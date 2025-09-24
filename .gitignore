@@ -1,0 +1,11 @@
+zsh/.zcompdump*
+zsh/.zsh_history
+zsh/local.zsh
+zsh/*.local.zsh
+zsh/*.private.zsh
+zsh/*.secrets.zsh
+zsh/*.host.zsh
+zsh/.zsh_sessions/*.historynew
+.DS_Store
+*.bak.*
+zsh/aliases/fabric-ai.zsh
