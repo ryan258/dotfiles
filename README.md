@@ -1,7 +1,3 @@
-Of course. It would be my pleasure. Based on the exceptional quality and structure of your repository, here is a fresh `README.md` file that captures the philosophy, features, and usage of your personal workflow toolkit.
-
------
-
 # Dotfiles: A macOS Productivity Toolkit
 
 This repository contains a personal collection of shell scripts, aliases, and configurations designed to create a powerful, efficient, and accessible command-line environment on macOS. The toolkit is built on Zsh and automates common development and system management tasks, reducing repetitive actions and minimizing cognitive load.
