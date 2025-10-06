@@ -29,16 +29,19 @@ echo ""
 echo "🚀 ACTIVE PROJECTS (with uncommitted changes):"
 if [ -d "$PROJECTS_DIR" ]; then
     found_changes=false
-    find "$PROJECTS_DIR" -maxdepth 2 -type d -name ".git" | while read -r gitdir; do
+    while IFS= read -r gitdir; do
         proj_dir=$(dirname "$gitdir")
         if (cd "$proj_dir" && git status --porcelain | grep -q .); then
             echo "  • $(basename "$proj_dir") has uncommitted changes."
             found_changes=true
         fi
-    done
+    done < <(find "$PROJECTS_DIR" -maxdepth 2 -type d -name ".git")
+
     if [ "$found_changes" = false ]; then
         echo "  (All projects are committed)"
     fi
+else
+    echo "  (Projects directory not found)"
 fi
 
 # 4. Prompt for tomorrow's note
