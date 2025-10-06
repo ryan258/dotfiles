@@ -166,6 +166,9 @@ alias todoadd="~/dotfiles/scripts/todo.sh add"
 alias journal="~/dotfiles/scripts/journal.sh"
 alias break="~/dotfiles/scripts/take_a_break.sh"
 
+# Health tracking
+alias health="~/dotfiles/scripts/health.sh"
+
 # Ultra-short aliases for frequent tasks
 alias t="~/dotfiles/scripts/todo.sh list"          # Show todo list
 alias j="~/dotfiles/scripts/journal.sh"            # Add journal entry
@@ -430,3 +433,4 @@ if command -v ggrep >/dev/null 2>&1; then
 else
   alias grep='grep'
 fi
+
