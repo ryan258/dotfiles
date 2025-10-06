@@ -297,7 +297,7 @@ alias mtg="~/dotfiles/scripts/mtg_price_check.sh"
 
 # Information dashboards
 alias info="~/dotfiles/scripts/weather.sh && echo && ~/dotfiles/scripts/todo.sh list"
-alias status="~/dotfiles/scripts/journal.sh && echo && ~/dotfiles/scripts/todo.sh list"
+alias status="~/dotfiles/scripts/status.sh"
 alias overview="~/dotfiles/scripts/system_info.sh && echo && ~/dotfiles/scripts/battery_check.sh"
 
 # Quick maintenance
