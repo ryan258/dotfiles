@@ -5,7 +5,9 @@ zsh/*.local.zsh
 zsh/*.private.zsh
 zsh/*.secrets.zsh
 zsh/*.host.zsh
+zsh/.zsh_sessions/*
 zsh/.zsh_sessions/*.historynew
 .DS_Store
+*.bak
 *.bak.*
 zsh/aliases/fabric-ai.zsh

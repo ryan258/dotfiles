@@ -30,3 +30,9 @@ eval "$(fnm env --shell zsh --use-on-cd)"
 echo "SUCCESS! Dotfiles are loading."
 source "$ZDOTDIR/aliases.zsh"
 # source "$ZDOTDIR/.zsh_aliases"
+
+# run startday.sh once per day
+if [[ ! -f /tmp/startday_ran_today_$(date +%Y%m%d) ]]; then
+    source "$HOME/dotfiles/scripts/startday.sh"
+    touch /tmp/startday_ran_today_$(date +%Y%m%d)
+fi
