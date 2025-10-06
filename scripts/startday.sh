@@ -29,13 +29,8 @@ fi
 
 # --- BLOG STATUS ---
 echo ""
-echo "📝 BLOG STATUS (ryanleej.com):"
-if [ -d "$HOME/Projects/my-ms-ai-blog" ]; then
-    stub_count=$(grep -l "content stub" "$HOME/Projects/my-ms-ai-blog/content/posts/"*.md 2>/dev/null | wc -l | tr -d ' ')
-    total_posts=$(ls "$HOME/Projects/my-ms-ai-blog/content/posts/"*.md 2>/dev/null | wc -l | tr -d ' ')
-    echo "  • Total posts: $total_posts"
-    echo "  • Posts needing content: $stub_count"
-    echo "  • Site: https://ryanleej.com"
+if [ -f "$HOME/dotfiles/scripts/blog.sh" ]; then
+    "$HOME/dotfiles/scripts/blog.sh" status
 fi
 
 # --- HEALTH ---
