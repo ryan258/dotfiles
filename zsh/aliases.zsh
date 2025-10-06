@@ -184,6 +184,7 @@ alias newproject="~/dotfiles/scripts/start_project.sh"
 alias newpython="~/dotfiles/scripts/mkproject_py.sh"
 alias newpy="~/dotfiles/scripts/mkproject_py.sh"
 alias progress="~/dotfiles/scripts/my_progress.sh"
+alias projects="~/dotfiles/scripts/projects.sh"
 
 # File & System Management
 alias backup="~/dotfiles/scripts/backup_project.sh"
