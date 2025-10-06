@@ -14,15 +14,30 @@ if [ -f ~/.daily_journal.txt ]; then
     tail -n 3 ~/.daily_journal.txt | sed 's/^/  • /'
 fi
 
-# --- ACTIVE PROJECTS ---
+# --- ACTIVE PROJECTS (from GitHub) ---
 echo ""
-echo "🚀 ACTIVE PROJECTS (modified in last 7 days):"
-if [ -d "$HOME/Projects" ]; then
-    find "$HOME/Projects" -maxdepth 1 -type d -mtime -7 2>/dev/null | while read -r project; do
-        if [ -d "$project/.git" ]; then
-            project_name=$(basename "$project")
-            last_commit=$(cd "$project" && git log -1 --format="%ar: %s" 2>/dev/null)
-            echo "  • $project_name - $last_commit"
+echo "🚀 ACTIVE PROJECTS (pushed to GitHub in last 7 days):"
+HELPER_SCRIPT="$HOME/dotfiles/scripts/github_helper.sh"
+if [ -f "$HELPER_SCRIPT" ]; then
+    "$HELPER_SCRIPT" list_repos | jq -r '.[] | "\(.pushed_at) \(.name)"' | while read -r line; do
+        pushed_at_str=$(echo "$line" | awk '{print $1}')
+        repo_name=$(echo "$line" | awk '{$1=""; print $0}' | xargs) # handle repo names with spaces
+        
+        pushed_at_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$pushed_at_str" +%s 2>/dev/null || continue)
+        NOW=$(date +%s)
+        DAYS_AGO=$(( (NOW - pushed_at_epoch) / 86400 ))
+        
+        if [ "$DAYS_AGO" -le 7 ]; then
+            if [ "$DAYS_AGO" -eq 0 ]; then
+                day_text="today"
+            elif [ "$DAYS_AGO" -eq 1 ]; then
+                day_text="yesterday"
+            else
+                day_text="$DAYS_AGO days ago"
+            fi
+            echo "  • $repo_name (pushed $day_text)"
+        else
+            break
         fi
     done
 fi

@@ -11,3 +11,6 @@ zsh/.zsh_sessions/*.historynew
 *.bak
 *.bak.*
 zsh/aliases/fabric-ai.zsh
+
+# GitHub Personal Access Token
+.github_token

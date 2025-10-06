@@ -4,6 +4,18 @@
 
 ---
 
+## 0. Initial Setup for GitHub Integration
+
+This new system connects directly to GitHub, so there's one crucial setup step.
+
+### What to Check
+1.  **Create a GitHub Personal Access Token (PAT):** If you haven't already, create a **classic** token at [https://github.com/settings/tokens/new](https://github.com/settings/tokens/new).
+2.  **Token Scope:** Ensure the token has the **`repo`** scope selected.
+3.  **Save the Token:** The token must be saved in a file at `~/.github_token`. The command `cat ~/.github_token` should display your token.
+4.  **Dependencies:** Ensure `curl` and `jq` are installed (`brew install jq`).
+
+---
+
 ## 1. Testing the Enhanced `status` Command
 
 The `status` command is your new go-to for mid-day context recovery. It gives you a complete snapshot of what you're working on.
@@ -77,23 +89,26 @@ goodevening
 
 ---
 
-## 3. Testing the `projects` Command
+## 3. Testing the `projects` Command (GitHub Version)
 
-This command helps you find and get details about projects you haven't touched in a while.
+This command now helps you find and get details about projects directly from your GitHub account.
 
 ### How to Use
--   To find old projects: `projects forgotten`
--   To get details on a project: `projects recall <project_name>`
+-   To find old projects on GitHub: `projects forgotten`
+-   To get details on a GitHub repo: `projects recall <repo_name>`
+
+### What to Check
+The commands should now reflect the state of your repositories on GitHub, not your local machine.
 
 ### Test Plan
 1.  **Find Forgotten Projects:**
     -   Run `projects forgotten`.
-    -   **Expected:** A list of projects in `~/Projects` that haven't been modified in over 60 days. (This list might be empty if all your projects are active).
+    -   **Expected:** A list of your GitHub repositories that you haven't pushed to in over 60 days.
 
 2.  **Recall a Project:**
-    -   Pick a project name from the `forgotten` list (or any project in `~/Projects`).
-    -   Run `projects recall <project_name>`.
-    -   **Expected:** You should see a summary card with the project's last modification date, last commit, a preview of its README, and its full path.
+    -   Pick a repository name (e.g., `dotfiles`).
+    -   Run `projects recall dotfiles`.
+    -   **Expected:** A summary card showing the last push date, the message from the very last commit, a preview of the README from GitHub, and the URL to the repository.
 
 ---
 
@@ -122,3 +137,26 @@ This is your new toolkit for managing your blog content workflow.
     -   Open any blog post file in `~/Projects/my-ms-ai-blog/content/posts/` and save it (even with no changes) to update its modification time.
     -   Run `blog recent`.
     -   **Expected:** The file you just saved should appear at the top of the list.
+
+---
+
+## 5. Testing the GitHub-Powered `startday` Command
+
+The `startday` script's "Active Projects" section has been updated to reflect your recent GitHub activity, making it consistent across machines.
+
+### How to Use
+Simply run:
+```bash
+startday
+```
+
+### What to Check
+- **🚀 ACTIVE PROJECTS:** This section should now be titled "ACTIVE PROJECTS (pushed to GitHub in last 7 days)".
+- It should list repositories you've recently pushed to, not just local folders.
+
+### Test Plan
+1.  **Push to a Repo:**
+    -   Go to any project on your development machine and push a change to GitHub.
+2.  **Run `startday`:**
+    -   On *any* machine (your laptop or desktop), run `startday`.
+    -   **Expected:** The repository you just pushed to should appear at the top of the "ACTIVE PROJECTS" list, marked as pushed "today".

@@ -1,42 +1,34 @@
 #!/bin/bash
-# projects.sh - Find and recall forgotten projects.
+# projects.sh - Find and recall forgotten projects from GitHub.
 
-PROJECTS_DIR=~/Projects
+HELPER_SCRIPT="$HOME/dotfiles/scripts/github_helper.sh"
+
+if [ ! -x "$HELPER_SCRIPT" ]; then
+    echo "Error: GitHub helper script not found or not executable." >&2
+    exit 1
+fi
 
 # --- Subcommand: forgotten ---
 function forgotten() {
-    echo "🗂️ PROJECTS NOT TOUCHED IN 60+ DAYS:"
+    echo "🗂️  PROJECTS NOT TOUCHED IN 60+ DAYS (on GitHub):"
     
-    if [ ! -d "$PROJECTS_DIR" ]; then
-        echo "  (Projects directory not found at $PROJECTS_DIR)"
-        return
-    fi
-
     NOW=$(date +%s)
     
-    # Create a temporary file to store results for sorting
-    TMP_FILE=$(mktemp)
-
-    find "$PROJECTS_DIR" -maxdepth 1 -type d | while read -r project_path; do
-        if [ -d "$project_path/.git" ]; then
-            LAST_MOD_EPOCH=$(stat -f "%m" "$project_path")
-            DAYS_AGO=$(( (NOW - LAST_MOD_EPOCH) / 86400 ))
-            
-            if [ "$DAYS_AGO" -ge 60 ]; then
-                PROJECT_NAME=$(basename "$project_path")
-                echo "$DAYS_AGO $PROJECT_NAME" >> "$TMP_FILE"
-            fi
+    # Call helper to get repos, then parse with jq
+    "$HELPER_SCRIPT" list_repos | jq -c '.[] | {name: .name, pushed_at: .pushed_at}' | while read -r repo_json; do
+        
+        repo_name=$(echo "$repo_json" | jq -r '.name')
+        pushed_at_str=$(echo "$repo_json" | jq -r '.pushed_at')
+        
+        # Convert pushed_at (ISO 8601) to epoch seconds
+        pushed_at_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$pushed_at_str" +%s 2>/dev/null || continue)
+        
+        DAYS_AGO=$(( (NOW - pushed_at_epoch) / 86400 ))
+        
+        if [ "$DAYS_AGO" -ge 60 ]; then
+            echo "  • $repo_name ($DAYS_AGO days ago)"
         fi
     done
-
-    # Sort by days ago (descending) and print
-    sort -rn "$TMP_FILE" | while read -r line; do
-        DAYS_AGO=$(echo "$line" | awk '{print $1}')
-        PROJECT_NAME=$(echo "$line" | awk '{$1=""; print $0}' | xargs)
-        echo "  • $PROJECT_NAME ($DAYS_AGO days ago)"
-    done
-
-    rm "$TMP_FILE"
     
     echo ""
     echo "Run 'projects recall <name>' to see details"
@@ -50,33 +42,36 @@ function recall() {
     fi
     
     PROJECT_NAME="$1"
-    PROJECT_PATH="$PROJECTS_DIR/$PROJECT_NAME"
-    
-    if [ ! -d "$PROJECT_PATH" ]; then
-        echo "Project '$PROJECT_NAME' not found at $PROJECT_PATH"
-        return
-    fi
     
     echo "📦 Project: $PROJECT_NAME"
     
+    # Get repo details
+    repo_details=$("$HELPER_SCRIPT" get_repo "$PROJECT_NAME")
+    if [[ $(echo "$repo_details" | jq '.message == "Not Found"') == "true" ]]; then
+        echo "Project '$PROJECT_NAME' not found on GitHub for user ryan258."
+        return
+    fi
+
+    pushed_at_str=$(echo "$repo_details" | jq -r '.pushed_at')
+    pushed_at_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$pushed_at_str" +%s 2>/dev/null || echo "$NOW")
     NOW=$(date +%s)
-    LAST_MOD_EPOCH=$(stat -f "%m" "$PROJECT_PATH")
-    DAYS_AGO=$(( (NOW - LAST_MOD_EPOCH) / 86400 ))
-    echo "Last modified: $DAYS_AGO days ago"
-    
-    if [ -d "$PROJECT_PATH/.git" ]; then
-        LAST_COMMIT=$(cd "$PROJECT_PATH" && git log -1 --format='"%s"')
-        echo "Last commit: $LAST_COMMIT"
-    fi
-    
-    if [ -f "$PROJECT_PATH/README.md" ]; then
+    DAYS_AGO=$(( (NOW - pushed_at_epoch) / 86400 ))
+    echo "Last push: $DAYS_AGO days ago"
+
+    # Get latest commit
+    latest_commit=$("$HELPER_SCRIPT" get_latest_commit "$PROJECT_NAME")
+    commit_message=$(echo "$latest_commit" | jq -r '.commit.message | split("\n")[0]')
+    echo "Last commit: \"$commit_message\""
+
+    # Get README
+    readme_content=$("$HELPER_SCRIPT" get_readme_content "$PROJECT_NAME")
+    if [ -n "$readme_content" ]; then
         echo "README preview:"
-        head -n 5 "$PROJECT_PATH/README.md" | sed 's/^/  /'
+        echo "$readme_content" | head -n 5 | sed 's/^/  /'
     fi
     
-    echo "Path: $PROJECT_PATH"
-    echo ""
-    echo "Commands: cd to navigate, goto to bookmark"
+    html_url=$(echo "$repo_details" | jq -r '.html_url')
+    echo "URL: $html_url"
 }
 
 # --- Main Logic ---
