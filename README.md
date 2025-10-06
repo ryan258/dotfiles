@@ -81,7 +81,7 @@ Below is a summary of the most common commands. For a complete list, see `script
 | `ll`, `la`, `lt` | Enhanced `ls` commands for detailed, sorted views.    |
 | `..`, `...`  | Navigate up one or two parent directories.            |
 | `info`     | A dashboard showing weather and current to-do items.      |
-| `status`   | A summary of your recent journal entries and tasks.     |
+| `status`   | A dashboard showing your current work context (directory, git), journal, and tasks.     |
 | `cleanup`  | Organizes the `~/Downloads` folder and lists large files. |
 
 ### Core Scripts
@@ -93,10 +93,12 @@ Many scripts can be called directly. Some, marked with `(source)`, provide extra
 | `todo`         | A powerful command-line todo list manager (`add`, `list`, `done`).       |
 | `journal`      | Append a timestamped entry to your daily journal.                     |
 | `startday`     | A morning routine that shows tasks and suggests a workspace.        |
-| `goodevening`  | An end-of-day summary of open tasks and Git status.               |
+| `goodevening`  | An interactive end-of-day summary of completed tasks, journal entries, and uncommitted changes. |
 | `backup`       | Creates a timestamped backup of the current project directory.    |
 | `newproject`   | Interactively scaffolds a new project with a standard directory structure. |
 | `newpython`    | Bootstraps a Python project with a virtual environment and `.gitignore`. |
+| `projects`     | Find and get details about forgotten projects (`projects forgotten`, `projects recall <name>`). |
+| `blog`         | Tools for managing blog content (`blog status`, `blog stubs`, `blog random`). |
 | `goto` (source)  | Bookmark directories and jump to them by name (`goto save proj`, `goto proj`). |
 | `back` (source)  | Interactively jump to a recently visited directory.                 |
 | `done`         | Run any long command and get a system notification when it's finished.  |

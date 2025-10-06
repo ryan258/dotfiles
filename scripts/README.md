@@ -42,7 +42,11 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 - `week_in_review.sh` – Summarise recent todos, journal entries, and commits from the last seven days.
 - `my_progress.sh` – Show your latest Git commits in the current repository.
 - `startday.sh` – Morning routine: prints the date, suggests a workspace folder, and lists today’s todos.
-- `greeting.sh` / `goodevening.sh` – Quick context summaries for the start or end of a session.
+- `goodevening.sh` – An interactive end-of-day summary of completed tasks, journal entries, and uncommitted changes.
+- `status.sh` – A dashboard showing your current work context (directory, git), journal, and tasks.
+- `projects.sh {forgotten|recall <name>}` – Find and get details about forgotten projects.
+- `blog.sh {status|stubs|random|recent}` – Tools for managing blog content.
+- `greeting.sh` – Quick context summaries for the start of a session.
 
 ### Project & Directory Management
 
