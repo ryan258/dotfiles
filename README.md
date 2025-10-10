@@ -94,6 +94,7 @@ Many scripts can be called directly. Some, marked with `(source)`, provide extra
 | `journal`      | Append a timestamped entry to your daily journal.                     |
 | `startday`     | A morning routine that shows tasks and suggests a workspace.        |
 | `goodevening`  | An interactive end-of-day summary of completed tasks, journal entries, and uncommitted changes. |
+| `graballtext`  | Capture readable text from the repo into `all_text_contents.txt` for quick review or search. |
 | `backup`       | Creates a timestamped backup of the current project directory.    |
 | `newproject`   | Interactively scaffolds a new project with a standard directory structure. |
 | `newpython`    | Bootstraps a Python project with a virtual environment and `.gitignore`. |

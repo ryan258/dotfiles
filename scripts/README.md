@@ -72,6 +72,7 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 - `file_organizer.sh {bytype|bydate|bysize}` – Sort files into folders based on extension, creation date, or size buckets.
 - `findbig.sh` – List the ten largest items in the current directory tree.
 - `findtext.sh` – Interactive `grep -r` wrapper for locating text within files.
+- `grab_all_text.sh` – Concatenate all readable files (skipping git metadata) into `all_text_contents.txt` for quick searching or backups.
 - `text_processor.sh {count|search|replace|clean}` – Compare text statistics, search within a file, replace strings safely, or strip trailing whitespace.
 - `tidy_downloads.sh` – Sweep `~/Downloads`, filing images, documents, media, and archives into sensible homes.
 - `open_file.sh <query>` – Fuzzy search for files beneath your home directory and open the selected result.

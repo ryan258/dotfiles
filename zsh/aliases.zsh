@@ -178,6 +178,7 @@ alias ta="~/dotfiles/scripts/todo.sh add"          # Add todo task
 alias memo="~/dotfiles/scripts/memo.sh"
 alias weather="~/dotfiles/scripts/weather.sh"
 alias findtext="~/dotfiles/scripts/findtext.sh"
+alias graballtext="~/dotfiles/scripts/grab_all_text.sh"
 
 # Project & Development Tools
 alias newproject="~/dotfiles/scripts/start_project.sh"
@@ -439,4 +440,3 @@ fi
 # BLOG WORKFLOW
 # =============================================================================
 alias blog="~/dotfiles/scripts/blog.sh"
-

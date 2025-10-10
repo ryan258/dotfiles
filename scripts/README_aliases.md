@@ -92,6 +92,7 @@ Every script in `$SCRIPTS_DIR` has a corresponding wrapper function which ensure
 ### Text & Media Processing
 
 - `textproc`, `wordcount`, `textsearch`, `textreplace`, `textclean`
+- `graballtext` – Runs `grab_all_text.sh` to collate readable files into `all_text_contents.txt`.
 - `media`, `video2audio`, `resizeimg`, `compresspdf`
 - `archive`, `archcreate`, `archextract`, `archlist`
 - `unpack`
