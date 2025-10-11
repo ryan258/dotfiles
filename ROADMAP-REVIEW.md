@@ -60,3 +60,14 @@ This document contains the details of the roadmap items that have been implement
 - Alias added to `~/dotfiles/zsh/aliases.zsh`
 
 ---
+
+## ✅ October 2025: Clipboard & Context Docs
+**Problem:** Clipboard workflows were tribal knowledge and hard to recall during brain fog.
+
+**Deliverables:**
+- `docs/clipboard.md` with end-to-end `pbcopy`/`pbpaste` pipelines and real-world examples.
+- Cross-links added to `README.md`, `scripts/README.md`, and `scripts/README_aliases.md`.
+
+**Impact:** Faster "copy, transform, share" flows without leaving the keyboard—supports low-energy days and pairs well with `graballtext`.
+
+---

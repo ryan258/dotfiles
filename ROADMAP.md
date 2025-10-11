@@ -1,7 +1,7 @@
 # Daily Context System - Roadmap
 
 **Purpose:** Combat MS-related brain fog by automatically preserving context across days  
-**Status:** Core system working as of October 6, 2025  
+**Status:** Core system working as of October 10, 2025  
 **Location:** `~/dotfiles/`
 
 ---
@@ -70,38 +70,40 @@ Data Files:
 
 ---
 
-## 🎯 Enhancement Roadmap
+## 🎯 Next Round Objectives (Q4 2025)
 
-### Priority 4: Blog Content Workflow
-**Problem:** 21 posts published, some marked as "content stubs" need expansion
+### 1. Morning Routine Reliability
+- **Goal:** Resolve the `startday.sh` parse error surfaced during login so the automated morning briefing never fails.
+- **Why now:** Broken startup scripts erode trust in the ritual; this is a blocker for daily use.
+- **Deliverable:** Patch `startday.sh`, add a smoke-test snippet (e.g., `zsh -ic startday`) to the test guide.
 
-**Note:** `blog.sh` created with `status`, `stubs`, `random`, `recent`. Further enhancements can be tracked here.
+### 2. Daily Happy Path Documentation
+- **Goal:** Create `docs/happy-path.md` outlining the ideal morning → mid-day → evening flow using `startday`, `status`, `goodevening`, and supporting aliases.
+- **Why now:** Gives future-you and assistants a frictionless script to follow on foggy days.
+- **Deliverable:** Concise walkthrough with copy/pasteable commands; link it from `README.md` and the cheatsheet.
 
-**Potential enhancements:**
-- Track "last blog work" to remind if it's been >7 days
+### 3. Health Context Expansion (Iteration 1)
+- **Goal:** Extend `health.sh` to capture symptom notes and daily energy ratings, surfacing them in `startday`/`goodevening` summaries.
+- **Why now:** Aligns tooling with current health tracking needs without taking on the full medication-reminder scope yet.
+- **Deliverable:** New subcommands (`health symptom`, `health energy`), appended data store, and dashboard summaries.
 
----
+## 📋 Backlog & Ideas
 
-### Priority 5: Health Context Tracking
-**Current:** Appointment tracking works well
+- **Blog cadence nudges:** Track last edit date per post and flag stubs older than 7 days.
+- **Medication reminders:** CLI to log dosage windows plus optional notifications.
+- **Symptom timeline export:** Generate weekly health recap for medical appointments.
+- **Automation safety nets:** Auto-detect lingering git branches or large diff counts and surface them in `goodevening`.
 
-**Potential enhancements:**
-- Medication reminders with time of day
-- Symptom logging: `health symptom "description"`
-- Energy level tracking: `health energy [1-10]`
-- Weekly health summary
+Revisit once the three objectives above ship or if priorities shift.
 
-**Not urgent** - current system handles immediate need
+## ✅ Recent Wins
 
----
-
-## 🚀 Implementation Priority
-
-1. **Enhance `status`** - ✅ Done
-2. **Enhance `goodevening`** - ✅ Done
-3. **Forgotten projects** - ✅ Done
-4. **Blog workflow tools** - In Progress (`blog.sh` created)
-5. **Health enhancements** - To Do
+| Item | Date | Notes |
+| ---- | ---- | ----- |
+| `status` overhaul | 2025-10-04 | Added location, git, journal, and task snapshots. |
+| `goodevening` revamp | 2025-10-06 | Lists completed tasks, journal, dirty projects; prompts for tomorrow’s note. |
+| `projects` recall tools | 2025-10-06 | Surfaced forgotten repos via GitHub API. |
+| Clipboard workflows doc | 2025-10-10 | New `docs/clipboard.md` plus cross-links in README files. |
 
 ---
 
@@ -126,5 +128,5 @@ Data Files:
 
 ---
 
-**Last Updated:** October 6, 2025  
-**Next Review:** When implementing Priority 5 enhancement
+**Last Updated:** October 10, 2025  
+**Next Review:** After Morning Routine Reliability and Happy Path docs ship

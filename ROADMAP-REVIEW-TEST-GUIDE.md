@@ -160,3 +160,10 @@ startday
 2.  **Run `startday`:**
     -   On *any* machine (your laptop or desktop), run `startday`.
     -   **Expected:** The repository you just pushed to should appear at the top of the "ACTIVE PROJECTS" list, marked as pushed "today".
+
+---
+
+## 🧪 Upcoming Additions (Next Round)
+
+- **`startday` smoke test:** After fixing the parse error, add a quick command (`zsh -ic startday`) to ensure the login hook runs without syntax errors.
+- **Happy Path walk-through:** Once documented, add a checklist to rehearse the `startday → status → goodevening` flow weekly.
