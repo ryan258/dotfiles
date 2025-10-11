@@ -104,6 +104,10 @@ Many scripts can be called directly. Some, marked with `(source)`, provide extra
 | `back` (source)  | Interactively jump to a recently visited directory.                 |
 | `done`         | Run any long command and get a system notification when it's finished.  |
 
+### Clipboard Workflows
+
+Make the macOS clipboard part of your shell toolkit—`docs/clipboard.md` walks through practical `pbcopy`/`pbpaste` pipelines plus real-world usage examples for zero-mouse context switches.
+
 ### Magic the Gathering Collection
 
 This toolkit includes a specialized script for pricing a Magic: The Gathering collection stored in a CSV file.

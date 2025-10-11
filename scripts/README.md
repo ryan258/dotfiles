@@ -82,6 +82,7 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 
 - `app_launcher.sh {add|list|<shortcut>}` – Maintain a favourite-app list and launch shortcuts (`app_launcher.sh add code "Visual Studio Code"`).
 - `clipboard_manager.sh {save|load|list|peek}` – Store snippets from the macOS clipboard (`clipboard_manager.sh save draft`, `clipboard_manager.sh load draft`).
+- `pbcopy` / `pbpaste` tips live in `../docs/clipboard.md`—learn how to funnel command output straight into the clipboard and back with concrete examples.
 
 ### Media & Data Conversion
 

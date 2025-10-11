@@ -62,6 +62,8 @@ Standard `git` abbreviations like `gs`, `gaa`, `gc`, `gd`, `gco`, and `glog` cov
 
 `clip` plus `clipsave`, `clipload`, and `cliplist` wrap `clipboard_manager.sh` (when present) for saved snippets.
 
+Want deeper patterns? See `../docs/clipboard.md` for pipelines, formatting tricks, and real-world `pbcopy`/`pbpaste` workflows.
+
 ## Script Wrappers
 
 Every script in `$SCRIPTS_DIR` has a corresponding wrapper function which ensures it exists before aliasing. Below are the high-level categories—refer to `README.md` for script-specific behaviour.
