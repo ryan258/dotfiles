@@ -160,6 +160,10 @@ startday
 2.  **Run `startday`:**
     -   On *any* machine (your laptop or desktop), run `startday`.
     -   **Expected:** The repository you just pushed to should appear at the top of the "ACTIVE PROJECTS" list, marked as pushed "today".
+3.  **Smoke Test After Shell Changes:**
+    -   Reset the daily guard so the login hook fires: `rm -f /tmp/startday_ran_today_$(date +%Y%m%d)`.
+    -   Launch a fresh shell: `zsh -ic 'echo ok'`.
+    -   **Expected:** `startday` runs once without syntax errors, prints the morning dashboard, and the shell continues to `echo ok`.
 
 ---
 
