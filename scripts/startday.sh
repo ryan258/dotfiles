@@ -55,14 +55,34 @@ echo ""
 echo "🏥 HEALTH:"
 HEALTH_FILE="$HOME/.config/dotfiles-data/health.txt"
 if [ -f "$HEALTH_FILE" ] && [ -s "$HEALTH_FILE" ]; then
-    sort "$HEALTH_FILE" | while IFS='|' read -r appt_date desc; do
-        days_until=$(( ( $(date -j -f "%Y-%m-%d %H:%M" "$appt_date" +%s 2>/dev/null || echo 0) - $(date +%s) ) / 86400 ))
-        if [ "$days_until" -ge 0 ]; then
-            echo "  • $desc - $appt_date (in $days_until days)"
-        fi
-    done
+    # Show upcoming appointments
+    if grep -q "^APPT|" "$HEALTH_FILE" 2>/dev/null; then
+        grep "^APPT|" "$HEALTH_FILE" | sort -t'|' -k2 | while IFS='|' read -r type appt_date desc; do
+            days_until=$(( ( $(date -j -f "%Y-%m-%d %H:%M" "$appt_date" +%s 2>/dev/null || echo 0) - $(date +%s) ) / 86400 ))
+            if [ "$days_until" -ge 0 ]; then
+                echo "  • $desc - $appt_date (in $days_until days)"
+            fi
+        done
+    fi
+
+    # Show today's health snapshot if available
+    today=$(date '+%Y-%m-%d')
+    if grep -q "^ENERGY|$today" "$HEALTH_FILE" 2>/dev/null; then
+        today_energy=$(grep "^ENERGY|$today" "$HEALTH_FILE" | tail -1 | cut -d'|' -f3)
+        echo "  Energy level: $today_energy/10"
+    fi
+
+    if grep -q "^SYMPTOM|$today" "$HEALTH_FILE" 2>/dev/null; then
+        symptom_count=$(grep -c "^SYMPTOM|$today" "$HEALTH_FILE")
+        echo "  Symptoms logged today: $symptom_count (run 'health list' to see)"
+    fi
+
+    # If no data shown, display help
+    if ! grep -q "^APPT\|^ENERGY\|^SYMPTOM" "$HEALTH_FILE" 2>/dev/null; then
+        echo "  (no data tracked - try: health add, health energy, health symptom)"
+    fi
 else
-    echo "  (no appointments tracked - add with: health add \"description\" \"date\")"
+    echo "  (no data tracked - try: health add, health energy, health symptom)"
 fi
 
 # --- TODAY'S TASKS ---

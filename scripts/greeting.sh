@@ -6,8 +6,8 @@ elif [ "$hour" -lt 18 ]; then part="afternoon"
 else part="evening"; fi
 echo "Good $part, $(whoami)."
 # Optional quick context (silent if tools missing)
-[ -x "$HOME/scripts/weather.sh" ] && "$HOME/scripts/weather.sh" || true
-TODO_FILE="${TODO_FILE:-$HOME/.local/share/todo.txt}"
+command -v weather.sh >/dev/null 2>&1 && weather.sh || true
+TODO_FILE="${TODO_FILE:-$HOME/.config/dotfiles-data/todo.txt}"
 if [ -s "$TODO_FILE" ]; then
   echo
   echo "Top tasks:"

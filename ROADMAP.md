@@ -152,6 +152,11 @@ clipboard_history/         # Saved clipboard snippets
 
 ## 🎯 Next Round Objectives (Q4 2025)
 
+### 0. Remaining Fixes
+Fix the aliases. Remove all the hardcoded paths in zsh/aliases.zsh and let your .zprofile's PATH do its job.
+
+Fix the minor bug. Update the TODO_FILE path in greeting.sh.
+
 ### 1. Morning Routine Reliability
 - **Goal:** Resolve the `startday.sh` parse error surfaced during login so the automated morning briefing never fails.
 - **Why now:** Broken startup scripts erode trust in the ritual; this is a blocker for daily use.

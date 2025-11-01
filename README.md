@@ -83,6 +83,8 @@ This single directory can be easily backed up, synced, or excluded from version 
 
 ## Usage Reference
 
+**New to the system?** Start with the **[Daily Happy Path Guide](docs/happy-path.md)** - a step-by-step walkthrough designed for brain fog days.
+
 Below is a summary of the most common commands. For a complete list, see `scripts/README_aliases.md`.
 
 ### Key Aliases

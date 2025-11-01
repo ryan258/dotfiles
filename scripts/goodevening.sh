@@ -44,16 +44,39 @@ else
     echo "  (Projects directory not found)"
 fi
 
-# 4. Prompt for tomorrow's note
+# 4. Health check-in
+echo ""
+echo "💊 HEALTH CHECK-IN:"
+HEALTH_FILE="$HOME/.config/dotfiles-data/health.txt"
+today=$(date '+%Y-%m-%d')
+
+# Check if energy was logged today
+today_energy=$(grep "^ENERGY|$today" "$HEALTH_FILE" 2>/dev/null | tail -1 | cut -d'|' -f3)
+if [ -n "$today_energy" ]; then
+    echo "  Energy level logged: $today_energy/10"
+else
+    IFS= read -r -p "How was your energy today (1-10)? (Press Enter to skip) " energy_input
+    if [ -n "$energy_input" ]; then
+        bash "$(dirname "$0")/health.sh" energy "$energy_input"
+    fi
+fi
+
+# Check if symptoms were logged
+symptom_count=$(grep -c "^SYMPTOM|$today" "$HEALTH_FILE" 2>/dev/null || echo "0")
+if [ "$symptom_count" -gt 0 ]; then
+    echo "  Symptoms logged today: $symptom_count"
+fi
+
+# 5. Prompt for tomorrow's note
 echo ""
 IFS= read -r -p "What should tomorrow-you remember about today? (Press Enter to skip) " note
 if [ -n "$note" ]; then
-    # 5. Add response to journal
+    # 6. Add response to journal
     # Assuming journal.sh is in the same directory or in PATH
     "$(dirname "$0")/journal.sh" "EOD Note: $note"
 fi
 
-# 6. Clear completed tasks older than 7 days
+# 7. Clear completed tasks older than 7 days
 echo ""
 echo "🧹 Tidying up old completed tasks..."
 if [ -f "$TODO_DONE_FILE" ]; then
