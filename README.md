@@ -123,12 +123,6 @@ Many scripts can be called directly. Some, marked with `(source)`, provide extra
 
 Make the macOS clipboard part of your shell toolkit—`docs/clipboard.md` walks through practical `pbcopy`/`pbpaste` pipelines plus real-world usage examples for zero-mouse context switches.
 
-### Magic the Gathering Collection
-
-This toolkit includes a specialized script for pricing a Magic: The Gathering collection stored in a CSV file.
-
-  * `mtg [collection.csv]`: Fetches the latest Card Kingdom buylist, processes your `collection.csv` file against it, and outputs a new CSV with matched prices. The processing logic is handled by the accompanying `mtg_tracker.py` Python script.
-
 ## Customization
 
 Adding your own commands is easy:
