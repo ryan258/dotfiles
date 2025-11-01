@@ -4,12 +4,9 @@ This document complements the `~/.zsh_aliases` file. It explains the purpose of 
 
 ## Quick Start
 
-1. Ensure your scripts live under a directory exported as `SCRIPTS_DIR` (defaults to `~/scripts`).
-2. Copy `.zsh_aliases` into your home directory and source it from `~/.zshrc`:
-   ```bash
-   echo 'source ~/.zsh_aliases' >> ~/.zshrc
-   ```
-3. Reload your shell: `source ~/.zshrc`.
+1. Scripts are located in `~/dotfiles/scripts` and added to PATH via `~/.zprofile`.
+2. Aliases are defined in `~/dotfiles/zsh/aliases.zsh` and sourced from `~/.zshrc`.
+3. All data files are centralized in `~/.config/dotfiles-data/` for easy backup.
 4. Confirm required tools (Homebrew, git, Python 3, macOS utilities) are installed. Third-party dependencies (e.g. VS Code, `ffmpeg`) are optional, and the aliases gracefully skip features that aren’t available.
 
 ## Helper Functions
@@ -70,13 +67,12 @@ Every script in `$SCRIPTS_DIR` has a corresponding wrapper function which ensure
 
 ### Task & Notes
 
-- `todo`, `t`, `todoadd`, `todolist`, `tododone`
-- `journal`, `j`
-- `memo`
-- `note`, `noteadd`, `notesearch`, `notetoday`
-- `remind` (macOS notifications via `remind_me.sh`)
-- `break` (health timer)
-- `weekreview`, `startday`, `goodevening`, `greeting`, `weather`
+- `todo`, `t`, `todoadd`, `todolist`, `tododone` – Task management (data in `~/.config/dotfiles-data/todo.txt`)
+- `journal`, `j` – Journal entries (data in `~/.config/dotfiles-data/journal.txt`)
+- `health` – Health appointment tracking (data in `~/.config/dotfiles-data/health.txt`)
+- `remind` – macOS notifications via `remind_me.sh`
+- `break` – Health timer via `take_a_break.sh`
+- `weekreview`, `startday`, `goodevening`, `greeting`, `status`, `weather`
 
 ### Project & Workspace
 
@@ -109,9 +105,9 @@ Every script in `$SCRIPTS_DIR` has a corresponding wrapper function which ensure
 
 ### Notification & Completion
 
-- `done` (wrapper for `done.sh` via `finish()`)
-- `app`, `launch` (favorite app launcher)
-- `clip` + subcommands (clipboard manager)
+- `done` – Run long commands with notification on completion
+- `app`, `launch` – Favorite app launcher (favorites in `~/.config/dotfiles-data/favorite_apps`)
+- `clip` + subcommands – Clipboard manager (saved in `~/.config/dotfiles-data/clipboard_history/`)
 
 ## Compound Helpers
 
@@ -138,9 +134,10 @@ Every script in `$SCRIPTS_DIR` has a corresponding wrapper function which ensure
 
 ## Tips
 
-- Keep `$SCRIPTS_DIR` on your `PATH` so manual calls work (`export PATH="$SCRIPTS_DIR:$PATH"`).
-- Run `run_script <name>` to confirm a wrapper can find its script.
-- The `cd` override only records directory history when `recent_dirs.sh` is executable; remove the block if you prefer the default behaviour.
-- Add new scripts by placing them in `$SCRIPTS_DIR`, making them executable, and mirroring the wrapper style shown above.
+- Scripts directory (`~/dotfiles/scripts`) is added to PATH in `~/.zprofile`.
+- All data files are centralized in `~/.config/dotfiles-data/` for easy backup.
+- The `cd` override records directory history to `~/.config/dotfiles-data/dir_history`.
+- Navigation bookmarks are stored in `~/.config/dotfiles-data/dir_bookmarks`.
+- Add new scripts by placing them in `~/dotfiles/scripts/`, making them executable, and adding aliases in `~/dotfiles/zsh/aliases.zsh`.
 
 Happy aliasing!

@@ -4,16 +4,27 @@ This folder collects small shell utilities that streamline day-to-day work on ma
 
 ## Getting Started
 
-1. Clone or copy this directory to `~/scripts` (or another location you control).
+1. Clone or copy this directory to `~/dotfiles/scripts` (or another location you control).
 2. Make every script executable:
    ```bash
-   chmod +x ~/scripts/*.sh
+   chmod +x ~/dotfiles/scripts/*.sh
    ```
-3. Add the directory to your `PATH` so each command is available everywhere. Append the following to `~/.zshrc` (or `~/.bash_profile`):
+3. Add the directory to your `PATH` in `~/.zprofile`:
    ```bash
-   export PATH="$HOME/scripts:$PATH"
+   path_prepend "$HOME/dotfiles/scripts"
+   export PATH
    ```
-4. Reload your shell configuration: `source ~/.zshrc`.
+4. Reload your shell configuration: `source ~/.zprofile`.
+
+### Data Storage
+
+All script data files are centralized in `~/.config/dotfiles-data/` for easy backup and organization:
+- `journal.txt` – Journal entries
+- `todo.txt` & `todo_done.txt` – Task lists
+- `health.txt` – Health appointments
+- `dir_bookmarks` & `dir_history` – Directory navigation data
+- `favorite_apps` – Application launcher shortcuts
+- `clipboard_history/` – Saved clipboard snippets
 
 Many helper scripts (for example `goto.sh`, `dev_shortcuts.sh env`, and `recent_dirs.sh`) can change your current directory when they are *sourced* instead of executed. To use them that way, call `source ~/scripts/<script>.sh ...` or set up aliases/functions in your shell configuration.
 
@@ -35,10 +46,9 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 
 ### Productivity & Planning
 
-- `journal.sh [text]` – Append a journal entry (`journal.sh "Wrapped up sprint"`) or, with no arguments, display the last five entries.
-- `memo.sh {add|list|today|clear}` – Lightweight memo pad (`memo.sh add "alias idea"`, `memo.sh list`).
-- `quick_note.sh {add|search|recent|today}` – Timestamped notes; for example `quick_note.sh add "Pairing tomorrow at 2"` or `quick_note.sh search pairing`.
-- `todo.sh {add|list|done|clear}` – CLI todo list (`todo.sh add "Refactor utils"`, `todo.sh done 2`).
+- `journal.sh [text]` – Append a journal entry (`journal.sh "Wrapped up sprint"`) or, with no arguments, display the last five entries. Entries stored in `~/.config/dotfiles-data/journal.txt`.
+- `todo.sh {add|list|done|clear}` – CLI todo list (`todo.sh add "Refactor utils"`, `todo.sh done 2`). Data stored in `~/.config/dotfiles-data/todo.txt` and `todo_done.txt`.
+- `health.sh {add|list|remove}` – Track health appointments with countdown (`health.sh add "Checkup" "2025-12-01 14:00"`). Stored in `~/.config/dotfiles-data/health.txt`.
 - `week_in_review.sh` – Summarise recent todos, journal entries, and commits from the last seven days.
 - `my_progress.sh` – Show your latest Git commits in the current repository.
 - `startday.sh` – Morning routine: prints the date, suggests a workspace folder, and lists today’s todos.
@@ -92,10 +102,8 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 ### Notifications, Breaks, and Timers
 
 - `done.sh <command ...>` – Run any long-lived command and receive a notification when it finishes.
-- `script_67777906.sh <command ...>` – Alternate notification wrapper that mirrors `done.sh` but uses emoji titles.
 - `remind_me.sh +30m "Stretch"` – Schedule a macOS notification for 30 minutes (also supports `+2h`).
 - `take_a_break.sh [minutes]` – Health break timer with suggestions; defaults to 15 minutes.
-- `script_58131199.sh [minutes]` – Minimal break timer that simply sleeps and notifies.
 
 ### Weather, Status, and Miscellaneous Tools
 

@@ -66,7 +66,20 @@ This setup uses a modern Zsh structure to keep your home directory clean:
   * `~/.zshenv`: This is the first file Zsh reads. It sets the `$ZDOTDIR` variable, telling Zsh to look for its configuration files inside `~/dotfiles/zsh/`.
   * `~/dotfiles/zsh/.zprofile`: This file runs once at login and is the correct place to manage your `$PATH`, ensuring compatibility with macOS tools.
   * `~/dotfiles/zsh/.zshrc`: This runs every time you open a new shell. It sources your aliases and other interactive configurations.
-  * `~/dotfiles/zsh/aliases.zsh`: This is where the magic happens\! It contains hundreds of shortcuts and helper functions that form the core of the workflow.
+  * `~/dotfiles/zsh/aliases.zsh`: This is where the magic happens! It contains hundreds of shortcuts and helper functions that form the core of the workflow.
+
+### Data Storage
+
+All script data is centralized in `~/.config/dotfiles-data/` for easy backup and management:
+
+  * `journal.txt` – Timestamped journal entries
+  * `todo.txt` & `todo_done.txt` – Active and completed tasks
+  * `health.txt` – Health appointments with reminders
+  * `dir_bookmarks` & `dir_history` – Directory navigation data
+  * `favorite_apps` – Application launcher shortcuts
+  * `clipboard_history/` – Saved clipboard snippets
+
+This single directory can be easily backed up, synced, or excluded from version control.
 
 ## Usage Reference
 
