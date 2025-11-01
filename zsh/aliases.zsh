@@ -284,7 +284,7 @@ alias archextract="archive_manager.sh extract"
 alias archlist="archive_manager.sh list"
 
 # Finance & Data Analysis
-alias mtg="mtg_price_check.sh"
+# alias mtg="mtg_price_check.sh"  # Removed - MTG tools moved to private repo
 
 # =============================================================================
 # COMPOUND ALIASES (USEFUL COMBINATIONS)
