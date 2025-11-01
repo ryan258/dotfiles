@@ -178,17 +178,22 @@ All Next Round Objectives completed November 1, 2025.
 
 ## 📋 Backlog & Ideas
 
-- **Blog cadence nudges:** Track last edit date per post and flag stubs older than 7 days.
-- **Medication reminders:** CLI to log dosage windows plus optional notifications.
-- **Symptom timeline export:** Generate weekly health recap for medical appointments.
-- **Automation safety nets:** Auto-detect lingering git branches or large diff counts and surface them in `goodevening`.
+### ✅ Recently Completed from Backlog
 
-Revisit once the three objectives above ship or if priorities shift.
+- [x] **Blog cadence nudges:** Enhanced `blog.sh status` to show stale stubs (>7 days), warns if blog not updated in 14 days. Enhanced `blog.sh stubs` to show age of each stub with visual warnings.
+- [x] **Medication reminders:** Created new `meds.sh` with full tracking system - add medications with schedules (morning/evening or specific times), log doses, check what's due, history tracking, and `meds remind` for cron notifications via osascript.
+- [x] **Symptom timeline export:** Added `health.sh export [days]` command to generate markdown reports with energy levels (including averages), symptoms, and upcoming appointments - ready to email or print for medical appointments.
+- [x] **Automation safety nets:** Enhanced `goodevening.sh` to auto-detect uncommitted changes (with counts), large diffs (>100 lines), lingering branches (>7 days old), unpushed commits, and branches not pushed to remote.
+
+### 💡 Future Ideas
+
+(No pending backlog items - ready for new priorities)
 
 ## ✅ Recent Wins
 
 | Item | Date | Notes |
 | ---- | ---- | ----- |
+| Backlog Implementation | 2025-11-01 | Completed all 4 backlog items: blog cadence nudges with age warnings, full medication tracking system (`meds.sh`), health export for medical appointments, automation safety nets in goodevening (uncommitted changes, large diffs, lingering branches, unpushed commits). |
 | Foundation & Hardening (Phases 1-3) | 2025-11-01 | Fixed broken journaling loop, centralized all data to `~/.config/dotfiles-data/`, deleted 4 redundant scripts, cleaned up shell config, modernized all aliases, hardened core scripts with `set -euo pipefail`. |
 | Q4 Objectives 0-3 | 2025-11-01 | Fixed remaining bugs, created Daily Happy Path guide, extended health.sh with symptom and energy tracking. |
 | `docs/happy-path.md` | 2025-11-01 | Comprehensive daily workflow guide designed for brain fog days. |
@@ -222,4 +227,4 @@ Revisit once the three objectives above ship or if priorities shift.
 ---
 
 **Last Updated:** November 1, 2025
-**Next Review:** Q1 2026 - Foundation complete, all Q4 objectives shipped. Ready for backlog items or new priorities.
+**Next Review:** Q1 2026 - Foundation complete, all Q4 objectives shipped, all backlog items implemented. System is comprehensive and stable. Ready for new priorities.

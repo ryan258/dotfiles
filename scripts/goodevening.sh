@@ -24,21 +24,69 @@ if [ -f "$JOURNAL_FILE" ]; then
     grep "\[$TODAY" "$JOURNAL_FILE" | sed 's/^/  • /' || echo "  (No journal entries for today)"
 fi
 
-# 3. List active projects with uncommitted changes
+# 3. Automation Safety Nets - Check projects for potential issues
 echo ""
-echo "🚀 ACTIVE PROJECTS (with uncommitted changes):"
+echo "🚀 PROJECT SAFETY CHECK:"
 if [ -d "$PROJECTS_DIR" ]; then
-    found_changes=false
+    found_issues=false
+
     while IFS= read -r gitdir; do
         proj_dir=$(dirname "$gitdir")
-        if (cd "$proj_dir" && git status --porcelain | grep -q .); then
-            echo "  • $(basename "$proj_dir") has uncommitted changes."
-            found_changes=true
-        fi
+        proj_name=$(basename "$proj_dir")
+
+        (
+            cd "$proj_dir" || exit
+
+            # Check for uncommitted changes
+            if git status --porcelain | grep -q .; then
+                change_count=$(git status --porcelain | wc -l | tr -d ' ')
+                echo "  ⚠️  $proj_name: $change_count uncommitted changes"
+                found_issues=true
+
+                # Check for large diffs
+                additions=$(git diff --stat | tail -1 | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo "0")
+                deletions=$(git diff --stat | tail -1 | grep -oE '[0-9]+ deletion' | grep -oE '[0-9]+' || echo "0")
+                total_changes=$((additions + deletions))
+
+                if [ "$total_changes" -gt 100 ]; then
+                    echo "      └─ Large diff: +$additions/-$deletions lines"
+                fi
+            fi
+
+            # Check for lingering non-default branches
+            current_branch=$(git branch --show-current)
+            default_branch=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
+
+            if [ "$current_branch" != "$default_branch" ] && [ "$current_branch" != "main" ] && [ "$current_branch" != "master" ]; then
+                # Check how old this branch is
+                branch_age_days=$(( ( $(date +%s) - $(git log -1 --format=%ct "$current_branch" 2>/dev/null || echo 0) ) / 86400 ))
+
+                if [ "$branch_age_days" -gt 7 ]; then
+                    echo "  ⚠️  $proj_name: On branch '$current_branch' (${branch_age_days} days old)"
+                    found_issues=true
+
+                    # Check if branch is pushed to remote
+                    if ! git ls-remote --heads origin "$current_branch" 2>/dev/null | grep -q .; then
+                        echo "      └─ Branch not pushed to remote"
+                    fi
+                fi
+            fi
+
+            # Check for unpushed commits on default branch
+            if [ "$current_branch" = "$default_branch" ] || [ "$current_branch" = "main" ] || [ "$current_branch" = "master" ]; then
+                if git rev-parse @{u} >/dev/null 2>&1; then
+                    unpushed=$(git rev-list @{u}..HEAD --count 2>/dev/null || echo "0")
+                    if [ "$unpushed" -gt 0 ]; then
+                        echo "  📤 $proj_name: $unpushed unpushed commit(s) on $current_branch"
+                        found_issues=true
+                    fi
+                fi
+            fi
+        )
     done < <(find "$PROJECTS_DIR" -maxdepth 2 -type d -name ".git")
 
-    if [ "$found_changes" = false ]; then
-        echo "  (All projects are committed)"
+    if [ "$found_issues" = false ]; then
+        echo "  ✅ All projects clean (no uncommitted changes, stale branches, or unpushed commits)"
     fi
 else
     echo "  (Projects directory not found)"

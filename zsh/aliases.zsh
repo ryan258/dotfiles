@@ -168,6 +168,7 @@ alias break="take_a_break.sh"
 
 # Health tracking
 alias health="health.sh"
+alias meds="meds.sh"
 
 # Ultra-short aliases for frequent tasks
 alias t="todo.sh list"          # Show todo list
