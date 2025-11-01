@@ -14,3 +14,8 @@ zsh/aliases/fabric-ai.zsh
 
 # GitHub Personal Access Token
 .github_token
+
+# Personal data (moved to private repos)
+scripts/collection.csv
+scripts/mtg_*.sh
+scripts/mtg_*.py
