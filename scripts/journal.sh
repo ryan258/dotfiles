@@ -1,11 +1,12 @@
 #!/bin/bash
+set -euo pipefail
 
 # --- A quick command-line journal ---
 # Usage:
 #   journal.sh This is my entry for the evening.
 #   journal.sh (with no text, to read the last 5 entries)
 
-JOURNAL_FILE=~/journal.txt
+JOURNAL_FILE="$HOME/.config/dotfiles-data/journal.txt"
 ENTRY="$*" # Combine all arguments into a single entry
 
 # If the entry is empty, show the last 5 lines of the journal

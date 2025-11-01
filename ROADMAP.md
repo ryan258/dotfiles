@@ -70,6 +70,83 @@ Data Files:
 
 ---
 
+## 🔧 Foundation & Hardening (Priority Fixes)
+
+**Goal:** Address critical technical debt and configuration issues that affect system reliability.
+**Status:** Identified via external code review - needed before Q4 feature work
+
+### Phase 1: Critical System Repairs
+
+#### Fix 2: Repair the Core Journaling Loop ⚠️ CRITICAL
+**Problem:** `journal.sh` writes to `~/journal.txt` but core scripts (`startday`, `status`, `goodevening`) read from `~/.daily_journal.txt`. This breaks the entire context-recovery loop.
+
+**Action:**
+- [ ] Edit `scripts/journal.sh`: Change `JOURNAL_FILE=~/journal.txt` → `JOURNAL_FILE=~/.daily_journal.txt`
+- [ ] Edit `scripts/week_in_review.sh`: Change all `~/journal.txt` references → `~/.daily_journal.txt`
+
+**Impact:** Fixes broken journaling integration that defeats the core purpose of the system.
+
+#### Fix 3: Centralize All Data Files
+**Problem:** Data scattered across home directory (`~/journal.txt`, `~/.daily_journal.txt`, `~/.todo_list.txt`, etc.) is fragile and hard to back up.
+
+**Action:**
+- [ ] Create central data directory: `mkdir -p ~/.config/dotfiles-data`
+- [ ] Update all scripts to use centralized paths:
+  - `todo.sh`: `~/.config/dotfiles-data/todo.txt` & `todo_done.txt`
+  - `journal.sh`: `~/.config/dotfiles-data/journal.txt`
+  - `health.sh`: `~/.config/dotfiles-data/health.txt`
+  - `quick_note.sh`, `memo.sh`, `goto.sh`, `recent_dirs.sh`, `app_launcher.sh`, `clipboard_manager.sh`
+- [ ] Update core loop scripts: `startday.sh`, `status.sh`, `goodevening.sh`
+
+**Impact:** Single backup location, cleaner home directory, easier to maintain.
+
+### Phase 2: Simplification & Cleanup
+
+#### Fix 4: De-duplicate Redundant Scripts
+**Problem:** Multiple scripts doing the same thing creates confusion and maintenance burden.
+
+**Action:**
+- [ ] Delete redundant note-takers: `scripts/memo.sh`, `scripts/quick_note.sh`
+- [ ] Remove aliases: `memo`, `note`, `noteadd`, `notesearch` from `zsh/aliases.zsh`
+- [ ] Delete duplicate notification wrapper: `scripts/script_67777906.sh`
+- [ ] Delete inferior break timer: `scripts/script_58131199.sh` (keep `take_a_break.sh`)
+
+**Impact:** Clearer mental model, less code to maintain, forces consistent usage patterns.
+
+#### Fix 5: Clean Up Shell Configuration
+**Problem:** `PATH` set in multiple files (`.zshrc`, `.zprofile`), redundant sourcing creates confusion.
+
+**Action:**
+- [ ] Edit `zsh/.zprofile`: Add `path_prepend "$HOME/dotfiles/scripts"`, remove non-existent `scripts/bin`
+- [ ] Edit `zsh/.zshrc`: Delete lines 1-4 (user PATH exports), delete lines 6-12 (legacy `.zsh_aliases` sourcing)
+
+**Impact:** Clean separation: PATH in `.zprofile`, interactive config in `.zshrc`.
+
+#### Fix 6: Modernize Aliases
+**Problem:** Hardcoded paths (`~/dotfiles/scripts/todo.sh`) are brittle. Now that `scripts/` is in PATH, simplify.
+
+**Action:**
+- [ ] Edit `zsh/aliases.zsh`: Change all `~/dotfiles/scripts/X.sh` → just `X.sh`
+- [ ] Examples: `alias todo="todo.sh"`, `alias journal="journal.sh"`, `alias health="health.sh"`
+
+**Impact:** More portable, easier to reorganize files later.
+
+### Phase 3: Robustness & Best Practices
+
+#### Fix 7: Harden Shell Scripts
+**Problem:** Scripts lack modern safeguards (set -euo pipefail, quoted variables, dependency checks).
+
+**Action:**
+- [ ] Add `set -euo pipefail` after shebang in all `.sh` files
+- [ ] Quote all variable usages: `$VAR` → `"$VAR"` throughout all scripts
+- [ ] Add dependency checks (following `github_helper.sh` pattern):
+  - `media_converter.sh`: check for `ffmpeg`, `convert`, `gs`
+  - Other scripts: check for `jq`, `curl`, etc. as needed
+
+**Impact:** Scripts fail fast and clearly instead of silently breaking. Prevents common shell pitfalls.
+
+---
+
 ## 🎯 Next Round Objectives (Q4 2025)
 
 ### 1. Morning Routine Reliability
@@ -128,5 +205,5 @@ Revisit once the three objectives above ship or if priorities shift.
 
 ---
 
-**Last Updated:** October 10, 2025  
-**Next Review:** After Morning Routine Reliability and Happy Path docs ship
+**Last Updated:** November 1, 2025
+**Next Review:** After Foundation & Hardening fixes (especially Fix 2) and Morning Routine Reliability ship

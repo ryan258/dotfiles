@@ -1,14 +1,3 @@
-# --- user PATHs ---
-export PATH="$HOME/scripts:$PATH"
-[[ ":$PATH:" == *":$HOME/bin:"* ]] || export PATH="$HOME/bin:$PATH"
-
-# --- safely load aliases if syntax is OK ---
-if command -v zsh >/dev/null 2>&1 && zsh -n "$HOME/.zsh_aliases" >/dev/null 2>&1; then
-  source "$HOME/.zsh_aliases"
-else
-  [[ -f "$HOME/.zsh_aliases" ]] && echo "⚠️  Skipping ~/.zsh_aliases due to syntax errors."
-fi
-
 # --- reserved names hardening (runs AFTER aliases load) ---
 unalias env  2>/dev/null; unset -f env  2>/dev/null
 unalias open 2>/dev/null; unset -f open 2>/dev/null

@@ -175,7 +175,6 @@ alias j="~/dotfiles/scripts/journal.sh"            # Add journal entry
 alias ta="~/dotfiles/scripts/todo.sh add"          # Add todo task
 
 # Information & Utilities
-alias memo="~/dotfiles/scripts/memo.sh"
 alias weather="~/dotfiles/scripts/weather.sh"
 alias findtext="~/dotfiles/scripts/findtext.sh"
 alias graballtext="~/dotfiles/scripts/grab_all_text.sh"
@@ -244,12 +243,6 @@ alias cliplist="~/dotfiles/scripts/clipboard_manager.sh list"
 # Application management
 alias app="~/dotfiles/scripts/app_launcher.sh"
 alias launch="~/dotfiles/scripts/app_launcher.sh"
-
-# Note taking
-alias note="~/dotfiles/scripts/quick_note.sh"
-alias noteadd="~/dotfiles/scripts/quick_note.sh add"
-alias notesearch="~/dotfiles/scripts/quick_note.sh search"
-alias notetoday="~/dotfiles/scripts/quick_note.sh today"
 
 # Workspace management
 alias workspace="~/dotfiles/scripts/workspace_manager.sh"
@@ -379,8 +372,7 @@ alias wr='with-req --'
 # 2. Add this line to your ~/.zshrc file:
 #    source ~/.zsh_aliases
 # 3. Create the ~/scripts directory: mkdir ~/scripts
-# 4. Copy all the script files to ~/dotfiles/scripts/
-# 5. Make scripts executable: chmod +x ~/dotfiles/scripts/*.sh
+# 4. Copy all the script files to # 5. Make scripts executable: chmod +x ~/dotfiles/scripts/*.sh
 # 6. Reload your shell: source ~/.zshrc
 
 # =============================================================================

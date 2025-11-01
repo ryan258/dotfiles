@@ -1,7 +1,7 @@
 #!/bin/bash
 # clipboard_manager.sh - Enhanced clipboard management for macOS
 
-CLIP_DIR=~/.clipboard_history
+CLIP_DIR="$HOME/.config/dotfiles-data/clipboard_history"
 mkdir -p "$CLIP_DIR"
 
 case "$1" in

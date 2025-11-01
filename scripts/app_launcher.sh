@@ -1,7 +1,7 @@
 #!/bin/bash
 # app_launcher.sh - macOS application launcher with favorites
 
-APPS_FILE=~/.favorite_apps
+APPS_FILE="$HOME/.config/dotfiles-data/favorite_apps"
 
 case "$1" in
     add)

@@ -39,7 +39,7 @@ This setup assumes you are on macOS with Zsh (the default shell). You will also 
 1.  **Clone the Repository:**
 
     ```bash
-    git clone <your-repository-url> ~/dotfiles
+    git clone https://github.com/ryan258/dotfiles.git ~/dotfiles
     ```
 
 2.  **Run the Setup Workflow:**

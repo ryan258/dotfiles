@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # --- Configuration ---
-TODO_DONE_FILE=~/.todo_done.txt
-JOURNAL_FILE=~/.daily_journal.txt
+TODO_DONE_FILE="$HOME/.config/dotfiles-data/todo_done.txt"
+JOURNAL_FILE="$HOME/.config/dotfiles-data/journal.txt"
 PROJECTS_DIR=~/Projects
 
 echo "=== Evening Close-Out — $(date '+%Y-%m-%d %H:%M') ==="

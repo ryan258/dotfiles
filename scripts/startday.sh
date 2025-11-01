@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 # startday.sh - Enhanced morning routine
 
 echo "╔════════════════════════════════════════════════════════════╗"
@@ -6,12 +7,13 @@ echo "║  Good morning! $(date '+%A, %B %d, %Y - %H:%M')            "
 echo "╚════════════════════════════════════════════════════════════╝"
 
 # --- YESTERDAY'S CONTEXT ---
+JOURNAL_FILE="$HOME/.config/dotfiles-data/journal.txt"
 echo ""
 echo "📅 YESTERDAY YOU WERE:"
 # Show last 3 journal entries or git commits
-if [ -f ~/.daily_journal.txt ]; then
+if [ -f "$JOURNAL_FILE" ]; then
     echo "Journal entries:"
-    tail -n 3 ~/.daily_journal.txt | sed 's/^/  • /'
+    tail -n 3 "$JOURNAL_FILE" | sed 's/^/  • /'
 fi
 
 # --- ACTIVE PROJECTS (from GitHub) ---
@@ -51,7 +53,7 @@ fi
 # --- HEALTH ---
 echo ""
 echo "🏥 HEALTH:"
-HEALTH_FILE="$HOME/.health_appointments.txt"
+HEALTH_FILE="$HOME/.config/dotfiles-data/health.txt"
 if [ -f "$HEALTH_FILE" ] && [ -s "$HEALTH_FILE" ]; then
     sort "$HEALTH_FILE" | while IFS='|' read -r appt_date desc; do
         days_until=$(( ( $(date -j -f "%Y-%m-%d %H:%M" "$appt_date" +%s 2>/dev/null || echo 0) - $(date +%s) ) / 86400 ))
@@ -64,10 +66,11 @@ else
 fi
 
 # --- TODAY'S TASKS ---
+TODO_FILE="$HOME/.config/dotfiles-data/todo.txt"
 echo ""
 echo "✅ TODAY'S TASKS:"
-if [ -f ~/.todo_list.txt ] && [ -s ~/.todo_list.txt ]; then
-    cat -n ~/.todo_list.txt | sed 's/^/  /'
+if [ -f "$TODO_FILE" ] && [ -s "$TODO_FILE" ]; then
+    cat -n "$TODO_FILE" | sed 's/^/  /'
 else
     echo "  (no tasks yet - add with: todo add 'task name')"
 fi

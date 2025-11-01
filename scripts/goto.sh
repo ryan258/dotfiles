@@ -1,7 +1,7 @@
 #!/bin/bash
 # goto.sh - Directory bookmarking system for macOS
 
-BOOKMARKS_FILE=~/.dir_bookmarks
+BOOKMARKS_FILE="$HOME/.config/dotfiles-data/dir_bookmarks"
 
 is_sourced() {
     if [ -n "$ZSH_VERSION" ]; then

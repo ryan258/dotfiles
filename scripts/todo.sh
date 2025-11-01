@@ -1,9 +1,11 @@
 #!/bin/bash
+set -euo pipefail
 
 # --- A simple, powerful command-line todo list manager ---
 
-TODO_FILE=~/.todo_list.txt
-DONE_FILE=~/.todo_done.txt
+DATA_DIR="$HOME/.config/dotfiles-data"
+TODO_FILE="$DATA_DIR/todo.txt"
+DONE_FILE="$DATA_DIR/todo_done.txt"
 
 # Ensure data files exist
 touch "$TODO_FILE" "$DONE_FILE"

@@ -1,7 +1,8 @@
 #!/bin/bash
+set -euo pipefail
 # health.sh - Track health appointments and events
 
-HEALTH_FILE="$HOME/.health_appointments.txt"
+HEALTH_FILE="$HOME/.config/dotfiles-data/health.txt"
 
 case "$1" in
     add)

@@ -1,7 +1,7 @@
 #!/bin/bash
 # recent_dirs.sh - Navigate to recently visited directories (macOS)
 
-HISTORY_FILE=~/.dir_history
+HISTORY_FILE="$HOME/.config/dotfiles-data/dir_history"
 MAX_HISTORY=20
 
 is_sourced() {

@@ -1,9 +1,10 @@
 #!/bin/bash
+set -euo pipefail
 # status.sh - Provides a mid-day context recovery dashboard.
 
 # --- Configuration ---
-JOURNAL_FILE=~/.daily_journal.txt
-TODO_FILE=~/.todo_list.txt
+JOURNAL_FILE="$HOME/.config/dotfiles-data/journal.txt"
+TODO_FILE="$HOME/.config/dotfiles-data/todo.txt"
 PROJECTS_DIR=~/Projects
 
 # --- Display Header ---
