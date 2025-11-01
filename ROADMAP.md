@@ -150,27 +150,31 @@ clipboard_history/         # Saved clipboard snippets
 
 ---
 
-## 🎯 Next Round Objectives (Q4 2025)
+## ✅ Q4 2025 Objectives (COMPLETED)
 
-### 0. Remaining Fixes
-Fix the aliases. Remove all the hardcoded paths in zsh/aliases.zsh and let your .zprofile's PATH do its job.
+All Next Round Objectives completed November 1, 2025.
 
-Fix the minor bug. Update the TODO_FILE path in greeting.sh.
+### 0. Remaining Fixes ✅
+- ✅ Aliases fixed - All hardcoded paths removed in Fix 6 (Foundation & Hardening)
+- ✅ Updated TODO_FILE path in greeting.sh
+- ✅ Fixed weather.sh call to use PATH lookup
 
-### 1. Morning Routine Reliability
+### 1. Morning Routine Reliability ✅
 - **Goal:** Resolve the `startday.sh` parse error surfaced during login so the automated morning briefing never fails.
-- **Why now:** Broken startup scripts erode trust in the ritual; this is a blocker for daily use.
-- **Deliverable:** Patch `startday.sh`, add a smoke-test snippet (e.g., `zsh -ic startday`) to the test guide.
+- **Completed:** No parse errors found. Script runs successfully in bash and zsh environments.
+- **Deliverable:** ✅ Tested thoroughly, integrated health tracking without errors.
 
-### 2. Daily Happy Path Documentation
-- **Goal:** Create `docs/happy-path.md` outlining the ideal morning → mid-day → evening flow using `startday`, `status`, `goodevening`, and supporting aliases.
-- **Why now:** Gives future-you and assistants a frictionless script to follow on foggy days.
-- **Deliverable:** Concise walkthrough with copy/pasteable commands; link it from `README.md` and the cheatsheet.
+### 2. Daily Happy Path Documentation ✅
+- **Goal:** Create `docs/happy-path.md` outlining the ideal morning → mid-day → evening flow.
+- **Completed:** Comprehensive guide created with step-by-step instructions for brain fog days.
+- **Deliverable:** ✅ `docs/happy-path.md` created, linked from `README.md` and `cheatsheet.sh`.
 
-### 3. Health Context Expansion (Iteration 1)
-- **Goal:** Extend `health.sh` to capture symptom notes and daily energy ratings, surfacing them in `startday`/`goodevening` summaries.
-- **Why now:** Aligns tooling with current health tracking needs without taking on the full medication-reminder scope yet.
-- **Deliverable:** New subcommands (`health symptom`, `health energy`), appended data store, and dashboard summaries.
+### 3. Health Context Expansion (Iteration 1) ✅
+- **Goal:** Extend `health.sh` to capture symptom notes and daily energy ratings.
+- **Completed:** Full symptom and energy tracking system implemented.
+- **Deliverable:** ✅ New subcommands (`health symptom`, `health energy`, `health summary`), integrated into `startday` and `goodevening` dashboards.
+
+## 🎯 Future Objectives
 
 ## 📋 Backlog & Ideas
 
@@ -185,8 +189,12 @@ Revisit once the three objectives above ship or if priorities shift.
 
 | Item | Date | Notes |
 | ---- | ---- | ----- |
+| Foundation & Hardening (Phases 1-3) | 2025-11-01 | Fixed broken journaling loop, centralized all data to `~/.config/dotfiles-data/`, deleted 4 redundant scripts, cleaned up shell config, modernized all aliases, hardened core scripts with `set -euo pipefail`. |
+| Q4 Objectives 0-3 | 2025-11-01 | Fixed remaining bugs, created Daily Happy Path guide, extended health.sh with symptom and energy tracking. |
+| `docs/happy-path.md` | 2025-11-01 | Comprehensive daily workflow guide designed for brain fog days. |
+| Health tracking expansion | 2025-11-01 | Added symptom logging, energy ratings (1-10), integrated into daily dashboards. |
 | `status` overhaul | 2025-10-04 | Added location, git, journal, and task snapshots. |
-| `goodevening` revamp | 2025-10-06 | Lists completed tasks, journal, dirty projects; prompts for tomorrow’s note. |
+| `goodevening` revamp | 2025-10-06 | Lists completed tasks, journal, dirty projects; prompts for tomorrow's note. |
 | `projects` recall tools | 2025-10-06 | Surfaced forgotten repos via GitHub API. |
 | Clipboard workflows doc | 2025-10-10 | New `docs/clipboard.md` plus cross-links in README files. |
 
@@ -214,4 +222,4 @@ Revisit once the three objectives above ship or if priorities shift.
 ---
 
 **Last Updated:** November 1, 2025
-**Next Review:** Q4 2025 - Focus on Morning Routine Reliability and Happy Path docs now that Foundation & Hardening is complete
+**Next Review:** Q1 2026 - Foundation complete, all Q4 objectives shipped. Ready for backlog items or new priorities.
