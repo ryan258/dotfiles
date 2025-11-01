@@ -159,149 +159,149 @@ alias battery="pmset -g batt"             # Battery status
 # =============================================================================
 
 # Task & Time Management
-alias todo="~/dotfiles/scripts/todo.sh"
-alias todolist="~/dotfiles/scripts/todo.sh list"
-alias tododone="~/dotfiles/scripts/todo.sh done"
-alias todoadd="~/dotfiles/scripts/todo.sh add"
-alias journal="~/dotfiles/scripts/journal.sh"
-alias break="~/dotfiles/scripts/take_a_break.sh"
+alias todo="todo.sh"
+alias todolist="todo.sh list"
+alias tododone="todo.sh done"
+alias todoadd="todo.sh add"
+alias journal="journal.sh"
+alias break="take_a_break.sh"
 
 # Health tracking
-alias health="~/dotfiles/scripts/health.sh"
+alias health="health.sh"
 
 # Ultra-short aliases for frequent tasks
-alias t="~/dotfiles/scripts/todo.sh list"          # Show todo list
-alias j="~/dotfiles/scripts/journal.sh"            # Add journal entry
-alias ta="~/dotfiles/scripts/todo.sh add"          # Add todo task
+alias t="todo.sh list"          # Show todo list
+alias j="journal.sh"            # Add journal entry
+alias ta="todo.sh add"          # Add todo task
 
 # Information & Utilities
-alias weather="~/dotfiles/scripts/weather.sh"
-alias findtext="~/dotfiles/scripts/findtext.sh"
-alias graballtext="~/dotfiles/scripts/grab_all_text.sh"
+alias weather="weather.sh"
+alias findtext="findtext.sh"
+alias graballtext="grab_all_text.sh"
 
 # Project & Development Tools
-alias newproject="~/dotfiles/scripts/start_project.sh"
-alias newpython="~/dotfiles/scripts/mkproject_py.sh"
-alias newpy="~/dotfiles/scripts/mkproject_py.sh"
-alias progress="~/dotfiles/scripts/my_progress.sh"
-alias projects="~/dotfiles/scripts/projects.sh"
+alias newproject="start_project.sh"
+alias newpython="mkproject_py.sh"
+alias newpy="mkproject_py.sh"
+alias progress="my_progress.sh"
+alias projects="projects.sh"
 
 # File & System Management
-alias backup="~/dotfiles/scripts/backup_project.sh"
-alias findbig="~/dotfiles/scripts/findbig.sh"
-alias unpack="~/dotfiles/scripts/unpacker.sh"
-alias tidydown="~/dotfiles/scripts/tidy_downloads.sh"
+alias backup="backup_project.sh"
+alias findbig="findbig.sh"
+alias unpack="unpacker.sh"
+alias tidydown="tidy_downloads.sh"
 
 # Daily Routine Scripts
-alias startday="~/dotfiles/scripts/startday.sh"
-alias goodevening="~/dotfiles/scripts/goodevening.sh"
-alias greeting="~/dotfiles/scripts/greeting.sh"
-alias weekreview="~/dotfiles/scripts/week_in_review.sh"
+alias startday="startday.sh"
+alias goodevening="goodevening.sh"
+alias greeting="greeting.sh"
+alias weekreview="week_in_review.sh"
 
 # =============================================================================
 # NAVIGATION & FILE MANAGEMENT SCRIPTS
 # =============================================================================
 
 # Smart navigation
-alias g="~/dotfiles/scripts/goto.sh"
-alias goto="~/dotfiles/scripts/goto.sh"
-alias back="~/dotfiles/scripts/recent_dirs.sh"
-alias recent="~/dotfiles/scripts/recent_dirs.sh"
+alias g="goto.sh"
+alias goto="goto.sh"
+alias back="recent_dirs.sh"
+alias recent="recent_dirs.sh"
 
 # File operations
-alias openf="~/dotfiles/scripts/open_file.sh"
+alias openf="open_file.sh"
 # alias open= (disabled — reserved name)
-alias finddupes="~/dotfiles/scripts/duplicate_finder.sh"
-alias organize="~/dotfiles/scripts/file_organizer.sh"
+alias finddupes="duplicate_finder.sh"
+alias organize="file_organizer.sh"
 
 # =============================================================================
 # SYSTEM MONITORING SCRIPTS (macOS)
 # =============================================================================
 
 # System information
-alias sysinfo="~/dotfiles/scripts/system_info.sh"
-alias batterycheck="~/dotfiles/scripts/battery_check.sh"
-alias processes="~/dotfiles/scripts/process_manager.sh"
-alias netinfo="~/dotfiles/scripts/network_info.sh"
+alias sysinfo="system_info.sh"
+alias batterycheck="battery_check.sh"
+alias processes="process_manager.sh"
+alias netinfo="network_info.sh"
 
 # Quick system checks
-alias topcpu="~/dotfiles/scripts/process_manager.sh top"
-alias topmem="~/dotfiles/scripts/process_manager.sh memory"
-alias netstatus="~/dotfiles/scripts/network_info.sh status"
-alias netspeed="~/dotfiles/scripts/network_info.sh speed"
+alias topcpu="process_manager.sh top"
+alias topmem="process_manager.sh memory"
+alias netstatus="network_info.sh status"
+alias netspeed="network_info.sh speed"
 
 # =============================================================================
 # PRODUCTIVITY & AUTOMATION SCRIPTS
 # =============================================================================
 
 # Clipboard management
-alias clip="~/dotfiles/scripts/clipboard_manager.sh"
-alias clipsave="~/dotfiles/scripts/clipboard_manager.sh save"
-alias clipload="~/dotfiles/scripts/clipboard_manager.sh load"
-alias cliplist="~/dotfiles/scripts/clipboard_manager.sh list"
+alias clip="clipboard_manager.sh"
+alias clipsave="clipboard_manager.sh save"
+alias clipload="clipboard_manager.sh load"
+alias cliplist="clipboard_manager.sh list"
 
 # Application management
-alias app="~/dotfiles/scripts/app_launcher.sh"
-alias launch="~/dotfiles/scripts/app_launcher.sh"
+alias app="app_launcher.sh"
+alias launch="app_launcher.sh"
 
 # Workspace management
-alias workspace="~/dotfiles/scripts/workspace_manager.sh"
-alias wsave="~/dotfiles/scripts/workspace_manager.sh save"
-alias wload="~/dotfiles/scripts/workspace_manager.sh load"
+alias workspace="workspace_manager.sh"
+alias wsave="workspace_manager.sh save"
+alias wload="workspace_manager.sh load"
 
 # Reminders and notifications
-alias remind="~/dotfiles/scripts/remind_me.sh"
-alias done="~/dotfiles/scripts/done.sh"
+alias remind="remind_me.sh"
+alias done="done.sh"
 
 # Development shortcuts
-alias dev="~/dotfiles/scripts/dev_shortcuts.sh"
-alias server="~/dotfiles/scripts/dev_shortcuts.sh server"
-alias json="~/dotfiles/scripts/dev_shortcuts.sh json"
-# alias env="~/dotfiles/scripts/dev_shortcuts.sh env"  # disabled — reserved name
-alias gitquick="~/dotfiles/scripts/dev_shortcuts.sh gitquick"
+alias dev="dev_shortcuts.sh"
+alias server="dev_shortcuts.sh server"
+alias json="dev_shortcuts.sh json"
+# alias env="dev_shortcuts.sh env"  # disabled — reserved name
+alias gitquick="dev_shortcuts.sh gitquick"
 
 # =============================================================================
 # FILE PROCESSING & ANALYSIS SCRIPTS
 # =============================================================================
 
 # Text processing
-alias textproc="~/dotfiles/scripts/text_processor.sh"
-alias wordcount="~/dotfiles/scripts/text_processor.sh count"
-alias textsearch="~/dotfiles/scripts/text_processor.sh search"
-alias textreplace="~/dotfiles/scripts/text_processor.sh replace"
-alias textclean="~/dotfiles/scripts/text_processor.sh clean"
+alias textproc="text_processor.sh"
+alias wordcount="text_processor.sh count"
+alias textsearch="text_processor.sh search"
+alias textreplace="text_processor.sh replace"
+alias textclean="text_processor.sh clean"
 
 # Media conversion
-alias media="~/dotfiles/scripts/media_converter.sh"
-alias video2audio="~/dotfiles/scripts/media_converter.sh video2audio"
-alias resizeimg="~/dotfiles/scripts/media_converter.sh resize_image"
-alias compresspdf="~/dotfiles/scripts/media_converter.sh pdf_compress"
+alias media="media_converter.sh"
+alias video2audio="media_converter.sh video2audio"
+alias resizeimg="media_converter.sh resize_image"
+alias compresspdf="media_converter.sh pdf_compress"
 
 # Archive management
-alias archive="~/dotfiles/scripts/archive_manager.sh"
-alias archcreate="~/dotfiles/scripts/archive_manager.sh create"
-alias archextract="~/dotfiles/scripts/archive_manager.sh extract"
-alias archlist="~/dotfiles/scripts/archive_manager.sh list"
+alias archive="archive_manager.sh"
+alias archcreate="archive_manager.sh create"
+alias archextract="archive_manager.sh extract"
+alias archlist="archive_manager.sh list"
 
 # Finance & Data Analysis
-alias mtg="~/dotfiles/scripts/mtg_price_check.sh"
+alias mtg="mtg_price_check.sh"
 
 # =============================================================================
 # COMPOUND ALIASES (USEFUL COMBINATIONS)
 # =============================================================================
 
 # Information dashboards
-alias info="~/dotfiles/scripts/weather.sh && echo && ~/dotfiles/scripts/todo.sh list"
-alias status="~/dotfiles/scripts/status.sh"
-alias overview="~/dotfiles/scripts/system_info.sh && echo && ~/dotfiles/scripts/battery_check.sh"
+alias info="weather.sh && echo && todo.sh list"
+alias status="status.sh"
+alias overview="system_info.sh && echo && battery_check.sh"
 
 # Quick maintenance
-alias cleanup="cd ~/Downloads && ~/dotfiles/scripts/file_organizer.sh bytype && ~/dotfiles/scripts/findbig.sh"
-alias quickbackup="~/dotfiles/scripts/backup_project.sh && echo 'Backup complete!'"
+alias cleanup="cd ~/Downloads && file_organizer.sh bytype && findbig.sh"
+alias quickbackup="backup_project.sh && echo 'Backup complete!'"
 
 # Development workflow
-alias devstart="~/dotfiles/scripts/dev_shortcuts.sh env && code ."
-alias gitcheck="~/dotfiles/scripts/my_progress.sh && git status"
+alias devstart="dev_shortcuts.sh env && code ."
+alias gitcheck="my_progress.sh && git status"
 
 # =============================================================================
 # FUNCTIONS (SLIGHTLY MORE COMPLEX ALIASES)
@@ -330,15 +330,15 @@ search() {
 
 # Enhanced cd that tracks history for recent_dirs script
 cd() {
-    builtin cd "$@" && ~/dotfiles/scripts/recent_dirs.sh add 2>/dev/null
+    builtin cd "$@" && recent_dirs.sh add 2>/dev/null
 }
 
 # Quick git status and todo check
 morning() {
     echo "=== Morning Briefing ==="
-    ~/dotfiles/scripts/weather.sh
+    weather.sh
     echo ""
-    ~/dotfiles/scripts/todo.sh list
+    todo.sh list
     echo ""
     if [ -d .git ]; then
         echo "=== Git Status ==="
@@ -349,7 +349,7 @@ morning() {
 # Quick end-of-day routine
 endday() {
     echo "=== End of Day Summary ==="
-    ~/dotfiles/scripts/my_progress.sh 2>/dev/null || echo "Not in a git repository"
+    my_progress.sh 2>/dev/null || echo "Not in a git repository"
     echo ""
     echo "Don't forget to:"
     echo "- Save your work"
@@ -372,7 +372,7 @@ alias wr='with-req --'
 # 2. Add this line to your ~/.zshrc file:
 #    source ~/.zsh_aliases
 # 3. Create the ~/scripts directory: mkdir ~/scripts
-# 4. Copy all the script files to # 5. Make scripts executable: chmod +x ~/dotfiles/scripts/*.sh
+# 4. Copy all the script files to # 5. Make scripts executable: chmod +x *.sh
 # 6. Reload your shell: source ~/.zshrc
 
 # =============================================================================
@@ -414,7 +414,7 @@ alias wr='with-req --'
 # 
 # Quick information:
 # info                      # Weather + todos
-# overview                  # System info + battery devenv='~/dotfiles/scripts/dev_shortcuts.sh env'
+# overview                  # System info + battery devenv='dev_shortcuts.sh env'
 # Portable grep coloring
 if command -v ggrep >/dev/null 2>&1; then
     alias grep='ggrep --color=auto'
@@ -431,4 +431,4 @@ fi
 # =============================================================================
 # BLOG WORKFLOW
 # =============================================================================
-alias blog="~/dotfiles/scripts/blog.sh"
+alias blog="blog.sh"
