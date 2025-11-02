@@ -156,7 +156,6 @@ alias battery="pmset -g batt"             # Battery status
 
 # =============================================================================
 # CORE PRODUCTIVITY SCRIPTS
-alias test_new_script="test_new_script.sh"
 alias howto="howto.sh"
 alias whatis="whatis.sh"
 alias dotfiles_check="dotfiles_check.sh"
