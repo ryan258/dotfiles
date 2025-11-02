@@ -2,6 +2,7 @@
 set -euo pipefail
 # meds.sh - Medication tracking and reminder system
 
+SYSTEM_LOG_FILE="$HOME/.config/dotfiles-data/system.log"
 MEDS_FILE="$HOME/.config/dotfiles-data/medications.txt"
 
 case "$1" in
@@ -145,6 +146,55 @@ case "$1" in
         fi
         ;;
 
+    dashboard)
+        echo "💊 MEDICATION ADHERENCE DASHBOARD (Last 30 Days) 💊"
+        echo ""
+
+        # --- Configuration ---
+        DAYS_AGO=30
+        CUTOFF_DATE=$(date -v-${DAYS_AGO}d '+%Y-%m-%d')
+        MEDS_FILE="$HOME/.config/dotfiles-data/medications.txt"
+
+        if [ ! -f "$MEDS_FILE" ]; then
+            echo "Medications file not found."
+            exit 1
+        fi
+
+        if [ ! -s "$MEDS_FILE" ]; then
+            echo "Medications file is empty."
+            exit 0
+        fi
+
+        # --- Calculations ---
+        # Get all medications
+        MEDS=$(grep "^MED|" "$MEDS_FILE" | cut -d'|' -f2)
+
+        if [ -z "$MEDS" ]; then
+            echo "No medications configured."
+            exit 0
+        fi
+
+        for med in $MEDS; do
+            # Get schedule for the med
+            SCHEDULE=$(grep "^MED|$med|" "$MEDS_FILE" | cut -d'|' -f3)
+            DOSES_PER_DAY=$(echo "$SCHEDULE" | tr ',' '\n' | wc -l | tr -d ' ')
+
+            # Calculate expected doses
+            EXPECTED_DOSES=$((DAYS_AGO * DOSES_PER_DAY))
+
+            # Calculate actual doses
+            ACTUAL_DOSES=$(grep "^DOSE|" "$MEDS_FILE" | awk -F'|' -v cutoff="$CUTOFF_DATE" -v med="$med" '$2 >= cutoff && $3 == med' | wc -l | tr -d ' ')
+
+            # Calculate adherence
+            if [ "$EXPECTED_DOSES" -gt 0 ]; then
+                ADHERENCE=$((ACTUAL_DOSES * 100 / EXPECTED_DOSES))
+                echo "• $med: ${ADHERENCE}% adherence ($ACTUAL_DOSES/$EXPECTED_DOSES doses)"
+            else
+                echo "• $med: N/A (no schedule found)"
+            fi
+        done
+        ;;
+
     remove)
         if [ -z "$2" ]; then
             echo "Usage: meds remove \"medication name\""
@@ -190,6 +240,7 @@ case "$1" in
 
                     if [ "$taken" -eq 0 ]; then
                         # Send notification
+                        echo "$(date): meds.sh - Sending reminder for $med_name ($time_slot)." >> "$SYSTEM_LOG_FILE"
                         osascript -e "display notification \"Time to take: $med_name ($time_slot)\" with title \"💊 Medication Reminder\""
                         overdue_found=true
                     fi
@@ -199,7 +250,8 @@ case "$1" in
         ;;
 
     *)
-        echo "Usage: meds [add|log|list|check|history|remove|remind]"
+        echo "Error: Unknown command '$1'" >&2
+        echo "Usage: meds [add|log|list|check|history|dashboard|remove|remind]"
         echo ""
         echo "Setup:"
         echo "  meds add \"medication name\" \"schedule\""
@@ -212,9 +264,11 @@ case "$1" in
         echo ""
         echo "History & Maintenance:"
         echo "  meds history [med] [days]   # Show dose history"
+        echo "  meds dashboard          # Show 30-day adherence dashboard"
         echo "  meds remove \"med name\"     # Remove a medication"
         echo ""
         echo "Automation:"
         echo "  meds remind             # Check & send notifications (for cron)"
+        exit 1
         ;;
 esac

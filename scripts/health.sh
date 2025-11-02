@@ -219,6 +219,87 @@ case "$1" in
         echo "  • Copy to clipboard: pbcopy < $output_file"
         ;;
 
+    dashboard)
+        set +e
+        echo "🏥 HEALTH DASHBOARD (Last 30 Days) 🏥"
+        echo ""
+
+        # --- Configuration ---
+        DAYS_AGO=30
+        CUTOFF_DATE=$(date -v-${DAYS_AGO}d '+%Y-%m-%d')
+        HEALTH_FILE="$HOME/.config/dotfiles-data/health.txt"
+
+        if [ ! -f "$HEALTH_FILE" ]; then
+            echo "Health data file not found."
+            exit 1
+        fi
+
+        if [ ! -s "$HEALTH_FILE" ]; then
+            echo "Health data file is empty."
+            exit 0
+        fi
+
+        # --- Calculations ---
+        # Filter relevant data once
+        RECENT_DATA=$(grep -E "^(ENERGY|SYMPTOM)" "$HEALTH_FILE" | awk -F'|' -v cutoff="$CUTOFF_DATE" '$2 >= cutoff' || true)
+
+        # 1. Average Energy Level
+        AVG_ENERGY=$(echo "$RECENT_DATA" | grep "^ENERGY" | awk -F'|' '{ sum += $3; count++ } END { if (count > 0) printf "%.1f", sum/count; else echo "N/A"; }')
+        echo "• Average Energy (30d): $AVG_ENERGY/10"
+
+        # 2. Symptom Frequency
+        echo "• Symptom Frequency (30d):"
+        FOG_COUNT=$(echo "$RECENT_DATA" | grep -i "fog" | wc -l | tr -d ' ')
+        FATIGUE_COUNT=$(echo "$RECENT_DATA" | grep -i "fatigue" | wc -l | tr -d ' ')
+        HEADACHE_COUNT=$(echo "$RECENT_DATA" | grep -i "headache" | wc -l | tr -d ' ')
+        PAIN_COUNT=$(echo "$RECENT_DATA" | grep -i "pain" | wc -l | tr -d ' ')
+        ANXIETY_COUNT=$(echo "$RECENT_DATA" | grep -i "anxiety" | wc -l | tr -d ' ')
+        OTHER_COUNT=$(echo "$RECENT_DATA" | grep -v -i -e "fog" -e "fatigue" -e "headache" -e "pain" -e "anxiety" | wc -l | tr -d ' ')
+
+        if [ "$FOG_COUNT" -gt 0 ]; then
+            printf "  - %-15s: %s times\n" "fog" "$FOG_COUNT"
+        fi
+        if [ "$FATIGUE_COUNT" -gt 0 ]; then
+            printf "  - %-15s: %s times\n" "fatigue" "$FATIGUE_COUNT"
+        fi
+        if [ "$HEADACHE_COUNT" -gt 0 ]; then
+            printf "  - %-15s: %s times\n" "headache" "$HEADACHE_COUNT"
+        fi
+        if [ "$PAIN_COUNT" -gt 0 ]; then
+            printf "  - %-15s: %s times\n" "pain" "$PAIN_COUNT"
+        fi
+        if [ "$ANXIETY_COUNT" -gt 0 ]; then
+            printf "  - %-15s: %s times\n" "anxiety" "$ANXIETY_COUNT"
+        fi
+        if [ "$OTHER_COUNT" -gt 0 ]; then
+            printf "  - %-15s: %s times\n" "other" "$OTHER_COUNT"
+        fi
+
+        # 3. Average energy on days with 'fog'
+        FOG_DAYS=$(echo "$RECENT_DATA" | grep "^SYMPTOM" | grep -i "fog" | awk -F'|' '{print substr($2, 1, 10)}' | sort -u)
+        if [ -n "$FOG_DAYS" ]; then
+            FOG_DAY_ENERGY_SUM=0
+            FOG_DAY_ENERGY_COUNT=0
+            for day in $FOG_DAYS; do
+                # Get energy for that day. If multiple, take the first one.
+                ENERGY_ON_FOG_DAY=$(echo "$RECENT_DATA" | grep "^ENERGY" | grep "^ENERGY|$day" | head -n 1 | awk -F'|' '{print $3}')
+                if [ -n "$ENERGY_ON_FOG_DAY" ]; then
+                    FOG_DAY_ENERGY_SUM=$((FOG_DAY_ENERGY_SUM + ENERGY_ON_FOG_DAY))
+                    FOG_DAY_ENERGY_COUNT=$((FOG_DAY_ENERGY_COUNT + 1))
+                fi
+            done
+
+            if [ "$FOG_DAY_ENERGY_COUNT" -gt 0 ]; then
+                AVG_ENERGY_FOG=$(awk "BEGIN {printf \"%.1f\", $FOG_DAY_ENERGY_SUM / $FOG_DAY_ENERGY_COUNT}")
+                echo "• Avg. Energy on 'Fog' Days: $AVG_ENERGY_FOG/10"
+            else
+                echo "• Avg. Energy on 'Fog' Days: N/A (no energy logged on fog days)"
+            fi
+        else
+            echo "• Avg. Energy on 'Fog' Days: N/A (no 'fog' symptoms logged)"
+        fi
+        ;;
+
     remove)
         if [ -z "$2" ]; then
             echo "Usage: health remove <line_number>"
@@ -231,7 +312,8 @@ case "$1" in
         ;;
 
     *)
-        echo "Usage: health [add|symptom|energy|list|summary|export|remove]"
+        echo "Error: Unknown command '$1'" >&2
+        echo "Usage: health [add|symptom|energy|list|summary|dashboard|export|remove]"
         echo ""
         echo "Appointments:"
         echo "  health add \"description\" \"YYYY-MM-DD HH:MM\""
@@ -244,6 +326,8 @@ case "$1" in
         echo "  health summary"
         echo ""
         echo "Reporting:"
+        echo "  health dashboard        # Show 30-day trend analysis"
         echo "  health export [days]    # Export last N days (default: 7)"
+        exit 1
         ;;
 esac

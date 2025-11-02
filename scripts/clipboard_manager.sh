@@ -21,8 +21,13 @@ case "$1" in
             exit 1
         fi
         if [ -f "$CLIP_DIR/$2" ]; then
-            cat "$CLIP_DIR/$2" | pbcopy
-            echo "Loaded '$2' to clipboard"
+            if [ -x "$CLIP_DIR/$2" ]; then
+                "$CLIP_DIR/$2" | pbcopy
+                echo "Executed '$2' and loaded to clipboard"
+            else
+                cat "$CLIP_DIR/$2" | pbcopy
+                echo "Loaded '$2' to clipboard"
+            fi
         else
             echo "Clip '$2' not found"
         fi

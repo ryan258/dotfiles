@@ -1,6 +1,7 @@
 #!/bin/bash
 # blog.sh - Tools for managing the blog content workflow.
 
+SYSTEM_LOG_FILE="$HOME/.config/dotfiles-data/system.log"
 BLOG_DIR=~/Projects/my-ms-ai-blog
 POSTS_DIR="$BLOG_DIR/content/posts"
 
@@ -145,6 +146,30 @@ function recent() {
     done
 }
 
+function sync_tasks() {
+    echo "🔄 Syncing blog stubs with todo list..."
+    STUB_FILES=$(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null)
+    TODO_FILE="$HOME/.config/dotfiles-data/todo.txt"
+
+    if [ -n "$STUB_FILES" ]; then
+        echo "$STUB_FILES" | while read -r file; do
+            filename=$(basename "$file" .md)
+            task_text="BLOG: $filename"
+            if ! grep -q "$task_text" "$TODO_FILE"; then
+                echo "  Adding task: $task_text"
+                echo "$(date): blog.sh - Adding task '$task_text' to todo list." >> "$SYSTEM_LOG_FILE"
+                todo.sh add "$task_text"
+            fi
+        done
+    fi
+    echo "Sync complete."
+}
+
+function ideas() {
+    echo "💡 Searching for blog ideas in journal..."
+    /Users/ryanjohnson/dotfiles/scripts/journal.sh search "blog idea"
+}
+
 # --- Main Logic ---
 case "$1" in
     status)
@@ -159,7 +184,13 @@ case "$1" in
     recent)
         recent
         ;;
+    sync)
+        sync_tasks
+        ;;
+    ideas)
+        ideas
+        ;;
     *)
-        echo "Usage: blog {status|stubs|random|recent}"
+        echo "Usage: blog {status|stubs|random|recent|sync|ideas}"
         ;;
 esac

@@ -49,10 +49,10 @@ fi
 # --- Tasks ---
 echo ""
 echo "✅ TASKS:"
-if [ -f "$TODO_FILE" ] && [ -s "$TODO_FILE" ]; then
-    cat -n "$TODO_FILE" | sed 's/^/  /'
+if [ -f "$HOME/dotfiles/scripts/todo.sh" ]; then
+    "$HOME/dotfiles/scripts/todo.sh" top 3
 else
-    echo "  (No tasks yet)"
+    echo "  (todo.sh not found)"
 fi
 
 # --- Footer ---

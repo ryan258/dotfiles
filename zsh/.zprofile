@@ -4,3 +4,6 @@ path_prepend "$HOME/.local/bin"
 path_prepend "$HOME/dotfiles/scripts"
 export PATH
 # Keep PATH updates at the end to override macOS path_helper.
+
+# Source the interactive config for login shells to unify environments
+[ -f "$ZDOTDIR/.zshrc" ] && source "$ZDOTDIR/.zshrc"

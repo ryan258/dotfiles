@@ -2,9 +2,17 @@
 set -euo pipefail
 # startday.sh - Enhanced morning routine
 
+SYSTEM_LOG_FILE="$HOME/.config/dotfiles-data/system.log"
+echo "$(date): startday.sh - Running morning routine." >> "$SYSTEM_LOG_FILE"
+
 echo "╔════════════════════════════════════════════════════════════╗"
 echo "║  Good morning! $(date '+%A, %B %d, %Y - %H:%M')            "
 echo "╚════════════════════════════════════════════════════════════╝"
+
+# --- Sync Blog Tasks ---
+if [ -f "$HOME/dotfiles/scripts/blog.sh" ]; then
+    "$HOME/dotfiles/scripts/blog.sh" sync
+fi
 
 # --- YESTERDAY'S CONTEXT ---
 JOURNAL_FILE="$HOME/.config/dotfiles-data/journal.txt"
@@ -85,14 +93,32 @@ else
     echo "  (no data tracked - try: health add, health energy, health symptom)"
 fi
 
+# --- SCHEDULED TASKS ---
+echo ""
+echo "🗓️  SCHEDULED TASKS:"
+if command -v atq >/dev/null 2>&1; then
+    atq | sed 's/^/  /' || echo "  (No scheduled tasks)"
+else
+    echo "  (at command not available)"
+fi
+
+# --- STALE TASKS (older than 7 days) ---
+STALE_TODO_FILE="$HOME/.config/dotfiles-data/todo.txt"
+echo ""
+echo "⏰ STALE TASKS:"
+if [ -f "$STALE_TODO_FILE" ] && [ -s "$STALE_TODO_FILE" ]; then
+    CUTOFF_DATE=$(date -v-7d '+%Y-%m-%d')
+    awk -F'|' -v cutoff="$CUTOFF_DATE" '$1 < cutoff { printf "  • %s (from %s)\n", $2, $1 }' "$STALE_TODO_FILE"
+fi
+
 # --- TODAY'S TASKS ---
 TODO_FILE="$HOME/.config/dotfiles-data/todo.txt"
 echo ""
 echo "✅ TODAY'S TASKS:"
-if [ -f "$TODO_FILE" ] && [ -s "$TODO_FILE" ]; then
-    cat -n "$TODO_FILE" | sed 's/^/  /'
+if [ -f "$HOME/dotfiles/scripts/todo.sh" ]; then
+    "$HOME/dotfiles/scripts/todo.sh" top 3
 else
-    echo "  (no tasks yet - add with: todo add 'task name')"
+    echo "  (todo.sh not found)"
 fi
 
 echo ""

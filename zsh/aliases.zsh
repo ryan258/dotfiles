@@ -156,9 +156,14 @@ alias battery="pmset -g batt"             # Battery status
 
 # =============================================================================
 # CORE PRODUCTIVITY SCRIPTS
+alias test_new_script="test_new_script.sh"
+alias howto="howto.sh"
+alias whatis="whatis.sh"
+alias dotfiles_check="dotfiles_check.sh"
 # =============================================================================
 
 # Task & Time Management
+alias pomo="take_a_break.sh 25"
 alias todo="todo.sh"
 alias todolist="todo.sh list"
 alias tododone="todo.sh done"
@@ -171,6 +176,7 @@ alias health="health.sh"
 alias meds="meds.sh"
 
 # Ultra-short aliases for frequent tasks
+alias next="todo.sh top 1"
 alias t="todo.sh list"          # Show todo list
 alias j="journal.sh"            # Add journal entry
 alias ta="todo.sh add"          # Add todo task
@@ -204,10 +210,7 @@ alias weekreview="week_in_review.sh"
 # =============================================================================
 
 # Smart navigation
-alias g="goto.sh"
-alias goto="goto.sh"
-alias back="recent_dirs.sh"
-alias recent="recent_dirs.sh"
+alias g="source g.sh"
 
 # File operations
 alias openf="open_file.sh"
@@ -217,6 +220,7 @@ alias organize="file_organizer.sh"
 
 # =============================================================================
 # SYSTEM MONITORING SCRIPTS (macOS)
+alias systemlog="tail -n 20 ~/.config/dotfiles-data/system.log"
 # =============================================================================
 
 # System information
@@ -245,10 +249,7 @@ alias cliplist="clipboard_manager.sh list"
 alias app="app_launcher.sh"
 alias launch="app_launcher.sh"
 
-# Workspace management
-alias workspace="workspace_manager.sh"
-alias wsave="workspace_manager.sh save"
-alias wload="workspace_manager.sh load"
+
 
 # Reminders and notifications
 alias remind="remind_me.sh"
