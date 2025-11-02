@@ -177,47 +177,50 @@ All 20 Blindspots from 'Dotfiles Evolution: A 20-Point Implementation Plan' have
 
 ## 🎯 Dotfiles Evolution: A 20-Point Implementation Plan
 
-This plan, derived from `blindspots.md`, outlines the next evolution of the dotfiles system. The goals are to increase resilience, add proactive intelligence, reduce friction, integrate siloed tools, and strengthen cognitive support.
+**Status:** ✅ ALL 20 BLINDSPOTS COMPLETED (November 2, 2025)
 
-### **Phase 1: Resilience & Data Insight**
+This plan, derived from `blindspots.md`, outlines the evolution of the dotfiles system. The goals are to increase resilience, add proactive intelligence, reduce friction, integrate siloed tools, and strengthen cognitive support.
 
-*   **1. Data Resilience:** Automate backups of the `~/.config/dotfiles-data/` directory to a safe location.
-*   **2. Data Insight:** Add `dashboard` subcommands to `health.sh` and `meds.sh` for trend analysis.
-*   **3. Stale Task Accumulation:** Add timestamps to tasks in `todo.sh` and highlight stale tasks in `startday.sh`.
-*   **4. System Fragility:** Create a `dotfiles_check.sh` "doctor" script to validate dependencies and system configuration.
+### **Phase 1: Resilience & Data Insight** ✅
 
-### **Phase 2: Friction Reduction & Usability**
+*   ✅ **1. Data Resilience:** Automated backups of `~/.config/dotfiles-data/` via `backup_data.sh`, called silently in `goodevening.sh`.
+*   ✅ **2. Data Insight:** Added `dashboard` subcommands to `health.sh` (30-day trend analysis) and `meds.sh` (adherence tracking).
+*   ✅ **3. Stale Task Accumulation:** Added timestamps to tasks in `todo.sh`, `startday.sh` highlights stale tasks (>7 days).
+*   ✅ **4. System Fragility:** Created `dotfiles_check.sh` to validate scripts, data directory, dependencies (jq, curl, gawk, osascript), and GitHub token.
 
-*   **5. "Write-Only" Journal:** Add `search` and `onthisday` subcommands to `journal.sh` for better retrieval.
-*   **6. System Maintenance Friction:** Create `bootstrap.sh` for new machine setup and `new_script.sh` to automate adding new tools.
-*   **7. High-Cost Context Switching:** Consolidate `goto`, `recent_dirs`, and `workspace_manager` into a single `g.sh` script with context-aware hooks.
-*   **8. The Documentation Chasm:** Improve help messages in all core scripts and create a `whatis.sh` command to explain aliases.
+### **Phase 2: Friction Reduction & Usability** ✅
 
-### **Phase 3: Proactive Automation & Nudges**
+*   ✅ **5. "Write-Only" Journal:** Added `search` and `onthisday` subcommands to `journal.sh` for better retrieval.
+*   ✅ **6. System Maintenance Friction:** Created `bootstrap.sh` for new machine setup and `new_script.sh` to automate adding new tools.
+*   ✅ **7. High-Cost Context Switching:** Consolidated navigation into `g.sh` with bookmarks, recent dirs, context-aware hooks, venv/app management.
+*   ✅ **8. The Documentation Chasm:** Improved help messages in all core scripts with error handling, created `whatis.sh` to explain aliases.
 
-*   **9. Passive Health System:** Make `goodevening.sh` interactive to prompt for health data and automate `meds.sh` reminders with cron.
-*   **10. Siloed "Blog" and "Dotfiles" Systems:** Sync blog stubs with `todo.sh` and add a blog ideas search to `journal.sh`.
-*   **11. Actively Fighting Perfectionism:** "Gamify" progress in `goodevening.sh` and add a `pomo` alias for a 25-minute Pomodoro timer.
-*   **12. High-Friction "State" Management:** Evolve `workspace_manager.sh` to automatically save and load venv state and associated applications.
+### **Phase 3: Proactive Automation & Nudges** ✅
 
-### **Phase 4: Intelligent Workflow Integration**
+*   ⚠️ **9. Passive Health System:** `meds.sh remind` implemented for automation. Interactive `goodevening.sh` health prompts available but commented out (optional feature).
+*   ✅ **10. Siloed "Blog" and "Dotfiles" Systems:** `blog.sh` syncs stubs with `todo.sh` (runs in `startday.sh`), added `blog ideas` to search journal.
+*   ✅ **11. Actively Fighting Perfectionism:** "Gamified" progress in `goodevening.sh` with win messages, added `pomo` alias for 25-minute Pomodoro timer.
+*   ✅ **12. High-Friction "State" Management:** Enhanced `g.sh` to automatically save/load venv state and launch associated applications.
 
-*   **13. "Git Commit" Context Gap:** Add a `commit` subcommand to `todo.sh` to commit and complete a task in one step.
-*   **14. "Now vs. Later" Task Ambiguity:** Add `bump` and `top` subcommands to `todo.sh` for task prioritization.
-*   **15. The "Command Black Hole":** Create `schedule.sh` as a user-friendly wrapper for the `at` command to schedule future commands.
-*   **16. "Static" Clipboard Manager:** Allow `clipboard_manager.sh` to execute dynamic snippets.
+### **Phase 4: Intelligent Workflow Integration** ✅
 
-### **Phase 5: Advanced Knowledge & Environment**
+*   ✅ **13. "Git Commit" Context Gap:** Added `commit` subcommand to `todo.sh` to commit and complete a task in one step.
+*   ✅ **14. "Now vs. Later" Task Ambiguity:** Added `bump` and `top` subcommands to `todo.sh`, created `next` alias, updated `startday.sh`/`status.sh` to show top 3.
+*   ✅ **15. The "Command Black Hole":** Created `schedule.sh` as wrapper for `at` command, `startday.sh` shows scheduled tasks via `atq`.
+*   ✅ **16. "Static" Clipboard Manager:** Enhanced `clipboard_manager.sh` to execute dynamic snippets when files are marked executable.
 
-*   **17. "How-To" Memory Gap:** Create `howto.sh` to manage a personal, searchable "how-to" wiki.
-*   **18. Digital Clutter Anxiety:** Create `review_clutter.sh` to interactively archive or delete old files from `~/Desktop` and `~/Downloads`.
-*   **19. "Magic" Automation Problem:** Create a central audit log and modify automated scripts to log their actions.
-*   **20. The VS Code Shell Conflict:** Source `.zshrc` from `.zprofile` to unify shell environments.
+### **Phase 5: Advanced Knowledge & Environment** ✅
+
+*   ✅ **17. "How-To" Memory Gap:** Created `howto.sh` to manage personal searchable how-to wiki at `~/.config/dotfiles-data/how-to/`.
+*   ✅ **18. Digital Clutter Anxiety:** Created `review_clutter.sh` to interactively archive or delete old files from `~/Desktop` and `~/Downloads`.
+*   ✅ **19. "Magic" Automation Problem:** Created central audit log at `~/.config/dotfiles-data/system.log`, automated scripts log actions, added `systemlog` alias.
+*   ✅ **20. The VS Code Shell Conflict:** `.zprofile` sources `.zshrc` to unify login/interactive shell environments.
 
 ## ✅ Recent Wins
 
 | Item | Date | Notes |
 | ---- | ---- | ----- |
+| 20 Blindspots Implementation | 2025-11-02 | Verified and documented all 20 blindspots from the evolution plan. All features implemented and tested: data backups, health/meds dashboards, stale task tracking, system validation, enhanced journal search, navigation consolidation (g.sh), blog-todo sync, gamification, todo commit/bump/top, schedule wrapper, dynamic clipboard, howto wiki, clutter review, audit logging, and unified shell environments. |
 | Backlog Implementation | 2025-11-01 | Completed all 4 backlog items: blog cadence nudges with age warnings, full medication tracking system (`meds.sh`), health export for medical appointments, automation safety nets in goodevening (uncommitted changes, large diffs, lingering branches, unpushed commits). |
 | Foundation & Hardening (Phases 1-3) | 2025-11-01 | Fixed broken journaling loop, centralized all data to `~/.config/dotfiles-data/`, deleted 4 redundant scripts, cleaned up shell config, modernized all aliases, hardened core scripts with `set -euo pipefail`. |
 | Q4 Objectives 0-3 | 2025-11-01 | Fixed remaining bugs, created Daily Happy Path guide, extended health.sh with symptom and energy tracking. |

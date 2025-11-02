@@ -19,12 +19,17 @@ This folder collects small shell utilities that streamline day-to-day work on ma
 ### Data Storage
 
 All script data files are centralized in `~/.config/dotfiles-data/` for easy backup and organization:
-- `journal.txt` – Journal entries
-- `todo.txt` & `todo_done.txt` – Task lists
-- `health.txt` – Health appointments
+- `journal.txt` – Journal entries (searchable)
+- `todo.txt` & `todo_done.txt` – Task lists (with timestamps)
+- `health.txt` – Health appointments, symptoms, energy ratings
+- `medications.txt` – Medication schedules and dose logs
+- `system.log` – Central audit log for automation
 - `dir_bookmarks` & `dir_history` – Directory navigation data
 - `favorite_apps` – Application launcher shortcuts
-- `clipboard_history/` – Saved clipboard snippets
+- `clipboard_history/` – Saved clipboard snippets (supports dynamic snippets)
+- `how-to/` – Personal how-to wiki articles
+
+Automated daily backups to `~/Backups/dotfiles_data/` via `goodevening.sh`.
 
 Many helper scripts (for example `goto.sh`, `dev_shortcuts.sh env`, and `recent_dirs.sh`) can change your current directory when they are *sourced* instead of executed. To use them that way, call `source ~/scripts/<script>.sh ...` or set up aliases/functions in your shell configuration.
 
@@ -46,27 +51,34 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 
 ### Productivity & Planning
 
-- `journal.sh [text]` – Append a journal entry (`journal.sh "Wrapped up sprint"`) or, with no arguments, display the last five entries. Entries stored in `~/.config/dotfiles-data/journal.txt`.
-- `todo.sh {add|list|done|clear}` – CLI todo list (`todo.sh add "Refactor utils"`, `todo.sh done 2`). Data stored in `~/.config/dotfiles-data/todo.txt` and `todo_done.txt`.
-- `health.sh {add|list|remove}` – Track health appointments with countdown (`health.sh add "Checkup" "2025-12-01 14:00"`). Stored in `~/.config/dotfiles-data/health.txt`.
+- `journal.sh {add|list|search|onthisday}` – Append timestamped entries, list recent entries, search for keywords, or see "on this day" from previous years. Building your second brain.
+- `todo.sh {add|list|done|clear|commit|bump|top}` – Advanced todo list with git integration (`commit`), prioritization (`bump`, `top`), and timestamp tracking. Highlights stale tasks >7 days old.
+- `health.sh {add|symptom|energy|list|summary|dashboard|export|remove}` – Track appointments, log symptoms, rate energy levels (1-10), view 30-day trend dashboards, and export reports for doctors.
+- `meds.sh {add|log|list|check|history|dashboard|remove|remind}` – Medication tracking with adherence monitoring, automated reminders (for cron), and 30-day dashboards.
 - `week_in_review.sh` – Summarise recent todos, journal entries, and commits from the last seven days.
 - `my_progress.sh` – Show your latest Git commits in the current repository.
-- `startday.sh` – Morning routine: prints the date, suggests a workspace folder, and lists today’s todos.
-- `goodevening.sh` – An interactive end-of-day summary of completed tasks, journal entries, and uncommitted changes.
-- `status.sh` – A dashboard showing your current work context (directory, git), journal, and tasks.
-- `projects.sh {forgotten|recall <name>}` – Find and get details about forgotten projects.
-- `blog.sh {status|stubs|random|recent}` – Tools for managing blog content.
+- `startday.sh` – Automated morning routine: syncs blog stubs to todos, shows yesterday's context, active GitHub projects, blog status, health reminders, stale tasks (>7 days), scheduled commands, and top 3 priorities.
+- `goodevening.sh` – End-of-day wrap-up with gamified progress tracking, project safety checks (uncommitted changes, large diffs, stale branches, unpushed commits), task cleanup, and automated data backup.
+- `status.sh` – Mid-day dashboard showing your current work context (directory, git), journal, and top 3 tasks.
+- `projects.sh {forgotten|recall <name>}` – Find and get details about forgotten projects from GitHub.
+- `blog.sh {status|stubs|random|recent|sync|ideas}` – Blog workflow tools with stub age warnings, todo sync, and journal search for blog ideas.
 - `greeting.sh` – Quick context summaries for the start of a session.
+- `howto.sh {add|<name>|search}` – Personal searchable how-to wiki for complex workflows.
+- `schedule.sh "<time>" "<command>"` – User-friendly wrapper for macOS `at` command to schedule future commands.
+- `dotfiles_check.sh` – System validation script (doctor) that checks scripts, dependencies, data directory, and GitHub token.
+- `backup_data.sh` – Automated backup of entire `~/.config/dotfiles-data/` directory (called by `goodevening.sh`).
+- `new_script.sh <name>` – Automate adding new scripts with proper headers, executable permissions, and alias creation.
 
 ### Project & Directory Management
 
+- `g.sh {<bookmark>|-r|recent|save|-s|list}` – **Unified navigation system** that replaces goto/back/workspace_manager. Bookmarks directories, tracks recent history, auto-activates Python venvs, launches associated apps, and runs on-enter commands. Must be sourced for directory changes.
 - `start_project.sh` – Interactive scaffold for generic projects (`src/`, `docs/`, `assets/`). Source it to automatically `cd` into the new folder.
 - `mkproject_py.sh` – Bootstrap a Python project with a virtualenv, `.gitignore`, and starter `main.py`.
 - `backup_project.sh` – Run inside any directory to rsync it to `~/Backups` with a timestamped name.
 - `dev_shortcuts.sh {server|json|env|gitquick}` – Handy dev helpers: `dev_shortcuts.sh server 9000`, `dev_shortcuts.sh json data.json`, `dev_shortcuts.sh env` (source for auto-activation), or `dev_shortcuts.sh gitquick "Fix build"`.
-- `workspace_manager.sh {save|load|list}` – Capture and recall working contexts (`workspace_manager.sh save focus`, `workspace_manager.sh load focus`). Source it for automatic directory switching.
-- `recent_dirs.sh [add]` – Maintain a jump list of directories. Hook the `add` subcommand into your `cd` function, or run `recent_dirs.sh` to pick one interactively.
-- `goto.sh {save|list|<bookmark>}` – Bookmark directories (`goto.sh save repos`, `goto.sh repos`). Source for automatic navigation.
+- ~~`workspace_manager.sh`~~ – **Deprecated:** Use `g.sh` instead for enhanced state management.
+- ~~`recent_dirs.sh`~~ – **Deprecated:** Use `g.sh -r` instead.
+- ~~`goto.sh`~~ – **Deprecated:** Use `g.sh` instead.
 
 ### System & Network Utilities
 
@@ -85,13 +97,15 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 - `grab_all_text.sh` – Concatenate all readable files (skipping git metadata) into `all_text_contents.txt` for quick searching or backups.
 - `text_processor.sh {count|search|replace|clean}` – Compare text statistics, search within a file, replace strings safely, or strip trailing whitespace.
 - `tidy_downloads.sh` – Sweep `~/Downloads`, filing images, documents, media, and archives into sensible homes.
+- `review_clutter.sh` – **Interactive clutter management** for `~/Desktop` and `~/Downloads`. Prompts for each file >30 days old: (a)rchive to `~/Documents/Archives/YYYY-MM/`, (d)elete, or (s)kip.
 - `open_file.sh <query>` – Fuzzy search for files beneath your home directory and open the selected result.
 - `unpacker.sh <archive>` – Extract common archive formats (`.tar.gz`, `.zip`, `.rar`, `.7z`).
 
 ### Clipboard, Launchers, and Shortcuts
 
 - `app_launcher.sh {add|list|<shortcut>}` – Maintain a favourite-app list and launch shortcuts (`app_launcher.sh add code "Visual Studio Code"`).
-- `clipboard_manager.sh {save|load|list|peek}` – Store snippets from the macOS clipboard (`clipboard_manager.sh save draft`, `clipboard_manager.sh load draft`).
+- `clipboard_manager.sh {save|load|list|peek}` – Store snippets from the macOS clipboard. **Supports dynamic snippets**: if a saved snippet is executable, it runs and pipes output to clipboard (e.g., save a script that outputs current git branch).
+- `whatis.sh <command>` – Look up what an alias or command does by searching `aliases.zsh` and documentation.
 - `pbcopy` / `pbpaste` tips live in `../docs/clipboard.md`—learn how to funnel command output straight into the clipboard and back with concrete examples.
 
 ### Media & Data Conversion
@@ -103,7 +117,7 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 
 - `done.sh <command ...>` – Run any long-lived command and receive a notification when it finishes.
 - `remind_me.sh +30m "Stretch"` – Schedule a macOS notification for 30 minutes (also supports `+2h`).
-- `take_a_break.sh [minutes]` – Health break timer with suggestions; defaults to 15 minutes.
+- `take_a_break.sh [minutes]` – Health break timer with suggestions; defaults to 15 minutes. Use `pomo` alias for 25-minute Pomodoro timer.
 
 ### Weather, Status, and Miscellaneous Tools
 

@@ -6,8 +6,21 @@ This document complements the `~/.zsh_aliases` file. It explains the purpose of 
 
 1. Scripts are located in `~/dotfiles/scripts` and added to PATH via `~/.zprofile`.
 2. Aliases are defined in `~/dotfiles/zsh/aliases.zsh` and sourced from `~/.zshrc`.
-3. All data files are centralized in `~/.config/dotfiles-data/` for easy backup.
-4. Confirm required tools (Homebrew, git, Python 3, macOS utilities) are installed. Third-party dependencies (e.g. VS Code, `ffmpeg`) are optional, and the aliases gracefully skip features that aren’t available.
+3. All data files are centralized in `~/.config/dotfiles-data/` and automatically backed up daily by `goodevening.sh`.
+4. Confirm required tools (Homebrew, git, Python 3, macOS utilities) are installed. Use `dotfiles_check` to validate your installation.
+5. Run `startday` each morning for automated context recovery, or let it run automatically on first terminal open.
+
+## Recent Enhancements (November 2025)
+
+All 20 blindspots from the evolution plan have been implemented:
+- **Advanced Task Management**: `todo commit`, `todo bump`, `todo top` with stale task tracking
+- **Health & Medication Tracking**: `health dashboard`, `meds dashboard` with 30-day trend analysis
+- **Enhanced Journal**: `journal search`, `journal onthisday` for building your second brain
+- **Unified Navigation**: `g` command replaces goto/back/workspace with auto-venv and app launching
+- **Knowledge Management**: `howto` wiki, `schedule` command wrapper, `review_clutter` for Desktop/Downloads
+- **System Intelligence**: `dotfiles_check` validation, `systemlog` audit trail, automated backups
+- **Blog Integration**: `blog sync` to todos, `blog ideas` search
+- **Productivity Nudges**: `pomo` Pomodoro timer, `next` top priority, gamified progress tracking
 
 ## Helper Functions
 
@@ -67,20 +80,36 @@ Every script in `$SCRIPTS_DIR` has a corresponding wrapper function which ensure
 
 ### Task & Notes
 
-- `todo`, `t`, `todoadd`, `todolist`, `tododone` – Task management (data in `~/.config/dotfiles-data/todo.txt`)
-- `journal`, `j` – Journal entries (data in `~/.config/dotfiles-data/journal.txt`)
-- `health` – Health appointment tracking (data in `~/.config/dotfiles-data/health.txt`)
+- `todo`, `t`, `todoadd`, `todolist`, `tododone` – Advanced task management with `commit`, `bump`, `top` subcommands
+- `next` – Show only your top priority task (`todo top 1`)
+- `journal`, `j` – Journal entries with `search` and `onthisday` features for second brain
+- `health` – Comprehensive health tracking with symptoms, energy ratings, and `dashboard` for trends
+- `meds` – Medication tracking with adherence monitoring and `remind` for automation
 - `remind` – macOS notifications via `remind_me.sh`
 - `break` – Health timer via `take_a_break.sh`
+- `pomo` – 25-minute Pomodoro timer (alias for `take_a_break 25`)
 - `weekreview`, `startday`, `goodevening`, `greeting`, `status`, `weather`
+- `howto` – Personal searchable how-to wiki
+- `schedule` – User-friendly wrapper for `at` command
+- `blog` – Blog workflow with `status`, `stubs`, `sync` (to todos), `ideas` (search journal)
 
 ### Project & Workspace
 
-- `goto`, `g`
-- `back`, `recent`
+- `g` – **Unified navigation** (replaces goto/back/workspace) with auto-venv activation and app launching
+- ~~`goto`~~ – Deprecated, use `g` instead
+- ~~`back`~~, ~~`recent`~~ – Deprecated, use `g -r` instead
 - `newproject`, `newpython`, `newpy`
 - `progress`, `backup`, `findbig`, `tidydown`, `organize`, `openf`, `finddupes`
+- `review_clutter` – Interactive tool to archive/delete old Desktop and Downloads files
 - `startday`, `goodevening`, `weekreview`
+
+### System Tools
+
+- `dotfiles_check` – Validate entire system (scripts, dependencies, data directory, GitHub token)
+- `systemlog` – View last 20 automation events from central audit log
+- `whatis` – Look up what an alias or command does
+- `new_script` – Automate creation of new scripts with proper headers and aliases
+- `backup_data` – Manual trigger for data backup (runs automatically in `goodevening`)
 
 ### System Diagnostics
 

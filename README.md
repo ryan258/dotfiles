@@ -13,14 +13,15 @@ This setup is guided by a few key principles:
 
 ## Features
 
-This toolkit provides a wide range of enhancements, including:
+This toolkit provides a comprehensive set of enhancements, including:
 
-  * **Productivity & Task Management:** Keep track of your day with command-line tools for todos, journaling, and quick notes.
-  * **Project & Workspace Management:** Scaffold new projects, create timestamped backups, and save/load directory contexts with bookmarks.
-  * **System & Network Diagnostics:** Get a quick overview of your system's hardware, CPU, and memory usage, check battery status, and troubleshoot network issues.
-  * **File & Archive Utilities:** Effortlessly organize your `Downloads` folder, find large or duplicate files, and manage archives like `.zip` and `.tar.gz`.
-  * **Development Shortcuts:** Automate common Git workflows, manage Python virtual environments, and spin up local web servers.
-  * **macOS Integration:** Manage clipboard history, launch favorite applications, and receive system notifications when long-running tasks are complete.
+  * **Productivity & Task Management:** Advanced command-line tools for todos (with prioritization and git integration), journaling (with search and "on this day"), health/symptom tracking with trend dashboards, and medication adherence monitoring.
+  * **Project & Workspace Management:** Scaffold new projects, create timestamped backups, and save/load directory contexts with intelligent state management (auto-activates venvs, launches apps).
+  * **Knowledge Management:** Personal searchable how-to wiki, blog content integration with todo system, and journal search capabilities for building a "second brain".
+  * **System & Network Diagnostics:** Get a quick overview of your system's hardware, CPU, and memory usage, check battery status, and troubleshoot network issues. Includes system health validation and audit logging.
+  * **File & Archive Utilities:** Effortlessly organize your `Downloads` folder, find large or duplicate files, manage archives, and interactive clutter review for Desktop/Downloads.
+  * **Development Shortcuts:** Automate common Git workflows with todo integration, manage Python virtual environments, spin up local web servers, and schedule future commands.
+  * **macOS Integration:** Enhanced clipboard manager with dynamic snippets, launch favorite applications, receive system notifications, and unified shell environment across Terminal and VS Code.
 
 ## Prerequisites
 
@@ -36,28 +37,43 @@ This setup assumes you are on macOS with Zsh (the default shell). You will also 
 
 ## Installation
 
+### Automated Setup (Recommended)
+
 1.  **Clone the Repository:**
 
     ```bash
     git clone https://github.com/ryan258/dotfiles.git ~/dotfiles
     ```
 
-2.  **Run the Setup Workflow:**
-    Follow the steps outlined in the initial setup plan to back up your existing files and link the new configuration. The core of this involves creating a `~/.zshenv` file with the following content:
+2.  **Run Bootstrap:**
+    The bootstrap script automates the entire setup process:
 
     ```bash
-    export ZDOTDIR="$HOME/dotfiles/zsh"
+    cd ~/dotfiles
+    ./bootstrap.sh
     ```
 
-3.  **Make Scripts Executable:**
-    Ensure all utility scripts are ready to run.
+    This will:
+    - Install Homebrew (if needed)
+    - Install required dependencies (jq, curl, gawk)
+    - Create the data directory at `~/.config/dotfiles-data/`
+    - Create `~/.zshenv` to point to the dotfiles
+    - Make all scripts executable
+    - Validate the installation with `dotfiles_check.sh`
 
-    ```bash
-    chmod +x ~/dotfiles/scripts/*.sh
-    ```
-
-4.  **Restart Your Shell:**
+3.  **Restart Your Shell:**
     Close and reopen your terminal or run `zsh -l` to apply the new configuration.
+
+### Manual Setup
+
+If you prefer manual installation:
+
+1.  Clone the repository as above
+2.  Create `~/.zshenv` with: `export ZDOTDIR="$HOME/dotfiles/zsh"`
+3.  Make scripts executable: `chmod +x ~/dotfiles/scripts/*.sh`
+4.  Create data directory: `mkdir -p ~/.config/dotfiles-data`
+5.  Install dependencies: `brew install jq gawk`
+6.  Verify installation: `dotfiles_check`
 
 ## How It Works
 
@@ -72,14 +88,17 @@ This setup uses a modern Zsh structure to keep your home directory clean:
 
 All script data is centralized in `~/.config/dotfiles-data/` for easy backup and management:
 
-  * `journal.txt` – Timestamped journal entries
-  * `todo.txt` & `todo_done.txt` – Active and completed tasks
-  * `health.txt` – Health appointments with reminders
+  * `journal.txt` – Timestamped journal entries (searchable with `journal search`)
+  * `todo.txt` & `todo_done.txt` – Active and completed tasks with timestamps
+  * `health.txt` – Health appointments, symptom logs, and energy ratings
+  * `medications.txt` – Medication schedules and dose logs
+  * `system.log` – Central audit log for all automated actions
   * `dir_bookmarks` & `dir_history` – Directory navigation data
   * `favorite_apps` – Application launcher shortcuts
-  * `clipboard_history/` – Saved clipboard snippets
+  * `clipboard_history/` – Saved clipboard snippets (supports dynamic/executable snippets)
+  * `how-to/` – Personal how-to wiki articles
 
-This single directory can be easily backed up, synced, or excluded from version control.
+This single directory is automatically backed up daily by `goodevening.sh` to `~/Backups/dotfiles_data/`.
 
 ## Usage Reference
 
@@ -105,19 +124,28 @@ Many scripts can be called directly. Some, marked with `(source)`, provide extra
 
 | Command        | Description                                                                 |
 | :------------- | :-------------------------------------------------------------------------- |
-| `todo`         | A powerful command-line todo list manager (`add`, `list`, `done`).       |
-| `journal`      | Append a timestamped entry to your daily journal.                     |
-| `startday`     | A morning routine that shows tasks and suggests a workspace.        |
-| `goodevening`  | An interactive end-of-day summary of completed tasks, journal entries, and uncommitted changes. |
-| `graballtext`  | Capture readable text from the repo into `all_text_contents.txt` for quick review or search. |
-| `backup`       | Creates a timestamped backup of the current project directory.    |
+| `todo`         | Advanced todo list manager with `add`, `list`, `done`, `commit`, `bump`, `top` - integrates with git commits and task prioritization. |
+| `journal`      | Timestamped journal with `search` and `onthisday` features for building your second brain. |
+| `health`       | Track appointments, symptoms, and energy levels with `dashboard` for 30-day trend analysis. |
+| `meds`         | Medication tracking system with `check`, `log`, `remind`, and `dashboard` for adherence monitoring. |
+| `startday`     | Automated morning routine showing yesterday's context, active projects, blog status, health reminders, stale tasks, and top 3 priorities. Syncs blog stubs to todos. |
+| `goodevening`  | End-of-day summary with gamified progress tracking, project safety checks (uncommitted changes, stale branches), and automated data backups. |
+| `g` (source)   | Unified navigation system - bookmarks, recent dirs, auto-activates venvs, launches apps, runs on-enter commands. Replaces goto/back/workspace_manager. |
+| `blog`         | Blog workflow tools: `status`, `stubs`, `random`, `sync` (to todos), `ideas` (search journal). |
+| `howto`        | Personal searchable how-to wiki for storing and retrieving complex workflows. |
+| `schedule`     | User-friendly wrapper for `at` command to schedule future commands and reminders. |
+| `whatis`       | Look up what an alias or command does by searching aliases and documentation. |
+| `dotfiles_check` | System validation - verifies all scripts, dependencies, data directories, and GitHub token. |
+| `backup`       | Creates a timestamped backup of the current project directory. |
 | `newproject`   | Interactively scaffolds a new project with a standard directory structure. |
 | `newpython`    | Bootstraps a Python project with a virtual environment and `.gitignore`. |
-| `projects`     | Find and get details about forgotten projects (`projects forgotten`, `projects recall <name>`). |
-| `blog`         | Tools for managing blog content (`blog status`, `blog stubs`, `blog random`). |
-| `goto` (source)  | Bookmark directories and jump to them by name (`goto save proj`, `goto proj`). |
-| `back` (source)  | Interactively jump to a recently visited directory.                 |
-| `done`         | Run any long command and get a system notification when it's finished.  |
+| `projects`     | Find and get details about forgotten projects from GitHub. |
+| `review_clutter` | Interactive tool to archive or delete old files from Desktop/Downloads. |
+| `graballtext`  | Capture readable text from the repo into `all_text_contents.txt` for quick review or search. |
+| `done`         | Run any long command and get a system notification when it's finished. |
+| `pomo`         | Start a 25-minute Pomodoro timer with break reminder (alias for `take_a_break 25`). |
+| `next`         | Show only your top priority task (alias for `todo top 1`). |
+| `systemlog`    | View the last 20 automation events from the central audit log. |
 
 ### Clipboard Workflows
 
@@ -128,14 +156,32 @@ Make the macOS clipboard part of your shell toolkit—`docs/clipboard.md` walks 
 Adding your own commands is easy:
 
   * **To add a new alias:** Open `~/dotfiles/zsh/aliases.zsh` and add your shortcut in the relevant section.
-  * **To add a new script:**
+  * **To add a new script (automated):**
+    ```bash
+    new_script my_tool
+    ```
+    This automatically creates `scripts/my_tool.sh` with proper headers, makes it executable, and adds an alias to `aliases.zsh`.
+
+  * **To add a new script (manual):**
     1.  Place the new script file in `~/dotfiles/scripts/`.
     2.  Make it executable: `chmod +x ~/dotfiles/scripts/your_script.sh`.
     3.  (Optional) Add a convenient alias for it in `aliases.zsh`.
 
 ## Maintenance
 
-To maintain code quality and prevent common shell scripting errors, it is recommended to run `shellcheck` on any modified scripts.
+### System Validation
+
+Run the built-in doctor script to verify your installation:
+
+```bash
+dotfiles_check
+```
+
+This validates all scripts, dependencies, data directories, and configuration.
+
+### Code Quality
+
+To maintain code quality and prevent common shell scripting errors, run `shellcheck` on any modified scripts:
 
 ```bash
 # Install shellcheck if you don't have it
@@ -144,3 +190,13 @@ brew install shellcheck
 # Run it on all scripts
 shellcheck ~/dotfiles/scripts/*.sh
 ```
+
+### Viewing System Activity
+
+Check the central audit log to see what automated tasks have run:
+
+```bash
+systemlog
+```
+
+This shows the last 20 automation events from data backups, task cleanups, blog syncs, and medication reminders.
