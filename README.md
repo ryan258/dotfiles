@@ -23,6 +23,17 @@ This toolkit provides a comprehensive set of enhancements, including:
   * **Development Shortcuts:** Automate common Git workflows with todo integration, manage Python virtual environments, spin up local web servers, and schedule future commands.
   * **macOS Integration:** Enhanced clipboard manager with dynamic snippets, launch favorite applications, receive system notifications, and unified shell environment across Terminal and VS Code.
 
+## What's New in Round 2 (November 2025)
+
+This project has recently completed a major evolution, "Round 2," which focused on deepening integrations, improving data integrity, and adding proactive intelligence. Key improvements include:
+
+  * **Enhanced Error Handling & Data Validation:** The entire system is more robust, with better error handling and a new data validation script to prevent corruption.
+  * **Health & Productivity Correlation:** The `health` dashboard now correlates energy levels with task completions and git activity, providing valuable insights into productivity patterns.
+  * **Smart Navigation:** The `g` command now logs directory usage, providing intelligent suggestions for frequently used directories.
+  * **Automated Weekly Reviews:** A new LaunchAgent automatically generates a weekly review every Sunday.
+  * **Safer File Operations:** Scripts like `tidy_downloads` now have safety checks to avoid moving recently modified files.
+  * **And much more:** See the `CHANGELOG.md` for a detailed list of all 20+ improvements.
+
 ## Prerequisites
 
 This setup assumes you are on macOS with Zsh (the default shell). You will also need:

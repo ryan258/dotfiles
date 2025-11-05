@@ -29,22 +29,45 @@ for dep in "${DEPENDENCIES[@]}"; do
   fi
 done
 
-# 3. Create data directory
+# 3. Create data directory and initialize data files
 DATA_DIR="$HOME/.config/dotfiles-data"
-echo "Creating data directory at $DATA_DIR..."
+echo "Setting up data directory at $DATA_DIR..."
 mkdir -p "$DATA_DIR"
+
+# Initialize data files only if they don't exist
+DATA_FILES=("todo.txt" "todo_done.txt" "journal.txt" "health.txt" "dir_bookmarks" "dir_history" "dir_usage.log")
+for file in "${DATA_FILES[@]}"; do
+  FILE_PATH="$DATA_DIR/$file"
+  if [ ! -f "$FILE_PATH" ]; then
+    touch "$FILE_PATH"
+    echo "  ✓ Created $file"
+  else
+    echo "  ✓ $file already exists"
+  fi
+done
 
 # 4. Symlink dotfiles
 echo "Symlinking dotfiles..."
 symlink() {
   local source=$1
   local target=$2
-  if [ -L "$target" ] && [ "$(readlink "$target")" == "$source" ] && [ "$FORCE" = false ]; then
-    echo "  Symlink for $(basename "$target") already exists and is correct."
-  else
-    ln -sf "$source" "$target"
-    echo "  Created symlink for $(basename "$target")."
+
+  # Check if target is a symlink pointing to the correct location
+  if [ -L "$target" ] && [ "$(readlink "$target")" == "$source" ]; then
+    echo "  ✓ Symlink for $(basename "$target") already exists and is correct."
+    return 0
   fi
+
+  # Check if target exists but is not a symlink (e.g., a regular file)
+  if [ -e "$target" ] && [ ! -L "$target" ] && [ "$FORCE" = false ]; then
+    echo "  ⚠️  Warning: $(basename "$target") exists as a regular file (not a symlink)."
+    echo "      Run with --force to replace it, or backup and remove it manually."
+    return 1
+  fi
+
+  # Create or update the symlink
+  ln -sf "$source" "$target"
+  echo "  ✓ Created symlink for $(basename "$target")."
 }
 symlink "$(pwd)/zsh/.zshrc" "$HOME/.zshrc"
 symlink "$(pwd)/zsh/.zprofile" "$HOME/.zprofile"

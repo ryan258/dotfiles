@@ -98,17 +98,25 @@ if [ -d "$PROJECTS_DIR" ]; then
                         found_issues=true
 
                         # Check if branch is pushed to remote
-                        if ! git ls-remote --heads origin "$current_branch" | grep -q .; then
-                            echo "      └─ Branch not pushed to remote"
+                        if remote_check=$(git ls-remote --heads origin "$current_branch" 2>&1); then
+                            if ! echo "$remote_check" | grep -q .; then
+                                echo "      └─ Branch not pushed to remote"
+                            fi
+                        else
+                            echo "      └─ Failed to check remote status: $remote_check"
                         fi
                     fi
                 fi
 
                 # Check for unpushed commits on default branch
                 if [ "$current_branch" = "$default_branch" ] || [ "$current_branch" = "main" ] || [ "$current_branch" = "master" ]; then
+                    # Check if upstream branch exists (expected to fail for local-only branches)
                     if git rev-parse @{u} >/dev/null 2>&1; then
-                        unpushed=$(git rev-list @{u}..HEAD --count || echo "0")
-                        if [ "$unpushed" -gt 0 ]; then
+                        # Upstream exists, check for unpushed commits
+                        if ! unpushed=$(git rev-list @{u}..HEAD --count 2>&1); then
+                            echo "  ⚠️  $proj_name: Failed to check unpushed commits: $unpushed"
+                            found_issues=true
+                        elif [ "$unpushed" -gt 0 ]; then
                             echo "  📤 $proj_name: $unpushed unpushed commit(s) on $current_branch"
                             found_issues=true
                         fi
@@ -181,9 +189,12 @@ echo ""
 echo "🛡️  Validating data integrity..."
 if bash "$(dirname "$0")/data_validate.sh"; then
     echo "  ✅ Data validation passed."
-    # 9. Silent backup of dotfiles data
+    # 9. Backup of dotfiles data
     echo "$(date): goodevening.sh - Backing up dotfiles data." >> "$SYSTEM_LOG_FILE"
-    /bin/bash "$(dirname "$0")/backup_data.sh" > /dev/null 2>&1
+    if ! backup_output=$(/bin/bash "$(dirname "$0")/backup_data.sh" 2>&1); then
+        echo "  ⚠️  WARNING: Backup failed: $backup_output"
+        echo "$(date): goodevening.sh - Backup failed: $backup_output" >> "$SYSTEM_LOG_FILE"
+    fi
 else
     echo "  ❌ ERROR: Data validation failed. Skipping backup."
 fi

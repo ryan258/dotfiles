@@ -62,6 +62,14 @@ if [ ! -f "$GITHUB_TOKEN_FILE" ]; then
   # This is a warning, not a critical error, so we don't increment ERROR_COUNT
 fi
 
+# 5. Prune dead bookmarks
+echo "[5/5] Pruning dead directory bookmarks..."
+if [ -f "$SCRIPTS_DIR/g.sh" ]; then
+  "$SCRIPTS_DIR/g.sh" prune --auto
+else
+  echo "  ⚠️  WARNING: g.sh not found, skipping bookmark pruning."
+fi
+
 # --- Summary ---
 echo ""
 if [ $ERROR_COUNT -eq 0 ]; then

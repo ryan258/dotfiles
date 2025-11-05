@@ -4,8 +4,11 @@ set -euo pipefail
 # --- new_script.sh: New Script Creation Utility ---
 
 if [ -z "$1" ]; then
-  echo "Usage: new_script.sh <script_name>"
+  echo "Usage: new_script.sh <script_name> [--force]"
   echo "Example: new_script.sh my_tool"
+  echo ""
+  echo "Options:"
+  echo "  --force    Override name collision warnings"
   exit 1
 fi
 
@@ -14,11 +17,54 @@ SCRIPTS_DIR="$(dirname "$0")"
 SCRIPT_PATH="$SCRIPTS_DIR/$SCRIPT_NAME.sh"
 ALIASES_FILE="$HOME/dotfiles/zsh/aliases.zsh"
 
-# 1. Create the new script file
-if [ -f "$SCRIPT_PATH" ]; then
-  echo "Error: Script already exists at $SCRIPT_PATH"
-  exit 1
+# --- Collision Detection ---
+FORCE_MODE=false
+if [ "${2:-}" == "--force" ]; then
+  FORCE_MODE=true
 fi
+
+COLLISIONS_FOUND=false
+
+# Check 1: Script file already exists
+if [ -f "$SCRIPT_PATH" ]; then
+  echo "⚠️  Collision: Script already exists at $SCRIPT_PATH"
+  COLLISIONS_FOUND=true
+fi
+
+# Check 2: Alias already exists in aliases.zsh
+if [ -f "$ALIASES_FILE" ] && grep -q "^alias $SCRIPT_NAME=" "$ALIASES_FILE"; then
+  echo "⚠️  Collision: Alias '$SCRIPT_NAME' already exists in $ALIASES_FILE"
+  COLLISIONS_FOUND=true
+fi
+
+# Check 3: Another script with similar name exists
+for ext in .sh .bash .zsh ""; do
+  OTHER_SCRIPT="$SCRIPTS_DIR/$SCRIPT_NAME$ext"
+  if [ -f "$OTHER_SCRIPT" ] && [ "$OTHER_SCRIPT" != "$SCRIPT_PATH" ]; then
+    echo "⚠️  Collision: Similar script exists at $OTHER_SCRIPT"
+    COLLISIONS_FOUND=true
+    break
+  fi
+done
+
+# Check 4: System command exists
+if command -v "$SCRIPT_NAME" >/dev/null 2>&1; then
+  echo "⚠️  Collision: '$SCRIPT_NAME' exists as a system command ($(command -v "$SCRIPT_NAME"))"
+  COLLISIONS_FOUND=true
+fi
+
+# Exit if collisions found and not in force mode
+if [ "$COLLISIONS_FOUND" = true ] && [ "$FORCE_MODE" = false ]; then
+  echo ""
+  echo "Error: Name collision detected. Use a different name or run with --force to override."
+  exit 1
+elif [ "$COLLISIONS_FOUND" = true ] && [ "$FORCE_MODE" = true ]; then
+  echo ""
+  echo "⚠️  Force mode enabled. Proceeding despite collisions..."
+  echo ""
+fi
+
+# 1. Create the new script file
 
 echo "Creating new script at $SCRIPT_PATH..."
 cat << EOF > "$SCRIPT_PATH"

@@ -16,7 +16,7 @@ export PATH="$HOME/.config/composer/vendor/bin:$PATH"
 # fnm: fast node manager
 eval "$(fnm env --shell zsh --use-on-cd)"
 
-echo "SUCCESS! Dotfiles are loading."
+# echo "SUCCESS! Dotfiles are loading."
 source "$ZDOTDIR/aliases.zsh"
 # source "$ZDOTDIR/.zsh_aliases"
 
@@ -37,3 +37,15 @@ if [ "$LAST_RUN_DATE" != "$TODAY" ]; then
     # Update the last run file with today's date
     echo "$TODAY" > "$LAST_RUN_FILE"
 fi
+
+# --- Smart Navigation: Log directory changes for intelligent suggestions ---
+USAGE_LOG="$HOME/.config/dotfiles-data/dir_usage.log"
+
+# Use zsh hook system to avoid conflicts
+autoload -U add-zsh-hook
+__log_directory_change() {
+    # Log directory changes for smart navigation suggestions (used by g suggest)
+    # Format: timestamp:directory
+    echo "$(date +%s):$(pwd)" >> "$USAGE_LOG"
+}
+add-zsh-hook chpwd __log_directory_change

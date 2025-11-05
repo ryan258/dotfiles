@@ -175,11 +175,30 @@ All 20 Blindspots from 'Dotfiles Evolution: A 20-Point Implementation Plan' have
 - **Completed:** Full symptom and energy tracking system implemented.
 - **Deliverable:** ✅ New subcommands (`health symptom`, `health energy`, `health summary`), integrated into `startday` and `goodevening` dashboards.
 
-## 🎯 Dotfiles Evolution: A 20-Point Implementation Plan
+## 🎯 Dotfiles Evolution: Round 1 (Blindspots 1-20)
 
 **Status:** ✅ ALL 20 BLINDSPOTS COMPLETED (November 2, 2025)
 
-This plan, derived from `blindspots.md`, outlines the evolution of the dotfiles system. The goals are to increase resilience, add proactive intelligence, reduce friction, integrate siloed tools, and strengthen cognitive support.
+This first round, derived from the original implementation plan, focused on resilience, proactive intelligence, friction reduction, tool integration, and cognitive support.
+
+## 🎯 Dotfiles Evolution: Round 2 (Blindspots 21-40)
+
+**Status:** ✅ ALL 20 BLINDSPOTS COMPLETED (November 5, 2025)
+
+This second round addressed critical data integrity gaps, deepened workflow integrations, introduced intelligent features, and added extensive system polish. See `blindspots.md` for full details.
+
+**Key Improvements in Round 2:**
+- ✅ Enhanced error handling and data validation
+- ✅ Health ↔ productivity correlation analysis
+- ✅ Smart directory navigation with usage tracking
+- ✅ Automated weekly review system (LaunchAgent)
+- ✅ Collision detection for script creation
+- ✅ Idempotent bootstrap with safety checks
+- ✅ File organization safety (ignore patterns, recent file detection)
+- ✅ Bookmark pruning and automated cleanup
+- ✅ Comprehensive health exports with medication data
+- ✅ Scheduler integration with todo system
+- ✅ Daily focus feature for brain fog days
 
 ### **Phase 1: Resilience & Data Insight** ✅
 
@@ -220,7 +239,8 @@ This plan, derived from `blindspots.md`, outlines the evolution of the dotfiles 
 
 | Item | Date | Notes |
 | ---- | ---- | ----- |
-| 20 Blindspots Implementation | 2025-11-02 | Verified and documented all 20 blindspots from the evolution plan. All features implemented and tested: data backups, health/meds dashboards, stale task tracking, system validation, enhanced journal search, navigation consolidation (g.sh), blog-todo sync, gamification, todo commit/bump/top, schedule wrapper, dynamic clipboard, howto wiki, clutter review, audit logging, and unified shell environments. |
+| Round 2: 20 Blindspots (21-40) | 2025-11-05 | Completed all 20 Round 2 blindspots. Key improvements: error handling in goodevening.sh, health ↔ productivity correlation, smart navigation logging (chpwd hook), weekly review automation (LaunchAgent), script collision detection, idempotent bootstrap, file organization safety, bookmark pruning (g prune), medication data in health exports, scheduler-todo integration, daily focus feature. Fixed zsh hook conflicts with VS Code integration. |
+| Round 1: 20 Blindspots (1-20) | 2025-11-02 | Verified and documented all 20 blindspots from the evolution plan. All features implemented and tested: data backups, health/meds dashboards, stale task tracking, system validation, enhanced journal search, navigation consolidation (g.sh), blog-todo sync, gamification, todo commit/bump/top, schedule wrapper, dynamic clipboard, howto wiki, clutter review, audit logging, and unified shell environments. |
 | Backlog Implementation | 2025-11-01 | Completed all 4 backlog items: blog cadence nudges with age warnings, full medication tracking system (`meds.sh`), health export for medical appointments, automation safety nets in goodevening (uncommitted changes, large diffs, lingering branches, unpushed commits). |
 | Foundation & Hardening (Phases 1-3) | 2025-11-01 | Fixed broken journaling loop, centralized all data to `~/.config/dotfiles-data/`, deleted 4 redundant scripts, cleaned up shell config, modernized all aliases, hardened core scripts with `set -euo pipefail`. |
 | Q4 Objectives 0-3 | 2025-11-01 | Fixed remaining bugs, created Daily Happy Path guide, extended health.sh with symptom and energy tracking. |

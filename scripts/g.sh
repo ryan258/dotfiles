@@ -64,20 +64,83 @@ case "${1:-list}" in
         exit 1
     fi
 
-    awk -F':' '
+    NOW=$(date +%s)
+    awk -F':' -v now="$NOW" '
     {
-        # dir => [count, last_visit]
-        dirs[$2][0]++
-        dirs[$2][1] = $1
+        # Track visit count and last visit time for each directory
+        dir = $2
+        timestamp = $1
+
+        if (dir in visit_count) {
+            visit_count[dir]++
+        } else {
+            visit_count[dir] = 1
+        }
+        last_visit[dir] = timestamp
     }
     END {
-        for (dir in dirs) {
+        for (dir in visit_count) {
             # score = (visit_count) / (days_since_last_visit + 1)
-            days_since = (systime() - dirs[dir][1]) / 86400
-            score = dirs[dir][0] / (days_since + 1)
+            days_since = (now - last_visit[dir]) / 86400
+            score = visit_count[dir] / (days_since + 1)
             printf "%.2f %s\n", score, dir
         }
     }' "$USAGE_LOG" | sort -rn | head -n 10
+    ;;
+
+  prune)
+    # Remove dead bookmarks (directories that no longer exist)
+    if [ ! -f "$BOOKMARKS_FILE" ]; then
+      echo "No bookmarks file found."
+      exit 0
+    fi
+
+    AUTO_MODE=false
+    if [ "${2:-}" == "--auto" ]; then
+      AUTO_MODE=true
+    fi
+
+    echo "Checking for dead bookmarks..."
+
+    TEMP_FILE="${BOOKMARKS_FILE}.tmp"
+    > "$TEMP_FILE"
+
+    REMOVED_COUNT=0
+    KEPT_COUNT=0
+
+    while IFS=':' read -r name dir rest; do
+      if [ -d "$dir" ]; then
+        # Directory exists, keep the bookmark
+        echo "$name:$dir:$rest" >> "$TEMP_FILE"
+        KEPT_COUNT=$((KEPT_COUNT + 1))
+      else
+        # Directory doesn't exist
+        REMOVED_COUNT=$((REMOVED_COUNT + 1))
+
+        if [ "$AUTO_MODE" = true ]; then
+          echo "  ✗ Removed: $name -> $dir (directory not found)"
+        else
+          echo ""
+          echo "  Dead bookmark found: $name -> $dir"
+          read -p "  Remove this bookmark? (y/n) " -n 1 -r
+          echo ""
+          if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "  ✗ Removed: $name"
+          else
+            echo "  Kept: $name"
+            echo "$name:$dir:$rest" >> "$TEMP_FILE"
+            KEPT_COUNT=$((KEPT_COUNT + 1))
+            REMOVED_COUNT=$((REMOVED_COUNT - 1))
+          fi
+        fi
+      fi
+    done < "$BOOKMARKS_FILE"
+
+    # Replace bookmarks file with cleaned version
+    mv "$TEMP_FILE" "$BOOKMARKS_FILE"
+
+    echo ""
+    echo "Pruning complete: $REMOVED_COUNT removed, $KEPT_COUNT kept"
     ;;
 
   *)
@@ -92,6 +155,9 @@ case "${1:-list}" in
     ON_ENTER_CMD=$(echo "$BOOKMARK_DATA" | cut -d':' -f3)
     VENV_PATH=$(echo "$BOOKMARK_DATA" | cut -d':' -f4)
     APPS=$(echo "$BOOKMARK_DATA" | cut -d':' -f5)
+
+    # Log directory visit for smart suggestions
+    echo "$(date +%s):$DIR" >> "$USAGE_LOG"
 
     # Change directory
     cd "$DIR"
