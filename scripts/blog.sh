@@ -1,8 +1,9 @@
 #!/bin/bash
 # blog.sh - Tools for managing the blog content workflow.
 
+# Use the BLOG_DIR environment variable if it is set, otherwise use the default.
 SYSTEM_LOG_FILE="$HOME/.config/dotfiles-data/system.log"
-BLOG_DIR=~/Projects/my-ms-ai-blog
+BLOG_DIR="${BLOG_DIR:-$HOME/Projects/my-ms-ai-blog}"
 POSTS_DIR="$BLOG_DIR/content/posts"
 
 if [ ! -d "$POSTS_DIR" ]; then

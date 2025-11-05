@@ -4,6 +4,7 @@
 # --- Configuration ---
 BOOKMARKS_FILE="$HOME/.config/dotfiles-data/dir_bookmarks"
 HISTORY_FILE="$HOME/.config/dotfiles-data/dir_history"
+USAGE_LOG="$HOME/.config/dotfiles-data/dir_usage.log"
 APP_LAUNCHER="$HOME/dotfiles/scripts/app_launcher.sh"
 
 # --- Subcommands ---
@@ -54,6 +55,29 @@ case "${1:-list}" in
     else
       echo "No bookmarks saved."
     fi
+    ;;
+
+  suggest|-i)
+    # Suggest directories based on frequency and recency
+    if [ ! -f "$USAGE_LOG" ]; then
+        echo "No usage data to suggest from."
+        exit 1
+    fi
+
+    awk -F':' '
+    {
+        # dir => [count, last_visit]
+        dirs[$2][0]++
+        dirs[$2][1] = $1
+    }
+    END {
+        for (dir in dirs) {
+            # score = (visit_count) / (days_since_last_visit + 1)
+            days_since = (systime() - dirs[dir][1]) / 86400
+            score = dirs[dir][0] / (days_since + 1)
+            printf "%.2f %s\n", score, dir
+        }
+    }' "$USAGE_LOG" | sort -rn | head -n 10
     ;;
 
   *)

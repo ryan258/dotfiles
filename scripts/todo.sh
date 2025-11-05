@@ -20,8 +20,17 @@ case "$1" in
         echo "Usage: $0 add <task>"
         exit 1
     fi
+    # Strip pipe characters to prevent parsing issues
+    task_text=$(echo "$task_text" | tr -d '|')
     echo "$(date +%Y-%m-%d)|$task_text" >> "$TODO_FILE"
-    printf "Added: '%s'\n" "$task_text"
+    
+    # Encouraging messages for adding a task
+    add_messages=(
+        "Task added. You've got this! 💪"
+        "Captured! One less thing to remember."
+        "On the list. Let's get it done!"
+    )
+    printf "%s\n" "${add_messages[$((RANDOM % ${#add_messages[@]}))]} '[32m%s[0m'" "$task_text"
     ;;
 
   list)
@@ -47,7 +56,15 @@ case "$1" in
     fi
     # Remove it from the todo file
     sed -i '' "${task_num}d" "$TODO_FILE"
-    echo "Completed: $task_text"
+    
+    # Encouraging messages for completing a task
+    done_messages=(
+        "Great job! 🎯"
+        "Another one bites the dust!"
+        "You're on fire! 🔥"
+        "Progress! Keep going!"
+    )
+    printf "%s: '[32m%s[0m'\n" "${done_messages[$((RANDOM % ${#done_messages[@]}))]} " "$task_text"
     ;;
 
   clear)
@@ -119,9 +136,26 @@ case "$1" in
     head -n "$count" "$TODO_FILE" | awk -F'|' '{ printf "%-4s %-12s %s\n", NR, $1, $2 }'
     ;;
 
+  undo)
+    # Restore the most recently completed task.
+    if [ ! -s "$DONE_FILE" ]; then
+        echo "No tasks to undo."
+        exit 1
+    fi
+    # Get the last completed task
+    last_done_task=$(tail -n 1 "$DONE_FILE")
+    # Remove it from the done file
+    sed -i '' '$d' "$DONE_FILE"
+    # Extract original task text, removing the timestamp
+    task_text_to_restore=$(echo "$last_done_task" | sed -E 's/^\[[0-9- :]+] //')
+    # Add it back to the todo list with a new date
+    echo "$(date +%Y-%m-%d)|$task_text_to_restore" >> "$TODO_FILE"
+    echo "Restored task: $task_text_to_restore"
+    ;;
+
   *)
     echo "Error: Unknown command '$1'" >&2
-    echo "Usage: $0 {add|list|done|clear|commit|bump|top}"
+    echo "Usage: $0 {add|list|done|clear|commit|bump|top|undo}"
     echo "  add <'task text'> : Add a new task"
     echo "  list                : Show all current tasks"
     echo "  done <task_number>  : Mark a task as complete"
@@ -129,6 +163,7 @@ case "$1" in
     echo "  commit <task_number> ['message'] : Commit and mark a task as done"
     echo "  bump <task_number>  : Move a task to the top of the list"
     echo "  top [count]         : Show the top N tasks (default: 3)"
+    echo "  undo                : Restore the most recently completed task"
     exit 1
     ;;
 esac

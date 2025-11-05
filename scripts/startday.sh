@@ -9,6 +9,12 @@ echo "╔═══════════════════════�
 echo "║  Good morning! $(date '+%A, %B %d, %Y - %H:%M')            "
 echo "╚════════════════════════════════════════════════════════════╝"
 
+# --- FOCUS FOR TODAY ---
+if [ -f "$HOME/dotfiles/scripts/focus.sh" ]; then
+    echo ""
+    "$HOME/dotfiles/scripts/focus.sh"
+fi
+
 # --- Sync Blog Tasks ---
 if [ -f "$HOME/dotfiles/scripts/blog.sh" ]; then
     "$HOME/dotfiles/scripts/blog.sh" sync
@@ -23,6 +29,19 @@ if [ -f "$JOURNAL_FILE" ]; then
     echo "Journal entries:"
     tail -n 3 "$JOURNAL_FILE" | sed 's/^/  • /'
 fi
+
+# --- WEEKLY REVIEW ---
+if [ $(date +%u) -eq 1 ]; then
+    WEEK_NUM=$(date -v-1d +%V)
+    YEAR=$(date -v-1d +%Y)
+    REVIEW_FILE="$HOME/Documents/Reviews/Weekly/$YEAR-W$WEEK_NUM.md"
+    if [ -f "$REVIEW_FILE" ]; then
+        echo ""
+        echo "📈 LAST WEEK'S REVIEW:"
+        echo "  • Last week's review is available at: $REVIEW_FILE"
+    fi
+fi
+
 
 # --- ACTIVE PROJECTS (from GitHub) ---
 echo ""
@@ -50,6 +69,13 @@ if [ -f "$HELPER_SCRIPT" ]; then
             break
         fi
     done
+fi
+
+# --- SUGGESTED DIRECTORIES ---
+echo ""
+echo "💡 SUGGESTED DIRECTORIES:"
+if [ -f "$HOME/dotfiles/scripts/g.sh" ]; then
+    "$HOME/dotfiles/scripts/g.sh" suggest | head -n 3 | awk '{print "  • " $2}'
 fi
 
 # --- BLOG STATUS ---

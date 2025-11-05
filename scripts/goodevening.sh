@@ -83,31 +83,35 @@ if [ -d "$PROJECTS_DIR" ]; then
             fi
 
             # Check for lingering non-default branches
-            current_branch=$(git branch --show-current || true)
-            default_branch=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
+            current_branch=$(git branch --show-current)
+            if [ $? -ne 0 ]; then
+                echo "      └─ Could not determine current branch. Is this a valid git repository?"
+            else
+                default_branch=$(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@' || echo "main")
 
-            if [ "$current_branch" != "$default_branch" ] && [ "$current_branch" != "main" ] && [ "$current_branch" != "master" ]; then
-                # Check how old this branch is
-                branch_age_days=$(( ( $(date +%s) - $(git log -1 --format=%ct "$current_branch" 2>/dev/null || echo 0) ) / 86400 ))
+                if [ "$current_branch" != "$default_branch" ] && [ "$current_branch" != "main" ] && [ "$current_branch" != "master" ]; then
+                    # Check how old this branch is
+                    branch_age_days=$(( ( $(date +%s) - $(git log -1 --format=%ct "$current_branch" || echo 0) ) / 86400 ))
 
-                if [ "$branch_age_days" -gt 7 ]; then
-                    echo "  ⚠️  $proj_name: On branch '$current_branch' (${branch_age_days} days old)"
-                    found_issues=true
+                    if [ "$branch_age_days" -gt 7 ]; then
+                        echo "  ⚠️  $proj_name: On branch '$current_branch' (${branch_age_days} days old)"
+                        found_issues=true
 
-                    # Check if branch is pushed to remote
-                    if ! git ls-remote --heads origin "$current_branch" 2>/dev/null | grep -q .; then
-                        echo "      └─ Branch not pushed to remote"
+                        # Check if branch is pushed to remote
+                        if ! git ls-remote --heads origin "$current_branch" | grep -q .; then
+                            echo "      └─ Branch not pushed to remote"
+                        fi
                     fi
                 fi
-            fi
 
-            # Check for unpushed commits on default branch
-            if [ "$current_branch" = "$default_branch" ] || [ "$current_branch" = "main" ] || [ "$current_branch" = "master" ]; then
-                if git rev-parse @{u} >/dev/null 2>&1; then
-                    unpushed=$(git rev-list @{u}..HEAD --count 2>/dev/null || echo "0")
-                    if [ "$unpushed" -gt 0 ]; then
-                        echo "  📤 $proj_name: $unpushed unpushed commit(s) on $current_branch"
-                        found_issues=true
+                # Check for unpushed commits on default branch
+                if [ "$current_branch" = "$default_branch" ] || [ "$current_branch" = "main" ] || [ "$current_branch" = "master" ]; then
+                    if git rev-parse @{u} >/dev/null 2>&1; then
+                        unpushed=$(git rev-list @{u}..HEAD --count || echo "0")
+                        if [ "$unpushed" -gt 0 ]; then
+                            echo "  📤 $proj_name: $unpushed unpushed commit(s) on $current_branch"
+                            found_issues=true
+                        fi
                     fi
                 fi
             fi
@@ -172,9 +176,17 @@ if [ -f "$TODO_DONE_FILE" ]; then
     echo "  (Old completed tasks removed)"
 fi
 
-# 8. Silent backup of dotfiles data
-echo "$(date): goodevening.sh - Backing up dotfiles data." >> "$SYSTEM_LOG_FILE"
-/bin/bash "$(dirname "$0")/backup_data.sh" > /dev/null 2>&1
+# 8. Data Validation
+echo ""
+echo "🛡️  Validating data integrity..."
+if bash "$(dirname "$0")/data_validate.sh"; then
+    echo "  ✅ Data validation passed."
+    # 9. Silent backup of dotfiles data
+    echo "$(date): goodevening.sh - Backing up dotfiles data." >> "$SYSTEM_LOG_FILE"
+    /bin/bash "$(dirname "$0")/backup_data.sh" > /dev/null 2>&1
+else
+    echo "  ❌ ERROR: Data validation failed. Skipping backup."
+fi
 
 echo ""
 echo "Evening wrap-up complete. Have a great night!"

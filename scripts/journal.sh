@@ -33,13 +33,34 @@ case "${1:-add}" in
   search)
     # Search for a term in the journal.
     shift
+    local sort_order="recent" # Default to recent
+    if [ "$1" == "--oldest" ]; then
+      sort_order="oldest"
+      shift
+    elif [ "$1" == "--recent" ]; then
+      sort_order="recent"
+      shift
+    fi
+
     TERM="$*"
     if [ -z "$TERM" ]; then
-        echo "Usage: journal search <term>"
+        echo "Usage: journal search [--recent|--oldest] <term>"
         exit 1
     fi
-    echo "--- Searching for '$TERM' in journal ---"
-    grep -i "$TERM" "$JOURNAL_FILE" || echo "No entries found for '$TERM'."
+    echo "--- Searching for '$TERM' in journal (sorted by $sort_order) ---"
+
+    local search_results
+    if [ "$sort_order" == "recent" ]; then
+      search_results=$(tac "$JOURNAL_FILE" | grep -i "$TERM" || true)
+    else
+      search_results=$(grep -i "$TERM" "$JOURNAL_FILE" || true)
+    fi
+
+    if [ -n "$search_results" ]; then
+      echo "$search_results"
+    else
+      echo "No entries found for '$TERM'."
+    fi
     ;;
 
   onthisday)

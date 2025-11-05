@@ -3,6 +3,11 @@ set -euo pipefail
 
 # --- bootstrap.sh: New Machine Setup Script ---
 
+FORCE=false
+if [ "${1:-}" == "--force" ]; then
+  FORCE=true
+fi
+
 echo "🚀 Bootstrapping new machine..."
 
 # 1. Install Homebrew (if not installed)
@@ -13,13 +18,11 @@ else
   echo "Homebrew already installed."
 fi
 
-# 2. Install dependencies from Brewfile
-# For now, we will manually list the dependencies here.
-# In the future, we can use a Brewfile.
+# 2. Install dependencies
 DEPENDENCIES=("jq" "curl" "gawk")
 echo "Installing dependencies..."
 for dep in "${DEPENDENCIES[@]}"; do
-  if ! brew list "$dep" >/dev/null 2>&1; then
+  if ! brew list "$dep" >/dev/null 2>&1 || [ "$FORCE" = true ]; then
     brew install "$dep"
   else
     echo "  $dep is already installed."
@@ -32,12 +35,20 @@ echo "Creating data directory at $DATA_DIR..."
 mkdir -p "$DATA_DIR"
 
 # 4. Symlink dotfiles
-# This is a placeholder. In a real scenario, you would
-# have a more robust symlinking strategy.
 echo "Symlinking dotfiles..."
-ln -sf "$(pwd)/zsh/.zshrc" "$HOME/.zshrc"
-ln -sf "$(pwd)/zsh/.zprofile" "$HOME/.zprofile"
-ln -sf "$(pwd)/zsh/aliases.zsh" "$HOME/.zsh_aliases"
+symlink() {
+  local source=$1
+  local target=$2
+  if [ -L "$target" ] && [ "$(readlink "$target")" == "$source" ] && [ "$FORCE" = false ]; then
+    echo "  Symlink for $(basename "$target") already exists and is correct."
+  else
+    ln -sf "$source" "$target"
+    echo "  Created symlink for $(basename "$target")."
+  fi
+}
+symlink "$(pwd)/zsh/.zshrc" "$HOME/.zshrc"
+symlink "$(pwd)/zsh/.zprofile" "$HOME/.zprofile"
+symlink "$(pwd)/zsh/aliases.zsh" "$HOME/.zsh_aliases"
 
 
 echo "✅ Bootstrap complete!"

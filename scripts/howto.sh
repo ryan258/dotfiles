@@ -28,8 +28,8 @@ case "${1:-list}" in
     ;;
 
   list)
-    echo "--- How-To Articles ---"
-    ls "$HOWTO_DIR" | sed 's/\.txt$//'
+    echo "--- How-To Articles (most recent first) ---"
+    ls -t "$HOWTO_DIR" | sed 's/\.txt$//'
     ;;
 
   *)

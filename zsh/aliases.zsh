@@ -169,6 +169,7 @@ alias tododone="todo.sh done"
 alias todoadd="todo.sh add"
 alias journal="journal.sh"
 alias break="take_a_break.sh"
+alias focus="focus.sh"
 
 # Health tracking
 alias health="health.sh"
@@ -329,9 +330,9 @@ search() {
     find . -name "*$1*" -type f
 }
 
-# Enhanced cd that tracks history for recent_dirs script
+# Enhanced cd that tracks history for the suggestion engine
 cd() {
-    builtin cd "$@" && recent_dirs.sh add 2>/dev/null
+    builtin cd "$@" && echo "$(date +%s):$(pwd)" >> "$HOME/.config/dotfiles-data/dir_usage.log"
 }
 
 # Quick git status and todo check
@@ -433,3 +434,5 @@ fi
 # BLOG WORKFLOW
 # =============================================================================
 alias blog="blog.sh"
+alias dump='bash ~/dotfiles/scripts/dump.sh'
+alias data_validate='bash ~/dotfiles/scripts/data_validate.sh'

@@ -3,6 +3,12 @@ set -euo pipefail
 
 # --- review_clutter.sh: Interactive clutter review for Desktop and Downloads ---
 
+DRY_RUN=false
+if [ "${1:-}" == "--dry-run" ] || [ "${1:-}" == "-n" ]; then
+  DRY_RUN=true
+  echo "Performing a dry run. No files will be moved or deleted."
+fi
+
 CLUTTER_DIRS=("$HOME/Desktop" "$HOME/Downloads")
 ARCHIVE_DIR_BASE="$HOME/Documents/Archives"
 
@@ -18,13 +24,21 @@ for dir in "${CLUTTER_DIRS[@]}"; do
     case $REPLY in
       a|A)
         ARCHIVE_DIR="$ARCHIVE_DIR_BASE/$(date +%Y-%m)"
-        mkdir -p "$ARCHIVE_DIR"
-        mv "$file" "$ARCHIVE_DIR/"
-        echo "Archived to $ARCHIVE_DIR"
+        if [ "$DRY_RUN" = true ]; then
+            echo "  Would archive $file to $ARCHIVE_DIR"
+        else
+            mkdir -p "$ARCHIVE_DIR"
+            mv "$file" "$ARCHIVE_DIR/"
+            echo "Archived to $ARCHIVE_DIR"
+        fi
         ;;
       d|D)
-        rm "$file"
-        echo "Deleted."
+        if [ "$DRY_RUN" = true ]; then
+            echo "  Would delete $file"
+        else
+            rm "$file"
+            echo "Deleted."
+        fi
         ;;
       s|S)
         echo "Skipped."

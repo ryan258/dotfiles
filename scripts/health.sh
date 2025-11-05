@@ -298,6 +298,128 @@ case "$1" in
         else
             echo "• Avg. Energy on 'Fog' Days: N/A (no 'fog' symptoms logged)"
         fi
+
+        # 4. Energy vs. Productivity Correlation
+        echo ""
+        echo "• Energy vs. Productivity Correlation (30d):"
+        correlate_tasks "$RECENT_DATA"
+        correlate_commits "$RECENT_DATA"
+        ;;
+
+    remove)
+        if [ -z "$2" ]; then
+            echo "Usage: health remove <line_number>"
+            grep -n "^APPT|" "$HEALTH_FILE" 2>/dev/null | sed 's/^/  /' || echo "No appointments to remove"
+            exit 1
+        fi
+        # Only allow removing appointments, not symptoms/energy (they're historical data)
+        sed -i.bak "${2}d" "$HEALTH_FILE"
+        echo "Removed line #$2"
+        ;;
+
+    *)
+        echo "Error: Unknown command '$1'" >&2
+        echo "Usage: health [add|symptom|energy|list|summary|dashboard|export|remove]"
+        echo ""
+        echo "Appointments:"
+        echo "  health add \"description\" \"YYYY-MM-DD HH:MM\""
+        echo "  health list"
+        echo "  health remove <number>"
+        echo ""
+        echo "Daily Tracking:"
+        echo "  health symptom \"symptom description\""
+        echo "  health energy <1-10>"
+        echo "  health summary"
+        echo ""
+        echo "Reporting:"
+        echo "  health dashboard        # Show 30-day trend analysis"
+        echo "  health export [days]    # Export last N days (default: 7)"
+        exit 1
+        ;;
+esac
+
+function correlate_tasks() {
+    local recent_data="$1"
+    local todo_done_file="$HOME/.config/dotfiles-data/todo_done.txt"
+
+    if [ ! -f "$todo_done_file" ]; then
+        echo "  (todo_done.txt not found)"
+        return
+    fi
+
+    declare -A tasks_by_day
+    while read -r line; do
+        day=$(echo "$line" | awk -F'[[\] ]' '{print $2}')
+        tasks_by_day[$day]=$(( ${tasks_by_day[$day]:-0} + 1 ))
+    done < "$todo_done_file"
+
+    local low_energy_tasks=0
+    local low_energy_days=0
+    local high_energy_tasks=0
+    local high_energy_days=0
+
+    echo "$recent_data" | grep "^ENERGY" | while read -r line; do
+        day=$(echo "$line" | awk -F'|' '{print substr($2, 1, 10)}')
+        energy=$(echo "$line" | awk -F'|' '{print $3}')
+        tasks=${tasks_by_day[$day]:-0}
+
+        if [ "$energy" -le 4 ]; then
+            low_energy_tasks=$((low_energy_tasks + tasks))
+            low_energy_days=$((low_energy_days + 1))
+        elif [ "$energy" -ge 7 ]; then
+            high_energy_tasks=$((high_energy_tasks + tasks))
+            high_energy_days=$((high_energy_days + 1))
+        fi
+    done
+
+    local avg_low_energy_tasks=$( [ "$low_energy_days" -gt 0 ] && awk "BEGIN {printf \"%.1f\", $low_energy_tasks / $low_energy_days}" || echo "0.0" )
+    local avg_high_energy_tasks=$( [ "$high_energy_days" -gt 0 ] && awk "BEGIN {printf \"%.1f\", $high_energy_tasks / $high_energy_days}" || echo "0.0" )
+
+    echo "  - Avg tasks on low energy days: $avg_low_energy_tasks"
+    echo "  - Avg tasks on high energy days: $avg_high_energy_tasks"
+}
+
+function correlate_commits() {
+    local recent_data="$1"
+    local projects_dir="$HOME/Projects"
+
+    if [ ! -d "$projects_dir" ]; then
+        echo "  (Projects directory not found)"
+        return
+    fi
+
+    declare -A commits_by_day
+    while IFS= read -r gitdir; do
+        (cd "$(dirname "$gitdir")" && git log --pretty=format:%cs) | while read -r day; do
+            commits_by_day[$day]=$(( ${commits_by_day[$day]:-0} + 1 ))
+        done
+    done < <(find "$projects_dir" -maxdepth 2 -type d -name ".git")
+
+    local low_energy_commits=0
+    local low_energy_days=0
+    local high_energy_commits=0
+    local high_energy_days=0
+
+    echo "$recent_data" | grep "^ENERGY" | while read -r line; do
+        day=$(echo "$line" | awk -F'|' '{print substr($2, 1, 10)}')
+        energy=$(echo "$line" | awk -F'|' '{print $3}')
+        commits=${commits_by_day[$day]:-0}
+
+        if [ "$energy" -le 4 ]; then
+            low_energy_commits=$((low_energy_commits + commits))
+            low_energy_days=$((low_energy_days + 1))
+        elif [ "$energy" -ge 7 ]; then
+            high_energy_commits=$((high_energy_commits + commits))
+            high_energy_days=$((high_energy_days + 1))
+        fi
+    done
+
+    local avg_low_energy_commits=$( [ "$low_energy_days" -gt 0 ] && awk "BEGIN {printf \"%.1f\", $low_energy_commits / $low_energy_days}" || echo "0.0" )
+    local avg_high_energy_commits=$( [ "$high_energy_days" -gt 0 ] && awk "BEGIN {printf \"%.1f\", $high_energy_commits / $high_energy_days}" || echo "0.0" )
+
+    echo "  - Avg commits on low energy days: $avg_low_energy_commits"
+    echo "  - Avg commits on high energy days: $avg_high_energy_commits"
+}
         ;;
 
     remove)
