@@ -1,250 +1,181 @@
-# **Dotfiles Evolution: A 20-Point Implementation Plan**
+# **Dotfiles Evolution: A 20-Point Implementation Plan (Round 2)**
 
-This document outlines a 20-point plan to evolve the existing dotfiles system. The goals are to:
+This document outlines the next 20-point plan to continue the evolution of the dotfiles system, building on the foundational work already completed. The goals for this round are to:
 
-1. **Increase Resilience:** Add data backups and system health checks.  
-2. **Add Proactive Intelligence:** Turn data logs into actionable insights and trend analysis.  
-3. **Reduce Friction:** Automate system maintenance and streamline complex workflows.  
-4. **Integrate Siloed Tools:** Connect the todo system with git, the blog, and the journal.  
-5. **Strengthen Cognitive Support:** Implement proactive nudges, focus tools, and just-in-time help to actively combat brain fog and perfectionism.
+1.  **Introduce Proactive Intelligence:** Make tools that learn from user behavior.
+2.  **Deepen Workflow Integrations:** Connect previously separate tools into seamless workflows.
+3.  **Enhance User Experience & Polish:** Improve feedback, interactivity, and aesthetics.
+4.  **Increase System-Wide Resilience:** Add safeguards, observability, and self-management capabilities.
 
-## **Phase 1: Resilience & Data Insight**
+---
 
-### **\[Blindspot 1\]: Data Resilience**
+## **Phase 1: Enhanced Intelligence & UX**
 
-* **Critique:** The system's core data in \~/.config/dotfiles-data/ is not automatically backed up, creating a single point of failure.  
-* **Implementation Plan:**  
-  1. Create a new script: scripts/backup\_data.sh.  
-  2. This script will compress the *entire* \~/.config/dotfiles-data/ directory into a timestamped .tar.gz file.  
-  3. The script should save this backup to a user-configurable, safe location (e.g., \~/Backups/dotfiles\_data/).  
-  4. Modify scripts/goodevening.sh: Add a line at the end to *silently* run backup\_data.sh.  
-* **Target Files:**  
-  * scripts/backup\_data.sh (New)  
-  * scripts/goodevening.sh (Modified)
+### **[Blindspot 21]: "Dumb" Navigation**
 
-### **\[Blindspot 2\]: Data Insight**
+*   **Critique:** The `g` command is powerful for explicit navigation but doesn't learn from usage patterns. It can't suggest frequently or recently used directories.
+*   **Implementation Plan:**
+    1.  Modify `g.sh`: Add a logging mechanism to track the frequency and recency of directory access.
+    2.  Implement `g -i` (interactive) or `g --suggest`: This new subcommand will display a sorted list of suggested directories based on a combined frequency/recency score, allowing the user to select one with a number.
+    3.  The `cd` hook that updates `recent_dirs` should also feed into this new tracking system.
 
-* **Critique:** health.sh and meds.sh are good at capturing data but provide no long-term trend analysis.  
-* **Implementation Plan:**  
-  1. Modify scripts/health.sh: Add a new dashboard subcommand.  
-     * This command will use awk and grep on health.txt to calculate and print stats for the last 30 days: "Average energy level", "Symptom frequency (e.g., Fatigue: 12 times)", "Average energy on days 'fog' was logged".  
-  2. Modify scripts/meds.sh: Add a new dashboard subcommand.  
-     * This command will parse medication schedules and dose logs to calculate and print adherence percentages (e.g., "Medication X Adherence (30d): 92% (55/60 doses)").  
-* **Target Files:**  
-  * scripts/health.sh (Modified)  
-  * scripts/meds.sh (Modified)
+### **[Blindspot 22]: "Silent" Task Management**
 
-### **\[Blindspot 3\]: Stale Task Accumulation**
+*   **Critique:** The `todo.sh` script is functional but lacks positive reinforcement. Completing a task is a quiet, anticlimactic event.
+*   **Implementation Plan:**
+    1.  Modify `todo.sh` (`done` subcommand): After a task is completed, print a random, encouraging message (e.g., "Great job!", "Another one bites the dust!", "Progress!").
+    2.  Modify `todo.sh` (`add` subcommand): After adding a task, confirm with a message like "Task added. You've got this."
 
-* **Critique:** todo.sh is a flat list that can accumulate stale tasks, causing anxiety.  
-* **Implementation Plan:**  
-  1. Modify scripts/todo.sh (add subcommand): Prepend a YYYY-MM-DD| timestamp to each new task (e.g., echo "$(date \+%Y-%m-%d)|$task\_text" \>\> "$TODO\_FILE").  
-  2. Modify scripts/todo.sh (list subcommand): Update the cat \-n command to use awk to parse the timestamp and print it, while still printing the line number.  
-  3. Modify scripts/startday.sh: Add a new "⏰ STALE TASKS" section. This will parse todo.txt and print any tasks with a timestamp older than 7 days.  
-* **Target Files:**  
-  * scripts/todo.sh (Modified)  
-  * scripts/startday.sh (Modified)
+### **[Blindspot 23]: "Static" Morning Routine**
 
-### **\[Blindspot 4\]: System Fragility**
+*   **Critique:** The `startday.sh` script is informative but presents the same categories of information every single day, which can lead to it being ignored.
+*   **Implementation Plan:**
+    1.  Create a "focus of the day" feature. This could be a simple text file (`~/.config/dotfiles-data/daily_focus.txt`) that the user can set.
+    2.  Modify `startday.sh`: At the very top, display the "Focus for Today" if it's set.
+    3.  Add a `focus` command/alias that allows the user to set or clear the focus for the day (e.g., `focus "Ship the new API"`).
 
-* **Critique:** The complex system has deferred dependency checks. A missing tool (jq) or script could cause a silent failure.  
-* **Implementation Plan:**  
-  1. Create scripts/dotfiles\_check.sh: This "doctor" script will validate the full system.  
-  2. It must verify: 1\) Key script files exist, 2\) \~/.config/dotfiles-data exists, 3\) Binary dependencies (jq, curl, gawk, osascript) are in the PATH, 4\) \~/.github\_token exists.  
-  3. It should print a simple "All systems OK" or a detailed list of errors.  
-  4. Add an alias: alias dotfiles\_check="dotfiles\_check.sh".  
-* **Target Files:**  
-  * scripts/dotfiles\_check.sh (New)  
-  * zsh/aliases.zsh (Modified)
+### **[Blindspot 24]: "Manual" Weekly Review**
 
-## **Phase 2: Friction Reduction & Usability**
+*   **Critique:** The `week_in_review.sh` script is useful but relies on the user to remember to run it. A weekly summary should be an automated artifact.
+*   **Implementation Plan:**
+    1.  Modify `week_in_review.sh`: Add a `--file` flag that saves the output to a timestamped markdown file in a new directory, e.g., `~/Documents/Reviews/Weekly/2025-W45.md`.
+    2.  Create a new script or use `schedule.sh` to set up a recurring job (e.g., every Sunday at 8 PM) that automatically runs `week_in_review.sh --file`.
 
-### **\[Blindspot 5\]: "Write-Only" Journal**
+### **[Blindspot 25]: "Isolated" Health Data**
 
-* **Critique:** journal.sh is excellent for capture but has poor retrieval, limiting its use as a "second brain".  
-* **Implementation Plan:**  
-  1. Modify scripts/journal.sh: Add a search \<term\> subcommand. This will be a user-friendly wrapper for grep \-i "$term" $JOURNAL\_FILE.  
-  2. Modify scripts/journal.sh: Add an onthisday subcommand. This will grep the journal for entries with the current month and day from previous years (e.g., grep \-i "....-$(date \+%m-%d)" $JOURNAL\_FILE).  
-* **Target Files:**  
-  * scripts/journal.sh (Modified)
+*   **Critique:** The `health.sh` data is valuable but completely isolated. There's no way to see if low energy levels correlate with lower code output or fewer completed tasks.
+*   **Implementation Plan:**
+    1.  Modify `health.sh` (`dashboard` subcommand): Enhance the dashboard to cross-reference data.
+    2.  It should pull data from `todo_done.txt` and the git logs to calculate and display "Tasks completed on low-energy days" vs. "high-energy days".
+    3.  Similarly, it could show "Git commits on low-energy days" to provide a more holistic view of productivity vs. wellness.
 
-### **\[Blindspot 6\]: System Maintenance Friction**
+---
 
-* **Critique:** Adding new scripts or setting up a new machine is a high-friction, manual process.  
-* **Implementation Plan:**  
-  1. Create bootstrap.sh in the repo root: This script will automate new machine setup (install Homebrew, brew install dependencies, create data dir, symlink dotfiles).  
-  2. Create scripts/new\_script.sh: This script will automate adding new tools.  
-     * Input: new\_script.sh my\_tool  
-     * Action: Creates scripts/my\_tool.sh, adds \#\!/bin/bash and set \-euo pipefail, makes it executable, *and* appends alias my\_tool="my\_tool.sh" to zsh/aliases.zsh.  
-* **Target Files:**  
-  * bootstrap.sh (New)  
-  * scripts/new\_script.sh (New)  
-  * zsh/aliases.zsh (Modified by new\_script.sh)
+## **Phase 2: Deeper Integration & Automation**
 
-### **\[Blindspot 7\]: High-Cost Context Switching**
+### **[Blindspot 26]: "Disconnected" Reminders**
 
-* **Critique:** Navigation is split across three redundant tools (goto, recent\_dirs, workspace\_manager).  
-* **Implementation Plan:**  
-  1. Create scripts/g.sh: This new, consolidated navigation script will replace the old ones.  
-  2. Implement subcommands: g \<bookmark\> (for goto), g \-r (for recent\_dirs), g \-s \<name\> (for workspace save), g \-l \<name\> (for workspace load).  
-  3. Add "Context-Aware Hook" logic: g.sh should parse a config file (e.g., dir\_bookmarks) that can store an optional "on-enter" command (e.g., blog:\~/Projects/blog:blog status). When g blog is run, it will cd *and* execute blog status.  
-  4. Modify zsh/aliases.zsh: Remove old aliases for goto, back, workspace and add alias g="source g.sh" (must be sourced to change directory).  
-* **Target Files:**  
-  * scripts/g.sh (New)  
-  * zsh/aliases.sh (Modified)  
-  * scripts/goto.sh (Deprecated)  
-  * scripts/recent\_dirs.sh (Deprecated)  
-  * scripts/workspace\_manager.sh (Deprecated)
+*   **Critique:** The `remind_me.sh` and `schedule.sh` tools are fire-and-forget. They are not integrated with the `todo.sh` system, creating two separate places for tasks.
+*   **Implementation Plan:**
+    1.  Modify `schedule.sh`: Add a `--todo` flag.
+    2.  `schedule "tomorrow 9am" --todo "Call the doctor"` would schedule the task to be *added* to `todo.txt` at the specified time, rather than just sending a notification.
+    3.  This turns the scheduler into a "snooze" or "defer" feature for the todo list.
 
-### **\[Blindspot 8\]: The Documentation Chasm**
+### **[Blindspot 27]: "Unaware" Script Creation**
 
-* **Critique:** Help is either "all" (cheatsheet.sh) or "nothing" (failing silently).  
-* **Implementation Plan:**  
-  1. Modify all core scripts (todo.sh, health.sh, meds.sh, journal.sh, etc.): Update the \*) case in the case "$1" in block. It must: 1\) Print a clear "Error: Unknown command '$1'" to stderr, 2\) Print the full usage/help message, 3\) exit 1\. This provides "Just-in-Time" help.  
-  2. Create scripts/whatis.sh: This script will search zsh/aliases.zsh and scripts/README.md for a command and print the matching line (e.g., whatis gaa \-\> alias gaa="git add .").  
-  3. Add alias: alias whatis="whatis.sh".  
-* **Target Files:**  
-  * All scripts with case "$1" in blocks (Modified)  
-  * scripts/whatis.sh (New)  
-  * zsh/aliases.zsh (Modified)
+*   **Critique:** The `new_script.sh` command is helpful but "naive." It will happily create a script and an alias that collides with an existing command or alias, potentially causing unexpected behavior.
+*   **Implementation Plan:**
+    1.  Modify `new_script.sh`: Before creating the script or alias, it must check if the proposed name is already in use.
+    2.  It should check against: 1) existing aliases in `aliases.zsh`, 2) other scripts in the `scripts/` directory, and 3) commands in the system `PATH`.
+    3.  If a collision is detected, it should warn the user and exit without making changes.
 
-## **Phase 3: Proactive Automation & Nudges**
+### **[Blindspot 28]: "Manual" Project Backups**
 
-### **\[Blindspot 9\]: Passive Health System**
+*   **Critique:** The `backup_project.sh` script is manual. Projects that are not yet on GitHub or haven't been pushed in a while are at risk of data loss.
+*   **Implementation Plan:**
+    1.  Modify `goodevening.sh`: Add a new "Project Backup" section.
+    2.  This section should scan the `~/Projects` directory for repos that have unpushed commits or are not yet tracked by a remote.
+    3.  For each such project, it should automatically run `backup_project.sh` to ensure no work is lost. This acts as a safety net for local-only work.
 
-* **Critique:** The health system is manual ("write-only"), which fails on low-energy days.  
-* **Implementation Plan:**  
-  1. Modify scripts/goodevening.sh: Make it *interactive*. Add prompts that ask "How was your energy today (1-10)?" and "Any symptoms to log?". If input is provided, pipe it to health.sh energy "$input" or health.sh symptom "$input".  
-  2. Automate meds.sh remind: Add a cron job (or launchd agent) to run the meds.sh remind command at user-defined intervals (e.g., 8am, 8pm), which will trigger the osascript notification.  
-* **Target Files:**  
-  * scripts/goodevening.sh (Modified)  
-  * (Requires crontab \-e or launchd config, which is outside the repo)
+### **[Blindspot 29]: "Naive" File Organization**
 
-### **\[Blindspot 10\]: Siloed "Blog" and "Dotfiles" Systems**
+*   **Critique:** `tidy_downloads.sh` is a blunt instrument. It moves files based on extension, but it could accidentally move a file that is currently being downloaded or used by an application.
+*   **Implementation Plan:**
+    1.  Modify `tidy_downloads.sh`: Before moving a file, check if it has been modified in the last 60 seconds.
+    2.  Use `find` with the `-mmin -1` flag to identify and skip files that are "hot."
+    3.  Add a configuration file (e.g., `~/.config/dotfiles-data/tidy_ignore.txt`) where the user can list filenames or patterns to always ignore.
 
-* **Critique:** Your \#1 priority, the blog, is disconnected from your main todo.sh productivity loop.  
-* **Implementation Plan:**  
-  1. Modify scripts/blog.sh: Add a sync\_tasks subcommand. This script will: 1\) Get all stubs from blog stubs, 2\. Get all tasks from todo list, 3\. For any stub not already in todo.txt (e.g., as "BLOG: \<stub\_name\>"), add it via todo.sh add "BLOG: \<stub\_name\>".  
-  2. Modify scripts/startday.sh: Add a call to blog sync\_tasks to run it automatically each morning.  
-  3. Modify scripts/blog.sh: Add an ideas subcommand that simply runs journal.sh search "blog idea".  
-* **Target Files:**  
-  * scripts/blog.sh (Modified)  
-  * scripts/startday.sh (Modified)
+### **[Blindspot 30]: "Orphaned" Bookmarks**
 
-### **\[Blindspot 11\]: Actively Fighting Perfectionism**
+*   **Critique:** If a directory bookmarked with `g.sh` is deleted or renamed, the bookmark becomes a "dead link" that causes an error. There is no built-in way to clean these up.
+*   **Implementation Plan:**
+    1.  Create a new subcommand for `g.sh`: `g prune`.
+    2.  This command will read the bookmarks file, check if the directory for each bookmark still exists, and interactively prompt the user to remove any bookmarks pointing to non-existent locations.
 
-* **Critique:** The system documents the "anti-perfectionism" goal but doesn't actively *nudge* you towards it.  
-* **Implementation Plan:**  
-  1. Modify scripts/goodevening.sh: "Gamify" progress. If *any* tasks were completed, print "🎉 Win: You completed X task(s) today. Progress is progress." If *any* journal entries were made, print "🧠 Win: You logged Y entries. Context captured." If both are zero, print "Today was a rest day. Logging off is a valid and productive choice."  
-  2. Modify zsh/aliases.zsh: Add alias pomo="take\_a\_break.sh 25". This weaponizes take\_a\_break.sh as a 25-minute Pomodoro timer.  
-* **Target Files:**  
-  * scripts/goodevening.sh (Modified)  
-  * zsh/aliases.zsh (Modified)
+---
 
-### **\[Blindspot 12\]: High-Friction "State" Management**
+## **Phase 3: Advanced Tooling & Polish**
 
-* **Critique:** Starting work requires multiple "setup tax" commands (cd, activate venv, launch apps).  
-* **Implementation Plan:**  
-  1. Evolve scripts/workspace\_manager.sh into scripts/state\_manager.sh (or just enhance the new scripts/g.sh).  
-  2. The save command must also detect and save: 1\) The path to venv/bin/activate if it exists, 2\) A list of associated apps (e.g., g \-a code to link the "code" app).  
-  3. The load command (g \<name\>) must: 1\) cd to the directory, 2\) *Automatically* source the venv if one is saved, 3\) *Automatically* launch all linked apps via app\_launcher.sh.  
-* **Target Files:**  
-  * scripts/workspace\_manager.sh (Modified) or scripts/g.sh (Modified)  
-  * scripts/app\_launcher.sh (May need modification to be called by another script)
+### **[Blindspot 31]: "Basic" Text Search**
 
-## **Phase 4: Intelligent Workflow Integration**
+*   **Critique:** `findtext.sh` is a simple `grep` wrapper. For a real "second brain," search needs to be more powerful and interactive.
+*   **Implementation Plan:**
+    1.  Replace `findtext.sh` with a more advanced tool that uses `fzf` (a command-line fuzzy finder).
+    2.  The new script should `rg` (ripgrep) for the search term and pipe the results into `fzf`, allowing the user to interactively filter and preview the matches.
+    3.  Selecting a match in `fzf` should open the corresponding file directly in `$EDITOR` at the correct line number.
 
-### **\[Blindspot 13\]: "Git Commit" Context Gap**
+### **[Blindspot 32]: "Limited" Media Conversion**
 
-* **Critique:** todo.sh (intent) and git (action) are disconnected.  
-* **Implementation Plan:**  
-  1. Modify scripts/todo.sh: Add a commit subcommand.  
-  2. todo commit \<num\> "message" will: 1\) Run git commit \-m "message", 2\) Run the internal logic for todo done \<num\>.  
-  3. todo commit \<num\> (with no message) will: 1\) Extract the task text for \<num\>, 2\) Run git commit \-m "Done: \[Task Text\]", 3\) Run the internal logic for todo done \<num\>.  
-* **Target Files:**  
-  * scripts/todo.sh (Modified)
+*   **Critique:** The `media_converter.sh` script is useful but only handles a few basic conversions. It could be a much more comprehensive media toolkit.
+*   **Implementation Plan:**
+    1.  Extend `media_converter.sh` with new subcommands:
+        *   `gif`: Convert a short video clip into an optimized GIF.
+        *   `strip-audio`: Remove the audio track from a video file.
+        *   `normalize-audio`: Adjust the volume of an audio file to a standard level.
+    2.  This requires adding `ffmpeg` filters and options for each new capability.
 
-### **\[Blindspot 14\]: "Now vs. Later" Task Ambiguity**
+### **[Blindspot 33]: "Noisy" Dev Server**
 
-* **Critique:** todo.sh is a flat list that creates cognitive load.  
-* **Implementation Plan:**  
-  1. Modify scripts/todo.sh: Add a bump \<num\> subcommand that moves the specified task to the top of todo.txt.  
-  2. Modify scripts/todo.sh: Add a top \<count\> subcommand that prints only the top \<count\> tasks.  
-  3. Modify zsh/aliases.zsh: Add alias next="todo top 1".  
-  4. Modify scripts/startday.sh and scripts/status.sh: Change the "TODAY'S TASKS" section to only show todo top 3 instead of the full list.  
-* **Target Files:**  
-  * scripts/todo.sh (Modified)  
-  * zsh/aliases.zsh (Modified)  
-  * scripts/startday.sh (Modified)  
-  * scripts/status.sh (Modified)
+*   **Critique:** The `dev_shortcuts.sh server` command is handy, but the Python `http.server` logs every single GET request to the console, making it very noisy.
+*   **Implementation Plan:**
+    1.  Modify `dev_shortcuts.sh` (`server` subcommand): Redirect the `stdout` and `stderr` of the `python3 -m http.server` command to `/dev/null`.
+    2.  It should still print the initial "Starting server on port..." message but then remain silent during operation.
 
-### **\[Blindspot 15\]: The "Command Black Hole"**
+### **[Blindspot 34]: "Unstyled" Cheatsheet**
 
-* **Critique:** No system exists for scheduling a command or reminder for a *specific* future time.  
-* **Implementation Plan:**  
-  1. Create scripts/schedule.sh: This script will be a user-friendly wrapper for the macOS at command.  
-  2. schedule.sh "2:30 PM" "remind 'Call Mom'" will echo "remind 'Call Mom'" | at 2:30 PM.  
-  3. Modify scripts/startday.sh: Add a new "SCHEDULED TASKS" section that runs atq (which lists pending at jobs).  
-* **Target Files:**  
-  * scripts/schedule.sh (New)  
-  * scripts/startday.sh (Modified)
+*   **Critique:** The `cheatsheet.sh` is a plain text dump. With a little formatting, it could be much easier to read and scan quickly.
+*   **Implementation Plan:**
+    1.  Modify `cheatsheet.sh`: Use `tput` or ANSI escape codes to add color and styles.
+    2.  Section headers (e.g., "GIT COMMANDS") should be bold and a different color.
+    3.  Commands themselves could be highlighted to stand out from their descriptions.
 
-### **\[Blindspot 16\]: "Static" Clipboard Manager**
+### **[Blindspot 35]: No "Undo" for Tasks**
 
-* **Critique:** clipboard\_manager.sh only loads static text, wasting potential.  
-* **Implementation Plan:**  
-  1. Modify scripts/clipboard\_manager.sh (load subcommand): If the file being loaded (e.g., \~/.config/dotfiles-data/clipboard\_history/my\_snippet) is *executable* (\[ \-x "$file\_path" \]), the script must *execute it* and pipe its stdout to pbcopy, rather than cat-ing its content.  
-  2. Create a dynamic snippet: echo '\#\!/bin/bash\\ngit branch \--show-current' \> \~/.config/dotfiles-data/clipboard\_history/gitbranch && chmod \+x \~/.config/dotfiles-data/clipboard\_history/gitbranch.  
-* **Target Files:**  
-  * scripts/clipboard\_manager.sh (Modified)
+*   **Critique:** If a user accidentally marks a task as done with `todo done`, there is no easy way to revert it. The task is moved to a separate file, and restoring it is a manual process.
+*   **Implementation Plan:**
+    1.  Create a new `todo.sh` subcommand: `todo undo`.
+    2.  This command will read the last line from `todo_done.txt`, remove it from that file, and append it back to `todo.txt`.
+    3.  It should print a confirmation message like "Restored task: [Task Text]".
 
-## **Phase 5: Advanced Knowledge & Environment**
+---
 
-### **\[Blindspot 17\]: "How-To" Memory Gap**
+## **Phase 4: System-Wide Resilience & Observability**
 
-* **Critique:** cheatsheet.sh is too generic. A personal, searchable "how-to" wiki for complex workflows is missing.  
-* **Implementation Plan:**  
-  1. Create scripts/howto.sh: This script will manage text files in \~/.config/dotfiles-data/how-to/.  
-  2. Implement howto add \<name\>: Opens \~/.config/dotfiles-data/how-to/\<name\>.txt in $EDITOR.  
-  3. Implement howto \<name\>: cats the content of the file.  
-  4. Implement howto search \<term\>: greps all files in the how-to directory.  
-  5. Add alias: alias howto="howto.sh".  
-* **Target Files:**  
-  * scripts/howto.sh (New)  
-  * zsh/aliases.zsh (Modified)
+### **[Blindspot 36]: "Fragile" Bootstrap Process**
 
-### **\[Blindspot 18\]: Digital Clutter Anxiety**
+*   **Critique:** The `bootstrap.sh` script is not idempotent. If it's run a second time, it may fail or cause unintended side effects (e.g., re-creating symlinks).
+*   **Implementation Plan:**
+    1.  Modify `bootstrap.sh`: Add checks before performing any action.
+    2.  Before creating a symlink, check if it already exists and points to the correct location.
+    3.  Before installing a dependency, check if it's already installed.
+    4.  The script should be safe to run multiple times, only making changes that are actually needed.
 
-* **Critique:** tidy\_downloads.sh is manual. Clutter on \~/Desktop and \~/Downloads builds up, causing stress.  
-* **Implementation Plan:**  
-  1. Create scripts/review\_clutter.sh: This script will find files in \~/Desktop and \~/Downloads older than 30 days.  
-  2. It will loop through each file and interactively prompt the user: (a)rchive, (d)elete, (s)kip?.  
-  3. (a) moves to \~/Documents/Archives/YYYY-MM/, (d) runs rm, (s) does nothing.  
-* **Target Files:**  
-  * scripts/review\_clutter.sh (New)
+### **[Blindspot 37]: "Hidden" Automation**
 
-### **\[Blindspot 19\]: "Magic" Automation Problem**
+*   **Critique:** The `meds.sh remind` automation is designed to be set up in a user's personal `crontab`, which is opaque and outside the dotfiles repo. This makes it hard to manage and audit.
+*   **Implementation Plan:**
+    1.  Create a `crontab.example` file in the repository that documents the intended cron jobs.
+    2.  Create a new script, `schedule_manager.sh`, that can `install` or `uninstall` the cron jobs from the example file into the user's actual crontab, providing a single point of management.
 
-* **Critique:** As automation increases, the system becomes "magic" and untrustworthy. A lack of transparency is bad for a cognitive support system.  
-* **Implementation Plan:**  
-  1. Create a central audit log: \~/.config/dotfiles-data/system.log.  
-  2. Modify all automated scripts (goodevening.sh task cleanup, startday.sh run, meds.sh remind, blog.sh sync\_tasks) to append a simple, timestamped, human-readable log entry to system.log. (e.g., echo "$(date): goodevening.sh \- Cleaned 3 old tasks." \>\> $SYSTEM\_LOG\_FILE).  
-  3. Modify zsh/aliases.zsh: Add alias systemlog="tail \-n 20 \~/.config/dotfiles-data/system.log".  
-* **Target Files:**  
-  * scripts/goodevening.sh (Modified)  
-  * scripts/startday.sh (Modified)  
-  * scripts/meds.sh (Modified)  
-  * scripts/blog.sh (Modified)  
-  * zsh/aliases.zsh (Modified)
+### **[Blindspot 38]: No "Dry-Run" Mode**
 
-### **\[Blindspot 20\]: The VS Code Shell Conflict**
+*   **Critique:** Scripts that perform destructive or significant file operations (`tidy_downloads.sh`, `review_clutter.sh`, `file_organizer.sh`) lack a "dry-run" mode. The user has to trust that they will do the right thing.
+*   **Implementation Plan:**
+    1.  Modify these scripts to accept a `--dry-run` or `-n` flag.
+    2.  When this flag is present, the script should print the actions it *would* take (e.g., "Would move file.jpg to Images/") without actually performing them.
 
-* **Critique:** The system fails in the VS Code terminal because VS Code runs a login shell (.zprofile) while Terminal.app runs an interactive shell (.zshrc), and aliases are in .zshrc.  
-* **Implementation Plan:**  
-  1. Modify zsh/.zprofile: Add the following line at the *very end* of the file:  
-     \# Source the interactive config for login shells to unify environments  
-     \[ \-f "$ZDOTDIR/.zshrc" \] && source "$ZDOTDIR/.zshrc"
+### **[Blindspot 39]: "Inconsistent" Logging**
 
-  2. This makes login shells (like VS Code's) also source the .zshrc file, loading all aliases and functions and unifying the two environments.  
-* **Target Files:**  
-  * zsh/.zprofile (Modified)
+*   **Critique:** While a `system.log` exists, the format and verbosity of log messages are inconsistent across different scripts.
+*   **Implementation Plan:**
+    1.  Create a dedicated, separate logger script (e.g., `log.sh`).
+    2.  This script will take a log level (INFO, WARN, ERROR) and a message, and format it consistently before appending to `system.log`.
+    3.  Refactor all other scripts (`goodevening.sh`, `startday.sh`, etc.) to call `log.sh` instead of `echo`ing directly to the log file.
+
+### **[Blindspot 40]: No "Self-Update" Capability**
+
+*   **Critique:** The dotfiles are a git repository, but there is no built-in, easy way for the user to pull the latest changes from the remote.
+*   **Implementation Plan:**
+    1.  Create a new script: `dotfiles_update.sh`.
+    2.  This script will `cd` into the dotfiles directory, run `git pull`, and then perhaps run `dotfiles_check.sh` to ensure the update didn't break anything.
+    3.  Add an alias `update_dotfiles` for this script. This makes keeping the toolkit up-to-date a single, simple command.
