@@ -42,6 +42,20 @@ pbpaste | sh                                   # run a copied shell snippet (onl
 pbpaste | jq '.summary'                        # inspect a copied JSON blob
 ```
 
+## Saved Snippet Toolbox (`clip`)
+
+The repo ships with a `clip` helper that stores clipboard snippets in `~/.config/dotfiles-data/clipboard_history/`:
+
+```bash
+clip save standup    # Save the current clipboard as "standup"
+clip list            # Preview the first part of each saved clip
+clip load standup    # Restore the snippet to your clipboard
+```
+
+- Files are plain text, so you can edit them in your editor.
+- Make a clip executable (`chmod +x ~/.config/dotfiles-data/clipboard_history/my_snippet`) and `clip load my_snippet` will run it before piping the output back to your clipboard—perfect for reusable formatters.
+- `clip peek` gives you a quick look at whatever is currently sitting in the clipboard.
+
 ## Real-World Workflows
 
 ### Save a Command’s Output and Share It
@@ -101,7 +115,7 @@ clipfmt prettier --parser markdown
 ## Integrations in This Repo
 
 - `copy`, `paste`, `copyfile`, and `copyfolder` aliases (`zsh/aliases.zsh`).
-- `clipboard_manager.sh` stores named snippets and uses `pbcopy`/`pbpaste` behind the scenes.
+- `clip`, `clip save`, `clip load`, `clip list`, and `clip peek` wrap `clipboard_manager.sh` (supports executable snippets for dynamic output).
 - `graballtext` pairs well with `pbcopy` for quick sharing: `graballtext && pbcopy < all_text_contents.txt`.
 
 ## Troubleshooting

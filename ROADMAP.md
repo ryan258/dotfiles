@@ -1,7 +1,7 @@
 # Daily Context System - Roadmap
 
 **Purpose:** Combat MS-related brain fog by automatically preserving context across days  
-**Status:** Core system working as of October 10, 2025  
+**Status:** Comprehensive system stable as of November 5, 2025 (daily loop refreshed)  
 **Location:** `~/dotfiles/`
 
 ---
@@ -21,24 +21,41 @@ Ryan has MS-related brain fog. Each morning is a reset:
 ## ✅ What's Working Now
 
 ### Morning Routine (Automatic)
-- **`startday`** auto-runs on first terminal of the day
+- **`startday`** auto-runs once per calendar day (guarded by `~/.config/dotfiles-data/.startday_last_run`).
 - Shows:
+  - 🎯 Focus for today (via `focus.sh`)
   - Yesterday's journal entries
-  - Active projects (modified in last 7 days)
-  - Blog status (from `blog.sh`)
-  - Health appointments with countdown
-  - Today's task list
+  - Active GitHub projects pushed in the last 7 days (via `github_helper.sh`)
+  - Suggested directories (via `g.sh suggest` using usage logs)
+  - Blog sync status and stub-to-todo integration
+  - Health appointments with countdown and today's health snapshot
+  - Scheduled commands/reminders
+  - Stale tasks older than 7 days
+  - Top 3 priority tasks
 
 ### Core Commands (Manual)
-- **`journal "note"`** - Timestamped entries → `~/.daily_journal.txt`
-- **`todo add "task"`** - Add tasks → `~/.todo_list.txt`
-- **`status`** - Enhanced context dashboard
-- **`goodevening`** - Enhanced end-of-day summary
-- **`projects`** - Forgotten project recovery tool
-- **`blog`** - Blog content workflow tool
-- **`health add "desc" "YYYY-MM-DD HH:MM"`** - Track appointments
-- **`goto`** - Bookmark project directories
-- **`backup`** - Timestamped project backups
+- **`focus`, `focus show`, `focus clear`** – Set or recall the day's anchor surfaced by `startday`.
+- **`journal "note"` / `dump`** – Quick entries or long-form brain dumps stored in `~/.config/dotfiles-data/journal.txt`.
+- **`todo add|done|undo|commit|bump|top`** – Task management with git integration and encouraging feedback (`todo.txt`, `todo_done.txt`).
+- **`status`** – Enhanced context dashboard for mid-day recovery.
+- **`goodevening`** – Evening summary with gamification, project safety checks, data validation, and backups.
+- **`projects`** – Forgotten project recovery using GitHub API.
+- **`blog`** – Blog content workflow (status, stubs, random, sync, ideas).
+- **`health` / `meds`** – Track appointments, symptoms, energy, medication adherence.
+- **`g` / `g suggest` / `g prune`** – Smart navigation, suggestions, and bookmark cleanup.
+- **`weekreview --file` / `setup_weekly_review`** – Weekly retros exported to Markdown and scheduled nudges.
+- **`backup` / `backup_data`** – Timestamped project backups and nightly data snapshots.
+
+---
+
+## ✅ November 2025 Enhancements
+
+- **Daily Focus Anchor:** `focus.sh` persists the day's intention so `startday` can surface it immediately; `focus show` is the fastest way to get back on track.
+- **Richer Morning Briefing:** `startday` now syncs blog stubs to todos, pulls GitHub pushes from any machine, suggests directories (via usage analytics), and links to the latest weekly review file on Mondays.
+- **Weekly Review Automation:** `week_in_review.sh --file` exports Markdown summaries to `~/Documents/Reviews/Weekly/`, with `setup_weekly_review.sh` scheduling the Sunday run through the existing `schedule.sh` helper.
+- **Navigation Intelligence:** `g.sh` logs directory usage, powers `g suggest`, and ships with `g prune --auto` to drop dead bookmarks.
+- **Evening Safety Net:** `goodevening` cleans stale tasks, audits git hygiene, expects `scripts/data_validate.sh` for structured data checks, and only then runs `backup_data.sh`.
+- **Task & Journal Quality of Life:** `todo` now supports `undo` with positive reinforcement messages, and the new `dump` script captures long-form thoughts via `$EDITOR`.
 
 ---
 
@@ -50,26 +67,34 @@ Ryan has MS-related brain fog. Each morning is a reset:
 │   ├── .zshrc              # Main config, sources aliases, auto-runs startday
 │   └── aliases.zsh         # Command aliases
 ├── scripts/
-│   ├── startday.sh         # Morning context display
-│   ├── goodevening.sh      # Evening wrap-up
-│   ├── health.sh           # Health appointment tracking
-│   ├── journal.sh          # Timestamped note taking
-│   ├── todo.sh             # Task management
-│   ├── status.sh           # Mid-day context check
-│   ├── projects.sh         # Forgotten project recovery
-│   ├── blog.sh             # Blog content workflow
+│   ├── startday.sh         # Morning briefing (focus, GitHub, blog sync, suggestions, health)
+│   ├── focus.sh            # Set/show/clear the daily focus message
+│   ├── week_in_review.sh   # Weekly summary (supports `--file` exports)
+│   ├── setup_weekly_review.sh # Friendly scheduler wrapper for weekly exports
+│   ├── goodevening.sh      # Evening wrap-up with safety checks, validation, backups
+│   ├── g.sh                # Smart navigation (save/list/suggest/prune bookmarks)
+│   ├── github_helper.sh    # GitHub API helper for startday/projects
+│   ├── dump.sh             # Long-form journaling via $EDITOR
+│   ├── todo.sh             # Task management (add/done/undo/commit/bump/top)
+│   ├── health.sh / meds.sh # Health + medication tracking dashboards
+│   ├── schedule.sh         # Human-friendly wrapper for `at`
+│   ├── blog.sh             # Blog workflow integration
 │   └── ...
 └── README.md               # System documentation
 
 Data Files (centralized in ~/.config/dotfiles-data/):
 journal.txt                 # All journal entries
 todo.txt                    # Active tasks
-todo_done.txt              # Completed tasks
-health.txt                 # Upcoming appointments (format: date|description)
-dir_bookmarks              # Saved directory bookmarks
-dir_history                # Recent directory history
-favorite_apps              # Application launcher shortcuts
-clipboard_history/         # Saved clipboard snippets
+todo_done.txt               # Completed tasks
+health.txt                  # Appointments, energy, symptoms
+medications.txt             # Medication schedules & logs
+daily_focus.txt             # Current focus surfaced by startday
+dir_bookmarks / dir_history # Navigation bookmarks/history
+dir_usage.log               # Smart suggestion weighting for `g suggest`
+favorite_apps               # Application launcher shortcuts
+clipboard_history/          # Saved (and executable) clipboard snippets
+how-to/                     # Personal how-to wiki
+system.log                  # Automation audit trail
 ```
 
 ---
@@ -235,6 +260,11 @@ This second round addressed critical data integrity gaps, deepened workflow inte
 *   ✅ **19. "Magic" Automation Problem:** Created central audit log at `~/.config/dotfiles-data/system.log`, automated scripts log actions, added `systemlog` alias.
 *   ✅ **20. The VS Code Shell Conflict:** `.zprofile` sources `.zshrc` to unify login/interactive shell environments.
 
+## ⚠️ Follow-Ups
+
+- Create `scripts/data_validate.sh` so the goodevening validation step stops warning and backups can run silently.
+- Document the GitHub token requirement in onboarding (PAT at `~/.github_token`) whenever we clone to a new machine.
+
 ## ✅ Recent Wins
 
 | Item | Date | Notes |
@@ -269,10 +299,14 @@ This second round addressed critical data integrity gaps, deepened workflow inte
 - **Health context matters:** Symptoms affect everything
 - **System must be automatic:** Relying on remembering = system failure
 - **VS Code terminal:** Has shell integration conflict, use Terminal.app for testing
+- **Daily guard:** `startday` uses `~/.config/dotfiles-data/.startday_last_run` to avoid reruns—touching it will re-trigger the morning briefing.
+- **Focus + dump:** `focus` + `dump` are the preferred ways to re-anchor the day and capture longer thoughts.
+- **Backups:** `goodevening` expects `scripts/data_validate.sh`; missing file currently prints a warning before skipping backups—implement it when possible.
+- **GitHub API:** Requires a PAT stored at `~/.github_token` (classic token with `repo` scope) for `startday` and `projects`.
 
 **Before suggesting new features:** Check if an existing script already does it. The system is more complete than Ryan may remember.
 
 ---
 
-**Last Updated:** November 2, 2025
+**Last Updated:** November 5, 2025
 **Next Review:** Q1 2026 - Foundation complete, all Q4 objectives shipped, all backlog items implemented. System is comprehensive and stable. Ready for new priorities.

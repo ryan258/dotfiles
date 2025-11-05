@@ -15,36 +15,48 @@ This setup is guided by a few key principles:
 
 This toolkit provides a comprehensive set of enhancements, including:
 
-  * **Productivity & Task Management:** Advanced command-line tools for todos (with prioritization and git integration), journaling (with search and "on this day"), health/symptom tracking with trend dashboards, and medication adherence monitoring.
-  * **Project & Workspace Management:** Scaffold new projects, create timestamped backups, and save/load directory contexts with intelligent state management (auto-activates venvs, launches apps).
-  * **Knowledge Management:** Personal searchable how-to wiki, blog content integration with todo system, and journal search capabilities for building a "second brain".
-  * **System & Network Diagnostics:** Get a quick overview of your system's hardware, CPU, and memory usage, check battery status, and troubleshoot network issues. Includes system health validation and audit logging.
-  * **File & Archive Utilities:** Effortlessly organize your `Downloads` folder, find large or duplicate files, manage archives, and interactive clutter review for Desktop/Downloads.
-  * **Development Shortcuts:** Automate common Git workflows with todo integration, manage Python virtual environments, spin up local web servers, and schedule future commands.
-  * **macOS Integration:** Enhanced clipboard manager with dynamic snippets, launch favorite applications, receive system notifications, and unified shell environment across Terminal and VS Code.
+  * **Productivity & Task Management:** Advanced todo flow with prioritization, git-integrated commits, encouraging feedback, and `todo undo`; quick journaling plus `dump` for long-form context capture; health and medication tracking with dashboards; weekly and daily reviews generated from recorded activity.
+  * **Project & Workspace Management:** Scaffold new projects, create timestamped backups, and save/load directory contexts with intelligent state management (auto-activates venvs, launches apps, logs usage, and can suggest where to jump next).
+  * **Knowledge Management:** Personal searchable how-to wiki, blog content integration with todo system, journal search/"on this day", and weekly Markdown summaries for looking back.
+  * **System & Network Diagnostics:** Quick hardware, CPU, and memory snapshots, battery status, network troubleshooting, system validation, and audit logging so automation never feels opaque.
+  * **File & Archive Utilities:** Effortlessly organize `~/Downloads`, find large or duplicate files, manage/inspect archives, and run interactive clutter reviews to keep surfaces clean.
+  * **Development Shortcuts:** Automate common Git workflows, manage Python environments, spin up project workspaces, and schedule future commands without leaving the shell.
+  * **macOS Integration:** Enhanced clipboard manager with dynamic snippets, saved clip executions, notifications, LaunchAgent-friendly scripts, and a unified shell environment across Terminal and VS Code.
 
-## What's New in Round 2 (November 2025)
+## What's New (November 2025 Refresh)
 
-This project has recently completed a major evolution, "Round 2," which focused on deepening integrations, improving data integrity, and adding proactive intelligence. Key improvements include:
+Round 2 shipped earlier this month and we immediately layered on quality-of-life upgrades to tighten the daily loop:
 
-  * **Enhanced Error Handling & Data Validation:** The entire system is more robust, with better error handling and a new data validation script to prevent corruption.
-  * **Health & Productivity Correlation:** The `health` dashboard now correlates energy levels with task completions and git activity, providing valuable insights into productivity patterns.
-  * **Smart Navigation:** The `g` command now logs directory usage, providing intelligent suggestions for frequently used directories.
-  * **Automated Weekly Reviews:** A new LaunchAgent automatically generates a weekly review every Sunday.
-  * **Safer File Operations:** Scripts like `tidy_downloads` now have safety checks to avoid moving recently modified files.
-  * **And much more:** See the `CHANGELOG.md` for a detailed list of all 20+ improvements.
+  * **Focus & Daily Anchor:** A new `focus` command stores the day's intention so `startday` can surface it at the very top of your morning briefing.
+  * **Smarter Morning Briefing:** `startday` now pulls GitHub activity, syncs blog stubs to todos, highlights suggested directories via `g suggest`, and links to the latest weekly review file when it's Monday.
+  * **Weekly Review Automation:** `week_in_review.sh --file` writes a Markdown recap to `~/Documents/Reviews/Weekly/`, and `setup_weekly_review.sh` can schedule it so Sunday summaries appear automatically.
+  * **Safety Nets & Backups:** `goodevening` validates structured data (expects `scripts/data_validate.sh`) before running `backup_data.sh`, so nightly backups only proceed when files look healthy.
+  * **Task Flow Upgrades:** `todo undo` rescues accidental completions, and both `todo add`/`todo done` cheer you on. Pair that with the new `dump` script for long-form journaling on foggy days.
+  * **Navigation Intelligence:** `g.sh` logs directory usage and can suggest where to jump next; `g prune --auto` keeps dead bookmarks out of the way.
+
+See `CHANGELOG.md` for the play-by-play of the latest blindspots and fixes.
+
+## Daily Loop at a Glance
+
+  * `startday` launches automatically once per calendar day on your first shell, greeting you with the day's focus, fresh GitHub pushes, suggested directories, blog sync results, and health reminders.
+  * Capture intentions with `focus "Ship the review"` (clear with `focus clear`) so your morning dashboard anchors you immediately.
+  * Use `status` for midday course-correction, `todo` for prioritized tasks (`bump`, `top`, `undo`, `commit`), and `dump`/`journal` to keep context searchable.
+  * Close out with `goodevening` to celebrate wins, spot risky repos, validate data, and trigger `backup_data.sh`.
+  * Run `weekreview --file` or schedule it with `setup_weekly_review.sh` for an automatic Sunday recap saved to `~/Documents/Reviews/Weekly/`.
+
+Need the expanded playbook? Check `docs/happy-path.md` for the brain-fog-friendly walkthrough.
 
 ## Prerequisites
 
 This setup assumes you are on macOS with Zsh (the default shell). You will also need:
 
   * **Homebrew:** The missing package manager for macOS.
-  * **Optional Dependencies:** For full functionality, install the following tools via Homebrew:
-      * `ffmpeg`: For converting video to audio.
-      * `imagemagick`: For resizing images.
-      * `ghostscript`: For compressing PDFs.
-      * `jq`: For processing JSON (used in various helper scripts).
-      * `unrar`: For extracting `.rar` archives.
+  * **Core CLIs:** `jq`, `curl`, and `gawk` (the bootstrap script installs/updates them for you).
+  * **Optional Extras:** Install with Homebrew for specific workflows:
+      * `ffmpeg`: Convert video to audio.
+      * `imagemagick`: Resize images.
+      * `ghostscript`: Compress PDFs.
+      * `unrar`: Extract `.rar` archives.
 
 ## Installation
 
@@ -104,8 +116,9 @@ All script data is centralized in `~/.config/dotfiles-data/` for easy backup and
   * `health.txt` – Health appointments, symptom logs, and energy ratings
   * `medications.txt` – Medication schedules and dose logs
   * `system.log` – Central audit log for all automated actions
-  * `dir_bookmarks` & `dir_history` – Directory navigation data
+  * `dir_bookmarks`, `dir_history`, `dir_usage.log` – Smart navigation bookmarks, history, and frequency scores
   * `favorite_apps` – Application launcher shortcuts
+  * `daily_focus.txt` – Stores the current focus surfaced by `startday`
   * `clipboard_history/` – Saved clipboard snippets (supports dynamic/executable snippets)
   * `how-to/` – Personal how-to wiki articles
 
@@ -135,13 +148,17 @@ Many scripts can be called directly. Some, marked with `(source)`, provide extra
 
 | Command        | Description                                                                 |
 | :------------- | :-------------------------------------------------------------------------- |
-| `todo`         | Advanced todo list manager with `add`, `list`, `done`, `commit`, `bump`, `top` - integrates with git commits and task prioritization. |
-| `journal`      | Timestamped journal with `search` and `onthisday` features for building your second brain. |
+| `todo`         | Advanced todo list manager with `add`, `list`, `done`, `undo`, `commit`, `bump`, `top` plus encouraging feedback and git integration. |
+| `journal`      | Timestamped journal with `search`, `onthisday`, and quick capture aliases for building your second brain. |
+| `dump`         | Launches `$EDITOR` for long-form brain dumps, appending the result to `journal.txt` with a timestamp. |
 | `health`       | Track appointments, symptoms, and energy levels with `dashboard` for 30-day trend analysis. |
 | `meds`         | Medication tracking system with `check`, `log`, `remind`, and `dashboard` for adherence monitoring. |
-| `startday`     | Automated morning routine showing yesterday's context, active projects, blog status, health reminders, stale tasks, and top 3 priorities. Syncs blog stubs to todos. |
-| `goodevening`  | End-of-day summary with gamified progress tracking, project safety checks (uncommitted changes, stale branches), and automated data backups. |
-| `g` (source)   | Unified navigation system - bookmarks, recent dirs, auto-activates venvs, launches apps, runs on-enter commands. Replaces goto/back/workspace_manager. |
+| `focus`        | Set, show, or clear the day's focus message surfaced by `startday`. |
+| `startday`     | Automated morning routine with focus reminder, GitHub activity, blog sync, suggested directories, health snapshot, weekly review link, stale tasks, and top priorities. |
+| `goodevening`  | End-of-day summary with gamified wins, project safety checks, data validation (expects `data_validate.sh`), and automated backups. |
+| `weekreview`   | Weekly recap of tasks, journal entries, and git commits; use `--file` to export to Markdown. |
+| `setup_weekly_review` | Schedule `weekreview --file` via the friendly `schedule.sh` wrapper for Sunday evenings. |
+| `g` (source)   | Unified navigation system – bookmarks, recent dirs, usage logging, suggestions, auto-venv activation, on-enter commands, and optional app launching. |
 | `blog`         | Blog workflow tools: `status`, `stubs`, `random`, `sync` (to todos), `ideas` (search journal). |
 | `howto`        | Personal searchable how-to wiki for storing and retrieving complex workflows. |
 | `schedule`     | User-friendly wrapper for `at` command to schedule future commands and reminders. |

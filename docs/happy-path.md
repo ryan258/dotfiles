@@ -5,11 +5,14 @@ This document outlines the ideal daily workflow using your context-recovery syst
 ## Morning Routine (Automatic)
 
 ### What Happens
-When you open your first terminal of the day, `startday` runs automatically and shows:
+When you open your first terminal of the day, `startday` runs automatically (only once per calendar day) and shows:
+- 🎯 Focus for today (if you set one with `focus "..."`)
 - Yesterday's journal entries (what you were working on)
-- Active GitHub projects (pushed in last 7 days)
+- Active GitHub projects (pushed in last 7 days from any machine)
+- Suggested directories based on recent/frequent usage (`g suggest`)
 - Blog status (auto-syncs blog stubs to your todo list)
-- Upcoming health appointments with countdown
+- Weekly review pointer on Mondays (links to the Markdown summary saved in `~/Documents/Reviews/Weekly/`)
+- Upcoming health appointments with countdown plus today's energy/symptom snapshot
 - Scheduled commands/reminders (from `schedule` command)
 - Stale tasks (older than 7 days - might want to address these)
 - Your top 3 priority tasks (not the full overwhelming list)
@@ -24,6 +27,17 @@ startday
 ```
 
 ## Morning: Capture Your Intentions
+
+### Set Today's Focus
+Give your morning dashboard an anchor:
+
+```bash
+focus "Ship the insights capsule"
+focus show       # Remind yourself later in the day
+focus clear      # When you want to reset
+```
+
+Whatever you set here appears at the top of `startday` (and you can re-run `startday` manually anytime).
 
 ### Add Today's Tasks
 As ideas come to you, quickly add them:
@@ -74,6 +88,12 @@ This shows:
 - Today's journal entries
 - Today's tasks
 
+Need a nudge on where to jump next?
+
+```bash
+g suggest | head -3   # Top smart directory suggestions
+```
+
 ### Journal Important Moments
 Capture context as things happen:
 
@@ -87,6 +107,11 @@ journal "blog idea: write about MS and developer tools"
 **Shortcut:**
 ```bash
 j "Quick note"     # Alias for 'journal'
+```
+
+**Need to brain dump paragraphs?**
+```bash
+dump               # Opens $EDITOR, saves everything to the journal for today
 ```
 
 **Search Your Past:**
@@ -107,6 +132,9 @@ todo done 3        # Complete task #3
 todo commit 2 "Fixed authentication bug"
 # Or let it auto-generate the commit message from the task:
 todo commit 2
+
+# Undo an accidental completion:
+todo undo         # Restores the most recently completed task
 ```
 
 ## Evening: Close the Loop
@@ -119,16 +147,17 @@ goodevening
 ```
 
 This shows:
-- **Gamified progress:** Celebrates tasks completed and journal entries logged (progress is progress!)
 - Tasks you completed today
 - Today's journal entries
+- **Gamified progress:** Celebrates tasks completed and journal entries logged (progress is progress!)
 - **Project safety checks:**
   - Uncommitted changes
   - Large diffs (>100 lines)
   - Stale branches (>7 days old)
   - Unpushed commits
 - **Automated cleanup:** Removes completed tasks older than 7 days
-- **Automated backup:** Silently backs up all your data to `~/Backups/dotfiles_data/`
+- **Data validation:** Runs `scripts/data_validate.sh` (add this script if you haven't yet) to catch corrupted files before backing up
+- **Automated backup:** When validation passes, backs up everything in `~/.config/dotfiles-data/` to `~/Backups/dotfiles_data/`
 
 **Note:** The interactive prompts for health tracking are available but currently commented out (optional feature).
 
@@ -137,13 +166,19 @@ This shows:
 Once a week (Sunday evenings work well):
 
 ```bash
-weekreview
+weekreview --file    # Saves to ~/Documents/Reviews/Weekly/YYYY-W##.md
 ```
 
 Shows:
 - Completed tasks from last 7 days
 - Journal entries from last 7 days
 - Git contributions this week
+
+Want it to run automatically? Use the friendly scheduler wrapper:
+
+```bash
+setup_weekly_review    # Schedules next Sunday's export via schedule.sh
+```
 
 ## Health Tracking
 
@@ -256,6 +291,12 @@ g recent           # Same thing
 g list             # See all saved locations
 ```
 
+### Let the System Suggest & Tidy
+```bash
+g suggest | head -3    # Smart suggestions based on frequency + recency
+g prune --auto         # Remove bookmarks whose directories disappeared
+```
+
 ## Productivity Power Tools
 
 ### Focus Timer (Pomodoro)
@@ -300,35 +341,40 @@ systemlog                             # View automation activity log
 | `journal "msg"` or `j "msg"` | Capture a moment |
 | `journal search "<term>"` | Find past journal entries |
 | `journal onthisday` | See this day in previous years |
+| `dump` | Long-form journaling via your `$EDITOR` |
 | `todo add "task"` or `ta "task"` | Add a task |
 | `todo list` or `t` | See all tasks |
 | `todo top 3` | See top 3 priorities |
 | `todo bump <num>` | Move task to top |
 | `todo done <num>` | Complete a task |
 | `todo commit <num>` | Commit code + complete task |
+| `todo undo` | Restore the most recently completed task |
 | `health energy <1-10>` | Log energy level |
 | `health symptom "..."` | Log symptoms |
 | `health dashboard` | 30-day health trends |
 | `meds check` | Check medication schedule |
 | `meds dashboard` | Adherence tracking |
-| `weekreview` | Weekly summary |
+| `weekreview --file` | Weekly summary saved to Markdown |
+| `setup_weekly_review` | Schedule the weekly export |
+| `focus` / `focus show` | Set or view today's focus |
 | `g save <name>` | Bookmark this directory |
 | `g <name>` | Jump to bookmark (with venv/apps) |
+| `g suggest` | Smart directory suggestions |
 | `pomo` | 25-minute Pomodoro timer |
 | `howto <name>` | Personal how-to wiki |
 | `systemlog` | View automation activity |
 
 ## The Most Important Rules
 
-1. **Let startday guide your morning:** It automatically brings back yesterday's context - just read and absorb.
+1. **Let `startday` + `focus` anchor you:** Set a focus if you can, then read the briefing—it stitches together blog, health, GitHub, and tasks for you.
 
-2. **Use `next` when overwhelmed:** Don't look at the full todo list. Just see your top priority and focus on that one thing.
+2. **Use `next` when overwhelmed:** Don't look at the full todo list. Just see your top priority and focus on that one thing (undo is there if you mis-click).
 
-3. **Journal liberally:** Every thought, every discovery, every struggle. Search is powerful now - make your journal searchable.
+3. **Journal and `dump` liberally:** Every thought, every discovery, every struggle. Search is powerful now—give your future self breadcrumbs.
 
-4. **Trust the automation:** The system now tracks patterns (health dashboards), syncs your blog to todos, backs up data, and shows you stale tasks. Let it work for you.
+4. **Trust the automation:** The system tracks patterns, syncs your blog to todos, validates data before backups, and shows you stale tasks. Let it work for you.
 
-5. **Celebrate progress:** `goodevening` now gamifies your wins. Even one task or one journal entry counts as progress.
+5. **Celebrate progress:** `goodevening` gamifies your wins. Even one task or one journal entry counts as progress.
 
 ## Tips for Bad Brain Fog Days
 
@@ -337,36 +383,58 @@ systemlog                             # View automation activity log
    next      # Just see task #1, that's all you need right now
    ```
 
-2. **Smaller tasks**: Break everything into tiny pieces
+2. **Remind yourself of the plan**: When the morning feels fuzzy
+   ```bash
+   focus show    # Re-read the focus you set earlier
+   startday      # Re-run the dashboard if you need the full picture
+   ```
+
+3. **Smaller tasks**: Break everything into tiny pieces
    ```bash
    todo add "Read auth code - just 10 minutes"
    todo add "Write 1 paragraph of blog post"
    ```
 
-3. **Log your health data**: Track the correlation between symptoms and productivity
+4. **Log your health data**: Track the correlation between symptoms and productivity
    ```bash
    health energy 3
    health symptom "Heavy fog today, fatigue"
    journal "Heavy fog today, taking frequent breaks"
    ```
 
-4. **Use status liberally**: Every time you lose your place
+5. **Use status liberally**: Every time you lose your place
    ```bash
    status    # Run this often, no shame
    ```
 
-5. **Use search when confused**: Your past self left breadcrumbs
+6. **Capture more context, quickly**: When words are messy
+   ```bash
+   dump      # Opens your editor for a long-form brain dump
+   j "short thought"   # Keep breadcrumbs searchable
+   ```
+
+7. **Use search when confused**: Your past self left breadcrumbs
    ```bash
    journal search "what was I working on"
    journal search "authentication"     # Find that work you did before
    ```
 
-6. **Take a Pomodoro**: 25 minutes of focus, then break
+8. **Let navigation nudge you**: When you can't remember the project path
+   ```bash
+   g suggest | head -3   # Smart guesses based on what you use most
+   ```
+
+9. **Undo mistakes immediately**: If you complete the wrong task
+   ```bash
+   todo undo
+   ```
+
+10. **Take a Pomodoro**: 25 minutes of focus, then break
    ```bash
    pomo      # Timer + notification when done
    ```
 
-7. **Trust the system**: Your notes are there, searchable, and backed up. You don't have to remember. That's the point.
+11. **Trust the system**: Your notes are there, searchable, and backed up. You don't have to remember. That's the point.
 
 ## Data Location
 
@@ -376,9 +444,12 @@ All your data is centralized in `~/.config/dotfiles-data/`:
 - `health.txt` - Health appointments, symptoms, energy ratings
 - `medications.txt` - Medication schedules and dose logs
 - `system.log` - Audit trail of all automation activity
-- `dir_bookmarks` - Saved navigation bookmarks
+- `dir_bookmarks`, `dir_history`, `dir_usage.log` - Smart navigation bookmarks, history, and suggestion weights
+- `daily_focus.txt` - Stores the focus message surfaced by `startday`
 - `clipboard_history/` - Saved clipboard snippets
 - `how-to/` - Your personal how-to wiki articles
+
+**Weekly Reviews:** `weekreview --file` saves Markdown summaries to `~/Documents/Reviews/Weekly/`.
 
 **Automatic Backups:** This directory is automatically backed up daily to `~/Backups/dotfiles_data/` by `goodevening`. Your data is safe.
 
@@ -388,4 +459,4 @@ All your data is centralized in `~/.config/dotfiles-data/`:
 
 **Remember:** The system exists because your brain doesn't always work the same way every day. That's okay. Use it. Trust it. Search it. Let the automation work for you. It's got your back.
 
-**Pro tip for brain fog days:** Just run `next` and `journal search` - those two commands can get you unstuck when nothing else makes sense.
+**Pro tip for brain fog days:** `focus show`, `next`, and `journal search`—those three commands can get you unstuck when nothing else makes sense.
