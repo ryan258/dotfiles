@@ -7,6 +7,11 @@ TODO_DONE_FILE="$HOME/.config/dotfiles-data/todo_done.txt"
 JOURNAL_FILE="$HOME/.config/dotfiles-data/journal.txt"
 PROJECTS_DIR=~/Projects
 
+# Load environment variables for optional AI features
+if [ -f "$HOME/dotfiles/.env" ]; then
+    source "$HOME/dotfiles/.env"
+fi
+
 echo "=== Evening Close-Out — $(date '+%Y-%m-%d %H:%M') ==="
 
 # 1. Show completed tasks from today
@@ -197,6 +202,44 @@ if bash "$(dirname "$0")/data_validate.sh"; then
     fi
 else
     echo "  ❌ ERROR: Data validation failed. Skipping backup."
+fi
+
+# --- AI REFLECTION (Optional) ---
+if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
+    echo ""
+    echo "🤖 AI REFLECTION:"
+
+    # Gather today's data
+    TODAY=$(date +%Y-%m-%d)
+    TODAY_TASKS=$(grep "\[$TODAY" "$TODO_DONE_FILE" 2>/dev/null || echo "")
+    TODAY_JOURNAL=$(grep "\[$TODAY" "$JOURNAL_FILE" 2>/dev/null || echo "")
+
+    if command -v dhp-strategy.sh &> /dev/null && [ -n "$TODAY_TASKS$TODAY_JOURNAL" ]; then
+        # Generate reflection via AI
+        REFLECTION=$({
+            echo "Provide a brief daily reflection (2-3 sentences) based on today's activities:"
+            echo ""
+            if [ -n "$TODAY_TASKS" ]; then
+                echo "Completed tasks:"
+                echo "$TODAY_TASKS"
+                echo ""
+            fi
+            if [ -n "$TODAY_JOURNAL" ]; then
+                echo "Journal entries:"
+                echo "$TODAY_JOURNAL"
+                echo ""
+            fi
+            echo "Provide:"
+            echo "- One key accomplishment to celebrate"
+            echo "- One suggestion for tomorrow"
+            echo ""
+            echo "Keep it encouraging and actionable."
+        } | dhp-strategy.sh 2>/dev/null || echo "Unable to generate AI reflection at this time.")
+
+        echo "$REFLECTION" | sed 's/^/  /'
+    else
+        echo "  (Enable AI reflection: Set AI_REFLECTION_ENABLED=true in .env)"
+    fi
 fi
 
 echo ""

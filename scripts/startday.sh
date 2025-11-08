@@ -5,6 +5,11 @@ set -euo pipefail
 SYSTEM_LOG_FILE="$HOME/.config/dotfiles-data/system.log"
 echo "$(date): startday.sh - Running morning routine." >> "$SYSTEM_LOG_FILE"
 
+# Load environment variables for optional AI features
+if [ -f "$HOME/dotfiles/.env" ]; then
+    source "$HOME/dotfiles/.env"
+fi
+
 echo "╔════════════════════════════════════════════════════════════╗"
 echo "║  Good morning! $(date '+%A, %B %d, %Y - %H:%M')            "
 echo "╚════════════════════════════════════════════════════════════╝"
@@ -145,6 +150,51 @@ if [ -f "$HOME/dotfiles/scripts/todo.sh" ]; then
     "$HOME/dotfiles/scripts/todo.sh" top 3
 else
     echo "  (todo.sh not found)"
+fi
+
+# --- AI BRIEFING (Optional) ---
+if [ "${AI_BRIEFING_ENABLED:-false}" = "true" ]; then
+    echo ""
+    echo "🤖 AI BRIEFING:"
+
+    # Cache file for today's briefing
+    BRIEFING_CACHE="$HOME/.config/dotfiles-data/.ai_briefing_cache"
+    TODAY=$(date '+%Y-%m-%d')
+
+    # Check if we already have today's briefing
+    if [ -f "$BRIEFING_CACHE" ] && grep -q "^$TODAY|" "$BRIEFING_CACHE"; then
+        echo "  (Cached from this morning)"
+        grep "^$TODAY|" "$BRIEFING_CACHE" | cut -d'|' -f2- | sed 's/^/  /'
+    else
+        # Generate new briefing
+        JOURNAL_FILE="$HOME/.config/dotfiles-data/journal.txt"
+        TODO_FILE="$HOME/.config/dotfiles-data/todo.txt"
+
+        # Gather context
+        RECENT_JOURNAL=$(tail -n 5 "$JOURNAL_FILE" 2>/dev/null || echo "")
+        TODAY_TASKS=$(head -n 5 "$TODO_FILE" 2>/dev/null || echo "")
+
+        if command -v dhp-strategy.sh &> /dev/null && [ -n "$RECENT_JOURNAL" ]; then
+            # Generate briefing via AI
+            BRIEFING=$({
+                echo "Provide a brief daily focus suggestion (2-3 sentences) based on:"
+                echo ""
+                echo "Recent journal entries:"
+                echo "$RECENT_JOURNAL"
+                echo ""
+                echo "Top tasks:"
+                echo "$TODAY_TASKS"
+                echo ""
+                echo "Keep it actionable and encouraging."
+            } | dhp-strategy.sh 2>/dev/null || echo "Unable to generate AI briefing at this time.")
+
+            # Cache the briefing
+            echo "$TODAY|$BRIEFING" > "$BRIEFING_CACHE"
+            echo "$BRIEFING" | sed 's/^/  /'
+        else
+            echo "  (Enable AI briefing: Set AI_BRIEFING_ENABLED=true in .env)"
+        fi
+    fi
 fi
 
 echo ""
