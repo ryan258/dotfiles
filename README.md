@@ -38,33 +38,81 @@ See `CHANGELOG.md` for the play-by-play of the latest blindspots and fixes.
 
 ## AI Staff HQ Integration
 
-**NEW:** Your dotfiles now include a complete AI workforce of 42 specialized professionals through the [AI-Staff-HQ](https://github.com/ryan258/AI-Staff-HQ) submodule.
+**NEW:** Your dotfiles now include a complete AI workforce powered by 10 active dispatchers accessing 42 specialized professionals through the [AI-Staff-HQ](https://github.com/ryan258/AI-Staff-HQ) submodule.
 
 ### Quick Start with Dispatchers
 
 Access your AI specialists instantly via high-speed dispatcher scripts:
 
 ```bash
-# Technical debugging (reads from stdin)
-cat broken-script.sh | dhp-tech    # Or: tech broken-script.sh
+# Technical & Development
+cat broken-script.sh | tech           # Debug code issues
+echo "Optimize this function" | tech  # Get technical advice
 
-# Creative writing workflows
-dhp-creative "A lighthouse keeper finds a mysterious artifact"
+# Creative & Content
+creative "lighthouse keeper story"    # Generate story package
+narrative "analyze plot structure"    # Story structure analysis
+copy "product launch email"           # Marketing copy
 
-# Content strategy & SEO
-dhp-content "Guide on overcoming creative blocks with AI"
+# Strategy & Analysis
+echo "Brand positioning for tech blog" | brand    # Brand analysis
+echo "SEO keywords for AI content" | market       # Market research
+tail -50 journal.txt | strategy                   # Strategic insights
+
+# Personal Development
+echo "Overwhelmed by perfectionism" | stoic      # Stoic coaching
+cat research-notes.md | research                  # Knowledge synthesis
 ```
 
-### The Complete AI Workforce
+### 10 Active AI Dispatchers
 
-42 specialists across 7 departments:
-- **Creative (8):** Art Director, Copywriter, Narrative Designer, Sound Designer, Voice Director, Persona Architect, Audio Producer, Medium Expert
-- **Strategy (5):** Chief of Staff, Creative Strategist, Brand Builder, Market Analyst, Actuary
-- **Technical (5):** Automation Specialist, Prompt Engineer, Toolmaker, Productivity Architect, SEO Specialist
-- **Kitchen (11):** Executive Chef, Sous Chef, Pastry Chef, Grill Master, Bartender, Sommelier, Nutritionist, Food Scientist, Butcher, Line Cook, Kitchen Porter
-- **Personal (3):** Stoic Coach, Patient Advocate, Head Librarian
-- **Commercialization (1):** Literary Agent
-- **Specialized (8):** Historical Storyteller, Futurist, Transmedia Producer, Cultural Anthropologist, Local Area Expert, Music Producer, and more
+**Technical (1):**
+- `tech` / `dhp-tech` - Code debugging, optimization, technical analysis
+
+**Creative (3):**
+- `creative` / `dhp-creative` - Complete story packages (horror specialty)
+- `narrative` / `dhp-narrative` - Story structure, plot development, character arcs
+- `copy` / `dhp-copy` - Sales copy, email sequences, landing pages
+
+**Strategy & Analysis (3):**
+- `strategy` / `dhp-strategy` - Strategic insights via Chief of Staff
+- `brand` / `dhp-brand` - Brand positioning, voice/tone, competitive analysis
+- `market` / `dhp-market` - SEO research, trends, audience insights
+
+**Content (1):**
+- `content` / `dhp-content` - SEO-optimized guides and evergreen content
+
+**Personal Development (2):**
+- `stoic` / `dhp-stoic` - Mindset coaching through stoic principles
+- `research` / `dhp-research` - Knowledge organization and synthesis
+
+### Workflow Integrations
+
+AI specialists are deeply integrated into daily workflows:
+
+**Blog Workflow:**
+```bash
+blog generate my-stub-name    # AI-generate full content from stub
+blog refine my-post.md         # AI-polish existing draft
+```
+
+**Todo Integration:**
+```bash
+todo debug 1                   # AI debug a technical task
+todo delegate 3 creative       # Delegate task to AI specialist
+```
+
+**Journal Analysis:**
+```bash
+journal analyze                # AI insights from last 7 days
+journal mood                   # Sentiment analysis (14 days)
+journal themes                 # Theme extraction (30 days)
+```
+
+**Optional Daily AI Features:**
+Set in `.env` to enable:
+- `AI_BRIEFING_ENABLED=true` - Morning AI focus suggestion (cached daily)
+- `AI_REFLECTION_ENABLED=true` - Evening AI reflection on accomplishments
 
 ### Setup Requirements
 
@@ -76,17 +124,26 @@ dhp-content "Guide on overcoming creative blocks with AI"
 
 2. **Get an API Key:** Sign up at [OpenRouter](https://openrouter.ai/) and create an API key
 
-3. **Configure Models:** The `.env` file includes sensible defaults, but you can customize which models each dispatcher uses
+3. **Configure Models:** The `.env` file includes sensible defaults (GPT-4o family recommended)
 
-### Dispatcher Aliases
+4. **Verify Installation:** Run the system check:
+   ```bash
+   bash scripts/dotfiles_check.sh
+   # Should report: "✅ Found 10/10 dispatchers"
+   ```
 
-All dispatchers are available via convenient aliases:
-- `dhp-tech` / `tech` - Technical debugging and code analysis
-- `dhp-creative` / `creative` - Creative writing workflows
-- `dhp-content` / `content` - Content strategy and SEO guides
-- `dhp` - Default to tech dispatcher
+### Full AI Workforce Access
 
-See `bin/README.md` for detailed dispatcher documentation and `ROADMAP.md` for planned integrations with the daily workflow system.
+The 10 dispatchers provide access to 42+ specialists across 7 departments:
+- **Creative:** Art Director, Copywriter, Narrative Designer, Sound Designer, and more
+- **Strategy:** Chief of Staff, Brand Builder, Market Analyst, Creative Strategist
+- **Technical:** Automation Specialist, Prompt Engineer, Toolmaker, Productivity Architect
+- **Personal:** Stoic Coach, Patient Advocate, Head Librarian
+- **Kitchen:** Executive Chef, Nutritionist, Sommelier (11 specialists)
+- **Commercialization:** Literary Agent
+- **Specialized:** Historical Storyteller, Futurist, Transmedia Producer, and more
+
+See `bin/README.md` for detailed dispatcher documentation, `ROADMAP.md` for implementation status, and `CHANGELOG.md` for complete feature history.
 
 ## Daily Loop at a Glance
 
