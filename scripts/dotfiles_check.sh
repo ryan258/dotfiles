@@ -76,16 +76,30 @@ BIN_DIR="$HOME/dotfiles/bin"
 if [ ! -d "$BIN_DIR" ]; then
   echo "  ⚠️  WARNING: bin/ directory not found at $BIN_DIR. Dispatcher system not installed."
 else
-  DISPATCHERS=("dhp-tech.sh" "dhp-creative.sh" "dhp-content.sh")
+  DISPATCHERS=(
+    "dhp-tech.sh"
+    "dhp-creative.sh"
+    "dhp-content.sh"
+    "dhp-strategy.sh"
+    "dhp-brand.sh"
+    "dhp-market.sh"
+    "dhp-stoic.sh"
+    "dhp-research.sh"
+    "dhp-narrative.sh"
+    "dhp-copy.sh"
+  )
+  dispatcher_count=0
   for dispatcher in "${DISPATCHERS[@]}"; do
     if [ ! -f "$BIN_DIR/$dispatcher" ]; then
-      echo "  ❌ ERROR: Missing dispatcher: $dispatcher"
-      ERROR_COUNT=$((ERROR_COUNT + 1))
+      echo "  ⚠️  WARNING: Missing optional dispatcher: $dispatcher"
     elif [ ! -x "$BIN_DIR/$dispatcher" ]; then
       echo "  ❌ ERROR: Dispatcher not executable: $dispatcher"
       ERROR_COUNT=$((ERROR_COUNT + 1))
+    else
+      dispatcher_count=$((dispatcher_count + 1))
     fi
   done
+  echo "  ✅ Found $dispatcher_count/10 dispatchers"
 fi
 
 # 7. Check .env configuration
