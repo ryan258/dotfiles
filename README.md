@@ -38,7 +38,7 @@ See `CHANGELOG.md` for the play-by-play of the latest blindspots and fixes.
 
 ## AI Staff HQ Integration
 
-**NEW:** Your dotfiles now include a complete AI workforce powered by 10 active dispatchers accessing 42 specialized professionals through the [AI-Staff-HQ](https://github.com/ryan258/AI-Staff-HQ) submodule.
+**NEW:** Your dotfiles now include a complete AI workforce powered by **10 active dispatchers** plus **4 advanced features** (multi-specialist orchestration, context-aware suggestions, dispatcher chaining, and local context injection) accessing 42 specialized professionals through the [AI-Staff-HQ](https://github.com/ryan258/AI-Staff-HQ) submodule.
 
 ### Quick Start with Dispatchers
 
@@ -62,6 +62,12 @@ tail -50 journal.txt | strategy                   # Strategic insights
 # Personal Development
 echo "Overwhelmed by perfectionism" | stoic      # Stoic coaching
 cat research-notes.md | research                  # Knowledge synthesis
+
+# Advanced Features
+ai-suggest                                        # Get context-aware suggestions
+dhp-project "new project idea"                    # Multi-specialist orchestration
+dhp-chain creative narrative copy -- "idea"       # Chain multiple specialists
+dhp-content --context "guide topic"               # Use local context injection
 ```
 
 ### 10 Active AI Dispatchers
@@ -113,6 +119,51 @@ journal themes                 # Theme extraction (30 days)
 Set in `.env` to enable:
 - `AI_BRIEFING_ENABLED=true` - Morning AI focus suggestion (cached daily)
 - `AI_REFLECTION_ENABLED=true` - Evening AI reflection on accomplishments
+
+### Advanced AI Features
+
+**Multi-Specialist Orchestration:**
+```bash
+dhp-project "Launch new blog series on AI productivity"
+# or: ai-project "project description"
+
+# Coordinates 5 specialists in sequence:
+# Market Analyst → Brand Builder → Chief of Staff → Content Specialist → Copywriter
+# Outputs comprehensive markdown project brief
+```
+
+**Context-Aware Suggestions:**
+```bash
+ai-suggest
+
+# Analyzes your current context and suggests relevant dispatchers:
+# - Current directory and project type
+# - Recent git commits and repo status
+# - Active todo items and recent journal entries
+# - Time-based suggestions (morning/evening)
+```
+
+**Dispatcher Chaining:**
+```bash
+dhp-chain creative narrative copy -- "lighthouse keeper finds artifact"
+# or: ai-chain dispatcher1 dispatcher2 -- "input"
+
+# Sequential AI processing:
+# creative → generates story → narrative → expands plot → copy → creates hook
+# Use --save <file> to save output
+```
+
+**Local Context Injection:**
+```bash
+dhp-content --context "Guide on productivity with AI"
+# Includes: git status, top tasks, recent blog topics
+
+dhp-content --full-context "Comprehensive guide topic"
+# Includes: journal, todos, README, full git history
+
+# Context injection available via dhp-context.sh library
+# Prevents duplicate content, aligns with current work
+```
 
 ### Setup Requirements
 

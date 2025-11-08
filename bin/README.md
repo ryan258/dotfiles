@@ -1,8 +1,8 @@
 # AI Staff HQ Dispatcher System
 
-This directory contains 10 AI dispatcher scripts that provide instant access to specialized AI professionals from the [AI-Staff-HQ](https://github.com/ryan258/AI-Staff-HQ) workforce. Each dispatcher is a high-speed orchestration layer that connects your workflow to the right specialist via OpenRouter API.
+This directory contains 10 AI dispatcher scripts plus 4 advanced features that provide instant access to specialized AI professionals from the [AI-Staff-HQ](https://github.com/ryan258/AI-Staff-HQ) workforce. Each dispatcher is a high-speed orchestration layer that connects your workflow to the right specialist via OpenRouter API.
 
-**Status:** ✅ 10/10 Dispatchers Active (Phases 1-3 Complete)
+**Status:** ✅ 10/10 Dispatchers Active + 4 Advanced Features (Phases 1-3, 5 Complete)
 
 ---
 
@@ -20,6 +20,15 @@ This directory contains 10 AI dispatcher scripts that provide instant access to 
 | `dhp-research.sh` | `research` | Knowledge synthesis | stdin |
 | `dhp-narrative.sh` | `narrative` | Story structure | stdin |
 | `dhp-copy.sh` | `copy` | Marketing copy | stdin |
+
+## Advanced Features
+
+| Feature | Alias | Purpose | Usage |
+|---------|-------|---------|-------|
+| `dhp-project.sh` | `ai-project` | Multi-specialist orchestration | argument |
+| `dhp-chain.sh` | `ai-chain` | Sequential dispatcher chaining | special |
+| `ai_suggest.sh` | `ai-suggest` | Context-aware suggestions | none |
+| `dhp-context.sh` | `ai-context` | Local context injection library | source |
 
 ---
 
@@ -425,6 +434,172 @@ echo "SUCCESS: 'Specialist Name' complete." >&2
 
 ---
 
+## Advanced Features Documentation
+
+### `dhp-project.sh` - Multi-Specialist Orchestration
+
+**Purpose:** Coordinate multiple AI specialists for complex projects
+
+**Input:** Project description as argument
+**Model:** Uses multiple models across specialists
+**Specialists:** Market Analyst, Brand Builder, Chief of Staff, Content Specialist, Copywriter
+**Output:** Comprehensive markdown project brief to stdout
+
+**Usage:**
+```bash
+dhp-project "Launch new blog series on AI productivity"
+
+# Or use alias
+ai-project "Create comprehensive onboarding program"
+
+# Save output to file
+dhp-project "New product launch strategy" > project-brief.md
+```
+
+**Workflow:**
+1. **Market Analyst** - Researches topic, identifies opportunities
+2. **Brand Builder** - Defines positioning and messaging
+3. **Chief of Staff** - Creates strategic plan and timeline
+4. **Content Specialist** - Develops content strategy
+5. **Copywriter** - Generates promotional copy
+
+**Output:** Complete project brief with all phases integrated
+
+---
+
+### `dhp-chain.sh` - Dispatcher Chaining
+
+**Purpose:** Sequential processing through multiple AI specialists
+
+**Input:** Special syntax: `dispatcher1 dispatcher2 [dispatcher3...] -- "input"`
+**Dispatchers:** Any combination of available dispatchers
+**Output:** Final result after all processing steps
+
+**Usage:**
+```bash
+# Story generation → structure analysis → marketing hook
+dhp-chain creative narrative copy -- "lighthouse keeper finds mysterious artifact"
+
+# Market research → brand strategy → content plan
+dhp-chain market brand content -- "AI productivity tools for developers"
+
+# Technical analysis → strategic review
+dhp-chain tech strategy -- "optimize database query performance"
+
+# Save final output
+dhp-chain creative narrative -- "story idea" --save story-brief.md
+```
+
+**Available Dispatchers:**
+- tech, creative, content, strategy, brand, market, stoic, research, narrative, copy
+
+**Features:**
+- Progress display after each step
+- Intermediate outputs shown to stderr
+- Final output to stdout
+- Optional `--save <file>` flag
+
+---
+
+### `ai_suggest.sh` - Context-Aware Suggestions
+
+**Purpose:** Analyze current environment and suggest relevant AI dispatchers
+
+**Input:** None (reads environment automatically)
+**Output:** Contextual suggestions to stdout
+
+**Usage:**
+```bash
+ai-suggest
+```
+
+**Context Analysis:**
+- Current directory and project type
+- Git repository status and recent commits
+- Active todo items and priorities
+- Recent journal entries (last 3 days)
+- Time of day (morning/evening suggestions)
+
+**Example Output:**
+```
+📍 Your Current Context:
+Current directory: /Users/you/blog
+Git repository: personal-blog
+Recent commits:
+  abc123 Update content strategy
+
+💡 Suggested Dispatchers:
+  📝 **Content Dispatcher**: Generate or refine blog content
+     blog generate <stub-name>
+     blog refine <file>
+
+  📊 **Journal Analysis**: Get insights from your journal
+     journal analyze
+```
+
+---
+
+### `dhp-context.sh` - Local Context Injection
+
+**Purpose:** Gather and inject local context into AI dispatcher prompts
+
+**Input:** Source this library to access context functions
+**Output:** Context data as text
+**Usage:** Function library (not direct execution)
+
+**Main Functions:**
+
+**`gather_context [--minimal|--full]`**
+Collects all relevant local context:
+```bash
+source dhp-context.sh
+gather_context --minimal    # Git + top 3 tasks
+gather_context --full       # Everything (journal, todos, README, git)
+```
+
+**`get_git_context [commit_count]`**
+Repository and commit history:
+```bash
+get_git_context 10  # Last 10 commits
+```
+
+**`get_recent_journal [days]`**
+Recent journal entries:
+```bash
+get_recent_journal 7  # Last 7 days
+```
+
+**`get_active_todos [limit]`**
+Active task list:
+```bash
+get_active_todos 5  # Top 5 tasks
+```
+
+**`get_project_readme`**
+Project README (first 50 lines):
+```bash
+get_project_readme
+```
+
+**Context Injection in Dispatchers:**
+
+Example: `dhp-content.sh` with context flags:
+```bash
+# Minimal context (git status, top tasks)
+dhp-content --context "Guide on productivity with AI"
+
+# Full context (journal, todos, README, git history)
+dhp-content --full-context "Comprehensive guide topic"
+```
+
+**Benefits:**
+- Prevents duplicate content creation
+- Aligns AI output with current work
+- Includes relevant project context automatically
+- References recent tasks and journal themes
+
+---
+
 ## Resources
 
 - **AI-Staff-HQ Repository:** https://github.com/ryan258/AI-Staff-HQ
@@ -436,5 +611,5 @@ echo "SUCCESS: 'Specialist Name' complete." >&2
 ---
 
 **Last Updated:** November 7, 2025
-**Status:** Production-ready, all 10 dispatchers operational
-**Phase:** 3/5 Complete (Infrastructure, Workflow Integration, Dispatcher Expansion)
+**Status:** Production-ready, 10 dispatchers + 4 advanced features operational
+**Phase:** 1, 2, 3, 5 Complete (Infrastructure, Workflow Integration, Dispatcher Expansion, Advanced Features)
