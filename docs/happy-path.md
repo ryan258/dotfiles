@@ -330,6 +330,42 @@ dotfiles_check                        # Verify entire system health
 systemlog                             # View automation activity log
 ```
 
+### AI Assistance (New!)
+
+**Get context-aware suggestions:**
+```bash
+ai-suggest                            # AI recommends dispatchers based on your current work
+```
+
+**Quick AI help:**
+```bash
+# Debug code
+cat script.sh | tech
+
+# Get strategic insights
+journal analyze
+
+# Generate content
+creative "story idea"
+
+# Get stoic perspective
+echo "feeling overwhelmed by tasks" | stoic
+```
+
+**Advanced AI features:**
+```bash
+# Multi-specialist project planning
+dhp-project "launch new blog series" > brief.md
+
+# Chain multiple AI specialists
+dhp-chain creative narrative copy -- "story idea"
+
+# Content with context injection
+content --context "guide topic"
+```
+
+**See full examples:** `cat ~/dotfiles/docs/ai-examples.md`
+
 ## Quick Reference Card
 
 | Command | What It Does |
@@ -363,6 +399,16 @@ systemlog                             # View automation activity log
 | `pomo` | 25-minute Pomodoro timer |
 | `howto <name>` | Personal how-to wiki |
 | `systemlog` | View automation activity |
+| **AI Assistance** | |
+| `ai-suggest` | Get AI dispatcher suggestions for current context |
+| `tech` | Debug code/scripts (pipe input) |
+| `creative "<idea>"` | Generate story packages |
+| `content "<topic>"` | Create SEO content guides |
+| `strategy` | Strategic analysis (pipe input) |
+| `stoic` | Stoic coaching (pipe input) |
+| `journal analyze` | AI insights from last 7 days |
+| `dhp-project "<desc>"` | Multi-specialist project planning |
+| `dhp-chain d1 d2 -- "input"` | Chain multiple AI specialists |
 
 ## The Most Important Rules
 
@@ -375,6 +421,8 @@ systemlog                             # View automation activity log
 4. **Trust the automation:** The system tracks patterns, syncs your blog to todos, validates data before backups, and shows you stale tasks. Let it work for you.
 
 5. **Celebrate progress:** `goodevening` gamifies your wins. Even one task or one journal entry counts as progress.
+
+6. **Delegate to AI when stuck:** Not sure what to do? Try `ai-suggest` for context-aware recommendations. Stuck on a problem? Pipe it to the right AI dispatcher (`tech` for code, `stoic` for mindset, `strategy` for planning).
 
 ## Tips for Bad Brain Fog Days
 
@@ -429,12 +477,20 @@ systemlog                             # View automation activity log
    todo undo
    ```
 
-10. **Take a Pomodoro**: 25 minutes of focus, then break
-   ```bash
-   pomo      # Timer + notification when done
-   ```
+10. **Let AI help when thinking is hard**: On foggy days, offload mental work
+    ```bash
+    ai-suggest                                    # "What should I do?"
+    journal analyze                                # "What patterns am I missing?"
+    echo "feeling stuck and overwhelmed" | stoic   # Get perspective
+    todo debug 1                                   # Let AI help with technical tasks
+    ```
 
-11. **Trust the system**: Your notes are there, searchable, and backed up. You don't have to remember. That's the point.
+11. **Take a Pomodoro**: 25 minutes of focus, then break
+    ```bash
+    pomo      # Timer + notification when done
+    ```
+
+12. **Trust the system**: Your notes are there, searchable, and backed up. You don't have to remember. That's the point.
 
 ## Data Location
 
