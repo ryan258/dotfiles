@@ -464,3 +464,11 @@ alias research="dhp-research.sh"
 alias narrative="dhp-narrative.sh"
 alias copy="dhp-copy.sh"
 alias dhp="dhp-tech.sh"  # Default to tech dispatcher
+
+# Advanced AI Features (Phase 5)
+alias dhp-project="dhp-project.sh"           # Multi-specialist orchestration
+alias ai-project="dhp-project.sh"            # Shorthand
+alias dhp-chain="dhp-chain.sh"               # Dispatcher chaining
+alias ai-chain="dhp-chain.sh"                # Shorthand
+alias ai-suggest="ai_suggest.sh"             # Context-aware suggestions
+alias ai-context="source dhp-context.sh"     # Context gathering library

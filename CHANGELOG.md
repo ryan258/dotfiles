@@ -110,6 +110,49 @@ This document tracks all major implementations, improvements, and fixes to the D
 - ✅ Model defaults: GPT-4o for creative/content, GPT-4o-mini for tech
 - ✅ Optional features: `AI_BRIEFING_ENABLED`, `AI_REFLECTION_ENABLED`
 
+#### Phase 5: Advanced Features ✅
+
+**Multi-Specialist Orchestration (`dhp-project.sh`):**
+- ✅ Coordinates 5 specialists for complex projects (Market Analyst, Brand Builder, Chief of Staff, Content Specialist, Copywriter)
+- ✅ Sequential AI processing with context building between phases
+- ✅ Generates comprehensive project briefs in markdown format
+- ✅ Alias: `dhp-project`, `ai-project`
+- ✅ Usage: `dhp-project "Launch new blog series on AI productivity"`
+
+**Context-Aware Suggestions (`ai_suggest.sh`):**
+- ✅ Analyzes current directory, git status, recent commits, and active todos
+- ✅ Suggests relevant dispatchers based on detected context
+- ✅ Time-based suggestions (morning/evening routines)
+- ✅ Detects project type and recommends appropriate AI workflows
+- ✅ Alias: `ai-suggest`
+
+**Dispatcher Chaining (`dhp-chain.sh`):**
+- ✅ Sequential processing through multiple AI specialists
+- ✅ Pipes output from one dispatcher to the next
+- ✅ Progress display after each step
+- ✅ Optional output saving to file with `--save` flag
+- ✅ Alias: `dhp-chain`, `ai-chain`
+- ✅ Usage: `dhp-chain creative narrative copy -- "story idea"`
+
+**Local Context Injection (`dhp-context.sh`):**
+- ✅ Context gathering library with multiple modes (minimal/full)
+- ✅ Collects git history, active todos, recent journal entries, project README
+- ✅ Blog context detection for content-related work
+- ✅ `--context` flag support added to `dhp-content.sh` (example implementation)
+- ✅ Automatically injects relevant local context into AI prompts
+- ✅ Functions: `gather_context()`, `get_git_context()`, `get_recent_journal()`, `get_active_todos()`, `get_project_readme()`
+
+**New Aliases (6 total):**
+- ✅ `dhp-project`, `ai-project` - Multi-specialist orchestration
+- ✅ `dhp-chain`, `ai-chain` - Dispatcher chaining
+- ✅ `ai-suggest` - Context-aware suggestions
+- ✅ `ai-context` - Source context library
+
+**Enhanced Dispatcher Features:**
+- ✅ `dhp-content.sh` now supports `--context` and `--full-context` flags
+- ✅ Context injection prevents duplicate content and aligns with current work
+- ✅ All context functions tested and validated
+
 ---
 
 ## Foundation & Hardening (November 1-5, 2025)
