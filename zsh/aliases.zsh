@@ -436,3 +436,17 @@ fi
 alias blog="blog.sh"
 alias dump='bash ~/dotfiles/scripts/dump.sh'
 alias data_validate='bash ~/dotfiles/scripts/data_validate.sh'
+
+# =============================================================================
+# AI STAFF HQ DISPATCHERS
+# =============================================================================
+# Full dispatcher names
+alias dhp-tech="dhp-tech.sh"
+alias dhp-creative="dhp-creative.sh"
+alias dhp-content="dhp-content.sh"
+
+# Shorthand versions for quick access
+alias tech="dhp-tech.sh"
+alias creative="dhp-creative.sh"
+alias content="dhp-content.sh"
+alias dhp="dhp-tech.sh"  # Default to tech dispatcher

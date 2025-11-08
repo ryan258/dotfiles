@@ -63,11 +63,47 @@ if [ ! -f "$GITHUB_TOKEN_FILE" ]; then
 fi
 
 # 5. Prune dead bookmarks
-echo "[5/5] Pruning dead directory bookmarks..."
+echo "[5/7] Pruning dead directory bookmarks..."
 if [ -f "$SCRIPTS_DIR/g.sh" ]; then
   "$SCRIPTS_DIR/g.sh" prune --auto
 else
   echo "  ⚠️  WARNING: g.sh not found, skipping bookmark pruning."
+fi
+
+# 6. Check AI Staff HQ Dispatchers
+echo "[6/7] Checking AI Staff HQ dispatcher system..."
+BIN_DIR="$HOME/dotfiles/bin"
+if [ ! -d "$BIN_DIR" ]; then
+  echo "  ⚠️  WARNING: bin/ directory not found at $BIN_DIR. Dispatcher system not installed."
+else
+  DISPATCHERS=("dhp-tech.sh" "dhp-creative.sh" "dhp-content.sh")
+  for dispatcher in "${DISPATCHERS[@]}"; do
+    if [ ! -f "$BIN_DIR/$dispatcher" ]; then
+      echo "  ❌ ERROR: Missing dispatcher: $dispatcher"
+      ERROR_COUNT=$((ERROR_COUNT + 1))
+    elif [ ! -x "$BIN_DIR/$dispatcher" ]; then
+      echo "  ❌ ERROR: Dispatcher not executable: $dispatcher"
+      ERROR_COUNT=$((ERROR_COUNT + 1))
+    fi
+  done
+fi
+
+# 7. Check .env configuration
+echo "[7/7] Checking .env configuration for dispatchers..."
+ENV_FILE="$HOME/dotfiles/.env"
+if [ ! -f "$ENV_FILE" ]; then
+  echo "  ⚠️  WARNING: .env file not found at $ENV_FILE. Dispatchers will not work without API keys."
+elif [ ! -r "$ENV_FILE" ]; then
+  echo "  ❌ ERROR: .env file is not readable."
+  ERROR_COUNT=$((ERROR_COUNT + 1))
+else
+  # Check for required environment variables
+  REQUIRED_VARS=("OPENROUTER_API_KEY" "DHP_TECH_MODEL" "DHP_CREATIVE_MODEL" "DHP_CONTENT_MODEL")
+  for var in "${REQUIRED_VARS[@]}"; do
+    if ! grep -q "^$var=" "$ENV_FILE"; then
+      echo "  ⚠️  WARNING: Missing environment variable in .env: $var"
+    fi
+  done
 fi
 
 # --- Summary ---

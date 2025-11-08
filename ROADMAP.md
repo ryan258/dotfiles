@@ -1,312 +1,559 @@
-# Daily Context System - Roadmap
+# AI Staff HQ Integration Roadmap
 
-**Purpose:** Combat MS-related brain fog by automatically preserving context across days  
-**Status:** Comprehensive system stable as of November 5, 2025 (daily loop refreshed)  
+**Purpose:** Maximize the AI Staff HQ dispatcher system to create a seamless AI workforce integration
+**Status:** Foundation laid, building full integration
 **Location:** `~/dotfiles/`
+**Last Updated:** November 7, 2025
 
 ---
 
-## 🧠 The Problem
+## 🎯 Vision
 
-Ryan has MS-related brain fog. Each morning is a reset:
-- Forgets what he was working on yesterday
-- Loses project context between sessions
-- Built systems then forgets to use them
-- Perfectionism prevents using "imperfect" tools
-
-**Solution:** Automated daily context system that runs without needing to remember
+Transform the dotfiles system into an AI-augmented productivity powerhouse by deeply integrating the 42-specialist AI-Staff-HQ workforce with existing daily workflows. The dispatcher scripts (dhp\*) become the high-speed interface for complex creative, technical, and content tasks.
 
 ---
 
-## ✅ What's Working Now
+## ✅ Current State (November 7, 2025)
 
-### Morning Routine (Automatic)
-- **`startday`** auto-runs once per calendar day (guarded by `~/.config/dotfiles-data/.startday_last_run`).
-- Shows:
-  - 🎯 Focus for today (via `focus.sh`)
-  - Yesterday's journal entries
-  - Active GitHub projects pushed in the last 7 days (via `github_helper.sh`)
-  - Suggested directories (via `g.sh suggest` using usage logs)
-  - Blog sync status and stub-to-todo integration
-  - Health appointments with countdown and today's health snapshot
-  - Scheduled commands/reminders
-  - Stale tasks older than 7 days
-  - Top 3 priority tasks
+**What's Working:**
+- ✅ AI-Staff-HQ submodule properly configured at `ai-staff-hq/`
+- ✅ Three dispatcher scripts created in `bin/`:
+  - `dhp-tech.sh` - Technical debugging (stdin → Automation Specialist → stdout)
+  - `dhp-creative.sh` - Horror story first-pass packages
+  - `dhp-content.sh` - SEO-optimized evergreen guides
+- ✅ Environment variables in `.env` for API keys and model configuration
+- ✅ All dispatchers integrate with specialist YAML files and OpenRouter API
 
-### Core Commands (Manual)
-- **`focus`, `focus show`, `focus clear`** – Set or recall the day's anchor surfaced by `startday`.
-- **`journal "note"` / `dump`** – Quick entries or long-form brain dumps stored in `~/.config/dotfiles-data/journal.txt`.
-- **`todo add|done|undo|commit|bump|top`** – Task management with git integration and encouraging feedback (`todo.txt`, `todo_done.txt`).
-- **`status`** – Enhanced context dashboard for mid-day recovery.
-- **`goodevening`** – Evening summary with gamification, project safety checks, data validation, and backups.
-- **`projects`** – Forgotten project recovery using GitHub API.
-- **`blog`** – Blog content workflow (status, stubs, random, sync, ideas).
-- **`health` / `meds`** – Track appointments, symptoms, energy, medication adherence.
-- **`g` / `g suggest` / `g prune`** – Smart navigation, suggestions, and bookmark cleanup.
-- **`weekreview --file` / `setup_weekly_review`** – Weekly retros exported to Markdown and scheduled nudges.
-- **`backup` / `backup_data`** – Timestamped project backups and nightly data snapshots.
+**Current Gaps:**
+- ⚠️ `bin/` directory is untracked (not in version control)
+- ⚠️ Duplicate `.env` entry in `.gitignore`
+- ⚠️ No integration with core dotfiles workflows (startday, todo, journal, blog)
+- ⚠️ Limited to 3 dispatchers out of 42 possible specialists
+- ⚠️ No usage tracking or analytics for dispatcher effectiveness
+- ⚠️ No aliases for quick dispatcher access
+- ⚠️ Missing documentation in cheatsheet and README
 
 ---
 
-## ✅ November 2025 Enhancements
+## 🚀 Phase 1: Foundation & Infrastructure (Priority: HIGH)
 
-- **Daily Focus Anchor:** `focus.sh` persists the day's intention so `startday` can surface it immediately; `focus show` is the fastest way to get back on track.
-- **Richer Morning Briefing:** `startday` now syncs blog stubs to todos, pulls GitHub pushes from any machine, suggests directories (via usage analytics), and links to the latest weekly review file on Mondays.
-- **Weekly Review Automation:** `week_in_review.sh --file` exports Markdown summaries to `~/Documents/Reviews/Weekly/`, with `setup_weekly_review.sh` scheduling the Sunday run through the existing `schedule.sh` helper.
-- **Navigation Intelligence:** `g.sh` logs directory usage, powers `g suggest`, and ships with `g prune --auto` to drop dead bookmarks.
-- **Evening Safety Net:** `goodevening` cleans stale tasks, audits git hygiene, expects `scripts/data_validate.sh` for structured data checks, and only then runs `backup_data.sh`.
-- **Task & Journal Quality of Life:** `todo` now supports `undo` with positive reinforcement messages, and the new `dump` script captures long-form thoughts via `$EDITOR`.
+**Goal:** Fix gaps, add to version control, create baseline integration
 
----
+### 1.1 Fix Immediate Issues ✅ (Do First)
 
-## 📁 File Structure
+- [ ] Clean up `.gitignore` duplicate `.env` entry
+- [ ] Add `bin/` directory to git (commit dispatcher scripts)
+- [ ] Verify `.env` has all required variables:
+  - `OPENROUTER_API_KEY`
+  - `DHP_TECH_MODEL`
+  - `DHP_CREATIVE_MODEL`
+  - `DHP_CONTENT_MODEL`
+- [ ] Document required environment variables in README
+- [ ] Add `bin/` to PATH (update `.zprofile` if not already there)
 
-```
-~/dotfiles/
-├── zsh/
-│   ├── .zshrc              # Main config, sources aliases, auto-runs startday
-│   └── aliases.zsh         # Command aliases
-├── scripts/
-│   ├── startday.sh         # Morning briefing (focus, GitHub, blog sync, suggestions, health)
-│   ├── focus.sh            # Set/show/clear the daily focus message
-│   ├── week_in_review.sh   # Weekly summary (supports `--file` exports)
-│   ├── setup_weekly_review.sh # Friendly scheduler wrapper for weekly exports
-│   ├── goodevening.sh      # Evening wrap-up with safety checks, validation, backups
-│   ├── g.sh                # Smart navigation (save/list/suggest/prune bookmarks)
-│   ├── github_helper.sh    # GitHub API helper for startday/projects
-│   ├── dump.sh             # Long-form journaling via $EDITOR
-│   ├── todo.sh             # Task management (add/done/undo/commit/bump/top)
-│   ├── health.sh / meds.sh # Health + medication tracking dashboards
-│   ├── schedule.sh         # Human-friendly wrapper for `at`
-│   ├── blog.sh             # Blog workflow integration
-│   └── ...
-└── README.md               # System documentation
+### 1.2 Create Dispatcher Aliases
 
-Data Files (centralized in ~/.config/dotfiles-data/):
-journal.txt                 # All journal entries
-todo.txt                    # Active tasks
-todo_done.txt               # Completed tasks
-health.txt                  # Appointments, energy, symptoms
-medications.txt             # Medication schedules & logs
-daily_focus.txt             # Current focus surfaced by startday
-dir_bookmarks / dir_history # Navigation bookmarks/history
-dir_usage.log               # Smart suggestion weighting for `g suggest`
-favorite_apps               # Application launcher shortcuts
-clipboard_history/          # Saved (and executable) clipboard snippets
-how-to/                     # Personal how-to wiki
-system.log                  # Automation audit trail
+**Target:** `zsh/aliases.zsh`
+
+Add convenient aliases for all three dispatchers:
+```bash
+# AI Staff HQ Dispatchers
+alias dhp-tech="dhp-tech.sh"
+alias dhp-creative="dhp-creative.sh"
+alias dhp-content="dhp-content.sh"
+alias dhp="dhp-tech.sh"  # default to tech
 ```
 
----
+Consider shorthand versions:
+```bash
+alias tech="dhp-tech.sh"
+alias creative="dhp-creative.sh"
+alias content="dhp-content.sh"
+```
 
-## ✅ Foundation & Hardening (COMPLETED)
+### 1.3 Document Dispatcher System
 
-**Goal:** Address critical technical debt and configuration issues that affect system reliability.
-**Status:** ✅ Completed November 1, 2025 - All fixes implemented and tested
+**Target Files:**
+- `README.md` - Add AI Staff HQ section
+- `bin/README.md` - Already exists, verify it's up to date
+- `scripts/cheatsheet.sh` - Add dispatcher commands
 
-### Phase 1: Critical System Repairs ✅
+**Documentation should include:**
+- What each dispatcher does
+- Usage examples
+- Required environment variables
+- Link to AI-Staff-HQ repo
 
-#### Fix 2: Repair the Core Journaling Loop ✅
-**Problem:** `journal.sh` writes to `~/journal.txt` but core scripts (`startday`, `status`, `goodevening`) read from `~/.daily_journal.txt`. This breaks the entire context-recovery loop.
+### 1.4 Add Dispatcher Validation to System Check
 
-**Action:**
-- [x] Edit `scripts/journal.sh`: Changed to use `~/.config/dotfiles-data/journal.txt`
-- [x] Edit `scripts/week_in_review.sh`: Updated all journal file references
-- [x] Fixed awk compatibility issue (now uses `gawk` for pattern matching)
+**Target:** `scripts/dotfiles_check.sh`
 
-**Impact:** ✅ Journaling system fully functional and tested.
-
-#### Fix 3: Centralize All Data Files ✅
-**Problem:** Data scattered across home directory (`~/journal.txt`, `~/.daily_journal.txt`, `~/.todo_list.txt`, etc.) is fragile and hard to back up.
-
-**Action:**
-- [x] Created central data directory: `~/.config/dotfiles-data`
-- [x] Updated all scripts to use centralized paths:
-  - `todo.sh`: `~/.config/dotfiles-data/todo.txt` & `todo_done.txt`
-  - `journal.sh`: `~/.config/dotfiles-data/journal.txt`
-  - `health.sh`: `~/.config/dotfiles-data/health.txt`
-  - `goto.sh`, `recent_dirs.sh`, `app_launcher.sh`, `clipboard_manager.sh`
-- [x] Updated core loop scripts: `startday.sh`, `status.sh`, `goodevening.sh`, `week_in_review.sh`
-
-**Impact:** ✅ Single backup location at `~/.config/dotfiles-data/`, cleaner home directory, all scripts tested.
-
-### Phase 2: Simplification & Cleanup ✅
-
-#### Fix 4: De-duplicate Redundant Scripts ✅
-**Problem:** Multiple scripts doing the same thing creates confusion and maintenance burden.
-
-**Action:**
-- [x] Deleted redundant scripts: `memo.sh`, `quick_note.sh`, `script_67777906.sh`, `script_58131199.sh`
-- [x] Removed all associated aliases from `zsh/aliases.zsh`
-
-**Impact:** ✅ 4 redundant scripts removed, cleaner codebase, forces use of `journal.sh` for all notes.
-
-#### Fix 5: Clean Up Shell Configuration ✅
-**Problem:** `PATH` set in multiple files (`.zshrc`, `.zprofile`), redundant sourcing creates confusion.
-
-**Action:**
-- [x] Updated `zsh/.zprofile`: Added `path_prepend "$HOME/dotfiles/scripts"`, removed non-existent `scripts/bin`
-- [x] Cleaned `zsh/.zshrc`: Removed redundant PATH exports and legacy `.zsh_aliases` sourcing
-
-**Impact:** ✅ Clean separation: PATH in `.zprofile`, interactive config in `.zshrc`.
-
-#### Fix 6: Modernize Aliases ✅
-**Problem:** Hardcoded paths (`~/dotfiles/scripts/todo.sh`) are brittle. Now that `scripts/` is in PATH, simplify.
-
-**Action:**
-- [x] Updated ALL 50+ aliases in `zsh/aliases.zsh`: Changed `~/dotfiles/scripts/X.sh` → `X.sh`
-- [x] All aliases now use simple script names
-
-**Impact:** ✅ More portable, easier to reorganize files later.
-
-### Phase 3: Robustness & Best Practices ✅
-
-#### Fix 7: Harden Shell Scripts ✅
-**Problem:** Scripts lack modern safeguards (set -euo pipefail, quoted variables, dependency checks).
-
-**Action:**
-- [x] Added `set -euo pipefail` to all critical daily-use scripts:
-  - `todo.sh`, `journal.sh`, `health.sh`
-  - `startday.sh`, `status.sh`, `goodevening.sh`, `week_in_review.sh`
-- [x] All scripts already use proper variable quoting
-- [x] Dependency checks deferred (not critical for core functionality)
-
-**Impact:** ✅ Core scripts now fail fast and clearly. Critical daily workflows are hardened.
+Add checks for:
+- `bin/` directory exists
+- Dispatcher scripts are executable
+- `.env` file exists and is readable
+- Required environment variables are set (`OPENROUTER_API_KEY`, model configs)
+- OpenRouter API connection test (optional)
 
 ---
 
-## ✅ Q4 2025 Objectives (COMPLETED)
+## 🔧 Phase 2: Workflow Integration (Priority: HIGH)
 
-All Next Round Objectives completed November 2, 2025.
-All 20 Blindspots from 'Dotfiles Evolution: A 20-Point Implementation Plan' have been implemented and tested.
+**Goal:** Connect dispatchers to existing daily workflows
 
-### 0. Remaining Fixes ✅
-- ✅ Aliases fixed - All hardcoded paths removed in Fix 6 (Foundation & Hardening)
-- ✅ Updated TODO_FILE path in greeting.sh
-- ✅ Fixed weather.sh call to use PATH lookup
+### 2.1 Blog Workflow Integration
 
-### 1. Morning Routine Reliability ✅
-- **Goal:** Resolve the `startday.sh` parse error surfaced during login so the automated morning briefing never fails.
-- **Completed:** No parse errors found. Script runs successfully in bash and zsh environments.
-- **Deliverable:** ✅ Tested thoroughly, integrated health tracking without errors.
+**Target:** `scripts/blog.sh`
 
-### 2. Daily Happy Path Documentation ✅
-- **Goal:** Create `docs/happy-path.md` outlining the ideal morning → mid-day → evening flow.
-- **Completed:** Comprehensive guide created with step-by-step instructions for brain fog days.
-- **Deliverable:** ✅ `docs/happy-path.md` created, linked from `README.md` and `cheatsheet.sh`.
+Add new subcommands:
+- `blog generate <stub-name>` - Uses `dhp-content.sh` to generate full guide from stub
+- `blog refine <file>` - Uses Content Specialist to polish existing draft
+- `blog ideas` - Already exists, document dispatcher can help expand ideas
 
-### 3. Health Context Expansion (Iteration 1) ✅
-- **Goal:** Extend `health.sh` to capture symptom notes and daily energy ratings.
-- **Completed:** Full symptom and energy tracking system implemented.
-- **Deliverable:** ✅ New subcommands (`health symptom`, `health energy`, `health summary`), integrated into `startday` and `goodevening` dashboards.
+**Implementation:**
+```bash
+case "$1" in
+  generate)
+    stub_name="$2"
+    echo "Generating content for: $stub_name"
+    echo "$stub_name" | dhp-content.sh "$stub_name"
+    ;;
+  refine)
+    file_path="$2"
+    cat "$file_path" | dhp-content.sh "refine"
+    ;;
+esac
+```
 
-## 🎯 Dotfiles Evolution: Round 1 (Blindspots 1-20)
+### 2.2 Todo → Dispatcher Integration
 
-**Status:** ✅ ALL 20 BLINDSPOTS COMPLETED (November 2, 2025)
+**Target:** `scripts/todo.sh`
 
-This first round, derived from the original implementation plan, focused on resilience, proactive intelligence, friction reduction, tool integration, and cognitive support.
+Add new subcommand:
+- `todo debug <num>` - For tech tasks, pipes task description through `dhp-tech.sh`
+- `todo delegate <num> <dispatcher>` - Delegates task to specified dispatcher
 
-## 🎯 Dotfiles Evolution: Round 2 (Blindspots 21-40)
+**Use Case:**
+User adds task: "Debug the startday.sh script, health section is broken"
+User runs: `todo debug 1`
+System: Extracts script path, reads file, pipes to dhp-tech.sh, displays analysis
 
-**Status:** ✅ ALL 20 BLINDSPOTS COMPLETED (November 5, 2025)
+### 2.3 Journal → AI Analysis
 
-This second round addressed critical data integrity gaps, deepened workflow integrations, introduced intelligent features, and added extensive system polish. See `blindspots.md` for full details.
+**Target:** `scripts/journal.sh`
 
-**Key Improvements in Round 2:**
-- ✅ Enhanced error handling and data validation
-- ✅ Health ↔ productivity correlation analysis
-- ✅ Smart directory navigation with usage tracking
-- ✅ Automated weekly review system (LaunchAgent)
-- ✅ Collision detection for script creation
-- ✅ Idempotent bootstrap with safety checks
-- ✅ File organization safety (ignore patterns, recent file detection)
-- ✅ Bookmark pruning and automated cleanup
-- ✅ Comprehensive health exports with medication data
-- ✅ Scheduler integration with todo system
-- ✅ Daily focus feature for brain fog days
+Add new subcommands:
+- `journal analyze` - Sends last 7 days to Chief of Staff for insights
+- `journal mood` - Sentiment analysis on recent entries
+- `journal themes` - Extract recurring themes/patterns
 
-### **Phase 1: Resilience & Data Insight** ✅
+**Use Case:**
+```bash
+journal analyze
+# Sends last week's entries to Chief of Staff
+# Returns: "Key themes: perfectionism blocking progress, energy levels correlating with blog output, need for system simplification"
+```
 
-*   ✅ **1. Data Resilience:** Automated backups of `~/.config/dotfiles-data/` via `backup_data.sh`, called silently in `goodevening.sh`.
-*   ✅ **2. Data Insight:** Added `dashboard` subcommands to `health.sh` (30-day trend analysis) and `meds.sh` (adherence tracking).
-*   ✅ **3. Stale Task Accumulation:** Added timestamps to tasks in `todo.sh`, `startday.sh` highlights stale tasks (>7 days).
-*   ✅ **4. System Fragility:** Created `dotfiles_check.sh` to validate scripts, data directory, dependencies (jq, curl, gawk, osascript), and GitHub token.
+### 2.4 Startday AI Briefing
 
-### **Phase 2: Friction Reduction & Usability** ✅
+**Target:** `scripts/startday.sh`
 
-*   ✅ **5. "Write-Only" Journal:** Added `search` and `onthisday` subcommands to `journal.sh` for better retrieval.
-*   ✅ **6. System Maintenance Friction:** Created `bootstrap.sh` for new machine setup and `new_script.sh` to automate adding new tools.
-*   ✅ **7. High-Cost Context Switching:** Consolidated navigation into `g.sh` with bookmarks, recent dirs, context-aware hooks, venv/app management.
-*   ✅ **8. The Documentation Chasm:** Improved help messages in all core scripts with error handling, created `whatis.sh` to explain aliases.
+Add optional AI section:
+- [ ] AI-generated daily focus suggestion based on recent journal + tasks
+- [ ] AI-powered task prioritization recommendation
+- [ ] Brief motivational message from Stoic Coach
 
-### **Phase 3: Proactive Automation & Nudges** ✅
+**Implementation Considerations:**
+- Make it opt-in via config flag
+- Cache results to avoid API calls on every terminal open
+- Run only once per day like startday guard
 
-*   ⚠️ **9. Passive Health System:** `meds.sh remind` implemented for automation. Interactive `goodevening.sh` health prompts available but commented out (optional feature).
-*   ✅ **10. Siloed "Blog" and "Dotfiles" Systems:** `blog.sh` syncs stubs with `todo.sh` (runs in `startday.sh`), added `blog ideas` to search journal.
-*   ✅ **11. Actively Fighting Perfectionism:** "Gamified" progress in `goodevening.sh` with win messages, added `pomo` alias for 25-minute Pomodoro timer.
-*   ✅ **12. High-Friction "State" Management:** Enhanced `g.sh` to automatically save/load venv state and launch associated applications.
+### 2.5 Goodevening AI Reflection
 
-### **Phase 4: Intelligent Workflow Integration** ✅
+**Target:** `scripts/goodevening.sh`
 
-*   ✅ **13. "Git Commit" Context Gap:** Added `commit` subcommand to `todo.sh` to commit and complete a task in one step.
-*   ✅ **14. "Now vs. Later" Task Ambiguity:** Added `bump` and `top` subcommands to `todo.sh`, created `next` alias, updated `startday.sh`/`status.sh` to show top 3.
-*   ✅ **15. The "Command Black Hole":** Created `schedule.sh` as wrapper for `at` command, `startday.sh` shows scheduled tasks via `atq`.
-*   ✅ **16. "Static" Clipboard Manager:** Enhanced `clipboard_manager.sh` to execute dynamic snippets when files are marked executable.
-
-### **Phase 5: Advanced Knowledge & Environment** ✅
-
-*   ✅ **17. "How-To" Memory Gap:** Created `howto.sh` to manage personal searchable how-to wiki at `~/.config/dotfiles-data/how-to/`.
-*   ✅ **18. Digital Clutter Anxiety:** Created `review_clutter.sh` to interactively archive or delete old files from `~/Desktop` and `~/Downloads`.
-*   ✅ **19. "Magic" Automation Problem:** Created central audit log at `~/.config/dotfiles-data/system.log`, automated scripts log actions, added `systemlog` alias.
-*   ✅ **20. The VS Code Shell Conflict:** `.zprofile` sources `.zshrc` to unify login/interactive shell environments.
-
-## ⚠️ Follow-Ups
-
-- Create `scripts/data_validate.sh` so the goodevening validation step stops warning and backups can run silently.
-- Document the GitHub token requirement in onboarding (PAT at `~/.github_token`) whenever we clone to a new machine.
-
-## ✅ Recent Wins
-
-| Item | Date | Notes |
-| ---- | ---- | ----- |
-| Round 2: 20 Blindspots (21-40) | 2025-11-05 | Completed all 20 Round 2 blindspots. Key improvements: error handling in goodevening.sh, health ↔ productivity correlation, smart navigation logging (chpwd hook), weekly review automation (LaunchAgent), script collision detection, idempotent bootstrap, file organization safety, bookmark pruning (g prune), medication data in health exports, scheduler-todo integration, daily focus feature. Fixed zsh hook conflicts with VS Code integration. |
-| Round 1: 20 Blindspots (1-20) | 2025-11-02 | Verified and documented all 20 blindspots from the evolution plan. All features implemented and tested: data backups, health/meds dashboards, stale task tracking, system validation, enhanced journal search, navigation consolidation (g.sh), blog-todo sync, gamification, todo commit/bump/top, schedule wrapper, dynamic clipboard, howto wiki, clutter review, audit logging, and unified shell environments. |
-| Backlog Implementation | 2025-11-01 | Completed all 4 backlog items: blog cadence nudges with age warnings, full medication tracking system (`meds.sh`), health export for medical appointments, automation safety nets in goodevening (uncommitted changes, large diffs, lingering branches, unpushed commits). |
-| Foundation & Hardening (Phases 1-3) | 2025-11-01 | Fixed broken journaling loop, centralized all data to `~/.config/dotfiles-data/`, deleted 4 redundant scripts, cleaned up shell config, modernized all aliases, hardened core scripts with `set -euo pipefail`. |
-| Q4 Objectives 0-3 | 2025-11-01 | Fixed remaining bugs, created Daily Happy Path guide, extended health.sh with symptom and energy tracking. |
-| `docs/happy-path.md` | 2025-11-01 | Comprehensive daily workflow guide designed for brain fog days. |
-| Health tracking expansion | 2025-11-01 | Added symptom logging, energy ratings (1-10), integrated into daily dashboards. |
-| `status` overhaul | 2025-10-04 | Added location, git, journal, and task snapshots. |
-| `goodevening` revamp | 2025-10-06 | Lists completed tasks, journal, dirty projects; prompts for tomorrow's note. |
-| `projects` recall tools | 2025-10-06 | Surfaced forgotten repos via GitHub API. |
-| Clipboard workflows doc | 2025-10-10 | New `docs/clipboard.md` plus cross-links in README files. |
+Add optional AI section:
+- [ ] AI-powered daily reflection prompts
+- [ ] Accomplishment summary from Chief of Staff
+- [ ] Tomorrow planning suggestions
 
 ---
 
-## 🔗 Key Resources
+## 🎨 Phase 3: Expand Dispatcher Coverage (Priority: MEDIUM)
 
-**GitHub:** https://github.com/ryan258/dotfiles  
-**Blog:** https://ryanleej.com  
-**Blog Repo:** https://github.com/ryan258/my-ms-ai-blog
+**Goal:** Create dispatchers for more specialist types
+
+### 3.1 Strategy Dispatchers
+
+**New Scripts to Create:**
+
+1. `bin/dhp-strategy.sh` - Chief of Staff coordination
+   - Multi-specialist project planning
+   - Resource allocation
+   - Timeline estimation
+
+2. `bin/dhp-brand.sh` - Brand Builder
+   - Brand positioning analysis
+   - Voice/tone development
+   - Competitive analysis
+
+3. `bin/dhp-market.sh` - Market Analyst
+   - SEO keyword research
+   - Trend analysis
+   - Audience insights
+
+### 3.2 Personal Dispatchers
+
+**New Scripts to Create:**
+
+1. `bin/dhp-stoic.sh` - Stoic Coach
+   - Daily stoic reflection
+   - Mindset coaching on challenges
+   - Journaling prompts
+
+2. `bin/dhp-health.sh` - Patient Advocate
+   - Medical research summarization
+   - Appointment preparation
+   - Symptom pattern analysis
+
+3. `bin/dhp-research.sh` - Head Librarian
+   - Research topic organization
+   - Source summarization
+   - Knowledge synthesis
+
+### 3.3 Kitchen Dispatchers
+
+**New Scripts to Create:**
+
+1. `bin/dhp-chef.sh` - Executive Chef
+   - Recipe development
+   - Menu planning
+   - Ingredient substitution
+
+2. `bin/dhp-nutrition.sh` - Nutritionist
+   - Meal planning for health goals
+   - Nutrition label analysis
+   - Diet optimization
+
+### 3.4 Creative Dispatchers (Expand)
+
+**New Scripts to Create:**
+
+1. `bin/dhp-narrative.sh` - Narrative Designer
+   - Story structure analysis
+   - Plot development
+   - Character arc planning
+
+2. `bin/dhp-copy.sh` - Copywriter
+   - Sales copy
+   - Email sequences
+   - Landing page copy
 
 ---
 
-## 📝 Notes for AI Assistants
+## 🧠 Phase 4: Intelligence & Analytics (Priority: MEDIUM)
 
-- **Brain fog is real:** Ryan may not remember yesterday's conversation
-- **Perfectionism blocks progress:** Ship working > perfect unused
-- **Batch work pattern:** He works in intense sprints, not steady increments
-- **Health context matters:** Symptoms affect everything
-- **System must be automatic:** Relying on remembering = system failure
-- **VS Code terminal:** Has shell integration conflict, use Terminal.app for testing
-- **Daily guard:** `startday` uses `~/.config/dotfiles-data/.startday_last_run` to avoid reruns—touching it will re-trigger the morning briefing.
-- **Focus + dump:** `focus` + `dump` are the preferred ways to re-anchor the day and capture longer thoughts.
-- **Backups:** `goodevening` expects `scripts/data_validate.sh`; missing file currently prints a warning before skipping backups—implement it when possible.
-- **GitHub API:** Requires a PAT stored at `~/.github_token` (classic token with `repo` scope) for `startday` and `projects`.
+**Goal:** Track usage, measure effectiveness, optimize workflows
 
-**Before suggesting new features:** Check if an existing script already does it. The system is more complete than Ryan may remember.
+### 4.1 Dispatcher Usage Tracking
+
+**New Script:** `scripts/dispatcher_log.sh`
+
+Track:
+- Which dispatchers are used most
+- Success/failure rates
+- API costs per dispatcher
+- Time saved estimates
+
+**Implementation:**
+- Each dispatcher logs to `~/.config/dotfiles-data/dispatcher_usage.log`
+- Format: `timestamp|dispatcher|model|tokens|duration|exit_code`
+- Add `dispatcher stats` command to view analytics
+
+### 4.2 Dispatcher Dashboard
+
+**Target:** `scripts/status.sh` or new `scripts/ai_dashboard.sh`
+
+Display:
+- Dispatcher calls today/this week
+- Estimated API costs
+- Most-used specialists
+- Suggested next dispatchers to try
+
+### 4.3 Cost Management
+
+**New Script:** `scripts/ai_budget.sh`
+
+Features:
+- Set monthly budget cap
+- Track spending by dispatcher
+- Alert when approaching limit
+- Cost optimization suggestions
+
+### 4.4 Quality Feedback Loop
+
+**Implementation:**
+
+Add feedback mechanism to dispatcher outputs:
+```bash
+# After dispatcher runs
+echo "Was this helpful? (y/n/retry)"
+read feedback
+# Log feedback to improve prompts over time
+```
 
 ---
 
-**Last Updated:** November 5, 2025
-**Next Review:** Q1 2026 - Foundation complete, all Q4 objectives shipped, all backlog items implemented. System is comprehensive and stable. Ready for new priorities.
+## 🏗️ Phase 5: Advanced Features (Priority: LOW)
+
+**Goal:** Push the limits of AI-augmented workflows
+
+### 5.1 Multi-Specialist Orchestration
+
+**New Script:** `bin/dhp-project.sh`
+
+Coordinates multiple specialists for complex projects:
+```bash
+dhp-project "Launch new blog series on AI productivity"
+
+# Internally orchestrates:
+# 1. Market Analyst - research topic
+# 2. Brand Builder - positioning
+# 3. Chief of Staff - project plan
+# 4. Content Specialist - outline series
+# 5. Copywriter - promotional copy
+```
+
+### 5.2 Context-Aware Dispatcher Selection
+
+**New Script:** `scripts/ai_suggest.sh`
+
+Analyzes current context and suggests best dispatcher:
+- Reads current directory
+- Checks recent git commits
+- Reviews active todo items
+- Suggests relevant specialist
+
+**Usage:**
+```bash
+$ ai-suggest
+Based on your current context (working in blog repo, recent tech commits), try:
+  • dhp-content "Refine latest blog post"
+  • dhp-tech < latest-script.sh
+```
+
+### 5.3 Dispatcher Chaining
+
+Enable piping between dispatchers:
+```bash
+dhp-creative "lighthouse keeper story" | dhp-narrative "expand plot" | dhp-copy "create email hook"
+```
+
+### 5.4 Local Context Injection
+
+Automatically inject relevant context into dispatcher prompts:
+- Recent journal entries
+- Current todo list
+- Active project README
+- Recent git commits
+
+**Implementation:**
+Add `--context` flag to all dispatchers:
+```bash
+dhp-content --context "Write guide on X"
+# Automatically includes: recent blog topics, journal mentions of X, todo items about X
+```
+
+### 5.5 Voice Interface (Experimental)
+
+Explore voice-to-dispatcher workflows:
+```bash
+voice-dispatch
+# Records audio, transcribes, routes to appropriate dispatcher
+```
+
+### 5.6 Dispatcher Templates
+
+**New Directory:** `templates/dispatchers/`
+
+Pre-built dispatcher invocations for common tasks:
+```bash
+templates/dispatchers/
+├── blog-post-from-idea.sh
+├── debug-script.sh
+├── story-outline.sh
+├── weekly-reflection.sh
+└── meal-plan.sh
+```
+
+---
+
+## 📊 Success Metrics
+
+**How we'll measure success:**
+
+### Quantitative Metrics
+- Number of dispatcher calls per day/week
+- Average time saved per dispatcher call (estimated)
+- Task completion rate increase
+- Blog post production rate increase
+- Code debugging success rate
+
+### Qualitative Metrics
+- User satisfaction with dispatcher outputs
+- Reduction in perfectionism paralysis
+- Increase in creative output
+- Better work-life balance via AI delegation
+- Cognitive load reduction on brain fog days
+
+### System Health Metrics
+- API error rate < 5%
+- Average dispatcher response time < 30s
+- Monthly API costs within budget
+- Zero security issues with API keys
+
+---
+
+## 🔐 Security & Best Practices
+
+### API Key Management
+- ✅ `.env` file in `.gitignore`
+- ✅ Never commit API keys
+- [ ] Add `.env.example` with placeholder values
+- [ ] Document key rotation process
+- [ ] Consider encrypted secrets for shared machines
+
+### Cost Control
+- [ ] Set up API usage alerts
+- [ ] Implement rate limiting per dispatcher
+- [ ] Add budget cap in scripts
+- [ ] Track and review monthly costs
+
+### Error Handling
+- [ ] All dispatchers should gracefully handle API failures
+- [ ] Provide helpful error messages
+- [ ] Log errors for debugging
+- [ ] Implement retry logic with exponential backoff
+
+### Privacy
+- [ ] Document what data is sent to OpenRouter
+- [ ] Add opt-out flags for sensitive data
+- [ ] Consider local LLM fallback for private data
+- [ ] Clear privacy policy in README
+
+---
+
+## 🎯 Immediate Next Actions
+
+**Start here (in order):**
+
+1. **Fix Infrastructure (30 min)**
+   - Clean up `.gitignore`
+   - Add `bin/` to git
+   - Verify `.env` configuration
+   - Add `.env.example` file
+
+2. **Add Aliases (10 min)**
+   - Add dispatcher aliases to `aliases.zsh`
+   - Test all aliases work
+   - Add to cheatsheet
+
+3. **Document System (45 min)**
+   - Update README with AI Staff section
+   - Verify `bin/README.md` is current
+   - Add to cheatsheet
+   - Create `docs/ai-staff-guide.md` (optional)
+
+4. **Test Current Dispatchers (30 min)**
+   - Run `dhp-tech.sh` on a test script
+   - Run `dhp-creative.sh` with a story idea
+   - Run `dhp-content.sh` with a blog topic
+   - Document any issues
+
+5. **First Integration (1 hour)**
+   - Add `blog generate` command
+   - Test end-to-end workflow
+   - Refine as needed
+
+---
+
+## 🔄 Iteration Plan
+
+**Week 1-2: Foundation**
+- Complete Phase 1 (Infrastructure)
+- Add aliases and documentation
+- Test all existing dispatchers thoroughly
+
+**Week 3-4: First Integrations**
+- Implement blog workflow integration
+- Add basic todo integration
+- Test with real usage
+
+**Month 2: Expand Coverage**
+- Add 3-5 new dispatchers (strategy + personal focus)
+- Integrate with journal and daily dashboards
+- Gather usage data
+
+**Month 3: Intelligence**
+- Implement usage tracking
+- Create analytics dashboard
+- Optimize based on real usage patterns
+
+**Month 4+: Advanced Features**
+- Multi-specialist orchestration
+- Context-aware suggestions
+- Template library
+
+---
+
+## 📝 Notes for Future Development
+
+**Brain Fog Considerations:**
+- All dispatchers should have simple, memorable invocations
+- Default behaviors should be sensible (minimal flags required)
+- Output should be immediately actionable
+- Errors should suggest fixes, not just report problems
+
+**Perfectionism Mitigation:**
+- Dispatchers output "first drafts" - not perfect, but shippable
+- Include encouraging language in outputs
+- Frame as "thought partner" not "authority"
+- Emphasize iterative improvement over perfection
+
+**System Integration Principles:**
+- Dispatchers should feel native to the dotfiles ecosystem
+- Consistent with existing command patterns
+- Work offline when possible (degrade gracefully)
+- Never block critical workflows
+
+**Cost Optimization:**
+- Cache responses where appropriate
+- Use smaller models for simpler tasks
+- Batch requests when possible
+- Monitor and optimize prompt efficiency
+
+---
+
+## 🔗 Resources
+
+**Internal:**
+- AI-Staff-HQ Submodule: `ai-staff-hq/`
+- Dispatcher Scripts: `bin/dhp-*.sh`
+- AI Staff Directory: `ai-staff-hq/STAFF-DIRECTORY.md`
+- Specialist Files: `ai-staff-hq/staff/*/`
+
+**External:**
+- AI-Staff-HQ Repo: https://github.com/ryan258/AI-Staff-HQ
+- OpenRouter Docs: https://openrouter.ai/docs
+- OpenRouter Models: https://openrouter.ai/models
+
+**Documentation:**
+- `docs/happy-path.md` - Daily workflow guide
+- `bin/README.md` - Dispatcher documentation
+- `CHANGELOG.md` - Implementation history
+
+---
+
+**Last Updated:** November 7, 2025
+**Next Review:** Weekly during Phase 1-2, then monthly
+**Status:** Foundation laid, Phase 1 ready to begin

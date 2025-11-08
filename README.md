@@ -36,6 +36,58 @@ Round 2 shipped earlier this month and we immediately layered on quality-of-life
 
 See `CHANGELOG.md` for the play-by-play of the latest blindspots and fixes.
 
+## AI Staff HQ Integration
+
+**NEW:** Your dotfiles now include a complete AI workforce of 42 specialized professionals through the [AI-Staff-HQ](https://github.com/ryan258/AI-Staff-HQ) submodule.
+
+### Quick Start with Dispatchers
+
+Access your AI specialists instantly via high-speed dispatcher scripts:
+
+```bash
+# Technical debugging (reads from stdin)
+cat broken-script.sh | dhp-tech    # Or: tech broken-script.sh
+
+# Creative writing workflows
+dhp-creative "A lighthouse keeper finds a mysterious artifact"
+
+# Content strategy & SEO
+dhp-content "Guide on overcoming creative blocks with AI"
+```
+
+### The Complete AI Workforce
+
+42 specialists across 7 departments:
+- **Creative (8):** Art Director, Copywriter, Narrative Designer, Sound Designer, Voice Director, Persona Architect, Audio Producer, Medium Expert
+- **Strategy (5):** Chief of Staff, Creative Strategist, Brand Builder, Market Analyst, Actuary
+- **Technical (5):** Automation Specialist, Prompt Engineer, Toolmaker, Productivity Architect, SEO Specialist
+- **Kitchen (11):** Executive Chef, Sous Chef, Pastry Chef, Grill Master, Bartender, Sommelier, Nutritionist, Food Scientist, Butcher, Line Cook, Kitchen Porter
+- **Personal (3):** Stoic Coach, Patient Advocate, Head Librarian
+- **Commercialization (1):** Literary Agent
+- **Specialized (8):** Historical Storyteller, Futurist, Transmedia Producer, Cultural Anthropologist, Local Area Expert, Music Producer, and more
+
+### Setup Requirements
+
+1. **Environment Configuration:** Copy `.env.example` to `.env` and add your OpenRouter API key:
+   ```bash
+   cp .env.example .env
+   # Edit .env and add your OPENROUTER_API_KEY
+   ```
+
+2. **Get an API Key:** Sign up at [OpenRouter](https://openrouter.ai/) and create an API key
+
+3. **Configure Models:** The `.env` file includes sensible defaults, but you can customize which models each dispatcher uses
+
+### Dispatcher Aliases
+
+All dispatchers are available via convenient aliases:
+- `dhp-tech` / `tech` - Technical debugging and code analysis
+- `dhp-creative` / `creative` - Creative writing workflows
+- `dhp-content` / `content` - Content strategy and SEO guides
+- `dhp` - Default to tech dispatcher
+
+See `bin/README.md` for detailed dispatcher documentation and `ROADMAP.md` for planned integrations with the daily workflow system.
+
 ## Daily Loop at a Glance
 
   * `startday` launches automatically once per calendar day on your first shell, greeting you with the day's focus, fresh GitHub pushes, suggested directories, blog sync results, and health reminders.
