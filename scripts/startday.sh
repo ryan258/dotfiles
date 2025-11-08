@@ -10,6 +10,17 @@ if [ -f "$HOME/dotfiles/.env" ]; then
     source "$HOME/dotfiles/.env"
 fi
 
+BLOG_SCRIPT="$HOME/dotfiles/scripts/blog.sh"
+BLOG_DIR_CONFIGURED="${BLOG_DIR:-}"
+BLOG_POSTS_DIR=""
+if [ -n "$BLOG_DIR_CONFIGURED" ]; then
+    BLOG_POSTS_DIR="$BLOG_DIR_CONFIGURED/content/posts"
+fi
+BLOG_READY=false
+if [ -f "$BLOG_SCRIPT" ] && [ -n "$BLOG_DIR_CONFIGURED" ] && [ -d "$BLOG_POSTS_DIR" ]; then
+    BLOG_READY=true
+fi
+
 echo "╔════════════════════════════════════════════════════════════╗"
 echo "║  Good morning! $(date '+%A, %B %d, %Y - %H:%M')            "
 echo "╚════════════════════════════════════════════════════════════╝"
@@ -21,8 +32,10 @@ if [ -f "$HOME/dotfiles/scripts/focus.sh" ]; then
 fi
 
 # --- Sync Blog Tasks ---
-if [ -f "$HOME/dotfiles/scripts/blog.sh" ]; then
-    "$HOME/dotfiles/scripts/blog.sh" sync
+if [ "$BLOG_READY" = true ]; then
+    if ! "$BLOG_SCRIPT" sync; then
+        echo "  ⚠️ Blog sync skipped (see message above)."
+    fi
 fi
 
 # --- YESTERDAY'S CONTEXT ---
@@ -84,10 +97,42 @@ if [ -f "$HOME/dotfiles/scripts/g.sh" ]; then
 fi
 
 # --- BLOG STATUS ---
-echo ""
-if [ -f "$HOME/dotfiles/scripts/blog.sh" ]; then
-    "$HOME/dotfiles/scripts/blog.sh" status
+if [ "$BLOG_READY" = true ]; then
+    echo ""
+    if ! "$BLOG_SCRIPT" status; then
+        echo "  ⚠️ Blog status unavailable (check BLOG_DIR configuration)."
+    fi
 fi
+
+# --- Helpers ---
+parse_timestamp() {
+    local raw="$1" epoch=""
+
+    # Full datetime with minutes (preferred)
+    if epoch=$(date -j -f "%Y-%m-%d %H:%M" "$raw" +%s 2>/dev/null); then
+        echo "$epoch"
+        return
+    fi
+
+    # Datetime missing minutes (e.g., "2025-11-18 11")
+    if [[ "$raw" =~ ^([0-9]{4}-[0-9]{2}-[0-9]{2})[[:space:]]+([0-9]{1,2})$ ]]; then
+        local padded_hour
+        printf -v padded_hour "%02d:00" "${BASH_REMATCH[2]}"
+        local normalized="${BASH_REMATCH[1]} ${padded_hour}"
+        if epoch=$(date -j -f "%Y-%m-%d %H:%M" "$normalized" +%s 2>/dev/null); then
+            echo "$epoch"
+            return
+        fi
+    fi
+
+    # Date-only entries
+    if epoch=$(date -j -f "%Y-%m-%d" "$raw" +%s 2>/dev/null); then
+        echo "$epoch"
+        return
+    fi
+
+    echo "0"
+}
 
 # --- HEALTH ---
 echo ""
@@ -97,7 +142,11 @@ if [ -f "$HEALTH_FILE" ] && [ -s "$HEALTH_FILE" ]; then
     # Show upcoming appointments
     if grep -q "^APPT|" "$HEALTH_FILE" 2>/dev/null; then
         grep "^APPT|" "$HEALTH_FILE" | sort -t'|' -k2 | while IFS='|' read -r type appt_date desc; do
-            days_until=$(( ( $(date -j -f "%Y-%m-%d %H:%M" "$appt_date" +%s 2>/dev/null || echo 0) - $(date +%s) ) / 86400 ))
+            appt_epoch=$(parse_timestamp "$appt_date")
+            if [ "$appt_epoch" -le 0 ]; then
+                continue
+            fi
+            days_until=$(( ( appt_epoch - $(date +%s) ) / 86400 ))
             if [ "$days_until" -ge 0 ]; then
                 echo "  • $desc - $appt_date (in $days_until days)"
             fi

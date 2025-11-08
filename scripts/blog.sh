@@ -1,9 +1,20 @@
 #!/bin/bash
 # blog.sh - Tools for managing the blog content workflow.
 
-# Use the BLOG_DIR environment variable if it is set, otherwise use the default.
 SYSTEM_LOG_FILE="$HOME/.config/dotfiles-data/system.log"
-BLOG_DIR="${BLOG_DIR:-$HOME/Projects/my-ms-ai-blog}"
+
+# Allow per-user overrides via .env without leaking secrets broadly.
+if [ -z "${BLOG_DIR:-}" ] && [ -f "$HOME/dotfiles/.env" ]; then
+    # shellcheck disable=SC1090
+    source "$HOME/dotfiles/.env"
+fi
+
+BLOG_DIR="${BLOG_DIR:-}"
+if [ -z "$BLOG_DIR" ]; then
+    echo "Blog workflows are disabled. Set BLOG_DIR in dotfiles/.env to use blog.sh."
+    exit 1
+fi
+
 POSTS_DIR="$BLOG_DIR/content/posts"
 
 if [ ! -d "$POSTS_DIR" ]; then
