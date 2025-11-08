@@ -171,6 +171,113 @@ function ideas() {
     /Users/ryanjohnson/dotfiles/scripts/journal.sh search "blog idea"
 }
 
+function generate() {
+    local stub_name="$2"
+
+    if [ -z "$stub_name" ]; then
+        echo "Usage: blog generate <stub-name>"
+        echo "Example: blog generate ai-productivity-guide"
+        return 1
+    fi
+
+    # Find the stub file
+    local stub_file="$POSTS_DIR/${stub_name}.md"
+
+    if [ ! -f "$stub_file" ]; then
+        echo "Error: Stub file not found: $stub_file"
+        echo "Available stubs:"
+        grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null | while read -r f; do
+            echo "  • $(basename "$f" .md)"
+        done
+        return 1
+    fi
+
+    echo "🤖 Generating full content for: $stub_name"
+    echo "Reading stub: $stub_file"
+    echo ""
+
+    # Extract title from the stub for context
+    local title=$(grep -m 1 "^title:" "$stub_file" | cut -d':' -f2- | tr -d '"' | xargs)
+
+    if [ -z "$title" ]; then
+        title="$stub_name"
+    fi
+
+    echo "AI Staff: Content Specialist is creating SEO-optimized guide..."
+    echo "Topic: $title"
+    echo "---"
+
+    # Call the content dispatcher with the title
+    if command -v dhp-content.sh &> /dev/null; then
+        dhp-content.sh "$title"
+    else
+        echo "Error: dhp-content.sh dispatcher not found"
+        echo "Make sure bin/ is in your PATH"
+        return 1
+    fi
+
+    echo ""
+    echo "✅ Content generation complete"
+    echo "Output saved by dispatcher to: ~/projects/ryanleej.com/content/guides/"
+    echo "Next steps:"
+    echo "  1. Review and edit the generated content"
+    echo "  2. Move it to $POSTS_DIR/ if satisfied"
+    echo "  3. Remove 'content stub' marker from original"
+}
+
+function refine() {
+    local file_path="$2"
+
+    if [ -z "$file_path" ]; then
+        echo "Usage: blog refine <file-path>"
+        echo "Example: blog refine $POSTS_DIR/my-post.md"
+        return 1
+    fi
+
+    # Handle relative paths
+    if [ ! -f "$file_path" ]; then
+        # Try adding POSTS_DIR prefix
+        file_path="$POSTS_DIR/$file_path"
+        if [ ! -f "$file_path" ]; then
+            file_path="$POSTS_DIR/${file_path}.md"
+        fi
+    fi
+
+    if [ ! -f "$file_path" ]; then
+        echo "Error: File not found: $file_path"
+        return 1
+    fi
+
+    echo "✨ Refining content: $(basename "$file_path")"
+    echo "Reading from: $file_path"
+    echo ""
+    echo "AI Staff: Content Specialist is polishing your draft..."
+    echo "---"
+
+    # Read the file content and pipe to content dispatcher with refine instruction
+    if command -v dhp-content.sh &> /dev/null; then
+        {
+            echo "Please refine and improve the following blog post content. Focus on:"
+            echo "- Clarity and readability"
+            echo "- SEO optimization"
+            echo "- Engaging headlines and structure"
+            echo "- Adding relevant examples if needed"
+            echo ""
+            echo "Original content:"
+            echo "---"
+            cat "$file_path"
+        } | dhp-content.sh "refine blog post"
+    else
+        echo "Error: dhp-content.sh dispatcher not found"
+        echo "Make sure bin/ is in your PATH"
+        return 1
+    fi
+
+    echo ""
+    echo "✅ Content refinement complete"
+    echo "Review the suggestions above and update: $file_path"
+}
+
 # --- Main Logic ---
 case "$1" in
     status)
@@ -191,7 +298,17 @@ case "$1" in
     ideas)
         ideas
         ;;
+    generate)
+        generate "$@"
+        ;;
+    refine)
+        refine "$@"
+        ;;
     *)
-        echo "Usage: blog {status|stubs|random|recent|sync|ideas}"
+        echo "Usage: blog {status|stubs|random|recent|sync|ideas|generate|refine}"
+        echo ""
+        echo "AI-powered commands:"
+        echo "  blog generate <stub-name>  - Generate full content from stub using AI"
+        echo "  blog refine <file-path>    - Polish and improve existing content"
         ;;
 esac

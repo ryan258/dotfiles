@@ -153,17 +153,138 @@ case "$1" in
     echo "Restored task: $task_text_to_restore"
     ;;
 
+  debug)
+    # Debug a task using AI (dhp-tech dispatcher)
+    task_num=$2
+    if [ -z "$task_num" ]; then
+        echo "Usage: $0 debug <task_number>"
+        echo "Example: $0 debug 3"
+        exit 1
+    fi
+
+    # Get the task text
+    task_line=$(sed -n "${task_num}p" "$TODO_FILE")
+    task_text=$(echo "$task_line" | cut -d'|' -f2-)
+
+    if [ -z "$task_text" ]; then
+        echo "Error: Task $task_num not found."
+        exit 1
+    fi
+
+    echo "🤖 Debugging task #$task_num with AI Staff..."
+    echo "Task: $task_text"
+    echo "---"
+    echo ""
+
+    # Check if this looks like a script debugging task
+    if echo "$task_text" | grep -qi "debug\|fix\|error\|bug"; then
+        # Try to extract a script name from the task
+        script_name=$(echo "$task_text" | grep -oE '[a-zA-Z0-9_-]+\.sh' | head -1)
+
+        if [ -n "$script_name" ] && [ -f "$script_name" ]; then
+            echo "Found script: $script_name"
+            echo "Sending to AI Staff: Technical Debugging Specialist..."
+            echo ""
+            cat "$script_name" | dhp-tech.sh
+        elif [ -n "$script_name" ] && [ -f "$HOME/dotfiles/scripts/$script_name" ]; then
+            echo "Found script: ~/dotfiles/scripts/$script_name"
+            echo "Sending to AI Staff: Technical Debugging Specialist..."
+            echo ""
+            cat "$HOME/dotfiles/scripts/$script_name" | dhp-tech.sh
+        else
+            # No script found, send task description for general help
+            echo "No script file found. Analyzing task description..."
+            echo ""
+            echo "$task_text" | dhp-tech.sh
+        fi
+    else
+        # Not a debugging task, send for general analysis
+        echo "$task_text" | dhp-tech.sh
+    fi
+    ;;
+
+  delegate)
+    # Delegate a task to an AI dispatcher
+    task_num=$2
+    dispatcher=$3
+
+    if [ -z "$task_num" ] || [ -z "$dispatcher" ]; then
+        echo "Usage: $0 delegate <task_number> <dispatcher>"
+        echo ""
+        echo "Available dispatchers:"
+        echo "  tech      - Technical debugging and code analysis"
+        echo "  creative  - Creative writing and storytelling"
+        echo "  content   - SEO-optimized content creation"
+        echo ""
+        echo "Example: $0 delegate 3 creative"
+        exit 1
+    fi
+
+    # Get the task text
+    task_line=$(sed -n "${task_num}p" "$TODO_FILE")
+    task_text=$(echo "$task_line" | cut -d'|' -f2-)
+
+    if [ -z "$task_text" ]; then
+        echo "Error: Task $task_num not found."
+        exit 1
+    fi
+
+    echo "🤖 Delegating task #$task_num to AI Staff ($dispatcher dispatcher)..."
+    echo "Task: $task_text"
+    echo "---"
+    echo ""
+
+    # Route to the appropriate dispatcher
+    case "$dispatcher" in
+        tech|dhp-tech)
+            echo "Routing to: Technical Debugging Specialist"
+            echo ""
+            echo "$task_text" | dhp-tech.sh
+            ;;
+        creative|dhp-creative)
+            echo "Routing to: Creative Writing Team"
+            echo ""
+            dhp-creative.sh "$task_text"
+            ;;
+        content|dhp-content)
+            echo "Routing to: Content Strategy Team"
+            echo ""
+            dhp-content.sh "$task_text"
+            ;;
+        *)
+            echo "Error: Unknown dispatcher '$dispatcher'"
+            echo "Available: tech, creative, content"
+            exit 1
+            ;;
+    esac
+
+    echo ""
+    echo "✅ Task delegated successfully"
+    echo "Review the AI's output above, then mark complete when done:"
+    echo "  todo done $task_num"
+    ;;
+
   *)
     echo "Error: Unknown command '$1'" >&2
-    echo "Usage: $0 {add|list|done|clear|commit|bump|top|undo}"
-    echo "  add <'task text'> : Add a new task"
-    echo "  list                : Show all current tasks"
-    echo "  done <task_number>  : Mark a task as complete"
-    echo "  clear               : Clear all tasks"
-    echo "  commit <task_number> ['message'] : Commit and mark a task as done"
-    echo "  bump <task_number>  : Move a task to the top of the list"
-    echo "  top [count]         : Show the top N tasks (default: 3)"
-    echo "  undo                : Restore the most recently completed task"
+    echo "Usage: $0 {add|list|done|clear|commit|bump|top|undo|debug|delegate}"
+    echo ""
+    echo "Task Management:"
+    echo "  add <'task text'>           : Add a new task"
+    echo "  list                        : Show all current tasks"
+    echo "  done <task_number>          : Mark a task as complete"
+    echo "  clear                       : Clear all tasks"
+    echo "  undo                        : Restore the most recently completed task"
+    echo ""
+    echo "Prioritization:"
+    echo "  bump <task_number>          : Move a task to the top of the list"
+    echo "  top [count]                 : Show the top N tasks (default: 3)"
+    echo ""
+    echo "Git Integration:"
+    echo "  commit <task_number> ['msg']: Commit and mark a task as done"
+    echo ""
+    echo "AI-Powered Commands:"
+    echo "  debug <task_number>         : Debug a task using AI technical specialist"
+    echo "  delegate <task_num> <type>  : Delegate task to AI (tech|creative|content)"
     exit 1
     ;;
 esac

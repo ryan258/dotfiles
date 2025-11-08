@@ -444,9 +444,11 @@ alias data_validate='bash ~/dotfiles/scripts/data_validate.sh'
 alias dhp-tech="dhp-tech.sh"
 alias dhp-creative="dhp-creative.sh"
 alias dhp-content="dhp-content.sh"
+alias dhp-strategy="dhp-strategy.sh"
 
 # Shorthand versions for quick access
 alias tech="dhp-tech.sh"
 alias creative="dhp-creative.sh"
 alias content="dhp-content.sh"
+alias strategy="dhp-strategy.sh"
 alias dhp="dhp-tech.sh"  # Default to tech dispatcher
