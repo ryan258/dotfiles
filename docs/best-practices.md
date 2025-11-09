@@ -2,7 +2,7 @@
 
 This guide covers proven strategies for maximizing productivity, maintaining data hygiene, and building sustainable workflows with your AI-augmented dotfiles system.
 
-**Last Updated:** November 7, 2025
+**Last Updated:** November 8, 2025
 
 ---
 
@@ -391,6 +391,78 @@ content --full-context "Advanced productivity guide"
 - One-off creative projects
 - Completely new topics
 - Speed is priority over awareness
+
+---
+
+### Streaming for Long-Running Tasks
+
+**Best Practice: Use `--stream` for real-time feedback**
+
+All dispatchers support the `--stream` flag for real-time output as the AI generates responses.
+
+✅ **Use streaming for:**
+```bash
+# Long creative tasks
+creative --stream "Complex story with multiple plot threads"
+
+# Comprehensive content generation
+content --stream "5000-word guide to AI productivity"
+
+# Deep strategic analysis
+tail -100 ~/.config/dotfiles-data/journal.txt | strategy --stream
+
+# Extensive market research
+echo "Complete competitive analysis of AI tools market" | market --stream
+
+# Complex technical debugging
+cat large-codebase.py | tech --stream
+```
+
+**When to use streaming:**
+- Tasks expected to take >10 seconds
+- Long-form content generation (guides, stories, reports)
+- Complex analysis (strategic insights, market research)
+- Interactive exploration and ideation
+- When you want to see progress in real-time
+
+❌ **Skip streaming for:**
+```bash
+# Quick queries (overhead not worth it)
+echo "Quick question" | tech
+
+# Batch processing (output piped to other commands)
+for file in *.sh; do cat $file | tech; done
+
+# Automated scripts (no human watching)
+# cron jobs, background processes
+
+# Piped output where streaming interferes
+echo "query" | dispatcher --stream | grep pattern  # ⚠️ Buffering issues
+```
+
+**Streaming vs. Non-Streaming:**
+```bash
+# Without streaming (default)
+content "Guide topic"
+# ... wait ... wait ... complete output appears
+
+# With streaming (real-time)
+content --stream "Guide topic"
+# Text appears as it generates:
+# "Let me create..."
+# "## Introduction..."
+# "The key concepts..."
+```
+
+**Saving streamed output:**
+```bash
+# Stream to terminal AND save to file simultaneously
+content --stream "Comprehensive guide" > guide.md
+# You see content in real-time, file gets saved
+
+# Stream without saving
+content --stream "Analysis for review only"
+```
 
 ---
 
@@ -789,7 +861,7 @@ Write → Search → Discover patterns → Write better
 
 ### Pitfall 4: Over-Booking with AI
 
-**Symptom:** Calling AI for every little thing
+**Symptom:** Calling AI for every little thing, or waiting for complete responses when streaming would give faster feedback
 
 ✅ **Fix:**
 ```bash
@@ -806,15 +878,20 @@ ai-suggest
 # - Simple googling
 # - Things you know how to do
 # - Learning experiences you should have
+
+# Use streaming for:
+# - Long tasks where you want real-time feedback
+# - Interactive exploration
+# - Content you'll review as it generates
 ```
 
-**AI is a power tool, not a replacement for thinking.**
+**AI is a power tool, not a replacement for thinking. Streaming is for efficiency, not every query.**
 
 ---
 
 ### Pitfall 5: Ignoring System Warnings
 
-**Symptom:** Skipping validation errors
+**Symptom:** Skipping validation errors or not noticing API errors
 
 ✅ **Fix:**
 ```bash
@@ -824,7 +901,19 @@ dotfiles_check
 # Actually read the output
 # Fix errors immediately
 # They're warnings for a reason
+
+# All dispatchers now have error handling
+# Example error output you might see:
+# "Error: Invalid API key"
+# "Error: Rate limit exceeded"
+# "Error: Request timeout"
+
+# If you see errors, check:
+grep OPENROUTER_API_KEY ~/dotfiles/.env
+dotfiles_check
 ```
+
+**Note:** As of November 8, 2025, all dispatchers detect and report API errors clearly. No more silent failures!
 
 ---
 
@@ -836,11 +925,11 @@ dotfiles_check
 
 ✅ **Example: Content Creation Stack**
 ```bash
-# 1. Research with AI
-echo "SEO keywords for AI productivity" | market > research.txt
+# 1. Research with AI (use streaming for long analysis)
+echo "SEO keywords for AI productivity" | market --stream > research.txt
 
-# 2. Generate outline with context
-cat research.txt | content --context "AI productivity guide" > outline.md
+# 2. Generate outline with context and streaming
+cat research.txt | content --stream --context "AI productivity guide" > outline.md
 
 # 3. Track the work
 todo add "Write AI productivity guide"
@@ -848,8 +937,8 @@ todo add "Write AI productivity guide"
 # 4. Commit when done
 todo commit 1
 
-# 5. Promote
-cat outline.md | copy > promotional-copy.txt
+# 5. Promote (streaming for longer copy)
+cat outline.md | copy --stream > promotional-copy.txt
 ```
 
 ---
@@ -866,12 +955,12 @@ cat outline.md | copy > promotional-copy.txt
 # Generate standard review
 weekreview --file
 
-# Get AI insights
+# Get AI insights (use streaming for interactive review)
 journal themes > ~/Documents/Reviews/ai-themes-$(date +%Y%m%d).md
 journal analyze > ~/Documents/Reviews/ai-insights-$(date +%Y%m%d).md
 
-# Strategic analysis of the week
-weekreview | strategy > ~/Documents/Reviews/ai-strategy-$(date +%Y%m%d).md
+# Strategic analysis of the week (stream for real-time insights)
+weekreview | strategy --stream > ~/Documents/Reviews/ai-strategy-$(date +%Y%m%d).md
 
 echo "✅ Weekly AI review complete. Check ~/Documents/Reviews/"
 ```

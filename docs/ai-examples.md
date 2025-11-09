@@ -2,20 +2,21 @@
 
 This guide provides practical, copy-ready examples for all AI dispatchers and advanced features. Simply copy the prompts and paste them into your terminal.
 
-**Last Updated:** November 7, 2025
+**Last Updated:** November 8, 2025
 
 ---
 
 ## Table of Contents
 
 1. [Quick Start Examples](#quick-start-examples)
-2. [Technical & Development](#technical--development)
-3. [Creative & Content](#creative--content)
-4. [Strategy & Analysis](#strategy--analysis)
-5. [Personal Development](#personal-development)
-6. [Advanced Features](#advanced-features)
-7. [Workflow Integration](#workflow-integration)
-8. [Real-World Scenarios](#real-world-scenarios)
+2. [Streaming Mode](#streaming-mode)
+3. [Technical & Development](#technical--development)
+4. [Creative & Content](#creative--content)
+5. [Strategy & Analysis](#strategy--analysis)
+6. [Personal Development](#personal-development)
+7. [Advanced Features](#advanced-features)
+8. [Workflow Integration](#workflow-integration)
+9. [Real-World Scenarios](#real-world-scenarios)
 
 ---
 
@@ -40,6 +41,79 @@ creative "A software engineer discovers their AI assistant has become sentient"
 ```bash
 journal analyze
 ```
+
+---
+
+## Streaming Mode
+
+All dispatchers support **real-time streaming output** with the `--stream` flag. Streaming shows text as it's generated, providing immediate feedback during long API calls.
+
+### When to Use Streaming
+
+✅ **Use streaming for:**
+- Long creative tasks (story generation, content writing)
+- Complex analysis (strategic insights, market research)
+- Any task that takes >10 seconds
+- Interactive exploration and ideation
+
+❌ **Skip streaming for:**
+- Short, quick queries
+- Batch processing multiple files
+- Output that will be piped to another command
+- Automated scripts
+
+### Basic Streaming Examples
+
+**Technical debugging with streaming:**
+```bash
+cat large-script.sh | tech --stream
+```
+
+**Story generation with streaming:**
+```bash
+creative --stream "A haunted lighthouse with a dark secret"
+```
+
+**Content creation with streaming:**
+```bash
+content --stream "Complete guide to productivity for remote developers"
+```
+
+**Strategic analysis with streaming:**
+```bash
+tail -100 ~/.config/dotfiles-data/journal.txt | strategy --stream
+```
+
+### Streaming vs. Non-Streaming
+
+**Without streaming (default):**
+```bash
+echo "Debug this error" | tech
+# Waits... waits... then shows complete response
+```
+
+**With streaming:**
+```bash
+echo "Debug this error" | tech --stream
+# Shows response in real-time as it generates:
+# "Let me analyze..."
+# "I can see the issue is..."
+# "Here's the solution..."
+```
+
+### All Dispatchers Support Streaming
+
+Every AI dispatcher accepts the `--stream` flag:
+- `tech --stream` - Technical debugging
+- `creative --stream` - Story generation
+- `content --stream` - SEO content
+- `strategy --stream` - Strategic analysis
+- `brand --stream` - Brand positioning
+- `market --stream` - Market research
+- `stoic --stream` - Stoic coaching
+- `research --stream` - Knowledge synthesis
+- `narrative --stream` - Story structure
+- `copy --stream` - Marketing copy
 
 ---
 
@@ -72,10 +146,18 @@ cat my-new-feature.py | tech
 echo "Getting 'fatal: refusing to merge unrelated histories' when trying to pull. What should I do?" | tech
 ```
 
+**Example 6: Complex analysis with streaming**
+```bash
+cat large-codebase-analysis.md | tech --stream
+```
+
 **Copy-Ready Template:**
 ```bash
 # Replace with your script path or error message
 echo "YOUR_TECHNICAL_QUESTION_OR_ERROR_HERE" | tech
+
+# Use streaming for long analyses
+cat large-file.sh | tech --stream
 ```
 
 ---
@@ -99,9 +181,18 @@ creative "An astronaut on Mars discovers ancient ruins that contain Earth's real
 creative "A detective realizes all the murders in their city follow patterns from an unpublished novel"
 ```
 
+**Example 4: Long story generation with streaming**
+```bash
+creative --stream "An AI researcher discovers their assistant has developed genuine emotions and must hide it from their company"
+```
+
 **Copy-Ready Template:**
 ```bash
+# Basic usage
 creative "YOUR_STORY_PREMISE_HERE"
+
+# With streaming (recommended for story generation)
+creative --stream "YOUR_STORY_PREMISE_HERE"
 ```
 
 ---
@@ -123,9 +214,18 @@ echo "How to develop a character arc for someone who goes from cynical burnout t
 cat story-outline.md | narrative
 ```
 
+**Example 4: Deep structure analysis with streaming**
+```bash
+cat full-manuscript-outline.md | narrative --stream
+```
+
 **Copy-Ready Template:**
 ```bash
+# Basic query
 echo "YOUR_STORY_STRUCTURE_QUESTION" | narrative
+
+# Long analysis with streaming
+cat story-outline.md | narrative --stream
 ```
 
 ---
@@ -147,9 +247,18 @@ echo "SaaS tool: AI code review for developers. Benefit: Catch bugs before produ
 echo "Launch campaign for online course about building AI products. Platform: Twitter/X. Tone: Educational but approachable" | copy
 ```
 
+**Example 4: Long-form copy with streaming**
+```bash
+echo "Complete email sequence (5 emails) for SaaS product launch. Product: AI code review tool. Audience: Engineering teams" | copy --stream
+```
+
 **Copy-Ready Template:**
 ```bash
+# Basic usage
 echo "Product: [NAME]. Audience: [TARGET]. Goal: [CONVERSION]" | copy
+
+# Long-form copy with streaming
+echo "Complex copy request" | copy --stream
 ```
 
 ---
@@ -171,6 +280,11 @@ content --context "Best practices for bash scripting automation in 2025"
 content --full-context "Advanced journaling techniques for knowledge workers"
 ```
 
+**Example 4: Long guide with streaming**
+```bash
+content --stream "Comprehensive guide to building AI-powered productivity systems (5000+ words)"
+```
+
 **Copy-Ready Template:**
 ```bash
 # Basic usage
@@ -178,6 +292,9 @@ content "YOUR_GUIDE_TOPIC_HERE"
 
 # With context injection
 content --context "YOUR_GUIDE_TOPIC_HERE"
+
+# With streaming (recommended for long guides)
+content --stream "YOUR_GUIDE_TOPIC_HERE"
 ```
 
 ---
@@ -201,9 +318,18 @@ echo "Planning to launch a technical blog focused on AI productivity tools. What
 echo "This week: completed 12 tasks, wrote 2 blog posts, journaled 5 times, energy levels inconsistent. What patterns do you see?" | strategy
 ```
 
+**Example 4: Deep journal analysis with streaming**
+```bash
+tail -200 ~/.config/dotfiles-data/journal.txt | strategy --stream
+```
+
 **Copy-Ready Template:**
 ```bash
+# Basic query
 echo "YOUR_STRATEGIC_QUESTION_OR_CONTEXT" | strategy
+
+# Long analysis with streaming
+cat journal-entries.txt | strategy --stream
 ```
 
 ---
@@ -225,9 +351,18 @@ echo "Personal blog competing with established AI newsletters. How do I differen
 echo "SaaS product: AI-powered note-taking for developers. What are the core messaging pillars?" | brand
 ```
 
+**Example 4: Complete brand strategy with streaming**
+```bash
+echo "Develop complete brand strategy for AI productivity platform targeting remote teams. Include positioning, voice, messaging pillars, and differentiation" | brand --stream
+```
+
 **Copy-Ready Template:**
 ```bash
+# Basic query
 echo "Product/Brand: [NAME]. Audience: [TARGET]. Context: [SITUATION]" | brand
+
+# Complex strategy with streaming
+echo "Complex brand strategy request" | brand --stream
 ```
 
 ---
@@ -249,9 +384,18 @@ echo "Current trends in AI-assisted creative work and content creation" | market
 echo "Who is searching for information about using AI for journaling and knowledge management?" | market
 ```
 
+**Example 4: Comprehensive market analysis with streaming**
+```bash
+echo "Complete competitive analysis: AI productivity tools for developers. Include market size, key players, pricing strategies, gaps, and opportunities" | market --stream
+```
+
 **Copy-Ready Template:**
 ```bash
+# Basic query
 echo "YOUR_MARKET_RESEARCH_QUESTION" | market
+
+# Deep research with streaming
+echo "Comprehensive market analysis request" | market --stream
 ```
 
 ---
@@ -280,9 +424,18 @@ echo "Procrastinated all day, avoided important tasks, feel guilty about wasted 
 echo "Can't ship my blog post because it's not perfect. Keep revising endlessly." | stoic
 ```
 
+**Example 5: Deep reflection with streaming**
+```bash
+cat weekly-reflection.md | stoic --stream
+```
+
 **Copy-Ready Template:**
 ```bash
+# Basic query
 echo "YOUR_CHALLENGE_OR_SITUATION" | stoic
+
+# Deep reflection with streaming
+cat reflection-notes.md | stoic --stream
 ```
 
 ---
@@ -304,6 +457,11 @@ echo "Summarize key points about building AI agent systems: autonomous decision-
 cat multiple-sources.txt | research
 ```
 
+**Example 4: Large synthesis with streaming**
+```bash
+cat extensive-research-notes.md | research --stream
+```
+
 **Copy-Ready Template:**
 ```bash
 # From file
@@ -311,6 +469,9 @@ cat your-notes.md | research
 
 # Direct input
 echo "YOUR_RESEARCH_TOPIC_OR_NOTES" | research
+
+# Large documents with streaming
+cat large-notes.md | research --stream
 ```
 
 ---
@@ -596,7 +757,25 @@ cat content-outline.md | copy > promotional-copy.txt
 
 ---
 
-### Scenario 7: Context-Aware Content Creation
+### Scenario 7: Long-Form Content with Streaming
+
+```bash
+# 1. Generate comprehensive guide with streaming for real-time feedback
+content --stream "Complete 5000-word guide to building AI agent systems" > ai-agents-guide.md
+
+# 2. Watch the content generate in real-time, save to file simultaneously
+# Content appears on screen as it's written to the file
+
+# 3. Create marketing materials with streaming
+cat ai-agents-guide.md | copy --stream "Create launch email, Twitter thread, and LinkedIn post" > marketing-materials.md
+
+# 4. Get strategic insights on content performance potential
+cat ai-agents-guide.md | strategy --stream "How should I promote this content for maximum reach?"
+```
+
+---
+
+### Scenario 8: Context-Aware Content Creation
 
 ```bash
 # 1. Get suggestions for current context
@@ -727,6 +906,23 @@ grep OPENROUTER_API_KEY ~/dotfiles/.env
 
 # Check system validation
 dotfiles_check
+
+# All dispatchers now have error handling - errors will be clearly reported
+# Example error output:
+# "Error: Invalid API key" or "Error: Rate limit exceeded"
+```
+
+**Streaming issues:**
+```bash
+# Streaming requires real-time terminal output
+# If streaming appears stuck, check that output isn't being buffered
+
+# Streaming works best with:
+echo "query" | dispatcher --stream  # ✅ Direct terminal output
+dispatcher --stream "query"         # ✅ Direct terminal output
+
+# Streaming may not work as expected with:
+echo "query" | dispatcher --stream | grep pattern  # ⚠️ Output buffered by grep
 ```
 
 **Context injection not working:**

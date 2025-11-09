@@ -2,7 +2,13 @@
 
 This directory contains 10 AI dispatcher scripts plus 4 advanced features that provide instant access to specialized AI professionals from the [AI-Staff-HQ](https://github.com/ryan258/AI-Staff-HQ) workforce. Each dispatcher is a high-speed orchestration layer that connects your workflow to the right specialist via OpenRouter API.
 
-**Status:** ✅ 10/10 Dispatchers Active + 4 Advanced Features (Phases 1-3, 5 Complete)
+**Status:** ✅ 10/10 Dispatchers Active + 4 Advanced Features (Phases 1-3, 5-6 Complete)
+
+**Latest Update (November 8, 2025):**
+- ✅ All dispatchers support real-time streaming with `--stream` flag
+- ✅ Robust error handling via shared library (`dhp-lib.sh`)
+- ✅ No more silent failures - API errors reported clearly
+- ✅ ~1,500 lines of duplicate code eliminated
 
 ---
 
@@ -47,12 +53,18 @@ This directory contains 10 AI dispatcher scripts plus 4 advanced features that p
 # Debug a script
 cat broken-script.sh | tech
 
+# Debug with real-time streaming
+cat broken-script.sh | tech --stream
+
 # Get optimization advice
 echo "How to optimize this bash loop?" | tech
 
 # Analyze error messages
 echo "TypeError: undefined is not a function" | tech
 ```
+
+**Flags:**
+- `--stream` - Enable real-time streaming output
 
 **Output:** Bug analysis, fix explanation, corrected code printed to stdout
 
@@ -66,16 +78,22 @@ echo "TypeError: undefined is not a function" | tech
 
 **Input:** Story idea or logline as argument
 **Model:** `DHP_CREATIVE_MODEL` (default: GPT-4o)
-**Specialists:** Chief of Staff, Narrative Designer, Persona Architect, Sound Designer
-**Output Location:** `~/projects/horror/`
+**Specialists:** Chief of Staff, Narrative Designer, Creative Strategist, Meditation Instructor
+**Output Location:** Configurable via `CREATIVE_OUTPUT_DIR` (default: `~/Projects/creative-writing/`)
 
 **Usage:**
 ```bash
 creative "A lighthouse keeper finds a mysterious artifact"
 
+# With real-time streaming
+creative --stream "Astronaut discovers sentient fog on Europa"
+
 # Full command
-dhp-creative.sh "Astronaut discovers sentient fog on Europa"
+dhp-creative.sh --stream "Software engineer's AI becomes sentient"
 ```
+
+**Flags:**
+- `--stream` - Enable real-time streaming output
 
 **Output:** Markdown file with complete story package saved to projects directory
 
@@ -87,19 +105,22 @@ dhp-creative.sh "Astronaut discovers sentient fog on Europa"
 
 **Input:** Reads from stdin
 **Model:** `DHP_CREATIVE_MODEL`
-**Specialist:** `ai-staff-hq/staff/creative/narrative-designer.yaml`
+**Specialist:** `ai-staff-hq/staff/producers/narrative-designer.yaml`
 
 **Usage:**
 ```bash
 # Analyze story structure
 echo "My hero starts weak, gains power, faces dark reflection" | narrative
 
-# Get plot development suggestions
-cat story-outline.md | narrative
+# With streaming for long analysis
+cat story-outline.md | narrative --stream
 
 # Character arc analysis
 echo "Character goes from selfish to selfless" | narrative
 ```
+
+**Flags:**
+- `--stream` - Enable real-time streaming output
 
 **Output:** Story structure analysis, plot suggestions, character arc recommendations
 
@@ -111,19 +132,22 @@ echo "Character goes from selfish to selfless" | narrative
 
 **Input:** Reads from stdin
 **Model:** `DHP_CREATIVE_MODEL`
-**Specialist:** `ai-staff-hq/staff/creative/copywriter.yaml`
+**Specialist:** `ai-staff-hq/staff/producers/copywriter.yaml`
 
 **Usage:**
 ```bash
 # Generate sales copy
 echo "Product: AI-powered task manager for ADHD" | copy
 
-# Email sequence
-echo "Launch sequence for new course on creative writing" | copy
+# Email sequence with streaming
+echo "Launch sequence for new course on creative writing" | copy --stream
 
 # Landing page copy
 echo "SaaS tool for content creators - convert visitors" | copy
 ```
+
+**Flags:**
+- `--stream` - Enable real-time streaming output
 
 **Output:** Compelling copy with headlines, body, and call-to-action
 
@@ -135,16 +159,27 @@ echo "SaaS tool for content creators - convert visitors" | copy
 
 **Input:** Topic as argument
 **Model:** `DHP_CONTENT_MODEL` (default: GPT-4o)
-**Specialists:** Market Analyst, SEO Specialist, Content Strategist
-**Output Location:** `~/projects/ryanleej.com/content/guides/`
+**Specialists:** Chief of Staff, Market Analyst, Copywriter
+**Output Location:** Configurable via `CONTENT_OUTPUT_DIR` (falls back to `$BLOG_DIR/content/guides/`)
 
 **Usage:**
 ```bash
 content "Guide on overcoming creative blocks with AI"
 
-# Full command
-dhp-content.sh "Complete guide to stoic philosophy for developers"
+# With streaming for long content
+content --stream "Complete guide to stoic philosophy for developers"
+
+# With context injection
+dhp-content.sh --context "Guide on productivity with AI"
+
+# Streaming + context
+dhp-content.sh --stream --context "Advanced Git workflows"
 ```
+
+**Flags:**
+- `--stream` - Enable real-time streaming output
+- `--context` - Include minimal local context (git, top tasks)
+- `--full-context` - Include full context (journal, todos, README, git)
 
 **Output:** SEO-optimized Hugo-ready markdown outline with research
 
@@ -165,12 +200,15 @@ dhp-content.sh "Complete guide to stoic philosophy for developers"
 # Analyze journal entries
 tail -20 ~/.config/dotfiles-data/journal.txt | strategy
 
-# Strategic planning
-echo "Launch AI consulting service - what's the roadmap?" | strategy
+# Strategic planning with streaming
+echo "Launch AI consulting service - what's the roadmap?" | strategy --stream
 
 # Pattern recognition
 cat weekly-metrics.txt | strategy
 ```
+
+**Flags:**
+- `--stream` - Enable real-time streaming output
 
 **Output:** Key insights, strategic recommendations, risks/opportunities
 
@@ -194,12 +232,15 @@ cat weekly-metrics.txt | strategy
 # Brand positioning
 echo "Tech blog focused on AI for creative work" | brand
 
-# Voice and tone
-echo "Define brand voice: educational but playful" | brand
+# Voice and tone with streaming
+echo "Define brand voice: educational but playful" | brand --stream
 
 # Competitive analysis
 echo "Analyze positioning vs. other AI content creators" | brand
 ```
+
+**Flags:**
+- `--stream` - Enable real-time streaming output
 
 **Output:** Brand attributes, voice recommendations, differentiation opportunities, messaging pillars
 
@@ -218,12 +259,15 @@ echo "Analyze positioning vs. other AI content creators" | brand
 # SEO research
 echo "Keywords for AI productivity tools content" | market
 
-# Trend analysis
-echo "Current trends in AI-assisted creative work" | market
+# Trend analysis with streaming
+echo "Current trends in AI-assisted creative work" | market --stream
 
 # Audience insights
 echo "Who's searching for AI writing assistance?" | market
 ```
+
+**Flags:**
+- `--stream` - Enable real-time streaming output
 
 **Output:** Keyword opportunities, market trends, audience insights, competitive landscape
 
@@ -237,43 +281,49 @@ echo "Who's searching for AI writing assistance?" | market
 
 **Input:** Reads from stdin
 **Model:** `DHP_STRATEGY_MODEL`
-**Specialist:** `ai-staff-hq/staff/personal/stoic-coach.yaml`
+**Specialist:** `ai-staff-hq/staff/health-lifestyle/stoic-coach.yaml`
 
 **Usage:**
 ```bash
 # Handle overwhelm
 echo "Overwhelmed by too many tasks and perfectionism" | stoic
 
-# Process setbacks
-echo "Project failed after months of work" | stoic
+# Process setbacks with streaming
+echo "Project failed after months of work" | stoic --stream
 
 # Daily reflection
 echo "Feeling stuck in analysis paralysis" | stoic
 ```
 
+**Flags:**
+- `--stream` - Enable real-time streaming output
+
 **Output:** Stoic reframe, control analysis, practical action, relevant quote
 
 ---
 
-### `dhp-research.sh` (Head Librarian)
+### `dhp-research.sh` (Academic Researcher)
 
 **Purpose:** Research organization, source summarization, knowledge synthesis
 
 **Input:** Reads from stdin
 **Model:** `DHP_STRATEGY_MODEL`
-**Specialist:** `ai-staff-hq/staff/personal/head-librarian.yaml`
+**Specialist:** `ai-staff-hq/staff/strategy/academic-researcher.yaml`
 
 **Usage:**
 ```bash
 # Synthesize research
 cat research-notes.md | research
 
-# Organize information
-echo "Summarize key points about AI agents" | research
+# Organize information with streaming
+echo "Summarize key points about AI agents" | research --stream
 
 # Connect concepts
 cat multiple-sources.txt | research
 ```
+
+**Flags:**
+- `--stream` - Enable real-time streaming output
 
 **Output:** Key themes, structured organization, connections, next research directions
 

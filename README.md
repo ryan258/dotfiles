@@ -25,6 +25,18 @@ This toolkit provides a comprehensive set of enhancements, including:
 
 ## What's New (November 2025 Refresh)
 
+### Latest: Dispatcher Robustness & Streaming (November 8, 2025)
+
+Major improvements to AI dispatcher reliability and user experience:
+
+  * **Real-Time Streaming:** All 10 AI dispatchers now support `--stream` flag for real-time output as AI generates responses
+  * **Robust Error Handling:** No more silent failures - API errors are caught and reported clearly with proper exit codes
+  * **Shared Library:** Centralized API logic in `bin/dhp-lib.sh` eliminates ~1,500 lines of duplicate code
+  * **Better Feedback:** See progress in real-time during long AI tasks, catch errors immediately
+  * **AI Staff HQ v3:** Upgraded to latest specialist organization with 41 YAML files
+
+### Quality-of-Life Upgrades (November 7, 2025)
+
 Round 2 shipped earlier this month and we immediately layered on quality-of-life upgrades to tighten the daily loop:
 
   * **Focus & Daily Anchor:** A new `focus` command stores the day's intention so `startday` can surface it at the very top of your morning briefing.
@@ -47,17 +59,19 @@ Access your AI specialists instantly via high-speed dispatcher scripts:
 ```bash
 # Technical & Development
 cat broken-script.sh | tech           # Debug code issues
+cat script.sh | tech --stream         # Debug with real-time streaming
 echo "Optimize this function" | tech  # Get technical advice
 
 # Creative & Content
-creative "lighthouse keeper story"    # Generate story package
-narrative "analyze plot structure"    # Story structure analysis
-copy "product launch email"           # Marketing copy
+creative "lighthouse keeper story"              # Generate story package
+creative --stream "astronaut on Europa"         # Stream story generation
+narrative "analyze plot structure"              # Story structure analysis
+copy "product launch email"                     # Marketing copy
 
 # Strategy & Analysis
 echo "Brand positioning for tech blog" | brand    # Brand analysis
 echo "SEO keywords for AI content" | market       # Market research
-tail -50 journal.txt | strategy                   # Strategic insights
+tail -50 journal.txt | strategy --stream          # Strategic insights (streaming)
 
 # Personal Development
 echo "Overwhelmed by perfectionism" | stoic      # Stoic coaching
@@ -67,8 +81,28 @@ cat research-notes.md | research                  # Knowledge synthesis
 ai-suggest                                        # Get context-aware suggestions
 dhp-project "new project idea"                    # Multi-specialist orchestration
 dhp-chain creative narrative copy -- "idea"       # Chain multiple specialists
-dhp-content --context "guide topic"               # Use local context injection
+dhp-content --stream --context "guide topic"      # Stream with local context
 ```
+
+### New: Real-Time Streaming
+
+All dispatchers now support **real-time streaming** with the `--stream` flag:
+
+```bash
+# Watch text appear as AI generates (perfect for long creative tasks)
+creative --stream "Write a story about..."
+content --stream "Complete guide to X"
+cat script.sh | tech --stream
+
+# Traditional mode (wait for complete response)
+creative "Story idea"  # Default behavior, no streaming
+```
+
+**Benefits:**
+- See progress immediately during long AI tasks
+- Better UX for creative and content generation
+- Same robust error handling in both modes
+- Opt-in via flag - existing workflows unchanged
 
 ### 10 Active AI Dispatchers
 
@@ -183,6 +217,20 @@ dhp-content --full-context "Comprehensive guide topic"
    bash scripts/dotfiles_check.sh
    # Should report: "✅ Found 10/10 dispatchers"
    ```
+
+### Error Handling & Reliability
+
+**Robust Error Detection (November 8, 2025):**
+- All dispatchers check for API errors and report them clearly
+- No more silent failures with fake "SUCCESS" messages
+- Proper exit codes (non-zero on failures) for script integration
+- Example error: `Error: API returned an error: Invalid API key`
+
+**Shared Library:**
+- Centralized API logic in `bin/dhp-lib.sh`
+- Consistent error handling across all dispatchers
+- API changes only require updating one file
+- Eliminated ~1,500 lines of duplicate code
 
 ### Full AI Workforce Access
 
