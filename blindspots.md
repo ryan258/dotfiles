@@ -1,16 +1,18 @@
 # Project Blindspots & Future Enhancements
 
-This document outlines a strategic review of the "Dispatcher" Orchestration System in its current state. The goal is to identify blindspots and propose future enhancements that would significantly benefit the project's promise of being a rapid, configurable, and robust "one-man factory."
+**Last Updated:** November 8, 2025
+
+This document outlines remaining blindspots and proposed future enhancements for the "Dispatcher" Orchestration System. For completed improvements, see [CHANGELOG.md](CHANGELOG.md#dispatcher-robustness--streaming-improvements-november-8-2025).
 
 ---
 
-## 1. Robustness & Error Handling
+## Recently Resolved (November 8, 2025)
 
-The current scripts are functional for the happy path, but they are brittle if the API returns an error that isn't a network failure.
+- ✅ **API Error Handling** - No more silent failures ([see CHANGELOG](CHANGELOG.md))
+- ✅ **Real-Time Streaming** - All dispatchers support `--stream` flag ([see CHANGELOG](CHANGELOG.md))
+- ✅ **Code Duplication (Partial)** - API logic centralized in shared library ([see CHANGELOG](CHANGELOG.md))
 
-*   **Blindspot:** API Error Handling
-    *   **Observation:** If the `curl` command completes but the OpenRouter API returns a valid JSON object containing an error (e.g., invalid API key, model not found), the script will fail silently. The `jq` command will simply find no content at `.choices[0].message.content` and produce an empty output, which `tee` will write to the file. The user will see a "SUCCESS" message for a failed job.
-    *   **Suggested Enhancement:** Before parsing the content, check if the JSON response contains an `.error` field. If it does, print the error message to `stderr` and exit with a non-zero status code. This would provide immediate, accurate feedback on API-level failures.
+---
 
 ## 2. Configuration & Flexibility
 
@@ -32,14 +34,16 @@ The current workflow is effective but could be streamlined and made more interac
     *   **Observation:** To create a new workflow (e.g., `dhp-legal.sh`), the user must copy, paste, and modify an existing script. This leads to significant code duplication and is a manual, error-prone process.
     *   **Suggested Enhancement:** This is the most significant opportunity. Refactor the system to use a single, master `dispatch.sh` script. This script could take the "squad" name (from the proposed `squads.yaml`) as an argument, e.g., `dispatch creative "brief..."`. This would eliminate the need for separate script files for each workflow.
 
-*   **Blindspot:** No Real-Time (Streaming) Output
-    *   **Observation:** The scripts wait for the entire API response to be completed before printing any output. For complex tasks that take time to generate, this leaves the user waiting with no feedback.
-    *   **Suggested Enhancement:** Modify the `curl` command to support streaming and process the response chunk-by-chunk as it arrives from the API. This would print the text to the screen in real-time, dramatically improving the interactive feel and aligning with the "high-speed" philosophy.
-
 ## 4. Code Maintenance & Scalability
 
-As the system grows, duplicated code will become a significant liability.
-
-*   **Blindspot:** High Degree of Code Duplication
-    *   **Observation:** The three dispatcher scripts share a large amount of boilerplate code for validation, prompt assembly, and the core `curl`/`jq` logic. A bug in this core logic would require fixing it in three separate places, a number that would grow with each new workflow script.
-    *   **Suggested Enhancement:** Adhere to the DRY (Don't Repeat Yourself) principle. Refactor the common code into a single, shared shell function or a helper script. This "core" function could be sourced and called by the individual dispatcher scripts (or the proposed master `dispatch.sh` script), ensuring that the main logic exists in only one place. This would make the entire system much easier to maintain, debug, and extend.
+*   **Remaining Issue:** Some Code Duplication
+    *   **Current State:** API logic centralized (✅), but validation and flag parsing still duplicated
+    *   **Observation:** While `call_openrouter()` eliminates major duplication, these patterns remain duplicated across scripts:
+        - Validation logic (curl/jq checks, API key checks)
+        - Flag parsing patterns
+        - Model fallback logic
+    *   **Suggested Enhancement:**
+        - Create validation library functions (e.g., `validate_dependencies()`, `validate_api_key()`)
+        - Create shared flag parsing helper
+        - Further consolidation of common patterns
+    *   **Priority:** Low (major improvements already complete)

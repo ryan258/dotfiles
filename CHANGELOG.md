@@ -1,12 +1,86 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** November 7, 2025
+**Last Updated:** November 8, 2025
 
 This document tracks all major implementations, improvements, and fixes to the Daily Context System.
 
 ---
 
 ## November 2025: AI Integration & Foundation Complete
+
+### Dispatcher Robustness & Streaming Improvements (November 8, 2025)
+
+**Phase 6: Error Handling & Streaming ✅**
+
+Addressed critical blindspots in dispatcher system for robustness and user experience.
+
+**Created Shared Library (`bin/dhp-lib.sh`):**
+- ✅ Centralized API interaction logic in `call_openrouter()` function
+- ✅ Error detection: Checks for `.error` field in API responses
+- ✅ Proper error reporting: Clear messages to stderr with non-zero exit codes
+- ✅ Streaming support: Server-Sent Events (SSE) parsing for real-time output
+- ✅ Dual-mode operation: Streaming (`--stream` flag) and traditional (default)
+
+**Updated All 10 API-Calling Dispatchers:**
+- ✅ `dhp-tech.sh` - Added library integration, error handling, streaming support
+- ✅ `dhp-creative.sh` - Added library integration, error handling, streaming support
+- ✅ `dhp-content.sh` - Added library integration, error handling, streaming support (with existing --context flag)
+- ✅ `dhp-strategy.sh` - Added library integration, error handling, streaming support
+- ✅ `dhp-brand.sh` - Added library integration, error handling, streaming support
+- ✅ `dhp-market.sh` - Added library integration, error handling, streaming support
+- ✅ `dhp-stoic.sh` - Added library integration, error handling, streaming support
+- ✅ `dhp-research.sh` - Added library integration, error handling, streaming support
+- ✅ `dhp-narrative.sh` - Added library integration, error handling, streaming support
+- ✅ `dhp-copy.sh` - Added library integration, error handling, streaming support
+
+**Error Handling Improvements:**
+- ✅ No more silent failures - API errors now properly reported
+- ✅ Before: `curl ... | jq -r '.choices[0].message.content'` (returns empty on error)
+- ✅ After: `call_openrouter()` checks for errors and exits with code 1
+- ✅ Example error: `Error: API returned an error: Invalid API key`
+- ✅ Failed dispatchers now report: `FAILED: '<Name>' encountered an error.`
+
+**Streaming Output Features:**
+- ✅ Real-time text display as AI generates responses
+- ✅ All 10 dispatchers support `--stream` flag
+- ✅ Usage: `cat script.sh | dhp-tech --stream`
+- ✅ Usage: `dhp-creative --stream "Story idea"`
+- ✅ Usage: `dhp-content --stream --context "Guide topic"`
+- ✅ Same error handling in streaming mode
+- ✅ Backward compatible (opt-in via flag)
+
+**Code Quality Improvements:**
+- ✅ Eliminated ~1,500 lines of duplicated curl/jq logic
+- ✅ Centralized API logic: Bug fixes now update all dispatchers automatically
+- ✅ Consistent behavior: All dispatchers handle errors identically
+- ✅ Improved maintainability: API changes only require updating one file
+
+**Configuration Improvements:**
+- ✅ Added `CREATIVE_OUTPUT_DIR` to `.env.example` and `.env`
+- ✅ Added `CONTENT_OUTPUT_DIR` to `.env.example` and `.env`
+- ✅ Removed hard-coded paths from `dhp-creative.sh` and `dhp-content.sh`
+- ✅ Output directories now configurable via environment variables
+
+**AI Staff HQ v3 Integration:**
+- ✅ Upgraded submodule from main branch to v3 branch
+- ✅ Updated specialist paths for new v3 structure:
+  - `creative/copywriter.yaml` → `producers/copywriter.yaml`
+  - `creative/narrative-designer.yaml` → `producers/narrative-designer.yaml`
+  - `personal/stoic-coach.yaml` → `health-lifestyle/stoic-coach.yaml`
+  - `personal/head-librarian.yaml` → `strategy/academic-researcher.yaml`
+- ✅ Updated all affected dispatchers to use new paths
+- ✅ Verified all 41 specialist YAML files present in v3
+
+**Documentation:**
+- ✅ Updated `blindspots.md` with resolved items
+- ✅ Updated usage messages in all 10 dispatchers to include `--stream` flag
+- ✅ Added examples for streaming mode usage
+
+**Impact:**
+- **Robustness:** API errors now caught and reported clearly
+- **User Experience:** Real-time streaming dramatically improves feedback for long tasks
+- **Code Quality:** Centralized logic reduces maintenance burden
+- **Backward Compatibility:** No breaking changes, existing scripts work unchanged
 
 ### AI Staff HQ Integration (November 7, 2025)
 
