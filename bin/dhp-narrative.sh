@@ -22,7 +22,7 @@ if [ -z "$MODEL" ]; then
     echo "Error: DHP_CREATIVE_MODEL not set." >&2; exit 1
 fi
 
-STAFF_FILE="$AI_STAFF_DIR/staff/creative/narrative-designer.yaml"
+STAFF_FILE="$AI_STAFF_DIR/staff/producers/narrative-designer.yaml"
 if [ ! -f "$STAFF_FILE" ]; then
     echo "Error: Narrative Designer specialist not found at $STAFF_FILE" >&2; exit 1
 fi

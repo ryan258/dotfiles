@@ -4,11 +4,19 @@ set -e # Exit immediately if a command fails
 # --- 1. CONFIGURATION ---
 DOTFILES_DIR="$HOME/dotfiles"
 AI_STAFF_DIR="$DOTFILES_DIR/ai-staff-hq"
-PROJECTS_DIR="$HOME/projects/ryanleej.com/content/guides"
 
 # Source environment variables
 if [ -f "$DOTFILES_DIR/.env" ]; then
   source "$DOTFILES_DIR/.env"
+fi
+
+# Set output directory with fallback
+if [ -n "$CONTENT_OUTPUT_DIR" ]; then
+  PROJECTS_DIR="$CONTENT_OUTPUT_DIR"
+elif [ -n "$BLOG_DIR" ]; then
+  PROJECTS_DIR="$BLOG_DIR/content/guides"
+else
+  PROJECTS_DIR="$HOME/Projects/my-ms-ai-blog/content/guides"
 fi
 
 # Source context library
@@ -84,7 +92,7 @@ USER_BRIEF="$1"
 STAFF_TO_LOAD=(
     "strategy/chief-of-staff.yaml"
     "strategy/market-analyst.yaml"
-    "creative/copywriter.yaml"
+    "producers/copywriter.yaml"
 )
 mkdir -p "$PROJECTS_DIR"
 SLUG=$(echo "$USER_BRIEF" | tr '[:upper:]' '[:lower:]' | tr -s '[:punct:][:space:]' '-' | cut -c 1-50)

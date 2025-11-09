@@ -1,3 +1,4 @@
 [submodule "ai-staff-hq"]
 	path = ai-staff-hq
 	url = https://github.com/ryan258/AI-Staff-HQ
+	branch = v3

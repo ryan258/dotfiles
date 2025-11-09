@@ -22,9 +22,9 @@ if [ -z "$MODEL" ]; then
     echo "Error: No model configured." >&2; exit 1
 fi
 
-STAFF_FILE="$AI_STAFF_DIR/staff/personal/head-librarian.yaml"
+STAFF_FILE="$AI_STAFF_DIR/staff/strategy/academic-researcher.yaml"
 if [ ! -f "$STAFF_FILE" ]; then
-    echo "Error: Head Librarian specialist not found at $STAFF_FILE" >&2; exit 1
+    echo "Error: Academic Researcher specialist not found at $STAFF_FILE" >&2; exit 1
 fi
 
 PIPED_CONTENT=$(cat -)
@@ -32,7 +32,7 @@ if [ -z "$PIPED_CONTENT" ]; then
     echo "Usage: <input> | $0" >&2; exit 1
 fi
 
-echo "Activating 'Head Librarian' via OpenRouter (Model: $MODEL)..." >&2
+echo "Activating 'Academic Researcher' via OpenRouter (Model: $MODEL)..." >&2
 echo "---" >&2
 
 MASTER_PROMPT=$(cat "$STAFF_FILE")
@@ -57,4 +57,4 @@ curl -s -X POST "https://openrouter.ai/api/v1/chat/completions" \
     -d "$JSON_PAYLOAD" | jq -r '.choices[0].message.content'
 
 echo -e "\n---" >&2
-echo "SUCCESS: 'Head Librarian' research complete." >&2
+echo "SUCCESS: 'Academic Researcher' research complete." >&2

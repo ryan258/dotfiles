@@ -22,7 +22,7 @@ if [ -z "$MODEL" ]; then
     echo "Error: No model configured." >&2; exit 1
 fi
 
-STAFF_FILE="$AI_STAFF_DIR/staff/personal/stoic-coach.yaml"
+STAFF_FILE="$AI_STAFF_DIR/staff/health-lifestyle/stoic-coach.yaml"
 if [ ! -f "$STAFF_FILE" ]; then
     echo "Error: Stoic Coach specialist not found at $STAFF_FILE" >&2; exit 1
 fi

@@ -4,11 +4,17 @@ set -e # Exit immediately if a command fails
 # --- 1. CONFIGURATION ---
 DOTFILES_DIR="$HOME/dotfiles"
 AI_STAFF_DIR="$DOTFILES_DIR/ai-staff-hq"
-PROJECTS_DIR="$HOME/projects/horror"
 
 # Source environment variables
 if [ -f "$DOTFILES_DIR/.env" ]; then
   source "$DOTFILES_DIR/.env"
+fi
+
+# Set output directory with fallback
+if [ -n "$CREATIVE_OUTPUT_DIR" ]; then
+  PROJECTS_DIR="$CREATIVE_OUTPUT_DIR"
+else
+  PROJECTS_DIR="$HOME/Projects/creative-writing"
 fi
 
 # --- 2. VALIDATION ---
@@ -50,9 +56,9 @@ fi
 USER_BRIEF="$1"
 STAFF_TO_LOAD=(
     "strategy/chief-of-staff.yaml"
-    "creative/narrative-designer.yaml"
-    "creative/persona-architect.yaml"
-    "creative/sound-designer.yaml"
+    "producers/narrative-designer.yaml"
+    "strategy/creative-strategist.yaml"
+    "health-lifestyle/meditation-instructor.yaml"
 )
 mkdir -p "$PROJECTS_DIR"
 SLUG=$(echo "$USER_BRIEF" | tr '[:upper:]' '[:lower:]' | tr -s '[:punct:][:space:]' '-' | cut -c 1-50)

@@ -22,7 +22,7 @@ if [ -z "$MODEL" ]; then
     echo "Error: DHP_CREATIVE_MODEL not set." >&2; exit 1
 fi
 
-STAFF_FILE="$AI_STAFF_DIR/staff/creative/copywriter.yaml"
+STAFF_FILE="$AI_STAFF_DIR/staff/producers/copywriter.yaml"
 if [ ! -f "$STAFF_FILE" ]; then
     echo "Error: Copywriter specialist not found at $STAFF_FILE" >&2; exit 1
 fi
