@@ -10,6 +10,14 @@ if [ -f "$DOTFILES_DIR/.env" ]; then
   source "$DOTFILES_DIR/.env"
 fi
 
+# Source shared library
+if [ -f "$DOTFILES_DIR/bin/dhp-lib.sh" ]; then
+  source "$DOTFILES_DIR/bin/dhp-lib.sh"
+else
+  echo "Error: Shared library dhp-lib.sh not found" >&2
+  exit 1
+fi
+
 # Set output directory with fallback
 if [ -n "$CONTENT_OUTPUT_DIR" ]; then
   PROJECTS_DIR="$CONTENT_OUTPUT_DIR"
@@ -26,6 +34,7 @@ fi
 
 # Parse flags
 USE_CONTEXT=false
+USE_STREAMING=false
 while [[ "$1" == --* ]]; do
   case "$1" in
     --context)
@@ -35,6 +44,10 @@ while [[ "$1" == --* ]]; do
     --full-context)
       USE_CONTEXT=true
       CONTEXT_MODE="--full"
+      shift
+      ;;
+    --stream)
+      USE_STREAMING=true
       shift
       ;;
     *)
@@ -69,15 +82,17 @@ fi
 
 # Check if the user provided a brief
 if [ -z "$1" ]; then
-    echo "Usage: $0 [--context|--full-context] \"Topic for your new guide\"" >&2
+    echo "Usage: $0 [--context|--full-context] [--stream] \"Topic for your new guide\"" >&2
     echo "" >&2
     echo "Options:" >&2
     echo "  --context       Include minimal local context (git, top tasks)" >&2
     echo "  --full-context  Include full context (journal, todos, README, git)" >&2
+    echo "  --stream        Enable real-time streaming output" >&2
     echo "" >&2
     echo "Examples:" >&2
     echo "  $0 \"Guide on productivity with AI\"" >&2
     echo "  $0 --context \"Best practices for bash scripting\"" >&2
+    echo "  $0 --stream --context \"Advanced Git workflows\"" >&2
     exit 1
 fi
 
@@ -145,20 +160,21 @@ Return a single, well-formatted Hugo-ready markdown document.
 
 # --- 5. FIRE! ---
 
-# 5a. Read the master prompt content
+# Read the master prompt content
 PROMPT_CONTENT=$(cat "$MASTER_PROMPT_FILE")
 
-# 5b. Build the JSON payload using jq
-JSON_PAYLOAD=$(jq -n \
-                  --arg model "$DHP_CONTENT_MODEL" \
-                  --arg prompt "$PROMPT_CONTENT" \
-                  '{model: $model, messages: [{role: "user", content: $prompt}]}')
+# Execute the API call with error handling and optional streaming
+if [ "$USE_STREAMING" = true ]; then
+    call_openrouter "$DHP_CONTENT_MODEL" "$PROMPT_CONTENT" --stream | tee "$OUTPUT_FILE"
+else
+    call_openrouter "$DHP_CONTENT_MODEL" "$PROMPT_CONTENT" | tee "$OUTPUT_FILE"
+fi
 
-# 5c. Execute the API call and parse the response
-curl -s -X POST "https://openrouter.ai/api/v1/chat/completions" \
-    -H "Authorization: Bearer $OPENROUTER_API_KEY" \
-    -H "Content-Type: application/json" \
-    -d "$JSON_PAYLOAD" | jq -r '.choices[0].message.content' | tee "$OUTPUT_FILE"
-
-echo -e "\n---"
-echo "SUCCESS: 'First-Draft Skeleton' saved to $OUTPUT_FILE"
+# Check if API call succeeded
+if [ $? -eq 0 ]; then
+    echo -e "\n---"
+    echo "SUCCESS: 'First-Draft Skeleton' saved to $OUTPUT_FILE"
+else
+    echo "FAILED: Content generation encountered an error."
+    exit 1
+fi

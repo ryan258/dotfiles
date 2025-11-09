@@ -10,6 +10,29 @@ if [ -f "$DOTFILES_DIR/.env" ]; then
   source "$DOTFILES_DIR/.env"
 fi
 
+# Source shared library
+if [ -f "$DOTFILES_DIR/bin/dhp-lib.sh" ]; then
+  source "$DOTFILES_DIR/bin/dhp-lib.sh"
+else
+  echo "Error: Shared library dhp-lib.sh not found" >&2
+  exit 1
+fi
+
+# Parse flags
+USE_STREAMING=false
+while [[ "$1" == --* ]]; do
+  case "$1" in
+    --stream)
+      USE_STREAMING=true
+      shift
+      ;;
+    *)
+      echo "Unknown flag: $1" >&2
+      exit 1
+      ;;
+  esac
+done
+
 # --- 2. VALIDATION ---
 # Check for required tools
 if ! command -v curl &> /dev/null; then
@@ -53,7 +76,11 @@ fi
 PIPED_CONTENT=$(cat -)
 
 if [ -z "$PIPED_CONTENT" ]; then
-    echo "Usage: <input> | $0" >&2
+    echo "Usage: <input> | $0 [--stream]" >&2
+    echo "" >&2
+    echo "Options:" >&2
+    echo "  --stream    Enable real-time streaming output" >&2
+    echo "" >&2
     echo "Error: No input provided via stdin." >&2
     exit 1
 fi
@@ -90,15 +117,18 @@ Keep your response concise and actionable.
 # --- 5. EXECUTE API CALL ---
 PROMPT_CONTENT=$(cat "$MASTER_PROMPT_FILE")
 
-JSON_PAYLOAD=$(jq -n \
-                  --arg model "$STRATEGY_MODEL" \
-                  --arg prompt "$PROMPT_CONTENT" \
-                  '{model: $model, messages: [{role: "user", content: $prompt}]}')
+# Execute the API call with error handling and optional streaming
+if [ "$USE_STREAMING" = true ]; then
+    call_openrouter "$STRATEGY_MODEL" "$PROMPT_CONTENT" --stream
+else
+    call_openrouter "$STRATEGY_MODEL" "$PROMPT_CONTENT"
+fi
 
-curl -s -X POST "https://openrouter.ai/api/v1/chat/completions" \
-    -H "Authorization: Bearer $OPENROUTER_API_KEY" \
-    -H "Content-Type: application/json" \
-    -d "$JSON_PAYLOAD" | jq -r '.choices[0].message.content'
-
-echo -e "\n---" >&2
-echo "SUCCESS: 'Chief of Staff' analysis complete." >&2
+# Check if API call succeeded
+if [ $? -eq 0 ]; then
+    echo -e "\n---" >&2
+    echo "SUCCESS: 'Chief of Staff' analysis complete." >&2
+else
+    echo "FAILED: 'Chief of Staff' encountered an error." >&2
+    exit 1
+fi

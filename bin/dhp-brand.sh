@@ -9,6 +9,29 @@ AI_STAFF_DIR="$DOTFILES_DIR/ai-staff-hq"
 
 if [ -f "$DOTFILES_DIR/.env" ]; then source "$DOTFILES_DIR/.env"; fi
 
+# Source shared library
+if [ -f "$DOTFILES_DIR/bin/dhp-lib.sh" ]; then
+    source "$DOTFILES_DIR/bin/dhp-lib.sh"
+else
+    echo "Error: Shared library dhp-lib.sh not found" >&2
+    exit 1
+fi
+
+# Parse flags
+USE_STREAMING=false
+while [[ "$1" == --* ]]; do
+    case "$1" in
+        --stream)
+            USE_STREAMING=true
+            shift
+            ;;
+        *)
+            echo "Unknown flag: $1" >&2
+            exit 1
+            ;;
+    esac
+done
+
 if ! command -v curl &> /dev/null || ! command -v jq &> /dev/null; then
     echo "Error: curl and jq are required." >&2; exit 1
 fi
@@ -29,7 +52,10 @@ fi
 
 PIPED_CONTENT=$(cat -)
 if [ -z "$PIPED_CONTENT" ]; then
-    echo "Usage: <input> | $0" >&2; exit 1
+    echo "Usage: <input> | $0 [--stream]" >&2
+    echo "Options:" >&2
+    echo "  --stream    Enable real-time streaming output" >&2
+    exit 1
 fi
 
 echo "Activating 'Brand Builder' via OpenRouter (Model: $MODEL)..." >&2
@@ -48,13 +74,18 @@ Provide brand positioning analysis with:
 4. Key messaging pillars
 "
 
-JSON_PAYLOAD=$(jq -n --arg model "$MODEL" --arg prompt "$MASTER_PROMPT" \
-    '{model: $model, messages: [{role: "user", content: $prompt}]}')
+# Execute the API call with error handling and optional streaming
+if [ "$USE_STREAMING" = true ]; then
+    call_openrouter "$MODEL" "$MASTER_PROMPT" --stream
+else
+    call_openrouter "$MODEL" "$MASTER_PROMPT"
+fi
 
-curl -s -X POST "https://openrouter.ai/api/v1/chat/completions" \
-    -H "Authorization: Bearer $OPENROUTER_API_KEY" \
-    -H "Content-Type: application/json" \
-    -d "$JSON_PAYLOAD" | jq -r '.choices[0].message.content'
-
-echo -e "\n---" >&2
-echo "SUCCESS: 'Brand Builder' analysis complete." >&2
+# Check if API call succeeded
+if [ $? -eq 0 ]; then
+    echo -e "\n---" >&2
+    echo "SUCCESS: 'Brand Builder' analysis complete." >&2
+else
+    echo "FAILED: 'Brand Builder' encountered an error." >&2
+    exit 1
+fi
