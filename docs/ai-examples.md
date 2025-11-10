@@ -2,7 +2,7 @@
 
 This guide provides practical, copy-ready examples for all AI dispatchers and advanced features. Simply copy the prompts and paste them into your terminal.
 
-> **How to run dispatchers:** Use the one-word aliases (they map directly to the `dhp-*` scripts), or `dispatch <squad> …` if you prefer a unified entry point. Piping full files still works:
+> **How to run dispatchers:** Use the one-word aliases (they map directly to the `dhp-*` scripts), or `dispatch <squad> …` if you prefer a unified entry point. Piping full files still works. All scripts have been refactored for improved robustness and maintainability.
 > ```bash
 > tech "Optimize this function"
 > content --temperature 0.4 --max-tokens 800 "Brain fog morning primer"
@@ -10,7 +10,7 @@ This guide provides practical, copy-ready examples for all AI dispatchers and ad
 > # Alternative unified entry: dispatch tech "…"
 > ```
 
-**Last Updated:** November 8, 2025
+**Last Updated:** November 10, 2025
 
 ---
 
