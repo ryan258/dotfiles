@@ -4,7 +4,7 @@
 SYSTEM_LOG_FILE="$HOME/.config/dotfiles-data/system.log"
 
 # Allow per-user overrides via .env without leaking secrets broadly.
-if [ -z "${BLOG_DIR:-}" ] && [ -f "$HOME/dotfiles/.env" ]; then
+if [ -f "$HOME/dotfiles/.env" ]; then
     # shellcheck disable=SC1090
     source "$HOME/dotfiles/.env"
 fi
@@ -15,7 +15,8 @@ if [ -z "$BLOG_DIR" ]; then
     exit 1
 fi
 
-POSTS_DIR="$BLOG_DIR/content/posts"
+DRAFTS_DIR="${BLOG_DRAFTS_DIR_OVERRIDE:-${CONTENT_OUTPUT_DIR:-$BLOG_DIR/drafts}}"
+POSTS_DIR="${BLOG_POSTS_DIR_OVERRIDE:-$BLOG_DIR/content/posts}"
 
 if [ ! -d "$POSTS_DIR" ]; then
     echo "Blog directory not found at $POSTS_DIR"
@@ -27,41 +28,33 @@ function status() {
     echo "📝 BLOG STATUS (ryanleej.com):"
 
     TOTAL_POSTS=$(find "$POSTS_DIR" -name "*.md" | wc -l | tr -d ' ')
-    STUB_FILES=$(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null)
-    STUB_COUNT=$(echo "$STUB_FILES" | grep -c . || echo "0")
+    STUB_FILES=$(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null || true)
+    if [ -n "$STUB_FILES" ]; then
+        STUB_COUNT=$(printf "%s\n" "$STUB_FILES" | grep -c . || true)
+    else
+        STUB_COUNT=0
+    fi
 
     echo "  • Total posts: $TOTAL_POSTS"
     echo "  • Posts needing content: $STUB_COUNT"
 
-    # Check for stale stubs (>7 days old)
-    if [ -n "$STUB_FILES" ]; then
-        SEVEN_DAYS_AGO=$(date -v-7d +%s)
-        stale_count=0
+    if [ -d "$DRAFTS_DIR" ]; then
+        draft_count=0
+        drafts_list=""
+        while IFS= read -r draft; do
+            drafts_list="${drafts_list}${draft}"$'\n'
+            draft_count=$((draft_count + 1))
+        done < <(find "$DRAFTS_DIR" -type f -name "*.md" 2>/dev/null | sort)
 
-        echo "$STUB_FILES" | while read -r file; do
-            if [ -f "$file" ]; then
-                if [ -d "$BLOG_DIR/.git" ]; then
-                    last_commit=$(cd "$BLOG_DIR" && git log -1 --format="%ct" -- "$file" 2>/dev/null)
-                    if [ -n "$last_commit" ] && [ "$last_commit" -lt "$SEVEN_DAYS_AGO" ]; then
-                        stale_count=$((stale_count + 1))
-                    fi
-                fi
-            fi
-        done
-
-        # Count stale stubs for display
-        STALE_STUBS=0
-        for file in $STUB_FILES; do
-            if [ -f "$file" ] && [ -d "$BLOG_DIR/.git" ]; then
-                last_commit=$(cd "$BLOG_DIR" && git log -1 --format="%ct" -- "$file" 2>/dev/null)
-                if [ -n "$last_commit" ] && [ "$last_commit" -lt "$SEVEN_DAYS_AGO" ]; then
-                    STALE_STUBS=$((STALE_STUBS + 1))
-                fi
-            fi
-        done
-
-        if [ "$STALE_STUBS" -gt 0 ]; then
-            echo "  ⚠️  Stale stubs (>7 days): $STALE_STUBS"
+        if [ "$draft_count" -gt 0 ]; then
+            echo "  • Drafts awaiting review ($draft_count):"
+            while IFS= read -r draft; do
+                [ -z "$draft" ] && continue
+                rel=${draft#"$DRAFTS_DIR"/}
+                echo "    - $rel"
+            done <<< "$drafts_list"
+        else
+            echo "  • Drafts awaiting review: 0"
         fi
     fi
 
@@ -150,31 +143,22 @@ function random_stub() {
 # --- Subcommand: recent ---
 function recent() {
     echo "⏳ RECENTLY MODIFIED POSTS:"
-    
-    find "$POSTS_DIR" -name "*.md" -mtime -14 -print0 | xargs -0 ls -t | head -n 5 | while read -r file; do
+
+    recent_files=()
+    while IFS= read -r -d '' file; do
+        recent_files+=("$file")
+    done < <(find "$POSTS_DIR" -name "*.md" -mtime -14 -print0 2>/dev/null)
+
+    if [ ${#recent_files[@]} -eq 0 ]; then
+        echo "  (No posts updated in the last 14 days)"
+        return
+    fi
+
+    printf '%s\0' "${recent_files[@]}" | xargs -0 ls -t | head -n 5 | while read -r file; do
         if [ -f "$file" ]; then
             echo "  • $(basename "$file")"
         fi
     done
-}
-
-function sync_tasks() {
-    echo "🔄 Syncing blog stubs with todo list..."
-    STUB_FILES=$(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null)
-    TODO_FILE="$HOME/.config/dotfiles-data/todo.txt"
-
-    if [ -n "$STUB_FILES" ]; then
-        echo "$STUB_FILES" | while read -r file; do
-            filename=$(basename "$file" .md)
-            task_text="BLOG: $filename"
-            if ! grep -q "$task_text" "$TODO_FILE"; then
-                echo "  Adding task: $task_text"
-                echo "$(date): blog.sh - Adding task '$task_text' to todo list." >> "$SYSTEM_LOG_FILE"
-                todo.sh add "$task_text"
-            fi
-        done
-    fi
-    echo "Sync complete."
 }
 
 function ideas() {
@@ -302,9 +286,6 @@ case "$1" in
         ;;
     recent)
         recent
-        ;;
-    sync)
-        sync_tasks
         ;;
     ideas)
         ideas

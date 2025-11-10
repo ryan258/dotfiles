@@ -3,8 +3,20 @@
 
 CLIP_DIR="$HOME/.config/dotfiles-data/clipboard_history"
 mkdir -p "$CLIP_DIR"
+chmod 700 "$CLIP_DIR"
 
-case "$1" in
+MODE="${1:-}"
+
+if [ -z "$MODE" ]; then
+    echo "Usage:"
+    echo "  clip save [name]  : Save current clipboard"
+    echo "  clip load <name>  : Load clip to clipboard"
+    echo "  clip list         : Show all saved clips"
+    echo "  clip peek         : Show current clipboard content"
+    exit 1
+fi
+
+case "$MODE" in
     save)
         NAME="$2"
         if [ -z "$NAME" ]; then
@@ -20,14 +32,10 @@ case "$1" in
             ls "$CLIP_DIR/" 2>/dev/null || echo "No clips saved yet"
             exit 1
         fi
-        if [ -f "$CLIP_DIR/$2" ]; then
-            if [ -x "$CLIP_DIR/$2" ]; then
-                "$CLIP_DIR/$2" | pbcopy
-                echo "Executed '$2' and loaded to clipboard"
-            else
-                cat "$CLIP_DIR/$2" | pbcopy
-                echo "Loaded '$2' to clipboard"
-            fi
+        clip_path="$CLIP_DIR/$2"
+        if [ -f "$clip_path" ]; then
+            cat "$clip_path" | pbcopy
+            echo "Loaded '$2' to clipboard"
         else
             echo "Clip '$2' not found"
         fi

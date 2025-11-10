@@ -12,7 +12,7 @@ fi
 escape_applescript() {
     local input="$1"
     input=${input//\\/\\\\}
-    input=${input//"/\\"}
+    input=${input//\"/\\\"}
     input=${input//$'\n'/\\n}
     printf '%s' "$input"
 }

@@ -8,6 +8,17 @@ This document tracks all major implementations, improvements, and fixes to the D
 
 ## November 2025: AI Integration & Foundation Complete
 
+
+### Reliability Sprint (November 2025)
+
+- ✅ R1: Fixed `journal search` so it no longer crashes or depends on GNU `tac`.
+- ✅ R2: Restored nightly backup validator by adding `scripts/data_validate.sh`.
+- ✅ R3: Locked down `clipboard_manager` so it never executes saved clips and the history dir is private.
+- ✅ R4: Escaped double quotes in `done.sh` notifications to prevent AppleScript failures.
+- ✅ R5: Hardened `blog recent` to handle empty result sets without dumping unrelated files.
+- ✅ R6: Removed PATH assumptions from the old stub sync (now removed entirely) by calling `todo.sh` directly.
+- ✅ R7: `startday` now degrades gracefully when GitHub helper/jq fail instead of aborting the routine.
+- ✅ R8: `file_organizer.py` dry runs no longer create directories or mutate files.
 ### Model Configuration & Spec Template System (November 10, 2025)
 
 **Phase 6: Optimized Models & Structured Workflow ✅**

@@ -11,7 +11,7 @@ _Last updated: November 10 2025_
 - **Now (unblock daily workflows):**
   - Fix the critical shell bugs (journal search crash, missing validators, clipboard execution, streaming error handling) so dispatchers + rituals are trustworthy.
   - Stand up dispatcher logging/governance so failures are observable and sensitive context is gated.
-  - Baseline blog CLI so it can prep a DigitalOcean-ready push (draft → validate → git push).
+  - Baseline blog CLI so it can prep a DigitalOcean-ready push (draft → validate → git push), including a `blog validate` quality gate and automatic visibility into drafts/latest content.
 - **Next (quality of life + configurability):**
   - Externalize squad/model config, shared flag parsing, and context filters.
   - Add blog validation, idea management, and versioning automations tied to the todo/journal loops.
@@ -23,19 +23,10 @@ _Last updated: November 10 2025_
 Task IDs (`R`, `C`, `O`, `W`, `B`, `T`) map to Reliability, Config, Observability, Workflow, Blog, and Testing respectively.
 
 ### 2.1 Reliability & Safety (Bugs)
-- [ ] **R1 · `journal search` fatal error** — Wrap logic inside a function (no `local` at top level) and replace GNU `tac` with a macOS-safe option (`tail -r` or Python). _File: `scripts/journal.sh`_
-- [ ] **R2 · `goodevening` missing validator** — Either add `scripts/data_validate.sh` or guard the call so nightly backups run only when validation truly fails. _File: `scripts/goodevening.sh`_
-- [ ] **R3 · Clipboard execution risk** — `clipboard_manager.sh load` should never execute saved snippets; treat files as data and ensure the history dir has safe permissions. _File: `scripts/clipboard_manager.sh`_
-- [ ] **R4 · `done.sh` quote escaping** — Escape double quotes before sending commands to `osascript` so notifications can describe commands with quotes. _File: `scripts/done.sh`_
-- [ ] **R5 · `blog recent` empty-run bug** — Guard the `find … | xargs ls` pipeline so an empty stub list doesn’t dump unrelated files. _File: `scripts/blog.sh`_
-- [ ] **R6 · `blog sync` path assumption** — Call `"$HOME/dotfiles/scripts/todo.sh"` to avoid PATH issues. _File: `scripts/blog.sh`_
-- [ ] **R7 · `startday` GitHub pipeline brittleness** — Capture helper/jq errors so missing tokens or transient API issues don’t abort the morning briefing. _File: `scripts/startday.sh`_
-- [ ] **R8 · `file_organizer` dry-run side effects** — Only create directories/move files when `dry_run=false`. _File: `ai-staff-hq/tools/scripts/file_organizer.py`_
-- [ ] **R9 · `image_resizer` overwrites** — Loop until a unique `_resized` filename is produced. _File: `ai-staff-hq/tools/scripts/image_resizer.py`_
+- [ ] **R9 · `image_resizer` overwrites** — Ensure repeated runs don’t overwrite existing `_resized` files by generating unique filenames. _File: `ai-staff-hq/tools/scripts/image_resizer.py`_
 - [ ] **R10 · `app_launcher` regex lookups** — Use fixed-string matching so shortnames like `.` don’t explode. _File: `scripts/app_launcher.sh`_
 - [ ] **R11 · `week_in_review` & `backup_data` guard rails** — Fail fast with clear errors when data files/dirs are missing before running `gawk`/`tar`. _Files: `scripts/week_in_review.sh`, `scripts/backup_data.sh`_
 - [ ] **R12 · `health dashboard` runaway scans** — Cache/git-limit the commits-per-day correlation so invoking the dashboard doesn’t traverse every repo each run. _File: `scripts/health.sh`_
-
 ### 2.2 Configuration & Flexibility
 - [ ] **C1 · Dynamic squads/config file** — Move the dispatcher squad definitions into `ai-staff-hq/squads.yaml` so scripts can load teams without edits. _Files: `bin/dhp-*.sh`, new config loader_
 - [ ] **C2 · Model parameter controls** — Allow temperature/max tokens/top_p to be set via CLI flags or `.env` so creative vs deterministic tasks can be tuned. _Files: `bin/dhp-*.sh`, `.env.example`_
@@ -74,6 +65,7 @@ Design this so the same tooling can point at any Hugo repo, defaulting to `ryanl
 - [ ] **B9 · Version management** — `blog version bump/check/history` following `VERSIONING-POLICY.md`, with auto journal logging and review reminders.
 - [ ] **B10 · Metrics + exemplars** — `blog metrics` and `blog exemplar` commands for analytics lookups and North Star templates.
 - [ ] **B11 · Social automation** — `blog social --platform twitter|reddit|linkedin` plus optional todo creation for sharing.
+- [x] **B12 · Draft & recent-content visibility** — Surface drafts awaiting review and newest published posts directly in `blog status`/`startday` so the morning loop shows actionable editorial work.
 
 ### 2.6 Testing, Docs & Ops
 - [ ] **T1 · Morning hook smoke test** — Add a simple `zsh -ic startday` CI/cron check to ensure login hooks never regress (from ROADMAP-REVIEW-TEST).

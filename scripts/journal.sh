@@ -33,33 +33,50 @@ case "${1:-add}" in
   search)
     # Search for a term in the journal.
     shift
-    local sort_order="recent" # Default to recent
-    if [ "$1" == "--oldest" ]; then
-      sort_order="oldest"
-      shift
-    elif [ "$1" == "--recent" ]; then
-      sort_order="recent"
-      shift
-    fi
+    sort_order="recent"
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --oldest)
+          sort_order="oldest"
+          shift
+          ;;
+        --recent)
+          sort_order="recent"
+          shift
+          ;;
+        *)
+          break
+          ;;
+      esac
+    done
 
-    TERM="$*"
-    if [ -z "$TERM" ]; then
+    if [ $# -eq 0 ]; then
         echo "Usage: journal search [--recent|--oldest] <term>"
         exit 1
     fi
-    echo "--- Searching for '$TERM' in journal (sorted by $sort_order) ---"
 
-    local search_results
-    if [ "$sort_order" == "recent" ]; then
-      search_results=$(tac "$JOURNAL_FILE" | grep -i "$TERM" || true)
+    if [ ! -f "$JOURNAL_FILE" ]; then
+        echo "Journal is empty. Add entries with: journal \"text\""
+        exit 0
+    fi
+
+    SEARCH_TERM="$*"
+    echo "--- Searching for '$SEARCH_TERM' in journal (sorted by $sort_order) ---"
+
+    if [ "$sort_order" = "recent" ]; then
+      if command -v tac >/dev/null 2>&1; then
+        search_results=$(tac "$JOURNAL_FILE" | grep -i -- "$SEARCH_TERM" || true)
+      else
+        search_results=$(tail -r "$JOURNAL_FILE" | grep -i -- "$SEARCH_TERM" || true)
+      fi
     else
-      search_results=$(grep -i "$TERM" "$JOURNAL_FILE" || true)
+      search_results=$(grep -i -- "$SEARCH_TERM" "$JOURNAL_FILE" || true)
     fi
 
     if [ -n "$search_results" ]; then
       echo "$search_results"
     else
-      echo "No entries found for '$TERM'."
+      echo "No entries found for '$SEARCH_TERM'."
     fi
     ;;
 
