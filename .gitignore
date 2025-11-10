@@ -20,3 +20,5 @@ zsh/aliases/fabric-ai.zsh
 scripts/collection.csv
 scripts/mtg_*.sh
 scripts/mtg_*.py
+
+ry.md

@@ -1,433 +1,88 @@
-# AI Staff HQ Integration Roadmap
+# Unified Roadmap
 
-**Purpose:** Maximize the AI Staff HQ dispatcher system to create a seamless AI workforce integration
-**Status:** Foundation laid, building full integration
-**Location:** `~/dotfiles/`
-**Last Updated:** November 7, 2025
+_Last updated: November 10 2025_
 
----
+## 0. Vision & Constraints
+- **Goal:** Run the dotfiles + AI Staff HQ toolchain as a dependable assistant that also drives the ryanleej.com publishing workflow (while remaining flexible enough to point at other Hugo projects).
+- **Platform:** macOS Terminal environment; blog builds are triggered server-side (DigitalOcean) after we push to the repo—local scripts should prepare commits/pushes rather than deploy directly.
+- **Guiding themes:** reliability first, transparent automation, AI-assisted content ops, and low-friction routines for days with limited energy.
 
-## 🎯 Vision
+## 1. Priority Snapshot
+- **Now (unblock daily workflows):**
+  - Fix the critical shell bugs (journal search crash, missing validators, clipboard execution, streaming error handling) so dispatchers + rituals are trustworthy.
+  - Stand up dispatcher logging/governance so failures are observable and sensitive context is gated.
+  - Baseline blog CLI so it can prep a DigitalOcean-ready push (draft → validate → git push).
+- **Next (quality of life + configurability):**
+  - Externalize squad/model config, shared flag parsing, and context filters.
+  - Add blog validation, idea management, and versioning automations tied to the todo/journal loops.
+  - Expand test coverage/smoke checks for the morning/evening routines.
+- **Later (analytics + growth):**
+  - Usage dashboards, AI budget tracking, social automation, full persona-driven workflows, and Netlify/Vercel deploy adapters if needed.
 
-Transform the dotfiles system into an AI-augmented productivity powerhouse by deeply integrating the 42-specialist AI-Staff-HQ workforce with existing daily workflows. The dispatcher scripts (dhp\*) become the high-speed interface for complex creative, technical, and content tasks.
+## 2. Workstreams & Task Backlog
+Task IDs (`R`, `C`, `O`, `W`, `B`, `T`) map to Reliability, Config, Observability, Workflow, Blog, and Testing respectively.
 
----
+### 2.1 Reliability & Safety (Bugs)
+- [ ] **R1 · `journal search` fatal error** — Wrap logic inside a function (no `local` at top level) and replace GNU `tac` with a macOS-safe option (`tail -r` or Python). _File: `scripts/journal.sh`_
+- [ ] **R2 · `goodevening` missing validator** — Either add `scripts/data_validate.sh` or guard the call so nightly backups run only when validation truly fails. _File: `scripts/goodevening.sh`_
+- [ ] **R3 · Clipboard execution risk** — `clipboard_manager.sh load` should never execute saved snippets; treat files as data and ensure the history dir has safe permissions. _File: `scripts/clipboard_manager.sh`_
+- [ ] **R4 · `done.sh` quote escaping** — Escape double quotes before sending commands to `osascript` so notifications can describe commands with quotes. _File: `scripts/done.sh`_
+- [ ] **R5 · `blog recent` empty-run bug** — Guard the `find … | xargs ls` pipeline so an empty stub list doesn’t dump unrelated files. _File: `scripts/blog.sh`_
+- [ ] **R6 · `blog sync` path assumption** — Call `"$HOME/dotfiles/scripts/todo.sh"` to avoid PATH issues. _File: `scripts/blog.sh`_
+- [ ] **R7 · `startday` GitHub pipeline brittleness** — Capture helper/jq errors so missing tokens or transient API issues don’t abort the morning briefing. _File: `scripts/startday.sh`_
+- [ ] **R8 · `file_organizer` dry-run side effects** — Only create directories/move files when `dry_run=false`. _File: `ai-staff-hq/tools/scripts/file_organizer.py`_
+- [ ] **R9 · `image_resizer` overwrites** — Loop until a unique `_resized` filename is produced. _File: `ai-staff-hq/tools/scripts/image_resizer.py`_
+- [ ] **R10 · `app_launcher` regex lookups** — Use fixed-string matching so shortnames like `.` don’t explode. _File: `scripts/app_launcher.sh`_
+- [ ] **R11 · `week_in_review` & `backup_data` guard rails** — Fail fast with clear errors when data files/dirs are missing before running `gawk`/`tar`. _Files: `scripts/week_in_review.sh`, `scripts/backup_data.sh`_
+- [ ] **R12 · `health dashboard` runaway scans** — Cache/git-limit the commits-per-day correlation so invoking the dashboard doesn’t traverse every repo each run. _File: `scripts/health.sh`_
 
-## ✅ Current State (November 7, 2025)
+### 2.2 Configuration & Flexibility
+- [ ] **C1 · Dynamic squads/config file** — Move the dispatcher squad definitions into `ai-staff-hq/squads.yaml` so scripts can load teams without edits. _Files: `bin/dhp-*.sh`, new config loader_
+- [ ] **C2 · Model parameter controls** — Allow temperature/max tokens/top_p to be set via CLI flags or `.env` so creative vs deterministic tasks can be tuned. _Files: `bin/dhp-*.sh`, `.env.example`_
+- [ ] **C3 · Single dispatcher entry point** — Provide a `dispatch` wrapper that accepts a squad name and input, reducing the need to copy/modify scripts. _Files: new `bin/dispatch.sh`, aliases_
+- [ ] **C4 · Shared flag/validation helpers** — Extract `validate_dependencies`, `validate_api_key`, and shared flag parsing into `dhp-lib.sh` (or another helper) to delete duplicate code. _Files: `bin/dhp-lib.sh`, `bin/dhp-*.sh`_
 
-**Implementation Complete:**
-- ✅ **Phase 1: Foundation & Infrastructure** - All systems operational
-- ✅ **Phase 2: Workflow Integration** - Deeply integrated into daily workflows
-- ✅ **Phase 3: Dispatcher Expansion** - 10/10 priority dispatchers active
-- ✅ **Phase 5: Advanced Features** - Multi-specialist orchestration, context injection, chaining
+### 2.3 Observability, Streaming & Governance
+- [ ] **O1 · Streaming exit codes** — Refactor `call_openrouter` streaming branch to avoid subshell loss, propagate HTTP errors, and only print SUCCESS on true success. _File: `bin/dhp-lib.sh`_
+- [ ] **O2 · Dispatcher usage logging** — Log each call to `~/.config/dotfiles-data/dispatcher_usage.log` (timestamp, dispatcher, model, tokens, duration, exit code, streaming flag). Provide a `dispatcher stats` view. _Files: `bin/dhp-lib.sh`, new script_
+- [ ] **O3 · Context redaction & controls** — Add allow/deny lists plus preview/approval for `dhp-context.sh` so journal/todo snippets don’t leak sensitive info by default. _Files: `bin/dhp-context.sh`, `.env` knobs_
+- [ ] **O4 · API key governance** — Support per-dispatcher keys/aliases, rotation reminders, and a `dispatcher auth test` command. Cache metadata (created date, scopes) for proactive warnings. _Files: `.env`, helper script_
 
-**What's Working:**
-- ✅ AI-Staff-HQ submodule properly configured at `ai-staff-hq/`
-- ✅ 10 dispatcher scripts operational in `bin/`:
-  - Technical (1): `dhp-tech.sh`
-  - Creative (3): `dhp-creative.sh`, `dhp-narrative.sh`, `dhp-copy.sh`
-  - Strategy (3): `dhp-strategy.sh`, `dhp-brand.sh`, `dhp-market.sh`
-  - Content (1): `dhp-content.sh`
-  - Personal (2): `dhp-stoic.sh`, `dhp-research.sh`
-- ✅ Advanced AI features:
-  - Multi-specialist orchestration (`dhp-project.sh`)
-  - Context-aware suggestions (`ai_suggest.sh`)
-  - Dispatcher chaining (`dhp-chain.sh`)
-  - Local context injection (`dhp-context.sh` with `--context` flag support)
-- ✅ Environment variables in `.env` with full configuration
-- ✅ All dispatchers integrate with specialist YAML files and OpenRouter API
-- ✅ Full integration with core workflows: `blog`, `todo`, `journal`, `startday`, `goodevening`
-- ✅ 27 AI aliases (21 dispatcher + 6 advanced features)
-- ✅ System validation via `dotfiles_check.sh`
-- ✅ Comprehensive documentation in README files
+### 2.4 Workflow & UX Improvements
+- [ ] **W1 · Hardcoded squad friction** — (Covered by C1/C3) ensure new squads/models can be added via config, not code edits.
+- [ ] **W2 · AI suggestion polish** — Expand `ai_suggest` with recent journal mood + pending health signals to recommend the right dispatcher (optional, later).
+- [ ] **W3 · Guard rails for `tidy_downloads`, `media_converter`, etc.** — Document macOS-only assumptions (done) and add optional GNU fallbacks where it’s cheap for contributor machines.
 
-**Next Priorities:**
-- 📊 Phase 4: Intelligence & Analytics (optional - usage tracking, cost management)
+### 2.5 Blog & Publishing Program
+Design this so the same tooling can point at any Hugo repo, defaulting to `ryanleej.com`, and remember that deployments happen after pushing to the remote (DigitalOcean build).
 
----
+#### Phase A · Enhance `blog.sh`
+- [ ] **B1 · Draft helpers** — `blog draft <type>` to scaffold archetypes, prefill metadata, and open the editor.
+- [ ] **B2 · Persona-aware generation** — Allow `--persona` flags that load staff playbooks (`docs/staff/*.md`) as system prompts for AI dispatchers.
+- [ ] **B3 · Workflow runner** — `blog workflow <type>` orchestrates outline → draft → accessibility review → promotion using the appropriate dispatchers.
 
-## ✅ Phase 1: Foundation & Infrastructure (COMPLETE)
+#### Phase B · Validation & Quality Gates
+- [ ] **B4 · `blog validate`** — Automated checks against `GUIDE-WRITING-STANDARDS.md`, front matter completeness, accessibility (alt text, heading hierarchy, MS-friendly language), and link health.
+- [ ] **B5 · Pre-commit hook installation** — Optional `blog hooks install` to run validation before git commits touching `content/`.
 
-**Status:** All objectives achieved, system fully operational
+#### Phase C · Deployment Prep (DigitalOcean push model)
+- [ ] **B6 · `blog publish`** — One command that runs validation, builds with Hugo, summarizes git status, and prepares a push to the server-backed repo (no direct deploy; ensure instructions remind that DO handles the build when commits land).
+- [ ] **B7 · Deployment config** — Support multiple deploy methods (`digitalocean` repo push default, plus optional Netlify/Vercel/rsync adapters) via `.env`.
 
-**Key Achievements:**
-- ✅ Infrastructure fixes: `.gitignore` cleaned, `bin/` in version control, `.env.example` created
-- ✅ PATH configuration: `bin/` added to `.zprofile` for global access
-- ✅ 21 dispatcher aliases: Full names + shorthand versions in `aliases.zsh`
-- ✅ System validation: Enhanced `dotfiles_check.sh` validates all 10 dispatchers
-- ✅ Documentation: Comprehensive updates to README.md, bin/README.md, cheatsheet.sh
+#### Phase D · Content Lifecycle Extras
+- [ ] **B8 · Idea syncing** — `blog ideas sync/generate/prioritize/next` to tie journal themes + `content-backlog.md` into `todo.txt`.
+- [ ] **B9 · Version management** — `blog version bump/check/history` following `VERSIONING-POLICY.md`, with auto journal logging and review reminders.
+- [ ] **B10 · Metrics + exemplars** — `blog metrics` and `blog exemplar` commands for analytics lookups and North Star templates.
+- [ ] **B11 · Social automation** — `blog social --platform twitter|reddit|linkedin` plus optional todo creation for sharing.
 
-**See CHANGELOG.md for detailed implementation notes.**
+### 2.6 Testing, Docs & Ops
+- [ ] **T1 · Morning hook smoke test** — Add a simple `zsh -ic startday` CI/cron check to ensure login hooks never regress (from ROADMAP-REVIEW-TEST).
+- [ ] **T2 · Happy-path rehearsal** — Document/run a weekly `startday → status → goodevening` test to ensure the “brain fog” flow stays green.
+- [ ] **T3 · GitHub helper setup checklist** — Keep the PAT instructions (from ROADMAP-REVIEW-TEST) in sync with README/onboarding.
 
----
-
-## ✅ Phase 2: Workflow Integration (COMPLETE)
-
-**Status:** All dispatchers deeply integrated into daily workflows
-
-**Key Achievements:**
-- ✅ Blog workflow: `blog generate`, `blog refine` using `dhp-content.sh`
-- ✅ Todo integration: `todo debug`, `todo delegate` with auto-detection
-- ✅ Journal analysis: `journal analyze`, `journal mood`, `journal themes` via `dhp-strategy.sh`
-- ✅ Daily automation: Optional AI briefing in `startday.sh` (cached daily)
-- ✅ Evening reflection: Optional AI summary in `goodevening.sh`
-- ✅ Both features opt-in via `AI_BRIEFING_ENABLED` and `AI_REFLECTION_ENABLED` flags
-
-**See CHANGELOG.md for detailed implementation notes.**
-
----
-
-## ✅ Phase 3: Dispatcher Expansion (COMPLETE)
-
-**Status:** 10/10 priority dispatchers operational, all categories covered
-
-**Key Achievements:**
-- ✅ Created 7 new dispatchers (10 total active)
-- ✅ Categories covered: Technical (1), Creative (3), Strategy (3), Content (1), Personal (2)
-- ✅ All dispatchers: `dhp-strategy`, `dhp-brand`, `dhp-market`, `dhp-stoic`, `dhp-research`, `dhp-narrative`, `dhp-copy`
-- ✅ 14 new aliases added (full names + shorthand)
-- ✅ System validation updated for all 10 dispatchers
-- ✅ All dispatchers tested and validated
-
-**Deferred (low priority):**
-- Kitchen dispatchers (dhp-chef, dhp-nutrition) - Can add on-demand
-
-**See CHANGELOG.md for detailed implementation notes.**
+## 3. Completed & Reference Notes
+- Historic write-ups (`blindspots.md`, `review.md`, `ry.md`, `ROADMAP-REVIEW*.md`) are preserved for context; the actionable backlog now lives here.
+- CHANGELOG.md tracks shipped work; update it whenever tasks above graduate from "Now"/"Next" to "Done".
 
 ---
-
-## 🧠 Phase 4: Intelligence & Analytics (Priority: MEDIUM)
-
-**Goal:** Track usage, measure effectiveness, optimize workflows
-
-### 4.1 Dispatcher Usage Tracking
-
-**New Script:** `scripts/dispatcher_log.sh`
-
-Track:
-- Which dispatchers are used most
-- Success/failure rates
-- API costs per dispatcher
-- Time saved estimates
-
-**Implementation:**
-- Each dispatcher logs to `~/.config/dotfiles-data/dispatcher_usage.log`
-- Format: `timestamp|dispatcher|model|tokens|duration|exit_code`
-- Add `dispatcher stats` command to view analytics
-
-### 4.2 Dispatcher Dashboard
-
-**Target:** `scripts/status.sh` or new `scripts/ai_dashboard.sh`
-
-Display:
-- Dispatcher calls today/this week
-- Estimated API costs
-- Most-used specialists
-- Suggested next dispatchers to try
-
-### 4.3 Cost Management
-
-**New Script:** `scripts/ai_budget.sh`
-
-Features:
-- Set monthly budget cap
-- Track spending by dispatcher
-- Alert when approaching limit
-- Cost optimization suggestions
-
-### 4.4 Quality Feedback Loop
-
-**Implementation:**
-
-Add feedback mechanism to dispatcher outputs:
-```bash
-# After dispatcher runs
-echo "Was this helpful? (y/n/retry)"
-read feedback
-# Log feedback to improve prompts over time
-```
-
----
-
-## ✅ Phase 5: Advanced Features (COMPLETE)
-
-**Status:** Core advanced features implemented, 5.5-5.6 deferred for future needs
-
-**Key Achievements:**
-- ✅ Multi-specialist orchestration (`dhp-project.sh`)
-- ✅ Context-aware dispatcher suggestions (`ai_suggest.sh`)
-- ✅ Dispatcher chaining (`dhp-chain.sh`)
-- ✅ Local context injection (`dhp-context.sh` + `--context` flag)
-- ✅ 6 new aliases, all features tested and validated
-
-### 5.1 Multi-Specialist Orchestration ✅
-
-**Script:** `bin/dhp-project.sh`
-
-Coordinates 5 specialists for complex projects:
-```bash
-dhp-project "Launch new blog series on AI productivity"
-
-# Internally orchestrates:
-# 1. Market Analyst - research topic
-# 2. Brand Builder - positioning
-# 3. Chief of Staff - project plan
-# 4. Content Specialist - outline series
-# 5. Copywriter - promotional copy
-```
-
-**Features:**
-- Sequential specialist activation with context building
-- Comprehensive markdown project brief output
-- Aliases: `dhp-project`, `ai-project`
-
-### 5.2 Context-Aware Dispatcher Selection ✅
-
-**Script:** `scripts/ai_suggest.sh`
-
-Analyzes current context and suggests best dispatcher:
-- ✅ Reads current directory and project type
-- ✅ Checks recent git commits
-- ✅ Reviews active todo items
-- ✅ Time-based suggestions (morning/evening)
-- ✅ Suggests relevant specialist based on context
-
-**Usage:**
-```bash
-$ ai-suggest
-Based on your current context (working in blog repo, recent tech commits), try:
-  • dhp-content "Refine latest blog post"
-  • dhp-tech < latest-script.sh
-```
-
-### 5.3 Dispatcher Chaining ✅
-
-**Script:** `bin/dhp-chain.sh`
-
-Sequential processing through multiple dispatchers:
-```bash
-dhp-chain creative narrative copy -- "lighthouse keeper story"
-
-# Processes through:
-# 1. creative - generates story package
-# 2. narrative - expands plot structure
-# 3. copy - creates marketing hook
-```
-
-**Features:**
-- Progress display after each step
-- Optional `--save <file>` for output
-- Aliases: `dhp-chain`, `ai-chain`
-
-### 5.4 Local Context Injection ✅
-
-**Library:** `bin/dhp-context.sh`
-
-Automatically inject relevant context into dispatcher prompts:
-- ✅ Recent journal entries
-- ✅ Current todo list
-- ✅ Active project README
-- ✅ Recent git commits
-- ✅ Blog context for content work
-
-**Implementation:**
-Added `--context` flag to `dhp-content.sh` (example):
-```bash
-dhp-content --context "Write guide on X"
-# Automatically includes: recent blog topics, git context, top tasks
-
-dhp-content --full-context "Comprehensive guide on Y"
-# Includes: journal, todos, README, git history
-```
-
-**Functions:**
-- `gather_context()` - Main context collection (minimal/full modes)
-- `get_git_context()` - Repository and commit history
-- `get_recent_journal()` - Last N days of journal entries
-- `get_active_todos()` - Top tasks
-- `get_project_readme()` - Project documentation
-
-### 5.5 Voice Interface (Deferred)
-
-**Status:** Future enhancement, implement on-demand
-
-Potential voice-to-dispatcher workflows:
-```bash
-voice-dispatch
-# Would record audio, transcribe, route to appropriate dispatcher
-```
-
-### 5.6 Dispatcher Templates (Deferred)
-
-**Status:** Future enhancement, create templates as usage patterns emerge
-
-Potential pre-built dispatcher invocations for common tasks:
-```bash
-templates/dispatchers/
-├── blog-post-from-idea.sh
-├── debug-script.sh
-├── story-outline.sh
-├── weekly-reflection.sh
-└── meal-plan.sh
-```
-
-**See CHANGELOG.md for Phase 5 implementation details.**
-
----
-
-## 📊 Success Metrics
-
-**How we'll measure success:**
-
-### Quantitative Metrics
-- Number of dispatcher calls per day/week
-- Average time saved per dispatcher call (estimated)
-- Task completion rate increase
-- Blog post production rate increase
-- Code debugging success rate
-
-### Qualitative Metrics
-- User satisfaction with dispatcher outputs
-- Reduction in perfectionism paralysis
-- Increase in creative output
-- Better work-life balance via AI delegation
-- Cognitive load reduction on brain fog days
-
-### System Health Metrics
-- API error rate < 5%
-- Average dispatcher response time < 30s
-- Monthly API costs within budget
-- Zero security issues with API keys
-
----
-
-## 🔐 Security & Best Practices
-
-### API Key Management
-- ✅ `.env` file in `.gitignore`
-- ✅ Never commit API keys
-- [ ] Add `.env.example` with placeholder values
-- [ ] Document key rotation process
-- [ ] Consider encrypted secrets for shared machines
-
-### Cost Control
-- [ ] Set up API usage alerts
-- [ ] Implement rate limiting per dispatcher
-- [ ] Add budget cap in scripts
-- [ ] Track and review monthly costs
-
-### Error Handling
-- [ ] All dispatchers should gracefully handle API failures
-- [ ] Provide helpful error messages
-- [ ] Log errors for debugging
-- [ ] Implement retry logic with exponential backoff
-
-### Privacy
-- [ ] Document what data is sent to OpenRouter
-- [ ] Add opt-out flags for sensitive data
-- [ ] Consider local LLM fallback for private data
-- [ ] Clear privacy policy in README
-
----
-
-## 🎯 Immediate Next Actions
-
-**Phases 1-3 Complete ✅** - Moving to intelligence and analytics
-
-**Recommended Next Steps:**
-
-1. **Try the System (Recommended First)**
-   - Use dispatchers in real workflows for 1-2 weeks
-   - Note which dispatchers get used most
-   - Identify pain points or missing features
-   - Gather feedback before building analytics
-
-2. **Phase 4: Start with Usage Tracking (Optional)**
-   - Implement basic dispatcher logging (low overhead)
-   - Track: dispatcher used, timestamp, success/failure
-   - Build simple analytics after gathering real usage data
-
-3. **On-Demand Expansion (As Needed)**
-   - Add kitchen dispatchers if meal planning becomes priority
-   - Create additional specialists based on actual need
-   - Don't over-engineer before usage patterns emerge
-
----
-
-## 🔄 Iteration Plan
-
-**✅ November 7, 2025: Foundation Complete**
-- ✅ Phase 1: Infrastructure (complete)
-- ✅ Phase 2: Workflow Integration (complete)
-- ✅ Phase 3: Dispatcher Expansion (complete)
-- ✅ 10 active dispatchers, full workflow integration, comprehensive documentation
-
-**November-December 2025: Real-World Usage**
-- Use dispatchers in daily workflows
-- Gather usage patterns organically
-- Note friction points and opportunities
-- Let needs drive Phase 4 priorities
-
-**Q1 2026: Intelligence & Analytics (If Needed)**
-- Implement usage tracking based on real pain points
-- Add cost management if spending becomes concern
-- Build analytics only if usage patterns warrant it
-
-**Q2 2026+: Advanced Features (On-Demand)**
-- Multi-specialist orchestration (if complex projects emerge)
-- Context-aware suggestions (if context switching is frequent)
-- Additional dispatchers (as specific needs arise)
-
----
-
-## 📝 Notes for Future Development
-
-**Brain Fog Considerations:**
-- All dispatchers should have simple, memorable invocations
-- Default behaviors should be sensible (minimal flags required)
-- Output should be immediately actionable
-- Errors should suggest fixes, not just report problems
-
-**Perfectionism Mitigation:**
-- Dispatchers output "first drafts" - not perfect, but shippable
-- Include encouraging language in outputs
-- Frame as "thought partner" not "authority"
-- Emphasize iterative improvement over perfection
-
-**System Integration Principles:**
-- Dispatchers should feel native to the dotfiles ecosystem
-- Consistent with existing command patterns
-- Work offline when possible (degrade gracefully)
-- Never block critical workflows
-
-**Cost Optimization:**
-- Cache responses where appropriate
-- Use smaller models for simpler tasks
-- Batch requests when possible
-- Monitor and optimize prompt efficiency
-
----
-
-## 🔗 Resources
-
-**Internal:**
-- AI-Staff-HQ Submodule: `ai-staff-hq/`
-- Dispatcher Scripts: `bin/dhp-*.sh`
-- AI Staff Directory: `ai-staff-hq/STAFF-DIRECTORY.md`
-- Specialist Files: `ai-staff-hq/staff/*/`
-
-**External:**
-- AI-Staff-HQ Repo: https://github.com/ryan258/AI-Staff-HQ
-- OpenRouter Docs: https://openrouter.ai/docs
-- OpenRouter Models: https://openrouter.ai/models
-
-**Documentation:**
-- `docs/happy-path.md` - Daily workflow guide
-- `bin/README.md` - Dispatcher documentation
-- `CHANGELOG.md` - Implementation history
-
----
-
-**Last Updated:** November 7, 2025
-**Next Review:** Monthly, or as new needs emerge
-**Status:** Phases 1-3 complete, 10 dispatchers operational, ready for real-world usage
+_This roadmap is intentionally living. Add/edit tasks inline rather than spinning up parallel planning docs so we always have a single source of truth._
