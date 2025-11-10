@@ -20,6 +20,16 @@ This document tracks all major implementations, improvements, and fixes to the D
 - ✅ R7: `startday` now degrades gracefully when GitHub helper/jq fail instead of aborting the routine.
 - ✅ R8: `file_organizer.py` dry runs no longer create directories or mutate files.
 
+### General Remediation (November 10, 2025)
+
+- ✅ **Script Robustness:** Added `set -euo pipefail` to over 20 scripts to ensure they fail fast and handle errors predictably.
+- ✅ **Code Consolidation:**
+    - Created `bin/dhp-shared.sh` to centralize setup, flag parsing, and input handling for all dispatcher scripts.
+    - Refactored `dhp-brand.sh`, `dhp-tech.sh`, and `dhp-creative.sh` to use the new shared library, removing significant code duplication.
+- ✅ **File Cleanup:** Removed 3 obsolete navigation scripts (`goto.sh.deprecated`, `recent_dirs.sh.deprecated`, `workspace_manager.sh.deprecated`) and several `.bak` files.
+- ✅ **Documentation:** Updated `README.md` to reflect the script hardening and code consolidation efforts.
+
+
 ### Dispatcher Squad Config (November 2025)
 
 - ✅ Added `ai-staff-hq/squads.json` to define multi-agent dispatcher squads in one place.
