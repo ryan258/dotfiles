@@ -1,0 +1,21 @@
+Generic Dispatcher Spec
+
+DISPATCHER: [tech/creative/content/strategy/market/research/stoic]
+
+CONTEXT:
+[What's the current situation?]
+
+GOAL/PROBLEM:
+[What are you trying to accomplish?]
+
+SPECIFICS:
+[Format, length, tone, constraints]
+
+OUTPUT FORMAT:
+[What form should the answer take?]
+
+CONSTRAINTS (What to avoid):
+[Things to exclude or not focus on]
+
+PURPOSE:
+[Why are you asking? What decision does this inform?]

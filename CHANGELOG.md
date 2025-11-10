@@ -1,12 +1,96 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** November 8, 2025
+**Last Updated:** November 10, 2025
 
 This document tracks all major implementations, improvements, and fixes to the Daily Context System.
 
 ---
 
 ## November 2025: AI Integration & Foundation Complete
+
+### Model Configuration & Spec Template System (November 10, 2025)
+
+**Phase 6: Optimized Models & Structured Workflow ✅**
+
+Upgraded all AI dispatchers with optimized free models and implemented a spec-driven workflow for complex tasks.
+
+**Model Configuration Migration:**
+- ✅ Migrated all dispatchers to optimized free models from OpenRouter
+- ✅ Added 7 primary dispatcher model configurations to `.env`:
+  - `TECH_MODEL` → DeepSeek R1-0528 (671B params, enhanced reasoning)
+  - `CREATIVE_MODEL` → Llama 4 Maverick (400B params, multimodal, 1M context)
+  - `CONTENT_MODEL` → Qwen3 Coder (480B params, code/technical content)
+  - `STRATEGY_MODEL` → Polaris Alpha (256K context, experimental GPT-5.1)
+  - `MARKET_MODEL` → Llama 4 Scout (109B params, 10M token context)
+  - `RESEARCH_MODEL` → GLM-4.5-Air (106B params, efficient reasoning)
+  - `STOIC_MODEL` → DeepSeek R1-0528 (same as tech, excellent depth)
+- ✅ Added 3 fallback model configurations:
+  - `FALLBACK_GENERAL` → Mistral Small 3.1 (24B params, low latency)
+  - `FALLBACK_CONSISTENT` → Optimus Alpha (OpenRouter in-house)
+  - `FALLBACK_MULTIMODAL` → Gemini 2.0 Flash Experimental (multimodal)
+- ✅ Updated all 10 dispatcher scripts to read from `.env` with fallbacks:
+  - `dhp-tech.sh`, `dhp-creative.sh`, `dhp-content.sh`
+  - `dhp-strategy.sh`, `dhp-market.sh`, `dhp-research.sh`
+  - `dhp-stoic.sh`, `dhp-copy.sh`, `dhp-narrative.sh`, `dhp-brand.sh`
+- ✅ Backward compatibility: Falls back to legacy `DHP_*` variables, then hardcoded defaults
+- ✅ All dispatchers now use optimized models suited to their specific tasks
+
+**Spec Template System:**
+- ✅ Created `~/dotfiles/templates/` directory with 8 template files
+- ✅ Dispatcher-specific templates:
+  - `tech-spec.txt` - Debug/technical analysis with context
+  - `creative-spec.txt` - Story generation with structure
+  - `content-spec.txt` - Content creation with SEO
+  - `strategy-spec.txt` - Strategic analysis with constraints
+  - `market-spec.txt` - Market research with focus
+  - `research-spec.txt` - Knowledge synthesis
+  - `stoic-spec.txt` - Stoic coaching with reflection
+  - `dispatcher-spec-template.txt` - Generic fallback
+- ✅ Created `spec_helper.sh` script for template workflow:
+  - Opens dispatcher-specific template in configured editor
+  - Auto-pipes completed spec to appropriate dispatcher
+  - Archives completed specs to `~/.config/dotfiles-data/specs/`
+  - Timestamp-based naming for easy retrieval
+  - macOS-compatible temp file handling
+- ✅ Added `spec` command alias via `aliases.zsh`
+- ✅ Configured `EDITOR="code --wait"` in `.zshrc` for VS Code integration
+- ✅ Created specs archive directory at `~/.config/dotfiles-data/specs/`
+
+**Workflow Improvements:**
+- ✅ Structured input: Templates guide comprehensive dispatcher requests
+- ✅ Reusability: Saved specs can be edited and reused
+- ✅ Documentation: Spec archive serves as project history
+- ✅ Flexibility: Optional - traditional stdin/heredoc methods still work
+- ✅ Editor integration: Works with VS Code, Vim, Nano, or any `$EDITOR`
+
+**Usage Examples:**
+```bash
+# Use spec-driven workflow
+spec tech           # Opens tech template in editor
+spec creative       # Opens creative template
+spec content        # Opens content template
+
+# Reuse previous specs
+ls ~/.config/dotfiles-data/specs/
+cat ~/.config/dotfiles-data/specs/20251110-100534-tech.txt | tech
+
+# Traditional methods still work
+echo "Quick question" | tech
+cat script.sh | tech --stream
+```
+
+**Documentation:**
+- ✅ Updated `bin/README.md` with comprehensive spec workflow section
+- ✅ Added template descriptions and usage examples
+- ✅ Documented spec reuse patterns and multi-line input alternatives
+- ✅ Updated metadata: Phase 6 complete, November 10, 2025
+
+**Impact:**
+- **Cost Optimization:** Free models reduce API costs while maintaining quality
+- **Task-Specific Models:** Each dispatcher uses model optimized for its specialty
+- **Improved Output Quality:** Structured templates guide better AI responses
+- **Knowledge Retention:** Archived specs preserve successful patterns
+- **Workflow Efficiency:** Less context switching between editor and terminal
 
 ### Dispatcher Robustness & Streaming Improvements (November 8, 2025)
 

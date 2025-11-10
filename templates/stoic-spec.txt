@@ -1,0 +1,16 @@
+Stoic Coaching Spec
+
+SITUATION:
+[What's happening? What's the frustration?]
+
+THE FEELING:
+[Describe the emotional state]
+
+WHAT YOU'VE TRIED:
+[Actions already taken]
+
+QUESTION FOR REFLECTION:
+[What part is within my control? What am I avoiding?]
+
+OUTPUT:
+[Stoic reframe separating control from external factors + practical next step]

@@ -472,3 +472,9 @@ alias dhp-chain="dhp-chain.sh"               # Dispatcher chaining
 alias ai-chain="dhp-chain.sh"                # Shorthand
 alias ai-suggest="ai_suggest.sh"             # Context-aware suggestions
 alias ai-context="source dhp-context.sh"     # Context gathering library
+
+# =============================================================================
+# SPEC-DRIVEN DISPATCHER WORKFLOW
+# =============================================================================
+# Structured template workflow for dispatchers
+source ~/dotfiles/scripts/spec_helper.sh

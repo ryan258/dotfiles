@@ -1,6 +1,19 @@
 # Personal macOS Scripts Toolkit
 
-This folder collects small shell utilities that streamline day-to-day work on macOS—from note taking and reminders to system diagnostics and media conversion. Most scripts are intended to be run from Terminal and assume the default macOS tools (`bash`, `python3`, `osascript`, `find`, `zip`, etc.) plus a few optional Homebrew installs for advanced features.
+This folder collects shell utilities that streamline day-to-day work on macOS—from note taking and reminders to system diagnostics and media conversion, plus **AI-powered workflows** through 10 specialized AI dispatchers. Scripts are intended to be run from Terminal and assume the default macOS tools (`bash`, `python3`, `osascript`, `find`, `zip`, etc.) plus a few optional Homebrew installs for advanced features.
+
+## What's New (November 2025)
+
+### AI Staff HQ Integration (Phase 6 - November 10, 2025)
+
+**10 Active AI Dispatchers + Advanced Features:**
+- Optimized free models (DeepSeek R1, Llama 4, Qwen3) - no API costs
+- Spec template system for structured AI requests (`spec` command)
+- Real-time streaming support (`--stream` flag)
+- Integrated into todo, journal, blog workflows
+- Advanced features: context injection, dispatcher chaining, smart suggestions
+
+**See:** `/bin/README.md` for complete dispatcher documentation
 
 ## Getting Started
 
@@ -19,8 +32,8 @@ This folder collects small shell utilities that streamline day-to-day work on ma
 ### Data Storage
 
 All script data files are centralized in `~/.config/dotfiles-data/` for easy backup and organization:
-- `journal.txt` – Journal entries (searchable)
-- `todo.txt` & `todo_done.txt` – Task lists (with timestamps)
+- `journal.txt` – Journal entries (searchable, AI-analyzable)
+- `todo.txt` & `todo_done.txt` – Task lists (with timestamps, AI-delegatable)
 - `health.txt` – Health appointments, symptoms, energy ratings
 - `medications.txt` – Medication schedules and dose logs
 - `system.log` – Central audit log for automation
@@ -28,6 +41,7 @@ All script data files are centralized in `~/.config/dotfiles-data/` for easy bac
 - `favorite_apps` – Application launcher shortcuts
 - `clipboard_history/` – Saved clipboard snippets (supports dynamic snippets)
 - `how-to/` – Personal how-to wiki articles
+- `specs/` – Archived AI dispatcher spec templates (NEW)
 
 Automated daily backups to `~/Backups/dotfiles_data/` via `goodevening.sh`.
 
@@ -51,23 +65,24 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 
 ### Productivity & Planning
 
-- `journal.sh {add|list|search|onthisday}` – Append timestamped entries, list recent entries, search for keywords, or see "on this day" from previous years. Building your second brain.
-- `todo.sh {add|list|done|clear|commit|bump|top}` – Advanced todo list with git integration (`commit`), prioritization (`bump`, `top`), and timestamp tracking. Highlights stale tasks >7 days old.
+- `journal.sh {add|list|search|onthisday|analyze|mood|themes}` – **AI-Enhanced** journal with searchable history plus AI-powered analysis (7 days), sentiment tracking (14 days), and theme extraction (30 days). Building your second brain.
+- `todo.sh {add|list|done|clear|commit|bump|top|debug|delegate}` – **AI-Enhanced** todo list with git integration (`commit`), prioritization (`bump`, `top`), timestamp tracking, plus AI debugging (`debug`) and task delegation to specialists (`delegate`).
 - `health.sh {add|symptom|energy|list|summary|dashboard|export|remove}` – Track appointments, log symptoms, rate energy levels (1-10), view 30-day trend dashboards, and export reports for doctors.
 - `meds.sh {add|log|list|check|history|dashboard|remove|remind}` – Medication tracking with adherence monitoring, automated reminders (for cron), and 30-day dashboards.
 - `week_in_review.sh` – Summarise recent todos, journal entries, and commits from the last seven days.
 - `my_progress.sh` – Show your latest Git commits in the current repository.
-- `startday.sh` – Automated morning routine: syncs blog stubs to todos, shows yesterday's context, active GitHub projects, blog status, health reminders, stale tasks (>7 days), scheduled commands, and top 3 priorities.
-- `goodevening.sh` – End-of-day wrap-up with gamified progress tracking, project safety checks (uncommitted changes, large diffs, stale branches, unpushed commits), task cleanup, and automated data backup.
+- `startday.sh` – **AI-Enhanced** morning routine: syncs blog stubs to todos, shows yesterday's context, active GitHub projects, blog status, health reminders, stale tasks (>7 days), scheduled commands, top 3 priorities, plus optional AI briefing.
+- `goodevening.sh` – **AI-Enhanced** end-of-day wrap-up with gamified progress tracking, project safety checks (uncommitted changes, large diffs, stale branches, unpushed commits), task cleanup, automated data backup, plus optional AI reflection.
 - `status.sh` – Mid-day dashboard showing your current work context (directory, git), journal, and top 3 tasks.
 - `projects.sh {forgotten|recall <name>}` – Find and get details about forgotten projects from GitHub.
-- `blog.sh {status|stubs|random|recent|sync|ideas}` – Blog workflow tools with stub age warnings, todo sync, and journal search for blog ideas.
+- `blog.sh {status|stubs|random|recent|sync|ideas|generate|refine}` – **AI-Enhanced** blog workflow: status tracking, stub management, todo sync, journal search, plus AI content generation (`generate`) and refinement (`refine`).
 - `greeting.sh` – Quick context summaries for the start of a session.
 - `howto.sh {add|<name>|search}` – Personal searchable how-to wiki for complex workflows.
 - `schedule.sh "<time>" "<command>"` – User-friendly wrapper for macOS `at` command to schedule future commands.
-- `dotfiles_check.sh` – System validation script (doctor) that checks scripts, dependencies, data directory, and GitHub token.
+- `dotfiles_check.sh` – System validation script (doctor) that checks scripts, dependencies, data directory, GitHub token, and AI dispatchers (10/10).
 - `backup_data.sh` – Automated backup of entire `~/.config/dotfiles-data/` directory (called by `goodevening.sh`).
 - `new_script.sh <name>` – Automate adding new scripts with proper headers, executable permissions, and alias creation.
+- `spec_helper.sh` – **NEW** Spec template workflow - opens structured templates for comprehensive AI dispatcher input.
 
 ### Project & Directory Management
 
@@ -122,11 +137,50 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 ### Weather, Status, and Miscellaneous Tools
 
 - `weather.sh` – Fetch the forecast for the default city (edit the `city` variable to change it).
-- `cheatsheet.sh` – Display commonly-used commands for quick reference.
+- `cheatsheet.sh` – Display commonly-used commands for quick reference, including AI dispatcher quick start.
+- `ai_suggest.sh` – **NEW** Context-aware AI dispatcher suggestions based on your current environment.
 
-### MTG Collection Tools
+### AI Staff HQ Dispatchers (10 Active)
 
-- `mtg_price_check.sh [collection.csv]` – Download the Card Kingdom buylist and combine it with your collection CSV, writing results to `~/mtg_prices/`. Requires network access and the companion `mtg_tracker.py` script.
+**Location:** `~/dotfiles/bin/` (see `/bin/README.md` for full documentation)
+
+**Quick Access via Spec Templates:**
+```bash
+spec tech           # Technical debugging template
+spec creative       # Story generation template
+spec content        # Content creation template
+spec strategy       # Strategic analysis template
+spec market         # Market research template
+spec research       # Knowledge synthesis template
+spec stoic          # Stoic coaching template
+```
+
+**Direct Access (Traditional):**
+```bash
+cat script.sh | tech --stream     # Debug with streaming
+creative "story idea"              # Generate story package
+echo "question" | strategy         # Strategic insights
+echo "challenge" | stoic           # Stoic coaching
+```
+
+**Dispatchers Available:**
+- **Technical:** `dhp-tech.sh` (tech) - Debugging, code optimization
+- **Creative:** `dhp-creative.sh` (creative), `dhp-narrative.sh` (narrative), `dhp-copy.sh` (copy)
+- **Content:** `dhp-content.sh` (content) - SEO-optimized guides
+- **Strategy:** `dhp-strategy.sh` (strategy), `dhp-brand.sh` (brand), `dhp-market.sh` (market)
+- **Personal:** `dhp-stoic.sh` (stoic), `dhp-research.sh` (research)
+
+**Advanced Features:**
+- `ai-suggest` - Context-aware dispatcher suggestions
+- `dhp-project` - Multi-specialist orchestration
+- `dhp-chain` - Sequential dispatcher chaining
+- Context injection via `--context` and `--full-context` flags
+
+**All dispatchers support:**
+- Real-time streaming (`--stream` flag)
+- Optimized free models (no API costs)
+- Robust error handling
+- Workflow integration (todo, journal, blog)
 
 ## Contributing & Maintenance
 

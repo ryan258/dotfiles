@@ -16,6 +16,9 @@ export PATH="$HOME/.config/composer/vendor/bin:$PATH"
 # fnm: fast node manager
 eval "$(fnm env --shell zsh --use-on-cd)"
 
+# Editor for spec templates
+export EDITOR="code --wait"
+
 # echo "SUCCESS! Dotfiles are loading."
 source "$ZDOTDIR/aliases.zsh"
 # source "$ZDOTDIR/.zsh_aliases"

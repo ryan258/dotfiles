@@ -40,10 +40,8 @@ if [ -z "$OPENROUTER_API_KEY" ]; then
     echo "Error: OPENROUTER_API_KEY not set." >&2; exit 1
 fi
 
-MODEL="${DHP_CREATIVE_MODEL}"
-if [ -z "$MODEL" ]; then
-    echo "Error: DHP_CREATIVE_MODEL not set." >&2; exit 1
-fi
+# Load model from .env, fallback to legacy variable, then default
+MODEL="${CREATIVE_MODEL:-${DHP_CREATIVE_MODEL:-meta-llama/llama-4-maverick:free}}"
 
 STAFF_FILE="$AI_STAFF_DIR/staff/producers/narrative-designer.yaml"
 if [ ! -f "$STAFF_FILE" ]; then

@@ -51,13 +51,8 @@ if [ -z "$OPENROUTER_API_KEY" ]; then
     exit 1
 fi
 
-# Use strategic model (can be same as content or creative)
-STRATEGY_MODEL="${DHP_STRATEGY_MODEL:-${DHP_CONTENT_MODEL}}"
-if [ -z "$STRATEGY_MODEL" ]; then
-    echo "Error: No model configured for strategy dispatcher." >&2
-    echo "Please set DHP_STRATEGY_MODEL or DHP_CONTENT_MODEL in your .env file." >&2
-    exit 1
-fi
+# Load model from .env, fallback to legacy variable, then default
+MODEL="${STRATEGY_MODEL:-${DHP_STRATEGY_MODEL:-openrouter/polaris-alpha}}"
 
 if [ ! -d "$AI_STAFF_DIR" ]; then
     echo "Error: AI Staff directory not found at $AI_STAFF_DIR" >&2
@@ -85,7 +80,7 @@ if [ -z "$PIPED_CONTENT" ]; then
     exit 1
 fi
 
-echo "Activating 'Chief of Staff' via OpenRouter (Model: $STRATEGY_MODEL)..." >&2
+echo "Activating 'Chief of Staff' via OpenRouter (Model: $MODEL)..." >&2
 echo "---" >&2
 
 # --- 4. BUILD MASTER PROMPT ---
@@ -119,9 +114,9 @@ PROMPT_CONTENT=$(cat "$MASTER_PROMPT_FILE")
 
 # Execute the API call with error handling and optional streaming
 if [ "$USE_STREAMING" = true ]; then
-    call_openrouter "$STRATEGY_MODEL" "$PROMPT_CONTENT" --stream
+    call_openrouter "$MODEL" "$PROMPT_CONTENT" --stream
 else
-    call_openrouter "$STRATEGY_MODEL" "$PROMPT_CONTENT"
+    call_openrouter "$MODEL" "$PROMPT_CONTENT"
 fi
 
 # Check if API call succeeded

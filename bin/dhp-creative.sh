@@ -57,11 +57,9 @@ if [ -z "$OPENROUTER_API_KEY" ]; then
     echo "Please add it to your .env file and source it." >&2
     exit 1
 fi
-if [ -z "$DHP_CREATIVE_MODEL" ]; then
-    echo "Error: DHP_CREATIVE_MODEL is not set." >&2
-    echo "Please define it in your .env file." >&2
-    exit 1
-fi
+
+# Load model from .env, fallback to legacy variable, then default
+MODEL="${CREATIVE_MODEL:-${DHP_CREATIVE_MODEL:-meta-llama/llama-4-maverick:free}}"
 
 # Check if the user provided a brief
 if [ -z "$1" ]; then
@@ -90,7 +88,7 @@ mkdir -p "$PROJECTS_DIR"
 SLUG=$(echo "$USER_BRIEF" | tr '[:upper:]' '[:lower:]' | tr -s '[:punct:][:space:]' '-' | cut -c 1-50)
 OUTPUT_FILE="$PROJECTS_DIR/${SLUG}.md"
 
-echo "Activating 'AI-Staff-HQ' via OpenRouter (Model: $DHP_CREATIVE_MODEL)..."
+echo "Activating 'AI-Staff-HQ' via OpenRouter (Model: $MODEL)..."
 echo "Brief: $USER_BRIEF"
 echo "Saving to: $OUTPUT_FILE"
 echo "---"
@@ -135,9 +133,9 @@ PROMPT_CONTENT=$(cat "$MASTER_PROMPT_FILE")
 
 # Execute the API call with error handling and optional streaming
 if [ "$USE_STREAMING" = true ]; then
-    call_openrouter "$DHP_CREATIVE_MODEL" "$PROMPT_CONTENT" --stream | tee "$OUTPUT_FILE"
+    call_openrouter "$MODEL" "$PROMPT_CONTENT" --stream | tee "$OUTPUT_FILE"
 else
-    call_openrouter "$DHP_CREATIVE_MODEL" "$PROMPT_CONTENT" | tee "$OUTPUT_FILE"
+    call_openrouter "$MODEL" "$PROMPT_CONTENT" | tee "$OUTPUT_FILE"
 fi
 
 # Check if API call succeeded

@@ -50,11 +50,9 @@ if [ -z "$OPENROUTER_API_KEY" ]; then
     echo "Please add it to your .env file and source it." >&2
     exit 1
 fi
-if [ -z "$DHP_TECH_MODEL" ]; then
-    echo "Error: DHP_TECH_MODEL is not set." >&2
-    echo "Please define it in your .env file." >&2
-    exit 1
-fi
+
+# Load model from .env, fallback to legacy variable, then default
+MODEL="${TECH_MODEL:-${DHP_TECH_MODEL:-deepseek/deepseek-r1-0528:free}}"
 
 if [ ! -d "$AI_STAFF_DIR" ]; then
     echo "Error: AI Staff directory not found at $AI_STAFF_DIR" >&2
@@ -75,7 +73,7 @@ if [ -z "$PIPED_CONTENT" ]; then
     exit 1
 fi
 
-echo "Activating 'The Technician' via OpenRouter (Model: $DHP_TECH_MODEL)..." >&2
+echo "Activating 'The Technician' via OpenRouter (Model: $MODEL)..." >&2
 echo "---" >&2
 
 # --- 4. THE "MASTER PROMPT" (THE PAYLOAD) ---
@@ -113,9 +111,9 @@ PROMPT_CONTENT=$(cat "$MASTER_PROMPT_FILE")
 
 # Execute the API call with error handling and optional streaming
 if [ "$USE_STREAMING" = true ]; then
-    call_openrouter "$DHP_TECH_MODEL" "$PROMPT_CONTENT" --stream
+    call_openrouter "$MODEL" "$PROMPT_CONTENT" --stream
 else
-    call_openrouter "$DHP_TECH_MODEL" "$PROMPT_CONTENT"
+    call_openrouter "$MODEL" "$PROMPT_CONTENT"
 fi
 
 # Check if API call succeeded

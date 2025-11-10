@@ -40,10 +40,8 @@ if [ -z "$OPENROUTER_API_KEY" ]; then
     echo "Error: OPENROUTER_API_KEY not set." >&2; exit 1
 fi
 
-MODEL="${DHP_STRATEGY_MODEL:-${DHP_CONTENT_MODEL}}"
-if [ -z "$MODEL" ]; then
-    echo "Error: No model configured." >&2; exit 1
-fi
+# Load model from .env, fallback to legacy variable, then default
+MODEL="${STOIC_MODEL:-${DHP_STRATEGY_MODEL:-deepseek/deepseek-r1-0528:free}}"
 
 STAFF_FILE="$AI_STAFF_DIR/staff/health-lifestyle/stoic-coach.yaml"
 if [ ! -f "$STAFF_FILE" ]; then

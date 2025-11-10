@@ -1,0 +1,21 @@
+Strategic Analysis Spec
+
+CURRENT STATE:
+[What's the situation now?]
+
+DECISION/QUESTION:
+[What needs strategic input?]
+
+CONSTRAINTS:
+- Time: [Available time/deadline]
+- Resources: [Budget, people, tools]
+- Requirements: [Must-haves, non-negotiables]
+
+OPTIONS TO EVALUATE:
+[List alternatives being considered]
+
+EVALUATION CRITERIA:
+[ROI, maintainability, risk, alignment with goals]
+
+OUTPUT:
+[Ranked recommendation with rationale]

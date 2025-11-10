@@ -25,11 +25,21 @@ This toolkit provides a comprehensive set of enhancements, including:
 
 ## What's New (November 2025 Refresh)
 
-### Latest: Dispatcher Robustness & Streaming (November 8, 2025)
+### Latest: Model Optimization & Spec Templates (November 10, 2025)
+
+Upgraded all AI dispatchers with cost-effective models and structured workflow system:
+
+  * **Optimized Free Models:** All 10 dispatchers now use task-specific free models from OpenRouter (DeepSeek R1, Llama 4, Qwen3, etc.)
+  * **Spec Template System:** New `spec` command opens structured templates in your editor for comprehensive AI requests
+  * **Template Library:** 8 dispatcher-specific templates guide you through filling in all relevant context
+  * **Automatic Archival:** Completed specs saved to `~/.config/dotfiles-data/specs/` for reuse and documentation
+  * **Backward Compatible:** Falls back to legacy model variables and defaults automatically
+
+### Previous: Dispatcher Robustness & Streaming (November 8, 2025)
 
 Major improvements to AI dispatcher reliability and user experience:
 
-  * **Real-Time Streaming:** All 10 AI dispatchers now support `--stream` flag for real-time output as AI generates responses
+  * **Real-Time Streaming:** All 10 AI dispatchers support `--stream` flag for real-time output as AI generates responses
   * **Robust Error Handling:** No more silent failures - API errors are caught and reported clearly with proper exit codes
   * **Shared Library:** Centralized API logic in `bin/dhp-lib.sh` eliminates ~1,500 lines of duplicate code
   * **Better Feedback:** See progress in real-time during long AI tasks, catch errors immediately
@@ -57,7 +67,13 @@ See `CHANGELOG.md` for the play-by-play of the latest blindspots and fixes.
 Access your AI specialists instantly via high-speed dispatcher scripts:
 
 ```bash
-# Technical & Development
+# Spec-Driven Workflow (NEW - Structured Templates)
+spec tech           # Opens tech debugging template in editor
+spec creative       # Opens creative writing template
+spec content        # Opens content creation template
+# Fill template → save → auto-pipes to dispatcher → archived for reuse
+
+# Quick Direct Access (Traditional)
 cat broken-script.sh | tech           # Debug code issues
 cat script.sh | tech --stream         # Debug with real-time streaming
 echo "Optimize this function" | tech  # Get technical advice
@@ -84,9 +100,31 @@ dhp-chain creative narrative copy -- "idea"       # Chain multiple specialists
 dhp-content --stream --context "guide topic"      # Stream with local context
 ```
 
-### New: Real-Time Streaming
+### New: Spec-Driven Workflow
 
-All dispatchers now support **real-time streaming** with the `--stream` flag:
+For complex tasks, use **structured templates** that guide comprehensive input:
+
+```bash
+# Open dispatcher-specific template in your editor
+spec tech           # Technical debugging with full context
+spec creative       # Story generation with structure
+spec content        # Content creation with SEO
+spec strategy       # Strategic analysis with constraints
+
+# Workflow: open → fill → save → auto-dispatch → archive
+# Completed specs saved to ~/.config/dotfiles-data/specs/
+# Reuse with: cat ~/.config/dotfiles-data/specs/[file] | tech
+```
+
+**Benefits:**
+- **Structured thinking:** Templates ensure you provide all relevant context
+- **Better AI output:** Comprehensive input = higher quality responses
+- **Reusability:** Save and iterate on successful patterns
+- **Documentation:** Archived specs serve as project history
+
+### Real-Time Streaming
+
+All dispatchers support **real-time streaming** with the `--stream` flag:
 
 ```bash
 # Watch text appear as AI generates (perfect for long creative tasks)
@@ -208,14 +246,18 @@ dhp-content --full-context "Comprehensive guide topic"
    # Edit .env and add your OPENROUTER_API_KEY
    ```
 
-2. **Get an API Key:** Sign up at [OpenRouter](https://openrouter.ai/) and create an API key
+2. **Get an API Key:** Sign up at [OpenRouter](https://openrouter.ai/) and create an API key (free tier available)
 
-3. **Configure Models:** The `.env` file includes sensible defaults (GPT-4o family recommended)
+3. **Configure Models:** The `.env` file includes optimized free models (DeepSeek, Llama 4, Qwen3) as defaults
+   - Cost-effective: All models are free tier on OpenRouter
+   - Task-specific: Each dispatcher uses a model optimized for its specialty
+   - Customizable: Change any model in `.env` to your preference
 
 4. **Verify Installation:** Run the system check:
    ```bash
    bash scripts/dotfiles_check.sh
    # Should report: "✅ Found 10/10 dispatchers"
+   # And: "✅ All systems OK!"
    ```
 
 ### Error Handling & Reliability

@@ -1,0 +1,16 @@
+Knowledge Synthesis Spec
+
+SOURCE MATERIAL:
+[What content should be analyzed?]
+
+ANALYSIS SCOPE:
+[Themes, patterns, insights to extract]
+
+DEPTH:
+[Surface observations vs. root causes]
+
+OUTPUT FORMAT:
+[Structured summary, key insights, actionable steps]
+
+TONE:
+[Analytical, reflective, action-oriented]

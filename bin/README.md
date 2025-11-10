@@ -650,6 +650,133 @@ dhp-content --full-context "Comprehensive guide topic"
 
 ---
 
+## Spec-Driven Workflow
+
+For complex dispatcher tasks, use the `spec` command to open structured templates that guide you through providing comprehensive input to AI specialists.
+
+### Using Structured Specs
+
+```bash
+spec tech      # Opens tech-spec.txt template in VS Code
+spec creative  # Opens creative-spec.txt template
+spec content   # Opens content-spec.txt template
+spec strategy  # Opens strategy-spec.txt template
+spec market    # Opens market-spec.txt template
+spec research  # Opens research-spec.txt template
+spec stoic     # Opens stoic-spec.txt template
+```
+
+### Workflow
+
+1. Run `spec <dispatcher>` (e.g., `spec tech`)
+2. Your editor (VS Code) opens with a pre-filled template
+3. Fill in the template sections with your requirements
+4. Save and close the file
+5. The spec automatically pipes to the appropriate dispatcher
+6. Completed spec saved to `~/.config/dotfiles-data/specs/` for reuse
+
+### Available Templates
+
+Each dispatcher has a custom-tailored template:
+
+**`tech-spec.txt`** - Technical debugging and analysis
+- Issue description, expected vs. current behavior
+- Environment context and recent changes
+- Areas to investigate, output format
+
+**`creative-spec.txt`** - Creative writing projects
+- Story type, length, setting, protagonist
+- Core conflict, tone, structure
+- Elements to avoid
+
+**`content-spec.txt`** - Content creation
+- Title/topic, target audience, length
+- Structure (opening, body, conclusion)
+- SEO keywords, tone, inclusions
+
+**`strategy-spec.txt`** - Strategic analysis
+- Current state, decision/question
+- Constraints (time, resources, requirements)
+- Options to evaluate, criteria
+
+**`market-spec.txt`** - Market research
+- Research focus, key questions
+- Comparison baseline, use case
+- Depth required
+
+**`research-spec.txt`** - Knowledge synthesis
+- Source material, analysis scope
+- Depth required, output format, tone
+
+**`stoic-spec.txt`** - Stoic coaching
+- Situation, emotional state
+- What you've tried, reflection questions
+- Expected output type
+
+**`dispatcher-spec-template.txt`** - Generic fallback
+- Used for any dispatcher without a specific template
+
+### Reusing Specs
+
+All completed specs are automatically saved with timestamps:
+
+```bash
+# List saved specs
+ls ~/.config/dotfiles-data/specs/
+
+# Reuse a previous spec
+cat ~/.config/dotfiles-data/specs/20251110-100534-tech.txt | tech
+
+# Edit and reuse
+code ~/.config/dotfiles-data/specs/20251110-100534-creative.txt
+# Make changes, then pipe to dispatcher
+```
+
+### Multi-line Input Methods
+
+If you prefer not to use the spec templates:
+
+**Heredoc (recommended for multi-line input):**
+```bash
+tech <<EOF
+Your multi-line
+spec here
+EOF
+```
+
+**Backslash continuation:**
+```bash
+tech "Line 1 \
+Line 2 \
+Line 3"
+```
+
+**Direct piping:**
+```bash
+echo "Quick question or analysis request" | tech
+```
+
+### Configuration
+
+The spec workflow uses your configured editor:
+
+```bash
+# Set in ~/.zshrc
+export EDITOR="code --wait"   # VS Code (default)
+export EDITOR="vim"            # Vim
+export EDITOR="nano"           # Nano
+```
+
+### Benefits
+
+- **Structured thinking** - Templates guide comprehensive input
+- **Reusability** - Save and reuse successful spec patterns
+- **Consistency** - Same format every time improves AI output
+- **Documentation** - Archived specs serve as project history
+- **Less context switching** - Editor + dispatcher in one workflow
+
+---
+
 ## Resources
 
 - **AI-Staff-HQ Repository:** https://github.com/ryan258/AI-Staff-HQ
@@ -660,6 +787,6 @@ dhp-content --full-context "Comprehensive guide topic"
 
 ---
 
-**Last Updated:** November 7, 2025
-**Status:** Production-ready, 10 dispatchers + 4 advanced features operational
-**Phase:** 1, 2, 3, 5 Complete (Infrastructure, Workflow Integration, Dispatcher Expansion, Advanced Features)
+**Last Updated:** November 10, 2025
+**Status:** Production-ready, 10 dispatchers + 4 advanced features + spec workflow operational
+**Phase:** 1, 2, 3, 5, 6 Complete (Infrastructure, Workflow Integration, Dispatcher Expansion, Advanced Features, Model Configuration + Spec System)

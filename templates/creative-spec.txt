@@ -1,0 +1,28 @@
+Creative Writing Spec
+
+STORY TYPE:
+[Horror, sci-fi, fantasy, etc.]
+
+LENGTH:
+[Word count: 500, 1500, 3000, etc.]
+
+SETTING:
+[Time, place, atmosphere]
+
+PROTAGONIST:
+[Name, role, key traits]
+
+CORE CONFLICT/THREAT:
+[Central problem or antagonist]
+
+TONE:
+[Dread, suspense, action, philosophical, etc.]
+
+STRUCTURE:
+[3-act, journal entries, single scene, etc.]
+
+AVOID:
+[Tropes, clichés, topics to exclude]
+
+OUTPUT:
+[Complete story, ready to publish]

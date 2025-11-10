@@ -12,7 +12,15 @@ This document complements the `~/.zsh_aliases` file. It explains the purpose of 
 
 ## Recent Enhancements (November 2025)
 
-All 20 blindspots from the evolution plan have been implemented:
+### Phase 6: AI Staff HQ Integration (November 10, 2025)
+- **10 AI Dispatchers**: tech, creative, content, strategy, brand, market, stoic, research, narrative, copy
+- **Spec Template System**: `spec` command for structured AI requests (8 templates)
+- **Optimized Free Models**: DeepSeek R1, Llama 4, Qwen3 - no API costs
+- **Real-Time Streaming**: All dispatchers support `--stream` flag
+- **AI-Enhanced Workflows**: todo debug/delegate, journal analyze/mood/themes, blog generate/refine
+- **Advanced Features**: ai-suggest, dhp-project, dhp-chain, context injection
+
+### Previous Phases: Foundation & Core Features
 - **Advanced Task Management**: `todo commit`, `todo bump`, `todo top` with stale task tracking
 - **Health & Medication Tracking**: `health dashboard`, `meds dashboard` with 30-day trend analysis
 - **Enhanced Journal**: `journal search`, `journal onthisday` for building your second brain
@@ -78,11 +86,11 @@ Want deeper patterns? See `../docs/clipboard.md` for pipelines, formatting trick
 
 Every script in `$SCRIPTS_DIR` has a corresponding wrapper function which ensures it exists before aliasing. Below are the high-level categories—refer to `README.md` for script-specific behaviour.
 
-### Task & Notes
+### Task & Notes (AI-Enhanced)
 
-- `todo`, `t`, `todoadd`, `todolist`, `tododone` – Advanced task management with `commit`, `bump`, `top` subcommands
+- `todo`, `t`, `todoadd`, `todolist`, `tododone` – **AI-Enhanced** task management with `commit`, `bump`, `top`, `debug` (AI debugging), `delegate` (route to AI specialist)
 - `next` – Show only your top priority task (`todo top 1`)
-- `journal`, `j` – Journal entries with `search` and `onthisday` features for second brain
+- `journal`, `j` – **AI-Enhanced** journal with `search`, `onthisday`, `analyze` (7-day AI insights), `mood` (14-day sentiment), `themes` (30-day patterns)
 - `health` – Comprehensive health tracking with symptoms, energy ratings, and `dashboard` for trends
 - `meds` – Medication tracking with adherence monitoring and `remind` for automation
 - `remind` – macOS notifications via `remind_me.sh`
@@ -91,7 +99,7 @@ Every script in `$SCRIPTS_DIR` has a corresponding wrapper function which ensure
 - `weekreview`, `startday`, `goodevening`, `greeting`, `status`, `weather`
 - `howto` – Personal searchable how-to wiki
 - `schedule` – User-friendly wrapper for `at` command
-- `blog` – Blog workflow with `status`, `stubs`, `sync` (to todos), `ideas` (search journal)
+- `blog` – **AI-Enhanced** blog workflow: `status`, `stubs`, `sync`, `ideas`, `generate` (AI content), `refine` (AI polish)
 
 ### Project & Workspace
 
@@ -105,11 +113,32 @@ Every script in `$SCRIPTS_DIR` has a corresponding wrapper function which ensure
 
 ### System Tools
 
-- `dotfiles_check` – Validate entire system (scripts, dependencies, data directory, GitHub token)
+- `dotfiles_check` – Validate entire system (scripts, dependencies, data directory, GitHub token, AI dispatchers)
 - `systemlog` – View last 20 automation events from central audit log
 - `whatis` – Look up what an alias or command does
 - `new_script` – Automate creation of new scripts with proper headers and aliases
 - `backup_data` – Manual trigger for data backup (runs automatically in `goodevening`)
+
+### AI Staff HQ Commands (NEW)
+
+- `spec <dispatcher>` – Open structured template for AI request (tech, creative, content, strategy, market, research, stoic)
+- `tech` / `dhp-tech` – Technical debugging and code analysis
+- `creative` / `dhp-creative` – Story generation with full package
+- `content` / `dhp-content` – SEO-optimized content creation
+- `strategy` / `dhp-strategy` – Strategic analysis via Chief of Staff
+- `brand` / `dhp-brand` – Brand positioning and voice development
+- `market` / `dhp-market` – Market research and SEO analysis
+- `stoic` / `dhp-stoic` – Stoic coaching and mindset reframing
+- `research` / `dhp-research` – Knowledge synthesis and organization
+- `narrative` / `dhp-narrative` – Story structure and plot analysis
+- `copy` / `dhp-copy` – Marketing copy and sales messaging
+- `ai-suggest` – Context-aware dispatcher suggestions
+- `ai-project` / `dhp-project` – Multi-specialist orchestration
+- `ai-chain` / `dhp-chain` – Sequential dispatcher chaining
+
+**Flags:** All dispatchers support `--stream` for real-time output
+**Setup:** `cp .env.example .env` and add your OPENROUTER_API_KEY
+**Docs:** See `/bin/README.md` for complete dispatcher documentation
 
 ### System Diagnostics
 

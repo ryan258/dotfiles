@@ -1,0 +1,27 @@
+Content Creation Spec
+
+TITLE/TOPIC:
+[Blog post title or main topic]
+
+TARGET AUDIENCE:
+[Who's reading? Experience level?]
+
+LENGTH:
+[Word count target]
+
+STRUCTURE:
+- Opening: [Hook, problem statement]
+- Body: [Main sections, 3-5 points]
+- Conclusion: [Takeaway, CTA]
+
+SEO KEYWORDS:
+[3-5 target keywords]
+
+TONE:
+[Professional, casual, technical, etc.]
+
+INCLUDE:
+[Code examples, real-world cases, data]
+
+OUTPUT FORMAT:
+[Markdown, HTML, plain text + formatting notes]

@@ -40,10 +40,8 @@ if [ -z "$OPENROUTER_API_KEY" ]; then
     echo "Error: OPENROUTER_API_KEY not set." >&2; exit 1
 fi
 
-MODEL="${DHP_STRATEGY_MODEL:-${DHP_CONTENT_MODEL}}"
-if [ -z "$MODEL" ]; then
-    echo "Error: No model configured." >&2; exit 1
-fi
+# Load model from .env, fallback to legacy variable, then default
+MODEL="${STRATEGY_MODEL:-${DHP_STRATEGY_MODEL:-openrouter/polaris-alpha}}"
 
 STAFF_FILE="$AI_STAFF_DIR/staff/strategy/brand-builder.yaml"
 if [ ! -f "$STAFF_FILE" ]; then

@@ -1,0 +1,19 @@
+Market Research Spec
+
+RESEARCH FOCUS:
+[Specific market, tool, or trend]
+
+KEY QUESTIONS:
+[What do you need to know?]
+
+COMPARISON BASELINE:
+[What are you comparing against?]
+
+USE CASE:
+[Why does this matter? What decision does it inform?]
+
+DEPTH:
+[High-level overview vs. deep dive]
+
+OUTPUT:
+[Market positioning matrix, trend analysis, risk assessment]

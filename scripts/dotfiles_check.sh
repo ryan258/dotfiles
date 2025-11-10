@@ -112,12 +112,25 @@ elif [ ! -r "$ENV_FILE" ]; then
   ERROR_COUNT=$((ERROR_COUNT + 1))
 else
   # Check for required environment variables
-  REQUIRED_VARS=("OPENROUTER_API_KEY" "DHP_TECH_MODEL" "DHP_CREATIVE_MODEL" "DHP_CONTENT_MODEL")
+  REQUIRED_VARS=("OPENROUTER_API_KEY" "TECH_MODEL" "CREATIVE_MODEL" "CONTENT_MODEL" "STRATEGY_MODEL")
   for var in "${REQUIRED_VARS[@]}"; do
     if ! grep -q "^$var=" "$ENV_FILE"; then
       echo "  ⚠️  WARNING: Missing environment variable in .env: $var"
     fi
   done
+
+  # Also check for legacy variables for backward compatibility
+  LEGACY_VARS=("DHP_TECH_MODEL" "DHP_CREATIVE_MODEL" "DHP_CONTENT_MODEL")
+  legacy_found=0
+  for var in "${LEGACY_VARS[@]}"; do
+    if grep -q "^$var=" "$ENV_FILE"; then
+      legacy_found=$((legacy_found + 1))
+    fi
+  done
+
+  if [ $legacy_found -gt 0 ]; then
+    echo "  ℹ️  INFO: Found $legacy_found legacy DHP_* model variables (still supported)"
+  fi
 fi
 
 # --- Summary ---

@@ -1,0 +1,21 @@
+Debug/Technical Analysis Spec
+
+ISSUE DESCRIPTION:
+[What's broken or needs analysis?]
+
+EXPECTED BEHAVIOR:
+[What should happen?]
+
+CURRENT BEHAVIOR:
+[What's actually happening?]
+
+CONTEXT:
+- Environment: [OS, shell, tools]
+- Recent changes: [What changed before issue appeared?]
+- What you've tried: [Already attempted fixes]
+
+AREAS TO INVESTIGATE:
+[PATH, permissions, dependencies, syntax, etc.]
+
+OUTPUT FORMAT:
+[Root cause + specific fix with code examples]
