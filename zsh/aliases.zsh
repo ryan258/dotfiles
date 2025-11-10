@@ -474,6 +474,9 @@ alias ai-suggest="ai_suggest.sh"             # Context-aware suggestions
 alias ai-context="source dhp-context.sh"     # Context gathering library
 
 # =============================================================================
+# Swipe logging
+alias swipe="$HOME/dotfiles/bin/swipe.sh"
+
 # SPEC-DRIVEN DISPATCHER WORKFLOW
 # =============================================================================
 # Structured template workflow for dispatchers

@@ -34,6 +34,8 @@ This document tracks all major implementations, improvements, and fixes to the D
 - ✅ C2: introduced `--temperature`/`--max-tokens` flags + per-dispatcher env overrides; `call_openrouter` honors them.
 - ✅ C3: added `bin/dispatch.sh` to provide a single entry point (falls back to `dhp-*` scripts).
 - ✅ C4: created `dhp-utils.sh` with `validate_dependencies`/`ensure_api_key` helpers and wired every dispatcher to it.
+- ✅ Dispatchers now accept quoted arguments (no stdin required) via `read_dispatcher_input`, so copy/paste commands work anywhere.
+- ✅ Added optional `swipe` wrapper + `.env` knobs to capture impressive outputs into a Markdown log.
 ### Model Configuration & Spec Template System (November 10, 2025)
 
 **Phase 6: Optimized Models & Structured Workflow ✅**

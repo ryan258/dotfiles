@@ -47,9 +47,16 @@ if [ ! -f "$STAFF_FILE" ]; then
     echo "Error: Academic Researcher specialist not found at $STAFF_FILE" >&2; exit 1
 fi
 
-PIPED_CONTENT=$(cat -)
+TEMP_INPUT="$*"
+if [ -n "$TEMP_INPUT" ]; then
+  PIPED_CONTENT="$TEMP_INPUT"
+else
+  PIPED_CONTENT=$(cat)
+fi
 if [ -z "$PIPED_CONTENT" ]; then
-    echo "Usage: <input> | $0 [--stream]" >&2
+    echo "Usage:" >&2
+    echo "  echo \"prompt\" | $0 [options]" >&2
+    echo "  $0 [options] \"prompt\"" >&2
     echo "Options:" >&2
     echo "  --stream    Enable real-time streaming output" >&2
     exit 1

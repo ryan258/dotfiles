@@ -68,7 +68,12 @@ if [ ! -f "$STAFF_FILE" ]; then
 fi
 
 # Read input from stdin
-PIPED_CONTENT=$(cat -)
+TEMP_INPUT="$*"
+if [ -n "$TEMP_INPUT" ]; then
+  PIPED_CONTENT="$TEMP_INPUT"
+else
+  PIPED_CONTENT=$(cat)
+fi
 
 if [ -z "$PIPED_CONTENT" ]; then
     echo "Usage: <input> | $0 [--stream]" >&2
