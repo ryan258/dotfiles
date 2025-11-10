@@ -28,3 +28,11 @@ default_output_dir() {
         echo "$fallback"
     fi
 }
+
+read_dispatcher_input() {
+    if [ -t 0 ]; then
+        printf "%s" "$*"
+    else
+        cat
+    fi
+}
