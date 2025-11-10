@@ -1,5 +1,6 @@
 #!/bin/bash
 # github_helper.sh - Functions for interacting with the GitHub API
+set -euo pipefail
 
 # --- Configuration ---
 TOKEN_FILE="$HOME/.github_token"

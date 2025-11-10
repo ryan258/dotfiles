@@ -1,5 +1,6 @@
 #!/bin/bash
 # mkproject_py.sh - Sets up a complete Python project with virtual environment
+set -euo pipefail
 
 # Ask for the project name
 IFS= read -r -p "Enter your Python project name: " project_name

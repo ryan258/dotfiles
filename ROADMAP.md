@@ -28,10 +28,10 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`) map to Reliability, Config, Observabilit
 - [ ] **R11 · `week_in_review` & `backup_data` guard rails** — Fail fast with clear errors when data files/dirs are missing before running `gawk`/`tar`. _Files: `scripts/week_in_review.sh`, `scripts/backup_data.sh`_
 - [ ] **R12 · `health dashboard` runaway scans** — Cache/git-limit the commits-per-day correlation so invoking the dashboard doesn’t traverse every repo each run. _File: `scripts/health.sh`_
 ### 2.2 Configuration & Flexibility
-- [ ] **C1 · Dynamic squads/config file** — Move the dispatcher squad definitions into `ai-staff-hq/squads.yaml` so scripts can load teams without edits. _Files: `bin/dhp-*.sh`, new config loader_
-- [ ] **C2 · Model parameter controls** — Allow temperature/max tokens/top_p to be set via CLI flags or `.env` so creative vs deterministic tasks can be tuned. _Files: `bin/dhp-*.sh`, `.env.example`_
-- [ ] **C3 · Single dispatcher entry point** — Provide a `dispatch` wrapper that accepts a squad name and input, reducing the need to copy/modify scripts. _Files: new `bin/dispatch.sh`, aliases_
-- [ ] **C4 · Shared flag/validation helpers** — Extract `validate_dependencies`, `validate_api_key`, and shared flag parsing into `dhp-lib.sh` (or another helper) to delete duplicate code. _Files: `bin/dhp-lib.sh`, `bin/dhp-*.sh`_
+- [x] **C1 · Dynamic squads/config file** — Move the dispatcher squad definitions into `ai-staff-hq/squads.yaml` so scripts can load teams without edits. _Files: `bin/dhp-*.sh`, new config loader_
+- [x] **C2 · Model parameter controls** — Allow temperature/max tokens/top_p to be set via CLI flags or `.env` so creative vs deterministic tasks can be tuned. _Files: `bin/dhp-*.sh`, `.env.example`_
+- [x] **C3 · Single dispatcher entry point** — Provide a `dispatch` wrapper that accepts a squad name and input, reducing the need to copy/modify scripts. _Files: new `bin/dispatch.sh`, aliases_
+- [ ] **[x] **C4 · Shared flag/validation helpers**** — Extract `validate_dependencies`, `validate_api_key`, and shared flag parsing into `dhp-lib.sh` (or another helper) to delete duplicate code. _Files: `bin/dhp-lib.sh`, `bin/dhp-*.sh`_
 
 ### 2.3 Observability, Streaming & Governance
 - [ ] **O1 · Streaming exit codes** — Refactor `call_openrouter` streaming branch to avoid subshell loss, propagate HTTP errors, and only print SUCCESS on true success. _File: `bin/dhp-lib.sh`_

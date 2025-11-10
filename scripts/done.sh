@@ -1,5 +1,6 @@
 #!/bin/bash
 # done.sh - Run commands with completion notifications (macOS version)
+set -euo pipefail
 
 if [ $# -eq 0 ]; then
     echo "Usage: $0 <your_command_here>"

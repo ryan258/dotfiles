@@ -1,5 +1,6 @@
 #!/bin/bash
 # text_processor.sh - Text file processing utilities
+set -euo pipefail
 
 case "$1" in
     count)

@@ -1,5 +1,6 @@
 #!/bin/bash
 # take_a_break.sh - Health-focused break timer with macOS notifications
+set -euo pipefail
 
 MINUTES=${1:-15}
 

@@ -1,5 +1,6 @@
 #!/bin/bash
 # clipboard_manager.sh - Enhanced clipboard management for macOS
+set -euo pipefail
 
 CLIP_DIR="$HOME/.config/dotfiles-data/clipboard_history"
 mkdir -p "$CLIP_DIR"

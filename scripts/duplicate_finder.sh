@@ -1,5 +1,6 @@
 #!/bin/bash
 # duplicate_finder.sh - Find duplicate files on macOS
+set -euo pipefail
 
 SEARCH_DIR="${1:-.}"
 

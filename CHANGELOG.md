@@ -19,6 +19,21 @@ This document tracks all major implementations, improvements, and fixes to the D
 - ✅ R6: Removed PATH assumptions from the old stub sync (now removed entirely) by calling `todo.sh` directly.
 - ✅ R7: `startday` now degrades gracefully when GitHub helper/jq fail instead of aborting the routine.
 - ✅ R8: `file_organizer.py` dry runs no longer create directories or mutate files.
+
+### Dispatcher Squad Config (November 2025)
+
+- ✅ Added `ai-staff-hq/squads.json` to define multi-agent dispatcher squads in one place.
+- ✅ Created `bin/dhp-config.sh` helper so dispatchers can load squad definitions dynamically.
+- ✅ Updated `dhp-content.sh` and `dhp-creative.sh` to read their agent lists from the shared config with sensible fallbacks.
+- ✅ Added CLI/env overrides for model temperature/max tokens so dispatchers can tune determinism per call.
+- ✅ Introduced `bin/dispatch.sh` so any squad/dispatcher can be invoked through a single entry point, with dispatcher mappings defined in `squads.json`.
+
+### Configuration & Flexibility (November 2025)
+
+- ✅ C1: added `ai-staff-hq/squads.json` + `dhp-config.sh` so squads load from config instead of hardcoding.
+- ✅ C2: introduced `--temperature`/`--max-tokens` flags + per-dispatcher env overrides; `call_openrouter` honors them.
+- ✅ C3: added `bin/dispatch.sh` to provide a single entry point (falls back to `dhp-*` scripts).
+- ✅ C4: created `dhp-utils.sh` with `validate_dependencies`/`ensure_api_key` helpers and wired every dispatcher to it.
 ### Model Configuration & Spec Template System (November 10, 2025)
 
 **Phase 6: Optimized Models & Structured Workflow ✅**

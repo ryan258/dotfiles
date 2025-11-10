@@ -1,5 +1,6 @@
 #!/bin/bash
 # open_file.sh - Find and open files with fuzzy matching (macOS optimized)
+set -euo pipefail
 
 if [ -z "$1" ]; then
     echo "Usage: $0 <partial_filename>"

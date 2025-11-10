@@ -1,5 +1,6 @@
 #!/bin/bash
 # unpacker.sh - Extracts any common archive type
+set -euo pipefail
 
 FILE=$1
 

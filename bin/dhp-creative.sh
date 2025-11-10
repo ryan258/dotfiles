@@ -1,89 +1,64 @@
 #!/bin/bash
 set -e # Exit immediately if a command fails
 
-# --- 1. CONFIGURATION ---
-DOTFILES_DIR="$HOME/dotfiles"
-AI_STAFF_DIR="$DOTFILES_DIR/ai-staff-hq"
+# Source shared libraries
+source "$(dirname "$0")/dhp-shared.sh"
 
-# Source environment variables
-if [ -f "$DOTFILES_DIR/.env" ]; then
-  source "$DOTFILES_DIR/.env"
+# --- 1. SETUP ---
+dhp_setup_env
+
+# Source squad configuration helpers if available
+if [ -f "$DOTFILES_DIR/bin/dhp-config.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$DOTFILES_DIR/bin/dhp-config.sh"
 fi
 
-# Source shared library
-if [ -f "$DOTFILES_DIR/bin/dhp-lib.sh" ]; then
-  source "$DOTFILES_DIR/bin/dhp-lib.sh"
-else
-  echo "Error: Shared library dhp-lib.sh not found" >&2
-  exit 1
-fi
+# --- 2. FLAG PARSING ---
+dhp_parse_flags "$@"
+# After dhp_parse_flags, the remaining arguments are in "$@"
+set -- "$@"
 
-# Parse flags
-USE_STREAMING=false
-while [[ "$1" == --* ]]; do
-  case "$1" in
-    --stream)
-      USE_STREAMING=true
-      shift
-      ;;
-    *)
-      echo "Unknown flag: $1" >&2
-      exit 1
-      ;;
-  esac
-done
+# --- 3. VALIDATION & INPUT ---
+validate_dependencies curl jq
+ensure_api_key OPENROUTER_API_KEY
 
-# Set output directory with fallback
-if [ -n "$CREATIVE_OUTPUT_DIR" ]; then
-  PROJECTS_DIR="$CREATIVE_OUTPUT_DIR"
-else
-  PROJECTS_DIR="$HOME/Projects/creative-writing"
-fi
+dhp_get_input "$@"
+USER_BRIEF="$PIPED_CONTENT"
 
-# --- 2. VALIDATION ---
-# Check for required tools
-if ! command -v curl &> /dev/null; then
-    echo "Error: 'curl' is not installed. Please install it." >&2
-    exit 1
-fi
-if ! command -v jq &> /dev/null; then
-    echo "Error: 'jq' is not installed. Please install it." >&2
-    exit 1
-fi
-
-# Check for Environment Variables
-if [ -z "$OPENROUTER_API_KEY" ]; then
-    echo "Error: OPENROUTER_API_KEY is not set." >&2
-    echo "Please add it to your .env file and source it." >&2
-    exit 1
-fi
-
-# Load model from .env, fallback to legacy variable, then default
-MODEL="${CREATIVE_MODEL:-${DHP_CREATIVE_MODEL:-meta-llama/llama-4-maverick:free}}"
-
-# Check if the user provided a brief
-if [ -z "$1" ]; then
+if [ -z "$USER_BRIEF" ]; then
     echo "Usage: $0 [--stream] \"Your story idea or logline\"" >&2
     echo "" >&2
     echo "Options:" >&2
-    echo "  --stream    Enable real-time streaming output" >&2
+    echo "  --stream         Enable real-time streaming output" >&2
+    echo "  --temperature    Set the creativity level (e.g., 0.7)" >&2
+    echo "  --max-tokens     Set the maximum response length (e.g., 1024)" >&2
     exit 1
 fi
 
-# Check if the AI_STAFF_DIR exists
+# --- 4. MODEL & STAFF ---
+MODEL="${CREATIVE_MODEL:-${DHP_CREATIVE_MODEL:-meta-llama/llama-4-maverick:free}}"
+PROJECTS_DIR=$(default_output_dir "$HOME/Projects/creative-writing" CREATIVE_OUTPUT_DIR)
+
 if [ ! -d "$AI_STAFF_DIR" ]; then
     echo "Error: AI Staff directory not found at $AI_STAFF_DIR" >&2
     exit 1
 fi
 
-# --- 3. THE "GATLIN GUN" ASSEMBLY ---
-USER_BRIEF="$1"
-STAFF_TO_LOAD=(
-    "strategy/chief-of-staff.yaml"
-    "producers/narrative-designer.yaml"
-    "strategy/creative-strategist.yaml"
-    "health-lifestyle/meditation-instructor.yaml"
-)
+# --- 5. THE "GATLIN GUN" ASSEMBLY ---
+STAFF_TO_LOAD=()
+if command -v get_squad_staff >/dev/null 2>&1; then
+    while IFS= read -r staff; do
+        [ -n "$staff" ] && STAFF_TO_LOAD+=("$staff")
+    done < <(get_squad_staff "creative" 2>/dev/null)
+fi
+if [ ${#STAFF_TO_LOAD[@]} -eq 0 ]; then
+    STAFF_TO_LOAD=(
+        "strategy/chief-of-staff.yaml"
+        "producers/narrative-designer.yaml"
+        "strategy/creative-strategist.yaml"
+        "health-lifestyle/meditation-instructor.yaml"
+    )
+fi
 mkdir -p "$PROJECTS_DIR"
 SLUG=$(echo "$USER_BRIEF" | tr '[:upper:]' '[:lower:]' | tr -s '[:punct:][:space:]' '-' | cut -c 1-50)
 OUTPUT_FILE="$PROJECTS_DIR/${SLUG}.md"
@@ -93,21 +68,21 @@ echo "Brief: $USER_BRIEF"
 echo "Saving to: $OUTPUT_FILE"
 echo "---"
 
-# --- 4. THE "MASTER PROMPT" (THE PAYLOAD) ---
+# --- 6. THE "MASTER PROMPT" (THE PAYLOAD) ---
 MASTER_PROMPT_FILE=$(mktemp)
 trap 'rm -f "$MASTER_PROMPT_FILE"' EXIT
 
-# 4a. Add the "Chief of Staff" first
+# 6a. Add the "Chief of Staff" first
 cat "$AI_STAFF_DIR/staff/${STAFF_TO_LOAD[0]}" > "$MASTER_PROMPT_FILE"
 
-# 4b. Add the rest of the team
+# 6b. Add the rest of the team
 for ((i=1; i<${#STAFF_TO_LOAD[@]}; i++)); do
     STAFF_FILE="$AI_STAFF_DIR/staff/${STAFF_TO_LOAD[$i]}"
     echo -e "\n\n--- SUPPORTING AGENT: $(basename "$STAFF_FILE") ---\n\n" >> "$MASTER_PROMPT_FILE"
     cat "$STAFF_FILE" >> "$MASTER_PROMPT_FILE"
 done
 
-# 4c. Add the final instructions
+# 6c. Add the final instructions
 echo -e "\n\n--- MASTER INSTRUCTION (THE DISPATCH) ---
 
 You are the **Chief of Staff**. Your supporting agent profiles are loaded above.
@@ -126,16 +101,13 @@ Your mission is to coordinate this team to execute on the following user brief a
 Return a single, well-formatted markdown document. Do not speak *as* the team, speak *as* the Chief of Staff presenting the team's coordinated work.
 " >> "$MASTER_PROMPT_FILE"
 
-# --- 5. FIRE! ---
-
-# Read the master prompt content
+# --- 7. FIRE! ---
 PROMPT_CONTENT=$(cat "$MASTER_PROMPT_FILE")
 
-# Execute the API call with error handling and optional streaming
 if [ "$USE_STREAMING" = true ]; then
-    call_openrouter "$MODEL" "$PROMPT_CONTENT" --stream | tee "$OUTPUT_FILE"
+    DHP_TEMPERATURE="$PARAM_TEMPERATURE" DHP_MAX_TOKENS="$PARAM_MAX_TOKENS" call_openrouter "$MODEL" "$PROMPT_CONTENT" --stream | tee "$OUTPUT_FILE"
 else
-    call_openrouter "$MODEL" "$PROMPT_CONTENT" | tee "$OUTPUT_FILE"
+    DHP_TEMPERATURE="$PARAM_TEMPERATURE" DHP_MAX_TOKENS="$PARAM_MAX_TOKENS" call_openrouter "$MODEL" "$PROMPT_CONTENT" | tee "$OUTPUT_FILE"
 fi
 
 # Check if API call succeeded

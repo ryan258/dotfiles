@@ -8,7 +8,7 @@ This setup is guided by a few key principles:
 
   * **Efficiency:** Every script and alias is designed to save keystrokes and streamline complex operations into simple commands.
   * **Accessibility:** By simplifying workflows and providing clear feedback, the toolkit aims to be usable and helpful even on low-energy days.
-  * **Robustness:** Scripts are written defensively, with checks for dependencies and safe error handling.
+  * **Robustness:** Scripts are written defensively, with checks for dependencies and safe error handling (`set -euo pipefail`).
   * **Seamless Integration:** The tools deeply integrate with macOS-specific features like `osascript` for notifications, `pmset` for battery status, and Finder for file operations.
 
 ## Features
@@ -147,6 +147,14 @@ creative "Story idea"  # Default behavior, no streaming
 **Technical (1):**
 - `tech` / `dhp-tech` - Code debugging, optimization, technical analysis
 
+Invoke dispatchers using the single-word aliases (shortcuts to the `dhp-*` scripts); you can also use the `dispatch` wrapper if you prefer a unified entry point:
+```bash
+tech "Optimize this function"
+cat script.sh | tech --stream
+content --temperature 0.4 --max-tokens 800 "Brain fog morning primer"
+# Alternative unified entry: dispatch content "…"
+```
+
 **Creative (3):**
 - `creative` / `dhp-creative` - Complete story packages (horror specialty)
 - `narrative` / `dhp-narrative` - Story structure, plot development, character arcs
@@ -174,6 +182,13 @@ blog generate my-stub-name    # AI-generate full content from stub
 blog refine my-post.md         # AI-polish existing draft
 ```
 Set `BLOG_DIR` in `dotfiles/.env` to point at your personal writing repo (examples: `$HOME/Projects/blog`, `$HOME/Projects/site/content`, `$HOME/Projects/articles`). Leaving it unset cleanly disables these commands for shared installs.
+
+**Swipe Logging (optional):**
+```bash
+# Enable in .env: SWIPE_LOG_ENABLED=true (defaults to ~/Documents/swipe.md)
+swipe dispatch tech "Summarize today's wins"
+```
+Use `swipe` to wrap any command and automatically append the output + command to your swipe log. Disable anytime via `.env`.
 
 **Todo Integration:**
 ```bash
@@ -269,10 +284,10 @@ dhp-content --full-context "Comprehensive guide topic"
 - Example error: `Error: API returned an error: Invalid API key`
 
 **Shared Library:**
-- Centralized API logic in `bin/dhp-lib.sh`
-- Consistent error handling across all dispatchers
-- API changes only require updating one file
-- Eliminated ~1,500 lines of duplicate code
+- Centralized API logic in `bin/dhp-lib.sh` and common setup/parsing logic in `bin/dhp-shared.sh`.
+- Consistent error handling and setup across all dispatchers.
+- API or setup changes only require updating one or two files.
+- Eliminated ~1,500 lines of duplicate code.
 
 ### Full AI Workforce Access
 
@@ -289,7 +304,7 @@ See `bin/README.md` for detailed dispatcher documentation, `ROADMAP.md` for impl
 
 ## Daily Loop at a Glance
 
-  * `startday` launches automatically once per calendar day on your first shell, greeting you with the day's focus, fresh GitHub pushes, suggested directories, blog sync results, and health reminders.
+  * `startday` launches automatically once per calendar day on your first shell, greeting you with the day's focus, fresh GitHub pushes, suggested directories, current blog status/drafts, and health reminders.
   * Capture intentions with `focus "Ship the review"` (clear with `focus clear`) so your morning dashboard anchors you immediately.
   * Use `status` for midday course-correction, `todo` for prioritized tasks (`bump`, `top`, `undo`, `commit`), and `dump`/`journal` to keep context searchable.
   * Close out with `goodevening` to celebrate wins, spot risky repos, validate data, and trigger `backup_data.sh`.
@@ -405,7 +420,7 @@ Many scripts can be called directly. Some, marked with `(source)`, provide extra
 | `health`       | Track appointments, symptoms, and energy levels with `dashboard` for 30-day trend analysis. |
 | `meds`         | Medication tracking system with `check`, `log`, `remind`, and `dashboard` for adherence monitoring. |
 | `focus`        | Set, show, or clear the day's focus message surfaced by `startday`. |
-| `startday`     | Automated morning routine with focus reminder, GitHub activity, blog sync, suggested directories, health snapshot, weekly review link, stale tasks, and top priorities. |
+| `startday`     | Automated morning routine with focus reminder, GitHub activity, blog status/draft visibility, suggested directories, health snapshot, weekly review link, stale tasks, and top priorities. |
 | `goodevening`  | End-of-day summary with gamified wins, project safety checks, data validation (expects `data_validate.sh`), and automated backups. |
 | `weekreview`   | Weekly recap of tasks, journal entries, and git commits; use `--file` to export to Markdown. |
 | `setup_weekly_review` | Schedule `weekreview --file` via the friendly `schedule.sh` wrapper for Sunday evenings. |
@@ -460,7 +475,7 @@ This validates all scripts, dependencies, data directories, and configuration.
 
 ### Code Quality
 
-To maintain code quality and prevent common shell scripting errors, run `shellcheck` on any modified scripts:
+To maintain code quality and prevent common shell scripting errors, all scripts have been updated to use `set -euo pipefail` for robust error handling. You can also run `shellcheck` on any modified scripts:
 
 ```bash
 # Install shellcheck if you don't have it
@@ -478,4 +493,4 @@ Check the central audit log to see what automated tasks have run:
 systemlog
 ```
 
-This shows the last 20 automation events from data backups, task cleanups, blog syncs, and medication reminders.
+This shows the last 20 automation events from data backups, task cleanups, blog status refreshes, and medication reminders.

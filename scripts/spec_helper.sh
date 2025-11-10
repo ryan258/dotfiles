@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Spec helper for structured dispatcher inputs
+set -euo pipefail
 
 spec_dispatch() {
   local dispatcher="${1}"

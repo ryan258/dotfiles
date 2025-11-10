@@ -1,5 +1,6 @@
 #!/bin/bash
 # tidy_downloads.sh - macOS version with proper directory handling
+set -euo pipefail
 
 DRY_RUN=false
 FORCE_MODE=false

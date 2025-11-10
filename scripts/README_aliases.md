@@ -27,7 +27,7 @@ This document complements the `~/.zsh_aliases` file. It explains the purpose of 
 - **Unified Navigation**: `g` command replaces goto/back/workspace with auto-venv and app launching
 - **Knowledge Management**: `howto` wiki, `schedule` command wrapper, `review_clutter` for Desktop/Downloads
 - **System Intelligence**: `dotfiles_check` validation, `systemlog` audit trail, automated backups
-- **Blog Integration**: `blog sync` to todos, `blog ideas` search
+- **Blog Integration**: `blog status`, `blog recent`, `blog ideas`
 - **Productivity Nudges**: `pomo` Pomodoro timer, `next` top priority, gamified progress tracking
 
 ## Helper Functions

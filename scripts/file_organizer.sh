@@ -1,5 +1,6 @@
 #!/bin/bash
 # file_organizer.sh - Organize files by type, date, or size
+set -euo pipefail
 
 DRY_RUN=false
 if [ "${2:-}" == "--dry-run" ] || [ "${2:-}" == "-n" ]; then

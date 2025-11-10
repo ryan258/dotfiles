@@ -1,5 +1,6 @@
 #!/bin/bash
 # blog.sh - Tools for managing the blog content workflow.
+set -euo pipefail
 
 SYSTEM_LOG_FILE="$HOME/.config/dotfiles-data/system.log"
 

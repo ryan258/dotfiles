@@ -1,5 +1,6 @@
 #!/bin/bash
 # battery_check.sh - macOS battery monitoring with suggestions
+set -euo pipefail
 
 # Check if this is a laptop with a battery
 if ! system_profiler SPPowerDataType >/dev/null 2>&1; then

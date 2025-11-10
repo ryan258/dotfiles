@@ -18,14 +18,19 @@ else
   exit 1
 fi
 
-# Set output directory with fallback
-if [ -n "$CONTENT_OUTPUT_DIR" ]; then
-  PROJECTS_DIR="$CONTENT_OUTPUT_DIR"
-elif [ -n "$BLOG_DIR" ]; then
-  PROJECTS_DIR="$BLOG_DIR/content/guides"
-else
-  PROJECTS_DIR="$HOME/Projects/my-ms-ai-blog/content/guides"
+# Shared utils
+if [ -f "$DOTFILES_DIR/bin/dhp-utils.sh" ]; then
+  source "$DOTFILES_DIR/bin/dhp-utils.sh"
 fi
+
+# Source squad configuration helpers if available
+if [ -f "$DOTFILES_DIR/bin/dhp-config.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$DOTFILES_DIR/bin/dhp-config.sh"
+fi
+
+# Set output directory with fallback
+PROJECTS_DIR=$(default_output_dir "$HOME/Projects/my-ms-ai-blog/content/guides" CONTENT_OUTPUT_DIR)
 
 # Source context library
 if [ -f "$DOTFILES_DIR/bin/dhp-context.sh" ]; then
@@ -35,11 +40,13 @@ fi
 # Parse flags
 USE_CONTEXT=false
 USE_STREAMING=false
+PARAM_TEMPERATURE=""
+PARAM_MAX_TOKENS=""
 while [[ "$1" == --* ]]; do
-  case "$1" in
-    --context)
-      USE_CONTEXT=true
-      shift
+    case "$1" in
+        --context)
+            USE_CONTEXT=true
+            shift
       ;;
     --full-context)
       USE_CONTEXT=true
@@ -47,33 +54,30 @@ while [[ "$1" == --* ]]; do
       shift
       ;;
     --stream)
-      USE_STREAMING=true
-      shift
-      ;;
-    *)
-      echo "Unknown flag: $1" >&2
-      exit 1
-      ;;
-  esac
+            USE_STREAMING=true
+            shift
+            ;;
+        --temperature)
+            PARAM_TEMPERATURE="$2"
+            shift 2
+            ;;
+        --max-tokens)
+            PARAM_MAX_TOKENS="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown flag: $1" >&2
+            exit 1
+            ;;
+    esac
 done
 
 # --- 2. VALIDATION ---
 # Check for required tools
-if ! command -v curl &> /dev/null; then
-    echo "Error: 'curl' is not installed. Please install it." >&2
-    exit 1
-fi
-if ! command -v jq &> /dev/null; then
-    echo "Error: 'jq' is not installed. Please install it." >&2
-    exit 1
-fi
+validate_dependencies curl jq
 
 # Check for Environment Variables
-if [ -z "$OPENROUTER_API_KEY" ]; then
-    echo "Error: OPENROUTER_API_KEY is not set." >&2
-    echo "Please add it to your .env file and source it." >&2
-    exit 1
-fi
+ensure_api_key OPENROUTER_API_KEY
 
 # Load model from .env, fallback to legacy variable, then default
 MODEL="${CONTENT_MODEL:-${DHP_CONTENT_MODEL:-qwen/qwen3-coder:free}}"
@@ -102,11 +106,19 @@ fi
 
 # --- 3. THE "GATLIN GUN" ASSEMBLY ---
 USER_BRIEF="$1"
-STAFF_TO_LOAD=(
-    "strategy/chief-of-staff.yaml"
-    "strategy/market-analyst.yaml"
-    "producers/copywriter.yaml"
-)
+STAFF_TO_LOAD=()
+if command -v get_squad_staff >/dev/null 2>&1; then
+    while IFS= read -r staff; do
+        [ -n "$staff" ] && STAFF_TO_LOAD+=("$staff")
+    done < <(get_squad_staff "content" 2>/dev/null)
+fi
+if [ ${#STAFF_TO_LOAD[@]} -eq 0 ]; then
+    STAFF_TO_LOAD=(
+        "strategy/chief-of-staff.yaml"
+        "strategy/market-analyst.yaml"
+        "producers/copywriter.yaml"
+    )
+fi
 mkdir -p "$PROJECTS_DIR"
 SLUG=$(echo "$USER_BRIEF" | tr '[:upper:]' '[:lower:]' | tr -s '[:punct:][:space:]' '-' | cut -c 1-50)
 OUTPUT_FILE="$PROJECTS_DIR/${SLUG}.md"

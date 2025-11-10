@@ -441,29 +441,29 @@ alias data_validate='bash ~/dotfiles/scripts/data_validate.sh'
 # AI STAFF HQ DISPATCHERS
 # =============================================================================
 # Full dispatcher names
-alias dhp-tech="dhp-tech.sh"
-alias dhp-creative="dhp-creative.sh"
-alias dhp-content="dhp-content.sh"
-alias dhp-strategy="dhp-strategy.sh"
-alias dhp-brand="dhp-brand.sh"
-alias dhp-market="dhp-market.sh"
-alias dhp-stoic="dhp-stoic.sh"
-alias dhp-research="dhp-research.sh"
-alias dhp-narrative="dhp-narrative.sh"
-alias dhp-copy="dhp-copy.sh"
+alias dhp-tech="$HOME/dotfiles/bin/dhp-tech.sh"
+alias dhp-creative="$HOME/dotfiles/bin/dhp-creative.sh"
+alias dhp-content="$HOME/dotfiles/bin/dhp-content.sh"
+alias dhp-strategy="$HOME/dotfiles/bin/dhp-strategy.sh"
+alias dhp-brand="$HOME/dotfiles/bin/dhp-brand.sh"
+alias dhp-market="$HOME/dotfiles/bin/dhp-market.sh"
+alias dhp-stoic="$HOME/dotfiles/bin/dhp-stoic.sh"
+alias dhp-research="$HOME/dotfiles/bin/dhp-research.sh"
+alias dhp-narrative="$HOME/dotfiles/bin/dhp-narrative.sh"
+alias dhp-copy="$HOME/dotfiles/bin/dhp-copy.sh"
 
 # Shorthand versions for quick access
-alias tech="dhp-tech.sh"
-alias creative="dhp-creative.sh"
-alias content="dhp-content.sh"
-alias strategy="dhp-strategy.sh"
-alias brand="dhp-brand.sh"
-alias market="dhp-market.sh"
-alias stoic="dhp-stoic.sh"
-alias research="dhp-research.sh"
-alias narrative="dhp-narrative.sh"
-alias copy="dhp-copy.sh"
-alias dhp="dhp-tech.sh"  # Default to tech dispatcher
+alias tech="$HOME/dotfiles/bin/dhp-tech.sh"
+alias creative="$HOME/dotfiles/bin/dhp-creative.sh"
+alias content="$HOME/dotfiles/bin/dhp-content.sh"
+alias strategy="$HOME/dotfiles/bin/dhp-strategy.sh"
+alias brand="$HOME/dotfiles/bin/dhp-brand.sh"
+alias market="$HOME/dotfiles/bin/dhp-market.sh"
+alias stoic="$HOME/dotfiles/bin/dhp-stoic.sh"
+alias research="$HOME/dotfiles/bin/dhp-research.sh"
+alias narrative="$HOME/dotfiles/bin/dhp-narrative.sh"
+alias copy="$HOME/dotfiles/bin/dhp-copy.sh"
+alias dhp="$HOME/dotfiles/bin/dhp-tech.sh"  # Default to tech dispatcher
 
 # Advanced AI Features (Phase 5)
 alias dhp-project="dhp-project.sh"           # Multi-specialist orchestration

@@ -1,5 +1,6 @@
 #!/bin/bash
 # findtext.sh - A user-friendly wrapper for grep to find text in files
+set -euo pipefail
 
 IFS= read -r -p "What text are you searching for? " search_term
 

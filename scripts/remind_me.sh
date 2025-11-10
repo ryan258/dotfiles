@@ -1,5 +1,6 @@
 #!/bin/bash
 # remind_me.sh - Simple reminder system using macOS notifications
+set -euo pipefail
 
 if [ $# -lt 2 ]; then
     echo "Usage: $0 <time> <reminder_message>"

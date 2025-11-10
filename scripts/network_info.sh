@@ -1,5 +1,6 @@
 #!/bin/bash
 # network_info.sh - Network diagnostics for macOS
+set -euo pipefail
 
 case "$1" in
     status)

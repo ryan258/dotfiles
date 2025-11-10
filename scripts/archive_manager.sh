@@ -1,5 +1,6 @@
 #!/bin/bash
 # archive_manager.sh - Archive management utilities
+set -euo pipefail
 
 case "$1" in
     create)

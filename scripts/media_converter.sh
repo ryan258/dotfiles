@@ -1,5 +1,6 @@
 #!/bin/bash
 # media_converter.sh - Media file conversion utilities for macOS
+set -euo pipefail
 
 format_bytes() {
     local bytes="$1"

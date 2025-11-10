@@ -1,5 +1,6 @@
 #!/bin/bash
 # projects.sh - Find and recall forgotten projects from GitHub.
+set -euo pipefail
 
 HELPER_SCRIPT="$HOME/dotfiles/scripts/github_helper.sh"
 

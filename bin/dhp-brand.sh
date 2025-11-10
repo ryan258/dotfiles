@@ -4,61 +4,43 @@ set -e
 # dhp-brand.sh - Brand Builder dispatcher
 # Brand positioning, voice/tone, competitive analysis
 
-DOTFILES_DIR="$HOME/dotfiles"
-AI_STAFF_DIR="$DOTFILES_DIR/ai-staff-hq"
+# Source shared libraries
+source "$(dirname "$0")/dhp-shared.sh"
 
-if [ -f "$DOTFILES_DIR/.env" ]; then source "$DOTFILES_DIR/.env"; fi
+# --- 1. SETUP ---
+dhp_setup_env
 
-# Source shared library
-if [ -f "$DOTFILES_DIR/bin/dhp-lib.sh" ]; then
-    source "$DOTFILES_DIR/bin/dhp-lib.sh"
-else
-    echo "Error: Shared library dhp-lib.sh not found" >&2
-    exit 1
-fi
+# --- 2. FLAG PARSING ---
+dhp_parse_flags "$@"
+# After dhp_parse_flags, the remaining arguments are in "$@"
+set -- "$@" 
 
-# Parse flags
-USE_STREAMING=false
-while [[ "$1" == --* ]]; do
-    case "$1" in
-        --stream)
-            USE_STREAMING=true
-            shift
-            ;;
-        *)
-            echo "Unknown flag: $1" >&2
-            exit 1
-            ;;
-    esac
-done
+# --- 3. VALIDATION & INPUT ---
+validate_dependencies curl jq
+ensure_api_key OPENROUTER_API_KEY
 
-if ! command -v curl &> /dev/null || ! command -v jq &> /dev/null; then
-    echo "Error: curl and jq are required." >&2; exit 1
-fi
+dhp_get_input "$@"
 
-if [ -z "$OPENROUTER_API_KEY" ]; then
-    echo "Error: OPENROUTER_API_KEY not set." >&2; exit 1
-fi
-
-# Load model from .env, fallback to legacy variable, then default
-MODEL="${STRATEGY_MODEL:-${DHP_STRATEGY_MODEL:-openrouter/polaris-alpha}}"
-
-STAFF_FILE="$AI_STAFF_DIR/staff/strategy/brand-builder.yaml"
-if [ ! -f "$STAFF_FILE" ]; then
-    echo "Error: Brand Builder specialist not found at $STAFF_FILE" >&2; exit 1
-fi
-
-PIPED_CONTENT=$(cat -)
 if [ -z "$PIPED_CONTENT" ]; then
-    echo "Usage: <input> | $0 [--stream]" >&2
+    echo "Usage:" >&2
+    echo "  echo \"prompt\" | $0 [options]" >&2
+    echo "  $0 [options] \"prompt\"" >&2
     echo "Options:" >&2
     echo "  --stream    Enable real-time streaming output" >&2
     exit 1
 fi
 
+# --- 4. MODEL & STAFF ---
+MODEL="${STRATEGY_MODEL:-${DHP_STRATEGY_MODEL:-openrouter/polaris-alpha}}"
+STAFF_FILE="$AI_STAFF_DIR/staff/strategy/brand-builder.yaml"
+if [ ! -f "$STAFF_FILE" ]; then
+    echo "Error: Brand Builder specialist not found at $STAFF_FILE" >&2; exit 1
+fi
+
 echo "Activating 'Brand Builder' via OpenRouter (Model: $MODEL)..." >&2
 echo "---" >&2
 
+# --- 5. PROMPT ASSEMBLY ---
 MASTER_PROMPT=$(cat "$STAFF_FILE")
 MASTER_PROMPT+="
 
@@ -72,7 +54,7 @@ Provide brand positioning analysis with:
 4. Key messaging pillars
 "
 
-# Execute the API call with error handling and optional streaming
+# --- 6. EXECUTION ---
 if [ "$USE_STREAMING" = true ]; then
     call_openrouter "$MODEL" "$MASTER_PROMPT" --stream
 else

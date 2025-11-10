@@ -1,5 +1,6 @@
 #!/bin/bash
 # my_progress.sh - Shows your recent Git commits
+set -euo pipefail
 
 # First, check if this is a git repository
 if [ ! -d .git ]; then

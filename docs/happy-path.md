@@ -2,6 +2,8 @@
 
 This document outlines the ideal daily workflow using your context-recovery system. Designed specifically for MS brain fog days when remembering what to do is hard.
 
+> **Dispatcher Tip:** Use the single-word aliases (they map directly to the `dhp-*` scripts) for everyday prompts. When you want a unified interface, `dispatch <squad> "brief"` works too.
+
 ## Morning Routine (Automatic)
 
 ### What Happens
@@ -10,7 +12,7 @@ When you open your first terminal of the day, `startday` runs automatically (onl
 - Yesterday's journal entries (what you were working on)
 - Active GitHub projects (pushed in last 7 days from any machine)
 - Suggested directories based on recent/frequent usage (`g suggest`)
-- Blog status (auto-syncs blog stubs to your todo list)
+- Blog status (shows latest drafts + recent published posts)
 - Weekly review pointer on Mondays (links to the Markdown summary saved in `~/Documents/Reviews/Weekly/`)
 - Upcoming health appointments with countdown plus today's energy/symptom snapshot
 - Scheduled commands/reminders (from `schedule` command)
@@ -355,7 +357,7 @@ echo "feeling overwhelmed by tasks" | stoic
 **Advanced AI features:**
 ```bash
 # Multi-specialist project planning
-dhp-project "launch new blog series" > brief.md
+dispatch project "launch new blog series" > brief.md
 
 # Chain multiple AI specialists
 dhp-chain creative narrative copy -- "story idea"
@@ -407,7 +409,7 @@ content --context "guide topic"
 | `strategy` | Strategic analysis (pipe input) |
 | `stoic` | Stoic coaching (pipe input) |
 | `journal analyze` | AI insights from last 7 days |
-| `dhp-project "<desc>"` | Multi-specialist project planning |
+| `dispatch project "<desc>"` | Multi-specialist project planning |
 | `dhp-chain d1 d2 -- "input"` | Chain multiple AI specialists |
 
 ## The Most Important Rules
@@ -509,7 +511,7 @@ All your data is centralized in `~/.config/dotfiles-data/`:
 
 **Automatic Backups:** This directory is automatically backed up daily to `~/Backups/dotfiles_data/` by `goodevening`. Your data is safe.
 
-**View Activity:** Run `systemlog` anytime to see what automated tasks have run (backups, blog syncs, task cleanups, etc.).
+**View Activity:** Run `systemlog` anytime to see what automated tasks have run (backups, blog status refreshes, task cleanups, etc.).
 
 ---
 

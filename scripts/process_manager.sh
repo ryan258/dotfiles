@@ -1,5 +1,6 @@
 #!/bin/bash
 # process_manager.sh - Find and manage processes on macOS
+set -euo pipefail
 
 case "$1" in
     find)

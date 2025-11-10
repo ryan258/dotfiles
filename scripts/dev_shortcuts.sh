@@ -1,5 +1,6 @@
 #!/bin/bash
 # dev_shortcuts.sh - Development workflow shortcuts for macOS
+set -euo pipefail
 
 is_sourced() {
     if [ -n "$ZSH_VERSION" ]; then

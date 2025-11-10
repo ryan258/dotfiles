@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -euo pipefail
 # --- Gets the weather for a specified city (or your current location) ---
 # It uses the website wttr.in, which is designed for terminals.
 

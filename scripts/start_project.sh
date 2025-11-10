@@ -1,5 +1,6 @@
 #!/bin/bash
 # start_project.sh - Creates a standard project directory structure
+set -euo pipefail
 
 is_sourced() {
     if [ -n "$ZSH_VERSION" ]; then

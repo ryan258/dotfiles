@@ -2,6 +2,14 @@
 
 This guide provides practical, copy-ready examples for all AI dispatchers and advanced features. Simply copy the prompts and paste them into your terminal.
 
+> **How to run dispatchers:** Use the one-word aliases (they map directly to the `dhp-*` scripts), or `dispatch <squad> …` if you prefer a unified entry point. Piping full files still works:
+> ```bash
+> tech "Optimize this function"
+> content --temperature 0.4 --max-tokens 800 "Brain fog morning primer"
+> cat script.sh | tech --stream
+> # Alternative unified entry: dispatch tech "…"
+> ```
+
 **Last Updated:** November 8, 2025
 
 ---
@@ -29,12 +37,12 @@ ai-suggest
 
 **Debug a script:**
 ```bash
-cat ~/dotfiles/scripts/todo.sh | tech
+cat ~/dotfiles/scripts/todo.sh | dhp-tech.sh --stream
 ```
 
 **Generate a story package:**
 ```bash
-creative "A software engineer discovers their AI assistant has become sentient"
+dispatch creative "A software engineer discovers their AI assistant has become sentient"
 ```
 
 **Get strategic insights from your journal:**
@@ -119,7 +127,7 @@ Every AI dispatcher accepts the `--stream` flag:
 
 ## Technical & Development
 
-### Debug Scripts (`tech` / `dhp-tech`)
+### Debug Scripts (`tech` / `dispatch tech`)
 
 **Example 1: Debug a broken script**
 ```bash

@@ -16,6 +16,10 @@ else
     exit 1
 fi
 
+if [ -f "$DOTFILES_DIR/bin/dhp-utils.sh" ]; then
+    source "$DOTFILES_DIR/bin/dhp-utils.sh"
+fi
+
 # Parse flags
 USE_STREAMING=false
 while [[ "$1" == --* ]]; do
@@ -32,13 +36,8 @@ while [[ "$1" == --* ]]; do
 done
 
 
-if ! command -v curl &> /dev/null || ! command -v jq &> /dev/null; then
-    echo "Error: curl and jq are required." >&2; exit 1
-fi
-
-if [ -z "$OPENROUTER_API_KEY" ]; then
-    echo "Error: OPENROUTER_API_KEY not set." >&2; exit 1
-fi
+validate_dependencies curl jq
+ensure_api_key OPENROUTER_API_KEY
 
 # Load model from .env, fallback to legacy variable, then default
 MODEL="${CREATIVE_MODEL:-${DHP_CREATIVE_MODEL:-meta-llama/llama-4-maverick:free}}"

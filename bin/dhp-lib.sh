@@ -11,6 +11,8 @@ call_openrouter() {
     local model="$1"
     local prompt="$2"
     local use_streaming=false
+    local temperature="${DHP_TEMPERATURE:-${DHP_TEMPERATURE_DEFAULT:-}}"
+    local max_tokens="${DHP_MAX_TOKENS:-${DHP_MAX_TOKENS_DEFAULT:-}}"
 
     # Check for --stream flag
     if [ "$3" = "--stream" ]; then
@@ -22,12 +24,16 @@ call_openrouter() {
         JSON_PAYLOAD=$(jq -n \
             --arg model "$model" \
             --arg prompt "$prompt" \
-            '{model: $model, messages: [{role: "user", content: $prompt}], stream: true}')
+            --argjson temperature "${temperature:-null}" \
+            --argjson max_tokens "${max_tokens:-null}" \
+            '{model: $model, messages: [{role: "user", content: $prompt}], stream: true} as $base | $base + (if $temperature? then {temperature: $temperature} else {} end) + (if $max_tokens? then {max_tokens: $max_tokens} else {} end)')
     else
         JSON_PAYLOAD=$(jq -n \
             --arg model "$model" \
             --arg prompt "$prompt" \
-            '{model: $model, messages: [{role: "user", content: $prompt}]}')
+            --argjson temperature "${temperature:-null}" \
+            --argjson max_tokens "${max_tokens:-null}" \
+            '{model: $model, messages: [{role: "user", content: $prompt}]} as $base | $base + (if $temperature? then {temperature: $temperature} else {} end) + (if $max_tokens? then {max_tokens: $max_tokens} else {} end)')
     fi
 
     # Make API call

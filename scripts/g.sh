@@ -1,5 +1,6 @@
 #!/bin/bash
 # g.sh - Consolidated navigation and state management script
+set -euo pipefail
 
 # --- Configuration ---
 BOOKMARKS_FILE="$HOME/.config/dotfiles-data/dir_bookmarks"
