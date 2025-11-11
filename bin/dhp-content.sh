@@ -30,7 +30,7 @@ if [ -f "$DOTFILES_DIR/bin/dhp-config.sh" ]; then
 fi
 
 # Set output directory with fallback
-PROJECTS_DIR=$(default_output_dir "$HOME/Projects/my-ms-ai-blog/content/guides" CONTENT_OUTPUT_DIR)
+PROJECTS_DIR=$(default_output_dir "$HOME/Documents/AI_Staff_HQ_Outputs/Content/Guides" "DHP_CONTENT_OUTPUT_DIR")
 
 # Source context library
 if [ -f "$DOTFILES_DIR/bin/dhp-context.sh" ]; then

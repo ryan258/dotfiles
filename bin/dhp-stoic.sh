@@ -31,7 +31,7 @@ if [ -z "$PIPED_CONTENT" ]; then
 fi
 
 # --- 4. MODEL & STAFF ---
-MODEL="${STOIC_MODEL:-${DHP_STRATEGY_MODEL:-deepseek/deepseek-r1-0528:free}}"
+MODEL="${STOIC_MODEL:-${FALLBACK_GENERAL:-mistralai/mistral-small-3.1-24b-instruct:free}}"
 STAFF_FILE="$AI_STAFF_DIR/staff/health-lifestyle/stoic-coach.yaml"
 if [ ! -f "$STAFF_FILE" ]; then
     echo "Error: Stoic Coach specialist not found at $STAFF_FILE" >&2; exit 1

@@ -37,7 +37,7 @@ fi
 
 # --- 4. MODEL & STAFF ---
 MODEL="${CREATIVE_MODEL:-${DHP_CREATIVE_MODEL:-meta-llama/llama-4-maverick:free}}"
-PROJECTS_DIR=$(default_output_dir "$HOME/Projects/creative-writing" CREATIVE_OUTPUT_DIR)
+PROJECTS_DIR=$(default_output_dir "$HOME/Documents/AI_Staff_HQ_Outputs/Creative/Stories" "DHP_CREATIVE_OUTPUT_DIR")
 
 if [ ! -d "$AI_STAFF_DIR" ]; then
     echo "Error: AI Staff directory not found at $AI_STAFF_DIR" >&2
