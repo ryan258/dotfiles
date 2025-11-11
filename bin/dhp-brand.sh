@@ -37,10 +37,17 @@ if [ ! -f "$STAFF_FILE" ]; then
     echo "Error: Brand Builder specialist not found at $STAFF_FILE" >&2; exit 1
 fi
 
+# --- 5. OUTPUT SETUP ---
+OUTPUT_DIR=$(default_output_dir "$HOME/Documents/AI_Staff_HQ_Outputs/Strategy/Brand" "DHP_BRAND_OUTPUT_DIR")
+mkdir -p "$OUTPUT_DIR"
+SLUG=$(echo "$PIPED_CONTENT" | tr '[:upper:]' '[:lower:]' | tr -s '[:punct:][:space:]' '-' | cut -c 1-50)
+OUTPUT_FILE="$OUTPUT_DIR/${SLUG}.md"
+
 echo "Activating 'Brand Builder' via OpenRouter (Model: $MODEL)..." >&2
+echo "Saving to: $OUTPUT_FILE" >&2
 echo "---" >&2
 
-# --- 5. PROMPT ASSEMBLY ---
+# --- 6. PROMPT ASSEMBLY ---
 MASTER_PROMPT=$(cat "$STAFF_FILE")
 MASTER_PROMPT+="
 
@@ -54,15 +61,15 @@ Provide brand positioning analysis with:
 4. Key messaging pillars
 "
 
-# --- 6. EXECUTION ---
+# --- 7. EXECUTION ---
 if [ "$USE_STREAMING" = true ]; then
-    call_openrouter "$MODEL" "$MASTER_PROMPT" --stream
+    call_openrouter "$MODEL" "$MASTER_PROMPT" --stream | tee "$OUTPUT_FILE"
 else
-    call_openrouter "$MODEL" "$MASTER_PROMPT"
+    call_openrouter "$MODEL" "$MASTER_PROMPT" | tee "$OUTPUT_FILE"
 fi
 
 # Check if API call succeeded
-if [ $? -eq 0 ]; then
+if [ ${PIPESTATUS[0]} -eq 0 ]; then
     echo -e "\n---" >&2
     echo "SUCCESS: 'Brand Builder' analysis complete." >&2
 else

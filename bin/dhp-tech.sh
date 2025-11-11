@@ -37,17 +37,24 @@ if [ ! -d "$AI_STAFF_DIR" ]; then
     exit 1
 fi
 
+# --- 5. OUTPUT SETUP ---
+OUTPUT_DIR=$(default_output_dir "$HOME/Documents/AI_Staff_HQ_Outputs/Technical/Code_Analysis" "DHP_TECH_OUTPUT_DIR")
+mkdir -p "$OUTPUT_DIR"
+SLUG=$(echo "$PIPED_CONTENT" | tr '[:upper:]' '[:lower:]' | tr -s '[:punct:][:space:]' '-' | cut -c 1-50)
+OUTPUT_FILE="$OUTPUT_DIR/${SLUG}.md"
+
 echo "Activating 'The Technician' via OpenRouter (Model: $MODEL)..." >&2
+echo "Saving to: $OUTPUT_FILE" >&2
 echo "---" >&2
 
-# --- 5. PROMPT ASSEMBLY ---
+# --- 6. PROMPT ASSEMBLY ---
 MASTER_PROMPT_FILE=$(mktemp)
 trap 'rm -f "$MASTER_PROMPT_FILE"' EXIT
 
-# 5a. Add the "Technician" persona
+# 6a. Add the "Technician" persona
 cat "$STAFF_FILE" > "$MASTER_PROMPT_FILE"
 
-# 5b. Add the final instructions and the user's piped-in code
+# 6b. Add the final instructions and the user's piped-in code
 echo -e "\n\n--- MASTER INSTRUCTION (THE DISPATCH) ---
 
 You are **The Technician**. Your persona is loaded above.
@@ -68,17 +75,17 @@ Return a single, clean markdown response with three sections:
 3.  **Corrected Code:** The complete, corrected script.
 " >> "$MASTER_PROMPT_FILE"
 
-# --- 6. EXECUTION ---
+# --- 7. EXECUTION ---
 PROMPT_CONTENT=$(cat "$MASTER_PROMPT_FILE")
 
 if [ "$USE_STREAMING" = true ]; then
-    call_openrouter "$MODEL" "$PROMPT_CONTENT" --stream
+    call_openrouter "$MODEL" "$PROMPT_CONTENT" --stream | tee "$OUTPUT_FILE"
 else
-    call_openrouter "$MODEL" "$PROMPT_CONTENT"
+    call_openrouter "$MODEL" "$PROMPT_CONTENT" | tee "$OUTPUT_FILE"
 fi
 
 # Check if API call succeeded
-if [ $? -eq 0 ]; then
+if [ ${PIPESTATUS[0]} -eq 0 ]; then
     echo -e "\n---" >&2
     echo "SUCCESS: 'The Technician' has completed the analysis." >&2
 else

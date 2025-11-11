@@ -1,79 +1,22 @@
 #!/bin/bash
 set -e # Exit immediately if a command fails
 
-# --- 1. CONFIGURATION ---
-DOTFILES_DIR="$HOME/dotfiles"
-AI_STAFF_DIR="$DOTFILES_DIR/ai-staff-hq"
+# Source shared libraries
+source "$(dirname "$0")/dhp-shared.sh"
 
-# Source environment variables
-if [ -f "$DOTFILES_DIR/.env" ]; then
-  source "$DOTFILES_DIR/.env"
-fi
+# --- 1. SETUP ---
+dhp_setup_env
 
-# Source shared library
-if [ -f "$DOTFILES_DIR/bin/dhp-lib.sh" ]; then
-  source "$DOTFILES_DIR/bin/dhp-lib.sh"
-else
-  echo "Error: Shared library dhp-lib.sh not found" >&2
-  exit 1
-fi
+# --- 2. FLAG PARSING ---
+dhp_parse_flags "$@"
+# After dhp_parse_flags, the remaining arguments are in "$@"
+set -- "$@"
 
-# Parse flags
-USE_STREAMING=false
-while [[ "$1" == --* ]]; do
-  case "$1" in
-    --stream)
-      USE_STREAMING=true
-      shift
-      ;;
-    *)
-      echo "Unknown flag: $1" >&2
-      exit 1
-      ;;
-  esac
-done
+# --- 3. VALIDATION & INPUT ---
+validate_dependencies curl jq
+ensure_api_key OPENROUTER_API_KEY
 
-# --- 2. VALIDATION ---
-# Check for required tools
-if ! command -v curl &> /dev/null; then
-    echo "Error: 'curl' is not installed. Please install it." >&2
-    exit 1
-fi
-if ! command -v jq &> /dev/null; then
-    echo "Error: 'jq' is not installed. Please install it." >&2
-    exit 1
-fi
-
-# Check for Environment Variables
-if [ -z "$OPENROUTER_API_KEY" ]; then
-    echo "Error: OPENROUTER_API_KEY is not set." >&2
-    echo "Please add it to your .env file and source it." >&2
-    exit 1
-fi
-
-# Load model from .env, fallback to legacy variable, then default
-MODEL="${STRATEGY_MODEL:-${DHP_STRATEGY_MODEL:-openrouter/polaris-alpha}}"
-
-if [ ! -d "$AI_STAFF_DIR" ]; then
-    echo "Error: AI Staff directory not found at $AI_STAFF_DIR" >&2
-    exit 1
-fi
-
-# --- 3. PREPARE PROMPT ---
-STAFF_FILE="$AI_STAFF_DIR/staff/strategy/chief-of-staff.yaml"
-
-if [ ! -f "$STAFF_FILE" ]; then
-    echo "Error: Chief of Staff specialist not found at $STAFF_FILE" >&2
-    exit 1
-fi
-
-# Read input from stdin
-TEMP_INPUT="$*"
-if [ -n "$TEMP_INPUT" ]; then
-  PIPED_CONTENT="$TEMP_INPUT"
-else
-  PIPED_CONTENT=$(cat)
-fi
+dhp_get_input "$@"
 
 if [ -z "$PIPED_CONTENT" ]; then
     echo "Usage: <input> | $0 [--stream]" >&2
@@ -85,10 +28,25 @@ if [ -z "$PIPED_CONTENT" ]; then
     exit 1
 fi
 
+# --- 4. MODEL & STAFF ---
+MODEL="${STRATEGY_MODEL:-${DHP_STRATEGY_MODEL:-openrouter/polaris-alpha}}"
+STAFF_FILE="$AI_STAFF_DIR/staff/strategy/chief-of-staff.yaml"
+if [ ! -f "$STAFF_FILE" ]; then
+    echo "Error: Chief of Staff specialist not found at $STAFF_FILE" >&2
+    exit 1
+fi
+
+# --- 5. OUTPUT SETUP ---
+OUTPUT_DIR=$(default_output_dir "$HOME/Documents/AI_Staff_HQ_Outputs/Strategy/Analysis" "DHP_STRATEGY_OUTPUT_DIR")
+mkdir -p "$OUTPUT_DIR"
+SLUG=$(echo "$PIPED_CONTENT" | tr '[:upper:]' '[:lower:]' | tr -s '[:punct:][:space:]' '-' | cut -c 1-50)
+OUTPUT_FILE="$OUTPUT_DIR/${SLUG}.md"
+
 echo "Activating 'Chief of Staff' via OpenRouter (Model: $MODEL)..." >&2
+echo "Saving to: $OUTPUT_FILE" >&2
 echo "---" >&2
 
-# --- 4. BUILD MASTER PROMPT ---
+# --- 6. BUILD MASTER PROMPT ---
 MASTER_PROMPT_FILE=$(mktemp)
 trap 'rm -f "$MASTER_PROMPT_FILE"' EXIT
 
@@ -114,18 +72,17 @@ Provide a clear, actionable analysis with:
 Keep your response concise and actionable.
 " >> "$MASTER_PROMPT_FILE"
 
-# --- 5. EXECUTE API CALL ---
+# --- 7. EXECUTE API CALL ---
 PROMPT_CONTENT=$(cat "$MASTER_PROMPT_FILE")
 
-# Execute the API call with error handling and optional streaming
 if [ "$USE_STREAMING" = true ]; then
-    call_openrouter "$MODEL" "$PROMPT_CONTENT" --stream
+    call_openrouter "$MODEL" "$PROMPT_CONTENT" --stream | tee "$OUTPUT_FILE"
 else
-    call_openrouter "$MODEL" "$PROMPT_CONTENT"
+    call_openrouter "$MODEL" "$PROMPT_CONTENT" | tee "$OUTPUT_FILE"
 fi
 
 # Check if API call succeeded
-if [ $? -eq 0 ]; then
+if [ ${PIPESTATUS[0]} -eq 0 ]; then
     echo -e "\n---" >&2
     echo "SUCCESS: 'Chief of Staff' analysis complete." >&2
 else
