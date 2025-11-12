@@ -81,7 +81,7 @@ dhp_get_input() {
     # Input validation
     if [ -n "$PIPED_CONTENT" ]; then
         # Check for null bytes
-        if printf '%s' "$PIPED_CONTENT" | grep -q "$(printf '\0')"; then
+        if [ "$(printf '%s' "$PIPED_CONTENT" | tr -d '\0' | wc -c)" -ne "$(printf '%s' "$PIPED_CONTENT" | wc -c)" ]; then
             echo "Error: Input contains null bytes, which are not allowed." >&2
             exit 1
         fi

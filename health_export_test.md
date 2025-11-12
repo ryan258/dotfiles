@@ -1,6 +1,6 @@
 # Health Summary Report
 
-**Generated:** 2025-11-12 13:43
+**Generated:** 2025-11-12 14:45
 **Period:** Last 7 days (since 2025-11-05)
 
 ## Energy Levels
@@ -14,7 +14,7 @@ No symptoms logged for this period.
 ## Upcoming Appointments
 
 - **2025-11-18 11:15**: Neurocare - EMG Results (in 5 days)
-- **2025-11-20 14:00**: Neuro-suregon - Consult (in 8 days)
+- **2025-11-20 14:00**: Neuro-suregon - Consult (in 7 days)
 - **2025-12-04 08:00**: Dr. Caitlin Campbell (Bring MRI Disc) (in 21 days)
 
 ## Current Medications
