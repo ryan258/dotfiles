@@ -4,7 +4,29 @@
 # Provides error handling and streaming support functions
 # Source this file in dispatcher scripts: source "$DOTFILES_DIR/bin/dhp-lib.sh"
 
+# --- Configuration ---
+DISPATCHER_USAGE_LOG="$HOME/.config/dotfiles-data/dispatcher_usage.log"
+
 # --- Private Helper Functions ---
+
+# _api_cooldown: Enforces a delay between API calls.
+_api_cooldown() {
+    local cooldown="${API_COOLDOWN_SECONDS:-0}"
+    if [ "$cooldown" -gt 0 ]; then
+        sleep "$cooldown"
+    fi
+}
+
+# _log_api_call: Logs details of an API call.
+# Usage: _log_api_call <dispatcher_name> <model> [prompt_tokens] [completion_tokens]
+_log_api_call() {
+    local dispatcher_name="${1:-unknown}"
+    local model="${2:-unknown}"
+    local prompt_tokens="${3:-0}"
+    local completion_tokens="${4:-0}"
+    printf "[%s] DISPATCHER: %s, MODEL: %s, PROMPT_TOKENS: %s, COMPLETION_TOKENS: %s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "$dispatcher_name" "$model" "$prompt_tokens" "$completion_tokens" >> "$DISPATCHER_USAGE_LOG"
+    # TODO: Add cost calculation here based on model pricing
+}
 
 # _build_json_payload: Constructs the JSON payload for the API call.
 _build_json_payload() {
@@ -41,15 +63,19 @@ _handle_api_error() {
 # --- Public API Functions ---
 
 # call_openrouter_sync: Makes a synchronous API call and returns the complete response.
-# Usage: call_openrouter_sync <model> <prompt>
+# Usage: call_openrouter_sync <model> <prompt> <dispatcher_name>
 call_openrouter_sync() {
     local model="$1"
     local prompt="$2"
+    local dispatcher_name="${3:-unknown}"
+
     local json_payload
     json_payload=$(_build_json_payload "$model" "$prompt" "false")
 
+    _api_cooldown # Enforce cooldown before API call
+
     local response
-    response=$(curl -s -X POST "https://openrouter.ai/api/v1/chat/completions" \
+    response=$(curl -s --max-time 300 -X POST "https://openrouter.ai/api/v1/chat/completions" \
         -H "Authorization: Bearer $OPENROUTER_API_KEY" \
         -H "Content-Type: application/json" \
         -d "$json_payload")
@@ -64,58 +90,73 @@ call_openrouter_sync() {
         return 1
     fi
 
+    local prompt_tokens; prompt_tokens=$(echo "$response" | jq -r '.usage.prompt_tokens // 0')
+    local completion_tokens; completion_tokens=$(echo "$response" | jq -r '.usage.completion_tokens // 0')
+    _log_api_call "$dispatcher_name" "$model" "$prompt_tokens" "$completion_tokens"
+
     echo "$response" | jq -r '.choices[0].message.content'
 }
 
 # call_openrouter_stream: Makes a streaming API call and prints content deltas.
-# Usage: call_openrouter_stream <model> <prompt>
+# Usage: call_openrouter_stream <model> <prompt> <dispatcher_name>
 call_openrouter_stream() {
     local model="$1"
     local prompt="$2"
+    local dispatcher_name="${3:-unknown}"
+    # For streaming, tokens are not easily available until the stream ends.
+    # A more advanced implementation would parse stream events for token usage.
+    _log_api_call "$dispatcher_name" "$model" "0" "0" # Log with 0 tokens for now
+
     local json_payload
     json_payload=$(_build_json_payload "$model" "$prompt" "true")
 
-    curl -s -N -X POST "https://openrouter.ai/api/v1/chat/completions" \
-        -H "Authorization: Bearer $OPENROUTER_API_KEY" \
-        -H "Content-Type: application/json" \
-        -d "$json_payload" | while IFS= read -r line; do
-            [ -z "$line" ] && continue
-            [[ "$line" == "data: [DONE]" ]] && break
+    _api_cooldown # Enforce cooldown before API call
 
-            if [[ "$line" == data:* ]]; then
-                local json_data="${line#data: }"
-                if echo "$json_data" | jq -e '.error' > /dev/null 2>&1; then
-                    _handle_api_error "$json_data"
-                    return 1 # Note: This return may not exit the parent script in a pipeline
-                fi
+    (
+        set -o pipefail
+        curl -s -N --max-time 300 -X POST "https://openrouter.ai/api/v1/chat/completions" \
+            -H "Authorization: Bearer $OPENROUTER_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$json_payload" | while IFS= read -r line; do
+                [ -z "$line" ] && continue
+                [[ "$line" == "data: [DONE]" ]] && break
 
-                local content
-                content=$(echo "$json_data" | jq -r '.choices[0].delta.content // empty')
-                if [ -n "$content" ] && [ "$content" != "null" ]; then
-                    printf "%s" "$content"
+                if [[ "$line" == data:* ]]; then
+                    local json_data="${line#data: }"
+                    if echo "$json_data" | jq -e '.error' > /dev/null 2>&1; then
+                        _handle_api_error "$json_data"
+                        return 1 # Note: This return may not exit the parent script in a pipeline
+                    fi
+
+                    local content
+                    content=$(echo "$json_data" | jq -r '.choices[0].delta.content // empty')
+                    if [ -n "$content" ] && [ "$content" != "null" ]; then
+                        printf "%s" "$content"
+                    fi
                 fi
-            fi
-        done
+            done
+    )
     echo # Ensure a final newline
 }
 
 # --- Call Router ---
 # call_openrouter: A wrapper that decides whether to stream or not.
 # This maintains backward compatibility with the old function signature.
-# Usage: call_openrouter <model> <prompt> [--stream]
+# Usage: call_openrouter <model> <prompt> [--stream] <dispatcher_name>
 call_openrouter() {
     local model="$1"
     local prompt="$2"
     local stream_flag="$3"
+    local dispatcher_name="${4:-unknown}" # Pass dispatcher name through
 
     if [ "$stream_flag" = "--stream" ]; then
-        call_openrouter_stream "$model" "$prompt"
+        call_openrouter_stream "$model" "$prompt" "$dispatcher_name"
     else
-        call_openrouter_sync "$model" "$prompt"
+        call_openrouter_sync "$model" "$prompt" "$dispatcher_name"
     fi
 }
 
 # Export functions if sourced
 if [ "${BASH_SOURCE[0]}" != "${0}" ]; then
-    export -f call_openrouter call_openrouter_sync call_openrouter_stream
+    export -f call_openrouter call_openrouter_sync call_openrouter_stream _log_api_call
 fi

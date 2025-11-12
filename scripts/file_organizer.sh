@@ -2,6 +2,19 @@
 # file_organizer.sh - Organize files by type, date, or size
 set -euo pipefail
 
+# Source shared utilities
+if [ -f "$HOME/dotfiles/bin/dhp-utils.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$HOME/dotfiles/bin/dhp-utils.sh"
+else
+    echo "Error: Shared utility library dhp-utils.sh not found." >&2
+    exit 1
+fi
+
+# Validate current working directory
+VALIDATED_CWD=$(validate_path "$(pwd)") || exit 1
+# No need to re-cd, just ensure it's valid.
+
 DRY_RUN=false
 if [ "${2:-}" == "--dry-run" ] || [ "${2:-}" == "-n" ]; then
   DRY_RUN=true

@@ -17,7 +17,7 @@ HEADER
 ${EDITOR:-nano} "$TEMP_FILE"
 
 # Check if user wrote anything beyond the header
-content_lines=$(tail -n +4 "$TEMP_FILE" | grep -v '^$' | wc -l | tr -d ' ')
+content_lines=$(tail -n +4 "$TEMP_FILE" | grep -vc '^$' | tr -d ' ')
 
 if [ "$content_lines" -gt 0 ]; then
     # Append entire dump to journal with timestamp

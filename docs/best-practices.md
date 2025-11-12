@@ -3,8 +3,10 @@
 This guide covers proven strategies for maximizing productivity, maintaining data hygiene, and building sustainable workflows with your AI-augmented dotfiles system.
 
 > **Quick note on dispatchers:** Use the single-word aliases (they invoke the `dhp-*` scripts directly) for minimal typing. When you need a unified entry point or want to reference squads from `squads.json`, use `dispatch <squad> "brief"`. All scripts have been refactored for improved robustness and maintainability.
+>
+> **Security Note:** For detailed information on security practices, how to report vulnerabilities, and credential management, please refer to our [Security Policy](../../SECURITY.md).
 
-**Last Updated:** November 10, 2025
+**Last Updated:** November 12, 2025
 
 ---
 
@@ -22,6 +24,7 @@ This guide covers proven strategies for maximizing productivity, maintaining dat
 10. [Advanced Techniques](#advanced-techniques)
 11. [Customization Guidelines](#customization-guidelines)
 12. [Backup & Recovery Strategy](#backup--recovery-strategy)
+13. [Secure Coding Practices](#secure-coding-practices)
 
 ---
 

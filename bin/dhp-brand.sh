@@ -63,13 +63,13 @@ Provide brand positioning analysis with:
 
 # --- 7. EXECUTION ---
 if [ "$USE_STREAMING" = true ]; then
-    call_openrouter "$MODEL" "$MASTER_PROMPT" --stream | tee "$OUTPUT_FILE"
+    call_openrouter "$MODEL" "$MASTER_PROMPT" "--stream" "dhp-brand" | tee "$OUTPUT_FILE"
 else
-    call_openrouter "$MODEL" "$MASTER_PROMPT" | tee "$OUTPUT_FILE"
+    call_openrouter "$MODEL" "$MASTER_PROMPT" "" "dhp-brand" | tee "$OUTPUT_FILE"
 fi
 
 # Check if API call succeeded
-if [ ${PIPESTATUS[0]} -eq 0 ]; then
+if [ "${PIPESTATUS[0]}" -eq 0 ]; then
     echo -e "\n---" >&2
     echo "SUCCESS: 'Brand Builder' analysis complete." >&2
 else

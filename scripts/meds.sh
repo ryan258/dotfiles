@@ -129,7 +129,7 @@ case "$1" in
         fi
         echo ""
 
-        cutoff=$(date -v-${days}d '+%Y-%m-%d')
+        cutoff=$(date -v-"${days}"d '+%Y-%m-%d')
 
         if [ -n "$med_name" ]; then
             grep "^DOSE|" "$MEDS_FILE" 2>/dev/null | grep "$med_name" | awk -F'|' -v cutoff="$cutoff" '

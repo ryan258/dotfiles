@@ -3,6 +3,10 @@
 This guide provides practical, copy-ready examples for all AI dispatchers and advanced features. Simply copy the prompts and paste them into your terminal.
 
 > **How to run dispatchers:** Use the one-word aliases (they map directly to the `dhp-*` scripts), or `dispatch <squad> …` if you prefer a unified entry point. Piping full files still works. All scripts have been refactored for improved robustness and maintainability.
+>
+> **Important API Signature Change:** For non-streaming calls, an empty string `""` is now passed as the third argument to `call_openrouter` to correctly log the dispatcher name.
+>
+> **Sensitive Data Redaction:** When using context injection, sensitive information (API keys, emails, etc.) is now automatically redacted.
 > ```bash
 > tech "Optimize this function"
 > content --temperature 0.4 --max-tokens 800 "Brain fog morning primer"
@@ -10,7 +14,7 @@ This guide provides practical, copy-ready examples for all AI dispatchers and ad
 > # Alternative unified entry: dispatch tech "…"
 > ```
 
-**Last Updated:** November 10, 2025
+**Last Updated:** November 12, 2025
 
 ---
 

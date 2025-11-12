@@ -79,13 +79,13 @@ Return a single, clean markdown response with three sections:
 PROMPT_CONTENT=$(cat "$MASTER_PROMPT_FILE")
 
 if [ "$USE_STREAMING" = true ]; then
-    call_openrouter "$MODEL" "$PROMPT_CONTENT" --stream | tee "$OUTPUT_FILE"
+    call_openrouter "$MODEL" "$PROMPT_CONTENT" "--stream" "dhp-tech" | tee "$OUTPUT_FILE"
 else
-    call_openrouter "$MODEL" "$PROMPT_CONTENT" | tee "$OUTPUT_FILE"
+    call_openrouter "$MODEL" "$PROMPT_CONTENT" "" "dhp-tech" | tee "$OUTPUT_FILE"
 fi
 
 # Check if API call succeeded
-if [ ${PIPESTATUS[0]} -eq 0 ]; then
+if [ "${PIPESTATUS[0]}" -eq 0 ]; then
     echo -e "\n---" >&2
     echo "SUCCESS: 'The Technician' has completed the analysis." >&2
 else

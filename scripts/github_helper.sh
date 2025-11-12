@@ -4,7 +4,23 @@ set -euo pipefail
 
 # --- Configuration ---
 TOKEN_FILE="$HOME/.github_token"
-USERNAME="ryan258" # Hardcoded as requested
+# Attempt to get username from environment, then git config, otherwise default to a placeholder
+GIT_USERNAME=$(git config user.name 2>/dev/null || true)
+USERNAME="${GITHUB_USERNAME:-${GIT_USERNAME}}"
+if [ -z "$USERNAME" ]; then
+    echo "Error: GITHUB_USERNAME not set and git config user.name not found" >&2
+    exit 1
+fi
+
+# Check for GitHub token file permissions
+if [ -f "$TOKEN_FILE" ]; then
+    CURRENT_PERMS=$(stat -f %A "$TOKEN_FILE")
+    if [ "$CURRENT_PERMS" != "600" ]; then
+        echo "Warning: GitHub token file ($TOKEN_FILE) has insecure permissions ($CURRENT_PERMS)." >&2
+        echo "Please run: chmod 600 \"$TOKEN_FILE\"" >&2
+        exit 1
+    fi
+fi
 
 # --- Check for dependencies ---
 if ! command -v curl &> /dev/null;

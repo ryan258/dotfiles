@@ -27,7 +27,7 @@ spec_dispatch() {
   fi
 
   # Create temp file from template (macOS compatible)
-  local tmpfile=$(mktemp /tmp/spec-XXXXXX)
+  local tmpfile; tmpfile=$(mktemp /tmp/spec-XXXXXX)
   mv "$tmpfile" "${tmpfile}.${dispatcher}-spec.txt"
   tmpfile="${tmpfile}.${dispatcher}-spec.txt"
   cat "$template_file" > "$tmpfile"

@@ -83,14 +83,17 @@ for ((i=1; i<${#STAFF_TO_LOAD[@]}; i++)); do
 done
 
 # 6c. Add the final instructions
-echo -e "\n\n--- MASTER INSTRUCTION (THE DISPATCH) ---
+cat <<EOF >> "$MASTER_PROMPT_FILE"
+
+
+--- MASTER INSTRUCTION (THE DISPATCH) ---
 
 You are the **Chief of Staff**. Your supporting agent profiles are loaded above.
 
 Your mission is to coordinate this team to execute on the following user brief and deliver a 'First-Pass Story Package' in a single, clean markdown response.
 
 **USER BRIEF:**
-\"$USER_BRIEF\"
+"$USER_BRIEF"
 
 **YOUR COORDINATION PLAN:**
 1.  **Assign to \`narrative-designer\`:** Generate a 3-Act structure and 5-7 key story beats.
@@ -99,19 +102,19 @@ Your mission is to coordinate this team to execute on the following user brief a
 
 **DELIVERABLE:**
 Return a single, well-formatted markdown document. Do not speak *as* the team, speak *as* the Chief of Staff presenting the team's coordinated work.
-" >> "$MASTER_PROMPT_FILE"
+EOF
 
 # --- 7. FIRE! ---
 PROMPT_CONTENT=$(cat "$MASTER_PROMPT_FILE")
 
 if [ "$USE_STREAMING" = true ]; then
-    DHP_TEMPERATURE="$PARAM_TEMPERATURE" DHP_MAX_TOKENS="$PARAM_MAX_TOKENS" call_openrouter "$MODEL" "$PROMPT_CONTENT" --stream | tee "$OUTPUT_FILE"
+    DHP_TEMPERATURE="$PARAM_TEMPERATURE" DHP_MAX_TOKENS="$PARAM_MAX_TOKENS" call_openrouter "$MODEL" "$PROMPT_CONTENT" "--stream" "dhp-creative" | tee "$OUTPUT_FILE"
 else
-    DHP_TEMPERATURE="$PARAM_TEMPERATURE" DHP_MAX_TOKENS="$PARAM_MAX_TOKENS" call_openrouter "$MODEL" "$PROMPT_CONTENT" | tee "$OUTPUT_FILE"
+    DHP_TEMPERATURE="$PARAM_TEMPERATURE" DHP_MAX_TOKENS="$PARAM_MAX_TOKENS" call_openrouter "$MODEL" "$PROMPT_CONTENT" "" "dhp-creative" | tee "$OUTPUT_FILE"
 fi
 
 # Check if API call succeeded
-if [ $? -eq 0 ]; then
+if [ "${PIPESTATUS[0]}" -eq 0 ]; then
     echo -e "\n---"
     echo "SUCCESS: 'First-Pass Story Package' saved to $OUTPUT_FILE"
 else

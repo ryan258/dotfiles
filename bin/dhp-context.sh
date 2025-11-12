@@ -14,6 +14,24 @@ DATA_DIR="$HOME/.config/dotfiles-data"
 TODO_FILE="$DATA_DIR/todo.txt"
 JOURNAL_FILE="$DATA_DIR/journal.txt"
 
+# redact_sensitive_info: Redacts common sensitive patterns from a string.
+# Usage: redact_sensitive_info <input_string>
+redact_sensitive_info() {
+    local input="$1"
+    local redacted_output="$input"
+
+    # Redact common API key patterns (e.g., sk-...)
+    redacted_output=$(echo "$redacted_output" | sed -E 's/sk-[A-Za-z0-9]{32,}/[REDACTED_API_KEY]/g')
+    # Redact email addresses
+    redacted_output=$(echo "$redacted_output" | sed -E 's/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/[REDACTED_EMAIL]/g')
+    # Redact SSN-like patterns (XXX-XX-XXXX)
+    redacted_output=$(echo "$redacted_output" | sed -E 's/[0-9]{3}-[0-9]{2}-[0-9]{4}/[REDACTED_SSN]/g')
+    # Redact common password keywords followed by potential passwords (simple, not exhaustive)
+    redacted_output=$(echo "$redacted_output" | sed -E 's/(password|passwd|secret|token|key)[[:space:]]*[:=][[:space:]]*[^[:space:]]+/[REDACTED_CREDENTIAL]/gi')
+
+    echo "$redacted_output"
+}
+
 # Get recent journal entries
 # Usage: get_recent_journal [days]
 get_recent_journal() {
@@ -26,7 +44,7 @@ get_recent_journal() {
     fi
 
     # Calculate cutoff date
-    cutoff_date=$(date -v-${days}d "+%Y-%m-%d" 2>/dev/null || date -d "${days} days ago" "+%Y-%m-%d" 2>/dev/null)
+    cutoff_date=$(date -v-"${days}"d "+%Y-%m-%d" 2>/dev/null || date -d "${days} days ago" "+%Y-%m-%d" 2>/dev/null)
 
     # Extract recent entries
     awk -v cutoff="$cutoff_date" '$0 ~ /^\[/ { if ($1 >= "["cutoff) print }' "$JOURNAL_FILE" 2>/dev/null | tail -20
@@ -204,6 +222,9 @@ gather_context() {
     fi
 
     context+="=== END CONTEXT ===\n"
+
+    # Redact sensitive information before outputting
+    context=$(redact_sensitive_info "$context")
 
     echo -e "$context"
 }

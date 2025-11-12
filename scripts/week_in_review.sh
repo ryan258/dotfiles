@@ -27,7 +27,7 @@ output() {
 
 # Clear the output file if it exists
 if [ -n "$OUTPUT_FILE" ]; then
-  > "$OUTPUT_FILE"
+  true > "$OUTPUT_FILE"
 fi
 
 output "========================================"
@@ -39,7 +39,7 @@ TODO_DONE_FILE="$HOME/.config/dotfiles-data/todo_done.txt"
 if [ -f "$TODO_DONE_FILE" ]; then
     output "\n## Recently Completed Tasks ##"
     # This looks for tasks completed in the last 7 days
-    gawk -v cutoff="$(date -v-7d +%F)" '
+    gawk -v cutoff="$(date -v-"${REVIEW_LOOKBACK_DAYS:-7}"d +%F)" '
         match($0, /\[([0-9]{4}-[0-9]{2}-[0-9]{2})/, m) {
             if (m[1] >= cutoff) {
                 print
@@ -52,7 +52,7 @@ fi
 JOURNAL_FILE="$HOME/.config/dotfiles-data/journal.txt"
 if [ -f "$JOURNAL_FILE" ]; then
     output "\n## Recent Journal Entries ##"
-    gawk -v cutoff="$(date -v-7d +%F)" '
+    gawk -v cutoff="$(date -v-"${REVIEW_LOOKBACK_DAYS:-7}"d +%F)" '
         match($0, /\[([0-9]{4}-[0-9]{2}-[0-9]{2})/, m) {
             if (m[1] >= cutoff) {
                 print

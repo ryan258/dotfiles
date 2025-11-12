@@ -9,7 +9,7 @@ case "$1" in
             exit 1
         fi
         echo "Searching for processes containing '$2'..."
-        ps aux | grep -i "$2" | grep -v grep
+        pgrep -fl "$2"
         ;;
     
     top)
@@ -35,7 +35,7 @@ case "$1" in
         fi
         
         echo "Found processes matching '$2':"
-        ps aux | grep -i "$2" | grep -v grep
+        pgrep -fl "$2"
         echo ""
         IFS= read -r -p "Kill these processes? (y/n): " confirm
         

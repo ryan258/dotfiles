@@ -89,7 +89,7 @@ if [ -d "$PROJECTS_DIR" ]; then
 
             # Check for lingering non-default branches
             current_branch=$(git branch --show-current)
-            if [ $? -ne 0 ]; then
+            if ! git branch --show-current >/dev/null 2>&1; then
                 echo "      └─ Could not determine current branch. Is this a valid git repository?"
             else
                 default_branch=$(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@' || echo "main")
@@ -138,37 +138,7 @@ else
     echo "  (Projects directory not found)"
 fi
 
-# 4. Health check-in
-#echo ""
-#echo "💊 HEALTH CHECK-IN:"
-#HEALTH_FILE="$HOME/.config/dotfiles-data/health.txt"
-#today=$(date '+%Y-%m-%d')
 
-# Check if energy was logged today
-#today_energy=$(grep "^ENERGY|$today" "$HEALTH_FILE" 2>/dev/null | tail -1 | cut -d'|' -f3)
-#if [ -n "$today_energy" ]; then
-#    echo "  Energy level already logged: $today_energy/10"
-#else
-#    IFS= read -r -p "How was your energy today (1-10)? (Press Enter to skip) " energy_input
-#    if [ -n "$energy_input" ]; then
-#        bash "$(dirname "$0")/health.sh" energy "$energy_input"
-#    fi
-#fi
-
-# Prompt for symptoms
-#IFS= read -r -p "Any symptoms to log? (Press Enter to skip) " symptom_input
-#if [ -n "$symptom_input" ]; then
-#    bash "$(dirname "$0")/health.sh" symptom "$symptom_input"
-#fi
-
-# 5. Prompt for tomorrow's note
-#echo ""
-#IFS= read -r -p "What should tomorrow-you remember about today? (Press Enter to skip) " note
-#if [ -n "$note" ]; then
-    # 6. Add response to journal
-    # Assuming journal.sh is in the same directory or in PATH
-#    "$(dirname "$0")/journal.sh" "EOD Note: $note"
-#fi
 
 # 7. Clear completed tasks older than 7 days
 echo ""

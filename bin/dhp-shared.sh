@@ -77,4 +77,21 @@ dhp_get_input() {
     else
         PIPED_CONTENT=""
     fi
+
+    # Input validation
+    if [ -n "$PIPED_CONTENT" ]; then
+        # Check for null bytes
+        if printf '%s' "$PIPED_CONTENT" | grep -q "$(printf '\0')"; then
+            echo "Error: Input contains null bytes, which are not allowed." >&2
+            exit 1
+        fi
+
+        # Check for maximum length (e.g., 50KB)
+        MAX_INPUT_BYTES=51200 # 50 * 1024 bytes
+        INPUT_BYTES=$(echo -n "$PIPED_CONTENT" | wc -c)
+        if [ "$INPUT_BYTES" -gt "$MAX_INPUT_BYTES" ]; then
+            echo "Error: Input exceeds maximum allowed size of $((MAX_INPUT_BYTES / 1024))KB." >&2
+            exit 1
+        fi
+    fi
 }

@@ -76,13 +76,13 @@ Keep your response concise and actionable.
 PROMPT_CONTENT=$(cat "$MASTER_PROMPT_FILE")
 
 if [ "$USE_STREAMING" = true ]; then
-    call_openrouter "$MODEL" "$PROMPT_CONTENT" --stream | tee "$OUTPUT_FILE"
+    call_openrouter "$MODEL" "$PROMPT_CONTENT" "--stream" "dhp-strategy" | tee "$OUTPUT_FILE"
 else
-    call_openrouter "$MODEL" "$PROMPT_CONTENT" | tee "$OUTPUT_FILE"
+    call_openrouter "$MODEL" "$PROMPT_CONTENT" "" "dhp-strategy" | tee "$OUTPUT_FILE"
 fi
 
 # Check if API call succeeded
-if [ ${PIPESTATUS[0]} -eq 0 ]; then
+if [ "${PIPESTATUS[0]}" -eq 0 ]; then
     echo -e "\n---" >&2
     echo "SUCCESS: 'Chief of Staff' analysis complete." >&2
 else

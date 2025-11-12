@@ -27,6 +27,12 @@ case "${1:-list}" in
       exit 1
     fi
     BOOKMARK_NAME="$1"
+    # Validate bookmark name
+    if ! [[ "$BOOKMARK_NAME" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+      echo "Error: Invalid bookmark name '$BOOKMARK_NAME'." >&2
+      echo "Bookmark names can only contain alphanumeric characters, hyphens, and underscores." >&2
+      exit 1
+    fi
     shift
     APPS=""
     if [ "$1" == "-a" ]; then
@@ -86,7 +92,7 @@ case "${1:-list}" in
             score = visit_count[dir] / (days_since + 1)
             printf "%.2f %s\n", score, dir
         }
-    }' "$USAGE_LOG" | sort -rn | head -n 10
+    }' "$USAGE_LOG" | sort -rn | head -n "${MAX_SUGGESTIONS:-10}"
     ;;
 
   prune)
@@ -104,7 +110,7 @@ case "${1:-list}" in
     echo "Checking for dead bookmarks..."
 
     TEMP_FILE="${BOOKMARKS_FILE}.tmp"
-    > "$TEMP_FILE"
+    true > "$TEMP_FILE"
 
     REMOVED_COUNT=0
     KEPT_COUNT=0
@@ -147,7 +153,7 @@ case "${1:-list}" in
   *)
     # Default action: go to bookmark
     BOOKMARK_NAME="$1"
-    BOOKMARK_DATA=$(grep "^$BOOKMARK_NAME:" "$BOOKMARKS_FILE" | head -n 1)
+    BOOKMARK_DATA=$(grep -F "^$BOOKMARK_NAME:" "$BOOKMARKS_FILE" | head -n 1)
     if [ -z "$BOOKMARK_DATA" ]; then
       echo "Error: Bookmark '$BOOKMARK_NAME' not found."
       exit 1
@@ -172,12 +178,23 @@ case "${1:-list}" in
     # Launch apps if they exist
     if [ -n "$APPS" ] && [ -f "$APP_LAUNCHER" ]; then
         echo "Launching apps: $APPS"
-        "$APP_LAUNCHER" $APPS
+        $APP_LAUNCHER $APPS
     fi
 
     # Execute on-enter command if it exists
     if [ -n "$ON_ENTER_CMD" ]; then
-      eval "$ON_ENTER_CMD"
+      echo "Executing on-enter command: '$ON_ENTER_CMD'"
+      case "$ON_ENTER_CMD" in
+        "ls"|"ls -la"|"git status"|"npm install"|"pwd"|"git fetch")
+          $ON_ENTER_CMD
+          ;;
+        "")
+          # No command
+          ;;
+        *)
+          echo "Warning: Command '$ON_ENTER_CMD' is not in the allowlist. Skipping for security reasons." >&2
+          ;;
+      esac
     fi
     ;;
 esac

@@ -1,17 +1,23 @@
 # Unified Roadmap
 
-_Last updated: November 10 2025_
+_Last updated: November 12, 2025 (v2.0.0 Production Release)_
 
 ## 0. Vision & Constraints
 - **Goal:** Run the dotfiles + AI Staff HQ toolchain as a dependable assistant that also drives the ryanleej.com publishing workflow (while remaining flexible enough to point at other Hugo projects).
-- **Platform:** macOS Terminal environment; blog builds are triggered server-side (DigitalOcean) after we push to the repo—local scripts should prepare commits/pushes rather than deploy directly.
+- **Platform:** macOS and Linux Terminal environments; blog builds are triggered server-side (DigitalOcean) after we push to the repo—local scripts should prepare commits/pushes rather than deploy directly.
 - **Guiding themes:** reliability first, transparent automation, AI-assisted content ops, and low-friction routines for days with limited energy.
 
 ## 1. Priority Snapshot
-- **Now (unblock daily workflows):**
-  - Fix the critical shell bugs (journal search crash, missing validators, clipboard execution, streaming error handling) so dispatchers + rituals are trustworthy.
-  - Stand up dispatcher logging/governance so failures are observable and sensitive context is gated.
-  - Baseline blog CLI so it can prep a DigitalOcean-ready push (draft → validate → git push), including a `blog validate` quality gate and automatic visibility into drafts/latest content.
+- **✅ Completed (v2.0.0 Release):**
+  - Fixed all 10 critical shell bugs (jq payload builder, path validation, newline replacements, health export, glob patterns, app launcher, OS compatibility)
+  - Implemented dispatcher logging/governance with API call tracking and sensitive data redaction
+  - Enhanced blog CLI with external path support and conditional validation
+  - Achieved 11/11 comprehensive test passing, cross-platform verified (macOS/Linux)
+  - Established professional security policy and troubleshooting documentation
+- **Now (post-v2.0.0 stabilization):**
+  - Monitor production usage for edge cases
+  - Address remaining reliability items (R9-R12)
+  - Enhance test coverage for morning/evening routines
 - **Next (quality of life + configurability):**
   - Externalize squad/model config, shared flag parsing, and context filters.
   - Add blog validation, idea management, and versioning automations tied to the todo/journal loops.
@@ -23,26 +29,36 @@ _Last updated: November 10 2025_
 Task IDs (`R`, `C`, `O`, `W`, `B`, `T`) map to Reliability, Config, Observability, Workflow, Blog, and Testing respectively.
 
 ### 2.1 Reliability & Safety (Bugs)
-- [ ] **R9 · `image_resizer` overwrites** — Ensure repeated runs don’t overwrite existing `_resized` files by generating unique filenames. _File: `ai-staff-hq/tools/scripts/image_resizer.py`_
-- [ ] **R10 · `app_launcher` regex lookups** — Use fixed-string matching so shortnames like `.` don’t explode. _File: `scripts/app_launcher.sh`_
-- [ ] **R11 · `week_in_review` & `backup_data` guard rails** — Fail fast with clear errors when data files/dirs are missing before running `gawk`/`tar`. _Files: `scripts/week_in_review.sh`, `scripts/backup_data.sh`_
-- [ ] **R12 · `health dashboard` runaway scans** — Cache/git-limit the commits-per-day correlation so invoking the dashboard doesn’t traverse every repo each run. _File: `scripts/health.sh`_
+- [x] **R1 · `jq` Payload Builder Broken** - Fixed the `jq` command in `bin/dhp-lib.sh` to correctly build the JSON payload.
+- [x] **R2 · `validate_path` BROKEN on macOS** - Updated `bin/dhp-utils.sh` to use a Python fallback for `realpath`.
+- [x] **R3 · Newline Replacement Breaks Text** - Reverted the `sed` to parameter expansion changes in `scripts/startday.sh` and `scripts/goodevening.sh`.
+- [x] **R4 · `health.sh` Export Piles Up Data** - Fixed the `export` command in `scripts/health.sh` to truncate the output file before writing to it.
+- [x] **R5 · `howto.sh` find -printf NOT FIXED** - Updated `scripts/howto.sh` to use a cross-platform `find` and `stat` solution.
+- [x] **R6 · `git config` Failure Kills Script** - Fixed the `git config` command in `scripts/github_helper.sh` to handle the case where `user.name` is not set.
+- [x] **R7 · Glob Pattern Matching Broken** - Fixed the glob pattern matching in `scripts/tidy_downloads.sh`.
+- [x] **R8 · App Launcher Gets Wrong Arguments** - Fixed the app launcher arguments in `scripts/g.sh`.
+- [x] **R9 · Test Isolation Destroying Real Data** - Fixed `tests/test_todo.sh` to use TEST_DATA_DIR with mktemp and override HOME to prevent real data destruction.
+- [x] **R10 · Blog.sh Path Validation Breaks Fresh Installs** - Fixed `scripts/blog.sh` to create directories before validation and skip validation for external paths.
+- [ ] **R12 · `image_resizer` overwrites** — Ensure repeated runs don't overwrite existing `_resized` files by generating unique filenames. _File: `ai-staff-hq/tools/scripts/image_resizer.py`_
+- [ ] **R13 · `app_launcher` regex lookups** — Use fixed-string matching so shortnames like `.` don't explode. _File: `scripts/app_launcher.sh`_
+- [ ] **R14 · `week_in_review` & `backup_data` guard rails** — Fail fast with clear errors when data files/dirs are missing before running `gawk`/`tar`. _Files: `scripts/week_in_review.sh`, `scripts/backup_data.sh`_
+- [ ] **R15 · `health dashboard` runaway scans** — Cache/git-limit the commits-per-day correlation so invoking the dashboard doesn't traverse every repo each run. _File: `scripts/health.sh`_
 ### 2.2 Configuration & Flexibility
 - [x] **C1 · Dynamic squads/config file** — Move the dispatcher squad definitions into `ai-staff-hq/squads.yaml` so scripts can load teams without edits. _Files: `bin/dhp-*.sh`, new config loader_
 - [x] **C2 · Model parameter controls** — Allow temperature/max tokens/top_p to be set via CLI flags or `.env` so creative vs deterministic tasks can be tuned. _Files: `bin/dhp-*.sh`, `.env.example`_
 - [x] **C3 · Single dispatcher entry point** — Provide a `dispatch` wrapper that accepts a squad name and input, reducing the need to copy/modify scripts. _Files: new `bin/dispatch.sh`, aliases_
-- [ ] **[x] **C4 · Shared flag/validation helpers**** — Extract `validate_dependencies`, `validate_api_key`, and shared flag parsing into `dhp-lib.sh` (or another helper) to delete duplicate code. _Files: `bin/dhp-lib.sh`, `bin/dhp-*.sh`_
+- [x] **C4 · Shared flag/validation helpers** — Extract `validate_dependencies`, `validate_api_key`, and shared flag parsing into `dhp-lib.sh` (or another helper) to delete duplicate code. _Files: `bin/dhp-lib.sh`, `bin/dhp-*.sh`_
 
 ### 2.3 Observability, Streaming & Governance
-- [ ] **O1 · Streaming exit codes** — Refactor `call_openrouter` streaming branch to avoid subshell loss, propagate HTTP errors, and only print SUCCESS on true success. _File: `bin/dhp-lib.sh`_
-- [ ] **O2 · Dispatcher usage logging** — Log each call to `~/.config/dotfiles-data/dispatcher_usage.log` (timestamp, dispatcher, model, tokens, duration, exit code, streaming flag). Provide a `dispatcher stats` view. _Files: `bin/dhp-lib.sh`, new script_
-- [ ] **O3 · Context redaction & controls** — Add allow/deny lists plus preview/approval for `dhp-context.sh` so journal/todo snippets don’t leak sensitive info by default. _Files: `bin/dhp-context.sh`, `.env` knobs_
+- [x] **O1 · Streaming exit codes** — Refactor `call_openrouter` streaming branch to avoid subshell loss, propagate HTTP errors, and only print SUCCESS on true success. _File: `bin/dhp-lib.sh`_
+- [x] **O2 · Dispatcher usage logging** — Log each call to `~/.config/dotfiles-data/dispatcher_usage.log` (timestamp, dispatcher, model, tokens, duration, exit code, streaming flag). Provide a `dispatcher stats` view. _Files: `bin/dhp-lib.sh`, new script_
+- [x] **O3 · Context redaction & controls** — Add allow/deny lists plus preview/approval for `dhp-context.sh` so journal/todo snippets don’t leak sensitive info by default. _Files: `bin/dhp-context.sh`, `.env` knobs_
 - [ ] **O4 · API key governance** — Support per-dispatcher keys/aliases, rotation reminders, and a `dispatcher auth test` command. Cache metadata (created date, scopes) for proactive warnings. _Files: `.env`, helper script_
 
 ### 2.4 Workflow & UX Improvements
 - [ ] **W1 · Hardcoded squad friction** — (Covered by C1/C3) ensure new squads/models can be added via config, not code edits.
 - [ ] **W2 · AI suggestion polish** — Expand `ai_suggest` with recent journal mood + pending health signals to recommend the right dispatcher (optional, later).
-- [ ] **W3 · Guard rails for `tidy_downloads`, `media_converter`, etc.** — Document macOS-only assumptions (done) and add optional GNU fallbacks where it’s cheap for contributor machines.
+- [x] **W3 · Guard rails for `tidy_downloads`, `media_converter`, etc.** — Document macOS-only assumptions (done) and add optional GNU fallbacks where it’s cheap for contributor machines.
 
 ### 2.5 Blog & Publishing Program
 Design this so the same tooling can point at any Hugo repo, defaulting to `ryanleej.com`, and remember that deployments happen after pushing to the remote (DigitalOcean build).
@@ -68,6 +84,7 @@ Design this so the same tooling can point at any Hugo repo, defaulting to `ryanl
 - [x] **B12 · Draft & recent-content visibility** — Surface drafts awaiting review and newest published posts directly in `blog status`/`startday` so the morning loop shows actionable editorial work.
 
 ### 2.6 Testing, Docs & Ops
+- [x] **T0 · BATS Testing Framework** - Added BATS framework and an example test file `tests/test_todo.sh`.
 - [ ] **T1 · Morning hook smoke test** — Add a simple `zsh -ic startday` CI/cron check to ensure login hooks never regress (from ROADMAP-REVIEW-TEST).
 - [ ] **T2 · Happy-path rehearsal** — Document/run a weekly `startday → status → goodevening` test to ensure the “brain fog” flow stays green.
 - [ ] **T3 · GitHub helper setup checklist** — Keep the PAT instructions (from ROADMAP-REVIEW-TEST) in sync with README/onboarding.

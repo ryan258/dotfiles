@@ -4,23 +4,57 @@ set -euo pipefail
 
 SYSTEM_LOG_FILE="$HOME/.config/dotfiles-data/system.log"
 
+# Source shared utilities
+if [ -f "$HOME/dotfiles/bin/dhp-utils.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$HOME/dotfiles/bin/dhp-utils.sh"
+else
+    echo "Error: Shared utility library dhp-utils.sh not found." >&2
+    exit 1
+fi
+
 # Allow per-user overrides via .env without leaking secrets broadly.
 if [ -f "$HOME/dotfiles/.env" ]; then
     # shellcheck disable=SC1090
     source "$HOME/dotfiles/.env"
 fi
 
+# Check that BLOG_DIR is configured
 BLOG_DIR="${BLOG_DIR:-}"
 if [ -z "$BLOG_DIR" ]; then
     echo "Blog workflows are disabled. Set BLOG_DIR in dotfiles/.env to use blog.sh."
     exit 1
 fi
 
+# Determine directory paths
 DRAFTS_DIR="${BLOG_DRAFTS_DIR_OVERRIDE:-${CONTENT_OUTPUT_DIR:-$BLOG_DIR/drafts}}"
 POSTS_DIR="${BLOG_POSTS_DIR_OVERRIDE:-$BLOG_DIR/content/posts}"
 
+# Create directories if they don't exist (mkdir -p is safe to run multiple times)
+mkdir -p "$BLOG_DIR"
+mkdir -p "$DRAFTS_DIR"
+mkdir -p "$POSTS_DIR"
+
+# Validate paths ONLY if they're under $HOME (security check for default configs)
+# Skip validation for explicit external paths (e.g., /var/www/blog)
+if [[ "$BLOG_DIR" == "$HOME"* ]]; then
+    VALIDATED_BLOG_DIR=$(validate_path "$BLOG_DIR") || exit 1
+    BLOG_DIR="$VALIDATED_BLOG_DIR"
+fi
+
+if [[ "$DRAFTS_DIR" == "$HOME"* ]]; then
+    VALIDATED_DRAFTS_DIR=$(validate_path "$DRAFTS_DIR") || exit 1
+    DRAFTS_DIR="$VALIDATED_DRAFTS_DIR"
+fi
+
+if [[ "$POSTS_DIR" == "$HOME"* ]]; then
+    VALIDATED_POSTS_DIR=$(validate_path "$POSTS_DIR") || exit 1
+    POSTS_DIR="$VALIDATED_POSTS_DIR"
+fi
+
+# Final check that posts directory exists (should always pass after mkdir -p)
 if [ ! -d "$POSTS_DIR" ]; then
-    echo "Blog directory not found at $POSTS_DIR"
+    echo "Error: Failed to create or access blog directory at $POSTS_DIR"
     exit 1
 fi
 
@@ -122,7 +156,7 @@ function stubs() {
 function random_stub() {
     echo "🎲 Opening a random stub..."
     
-    STUB_FILES=($(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null))
+    mapfile -t STUB_FILES < <(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null)
     
     if [ ${#STUB_FILES[@]} -eq 0 ]; then
         echo "  (No content stubs to choose from)"
@@ -193,7 +227,7 @@ function generate() {
     echo ""
 
     # Extract title from the stub for context
-    local title=$(grep -m 1 "^title:" "$stub_file" | cut -d':' -f2- | tr -d '"' | xargs)
+    local title; title=$(grep -m 1 "^title:" "$stub_file" | cut -d':' -f2- | tr -d '"' | xargs)
 
     if [ -z "$title" ]; then
         title="$stub_name"

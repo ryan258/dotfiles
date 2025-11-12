@@ -3,6 +3,8 @@ set -euo pipefail
 
 # --- dotfiles_check.sh: System Validation Script ---
 
+SCRIPTS_DIR="$(dirname "$0")"
+
 echo "🩺 Running Dotfiles System Check..."
 
 ERROR_COUNT=0
@@ -24,9 +26,8 @@ KEY_SCRIPTS=(
   "startday.sh"
   "status.sh"
   "todo.sh"
+  "validate_env.sh" # Add validate_env.sh to key scripts
 )
-
-SCRIPTS_DIR="$(dirname "$0")"
 
 echo "[1/4] Checking for key scripts in $SCRIPTS_DIR..."
 for script in "${KEY_SCRIPTS[@]}"; do
@@ -102,40 +103,15 @@ else
   echo "  ✅ Found $dispatcher_count/10 dispatchers"
 fi
 
-# 7. Check .env configuration
-echo "[7/7] Checking .env configuration for dispatchers..."
-ENV_FILE="$HOME/dotfiles/.env"
-if [ ! -f "$ENV_FILE" ]; then
-  echo "  ⚠️  WARNING: .env file not found at $ENV_FILE. Dispatchers will not work without API keys."
-elif [ ! -r "$ENV_FILE" ]; then
-  echo "  ❌ ERROR: .env file is not readable."
+# 7. Validate .env configuration using validate_env.sh
+echo "[7/7] Validating .env configuration..."
+if ! "$SCRIPTS_DIR/validate_env.sh"; then
   ERROR_COUNT=$((ERROR_COUNT + 1))
-else
-  # Check for required environment variables
-  REQUIRED_VARS=("OPENROUTER_API_KEY" "TECH_MODEL" "CREATIVE_MODEL" "CONTENT_MODEL" "STRATEGY_MODEL")
-  for var in "${REQUIRED_VARS[@]}"; do
-    if ! grep -q "^$var=" "$ENV_FILE"; then
-      echo "  ⚠️  WARNING: Missing environment variable in .env: $var"
-    fi
-  done
-
-  # Also check for legacy variables for backward compatibility
-  LEGACY_VARS=("DHP_TECH_MODEL" "DHP_CREATIVE_MODEL" "DHP_CONTENT_MODEL")
-  legacy_found=0
-  for var in "${LEGACY_VARS[@]}"; do
-    if grep -q "^$var=" "$ENV_FILE"; then
-      legacy_found=$((legacy_found + 1))
-    fi
-  done
-
-  if [ $legacy_found -gt 0 ]; then
-    echo "  ℹ️  INFO: Found $legacy_found legacy DHP_* model variables (still supported)"
-  fi
 fi
 
 # --- Summary ---
 echo ""
-if [ $ERROR_COUNT -eq 0 ]; then
+if [ "$ERROR_COUNT" -eq 0 ]; then
   echo "✅ All systems OK!"
   exit 0
 else

@@ -240,15 +240,17 @@ case "$1" in
 
         # Determine timeframe (default: last 7 days, or specify number of days)
         days=${2:-7}
-        cutoff=$(date -v-${days}d '+%Y-%m-%d')
+        cutoff=$(date -v-"${days}"d '+%Y-%m-%d')
 
-        output_file="$HOME/health_export_$(date '+%Y%m%d').md"
+        output_file="${HEALTH_EXPORT_FILE:-$HOME/health_export_$(date '+%Y%m%d').md}"
 
-        echo "# Health Summary Report" > "$output_file"
-        echo "" >> "$output_file"
-        echo "**Generated:** $(date '+%Y-%m-%d %H:%M')" >> "$output_file"
-        echo "**Period:** Last $days days (since $cutoff)" >> "$output_file"
-        echo "" >> "$output_file"
+        cat > "$output_file" << EOF
+# Health Summary Report
+
+**Generated:** $(date '+%Y-%m-%d %H:%M')
+**Period:** Last $days days (since $cutoff)
+
+EOF
 
         # Export energy levels
         echo "## Energy Levels" >> "$output_file"
@@ -272,11 +274,11 @@ case "$1" in
             echo "No energy data logged for this period." >> "$output_file"
         fi
 
-        echo "" >> "$output_file"
+        { echo ""; } >> "$output_file"
 
         # Export symptoms
         echo "## Symptoms" >> "$output_file"
-        echo "" >> "$output_file"
+        { echo ""; } >> "$output_file"
 
         if grep -q "^SYMPTOM|" "$HEALTH_FILE" 2>/dev/null; then
             grep "^SYMPTOM|" "$HEALTH_FILE" | awk -F'|' -v cutoff="$cutoff" '
@@ -288,11 +290,11 @@ case "$1" in
             echo "No symptoms logged for this period." >> "$output_file"
         fi
 
-        echo "" >> "$output_file"
+        { echo ""; } >> "$output_file"
 
         # Export upcoming appointments
         echo "## Upcoming Appointments" >> "$output_file"
-        echo "" >> "$output_file"
+        { echo ""; } >> "$output_file"
 
         if grep -q "^APPT|" "$HEALTH_FILE" 2>/dev/null; then
             grep "^APPT|" "$HEALTH_FILE" | sort -t'|' -k2 | awk -F'|' '
@@ -414,12 +416,12 @@ case "$1" in
 
         # 2. Symptom Frequency
         echo "• Symptom Frequency (30d):"
-        FOG_COUNT=$(echo "$RECENT_DATA" | grep -i "fog" | wc -l | tr -d ' ')
-        FATIGUE_COUNT=$(echo "$RECENT_DATA" | grep -i "fatigue" | wc -l | tr -d ' ')
-        HEADACHE_COUNT=$(echo "$RECENT_DATA" | grep -i "headache" | wc -l | tr -d ' ')
-        PAIN_COUNT=$(echo "$RECENT_DATA" | grep -i "pain" | wc -l | tr -d ' ')
-        ANXIETY_COUNT=$(echo "$RECENT_DATA" | grep -i "anxiety" | wc -l | tr -d ' ')
-        OTHER_COUNT=$(echo "$RECENT_DATA" | grep -v -i -e "fog" -e "fatigue" -e "headache" -e "pain" -e "anxiety" | wc -l | tr -d ' ')
+        FOG_COUNT=$(echo "$RECENT_DATA" | grep -ci "fog" | tr -d ' ')
+        FATIGUE_COUNT=$(echo "$RECENT_DATA" | grep -ci "fatigue" | tr -d ' ')
+        HEADACHE_COUNT=$(echo "$RECENT_DATA" | grep -ci "headache" | tr -d ' ')
+        PAIN_COUNT=$(echo "$RECENT_DATA" | grep -ci "pain" | tr -d ' ')
+        ANXIETY_COUNT=$(echo "$RECENT_DATA" | grep -ci "anxiety" | tr -d ' ')
+        OTHER_COUNT=$(echo "$RECENT_DATA" | grep -v -i -e "fog" -e "fatigue" -e "headache" -e "pain" -e "anxiety" -c | tr -d ' ')
 
         if [ "$FOG_COUNT" -gt 0 ]; then
             printf "  - %-15s: %s times\n" "fog" "$FOG_COUNT"

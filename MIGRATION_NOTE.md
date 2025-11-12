@@ -1,4 +1,67 @@
-# Data Migration Complete - November 1, 2025
+# Migration Notes
+
+## Version 2.0.0 - November 12, 2025
+
+### Overview
+Version 2.0.0 is a **non-breaking security and quality release**. All existing data remains compatible, but several important behavioral improvements and fixes have been implemented.
+
+### What Changed
+
+**Security & Reliability:**
+- Path validation now uses Python's `os.path.realpath()` for cross-platform compatibility (requires python3, which is standard on macOS/Linux)
+- External blog directories (e.g., `/var/www/blog`) are now fully supported - validation only applies to paths under `$HOME`
+- Test suite now uses isolated temporary directories to prevent accidental data corruption
+- All API dispatchers now properly log calls and handle errors correctly
+
+**Cross-Platform Compatibility:**
+- `howto.sh` now detects OS and uses appropriate commands (macOS `stat -f` vs Linux `find -printf`)
+- All scripts verified working on both macOS and Linux
+
+**Bug Fixes:**
+- Fixed jq JSON payload builder that was preventing temperature/max_tokens from being sent to API
+- Fixed newline replacement in `startday`/`goodevening` that was corrupting text
+- Fixed glob pattern matching in `tidy_downloads.sh`
+- Fixed app launcher argument passing in `g.sh`
+- Fixed `health.sh` export to truncate instead of append
+- Fixed git config errors in `github_helper.sh`
+
+### Migration Required?
+
+**No data migration required.** Your existing data files in `~/.config/dotfiles-data/` work as-is.
+
+### New Requirements
+
+1. **Python 3:** Now required for path validation (already installed on macOS/Linux by default)
+   ```bash
+   # Verify you have it:
+   python3 --version
+   ```
+
+2. **External Blog Paths:** If you use `BLOG_DIR` pointing outside `$HOME`, it now works correctly without validation errors
+
+### Recommended Actions
+
+1. **Review Security Policy:** Check [SECURITY.md](SECURITY.md) for security best practices
+2. **Check Troubleshooting Guide:** See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common issues
+3. **Verify Installation:**
+   ```bash
+   dotfiles_check
+   # Should report: "✅ All systems OK!"
+   ```
+
+4. **Run Test Suite:**
+   ```bash
+   bats tests/test_todo.sh
+   # Should show all tests passing
+   ```
+
+### Breaking Changes
+
+None! All existing workflows continue to work.
+
+---
+
+## Data Migration Complete - November 1, 2025
 
 Your personal data has been successfully migrated from scattered locations to the centralized data directory.
 

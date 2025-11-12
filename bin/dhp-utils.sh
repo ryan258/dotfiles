@@ -36,3 +36,32 @@ read_dispatcher_input() {
         cat
     fi
 }
+
+# validate_path: Canonicalizes a path and checks if it's within the user's home directory.
+# Usage: validate_path <path>
+# Returns: 0 on success (prints canonicalized path), 1 on failure (prints error)
+validate_path() {
+    local input_path="$1"
+    if [ -z "$input_path" ]; then
+        echo "Error: validate_path requires a path argument." >&2
+        return 1
+    fi
+
+    # Canonicalize the path
+    local canonical_path
+    canonical_path=$(python3 -c "import os; print(os.path.realpath('$input_path'))" 2>/dev/null)
+
+    if [ -z "$canonical_path" ]; then
+        echo "Error: Cannot canonicalize path: '$input_path'" >&2
+        return 1
+    fi
+
+    # Ensure the path is within the user's home directory
+    if [[ "$canonical_path" != "$HOME"* ]]; then
+        echo "Error: Path '$canonical_path' is outside the allowed home directory." >&2
+        return 1
+    fi
+
+    echo "$canonical_path"
+    return 0
+}

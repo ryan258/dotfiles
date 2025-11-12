@@ -77,4 +77,4 @@ else
 fi
 echo '```' >> "$LOG_FILE"
 
-exit $CMD_STATUS
+exit "$CMD_STATUS"

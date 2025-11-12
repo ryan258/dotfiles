@@ -175,13 +175,13 @@ PROMPT_CONTENT=$(cat "$MASTER_PROMPT_FILE")
 
 # Execute the API call with error handling and optional streaming
 if [ "$USE_STREAMING" = true ]; then
-    call_openrouter "$MODEL" "$PROMPT_CONTENT" --stream | tee "$OUTPUT_FILE"
+    call_openrouter "$MODEL" "$PROMPT_CONTENT" "--stream" "dhp-content" | tee "$OUTPUT_FILE"
 else
-    call_openrouter "$MODEL" "$PROMPT_CONTENT" | tee "$OUTPUT_FILE"
+    call_openrouter "$MODEL" "$PROMPT_CONTENT" "" "dhp-content" | tee "$OUTPUT_FILE"
 fi
 
 # Check if API call succeeded
-if [ $? -eq 0 ]; then
+if [ "${PIPESTATUS[0]}" -eq 0 ]; then
     echo -e "\n---"
     echo "SUCCESS: 'First-Draft Skeleton' saved to $OUTPUT_FILE"
 else

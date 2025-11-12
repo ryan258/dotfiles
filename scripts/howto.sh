@@ -29,7 +29,13 @@ case "${1:-list}" in
 
   list)
     echo "--- How-To Articles (most recent first) ---"
-    ls -t "$HOWTO_DIR" | sed 's/\.txt$//'
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        find "$HOWTO_DIR" -maxdepth 1 -type f -name "*.txt" -exec stat -f '%m %N' {} \; | sort -rn | cut -d' ' -f2- | sed 's/\.txt$//' | sed 's#.*/##'
+    else
+        # Linux
+        find "$HOWTO_DIR" -maxdepth 1 -type f -name "*.txt" -printf '%T@ %f\n' | sort -rn | cut -d' ' -f2- | sed 's/\.txt$//'
+    fi
     ;;
 
   *)

@@ -32,7 +32,7 @@ if [ -f "$JOURNAL_FILE" ]; then
 fi
 
 # --- WEEKLY REVIEW ---
-if [ $(date +%u) -eq 1 ]; then
+if [ "$(date +%u)" -eq 1 ]; then
     WEEK_NUM=$(date -v-1d +%V)
     YEAR=$(date -v-1d +%Y)
     REVIEW_FILE="$HOME/Documents/Reviews/Weekly/$YEAR-W$WEEK_NUM.md"
@@ -181,7 +181,7 @@ STALE_TODO_FILE="$HOME/.config/dotfiles-data/todo.txt"
 echo ""
 echo "⏰ STALE TASKS:"
 if [ -f "$STALE_TODO_FILE" ] && [ -s "$STALE_TODO_FILE" ]; then
-    CUTOFF_DATE=$(date -v-7d '+%Y-%m-%d')
+    CUTOFF_DATE=$(date -v-"${STALE_TASK_DAYS:-7}"d '+%Y-%m-%d')
     awk -F'|' -v cutoff="$CUTOFF_DATE" '$1 < cutoff { printf "  • %s (from %s)\n", $2, $1 }' "$STALE_TODO_FILE"
 fi
 
