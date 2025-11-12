@@ -4,7 +4,7 @@ set -euo pipefail
 # It uses the website wttr.in, which is designed for terminals.
 
 # You can change this to your preferred city
-city="Bentonville"
+city="${1:-Bentonville}"
 
 echo "Fetching the weather for $city..."
 curl "https://wttr.in/$city"

@@ -14,6 +14,12 @@ dhp_setup_env() {
         source "$DOTFILES_DIR/.env"
     fi
 
+    # Check for API key
+    if [ -z "${OPENROUTER_API_KEY:-}" ]; then
+        echo "Error: OPENROUTER_API_KEY is not set. Please add it to your .env file." >&2
+        exit 1
+    fi
+
     # Source shared libraries
     if [ -f "$DOTFILES_DIR/bin/dhp-lib.sh" ]; then
         source "$DOTFILES_DIR/bin/dhp-lib.sh"

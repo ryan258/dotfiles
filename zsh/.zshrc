@@ -21,7 +21,6 @@ export EDITOR="code --wait"
 
 # echo "SUCCESS! Dotfiles are loading."
 source "$ZDOTDIR/aliases.zsh"
-# source "$ZDOTDIR/.zsh_aliases"
 
 # Run startday.sh once per day, persistently across reboots
 LAST_RUN_FILE="$HOME/.config/dotfiles-data/.startday_last_run"

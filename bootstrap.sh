@@ -46,32 +46,34 @@ for file in "${DATA_FILES[@]}"; do
   fi
 done
 
-# 4. Symlink dotfiles
-echo "Symlinking dotfiles..."
-symlink() {
-  local source=$1
-  local target=$2
+# 4. Configure Zsh environment
+echo "Configuring Zsh environment..."
+ZSHENV_FILE="$HOME/.zshenv"
+ZDOTDIR_LINE="export ZDOTDIR=\"$HOME/dotfiles/zsh\""
+PATH_LINE_SCRIPTS="export PATH=\"$HOME/dotfiles/scripts:\$PATH\""
+PATH_LINE_BIN="export PATH=\"$HOME/dotfiles/bin:\$PATH\""
+PATH_LINE_LOCAL_BIN="export PATH=\"$HOME/.local/bin:\$PATH\""
 
-  # Check if target is a symlink pointing to the correct location
-  if [ -L "$target" ] && [ "$(readlink "$target")" == "$source" ]; then
-    echo "  ✓ Symlink for $(basename "$target") already exists and is correct."
-    return 0
-  fi
+# Create or update .zshenv file
+if [ -f "$ZSHENV_FILE" ]; then
+    # If file exists, check and add lines if they are missing
+    grep -qF -- "$ZDOTDIR_LINE" "$ZSHENV_FILE" || echo "$ZDOTDIR_LINE" >> "$ZSHENV_FILE"
+    grep -qF -- "$PATH_LINE_SCRIPTS" "$ZSHENV_FILE" || echo "$PATH_LINE_SCRIPTS" >> "$ZSHENV_FILE"
+    grep -qF -- "$PATH_LINE_BIN" "$ZSHENV_FILE" || echo "$PATH_LINE_BIN" >> "$ZSHENV_FILE"
+    grep -qF -- "$PATH_LINE_LOCAL_BIN" "$ZSHENV_FILE" || echo "$PATH_LINE_LOCAL_BIN" >> "$ZSHENV_FILE"
+    echo "  ✓ .zshenv already exists, ensured configuration is present."
+else
+    # If file doesn't exist, create it with all necessary exports
+    echo "$ZDOTDIR_LINE" > "$ZSHENV_FILE"
+    echo "$PATH_LINE_SCRIPTS" >> "$ZSHENV_FILE"
+    echo "$PATH_LINE_BIN" >> "$ZSHENV_FILE"
+    echo "$PATH_LINE_LOCAL_BIN" >> "$ZSHENV_FILE"
+    echo "  ✓ Created .zshenv and configured ZDOTDIR and PATH."
+fi
 
-  # Check if target exists but is not a symlink (e.g., a regular file)
-  if [ -e "$target" ] && [ ! -L "$target" ] && [ "$FORCE" = false ]; then
-    echo "  ⚠️  Warning: $(basename "$target") exists as a regular file (not a symlink)."
-    echo "      Run with --force to replace it, or backup and remove it manually."
-    return 1
-  fi
-
-  # Create or update the symlink
-  ln -sf "$source" "$target"
-  echo "  ✓ Created symlink for $(basename "$target")."
-}
-symlink "$(pwd)/zsh/.zshrc" "$HOME/.zshrc"
-symlink "$(pwd)/zsh/.zprofile" "$HOME/.zprofile"
-symlink "$(pwd)/zsh/aliases.zsh" "$HOME/.zsh_aliases"
+# 5. Symlink other necessary configurations (if any)
+# echo "Symlinking other dotfiles..."
+# Example: symlink "$(pwd)/git/.gitconfig" "$HOME/.gitconfig"
 
 
 echo "✅ Bootstrap complete!"

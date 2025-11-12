@@ -55,7 +55,7 @@ case "$1" in
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] $task_text" >> "$DONE_FILE"
     fi
     # Remove it from the todo file
-    sed -i '' "${task_num}d" "$TODO_FILE"
+    sed -i.bak "${task_num}d" "$TODO_FILE"
     
     # Encouraging messages for completing a task
     done_messages=(
@@ -108,7 +108,7 @@ case "$1" in
 
     # Mark task as done
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $task_text" >> "$DONE_FILE"
-    sed -i '' "${task_num}d" "$TODO_FILE"
+    sed -i.bak "${task_num}d" "$TODO_FILE"
     echo "Completed and committed: $task_text"
     ;;
 
@@ -124,7 +124,7 @@ case "$1" in
         echo "Error: Task $task_num not found."
         exit 1
     fi
-    sed -i '' "${task_num}d" "$TODO_FILE"
+    sed -i.bak "${task_num}d" "$TODO_FILE"
     echo "$task_line" | cat - "$TODO_FILE" > temp && mv temp "$TODO_FILE"
     echo "Bumped task $task_num to the top."
     ;;
@@ -145,7 +145,7 @@ case "$1" in
     # Get the last completed task
     last_done_task=$(tail -n 1 "$DONE_FILE")
     # Remove it from the done file
-    sed -i '' '$d' "$DONE_FILE"
+    sed -i.bak '$d' "$DONE_FILE"
     # Extract original task text, removing the timestamp
     task_text_to_restore=$(echo "$last_done_task" | sed -E 's/^\[[0-9- :]+] //')
     # Add it back to the todo list with a new date
