@@ -59,6 +59,41 @@ list_known_sections() {
     echo "guide guides blog blogs prompt prompts prompt-card shortcut shortcuts shortcut-spotlight system-instruction"
 }
 
+read -r -d '' DEFAULT_SECTION_EXEMPLARS <<'EOF'
+guides/ai-frameworks|content/guides/ai-frameworks/advanced-prompting.md
+guides/brain-fog|content/guides/brain-fog/daily-briefing.md
+guides/keyboard-efficiency|content/guides/keyboard-efficiency/core-5-shortcuts.md
+guides/productivity-systems|content/guides/productivity-systems/prompt-versioning.md
+blog|content/blog/automation-and-disability.md
+prompts|content/prompts/bluf-decision-prompt.md
+shortcuts/automations|content/shortcuts/automations/ai-summary-spotlight.md
+shortcuts/keyboard-shortcuts|content/shortcuts/keyboard-shortcuts/core-5-spotlight.md
+shortcuts/system-instructions|content/shortcuts/system-instructions/brain-fog-assistant-persona.md
+EOF
+
+SECTION_EXEMPLARS="${BLOG_SECTION_EXEMPLARS:-$DEFAULT_SECTION_EXEMPLARS}"
+
+find_exemplar_for_section() {
+    local section_path="$1"
+    local best_match=""
+    local best_file=""
+    while IFS='|' read -r prefix relpath; do
+        [ -z "$prefix" ] && continue
+        if [[ "$section_path" == "$prefix"* ]]; then
+            # Prefer longest prefix
+            if [ "${#prefix}" -gt "${#best_match}" ]; then
+                best_match="$prefix"
+                best_file="$relpath"
+            fi
+        fi
+    done <<< "$SECTION_EXEMPLARS"
+    if [ -n "$best_file" ]; then
+        echo "$best_file"
+        return 0
+    fi
+    return 1
+}
+
 get_section_config_field() {
     local key="$1"
     local field="$2"
@@ -414,6 +449,17 @@ $file_content"
     mkdir -p "$target_dir"
     echo "Target section: $section_path"
     echo "Saving drafts to: $target_dir"
+    local exemplar_snippet=""
+    local exemplar_rel=""
+    if exemplar_rel=$(find_exemplar_for_section "$section_path"); then
+        local exemplar_file="$BLOG_DIR/$exemplar_rel"
+        if [ -f "$exemplar_file" ]; then
+            exemplar_snippet=$(cat "$exemplar_file")
+            echo "Using exemplar: $exemplar_rel"
+        else
+            echo "Warning: Exemplar file not found at $exemplar_rel" >&2
+        fi
+    fi
 
     if [ -n "$archetype" ]; then
         local archetype_dir="${BLOG_ARCHETYPES_DIR:-${BLOG_DIR:-}/archetypes}"
@@ -437,7 +483,9 @@ $file_content"
         fi
         local archetype_content
         archetype_content=$(cat "$type_file")
-        input_text="HUGO ARCHETYPE TEMPLATE (${archetype}):\n${archetype_content}\n\n--- USER BRIEF ---\n${input_text}"
+        input_text="HUGO ARCHETYPE TEMPLATE (${archetype}):\n${archetype_content}\n$( [ -n "$exemplar_snippet" ] && printf '\nEXEMPLAR (%s):\n%s\n' "$section_path" "$exemplar_snippet" )\n--- USER BRIEF ---\n${input_text}"
+    elif [ -n "$exemplar_snippet" ]; then
+        input_text="EXEMPLAR (${section_path}):\n${exemplar_snippet}\n\n--- USER BRIEF ---\n${input_text}"
     fi
 
     if [ -n "$persona" ]; then

@@ -209,7 +209,7 @@ AI specialists are deeply integrated into daily workflows:
 
 **Blog Workflow:**
 ```bash
-blog generate my-stub-name    # AI-generate full content from stub
+blog generate -p "Calm Coach" -a guide -s guides/brain-fog "Energy-first planning walkthrough"
 blog refine my-post.md         # AI-polish existing draft
 ```
 Set `BLOG_DIR` in `dotfiles/.env` to point at your personal writing repo (examples: `$HOME/Projects/blog`, `$HOME/Projects/site/content`, `$HOME/Projects/articles`). Leaving it unset cleanly disables these commands for shared installs.
