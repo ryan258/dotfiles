@@ -19,7 +19,7 @@ _Last updated: November 14, 2025 (comprehensive codebase review)_
 - **Now (workflow enhancements):**
   - Enhance `ai_suggest` with health.sh energy scoring and medication adherence signals (W2) for truly context-aware dispatcher recommendations
   - Ship API key governance features (O4): per-dispatcher keys, rotation reminders, auth testing, proactive warnings
-  - (✅ B2 shipped) Continue polishing persona playbooks + archetype automation
+  - Continue polishing persona + section-aware automation (B2 follow-ups, exemplar integration)
 - **Next (testing & content lifecycle):**
   - Implement automated testing coverage (T1-T3): morning hook smoke tests, happy-path rehearsals, GitHub helper setup validation
   - Build out blog content lifecycle features (B8-B11): idea syncing, version management, metrics/exemplars, social automation

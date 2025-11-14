@@ -40,6 +40,39 @@ fi
 DRAFTS_DIR="${BLOG_DRAFTS_DIR_OVERRIDE:-${CONTENT_OUTPUT_DIR:-$BLOG_DIR/drafts}}"
 POSTS_DIR="${BLOG_POSTS_DIR_OVERRIDE:-$BLOG_DIR/content/posts}"
 
+# Section mapping helper: returns "content_subdir|archetype|default_subsection"
+known_section_defaults() {
+    local key="$1"
+    case "$key" in
+        guide|guides) echo "guides|guide.md|general" ;;
+        blog|blogs) echo "blog|blog.md|general" ;;
+        prompt|prompts) echo "prompts|prompt-card.md|general" ;;
+        prompt-card) echo "prompts|prompt-card.md|general" ;;
+        shortcut|shortcuts) echo "shortcuts|shortcut-spotlight.md|general" ;;
+        shortcut-spotlight) echo "shortcuts|shortcut-spotlight.md|general" ;;
+        system-instruction) echo "shortcuts/system-instructions|system-instruction.md|general" ;;
+        *) return 1 ;;
+    esac
+}
+
+list_known_sections() {
+    echo "guide guides blog blogs prompt prompts prompt-card shortcut shortcuts shortcut-spotlight system-instruction"
+}
+
+get_section_config_field() {
+    local key="$1"
+    local field="$2"
+    local config
+    config=$(known_section_defaults "$key") || { echo ""; return 1; }
+    local IFS='|'
+    read -r path archetype subsection <<< "$config"
+    case "$field" in
+        path) echo "$path" ;;
+        archetype) echo "$archetype" ;;
+        subsection) echo "$subsection" ;;
+    esac
+}
+
 # Create directories if they don't exist (mkdir -p is safe to run multiple times)
 mkdir -p "$BLOG_DIR"
 mkdir -p "$DRAFTS_DIR"
@@ -218,6 +251,7 @@ function generate() {
     local use_context=""
     local input_text=""
     local archetype=""
+    local section=""
 
     while [ $# -gt 0 ]; do
         case "$1" in
@@ -253,6 +287,14 @@ function generate() {
                 archetype="$2"
                 shift 2
                 ;;
+            -s|--section)
+                if [ -z "${2:-}" ]; then
+                    echo "Error: --section requires a name (e.g., brain-fog, shortcuts)." >&2
+                    return 1
+                fi
+                section="$2"
+                shift 2
+                ;;
             --help|-h)
                 cat <<'USAGE'
 Usage: blog generate [OPTIONS] "topic or draft text"
@@ -261,6 +303,7 @@ Usage: blog generate [OPTIONS] "topic or draft text"
 Options:
   -p, --persona NAME  Apply a persona playbook from docs/personas.md
   -a, --archetype NAME Load a Hugo archetype template (guide, blog, prompt-card, etc.)
+  -s, --section NAME   Target site section/subfolder (e.g., guides/brain-fog or guide:brain-fog)
   -f, --file PATH     Provide a file whose contents become the brief/input
   -c, --context       Inject minimal local context into the dispatcher
   -C, --full-context  Inject full local context (journal, todos, git, README)
@@ -306,6 +349,71 @@ $file_content"
 
     local brief_preview
     brief_preview=$(echo "$input_text" | head -n 1 | cut -c1-80)
+
+    local section_key=""
+    local section_path_override=""
+
+    if [ -n "$section" ]; then
+        local normalized_section="${section#/}"
+        normalized_section="${normalized_section%/}"
+        if [[ "$section" == *:* ]]; then
+            local base="${section%%:*}"
+            local child="${section#*:}"
+            child="${child#/}"
+            child="${child%/}"
+            section_key="$base"
+            local base_path
+            base_path=$(get_section_config_field "$base" "path")
+            if [ -z "$base_path" ]; then
+                echo "Error: Unknown section base '$base'. Expected one of: $(list_known_sections)" >&2
+                return 1
+            fi
+            section_path_override="$base_path"
+            if [ -n "$child" ]; then
+                section_path_override="$section_path_override/$child"
+            fi
+        elif [[ "$section" == */* ]]; then
+            section_path_override="$normalized_section"
+            local first_segment="${normalized_section%%/*}"
+            if known_section_defaults "$first_segment" >/dev/null 2>&1; then
+                section_key="$first_segment"
+            fi
+        elif known_section_defaults "$section" >/dev/null 2>&1; then
+            section_key="$section"
+            section_path_override=$(get_section_config_field "$section" "path")
+        else
+            echo "Error: Unknown section '$section'. Use keys ($(list_known_sections)) or paths like guides/brain-fog or guide:brain-fog." >&2
+            return 1
+        fi
+    fi
+
+    if [ -z "$section_key" ] && [ -n "$archetype" ] && known_section_defaults "$archetype" >/dev/null 2>&1; then
+        section_key="$archetype"
+    fi
+
+    if [ -z "$archetype" ] && [ -n "$section_key" ]; then
+        local default_arch
+        default_arch=$(get_section_config_field "$section_key" "archetype")
+        [ -n "$default_arch" ] && archetype="$default_arch"
+    fi
+
+    if [ -z "$section_path_override" ] && [ -n "$section_key" ]; then
+        section_path_override=$(get_section_config_field "$section_key" "path")
+    fi
+
+    local section_path="${section_path_override:-posts}"
+    section_path="${section_path#/}"
+    section_path="${section_path%/}"
+    [ -z "$section_path" ] && section_path="posts"
+    if [[ "$section_path" == *".."* ]]; then
+        echo "Error: Section path cannot include '..' segments." >&2
+        return 1
+    fi
+
+    local target_dir="$BLOG_DIR/content/$section_path"
+    mkdir -p "$target_dir"
+    echo "Target section: $section_path"
+    echo "Saving drafts to: $target_dir"
 
     if [ -n "$archetype" ]; then
         local archetype_dir="${BLOG_ARCHETYPES_DIR:-${BLOG_DIR:-}/archetypes}"
@@ -995,7 +1103,7 @@ case "$1" in
         echo "Usage: blog {status|stubs|random|recent|ideas|generate|refine|draft|workflow|publish|validate|hooks install}"
         echo ""
         echo "AI-powered commands:"
-        echo "  blog g / blog generate [options] \"topic\"  - Generate content (supports -p persona, -a archetype, -f file)"
+        echo "  blog g / blog generate [options] \"topic\"  - Generate content (supports -p persona, -a archetype, -s section, -f file)"
         echo "  blog r / blog refine <file-path>          - Polish and improve existing content"
         echo "  blog d / blog draft <type> <slug>         - Scaffold a new draft from archetypes"
         echo "  blog w / blog workflow <type> <slug> [--title --topic]"

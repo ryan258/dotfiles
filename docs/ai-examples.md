@@ -609,9 +609,10 @@ content --full-context "YOUR_TOPIC"
 
 **Generate content from any brief (supports personas + archetypes):**
 ```bash
-blog generate -p "Calm Coach" -a guide "Energy-first planning walkthrough"
-# or pull from a draft file
-blog generate -a blog --file ~/Projects/my-ms-ai-blog/drafts/idea.md
+blog generate -p "Calm Coach" -a guide -s guides/brain-fog \
+  "Energy-first planning walkthrough"
+# or pull from a draft file + section
+blog generate -a blog -s blog/general --file ~/Projects/my-ms-ai-blog/drafts/idea.md
 ```
 
 **Refine existing post:**

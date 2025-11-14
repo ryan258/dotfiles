@@ -12,7 +12,7 @@ Define every publishing persona you want to reuse for blog generation in this fi
 Keep instructions concise but descriptive—anything written in the persona block is injected ahead of the dispatcher coordination plan when you call:
 
 ```bash
-blog generate -p "Calm Coach" -a guide "Energy-first planning walkthrough"
+blog generate -p "Calm Coach" -a guide -s guides/brain-fog "Energy-first planning walkthrough"
 dhp-content.sh --persona calm-coach "Topic or draft text"
 ```
 
