@@ -19,7 +19,6 @@ _Last updated: November 14, 2025 (comprehensive codebase review)_
 - **Now (workflow enhancements):**
   - Enhance `ai_suggest` with health.sh energy scoring and medication adherence signals (W2) for truly context-aware dispatcher recommendations
   - Ship API key governance features (O4): per-dispatcher keys, rotation reminders, auth testing, proactive warnings
-  - Continue polishing persona + section-aware automation (B2 follow-ups, exemplar integration)
 - **Next (testing & content lifecycle):**
   - Implement automated testing coverage (T1-T3): morning hook smoke tests, happy-path rehearsals, GitHub helper setup validation
   - Build out blog content lifecycle features (B8-B11): idea syncing, version management, metrics/exemplars, social automation
@@ -30,27 +29,6 @@ _Last updated: November 14, 2025 (comprehensive codebase review)_
 
 ## 2. Workstreams & Task Backlog
 Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observability, Workflow, Blog, Testing, and Staff Library respectively.
-
-### 2.1 Reliability & Safety (Bugs) ✅ ALL COMPLETED
-- [x] **R1 · `jq` Payload Builder Broken** - Fixed the `jq` command in `bin/dhp-lib.sh:24` to correctly build the JSON payload.
-- [x] **R2 · `validate_path` BROKEN on macOS** - Fixed by improving the shell-based canonicalization in `bin/dhp-utils.sh:40-75` to handle non-existent paths correctly on macOS.
-- [x] **R3 · Newline Replacement Breaks Text** - Reverted the `sed` to parameter expansion changes in `scripts/startday.sh` and `scripts/goodevening.sh`.
-- [x] **R4 · `health.sh` Export Piles Up Data** - Fixed the `export` command in `scripts/health.sh` to truncate the output file before writing.
-- [x] **R5 · `howto.sh` find -printf NOT FIXED** - Updated `scripts/howto.sh` to use cross-platform `find` and `stat` solution.
-- [x] **R6 · `git config` Failure Kills Script** - Fixed `git config` command in `scripts/github_helper.sh` to handle missing `user.name`.
-- [x] **R7 · Glob Pattern Matching Broken** - Fixed glob pattern matching in `scripts/tidy_downloads.sh`.
-- [x] **R8 · App Launcher Gets Wrong Arguments** - Fixed app launcher arguments in `scripts/g.sh`.
-- [x] **R9 · Test Isolation Destroying Real Data** - Fixed `tests/test_todo.sh` to use TEST_DATA_DIR with mktemp and override HOME.
-- [x] **R10 · Blog.sh Path Validation Breaks Fresh Installs** - Fixed `scripts/blog.sh:43-68` to create directories before validation and skip validation for external paths.
-- [x] **R13 · `app_launcher` regex lookups** - Switched to fixed-string parsing in `scripts/app_launcher.sh` to support shortnames with regex characters.
-- [x] **R14 · `week_in_review` & `backup_data` guard rails** - Added dependency/data checks in `scripts/week_in_review.sh` and `scripts/backup_data.sh`.
-- [x] **R15 · `health dashboard` runaway scans** - Added commit-count caching + lookback limits in `scripts/health.sh`.
-- [x] **R16 · Cross-platform `date` helper** - Introduced `scripts/lib/date_utils.sh` and integrated into all daily routines and health utilities.
-### 2.2 Configuration & Flexibility ✅ ALL COMPLETED
-- [x] **C1 · Dynamic squads/config file** - Squad definitions in `ai-staff-hq/squads.json` with loader in `bin/dhp-config.sh`. All dispatchers load teams from config.
-- [x] **C2 · Model parameter controls** - CLI flags `--temperature`, `--max-tokens` implemented. Per-dispatcher env overrides in `.env`. Logic in `bin/dhp-lib.sh:145-165`.
-- [x] **C3 · Single dispatcher entry point** - Universal `bin/dispatch.sh` wrapper accepts squad names and flags, routes to appropriate dispatcher.
-- [x] **C4 · Shared flag/validation helpers** - Created `bin/dhp-utils.sh` with `validate_dependencies()`, `ensure_api_key()`, `validate_path()`. All dispatchers use shared library.
 
 ### 2.3 Observability, Streaming & Governance
 - [x] **O1 · Streaming exit codes** - Implemented robust streaming with proper error propagation in `bin/dhp-lib.sh:100-143`. All 10 dispatchers support `--stream` flag.
@@ -66,11 +44,10 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 ### 2.5 Blog & Publishing Program
 **Design Philosophy:** Tooling works with any Hugo repository (configurable via `BLOG_DIR` in `.env`), defaults to `ryanleej.com`. Deployments happen server-side (DigitalOcean) after git push—local scripts prepare commits/pushes only.
 
-**Current Status:** Core publishing pipeline complete (B1, B3-B6, B12). Content lifecycle features pending (B2, B7-B11).
+**Current Status:** Core publishing pipeline complete (B1, B2, B3-B6, B12). Content lifecycle features pending (B7-B11).
 
 #### Phase A · Blog Script Enhancements
 - [x] **B1 · Draft helpers** - `blog draft <type>` scaffolds archetypes, prefills metadata, opens editor. Implementation: `scripts/blog.sh:195-290`.
-- [x] **B2 · Persona-aware generation** - `blog generate` now accepts `-p/--persona` to load playbooks from `docs/personas.md` plus Hugo archetypes via `-a/--archetype`; `dhp-content.sh` injects persona text before prompting. Workflow documented in `docs/my-ms-site-integration.md`.
 - [x] **B3 · Workflow orchestration** - `blog workflow <type> <slug>` orchestrates full content pipeline (outline → draft → review → promotion). Implementation: `scripts/blog.sh:450-590`.
 
 #### Phase B · Validation & Quality Gates ✅ COMPLETED

@@ -61,6 +61,17 @@ This major release represents a comprehensive security audit and hardening of th
 
 ## November 2025: AI Integration & Foundation Complete
 
+### Persona-Aware Blog Generation (B2)
+- Added persona playbook loader (`docs/personas.md`) with `-p/--persona` flag for `blog generate`
+- Introduced section-aware workflows: `-s/--section` writes drafts directly into the correct `content/<section>/` folder
+- Hugo archetype, section exemplar, persona, and user brief are stacked in every AI call for consistent structure/voice
+- Exemplar sources are configurable via `BLOG_SECTION_EXEMPLARS` in `.env`; defaults include guides, blog posts, prompts, and shortcuts
+- Dispatchers still save `draft: true` files; publishing now just flips the flag and timestamps
+
+### Reliability & Configuration Hardening
+- Resolved R1–R16 reliability issues (path validation, glob fixes, macOS compatibility, data safeguards)
+- Added shared utils (`dhp-utils.sh`), dynamic squad config (`ai-staff-hq/squads.json`), universal dispatcher entry point, and model param flags
+- Implemented streaming error propagation, usage logging, and context redaction guards
 
 ### Reliability Sprint (November 2025)
 
