@@ -60,16 +60,16 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 Design this so the same tooling can point at any Hugo repo, defaulting to `ryanleej.com`, and remember that deployments happen after pushing to the remote (DigitalOcean build).
 
 #### Phase A · Enhance `blog.sh`
-- [ ] **B1 · Draft helpers** — `blog draft <type>` to scaffold archetypes, prefill metadata, and open the editor.
+- [x] **B1 · Draft helpers** — `blog draft <type>` to scaffold archetypes, prefill metadata, and open the editor.
 - [ ] **B2 · Persona-aware generation** — Allow `--persona` flags that load staff playbooks (`docs/staff/*.md`) as system prompts for AI dispatchers.
-- [ ] **B3 · Workflow runner** — `blog workflow <type>` orchestrates outline → draft → accessibility review → promotion using the appropriate dispatchers.
+- [x] **B3 · Workflow runner** — `blog workflow <type>` orchestrates outline → draft → accessibility review → promotion using the appropriate dispatchers.
 
 #### Phase B · Validation & Quality Gates
-- [ ] **B4 · `blog validate`** — Automated checks against `GUIDE-WRITING-STANDARDS.md`, front matter completeness, accessibility (alt text, heading hierarchy, MS-friendly language), and link health.
-- [ ] **B5 · Pre-commit hook installation** — Optional `blog hooks install` to run validation before git commits touching `content/`.
+- [x] **B4 · `blog validate`** — Automated checks against `GUIDE-WRITING-STANDARDS.md`, front matter completeness, accessibility (alt text, heading hierarchy, MS-friendly language), and link health.
+- [x] **B5 · Pre-commit hook installation** — Optional `blog hooks install` to run validation before git commits touching `content/`.
 
 #### Phase C · Deployment Prep (DigitalOcean push model)
-- [ ] **B6 · `blog publish`** — One command that runs validation, builds with Hugo, summarizes git status, and prepares a push to the server-backed repo (no direct deploy; ensure instructions remind that DO handles the build when commits land).
+- [x] **B6 · `blog publish`** — One command that runs validation, builds with Hugo, summarizes git status, and prepares a push to the server-backed repo (no direct deploy; ensure instructions remind that DO handles the build when commits land).
 - [ ] **B7 · Deployment config** — Support multiple deploy methods (`digitalocean` repo push default, plus optional Netlify/Vercel/rsync adapters) via `.env`.
 
 #### Phase D · Content Lifecycle Extras

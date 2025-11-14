@@ -318,6 +318,310 @@ function refine() {
     echo "Review the suggestions above and update: $file_path"
 }
 
+normalize_slug() {
+    local input="$1"
+    input="${input// /-}"
+    input="${input#./}"
+    input="${input%/}"
+    input=$(echo "$input" | tr '[:upper:]' '[:lower:]')
+    echo "$input"
+}
+
+draft_from_archetype() {
+    local type="$1"
+    local slug="$2"
+    shift 2
+
+    local title=""
+    local open_editor=false
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --title)
+                title="$2"
+                shift 2
+                ;;
+            --open)
+                open_editor=true
+                shift
+                ;;
+            *)
+                echo "Unknown draft option: $1" >&2
+                return 1
+                ;;
+        esac
+    done
+
+    local archetype=""
+    local subdir=""
+    local slug_path
+    slug_path=$(normalize_slug "$slug")
+
+    case "$type" in
+        blog)
+            archetype="blog.md"
+            subdir="blog"
+            ;;
+        guide)
+            archetype="guide.md"
+            subdir="guides"
+            if [[ "$slug_path" != */* ]]; then
+                echo "Guide drafts must include the category subdirectory (e.g., brain-fog/my-guide)." >&2
+                return 1
+            fi
+            ;;
+        prompt|prompt-card)
+            archetype="prompt-card.md"
+            subdir="prompts"
+            ;;
+        shortcut-spotlight)
+            archetype="shortcut-spotlight.md"
+            subdir="shortcuts"
+            ;;
+        system-instruction)
+            archetype="system-instruction.md"
+            subdir="shortcuts/system-instructions"
+            ;;
+        *)
+            archetype="default.md"
+            ;;
+    esac
+
+    local target="$DRAFTS_DIR"
+    if [ -n "$subdir" ]; then
+        target="$target/$subdir"
+    fi
+
+    if [[ "$slug_path" != *.md ]]; then
+        slug_path="${slug_path}.md"
+    fi
+    local draft_path="$target/$slug_path"
+    local archetype_path="$BLOG_DIR/archetypes/$archetype"
+    if [ ! -f "$archetype_path" ]; then
+        archetype_path="$BLOG_DIR/archetypes/default.md"
+    fi
+
+    mkdir -p "$(dirname "$draft_path")"
+
+    if [ -f "$draft_path" ]; then
+        echo "Draft already exists: $draft_path" >&2
+        echo "$draft_path"
+        return 0
+    fi
+
+    cat "$archetype_path" > "$draft_path"
+
+    if [ -n "$title" ]; then
+        python3 <<PY || true
+from pathlib import Path
+path = Path("$draft_path")
+lines = path.read_text().splitlines()
+for idx, line in enumerate(lines):
+    if line.strip().startswith("title"):
+        indent, rest = line.split(":", 1)
+        lines[idx] = f"{indent}: \"$title\""
+        break
+path.write_text("\n".join(lines) + "\n")
+PY
+    fi
+
+    echo "Created draft at $draft_path" >&2
+
+    if [ "$open_editor" = true ]; then
+        "${EDITOR:-vim}" "$draft_path"
+    fi
+
+    echo "$draft_path"
+}
+
+draft_command() {
+    shift # remove subcommand name
+    local draft_type="${1:-}"
+    local slug="${2:-}"
+    shift 2 || true
+
+    if [ -z "$draft_type" ] || [ -z "$slug" ]; then
+        echo "Usage: blog draft <type> <slug> [--title \"Title\"] [--open]" >&2
+        return 1
+    fi
+
+    draft_from_archetype "$draft_type" "$slug" "$@"
+}
+
+run_workflow() {
+    local type="$1"
+    local slug="$2"
+    shift 2
+
+    local title=""
+    local topic=""
+    local skip_ai=false
+    local open_editor=false
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --title)
+                title="$2"
+                shift 2
+                ;;
+            --topic)
+                topic="$2"
+                shift 2
+                ;;
+            --no-ai)
+                skip_ai=true
+                shift
+                ;;
+            --open)
+                open_editor=true
+                shift
+                ;;
+            *)
+                echo "Unknown workflow option: $1" >&2
+                return 1
+                ;;
+        esac
+    done
+
+    if [ -z "$slug" ]; then
+        echo "Usage: blog workflow <type> <slug> [--title \"Title\"] [--topic \"Topic\"] [--open] [--no-ai]" >&2
+        return 1
+    fi
+
+    local draft_args=()
+    if [ -n "$title" ]; then
+        draft_args+=(--title "$title")
+    fi
+    local draft_path
+    draft_path=$(draft_from_archetype "$type" "$slug" "${draft_args[@]}") || return 1
+    title=${title:-$(basename "$draft_path" .md | tr '-' ' ' | sed 's/.*/\u&/')}
+    topic=${topic:-$title}
+
+    if [ "$skip_ai" = true ] || ! command -v dhp-content.sh >/dev/null 2>&1; then
+        echo "Draft scaffolded at $draft_path."
+        echo "AI generation skipped. Use 'dhp-content.sh' manually if desired."
+        [ "$open_editor" = true ] && "${EDITOR:-vim}" "$draft_path"
+        return 0
+    fi
+
+    echo "Generating AI-assisted outline..."
+    local outline
+    if ! outline=$(cat <<PROMPT | dhp-content.sh "outline for $title"
+You are the editorial lead for the My MS & AI Journey site.
+Create a structured outline for a $type post.
+
+Title: $title
+Topic: $topic
+Audience: Readers managing MS-related brain fog who rely on accessible workflows.
+
+Include clear section headings and 1-2 bullet notes per section.
+PROMPT
+); then
+        echo "Warning: Unable to generate outline via dhp-content.sh" >&2
+        return 1
+    fi
+
+    {
+        echo ""
+        echo "## AI Outline (generated $(date '+%Y-%m-%d %H:%M'))"
+        echo ""
+        echo "$outline"
+        echo ""
+    } >> "$draft_path"
+
+    echo "Generating AI-assisted draft..."
+    local draft_text
+    if ! draft_text=$(cat <<PROMPT | dhp-content.sh "draft for $title"
+You are the editorial lead for My MS & AI Journey.
+Write the full $type content using the outline below.
+Focus on clarity, accessibility, and concrete steps that help readers manage MS brain fog.
+
+Title: $title
+Topic: $topic
+
+Outline:
+$outline
+PROMPT
+); then
+        echo "Warning: Unable to generate draft via dhp-content.sh" >&2
+        return 1
+    fi
+
+    {
+        echo "## AI Draft (generated $(date '+%Y-%m-%d %H:%M'))"
+        echo ""
+        echo "$draft_text"
+        echo ""
+    } >> "$draft_path"
+
+    echo "Generating reviewer checklist..."
+    local reviewer_notes
+    if reviewer_notes=$(cat <<PROMPT | dhp-content.sh "review for $title"
+You are the accessibility reviewer for My MS & AI Journey.
+Review the following $type draft and provide 4-5 bullet recommendations covering clarity, accessibility, and MS-friendly tone.
+
+$draft_text
+PROMPT
+); then
+        {
+            echo "## Reviewer Notes"
+            echo ""
+            echo "$reviewer_notes"
+            echo ""
+        } >> "$draft_path"
+    fi
+
+    echo "Workflow complete. Draft updated at $draft_path"
+
+    if [ "$open_editor" = true ]; then
+        "${EDITOR:-vim}" "$draft_path"
+    fi
+}
+
+workflow_command() {
+    shift
+    local workflow_type="${1:-}"
+    local slug="${2:-}"
+    shift 2 || true
+
+    if [ -z "$workflow_type" ] || [ -z "$slug" ]; then
+        echo "Usage: blog workflow <type> <slug> [options]" >&2
+        return 1
+    fi
+
+    run_workflow "$workflow_type" "$slug" "$@"
+}
+
+publish_site() {
+    echo "Running blog validation..."
+    if ! validate_site; then
+        echo "Publish aborted: validation failed." >&2
+        return 1
+    fi
+
+    if ! command -v hugo >/dev/null 2>&1; then
+        echo "Error: hugo CLI not found. Install Hugo to build the site." >&2
+        return 1
+    fi
+
+    echo ""
+    echo "Building site with Hugo (hugo --gc --minify)..."
+    if ! (cd "$BLOG_DIR" && hugo --gc --minify); then
+        echo "Hugo build failed; see errors above." >&2
+        return 1
+    fi
+
+    echo ""
+    echo "Build complete. Output directory: $BLOG_DIR/public"
+    echo ""
+    echo "Git status for $BLOG_DIR:"
+    git -C "$BLOG_DIR" status -sb || echo "  (Unable to read git status)"
+
+    echo ""
+    echo "Next steps:"
+    echo "  1. Review the changes above."
+    echo "  2. Commit in $BLOG_DIR (examples: git add . && git commit -m \"Publish\")"
+    echo "  3. Push when ready (DigitalOcean will build on push)."
+}
+
 validate_site() {
     if ! command -v python3 >/dev/null 2>&1; then
         echo "Error: python3 is required for blog validate." >&2
@@ -332,7 +636,11 @@ from pathlib import Path
 
 content_dir = Path(os.environ.get("POSTS_DIR", ""))
 drafts_dir = Path(os.environ.get("DRAFTS_DIR", ""))
-blog_dir = Path(os.environ.get("BLOG_DIR", ""))
+blog_dir_env = os.environ.get("BLOG_DIR")
+blog_dir = Path(blog_dir_env) if blog_dir_env else None
+content_root = (blog_dir / "content") if blog_dir else content_dir
+if not content_root.exists():
+    content_root = content_dir
 
 targets = []
 for base in (content_dir, drafts_dir):
@@ -391,6 +699,56 @@ def extract_value(front_matter, key):
         return match.group(1).strip().strip("'").strip('"')
     return ""
 
+markdown_link_pattern = re.compile(r"(?<!\!)\[([^\]]+)\]\(([^)]+)\)")
+markdown_image_pattern = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
+html_img_pattern = re.compile(r"<img[^>]*>", re.IGNORECASE)
+
+def check_accessibility(front_matter, body_text):
+    problems = []
+
+    for alt, src in markdown_image_pattern.findall(body_text):
+        if not alt.strip():
+            problems.append(f"image '{src}' is missing alt text")
+
+    for tag in html_img_pattern.findall(body_text):
+        if "alt=" not in tag.lower():
+            problems.append("HTML <img> missing alt attribute")
+
+    prev_level = None
+    for match in re.finditer(r"^(#{2,6})\s", body_text, re.MULTILINE):
+        level = len(match.group(1))
+        if prev_level and level > prev_level + 1:
+            problems.append(f"heading jumps from H{prev_level} to H{level}")
+        prev_level = level
+
+    return problems
+
+def check_links(body_text):
+    problems = []
+    for text, url in markdown_link_pattern.findall(body_text):
+        url = url.strip()
+        if not url or url.startswith("http://") or url.startswith("https://") or url.startswith("mailto:") or url.startswith("#"):
+            continue
+        clean = url.split("#")[0].split("?")[0].strip()
+        if not clean:
+            continue
+        if clean.startswith("//"):
+            continue
+
+        rel_target = clean.lstrip("/").rstrip("/")
+        candidates = []
+        for base in (content_root, drafts_dir):
+            if not base:
+                continue
+            candidates.append(base / f"{rel_target}.md")
+            candidates.append(base / rel_target / "index.md")
+            candidates.append(base / rel_target / "_index.md")
+
+        if not any(candidate.exists() for candidate in candidates):
+            problems.append(f"link '{url}' does not match a local file")
+
+    return problems
+
 for path in targets:
     if blog_dir:
         try:
@@ -406,7 +764,7 @@ for path in targets:
         continue
 
     text = path.read_text(encoding="utf-8", errors="ignore")
-    front_matter, _ = parse_front_matter(text)
+    front_matter, body_text = parse_front_matter(text)
     target_list = warnings if is_draft else issues
 
     if not front_matter:
@@ -433,6 +791,16 @@ for path in targets:
                     guide_category = extract_value(front_matter, "guide_category")
                     if guide_category and guide_category.strip().lower() != expected.lower():
                         issues.append(f"{rel_path}: guide_category '{guide_category}' should match folder '{expected}'")
+
+    if front_matter:
+        acc_problems = check_accessibility(front_matter, body_text)
+        for problem in acc_problems:
+            target_list.append(f"{rel_path}: {problem}")
+
+        link_problems = check_links(body_text)
+        for problem in link_problems:
+            target = warnings if is_draft else issues
+            target.append(f"{rel_path}: {problem}")
 
 if issues:
     print("❌ Blog validation failed:")
@@ -511,6 +879,15 @@ case "$1" in
     refine)
         refine "$@"
         ;;
+    draft)
+        draft_command "$@"
+        ;;
+    workflow)
+        workflow_command "$@"
+        ;;
+    publish)
+        publish_site
+        ;;
     validate)
         validate_site
         ;;
@@ -523,10 +900,13 @@ case "$1" in
         fi
         ;;
     *)
-        echo "Usage: blog {status|stubs|random|recent|ideas|generate|refine|validate|hooks install}"
+        echo "Usage: blog {status|stubs|random|recent|ideas|generate|refine|draft|workflow|publish|validate|hooks install}"
         echo ""
         echo "AI-powered commands:"
         echo "  blog generate <stub-name>  - Generate full content from stub using AI"
         echo "  blog refine <file-path>    - Polish and improve existing content"
+        echo "  blog draft <type> <slug>   - Scaffold a new draft from archetypes"
+        echo "  blog workflow <type> <slug> [--title --topic]"
+        echo "  blog publish              - Validate, build, and summarize site status"
         ;;
 esac
