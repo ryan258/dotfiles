@@ -57,7 +57,7 @@ todo delegate 3 creative       # Delegate task to creative specialist
 
 ### 8. Blog Workflow
 ```bash
-blog generate my-stub-name    # AI-generate content from stub
+blog generate -p "Calm Coach" -a guide "Energy-first planning walkthrough"
 blog refine my-post.md        # Polish existing draft
 ```
 

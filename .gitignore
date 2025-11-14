@@ -12,6 +12,7 @@ zsh/.zsh_sessions/*.historynew
 *.bak.*
 zsh/aliases/fabric-ai.zsh
 .env
+docs/my-ms-site-integration.md
 
 # GitHub Personal Access Token
 .github_token

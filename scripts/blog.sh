@@ -212,44 +212,140 @@ function ideas() {
 }
 
 function generate() {
-    local stub_name="$2"
+    shift # remove subcommand label
+    local persona=""
+    local input_file=""
+    local use_context=""
+    local input_text=""
+    local archetype=""
 
-    if [ -z "$stub_name" ]; then
-        echo "Usage: blog generate <stub-name>"
-        echo "Example: blog generate ai-productivity-guide"
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -p|--persona)
+                if [ -z "${2:-}" ]; then
+                    echo "Error: --persona requires a name" >&2
+                    return 1
+                fi
+                persona="$2"
+                shift 2
+                ;;
+            -f|--file|--input-file)
+                if [ -z "${2:-}" ]; then
+                    echo "Error: --file requires a path" >&2
+                    return 1
+                fi
+                input_file="$2"
+                shift 2
+                ;;
+            -c|--context)
+                use_context="--context"
+                shift
+                ;;
+            -C|--full-context)
+                use_context="--full-context"
+                shift
+                ;;
+            -a|--archetype|--type)
+                if [ -z "${2:-}" ]; then
+                    echo "Error: --archetype requires a name (guide, blog, prompt-card, etc.)." >&2
+                    return 1
+                fi
+                archetype="$2"
+                shift 2
+                ;;
+            --help|-h)
+                cat <<'USAGE'
+Usage: blog generate [OPTIONS] "topic or draft text"
+       blog generate [OPTIONS] --file path/to/input.md
+
+Options:
+  -p, --persona NAME  Apply a persona playbook from docs/personas.md
+  -a, --archetype NAME Load a Hugo archetype template (guide, blog, prompt-card, etc.)
+  -f, --file PATH     Provide a file whose contents become the brief/input
+  -c, --context       Inject minimal local context into the dispatcher
+  -C, --full-context  Inject full local context (journal, todos, git, README)
+  --help              Show this message
+
+Provide the content brief directly as arguments, pipe it via stdin, or use --file.
+USAGE
+                return 0
+                ;;
+            *)
+                input_text+="${input_text:+ }$1"
+                shift
+                ;;
+        esac
+    done
+
+    # Pull input from file if provided
+    if [ -n "$input_file" ]; then
+        if [ ! -f "$input_file" ]; then
+            echo "Error: Input file not found: $input_file" >&2
+            return 1
+        fi
+        local file_content
+        file_content=$(cat "$input_file")
+        if [ -n "$input_text" ]; then
+            input_text="$input_text
+
+$file_content"
+        else
+            input_text="$file_content"
+        fi
+    fi
+
+    # Allow stdin when no args were provided
+    if [ -z "$input_text" ] && [ ! -t 0 ]; then
+        input_text=$(cat)
+    fi
+
+    if [ -z "$input_text" ]; then
+        echo "Error: Provide a topic, idea, or draft text (arguments, --file, or stdin)." >&2
         return 1
     fi
 
-    # Find the stub file
-    local stub_file="$POSTS_DIR/${stub_name}.md"
+    local brief_preview
+    brief_preview=$(echo "$input_text" | head -n 1 | cut -c1-80)
 
-    if [ ! -f "$stub_file" ]; then
-        echo "Error: Stub file not found: $stub_file"
-        echo "Available stubs:"
-        grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null | while read -r f; do
-            echo "  • $(basename "$f" .md)"
-        done
-        return 1
+    if [ -n "$archetype" ]; then
+        local archetype_dir="${BLOG_ARCHETYPES_DIR:-${BLOG_DIR:-}/archetypes}"
+        local type_file=""
+        if [ -n "$archetype_dir" ] && [ -d "$archetype_dir" ]; then
+            if [ -f "$archetype_dir/$archetype.md" ]; then
+                type_file="$archetype_dir/$archetype.md"
+            elif [ -f "$archetype_dir/$archetype" ]; then
+                type_file="$archetype_dir/$archetype"
+            fi
+        fi
+        if [ -z "$type_file" ]; then
+            echo "Error: Archetype '$archetype' not found in $archetype_dir" >&2
+            if [ -d "$archetype_dir" ]; then
+                echo "Available archetypes:" >&2
+                ls "$archetype_dir" >&2
+            else
+                echo "Set BLOG_ARCHETYPES_DIR or BLOG_DIR to point to your Hugo archetypes." >&2
+            fi
+            return 1
+        fi
+        local archetype_content
+        archetype_content=$(cat "$type_file")
+        input_text="HUGO ARCHETYPE TEMPLATE (${archetype}):\n${archetype_content}\n\n--- USER BRIEF ---\n${input_text}"
     fi
 
-    echo "🤖 Generating full content for: $stub_name"
-    echo "Reading stub: $stub_file"
-    echo ""
-
-    # Extract title from the stub for context
-    local title; title=$(grep -m 1 "^title:" "$stub_file" | cut -d':' -f2- | tr -d '"' | xargs)
-
-    if [ -z "$title" ]; then
-        title="$stub_name"
+    if [ -n "$persona" ]; then
+        echo "AI Staff: Content Specialist is creating a draft as persona '$persona'..."
+    else
+        echo "AI Staff: Content Specialist is creating a draft..."
     fi
-
-    echo "AI Staff: Content Specialist is creating SEO-optimized guide..."
-    echo "Topic: $title"
+    [ -n "$brief_preview" ] && echo "Brief: $brief_preview"
     echo "---"
 
-    # Call the content dispatcher with the title
     if command -v dhp-content.sh &> /dev/null; then
-        dhp-content.sh "$title"
+        local cmd=(dhp-content.sh)
+        [ -n "$persona" ] && cmd+=(--persona "$persona")
+        [ -n "$use_context" ] && cmd+=("$use_context")
+        cmd+=("$input_text")
+        "${cmd[@]}"
     else
         echo "Error: dhp-content.sh dispatcher not found"
         echo "Make sure bin/ is in your PATH"
@@ -258,11 +354,7 @@ function generate() {
 
     echo ""
     echo "✅ Content generation complete"
-    echo "Output saved by dispatcher to: ~/projects/ryanleej.com/content/guides/"
-    echo "Next steps:"
-    echo "  1. Review and edit the generated content"
-    echo "  2. Move it to $POSTS_DIR/ if satisfied"
-    echo "  3. Remove 'content stub' marker from original"
+    echo "Review and edit the generated output in: ${DHP_CONTENT_OUTPUT_DIR:-~/Documents/AI_Staff_HQ_Outputs/Content/Guides/}"
 }
 
 function refine() {
@@ -858,40 +950,40 @@ HOOK
 }
 # --- Main Logic ---
 case "$1" in
-    status)
+    status|stat|s)
         status
         ;;
-    stubs)
+    stubs|stub|ls-stubs)
         stubs
         ;;
-    random)
+    random|rand|R)
         random_stub
         ;;
-    recent)
+    recent|rec)
         recent
         ;;
-    ideas)
+    ideas|idea|i)
         ideas
         ;;
-    generate)
+    generate|gen|g)
         generate "$@"
         ;;
-    refine)
+    refine|polish|r)
         refine "$@"
         ;;
-    draft)
+    draft|d)
         draft_command "$@"
         ;;
-    workflow)
+    workflow|w)
         workflow_command "$@"
         ;;
-    publish)
+    publish|p)
         publish_site
         ;;
-    validate)
+    validate|check|v)
         validate_site
         ;;
-    hooks)
+    hooks|hook)
         if [ "${2:-}" = "install" ]; then
             install_hooks
         else
@@ -903,10 +995,10 @@ case "$1" in
         echo "Usage: blog {status|stubs|random|recent|ideas|generate|refine|draft|workflow|publish|validate|hooks install}"
         echo ""
         echo "AI-powered commands:"
-        echo "  blog generate <stub-name>  - Generate full content from stub using AI"
-        echo "  blog refine <file-path>    - Polish and improve existing content"
-        echo "  blog draft <type> <slug>   - Scaffold a new draft from archetypes"
-        echo "  blog workflow <type> <slug> [--title --topic]"
-        echo "  blog publish              - Validate, build, and summarize site status"
+        echo "  blog g / blog generate [options] \"topic\"  - Generate content (supports -p persona, -a archetype, -f file)"
+        echo "  blog r / blog refine <file-path>          - Polish and improve existing content"
+        echo "  blog d / blog draft <type> <slug>         - Scaffold a new draft from archetypes"
+        echo "  blog w / blog workflow <type> <slug> [--title --topic]"
+        echo "  blog p / blog publish                    - Validate, build, and summarize site status"
         ;;
 esac

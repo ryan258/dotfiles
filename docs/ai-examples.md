@@ -607,9 +607,11 @@ content --full-context "YOUR_TOPIC"
 
 ### Blog Workflow
 
-**Generate content from stub:**
+**Generate content from any brief (supports personas + archetypes):**
 ```bash
-blog generate my-stub-name
+blog generate -p "Calm Coach" -a guide "Energy-first planning walkthrough"
+# or pull from a draft file
+blog generate -a blog --file ~/Projects/my-ms-ai-blog/drafts/idea.md
 ```
 
 **Refine existing post:**

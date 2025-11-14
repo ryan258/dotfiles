@@ -75,7 +75,7 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 - `goodevening.sh` – **AI-Enhanced** end-of-day wrap-up with gamified progress tracking, project safety checks (uncommitted changes, large diffs, stale branches, unpushed commits), task cleanup, automated data backup, plus optional AI reflection.
 - `status.sh` – Mid-day dashboard showing your current work context (directory, git), journal, and top 3 tasks.
 - `projects.sh {forgotten|recall <name>}` – Find and get details about forgotten projects from GitHub.
-- `blog.sh {status|stubs|random|recent|sync|ideas|generate|refine}` – **AI-Enhanced** blog workflow: status tracking, stub management, todo sync, journal search, plus AI content generation (`generate`) and refinement (`refine`).
+- `blog.sh {status|stubs|random|recent|sync|ideas|generate|refine}` – **AI-Enhanced** blog workflow: status tracking, optional stub management, todo sync, journal search, plus AI content generation (`generate` accepts raw briefs/drafts, `--persona NAME` from `docs/personas.md`, and `--archetype TYPE` to load Hugo archetypes) and refinement (`refine`).
 - `greeting.sh` – Quick context summaries for the start of a session.
 - `howto.sh {add|<name>|search}` – Personal searchable how-to wiki for complex workflows.
 - `schedule.sh "<time>" "<command>"` – User-friendly wrapper for macOS `at` command to schedule future commands.
