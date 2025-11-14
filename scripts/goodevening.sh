@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
+if [ -f "$DATE_UTILS" ]; then
+    # shellcheck disable=SC1090
+    source "$DATE_UTILS"
+else
+    echo "Error: date utilities not found at $DATE_UTILS" >&2
+    exit 1
+fi
+
 # --- Configuration ---
 SYSTEM_LOG_FILE="$HOME/.config/dotfiles-data/system.log"
 TODO_DONE_FILE="$HOME/.config/dotfiles-data/todo_done.txt"
@@ -144,7 +154,7 @@ fi
 echo ""
 echo "🧹 Tidying up old completed tasks..."
 if [ -f "$TODO_DONE_FILE" ]; then
-    CUTOFF_DATE_STR=$(date -v-7d '+%Y-%m-%d')
+    CUTOFF_DATE_STR=$(date_shift_days -7 "%Y-%m-%d")
     tasks_to_remove=$(awk -v cutoff="$CUTOFF_DATE_STR" '$0 ~ /^\[/ { date_str = substr($1, 2, 10); if (date_str < cutoff) { print } }' "$TODO_DONE_FILE" | wc -l | tr -d ' ')
     echo "$(date): goodevening.sh - Cleaned $tasks_to_remove old tasks." >> "$SYSTEM_LOG_FILE"
     awk -v cutoff="$CUTOFF_DATE_STR" '

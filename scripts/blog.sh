@@ -2,6 +2,16 @@
 # blog.sh - Tools for managing the blog content workflow.
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
+if [ -f "$DATE_UTILS" ]; then
+    # shellcheck disable=SC1090
+    source "$DATE_UTILS"
+else
+    echo "Error: date utilities not found at $DATE_UTILS" >&2
+    exit 1
+fi
+
 SYSTEM_LOG_FILE="$HOME/.config/dotfiles-data/system.log"
 
 # Source shared utilities
@@ -116,8 +126,8 @@ function stubs() {
     STUB_FILES=$(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null)
 
     if [ -n "$STUB_FILES" ]; then
-        SEVEN_DAYS_AGO=$(date -v-7d +%s)
-        THIRTY_DAYS_AGO=$(date -v-30d +%s)
+        SEVEN_DAYS_AGO=$(date_shift_days -7 "%s")
+        THIRTY_DAYS_AGO=$(date_shift_days -30 "%s")
 
         echo "$STUB_FILES" | while read -r file; do
             filename=$(basename "$file")

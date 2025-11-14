@@ -1,6 +1,6 @@
 # Unified Roadmap
 
-_Last updated: November 12, 2025 (v2.0.0 Production Release)_
+_Last updated: November 13, 2025 (post-v2.0.0 assessment)_
 
 ## 0. Vision & Constraints
 - **Goal:** Run the dotfiles + AI Staff HQ toolchain as a dependable assistant that also drives the ryanleej.com publishing workflow (while remaining flexible enough to point at other Hugo projects).
@@ -8,25 +8,20 @@ _Last updated: November 12, 2025 (v2.0.0 Production Release)_
 - **Guiding themes:** reliability first, transparent automation, AI-assisted content ops, and low-friction routines for days with limited energy.
 
 ## 1. Priority Snapshot
-- **✅ Completed (v2.0.0 Release):**
-  - Fixed all 10 critical shell bugs (jq payload builder, path validation, newline replacements, health export, glob patterns, app launcher, OS compatibility)
-  - Implemented dispatcher logging/governance with API call tracking and sensitive data redaction
-  - Enhanced blog CLI with external path support and conditional validation
-  - Achieved 11/11 comprehensive test passing, cross-platform verified (macOS/Linux)
-  - Established professional security policy and troubleshooting documentation
-- **Now (post-v2.0.0 stabilization):**
-  - Monitor production usage for edge cases
-  - Address remaining reliability items (R9-R12)
-  - Enhance test coverage for morning/evening routines
-- **Next (quality of life + configurability):**
-  - Externalize squad/model config, shared flag parsing, and context filters.
-  - Add blog validation, idea management, and versioning automations tied to the todo/journal loops.
-  - Expand test coverage/smoke checks for the morning/evening routines.
+- **✅ Completed (v2.0.0 release + AI Staff refresh):**
+  - Ten blocker-level shell bugs closed, dispatcher streaming + shared library shipped, spec-driven workflow templates landed, and path/data validation now guards the daily routines.
+  - Security/Troubleshooting docs, bootstrap + `.env` validation, and the AI Staff HQ expansion to 41 specialists keep the toolkit documented and production-ready on macOS.
+- **Now (stability + guard rails):**
+  - Close remaining reliability fixes (R12-R16): deterministic image_resizer outputs, fixed-string `app_launcher`, backup/review guard rails, health dashboard caching, and cross-platform `date` helpers.
+  - Ship API key governance + `ai_suggest` mood/health signals (O4, W2) and add smoke/cron coverage (T1-T3) so startday/goodevening remain trustworthy outside the happy path.
+- **Next (workflow automation):**
+  - Implement blog helpers/validators/publish wrappers (B1-B5, B8) so the editorial loop can run end-to-end from the CLI.
+  - Continue Staff HQ expansion/documentation (S1-S3) and broaden routine coverage with additional dispatcher + hook rehearsals.
 - **Later (analytics + growth):**
-  - Usage dashboards, AI budget tracking, social automation, full persona-driven workflows, and Netlify/Vercel deploy adapters if needed.
+  - Usage dashboards, API budget tracking, persona-driven social automation, and multi-deploy adapters (B6-B11 plus observability follow-ups) once stability tasks are green.
 
 ## 2. Workstreams & Task Backlog
-Task IDs (`R`, `C`, `O`, `W`, `B`, `T`) map to Reliability, Config, Observability, Workflow, Blog, and Testing respectively.
+Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observability, Workflow, Blog, Testing, and Staff Library respectively.
 
 ### 2.1 Reliability & Safety (Bugs)
 - [x] **R1 · `jq` Payload Builder Broken** - Fixed the `jq` command in `bin/dhp-lib.sh` to correctly build the JSON payload.
@@ -39,10 +34,11 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`) map to Reliability, Config, Observabilit
 - [x] **R8 · App Launcher Gets Wrong Arguments** - Fixed the app launcher arguments in `scripts/g.sh`.
 - [x] **R9 · Test Isolation Destroying Real Data** - Fixed `tests/test_todo.sh` to use TEST_DATA_DIR with mktemp and override HOME to prevent real data destruction.
 - [x] **R10 · Blog.sh Path Validation Breaks Fresh Installs** - Fixed `scripts/blog.sh` to create directories before validation and skip validation for external paths.
-- [ ] **R12 · `image_resizer` overwrites** — Ensure repeated runs don't overwrite existing `_resized` files by generating unique filenames. _File: `ai-staff-hq/tools/scripts/image_resizer.py`_
-- [ ] **R13 · `app_launcher` regex lookups** — Use fixed-string matching so shortnames like `.` don't explode. _File: `scripts/app_launcher.sh`_
-- [ ] **R14 · `week_in_review` & `backup_data` guard rails** — Fail fast with clear errors when data files/dirs are missing before running `gawk`/`tar`. _Files: `scripts/week_in_review.sh`, `scripts/backup_data.sh`_
-- [ ] **R15 · `health dashboard` runaway scans** — Cache/git-limit the commits-per-day correlation so invoking the dashboard doesn't traverse every repo each run. _File: `scripts/health.sh`_
+- [x] **R12 · `image_resizer` overwrites** — Avoided clobbering `_resized` artifacts by generating deterministic, incrementing filenames whenever collisions occur. _File: `ai-staff-hq/tools/scripts/image_resizer.py`_
+- [x] **R13 · `app_launcher` regex lookups** — Switched to fixed-string parsing to support shortnames with regex characters. _File: `scripts/app_launcher.sh`_
+- [x] **R14 · `week_in_review` & `backup_data` guard rails** — Added dependency/data checks so missing files or unreadable directories fail fast before invoking `gawk`/`tar`. _Files: `scripts/week_in_review.sh`, `scripts/backup_data.sh`_
+- [x] **R15 · `health dashboard` runaway scans** — Added commit-count caching + lookback limits so the dashboard no longer traverses every repo on each invocation. _File: `scripts/health.sh`_
+- [x] **R16 · Cross-platform `date` helper** — Introduced `scripts/lib/date_utils.sh` and sourced it in the daily routines and health utilities so macOS-only `date -v` usage no longer breaks Linux runs. _Files: `scripts/startday.sh`, `scripts/goodevening.sh`, `scripts/week_in_review.sh`, `scripts/meds.sh`, `scripts/health.sh`_
 ### 2.2 Configuration & Flexibility
 - [x] **C1 · Dynamic squads/config file** — Move the dispatcher squad definitions into `ai-staff-hq/squads.yaml` so scripts can load teams without edits. _Files: `bin/dhp-*.sh`, new config loader_
 - [x] **C2 · Model parameter controls** — Allow temperature/max tokens/top_p to be set via CLI flags or `.env` so creative vs deterministic tasks can be tuned. _Files: `bin/dhp-*.sh`, `.env.example`_
@@ -56,8 +52,8 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`) map to Reliability, Config, Observabilit
 - [ ] **O4 · API key governance** — Support per-dispatcher keys/aliases, rotation reminders, and a `dispatcher auth test` command. Cache metadata (created date, scopes) for proactive warnings. _Files: `.env`, helper script_
 
 ### 2.4 Workflow & UX Improvements
-- [ ] **W1 · Hardcoded squad friction** — (Covered by C1/C3) ensure new squads/models can be added via config, not code edits.
-- [ ] **W2 · AI suggestion polish** — Expand `ai_suggest` with recent journal mood + pending health signals to recommend the right dispatcher (optional, later).
+- [x] **W1 · Hardcoded squad friction** — Addressed via config-driven squads and the `dispatch` entry point (C1/C3).
+- [ ] **W2 · AI suggestion polish** — Current `ai_suggest` only inspects cwd/git/todo keywords; add recent journal mood scoring + health data inputs and better dispatcher ranking so suggestions adapt to energy levels.
 - [x] **W3 · Guard rails for `tidy_downloads`, `media_converter`, etc.** — Document macOS-only assumptions (done) and add optional GNU fallbacks where it’s cheap for contributor machines.
 
 ### 2.5 Blog & Publishing Program
@@ -77,7 +73,7 @@ Design this so the same tooling can point at any Hugo repo, defaulting to `ryanl
 - [ ] **B7 · Deployment config** — Support multiple deploy methods (`digitalocean` repo push default, plus optional Netlify/Vercel/rsync adapters) via `.env`.
 
 #### Phase D · Content Lifecycle Extras
-- [ ] **B8 · Idea syncing** — `blog ideas sync/generate/prioritize/next` to tie journal themes + `content-backlog.md` into `todo.txt`.
+- [ ] **B8 · Idea syncing** — The current `blog ideas` subcommand just proxies `journal search`; add real `blog ideas sync/generate/prioritize/next` flows tying journal themes + `content-backlog.md` into `todo.txt`.
 - [ ] **B9 · Version management** — `blog version bump/check/history` following `VERSIONING-POLICY.md`, with auto journal logging and review reminders.
 - [ ] **B10 · Metrics + exemplars** — `blog metrics` and `blog exemplar` commands for analytics lookups and North Star templates.
 - [ ] **B11 · Social automation** — `blog social --platform twitter|reddit|linkedin` plus optional todo creation for sharing.
@@ -88,6 +84,12 @@ Design this so the same tooling can point at any Hugo repo, defaulting to `ryanl
 - [ ] **T1 · Morning hook smoke test** — Add a simple `zsh -ic startday` CI/cron check to ensure login hooks never regress (from ROADMAP-REVIEW-TEST).
 - [ ] **T2 · Happy-path rehearsal** — Document/run a weekly `startday → status → goodevening` test to ensure the “brain fog” flow stays green.
 - [ ] **T3 · GitHub helper setup checklist** — Keep the PAT instructions (from ROADMAP-REVIEW-TEST) in sync with README/onboarding.
+
+### 2.7 AI Staff HQ (Specialist Library & Tooling)
+- [x] **S0 · Core expansion** — 41/107 specialists shipped with activation patterns, templates, and documentation (Batches 1-4). _Reference: `ai-staff-hq/IMPLEMENTATION-STATUS.md`_
+- [ ] **S1 · Batch 5 coverage** — Implement the remaining 66 niche specialists (culinary, audio/podcast, publishing, wellness, specialty commerce). _Dir: `ai-staff-hq/staff/`_
+- [ ] **S2 · Specialist validator** — Build lint/validation tooling (schema + quality checks) for staff YAML plus a CLI/CI entry point. _Files: `ai-staff-hq/tools/` (new), `ai-staff-hq/docs/`_
+- [ ] **S3 · Staff roadmap/doc refresh** — Update `ai-staff-hq/ROADMAP.md` and supporting docs to reflect the 41-specialist baseline, spec workflow, and upcoming phases.
 
 ## 3. Completed & Reference Notes
 - Historic write-ups (`blindspots.md`, `review.md`, `ry.md`, `ROADMAP-REVIEW*.md`) are preserved for context; the actionable backlog now lives here.

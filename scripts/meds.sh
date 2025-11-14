@@ -2,6 +2,16 @@
 set -euo pipefail
 # meds.sh - Medication tracking and reminder system
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
+if [ -f "$DATE_UTILS" ]; then
+    # shellcheck disable=SC1090
+    source "$DATE_UTILS"
+else
+    echo "Error: date utilities not found at $DATE_UTILS" >&2
+    exit 1
+fi
+
 SYSTEM_LOG_FILE="$HOME/.config/dotfiles-data/system.log"
 MEDS_FILE="$HOME/.config/dotfiles-data/medications.txt"
 
@@ -44,7 +54,7 @@ case "$1" in
 
         echo ""
         echo "📅 RECENT DOSES (last 7 days):"
-        cutoff=$(date -v-7d '+%Y-%m-%d')
+        cutoff=$(date_shift_days -7 "%Y-%m-%d")
         grep "^DOSE|" "$MEDS_FILE" 2>/dev/null | awk -F'|' -v cutoff="$cutoff" '
             $2 >= cutoff {
                 printf "  • %s: %s\n", $2, $3
@@ -129,7 +139,7 @@ case "$1" in
         fi
         echo ""
 
-        cutoff=$(date -v-"${days}"d '+%Y-%m-%d')
+        cutoff=$(date_shift_days "-${days}" "%Y-%m-%d")
 
         if [ -n "$med_name" ]; then
             grep "^DOSE|" "$MEDS_FILE" 2>/dev/null | grep "$med_name" | awk -F'|' -v cutoff="$cutoff" '
@@ -152,7 +162,7 @@ case "$1" in
 
         # --- Configuration ---
         DAYS_AGO=30
-        CUTOFF_DATE=$(date -v-${DAYS_AGO}d '+%Y-%m-%d')
+        CUTOFF_DATE=$(date_shift_days "-$DAYS_AGO" "%Y-%m-%d")
         MEDS_FILE="$HOME/.config/dotfiles-data/medications.txt"
 
         if [ ! -f "$MEDS_FILE" ]; then

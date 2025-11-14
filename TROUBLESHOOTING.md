@@ -64,9 +64,9 @@ This document provides solutions to common issues encountered when setting up an
 
 ### `date` command errors (`-v` flag not working)
 
-**Problem:** Some scripts use `date -v` (e.g., `date -v-7d`) which is a GNU `date` extension or macOS-specific. If you are on a different Unix-like system, this might not work.
+**Problem:** Earlier versions relied on the macOS-only `date -v` flag for relative time math. Modern scripts now route through `scripts/lib/date_utils.sh`, which prefers `python3` and falls back to BSD/GNU `date` when available. If the helper cannot find any compatible tool, you'll still see errors.
 
-**Solution:** The dotfiles are primarily designed for macOS. If you are on Linux, you might need to install `coreutils` (for GNU `date`) or adjust the `date` commands to use your system's `date` syntax.
+**Solution:** Ensure `python3` is installed (macOS and most Linux distros include it). If you prefer not to use Python, install GNU coreutils (`brew install coreutils` on macOS, or your distro package on Linux) so `gdate` is available as a fallback.
 
 ### `osascript` errors
 

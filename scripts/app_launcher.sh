@@ -33,17 +33,26 @@ case "$1" in
             echo "  app <n>                : Launch favorite app"
             exit 1
         fi
-        
-        if [ -f "$APPS_FILE" ]; then
-            APP_NAME=$(grep "^$1:" "$APPS_FILE" | cut -d: -f2-)
-            if [ -n "$APP_NAME" ]; then
-                open -a "$APP_NAME"
-                echo "Launched: $APP_NAME"
-            else
-                echo "App '$1' not found. Use 'app list' to see available apps."
-            fi
-        else
+
+        if [ ! -f "$APPS_FILE" ]; then
             echo "No favorite apps configured yet."
+            exit 1
+        fi
+
+        APP_NAME=""
+        while IFS=':' read -r short app_name; do
+            [ -z "$short" ] && continue
+            if [ "$short" = "$1" ]; then
+                APP_NAME="$app_name"
+                break
+            fi
+        done < "$APPS_FILE"
+
+        if [ -n "$APP_NAME" ]; then
+            open -a "$APP_NAME"
+            echo "Launched: $APP_NAME"
+        else
+            echo "App '$1' not found. Use 'app list' to see available apps."
         fi
         ;;
 esac

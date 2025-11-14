@@ -10,8 +10,28 @@ BACKUP_DIR="${DOTFILES_BACKUP_DIR:-$BACKUP_DIR_DEFAULT}"
 # Source directory
 SOURCE_DIR="$HOME/.config/dotfiles-data"
 
+# Pre-flight checks
+if ! command -v tar >/dev/null 2>&1; then
+  echo "Error: tar is required to run backup_data." >&2
+  exit 1
+fi
+
+if [ ! -d "$SOURCE_DIR" ]; then
+  echo "Error: Source data directory not found at $SOURCE_DIR" >&2
+  exit 1
+fi
+
+if [ ! -r "$SOURCE_DIR" ]; then
+  echo "Error: Source data directory is not readable: $SOURCE_DIR" >&2
+  exit 1
+fi
+
 # Create backup directory if it doesn't exist
 mkdir -p "$BACKUP_DIR"
+if [ ! -w "$BACKUP_DIR" ]; then
+  echo "Error: Backup directory is not writable: $BACKUP_DIR" >&2
+  exit 1
+fi
 
 # Create the timestamped backup file
 TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")

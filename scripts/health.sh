@@ -2,7 +2,22 @@
 set -euo pipefail
 # health.sh - Track health appointments, symptoms, and energy levels
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
+if [ -f "$DATE_UTILS" ]; then
+    # shellcheck disable=SC1090
+    source "$DATE_UTILS"
+else
+    echo "Error: date utilities not found at $DATE_UTILS" >&2
+    exit 1
+fi
+
 HEALTH_FILE="$HOME/.config/dotfiles-data/health.txt"
+CACHE_DIR="$HOME/.config/dotfiles-data/cache"
+mkdir -p "$CACHE_DIR"
+COMMITS_CACHE_FILE="$CACHE_DIR/health_commits.cache"
+COMMITS_CACHE_TTL="${HEALTH_COMMITS_CACHE_TTL:-3600}"
+COMMITS_LOOKBACK_DAYS="${HEALTH_COMMITS_LOOKBACK_DAYS:-90}"
 
 # --- Helper Functions ---
 correlate_tasks() {
@@ -72,12 +87,15 @@ correlate_commits() {
 
     # Build associative array of commits per day
     declare -A commits_by_day
-    while IFS= read -r gitdir; do
-        proj_dir=$(dirname "$gitdir")
-        (cd "$proj_dir" && git log --all --pretty=format:%cs 2>/dev/null || true) | while read -r day; do
-            commits_by_day[$day]=$(( ${commits_by_day[$day]:-0} + 1 ))
-        done
-    done < <(find "$projects_dir" -maxdepth 2 -type d -name ".git" 2>/dev/null || true)
+    if ! load_commit_cache commits_by_day; then
+        while IFS= read -r gitdir; do
+            proj_dir=$(dirname "$gitdir")
+            (cd "$proj_dir" && git log --all --since="${COMMITS_LOOKBACK_DAYS} days ago" --pretty=format:%cs 2>/dev/null || true) | while read -r day; do
+                commits_by_day[$day]=$(( ${commits_by_day[$day]:-0} + 1 ))
+            done
+        done < <(find "$projects_dir" -maxdepth 2 -type d -name ".git" 2>/dev/null || true)
+        save_commit_cache commits_by_day
+    fi
 
     local low_energy_commits=0
     local low_energy_days=0
@@ -168,8 +186,13 @@ case "$1" in
         echo "🏥 UPCOMING HEALTH APPOINTMENTS:"
         appt_found=false
         if grep -q "^APPT|" "$HEALTH_FILE" 2>/dev/null; then
+            current_epoch=$(date +%s)
             grep "^APPT|" "$HEALTH_FILE" | sort -t'|' -k2 | while IFS='|' read -r type appt_date desc; do
-                days_until=$(( ( $(date -j -f "%Y-%m-%d %H:%M" "$appt_date" +%s 2>/dev/null || echo 0) - $(date +%s) ) / 86400 ))
+                appt_epoch=$(timestamp_to_epoch "$appt_date")
+                if [ "$appt_epoch" -le 0 ]; then
+                    continue
+                fi
+                days_until=$(( ( appt_epoch - current_epoch ) / 86400 ))
                 if [ "$days_until" -ge 0 ]; then
                     echo "  • $desc - $appt_date (in $days_until days)"
                     appt_found=true
@@ -182,7 +205,7 @@ case "$1" in
 
         echo ""
         echo "📊 RECENT ENERGY LEVELS (last 7 days):"
-        cutoff=$(date -v-7d '+%Y-%m-%d')
+        cutoff=$(date_shift_days -7 "%Y-%m-%d")
         if grep -q "^ENERGY|" "$HEALTH_FILE" 2>/dev/null; then
             grep "^ENERGY|" "$HEALTH_FILE" | awk -F'|' -v cutoff="$cutoff" '
                 $2 >= cutoff {
@@ -240,7 +263,7 @@ case "$1" in
 
         # Determine timeframe (default: last 7 days, or specify number of days)
         days=${2:-7}
-        cutoff=$(date -v-"${days}"d '+%Y-%m-%d')
+        cutoff=$(date_shift_days "-${days}" "%Y-%m-%d")
 
         output_file="${HEALTH_EXPORT_FILE:-$HOME/health_export_$(date '+%Y%m%d').md}"
 
@@ -297,25 +320,17 @@ EOF
         { echo ""; } >> "$output_file"
 
         if grep -q "^APPT|" "$HEALTH_FILE" 2>/dev/null; then
-            grep "^APPT|" "$HEALTH_FILE" | sort -t'|' -k2 | awk -F'|' '
-                {
-                    appt_date = $2
-                    desc = $3
-                    cmd = "date +%s"
-                    cmd | getline now
-                    close(cmd)
-
-                    cmd2 = "date -j -f \"%Y-%m-%d %H:%M\" \"" appt_date "\" +%s 2>/dev/null || echo 0"
-                    cmd2 | getline appt_epoch
-                    close(cmd2)
-
-                    days_until = int((appt_epoch - now) / 86400)
-
-                    if (days_until >= 0) {
-                        printf "- **%s**: %s (in %d days)\n", appt_date, desc, days_until
-                    }
-                }
-            ' >> "$output_file"
+            current_epoch=$(date +%s)
+            while IFS='|' read -r _ appt_date desc; do
+                appt_epoch=$(timestamp_to_epoch "$appt_date")
+                if [ "$appt_epoch" -le 0 ]; then
+                    continue
+                fi
+                days_until=$(( ( appt_epoch - current_epoch ) / 86400 ))
+                if [ "$days_until" -ge 0 ]; then
+                    printf "- **%s**: %s (in %d days)\n" "$appt_date" "$desc" "$days_until" >> "$output_file"
+                fi
+            done < <(grep "^APPT|" "$HEALTH_FILE" | sort -t'|' -k2)
         else
             echo "No upcoming appointments." >> "$output_file"
         fi
@@ -393,7 +408,7 @@ EOF
 
         # --- Configuration ---
         DAYS_AGO=30
-        CUTOFF_DATE=$(date -v-${DAYS_AGO}d '+%Y-%m-%d')
+        CUTOFF_DATE=$(date_shift_days "-$DAYS_AGO" "%Y-%m-%d")
         HEALTH_FILE="$HOME/.config/dotfiles-data/health.txt"
 
         if [ ! -f "$HEALTH_FILE" ]; then
@@ -504,3 +519,52 @@ EOF
         exit 1
         ;;
 esac
+get_file_mtime() {
+    local file="$1"
+    if command -v stat >/dev/null 2>&1; then
+        if stat -f %m "$file" >/dev/null 2>&1; then
+            stat -f %m "$file"
+        else
+            stat -c %Y "$file"
+        fi
+    else
+        python3 - "$file" <<'PY'
+import os, sys
+print(int(os.path.getmtime(sys.argv[1])))
+PY
+    fi
+}
+
+load_commit_cache() {
+    local target_array="$1"
+    if [ ! -f "$COMMITS_CACHE_FILE" ]; then
+        return 1
+    fi
+
+    local now mtime age
+    now=$(date +%s)
+    mtime=$(get_file_mtime "$COMMITS_CACHE_FILE")
+    age=$((now - mtime))
+    if [ "$age" -ge "$COMMITS_CACHE_TTL" ]; then
+        return 1
+    fi
+
+    while read -r day count; do
+        [ -z "$day" ] && continue
+        eval "$target_array[\"\$day\"]=\$count"
+    done < "$COMMITS_CACHE_FILE"
+    return 0
+}
+
+save_commit_cache() {
+    local src_array="$1"
+    mkdir -p "$CACHE_DIR"
+    local tmp_file="$COMMITS_CACHE_FILE.tmp"
+    : > "$tmp_file"
+    eval "local keys=(\"\${!$src_array[@]}\")"
+    for day in "${keys[@]}"; do
+        eval "local value=\"\${$src_array[\"$day\"]}\""
+        printf "%s %s\n" "$day" "$value" >> "$tmp_file"
+    done
+    mv "$tmp_file" "$COMMITS_CACHE_FILE"
+}

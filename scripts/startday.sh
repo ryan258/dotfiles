@@ -2,6 +2,16 @@
 set -euo pipefail
 # startday.sh - Enhanced morning routine
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
+if [ -f "$DATE_UTILS" ]; then
+    # shellcheck disable=SC1090
+    source "$DATE_UTILS"
+else
+    echo "Error: date utilities not found at $DATE_UTILS" >&2
+    exit 1
+fi
+
 SYSTEM_LOG_FILE="$HOME/.config/dotfiles-data/system.log"
 echo "$(date): startday.sh - Running morning routine." >> "$SYSTEM_LOG_FILE"
 
@@ -33,8 +43,8 @@ fi
 
 # --- WEEKLY REVIEW ---
 if [ "$(date +%u)" -eq 1 ]; then
-    WEEK_NUM=$(date -v-1d +%V)
-    YEAR=$(date -v-1d +%Y)
+    WEEK_NUM=$(date_shift_days -1 "%V")
+    YEAR=$(date_shift_days -1 "%Y")
     REVIEW_FILE="$HOME/Documents/Reviews/Weekly/$YEAR-W$WEEK_NUM.md"
     if [ -f "$REVIEW_FILE" ]; then
         echo ""
@@ -100,32 +110,10 @@ fi
 
 # --- Helpers ---
 parse_timestamp() {
-    local raw="$1" epoch=""
-
-    # Full datetime with minutes (preferred)
-    if epoch=$(date -j -f "%Y-%m-%d %H:%M" "$raw" +%s 2>/dev/null); then
-        echo "$epoch"
-        return
-    fi
-
-    # Datetime missing minutes (e.g., "2025-11-18 11")
-    if [[ "$raw" =~ ^([0-9]{4}-[0-9]{2}-[0-9]{2})[[:space:]]+([0-9]{1,2})$ ]]; then
-        local padded_hour
-        printf -v padded_hour "%02d:00" "${BASH_REMATCH[2]}"
-        local normalized="${BASH_REMATCH[1]} ${padded_hour}"
-        if epoch=$(date -j -f "%Y-%m-%d %H:%M" "$normalized" +%s 2>/dev/null); then
-            echo "$epoch"
-            return
-        fi
-    fi
-
-    # Date-only entries
-    if epoch=$(date -j -f "%Y-%m-%d" "$raw" +%s 2>/dev/null); then
-        echo "$epoch"
-        return
-    fi
-
-    echo "0"
+    local raw="$1"
+    local epoch
+    epoch=$(timestamp_to_epoch "$raw")
+    echo "${epoch:-0}"
 }
 
 # --- HEALTH ---
@@ -181,7 +169,7 @@ STALE_TODO_FILE="$HOME/.config/dotfiles-data/todo.txt"
 echo ""
 echo "⏰ STALE TASKS:"
 if [ -f "$STALE_TODO_FILE" ] && [ -s "$STALE_TODO_FILE" ]; then
-    CUTOFF_DATE=$(date -v-"${STALE_TASK_DAYS:-7}"d '+%Y-%m-%d')
+    CUTOFF_DATE=$(date_shift_days "-${STALE_TASK_DAYS:-7}" "%Y-%m-%d")
     awk -F'|' -v cutoff="$CUTOFF_DATE" '$1 < cutoff { printf "  • %s (from %s)\n", $2, $1 }' "$STALE_TODO_FILE"
 fi
 

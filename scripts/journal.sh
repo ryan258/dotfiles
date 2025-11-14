@@ -3,6 +3,16 @@ set -euo pipefail
 
 # --- A quick command-line journal ---
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
+if [ -f "$DATE_UTILS" ]; then
+    # shellcheck disable=SC1090
+    source "$DATE_UTILS"
+else
+    echo "Error: date utilities not found at $DATE_UTILS" >&2
+    exit 1
+fi
+
 JOURNAL_FILE="$HOME/.config/dotfiles-data/journal.txt"
 
 # --- Main Logic ---
@@ -95,7 +105,7 @@ case "${1:-add}" in
     echo ""
 
     # Get entries from last 7 days
-    SEVEN_DAYS_AGO=$(date -v-7d "+%Y-%m-%d")
+    SEVEN_DAYS_AGO=$(date_shift_days -7 "%Y-%m-%d")
     RECENT_ENTRIES=$(awk -v cutoff="$SEVEN_DAYS_AGO" '$0 ~ /^\[/ { if ($1 >= "["cutoff) print }' "$JOURNAL_FILE")
 
     if [ -z "$RECENT_ENTRIES" ]; then
@@ -136,7 +146,7 @@ case "${1:-add}" in
     echo ""
 
     # Get entries from last 14 days
-    FOURTEEN_DAYS_AGO=$(date -v-14d "+%Y-%m-%d")
+    FOURTEEN_DAYS_AGO=$(date_shift_days -14 "%Y-%m-%d")
     RECENT_ENTRIES=$(awk -v cutoff="$FOURTEEN_DAYS_AGO" '$0 ~ /^\[/ { if ($1 >= "["cutoff) print }' "$JOURNAL_FILE")
 
     if [ -z "$RECENT_ENTRIES" ]; then
@@ -175,7 +185,7 @@ case "${1:-add}" in
     echo ""
 
     # Get entries from last 30 days
-    THIRTY_DAYS_AGO=$(date -v-30d "+%Y-%m-%d")
+    THIRTY_DAYS_AGO=$(date_shift_days -30 "%Y-%m-%d")
     RECENT_ENTRIES=$(awk -v cutoff="$THIRTY_DAYS_AGO" '$0 ~ /^\[/ { if ($1 >= "["cutoff) print }' "$JOURNAL_FILE")
 
     if [ -z "$RECENT_ENTRIES" ]; then

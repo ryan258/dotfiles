@@ -4,6 +4,16 @@ set -euo pipefail
 # ai_suggest.sh: Context-Aware Dispatcher Suggestion System
 # Analyzes current context and suggests relevant AI dispatchers
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
+if [ -f "$DATE_UTILS" ]; then
+    # shellcheck disable=SC1090
+    source "$DATE_UTILS"
+else
+    echo "Error: date utilities not found at $DATE_UTILS" >&2
+    exit 1
+fi
+
 DATA_DIR="$HOME/.config/dotfiles-data"
 TODO_FILE="$DATA_DIR/todo.txt"
 JOURNAL_FILE="$DATA_DIR/journal.txt"
@@ -97,7 +107,7 @@ fi
 # 4. Recent journal activity
 if [ -f "$JOURNAL_FILE" ]; then
     # Get last 3 days of journal entries
-    THREE_DAYS_AGO=$(date -v-3d "+%Y-%m-%d" 2>/dev/null || date -d "3 days ago" "+%Y-%m-%d")
+    THREE_DAYS_AGO=$(date_shift_days -3 "%Y-%m-%d")
     RECENT_JOURNAL=$(awk -v cutoff="$THREE_DAYS_AGO" '$0 ~ /^\[/ { if ($1 >= "["cutoff) print }' "$JOURNAL_FILE" 2>/dev/null | tail -10)
 
     if [ -n "$RECENT_JOURNAL" ]; then
