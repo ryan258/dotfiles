@@ -59,7 +59,7 @@ list_known_sections() {
     echo "guide guides blog blogs prompt prompts prompt-card shortcut shortcuts shortcut-spotlight system-instruction"
 }
 
-read -r -d '' DEFAULT_SECTION_EXEMPLARS <<'EOF'
+DEFAULT_SECTION_EXEMPLARS=$(cat <<'EOF'
 guides/ai-frameworks|content/guides/ai-frameworks/advanced-prompting.md
 guides/brain-fog|content/guides/brain-fog/daily-briefing.md
 guides/keyboard-efficiency|content/guides/keyboard-efficiency/core-5-shortcuts.md
@@ -70,6 +70,7 @@ shortcuts/automations|content/shortcuts/automations/ai-summary-spotlight.md
 shortcuts/keyboard-shortcuts|content/shortcuts/keyboard-shortcuts/core-5-spotlight.md
 shortcuts/system-instructions|content/shortcuts/system-instructions/brain-fog-assistant-persona.md
 EOF
+)
 
 SECTION_EXEMPLARS="${BLOG_SECTION_EXEMPLARS:-$DEFAULT_SECTION_EXEMPLARS}"
 

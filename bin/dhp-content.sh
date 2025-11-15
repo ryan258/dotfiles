@@ -70,10 +70,14 @@ load_persona_block() {
     }
     /^##[ \t]+/ {
         current=slugify(substr($0,3))
-        if (capture && current != target) {
+        if (capture && index(current,target) != 1) {
             exit
         }
-        capture = (current == target)
+        if (current == target || index(current,target)==1) {
+            capture = 1
+        } else {
+            capture = 0
+        }
         next
     }
     capture { print }
