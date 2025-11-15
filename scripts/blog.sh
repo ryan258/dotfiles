@@ -502,7 +502,7 @@ $file_content"
         [ -n "$persona" ] && cmd+=(--persona "$persona")
         [ -n "$use_context" ] && cmd+=("$use_context")
         cmd+=("$input_text")
-        "${cmd[@]}"
+        DHP_CONTENT_OUTPUT_DIR="$target_dir" "${cmd[@]}"
     else
         echo "Error: dhp-content.sh dispatcher not found"
         echo "Make sure bin/ is in your PATH"
@@ -511,7 +511,7 @@ $file_content"
 
     echo ""
     echo "✅ Content generation complete"
-    echo "Review and edit the generated output in: ${DHP_CONTENT_OUTPUT_DIR:-~/Documents/AI_Staff_HQ_Outputs/Content/Guides/}"
+    echo "Review and edit the generated output in: $target_dir"
 }
 
 function refine() {
