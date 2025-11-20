@@ -253,7 +253,7 @@ alias launch="app_launcher.sh"
 
 # Reminders and notifications
 alias remind="remind_me.sh"
-alias done="done.sh"
+alias did="done.sh"       # Renamed from 'done' (reserved keyword)
 
 # Development shortcuts
 alias dev="dev_shortcuts.sh"
