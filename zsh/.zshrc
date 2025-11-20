@@ -1,3 +1,7 @@
+export NVM_DIR="$HOME/.nvm"
+[ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && . "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
+[ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && . "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
+
 # --- reserved names hardening (runs AFTER aliases load) ---
 unalias env  2>/dev/null; unset -f env  2>/dev/null
 unalias open 2>/dev/null; unset -f open 2>/dev/null
@@ -51,3 +55,6 @@ __log_directory_change() {
     echo "$(date +%s):$(pwd)" >> "$USAGE_LOG"
 }
 add-zsh-hook chpwd __log_directory_change
+
+# Added by Antigravity
+export PATH="/Users/ryanjohnson/.antigravity/antigravity/bin:$PATH"
