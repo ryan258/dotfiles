@@ -184,7 +184,8 @@ case "$1" in
             exit 0
         fi
 
-        for med in $MEDS; do
+        while IFS= read -r med; do
+            [ -z "$med" ] && continue
             # Get schedule for the med
             SCHEDULE=$(grep "^MED|$med|" "$MEDS_FILE" | cut -d'|' -f3)
             DOSES_PER_DAY=$(echo "$SCHEDULE" | tr ',' '\n' | wc -l | tr -d ' ')
@@ -202,7 +203,7 @@ case "$1" in
             else
                 echo "• $med: N/A (no schedule found)"
             fi
-        done
+        done <<< "$MEDS"
         ;;
 
     remove)

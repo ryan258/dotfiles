@@ -462,14 +462,15 @@ EOF
         if [ -n "$FOG_DAYS" ]; then
             FOG_DAY_ENERGY_SUM=0
             FOG_DAY_ENERGY_COUNT=0
-            for day in $FOG_DAYS; do
+            while read -r day; do
+                [ -z "$day" ] && continue
                 # Get energy for that day. If multiple, take the first one.
                 ENERGY_ON_FOG_DAY=$(echo "$RECENT_DATA" | grep "^ENERGY" | grep "^ENERGY|$day" | head -n 1 | awk -F'|' '{print $3}')
                 if [ -n "$ENERGY_ON_FOG_DAY" ]; then
                     FOG_DAY_ENERGY_SUM=$((FOG_DAY_ENERGY_SUM + ENERGY_ON_FOG_DAY))
                     FOG_DAY_ENERGY_COUNT=$((FOG_DAY_ENERGY_COUNT + 1))
                 fi
-            done
+            done <<< "$FOG_DAYS"
 
             if [ "$FOG_DAY_ENERGY_COUNT" -gt 0 ]; then
                 AVG_ENERGY_FOG=$(awk "BEGIN {printf \"%.1f\", $FOG_DAY_ENERGY_SUM / $FOG_DAY_ENERGY_COUNT}")

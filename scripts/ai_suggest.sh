@@ -27,7 +27,6 @@ SUGGESTIONS=()
 
 # 1. Current directory context
 CURRENT_DIR=$(pwd)
-DIR_NAME=$(basename "$CURRENT_DIR")
 CONTEXT+="Current directory: $CURRENT_DIR\n"
 
 # Check if we're in a known project directory

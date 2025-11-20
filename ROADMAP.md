@@ -83,11 +83,11 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 - [ ] **S3 · Documentation refresh** - _Not yet implemented_. Plan: Update `ai-staff-hq/ROADMAP.md` and supporting docs to reflect 41-specialist baseline, v3 structure, spec workflow, and integration patterns.
 
 ### 2.8 Code Quality & Technical Debt (from Fixit Audit)
-- [ ] **Q1 · Unused variable cleanup** - Review and remove unused variables in `dhp-content.sh`, `dhp-project.sh`, `ai_suggest.sh`, etc. (e.g., `PARAM_TEMPERATURE`, `AI_STAFF_DIR`).
-- [ ] **Q2 · Return value masking** - Fix masking of return values in `blog.sh`, `spec_helper.sh`, `tidy_downloads.sh` where variables are declared and assigned in one line.
-- [ ] **Q3 · Subshell scope fixes** - Refactor `goodevening.sh` to avoid modifying variables inside subshells (e.g., `found_issues`).
-- [ ] **Q4 · Robust output parsing** - Replace `VAR=($(command))` with `mapfile` or `read -a` in `blog.sh` for safer array parsing.
-- [ ] **Q5 · Style improvements** - Address minor style issues: check exit codes directly (`if mycmd;`), use `pgrep` instead of `ps | grep`, double quote all variables in `health.sh`/`meds.sh`.
+- [x] **Q1 · Unused variable cleanup** - Review and remove unused variables in `dhp-content.sh`, `dhp-project.sh`, `ai_suggest.sh`, etc. (e.g., `PARAM_TEMPERATURE`, `AI_STAFF_DIR`).
+- [x] **Q2 · Return value masking** - Fix masking of return values in `blog.sh`, `spec_helper.sh`, `tidy_downloads.sh` where variables are declared and assigned in one line.
+- [x] **Q3 · Subshell scope fixes** - Refactor `goodevening.sh` to avoid modifying variables inside subshells (e.g., `found_issues`).
+- [x] **Q4 · Robust output parsing** - Replace `VAR=($(command))` with `mapfile` or `read -a` in `blog.sh` for safer array parsing.
+- [x] **Q5 · Style improvements** - Address minor style issues: check exit codes directly (`if mycmd;`), use `pgrep` instead of `ps | grep`, double quote all variables in `health.sh`/`meds.sh`.
 
 ## 3. Project Status Summary
 

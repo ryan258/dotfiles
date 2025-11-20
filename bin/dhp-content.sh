@@ -87,8 +87,6 @@ load_persona_block() {
 # Parse flags
 USE_CONTEXT=false
 USE_STREAMING=false
-PARAM_TEMPERATURE=""
-PARAM_MAX_TOKENS=""
 PERSONA_NAME=""
 while [[ "$1" == --* ]]; do
     case "$1" in
@@ -104,14 +102,6 @@ while [[ "$1" == --* ]]; do
     --stream)
             USE_STREAMING=true
             shift
-            ;;
-        --temperature)
-            PARAM_TEMPERATURE="$2"
-            shift 2
-            ;;
-        --max-tokens)
-            PARAM_MAX_TOKENS="$2"
-            shift 2
             ;;
         --persona)
             PERSONA_NAME="$2"

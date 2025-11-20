@@ -59,6 +59,12 @@ This major release represents a comprehensive security audit and hardening of th
 
 ---
 
+### Code Quality & Technical Debt (November 20, 2025)
+- **Cleanup:** Removed unused variables in `dhp-content.sh`, `dhp-project.sh`, and `ai_suggest.sh`.
+- **Robustness:** Fixed return value masking in `tidy_downloads.sh` and `spec_helper.sh`.
+- **Bug Fixes:** Resolved subshell scope issues in `goodevening.sh` to correctly track project issues.
+- **Parsing:** Improved loop robustness in `meds.sh` and `health.sh` to handle input with spaces.
+
 ## G3 Audit Recommendations (November 20, 2025)
 
 **Status:** ✅ Completed

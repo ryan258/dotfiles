@@ -74,18 +74,23 @@ echo "🚀 PROJECT SAFETY CHECK:"
 if [ -d "$PROJECTS_DIR" ]; then
     found_issues=false
 
+    # Create a temp file to track issues found in subshells
+    ISSUES_LOG=$(mktemp)
+    
     while IFS= read -r gitdir; do
         proj_dir=$(dirname "$gitdir")
         proj_name=$(basename "$proj_dir")
 
         (
             cd "$proj_dir" || exit
+            
+            issue_found=false
 
             # Check for uncommitted changes
             if git status --porcelain | grep -q .; then
                 change_count=$(git status --porcelain | wc -l | tr -d ' ')
                 echo "  ⚠️  $proj_name: $change_count uncommitted changes"
-                found_issues=true
+                issue_found=true
 
                 # Check for large diffs
                 additions=$(git diff --stat | tail -1 | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo "0")
@@ -110,7 +115,7 @@ if [ -d "$PROJECTS_DIR" ]; then
 
                     if [ "$branch_age_days" -gt 7 ]; then
                         echo "  ⚠️  $proj_name: On branch '$current_branch' (${branch_age_days} days old)"
-                        found_issues=true
+                        issue_found=true
 
                         # Check if branch is pushed to remote
                         if remote_check=$(git ls-remote --heads origin "$current_branch" 2>&1); then
@@ -130,16 +135,25 @@ if [ -d "$PROJECTS_DIR" ]; then
                         # Upstream exists, check for unpushed commits
                         if ! unpushed=$(git rev-list @{u}..HEAD --count 2>&1); then
                             echo "  ⚠️  $proj_name: Failed to check unpushed commits: $unpushed"
-                            found_issues=true
+                            issue_found=true
                         elif [ "$unpushed" -gt 0 ]; then
                             echo "  📤 $proj_name: $unpushed unpushed commit(s) on $current_branch"
-                            found_issues=true
+                            issue_found=true
                         fi
                     fi
                 fi
             fi
+            
+            if [ "$issue_found" = true ]; then
+                echo "issue" >> "$ISSUES_LOG"
+            fi
         )
     done < <(find "$PROJECTS_DIR" -maxdepth 2 -type d -name ".git")
+
+    if [ -s "$ISSUES_LOG" ]; then
+        found_issues=true
+    fi
+    rm "$ISSUES_LOG"
 
     if [ "$found_issues" = false ]; then
         echo "  ✅ All projects clean (no uncommitted changes, stale branches, or unpushed commits)"

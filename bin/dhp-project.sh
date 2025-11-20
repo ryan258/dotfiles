@@ -5,7 +5,6 @@ set -e
 # Coordinates multiple AI specialists for complex projects
 
 DOTFILES_DIR="$HOME/dotfiles"
-AI_STAFF_DIR="$DOTFILES_DIR/ai-staff-hq"
 
 if [ -f "$DOTFILES_DIR/.env" ]; then
     source "$DOTFILES_DIR/.env"

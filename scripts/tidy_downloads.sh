@@ -41,8 +41,10 @@ should_ignore() {
 
   # Check if file was modified in the last 60 seconds (actively being downloaded)
   if [ "$FORCE_MODE" = false ]; then
-    local mod_time; mod_time=$(stat -f %m "$file" 2>/dev/null || echo 0)
-    local now; now=$(date +%s)
+    local mod_time
+    mod_time=$(stat -f %m "$file" 2>/dev/null || echo 0)
+    local now
+    now=$(date +%s)
     local age=$((now - mod_time))
     if [ "$age" -lt 60 ]; then
       return 0  # Ignore (true)

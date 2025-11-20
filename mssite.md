@@ -1,6 +1,6 @@
 # MS Blog Site Reference
 
-**Root:** `/Users/ryanjohnson/Projects/my-ms-ai-blog`  
+**Root:** `$HOME/Projects/my-ms-ai-blog`  
 **Engine:** Hugo (PaperMod theme, Dark default)  
 **Primary Sections:** prompts, shortcuts, guides, blog  
 **Base URL:** `https://ryanleej.com/`
@@ -36,7 +36,7 @@
 - Versioning rules: per `VERSIONING-POLICY.md`.
 
 ## Useful Paths
-- `BLOG_DIR` (in `.env`): `/Users/ryanjohnson/Projects/my-ms-ai-blog`.  
+- `BLOG_DIR` (in `.env`): `$HOME/Projects/my-ms-ai-blog`.  
 - Recent content command: `scripts/blog_recent_content.sh` reads `BLOG_CONTENT_DIR`.  
 - Spec workflows: `openspec/`, `docs/AGENTS.md`, etc.  
 - Build command: `hugo --gc --minify` from repo root.
