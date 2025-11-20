@@ -1,6 +1,6 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** November 12, 2025
+**Last Updated:** November 20, 2025
 
 This document tracks all major implementations, improvements, and fixes to the Daily Context System.
 
@@ -64,6 +64,14 @@ This major release represents a comprehensive security audit and hardening of th
 - **Robustness:** Fixed return value masking in `tidy_downloads.sh` and `spec_helper.sh`.
 - **Bug Fixes:** Resolved subshell scope issues in `goodevening.sh` to correctly track project issues.
 - **Parsing:** Improved loop robustness in `meds.sh` and `health.sh` to handle input with spaces.
+
+### Roadmap Deliverables Completed (November 20, 2025)
+- **Observability (O1-O3):** Streaming exit codes propagate correctly; dispatcher usage logging writes to `dispatcher_usage.log`; context redaction guards sensitive data before AI calls.
+- **Workflow (W1, W3):** Squads now load from `ai-staff-hq/squads.json` instead of hardcoded values; macOS-specific scripts are documented with guard rails and cross-platform helpers.
+- **Blog & Publishing (B1, B3-B6, B12):** Draft scaffolding and full workflow orchestration landed; validation and pre-commit hooks added; publish command finalized; drafts and recent content surface in status routines.
+- **Testing & Operations (T0):** BATS test suite established for `todo.sh`.
+- **AI Staff HQ (S0):** 41 specialists shipped across categories with dynamic squad integration.
+- **Code Quality (Q1-Q5):** Unused variables removed, return-value masking fixed, subshell state tracked correctly, safer parsing patterns adopted, and shell style/quoting tightened.
 
 ## G3 Audit Recommendations (November 20, 2025)
 

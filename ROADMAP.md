@@ -31,32 +31,25 @@ _Last updated: November 14, 2025 (comprehensive codebase review)_
 Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observability, Workflow, Blog, Testing, and Staff Library respectively.
 
 ### 2.3 Observability, Streaming & Governance
-- [x] **O1 · Streaming exit codes** - Implemented robust streaming with proper error propagation in `bin/dhp-lib.sh:100-143`. All 10 dispatchers support `--stream` flag.
-- [x] **O2 · Dispatcher usage logging** - Usage logging to `~/.config/dotfiles-data/dispatcher_usage.log` with timestamp, dispatcher, model, tokens, duration, exit code. Stats view available.
-- [x] **O3 · Context redaction & controls** - Implemented redaction function in `bin/dhp-context.sh` to filter sensitive data before AI submission. Configurable via `.env`.
+- **Completed:** O1-O3 moved to `CHANGELOG.md` (Nov 20, 2025) covering streaming exit codes, dispatcher usage logging, and context redaction.
 - [ ] **O4 · API key governance** - _Not yet implemented_. Plan: Support per-dispatcher keys/aliases, rotation reminders, `dispatcher auth test` command, metadata caching for proactive warnings.
 - [ ] **O5 · Rate limiting & budget alerts** - _Not yet implemented_. Plan: Implement exponential backoff for retries, detect 429 responses, and add monthly budget warnings based on cost tracking.
 
 ### 2.4 Workflow & UX Improvements
-- [x] **W1 · Hardcoded squad friction** - Resolved via config-driven squads (`ai-staff-hq/squads.json`) and universal `dispatch` entry point. See C1/C3.
+- **Completed:** W1 and W3 moved to `CHANGELOG.md` (config-driven squads, macOS guard rails).
 - [ ] **W2 · AI suggestion polish** - `scripts/ai_suggest.sh` currently analyzes cwd/git/todo/journal keywords and detects stress/overwhelm patterns. _Needs enhancement_: Integrate `health.sh` energy scores and `meds.sh` adherence data for energy-aware dispatcher ranking.
-- [x] **W3 · Guard rails for macOS-specific scripts** - Documented macOS-only assumptions in `scripts/README.md`. Added cross-platform helpers where feasible (`date_utils.sh`, `howto.sh`). Remaining macOS dependencies clearly documented.
 
 ### 2.5 Blog & Publishing Program
 **Design Philosophy:** Tooling works with any Hugo repository (configurable via `BLOG_DIR` in `.env`), defaults to `ryanleej.com`. Deployments happen server-side (DigitalOcean) after git push—local scripts prepare commits/pushes only.
 
 **Current Status:** Core publishing pipeline complete (B1, B2, B3-B6, B12). Content lifecycle features pending (B7-B11).
 
-#### Phase A · Blog Script Enhancements
-- [x] **B1 · Draft helpers** - `blog draft <type>` scaffolds archetypes, prefills metadata, opens editor. Implementation: `scripts/blog.sh:195-290`.
-- [x] **B3 · Workflow orchestration** - `blog workflow <type> <slug>` orchestrates full content pipeline (outline → draft → review → promotion). Implementation: `scripts/blog.sh:450-590`.
+#### Phase A · Blog Script Enhancements — completed (see `CHANGELOG.md`)
 
-#### Phase B · Validation & Quality Gates ✅ COMPLETED
-- [x] **B4 · Blog validation** - `blog validate` performs automated quality checks: front matter completeness, accessibility (alt text, heading hierarchy), MS-friendly language. Python-based validator embedded in `scripts/blog.sh:625-820`.
-- [x] **B5 · Pre-commit hooks** - `blog hooks install` creates git pre-commit hook in blog repo to run validation automatically. Implementation: `scripts/blog.sh:823-860`.
+#### Phase B · Validation & Quality Gates — completed (see `CHANGELOG.md`)
 
 #### Phase C · Publishing & Deployment
-- [x] **B6 · Publish command** - `blog publish` runs validation, builds with Hugo, summarizes git status, prepares push (DigitalOcean handles actual deployment). Implementation: `scripts/blog.sh:593-623`.
+- **Completed:** B6 moved to `CHANGELOG.md` (publish command hardened).
 - [ ] **B7 · Multi-deploy adapters** - _Not yet implemented_. Plan: Support additional deployment methods (Netlify, Vercel, rsync) via `.env` configuration beyond default DigitalOcean push model.
 
 #### Phase D · Content Lifecycle Features
@@ -64,10 +57,10 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 - [ ] **B9 · Version management** - _Not yet implemented_. Plan: `blog version bump/check/history` commands following `VERSIONING-POLICY.md` with auto journal logging.
 - [ ] **B10 · Metrics & exemplars** - _Not yet implemented_. Plan: `blog metrics` for analytics, `blog exemplar` for North Star template showcase.
 - [ ] **B11 · Social automation** - _Not yet implemented_. Plan: `blog social --platform <name>` generates platform-specific content, creates todos for manual sharing.
-- [x] **B12 · Draft visibility** - Drafts and recent content surfaced in `blog status` output and `startday` morning briefing. Implementation: `scripts/blog.sh:72-140`, `scripts/startday.sh`.
+
 
 ### 2.6 Testing, Docs & Ops
-- [x] **T0 · BATS Testing Framework** - BATS framework installed with comprehensive test suite for `todo.sh` (11 tests, all passing). Test file: `tests/test_todo.sh`.
+- **Completed:** T0 moved to `CHANGELOG.md` (BATS test suite for `todo.sh`).
 - [ ] **T1 · Morning hook smoke test** - _Not yet implemented_. Plan: Add CI/cron check `zsh -ic startday` to ensure login hooks never regress.
 - [ ] **T2 · Happy-path rehearsal** - _Not yet implemented_. Plan: Document and run weekly `startday → status → goodevening` test flow to ensure brain-fog-friendly workflows remain reliable.
 - [ ] **T3 · GitHub helper setup checklist** - _Not yet implemented_. Plan: Maintain PAT instructions in sync with README/onboarding documentation. Current setup documented in TROUBLESHOOTING.md.
@@ -77,17 +70,13 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 
 **Integration Status:** 10 active dispatchers use specialists via dynamic squad configuration (`squads.json`). Spec-driven workflow supports all specialists via templates in `~/dotfiles/templates/`.
 
-- [x] **S0 · Core expansion** - 41 specialists shipped and active across commerce, creative, health-lifestyle, knowledge, producers, strategy, tech, and technical categories. Submodule at v3 branch. See `ai-staff-hq/staff/README.md`.
+- **Completed:** S0 moved to `CHANGELOG.md` (41 specialists shipped, dynamic squads integrated).
 - [ ] **S1 · Extended coverage** - _Not yet implemented_. Plan: Implement remaining 66 niche specialists (culinary, audio/podcast, publishing, wellness, specialty commerce) to reach 107 total.
 - [ ] **S2 · Specialist validator** - _Not yet implemented_. Plan: Build lint/validation tooling for YAML schema validation and quality checks. Create CLI/CI entry point. Target: `ai-staff-hq/tools/`.
 - [ ] **S3 · Documentation refresh** - _Not yet implemented_. Plan: Update `ai-staff-hq/ROADMAP.md` and supporting docs to reflect 41-specialist baseline, v3 structure, spec workflow, and integration patterns.
 
 ### 2.8 Code Quality & Technical Debt (from Fixit Audit)
-- [x] **Q1 · Unused variable cleanup** - Review and remove unused variables in `dhp-content.sh`, `dhp-project.sh`, `ai_suggest.sh`, etc. (e.g., `PARAM_TEMPERATURE`, `AI_STAFF_DIR`).
-- [x] **Q2 · Return value masking** - Fix masking of return values in `blog.sh`, `spec_helper.sh`, `tidy_downloads.sh` where variables are declared and assigned in one line.
-- [x] **Q3 · Subshell scope fixes** - Refactor `goodevening.sh` to avoid modifying variables inside subshells (e.g., `found_issues`).
-- [x] **Q4 · Robust output parsing** - Replace `VAR=($(command))` with `mapfile` or `read -a` in `blog.sh` for safer array parsing.
-- [x] **Q5 · Style improvements** - Address minor style issues: check exit codes directly (`if mycmd;`), use `pgrep` instead of `ps | grep`, double quote all variables in `health.sh`/`meds.sh`.
+- **Completed:** Q1-Q5 moved to `CHANGELOG.md` (unused variable cleanup, return-value masking fixes, subshell scope corrections, safer parsing, and style/quoting improvements).
 
 ## 3. Project Status Summary
 
