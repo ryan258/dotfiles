@@ -59,6 +59,24 @@ This major release represents a comprehensive security audit and hardening of th
 
 ---
 
+## G3 Audit Recommendations (November 20, 2025)
+
+**Status:** ✅ Completed
+
+Addressed findings from the G3 project audit to improve portability, documentation, and observability.
+
+### Portability & Code Quality
+- **Refactored Hardcoded Paths:** Replaced absolute paths (e.g., `/Users/ryanjohnson`) with dynamic paths in `setup_weekly_review.sh`, `schedule.sh`, `blog.sh`, and `dotfiles_check.sh`.
+- **Standardized Sourced Scripts:** Verified and ensured `bin/dhp-shared.sh` and `zsh/aliases.zsh` do not leak global shell options (`set -e`, etc.) into interactive sessions.
+
+### Documentation
+- **Generalized Docs:** Updated `README.md` and `mssite.md` to use generic placeholders (`$HOME`, `<username>`) instead of hardcoded user paths.
+
+### Features
+- **Cost Tracking:** Implemented API cost estimation in `bin/dhp-lib.sh` to track and log token usage/costs for AI dispatchers.
+
+---
+
 ## November 2025: AI Integration & Foundation Complete
 
 ### Persona-Aware Blog Generation (B2)

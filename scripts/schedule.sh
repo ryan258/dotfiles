@@ -22,7 +22,8 @@ if [ "$1" == "--todo" ]; then
     exit 1
   fi
   # Construct the command to add a todo task
-  COMMAND="/Users/ryanjohnson/dotfiles/scripts/todo.sh add '$TASK'"
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  COMMAND="$SCRIPT_DIR/todo.sh add '$TASK'"
   echo "Scheduling task: '$TASK' at $TIME"
 else
   COMMAND="$*"

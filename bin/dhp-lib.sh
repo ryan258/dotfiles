@@ -24,8 +24,27 @@ _log_api_call() {
     local model="${2:-unknown}"
     local prompt_tokens="${3:-0}"
     local completion_tokens="${4:-0}"
-    printf "[%s] DISPATCHER: %s, MODEL: %s, PROMPT_TOKENS: %s, COMPLETION_TOKENS: %s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "$dispatcher_name" "$model" "$prompt_tokens" "$completion_tokens" >> "$DISPATCHER_USAGE_LOG"
-    # TODO: Add cost calculation here based on model pricing
+    
+    # Simple cost estimation (placeholder rates per 1M tokens)
+    # Default to $0.50 input / $1.50 output if unknown
+    local rate_input=0.50
+    local rate_output=1.50
+    
+    # Adjust rates for known free models
+    if [[ "$model" == *":free" ]]; then
+        rate_input=0
+        rate_output=0
+    fi
+
+    # Calculate cost: (tokens / 1000000) * rate
+    local cost_input
+    cost_input=$(awk "BEGIN {printf \"%.6f\", ($prompt_tokens / 1000000) * $rate_input}")
+    local cost_output
+    cost_output=$(awk "BEGIN {printf \"%.6f\", ($completion_tokens / 1000000) * $rate_output}")
+    local total_cost
+    total_cost=$(awk "BEGIN {printf \"%.6f\", $cost_input + $cost_output}")
+
+    printf "[%s] DISPATCHER: %s, MODEL: %s, PROMPT_TOKENS: %s, COMPLETION_TOKENS: %s, EST_COST: $%s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "$dispatcher_name" "$model" "$prompt_tokens" "$completion_tokens" "$total_cost" >> "$DISPATCHER_USAGE_LOG"
 }
 
 # _build_json_payload: Constructs the JSON payload for the API call.

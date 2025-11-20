@@ -35,6 +35,7 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 - [x] **O2 · Dispatcher usage logging** - Usage logging to `~/.config/dotfiles-data/dispatcher_usage.log` with timestamp, dispatcher, model, tokens, duration, exit code. Stats view available.
 - [x] **O3 · Context redaction & controls** - Implemented redaction function in `bin/dhp-context.sh` to filter sensitive data before AI submission. Configurable via `.env`.
 - [ ] **O4 · API key governance** - _Not yet implemented_. Plan: Support per-dispatcher keys/aliases, rotation reminders, `dispatcher auth test` command, metadata caching for proactive warnings.
+- [ ] **O5 · Rate limiting & budget alerts** - _Not yet implemented_. Plan: Implement exponential backoff for retries, detect 429 responses, and add monthly budget warnings based on cost tracking.
 
 ### 2.4 Workflow & UX Improvements
 - [x] **W1 · Hardcoded squad friction** - Resolved via config-driven squads (`ai-staff-hq/squads.json`) and universal `dispatch` entry point. See C1/C3.
@@ -80,6 +81,13 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 - [ ] **S1 · Extended coverage** - _Not yet implemented_. Plan: Implement remaining 66 niche specialists (culinary, audio/podcast, publishing, wellness, specialty commerce) to reach 107 total.
 - [ ] **S2 · Specialist validator** - _Not yet implemented_. Plan: Build lint/validation tooling for YAML schema validation and quality checks. Create CLI/CI entry point. Target: `ai-staff-hq/tools/`.
 - [ ] **S3 · Documentation refresh** - _Not yet implemented_. Plan: Update `ai-staff-hq/ROADMAP.md` and supporting docs to reflect 41-specialist baseline, v3 structure, spec workflow, and integration patterns.
+
+### 2.8 Code Quality & Technical Debt (from Fixit Audit)
+- [ ] **Q1 · Unused variable cleanup** - Review and remove unused variables in `dhp-content.sh`, `dhp-project.sh`, `ai_suggest.sh`, etc. (e.g., `PARAM_TEMPERATURE`, `AI_STAFF_DIR`).
+- [ ] **Q2 · Return value masking** - Fix masking of return values in `blog.sh`, `spec_helper.sh`, `tidy_downloads.sh` where variables are declared and assigned in one line.
+- [ ] **Q3 · Subshell scope fixes** - Refactor `goodevening.sh` to avoid modifying variables inside subshells (e.g., `found_issues`).
+- [ ] **Q4 · Robust output parsing** - Replace `VAR=($(command))` with `mapfile` or `read -a` in `blog.sh` for safer array parsing.
+- [ ] **Q5 · Style improvements** - Address minor style issues: check exit codes directly (`if mycmd;`), use `pgrep` instead of `ps | grep`, double quote all variables in `health.sh`/`meds.sh`.
 
 ## 3. Project Status Summary
 

@@ -73,7 +73,7 @@ fi
 
 # 6. Check AI Staff HQ Dispatchers
 echo "[6/7] Checking AI Staff HQ dispatcher system..."
-BIN_DIR="$HOME/dotfiles/bin"
+BIN_DIR="$SCRIPTS_DIR/../bin"
 if [ ! -d "$BIN_DIR" ]; then
   echo "  ⚠️  WARNING: bin/ directory not found at $BIN_DIR. Dispatcher system not installed."
 else

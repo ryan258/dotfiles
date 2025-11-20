@@ -277,7 +277,7 @@ function recent() {
 
 function ideas() {
     echo "💡 Searching for blog ideas in journal..."
-    /Users/ryanjohnson/dotfiles/scripts/journal.sh search "blog idea"
+    "$SCRIPT_DIR/journal.sh" search "blog idea"
 }
 
 function generate() {
