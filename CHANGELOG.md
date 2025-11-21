@@ -416,6 +416,8 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 - ✅ Suggests relevant dispatchers based on detected context
 - ✅ Time-based suggestions (morning/evening routines)
 - ✅ Detects project type and recommends appropriate AI workflows
+- ✅ **New (W2):** Integrated `health.sh` energy scores (low energy → Stoic Coach, high energy → Strategy)
+- ✅ **New (W2):** Integrated `meds.sh` adherence checks and refill reminders
 - ✅ Alias: `ai-suggest`
 
 **Dispatcher Chaining (`dhp-chain.sh`):**

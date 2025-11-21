@@ -35,9 +35,7 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 - [ ] **O4 · API key governance** - _Not yet implemented_. Plan: Support per-dispatcher keys/aliases, rotation reminders, `dispatcher auth test` command, metadata caching for proactive warnings.
 - [ ] **O5 · Rate limiting & budget alerts** - _Not yet implemented_. Plan: Implement exponential backoff for retries, detect 429 responses, and add monthly budget warnings based on cost tracking.
 
-### 2.4 Workflow & UX Improvements
-- **Completed:** W1 and W3 moved to `CHANGELOG.md` (config-driven squads, macOS guard rails).
-- [ ] **W2 · AI suggestion polish** - `scripts/ai_suggest.sh` currently analyzes cwd/git/todo/journal keywords and detects stress/overwhelm patterns. _Needs enhancement_: Integrate `health.sh` energy scores and `meds.sh` adherence data for energy-aware dispatcher ranking.
+### 2.4 Workflow & UX Improvements · Publishing & Deployment — completed (see `CHANGELOG.md`)
 
 ### 2.5 Blog & Publishing Program
 **Design Philosophy:** Tooling works with any Hugo repository (configurable via `BLOG_DIR` in `.env`), defaults to `ryanleej.com`. Deployments happen server-side (DigitalOcean) after git push—local scripts prepare commits/pushes only.
@@ -91,7 +89,6 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 
 ### 🚧 In Progress & Next Steps
 **Near-term (1-2 weeks):**
-- W2: Integrate health energy scores into AI suggestions
 - O4: API key governance and rotation management
 - B2: Persona-aware blog generation
 
