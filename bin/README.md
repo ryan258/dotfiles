@@ -568,6 +568,8 @@ ai-suggest
 - Git repository status and recent commits
 - Active todo items and priorities
 - Recent journal entries (last 3 days)
+- Health signals: latest daily energy score from `health.sh`
+- Medication adherence: overdue doses flagged via `meds.sh check`
 - Time of day (morning/evening suggestions)
 
 **Example Output:**

@@ -48,9 +48,7 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 
 #### Phase B · Validation & Quality Gates — completed (see `CHANGELOG.md`)
 
-#### Phase C · Publishing & Deployment
-- **Completed:** B6 moved to `CHANGELOG.md` (publish command hardened).
-- [ ] **B7 · Multi-deploy adapters** - _Not yet implemented_. Plan: Support additional deployment methods (Netlify, Vercel, rsync) via `.env` configuration beyond default DigitalOcean push model.
+#### Phase C · Publishing & Deployment — completed (see `CHANGELOG.md`)
 
 #### Phase D · Content Lifecycle Features
 - [ ] **B8 · Idea syncing** - _Not yet implemented_. Current `blog ideas` only proxies to `journal search`. Plan: Build `blog ideas sync/generate/prioritize/next` to tie journal themes + `content-backlog.md` into `todo.txt`.

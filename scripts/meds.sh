@@ -29,6 +29,29 @@ case "$1" in
         echo "Added medication: $med_name ($schedule)"
         ;;
 
+    refill)
+        if [ -z "$2" ] || [ -z "$3" ]; then
+            echo "Usage: meds refill \"medication name\" \"YYYY-MM-DD\""
+            echo "Example: meds refill \"Medication X\" \"2025-12-01\""
+            exit 1
+        fi
+        med_name="$2"
+        refill_date="$3"
+        # Validate date format
+        if ! [[ "$refill_date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            echo "Error: Date must be YYYY-MM-DD"
+            exit 1
+        fi
+        # Remove existing refill entry for this med if exists (to update it)
+        # We use a temp file approach
+        if [ -f "$MEDS_FILE" ]; then
+            grep -v "^REFILL|$med_name|" "$MEDS_FILE" > "${MEDS_FILE}.tmp" || true
+            mv "${MEDS_FILE}.tmp" "$MEDS_FILE"
+        fi
+        echo "REFILL|$med_name|$refill_date" >> "$MEDS_FILE"
+        echo "✅ Set refill date for $med_name: $refill_date"
+        ;;
+
     log)
         if [ -z "$2" ]; then
             echo "Usage: meds log \"medication name\""
@@ -50,7 +73,7 @@ case "$1" in
         echo "💊 CURRENT MEDICATIONS:"
         grep "^MED|" "$MEDS_FILE" 2>/dev/null | while IFS='|' read -r type med_name schedule; do
             echo "  • $med_name - Schedule: $schedule"
-        done
+        done || true
 
         echo ""
         echo "📅 RECENT DOSES (last 7 days):"
@@ -115,11 +138,34 @@ case "$1" in
                     fi
                 fi
             done
-        done
+        done || true
 
         if [ "$all_taken" = true ]; then
             echo "  ✅ All scheduled medications taken for now"
         fi
+        ;;
+
+    check-refill)
+        if [ ! -f "$MEDS_FILE" ] || [ ! -s "$MEDS_FILE" ]; then
+            exit 0
+        fi
+
+        # Check for refills due within 7 days
+        current_epoch=$(date +%s)
+        warning_epoch=$(date -v+7d +%s 2>/dev/null || date -d "+7 days" +%s) # BSD vs GNU date
+        
+        grep "^REFILL|" "$MEDS_FILE" 2>/dev/null | while IFS='|' read -r type med_name refill_date; do
+            refill_epoch=$(timestamp_to_epoch "$refill_date")
+            if [ "$refill_epoch" -le "$warning_epoch" ]; then
+                 # Calculate days remaining
+                 days_left=$(( ( refill_epoch - current_epoch ) / 86400 ))
+                 if [ "$days_left" -lt 0 ]; then
+                     echo "  ⚠️  REFILL OVERDUE: $med_name (was due $refill_date)"
+                 else
+                     echo "  ⚠️  Refill due soon: $med_name (in $days_left days, on $refill_date)"
+                 fi
+            fi
+        done || true
         ;;
 
     history)
@@ -262,7 +308,7 @@ case "$1" in
 
     *)
         echo "Error: Unknown command '$1'" >&2
-        echo "Usage: meds [add|log|list|check|history|dashboard|remove|remind]"
+        echo "Usage: meds [add|refill|log|list|check|check-refill|history|dashboard|remove|remind]"
         echo ""
         echo "Setup:"
         echo "  meds add \"medication name\" \"schedule\""

@@ -17,6 +17,8 @@ fi
 DATA_DIR="$HOME/.config/dotfiles-data"
 TODO_FILE="$DATA_DIR/todo.txt"
 JOURNAL_FILE="$DATA_DIR/journal.txt"
+HEALTH_FILE="$DATA_DIR/health.txt"
+MEDS_FILE="$DATA_DIR/medications.txt"
 
 echo "🔍 Analyzing your current context..."
 echo ""
@@ -142,6 +144,61 @@ if [ "$HOUR" -ge 6 ] && [ "$HOUR" -lt 12 ]; then
 elif [ "$HOUR" -ge 18 ] && [ "$HOUR" -lt 23 ]; then
     SUGGESTIONS+=("🌙 **Evening Routine**: Wrap up your day")
     SUGGESTIONS+=("   goodevening  # Review and backup")
+fi
+
+# 6. Health & Energy Context
+if [ -f "$HEALTH_FILE" ]; then
+    TODAY=$(date +%Y-%m-%d)
+    # Get the latest energy reading for today
+    LATEST_ENERGY=$(grep "^ENERGY|$TODAY" "$HEALTH_FILE" 2>/dev/null | tail -1 | cut -d'|' -f3)
+    
+    if [ -n "$LATEST_ENERGY" ]; then
+        CONTEXT+="Energy Level: $LATEST_ENERGY/10\n"
+        
+        if [ "$LATEST_ENERGY" -le 4 ]; then
+            SUGGESTIONS+=("🧘 **Stoic Coach**: Low energy detected ($LATEST_ENERGY/10)")
+            SUGGESTIONS+=("   echo \"I'm feeling low energy today\" | stoic")
+            SUGGESTIONS+=("🧹 **Maintenance**: Focus on low-effort cleanup")
+            SUGGESTIONS+=("   tidy_downloads")
+            SUGGESTIONS+=("   review_clutter")
+        elif [ "$LATEST_ENERGY" -ge 7 ]; then
+            SUGGESTIONS+=("🚀 **Strategy & Deep Work**: High energy detected ($LATEST_ENERGY/10)")
+            SUGGESTIONS+=("   echo \"Strategic planning for next big feature\" | strategy")
+            SUGGESTIONS+=("   # Good time to tackle complex bugs or features")
+        fi
+    fi
+fi
+
+# 7. Medication Alerts
+if [ -f "$MEDS_FILE" ] && grep -q "^MED|" "$MEDS_FILE" 2>/dev/null; then
+    # Allow tests to override the meds script for deterministic output
+    MEDS_SCRIPT="${MEDS_SCRIPT_OVERRIDE:-"$SCRIPT_DIR/meds.sh"}"
+    if [ -x "$MEDS_SCRIPT" ]; then
+        # Check for overdue meds
+        # We capture the output of 'meds check' and look for "NOT TAKEN YET"
+        MEDS_STATUS=$("$MEDS_SCRIPT" check || true)
+        if [ -n "$MEDS_STATUS" ] && echo "$MEDS_STATUS" | grep -q "NOT TAKEN YET"; then
+            CONTEXT+="⚠️  **Health Alert**: Medications overdue\n"
+            SUGGESTIONS+=("💊 **Health Alert**: You have overdue medications")
+            SUGGESTIONS+=("   meds check")
+            
+            # Add specific overdue meds to context if possible
+            OVERDUE_MEDS=$(echo "$MEDS_STATUS" | grep "NOT TAKEN YET" | sed 's/⚠️//g' | sed 's/NOT TAKEN YET//g' | tr -d '\n')
+            # Clean up whitespace
+            OVERDUE_MEDS=$(echo "$OVERDUE_MEDS" | xargs)
+            if [ -n "$OVERDUE_MEDS" ]; then
+                 CONTEXT+="   Overdue: $OVERDUE_MEDS\n"
+            fi
+        fi
+        
+        # Check for refills
+        REFILL_STATUS=$("$MEDS_SCRIPT" check-refill || true)
+        if [ -n "$REFILL_STATUS" ] && echo "$REFILL_STATUS" | grep -q "Refill"; then
+            CONTEXT+="⚠️  **Health Alert**: Prescriptions need refill\n"
+            SUGGESTIONS+=("💊 **Health Alert**: Refill prescriptions soon")
+            SUGGESTIONS+=("   meds check-refill")
+        fi
+    fi
 fi
 
 # Display suggestions
