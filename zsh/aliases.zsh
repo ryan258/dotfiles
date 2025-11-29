@@ -278,6 +278,7 @@ alias media="media_converter.sh"
 alias video2audio="media_converter.sh video2audio"
 alias resizeimg="media_converter.sh resize_image"
 alias compresspdf="media_converter.sh pdf_compress"
+alias stitch="media_converter.sh audio_stitch"
 
 # Archive management
 alias archive="archive_manager.sh"

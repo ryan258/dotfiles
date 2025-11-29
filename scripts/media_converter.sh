@@ -104,12 +104,107 @@ case "$1" in
         echo "Original size: $(format_bytes "$ORIGINAL_SIZE")"
         echo "Compressed size: $(format_bytes "$COMPRESSED_SIZE")"
         ;;
+
+    audio_stitch)
+        # Default values
+        TARGET_DIR="."
+        OUTPUT_FILE=""
+        INPUT_FILES=()
+        
+        # Check if we are in "auto mode" (directory or no args) or "manual mode" (output file + input files)
+        # If $2 is empty or a directory, we are in auto mode.
+        if [ -z "${2:-}" ] || [ -d "${2:-}" ]; then
+            if [ -n "${2:-}" ]; then
+                TARGET_DIR="$2"
+            fi
+            
+            # Get directory name for filename
+            DIR_NAME=$(basename "$(cd "$TARGET_DIR" && pwd)")
+            
+            # Find audio files in the target directory
+            # We use find to handle spaces correctly and sort by name
+            while IFS= read -r -d '' file; do
+                INPUT_FILES+=("$file")
+            done < <(find "$TARGET_DIR" -maxdepth 1 -type f \( -iname "*.mp3" -o -iname "*.wav" -o -iname "*.m4a" -o -iname "*.aac" -o -iname "*.flac" -o -iname "*.ogg" \) -not -name "stitched_output.*" -print0 | sort -z)
+            
+            if [ ${#INPUT_FILES[@]} -eq 0 ]; then
+                echo "No audio files found in $TARGET_DIR"
+                exit 1
+            fi
+            
+            # Determine output format
+            FIRST_EXT="${INPUT_FILES[0]##*.}"
+            FIRST_EXT=$(echo "$FIRST_EXT" | tr '[:upper:]' '[:lower:]')
+            MIXED_FORMATS=false
+            
+            for file in "${INPUT_FILES[@]}"; do
+                EXT="${file##*.}"
+                EXT=$(echo "$EXT" | tr '[:upper:]' '[:lower:]')
+                if [ "$EXT" != "$FIRST_EXT" ]; then
+                    MIXED_FORMATS=true
+                    break
+                fi
+            done
+            
+            if [ "$MIXED_FORMATS" = true ]; then
+                OUTPUT_FORMAT="mp3"
+            else
+                OUTPUT_FORMAT="$FIRST_EXT"
+            fi
+            
+            OUTPUT_FILE="$TARGET_DIR/${DIR_NAME}.${OUTPUT_FORMAT}"
+            
+        else
+            # Manual mode: <output_file> <input_file1> ...
+            if [ $# -lt 3 ]; then
+                echo "Usage: $0 audio_stitch [directory]"
+                echo "       $0 audio_stitch <output_file> <input_file1> <input_file2> ..."
+                echo "Requires: ffmpeg (install with: brew install ffmpeg)"
+                exit 1
+            fi
+            
+            OUTPUT_FILE="$2"
+            shift 2
+            INPUT_FILES=("$@")
+        fi
+
+        if ! command -v ffmpeg &> /dev/null; then
+            echo "ffmpeg not found. Install with: brew install ffmpeg"
+            exit 1
+        fi
+
+        # Check if all input files exist (already checked in auto mode, but good for manual)
+        for file in "${INPUT_FILES[@]}"; do
+            if [ ! -f "$file" ]; then
+                echo "Input file not found: $file"
+                exit 1
+            fi
+        done
+
+        echo "Stitching ${#INPUT_FILES[@]} files into $OUTPUT_FILE..."
+        
+        # Construct ffmpeg input args and filter complex
+        INPUT_ARGS=()
+        FILTER_COMPLEX=""
+        for i in "${!INPUT_FILES[@]}"; do
+            INPUT_ARGS+=("-i" "${INPUT_FILES[$i]}")
+            FILTER_COMPLEX+="[$i:a]"
+        done
+        
+        FILTER_COMPLEX+="concat=n=${#INPUT_FILES[@]}:v=0:a=1[out]"
+
+        ffmpeg -y "${INPUT_ARGS[@]}" -filter_complex "$FILTER_COMPLEX" -map "[out]" "$OUTPUT_FILE"
+        
+        echo "Stitching complete: $OUTPUT_FILE"
+        ;;
     
     *)
-        echo "Usage: $0 {video2audio|resize_image|pdf_compress}"
+        echo "Usage: $0 {video2audio|resize_image|pdf_compress|audio_stitch}"
         echo "  video2audio <file>      : Extract audio from video"
         echo "  resize_image <file> <w> : Resize image to specified width"
         echo "  pdf_compress <file>     : Compress PDF file"
+        echo "  audio_stitch [dir]      : Stitch audio files in dir (default: current)"
+        echo "  audio_stitch <out> <in...>: Stitch specific files"
         ;;
 esac
 
