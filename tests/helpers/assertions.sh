@@ -3,6 +3,11 @@
 # tests/helpers/assertions.sh
 # Custom assertions for BATS tests
 
+fail() {
+    echo "$1"
+    return 1
+}
+
 # Assert that a file contains a specific string
 # Usage: assert_file_contains <file> <string>
 assert_file_contains() {

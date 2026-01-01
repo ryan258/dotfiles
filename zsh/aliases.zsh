@@ -171,6 +171,11 @@ alias journal="journal.sh"
 alias break="take_a_break.sh"
 alias focus="focus.sh"
 
+# Time Tracking
+alias t-start="todo.sh start"
+alias t-stop="todo.sh stop"
+alias t-status="time_tracker.sh status"
+
 # Health tracking
 alias health="health.sh"
 alias meds="meds.sh"

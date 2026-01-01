@@ -50,6 +50,37 @@ if [ -f "$JOURNAL_FILE" ]; then
     fi
 fi
 
+# 3. Time Tracking Summary
+echo ""
+echo "⏱️  TIME TRACKED TODAY:"
+# Correctly define SCRIPT_DIR if not already available or redeclare to be safe
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+TIME_TRACKER="${SCRIPT_DIR}/time_tracker.sh"
+if [ -x "$TIME_TRACKER" ]; then
+    # We use a subshell or call a function to get today's report
+    # Since report command in wrapper calls generate_time_report which is a stub...
+    # We should actually implement a simple daily summary here or in the library.
+    # For now, let's just list the entries for today from the log file manually or via a simple grep
+    TODAY=$(date +%Y-%m-%d)
+    TIME_LOG="$HOME/.config/dotfiles-data/time_tracking.txt"
+    if [ -f "$TIME_LOG" ]; then
+        TODAY_ENTRIES=$(grep "|$TODAY" "$TIME_LOG" || true)
+        if [ -n "$TODAY_ENTRIES" ]; then
+             echo "  (Time reporting details coming in Phase 1)"
+             echo "$TODAY_ENTRIES" | head -n 5 | sed 's/^/  • /' 
+             if [ $(echo "$TODAY_ENTRIES" | wc -l) -gt 5 ]; then
+                echo "  • ... and more"
+             fi
+        else
+            echo "  (No time tracked today)"
+        fi
+    else
+        echo "  (No time log found)"
+    fi
+else
+    echo "  (Time tracker not found)"
+fi
+
 # --- Gamify Progress ---
 echo ""
 echo "🌟 TODAY'S WINS:"

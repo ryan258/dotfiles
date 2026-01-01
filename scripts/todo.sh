@@ -10,6 +10,9 @@ DONE_FILE="$DATA_DIR/todo_done.txt"
 # Ensure data files exist
 touch "$TODO_FILE" "$DONE_FILE"
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+TIME_TRACKER="$SCRIPT_DIR/time_tracker.sh"
+
 # --- Main Logic ---
 case "$1" in
   add)
@@ -31,6 +34,50 @@ case "$1" in
         "On the list. Let's get it done!"
     )
     printf "%s\n" "${add_messages[$((RANDOM % ${#add_messages[@]}))]} '[32m%s[0m'" "$task_text"
+    ;;
+
+  start)
+    # Start timer for a task
+    if [ -z "${2:-}" ]; then
+        echo "Error: Task ID required" >&2
+        exit 1
+    fi
+    # Validate Task ID is numeric
+    if ! [[ "$2" =~ ^[0-9]+$ ]]; then
+        echo "Error: Task ID must be a number" >&2
+        exit 1
+    fi
+
+    # Get task text for context
+    task_num="$2"
+    task_line=$(sed -n "${task_num}p" "$TODO_FILE")
+    task_text=$(echo "$task_line" | cut -d'|' -f2-)
+    
+    if [ -z "$task_text" ]; then
+         echo "Error: Task $task_num not found" >&2
+         exit 1
+    fi
+    
+    "$TIME_TRACKER" start "$task_num" "$task_text"
+    ;;
+    
+  stop)
+    # Stop active timer
+    "$TIME_TRACKER" stop
+    ;;
+    
+  time)
+    # Check time for a task
+    if [ -z "${2:-}" ]; then
+        echo "Error: Task ID required" >&2
+        exit 1
+    fi
+    # Validate Task ID is numeric
+    if ! [[ "$2" =~ ^[0-9]+$ ]]; then
+        echo "Error: Task ID must be a number" >&2
+        exit 1
+    fi
+    "$TIME_TRACKER" check "$2"
     ;;
 
   list)
@@ -266,7 +313,7 @@ case "$1" in
 
   *)
     echo "Error: Unknown command '$1'" >&2
-    echo "Usage: $0 {add|list|done|clear|commit|bump|top|undo|debug|delegate}"
+    echo "Usage: $0 {add|list|done|clear|commit|bump|top|undo|debug|delegate|start|stop|time}"
     echo ""
     echo "Task Management:"
     echo "  add <'task text'>           : Add a new task"
@@ -285,6 +332,11 @@ case "$1" in
     echo "AI-Powered Commands:"
     echo "  debug <task_number>         : Debug a task using AI technical specialist"
     echo "  delegate <task_num> <type>  : Delegate task to AI (tech|creative|content)"
+    echo ""
+    echo "Time Tracking:"
+    echo "  start <task_number>         : Start timer for task"
+    echo "  stop                        : Stop active timer"
+    echo "  time <task_number>          : Show total time for task"
     exit 1
     ;;
 esac

@@ -6,7 +6,8 @@
 setup_test_environment() {
     # Create a temporary directory for test data
     export TEST_DIR=$(mktemp -d)
-    export DOTFILES_DATA_DIR="$TEST_DIR/config/dotfiles-data"
+    export HOME="$TEST_DIR"
+    export DOTFILES_DATA_DIR="$TEST_DIR/.config/dotfiles-data"
     
     # Create the data structure
     mkdir -p "$DOTFILES_DATA_DIR"
