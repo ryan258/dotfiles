@@ -97,8 +97,8 @@ Your mission is to coordinate this team to execute on the following user brief a
 
 **YOUR COORDINATION PLAN:**
 1.  **Assign to \`narrative-designer\`:** Generate a 3-Act structure and 5-7 key story beats.
-2.  **Assign to \`persona-architect\`:** Generate a character profile for the protagonist.
-3.  **Assign to \`sound-designer\` (acting as The Sensorium):** Generate 3 'sensory blocks' of ambient horror for this concept. Specifically focus on sound, smell, and the *feeling* of the "echoes" mentioned in the brief.
+2.  **Assign to \`creative-strategist\`:** Generate a character profile for the protagonist.
+3.  **Assign to \`meditation-instructor\` (acting as The Sensorium):** Generate 3 'sensory blocks' of ambient horror for this concept. Specifically focus on sound, smell, and the *feeling* of the "echoes" mentioned in the brief.
 
 **DELIVERABLE:**
 Return a single, well-formatted markdown document. Do not speak *as* the team, speak *as* the Chief of Staff presenting the team's coordinated work.

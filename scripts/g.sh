@@ -153,7 +153,11 @@ case "${1:-list}" in
   *)
     # Default action: go to bookmark
     BOOKMARK_NAME="$1"
-    BOOKMARK_DATA=$(grep -F "^$BOOKMARK_NAME:" "$BOOKMARKS_FILE" | head -n 1)
+    if [ ! -f "$BOOKMARKS_FILE" ]; then
+      echo "Error: No bookmarks saved." >&2
+      exit 1
+    fi
+    BOOKMARK_DATA=$(grep -F "^$BOOKMARK_NAME:" "$BOOKMARKS_FILE" | head -n 1 || true)
     if [ -z "$BOOKMARK_DATA" ]; then
       echo "Error: Bookmark '$BOOKMARK_NAME' not found."
       exit 1

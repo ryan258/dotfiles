@@ -49,7 +49,13 @@ validate_path() {
 
     # Canonicalize the path
     local canonical_path
-    canonical_path=$(python3 -c "import os; print(os.path.realpath('$input_path'))" 2>/dev/null)
+    canonical_path=$(python3 - "$input_path" <<'PY'
+import os
+import sys
+
+print(os.path.realpath(sys.argv[1]))
+PY
+    2>/dev/null)
 
     if [ -z "$canonical_path" ]; then
         echo "Error: Cannot canonicalize path: '$input_path'" >&2
@@ -57,7 +63,7 @@ validate_path() {
     fi
 
     # Ensure the path is within the user's home directory
-    if [[ "$canonical_path" != "$HOME"* ]]; then
+    if [ "$canonical_path" != "$HOME" ] && [[ "$canonical_path" != "$HOME"/* ]]; then
         echo "Error: Path '$canonical_path' is outside the allowed home directory." >&2
         return 1
     fi

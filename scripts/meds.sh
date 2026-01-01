@@ -15,6 +15,43 @@ fi
 SYSTEM_LOG_FILE="$HOME/.config/dotfiles-data/system.log"
 MEDS_FILE="$HOME/.config/dotfiles-data/medications.txt"
 
+get_meds_today() {
+    echo "${MEDS_TODAY_OVERRIDE:-$(date '+%Y-%m-%d')}"
+}
+
+get_meds_current_hour() {
+    echo "${MEDS_CURRENT_HOUR_OVERRIDE:-$(date '+%H')}"
+}
+
+dose_taken_for_slot() {
+    local med_name="$1"
+    local time_slot="$2"
+    local today="$3"
+
+    if [ ! -f "$MEDS_FILE" ]; then
+        return 1
+    fi
+
+    awk -F'|' -v today="$today" -v med="$med_name" -v slot="$time_slot" '
+        function hour_from_ts(ts) { return substr(ts, 12, 2) + 0 }
+        $1 == "DOSE" && $2 ~ "^" today {
+            if ($3 != med) next
+            if (NF >= 4 && $4 == slot) { found=1; exit }
+            h = hour_from_ts($2)
+            if (slot == "morning" && h >= 6 && h < 12) { found=1; exit }
+            if (slot == "afternoon" && h >= 12 && h < 18) { found=1; exit }
+            if (slot == "evening" && h >= 18 && h < 21) { found=1; exit }
+            if (slot == "night" && (h >= 21 || h < 6)) { found=1; exit }
+            if (slot ~ /^[0-9]{1,2}:[0-9]{2}$/) {
+                split(slot, parts, ":")
+                target_h = parts[1] + 0
+                if (h == target_h) { found=1; exit }
+            }
+        }
+        END { exit(found ? 0 : 1) }
+    ' "$MEDS_FILE"
+}
+
 case "$1" in
     add)
         if [ -z "$2" ] || [ -z "$3" ]; then
@@ -54,13 +91,18 @@ case "$1" in
 
     log)
         if [ -z "$2" ]; then
-            echo "Usage: meds log \"medication name\""
+            echo "Usage: meds log \"medication name\" [time_slot]"
             echo "Logs that you took the medication right now"
             exit 1
         fi
         med_name="$2"
+        time_slot="${3:-}"
         timestamp=$(date '+%Y-%m-%d %H:%M')
-        echo "DOSE|$timestamp|$med_name" >> "$MEDS_FILE"
+        if [ -n "$time_slot" ]; then
+            echo "DOSE|$timestamp|$med_name|$time_slot" >> "$MEDS_FILE"
+        else
+            echo "DOSE|$timestamp|$med_name" >> "$MEDS_FILE"
+        fi
         echo "✅ Logged: $med_name at $timestamp"
         ;;
 
@@ -92,13 +134,13 @@ case "$1" in
         fi
 
         echo "💊 MEDICATION CHECK:"
-        today=$(date '+%Y-%m-%d')
-        current_hour=$(date '+%H')
+        today=$(get_meds_today)
+        current_hour=$(get_meds_current_hour)
 
         all_taken=true
 
         # Check each medication
-        grep "^MED|" "$MEDS_FILE" 2>/dev/null | while IFS='|' read -r type med_name schedule; do
+        while IFS='|' read -r type med_name schedule; do
             # Parse schedule (could be "morning,evening" or "8:00,20:00")
             IFS=',' read -ra times <<< "$schedule"
 
@@ -128,9 +170,7 @@ case "$1" in
 
                 if [ "$should_take" = true ]; then
                     # Check if taken today
-                    taken=$(grep "^DOSE|$today.*|$med_name" "$MEDS_FILE" 2>/dev/null | grep -c "$time_slot" || echo "0")
-
-                    if [ "$taken" -eq 0 ]; then
+                    if ! dose_taken_for_slot "$med_name" "$time_slot" "$today"; then
                         echo "  ⚠️  $med_name ($time_slot) - NOT TAKEN YET"
                         all_taken=false
                     else
@@ -138,7 +178,7 @@ case "$1" in
                     fi
                 fi
             done
-        done || true
+        done < <(grep "^MED|" "$MEDS_FILE" 2>/dev/null || true)
 
         if [ "$all_taken" = true ]; then
             echo "  ✅ All scheduled medications taken for now"
@@ -269,13 +309,13 @@ case "$1" in
             exit 0
         fi
 
-        today=$(date '+%Y-%m-%d')
-        current_hour=$(date '+%H')
+        today=$(get_meds_today)
+        current_hour=$(get_meds_current_hour)
 
         # Check for any overdue medications
         overdue_found=false
 
-        grep "^MED|" "$MEDS_FILE" 2>/dev/null | while IFS='|' read -r type med_name schedule; do
+        while IFS='|' read -r type med_name schedule; do
             IFS=',' read -ra times <<< "$schedule"
 
             for time_slot in "${times[@]}"; do
@@ -293,9 +333,7 @@ case "$1" in
                 esac
 
                 if [ "$should_take" = true ]; then
-                    taken=$(grep -c "^DOSE|$today.*|$med_name" "$MEDS_FILE" 2>/dev/null || echo "0")
-
-                    if [ "$taken" -eq 0 ]; then
+                    if ! dose_taken_for_slot "$med_name" "$time_slot" "$today"; then
                         # Send notification
                         echo "$(date): meds.sh - Sending reminder for $med_name ($time_slot)." >> "$SYSTEM_LOG_FILE"
                         osascript -e "display notification \"Time to take: $med_name ($time_slot)\" with title \"💊 Medication Reminder\""
@@ -303,7 +341,7 @@ case "$1" in
                     fi
                 fi
             done
-        done
+        done < <(grep "^MED|" "$MEDS_FILE" 2>/dev/null || true)
         ;;
 
     *)
@@ -316,7 +354,7 @@ case "$1" in
         echo ""
         echo "Daily Use:"
         echo "  meds check              # Check what needs to be taken"
-        echo "  meds log \"med name\"     # Log that you took it"
+        echo "  meds log \"med name\" [time_slot]  # Log that you took it"
         echo "  meds list               # Show all medications & recent doses"
         echo ""
         echo "History & Maintenance:"

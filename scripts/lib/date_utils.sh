@@ -65,7 +65,7 @@ import sys
 from datetime import datetime
 
 value = sys.argv[1]
-formats = ("%Y-%m-%d %H:%M", "%Y-%m-%d %H", "%Y-%m-%d")
+formats = ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H", "%Y-%m-%d")
 for fmt in formats:
     try:
         print(int(datetime.strptime(value, fmt).timestamp()))

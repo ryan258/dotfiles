@@ -131,30 +131,53 @@ call_openrouter_stream() {
 
     _api_cooldown # Enforce cooldown before API call
 
-    (
-        set -o pipefail
-        curl -s -N --max-time 300 -X POST "https://openrouter.ai/api/v1/chat/completions" \
-            -H "Authorization: Bearer $OPENROUTER_API_KEY" \
-            -H "Content-Type: application/json" \
-            -d "$json_payload" | while IFS= read -r line; do
-                [ -z "$line" ] && continue
-                [[ "$line" == "data: [DONE]" ]] && break
+    local stream_status=0
+    local curl_status=0
+    local fifo
+    fifo=$(mktemp -u)
+    mkfifo "$fifo"
 
-                if [[ "$line" == data:* ]]; then
-                    local json_data="${line#data: }"
-                    if echo "$json_data" | jq -e '.error' > /dev/null 2>&1; then
-                        _handle_api_error "$json_data"
-                        return 1 # Note: This return may not exit the parent script in a pipeline
-                    fi
+    curl -s -N --max-time 300 -X POST "https://openrouter.ai/api/v1/chat/completions" \
+        -H "Authorization: Bearer $OPENROUTER_API_KEY" \
+        -H "Content-Type: application/json" \
+        -d "$json_payload" > "$fifo" &
+    local curl_pid=$!
 
-                    local content
-                    content=$(echo "$json_data" | jq -r '.choices[0].delta.content // empty')
-                    if [ -n "$content" ] && [ "$content" != "null" ]; then
-                        printf "%s" "$content"
-                    fi
-                fi
-            done
-    )
+    while IFS= read -r line; do
+        [ -z "$line" ] && continue
+        [[ "$line" == "data: [DONE]" ]] && break
+
+        if [[ "$line" == data:* ]]; then
+            local json_data="${line#data: }"
+            if echo "$json_data" | jq -e '.error' > /dev/null 2>&1; then
+                _handle_api_error "$json_data"
+                stream_status=1
+                break
+            fi
+
+            local content
+            content=$(echo "$json_data" | jq -r '.choices[0].delta.content // empty')
+            if [ -n "$content" ] && [ "$content" != "null" ]; then
+                printf "%s" "$content"
+            fi
+        fi
+    done < "$fifo"
+
+    if [ "$stream_status" -ne 0 ]; then
+        kill "$curl_pid" 2>/dev/null || true
+    fi
+
+    wait "$curl_pid"
+    curl_status=$?
+    rm -f "$fifo"
+
+    if [ "$stream_status" -ne 0 ]; then
+        return "$stream_status"
+    fi
+    if [ "$curl_status" -ne 0 ]; then
+        return "$curl_status"
+    fi
+
     echo # Ensure a final newline
 }
 

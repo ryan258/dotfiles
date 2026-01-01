@@ -63,3 +63,30 @@ teardown() {
     [ "$status" -eq 0 ]
     [[ -z "$output" ]]
 }
+
+@test "meds check flags missing doses when due" {
+    today="2025-01-02"
+    echo "MED|TestMed|morning" > "$TEST_DATA_DIR/.config/dotfiles-data/medications.txt"
+
+    run env MEDS_TODAY_OVERRIDE="$today" MEDS_CURRENT_HOUR_OVERRIDE="9" \
+        bash "$BATS_TEST_DIRNAME/../scripts/meds.sh" check
+
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ "NOT TAKEN YET" ]]
+    [[ ! "$output" =~ "All scheduled medications taken" ]]
+}
+
+@test "meds check confirms doses when taken" {
+    today="2025-01-02"
+    {
+        echo "MED|TestMed|morning"
+        echo "DOSE|$today 08:00|TestMed"
+    } > "$TEST_DATA_DIR/.config/dotfiles-data/medications.txt"
+
+    run env MEDS_TODAY_OVERRIDE="$today" MEDS_CURRENT_HOUR_OVERRIDE="9" \
+        bash "$BATS_TEST_DIRNAME/../scripts/meds.sh" check
+
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ "taken" ]]
+    [[ "$output" =~ "All scheduled medications taken" ]]
+}

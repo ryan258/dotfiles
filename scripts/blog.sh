@@ -192,7 +192,7 @@ function status() {
 function stubs() {
     echo "📄 CONTENT STUBS:"
 
-    STUB_FILES=$(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null)
+    STUB_FILES=$(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null || true)
 
     if [ -n "$STUB_FILES" ]; then
         SEVEN_DAYS_AGO=$(date_shift_days -7 "%s")
@@ -235,7 +235,7 @@ function stubs() {
 function random_stub() {
     echo "🎲 Opening a random stub..."
     
-    mapfile -t STUB_FILES < <(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null)
+    mapfile -t STUB_FILES < <(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null || true)
     
     if [ ${#STUB_FILES[@]} -eq 0 ]; then
         echo "  (No content stubs to choose from)"

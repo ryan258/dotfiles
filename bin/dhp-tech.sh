@@ -31,7 +31,7 @@ fi
 
 # --- 4. MODEL & STAFF ---
 MODEL="${TECH_MODEL:-${DHP_TECH_MODEL:-deepseek/deepseek-r1-0528:free}}"
-STAFF_FILE="$AI_STAFF_DIR/staff/technical/automation-specialist.yaml"
+STAFF_FILE="$AI_STAFF_DIR/staff/tech/automation-specialist.yaml"
 if [ ! -d "$AI_STAFF_DIR" ]; then
     echo "Error: AI Staff directory not found at $AI_STAFF_DIR" >&2
     exit 1
