@@ -9,6 +9,23 @@
 
 This repository contains a personal collection of shell scripts, aliases, and configurations designed to create a powerful, efficient, and accessible command-line environment on macOS. The toolkit is built on Zsh and automates common development and system management tasks, reducing repetitive actions and minimizing cognitive load.
 
+---
+
+## 👋 **New Here? Forgot What You Have?**
+
+**→ [📍 START HERE - 5 Minute Orientation](docs/start-here.md)**
+
+Quick links:
+- **[📋 Daily Cheat Sheet](docs/daily-cheatsheet.md)** - One-page reference
+- **[🔍 Discover Features](docs/discover.md)** - What can you do?
+- **[🧠 MS-Friendly Features](docs/ms-friendly-features.md)** - How it helps
+- **[🤖 AI Quick Reference](docs/ai-quick-reference.md)** - Your 10 AI specialists
+- **[📚 Documentation Index](docs/README.md)** - All guides
+
+**Validate everything is working:** `dotfiles-check`
+
+---
+
 ## Core Philosophy
 
 This setup is guided by a few key principles:
@@ -17,6 +34,44 @@ This setup is guided by a few key principles:
   * **Accessibility:** By simplifying workflows and providing clear feedback, the toolkit aims to be usable and helpful even on low-energy days.
   * **Robustness:** Scripts are written defensively, with checks for dependencies and safe error handling (`set -euo pipefail`).
   * **Seamless Integration:** The tools deeply integrate with macOS-specific features like `osascript` for notifications, `pmset` for battery status, and Finder for file operations.
+
+## 🚀 Quick Start - Discover What You Have
+
+**New to the system or forgot what's available?** Start here:
+
+### For Brain-Fog Days
+- **[Daily Cheat Sheet](docs/daily-cheatsheet.md)** - One-page reference of your most-used commands
+- **[MS-Friendly Features Guide](docs/ms-friendly-features.md)** - How the system supports you through energy fluctuations
+- **[Happy Path](docs/happy-path.md)** - Daily workflow walkthrough
+
+### Discover Features by What You Want to Do
+- **[Feature Discovery Guide](docs/discover.md)** - Complete guide organized by use case
+  - Daily essentials (morning/evening routines)
+  - When you're overwhelmed (low-energy helpers)
+  - Managing health (energy, symptoms, medications)
+  - Getting things done (tasks and priorities)
+  - Capturing ideas (journaling)
+  - Finding stuff fast (navigation and search)
+  - AI assistants (your 10 free specialists)
+  - Working on projects
+  - Publishing content
+  - System maintenance
+
+### AI Quick Reference
+- **[AI Quick Reference](docs/ai-quick-reference.md)** - Your 10 free AI specialists with real examples
+  - When to use each AI
+  - Practical examples
+  - Advanced features (chaining, context injection)
+  - Troubleshooting
+
+### Validation
+```bash
+dotfiles-check    # Verify everything is working
+whatis <command>  # Get help on any command
+ai_suggest        # AI recommends what to do based on your context
+```
+
+**Remember:** Everything is designed for minimum cognitive load. No command requires more than a few keystrokes.
 
 ## Features
 
