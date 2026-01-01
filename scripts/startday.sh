@@ -12,6 +12,40 @@ else
     exit 1
 fi
 
+# --- CONFIGURATION ---
+SPOON_MANAGER="$SCRIPT_DIR/spoon_manager.sh"
+
+# 1. Initialize Daily Spoons (Energy Budget)
+echo "🥣 SPOON CHECK:"
+if [ -x "$SPOON_MANAGER" ]; then
+    # Check if already initialized
+    if ! "$SPOON_MANAGER" check &>/dev/null; then
+        # Check if running interactively
+        if [ -t 0 ]; then
+            echo -n "  How many spoons do you have today? [12]: "
+            read -r spoons_input
+            spoons_count="${spoons_input:-12}"
+        else
+            echo "  (Non-interactive mode: defaulting to 12)"
+            spoons_count=12
+        fi
+
+        if ! [[ "$spoons_count" =~ ^[0-9]+$ ]]; then
+            echo "  Invalid input, defaulting to 12."
+            spoons_count=12
+        fi
+        
+        "$SPOON_MANAGER" init "$spoons_count" | sed 's/^/  /'
+    else
+        # Already initialized, just show status
+        remaining=$("$SPOON_MANAGER" check | grep -oE '[0-9]+' || echo "?")
+        echo "  You have $remaining spoons remaining today."
+    fi
+else
+    echo "  (Spoon manager not found)"
+fi
+
+# --- LOGGING ---
 SYSTEM_LOG_FILE="$HOME/.config/dotfiles-data/system.log"
 echo "$(date): startday.sh - Running morning routine." >> "$SYSTEM_LOG_FILE"
 

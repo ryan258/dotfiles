@@ -80,6 +80,40 @@ case "$1" in
     "$TIME_TRACKER" check "$2"
     ;;
 
+
+  spend)
+    # Spend spoons on a task
+    if [ -z "${2:-}" ] || [ -z "${3:-}" ]; then
+        echo "Error: Task ID and Spoon Count required" >&2
+        echo "Usage: $0 spend <task_id> <count>" >&2
+        exit 1
+    fi
+    # Validate inputs are numeric
+    if ! [[ "${2:-}" =~ ^[0-9]+$ ]] || ! [[ "${3:-}" =~ ^[0-9]+$ ]]; then
+        echo "Error: Task ID and Spoon Count must be numbers" >&2
+        exit 1
+    fi
+    task_num="$2"
+    
+    # Get task text
+    task_line=$(sed -n "${task_num}p" "$TODO_FILE")
+    task_text=$(echo "$task_line" | cut -d'|' -f2-)
+    
+    if [ -z "$task_text" ]; then
+         echo "Error: Task $task_num not found" >&2
+         exit 1
+    fi
+    
+    # Call spoon manager
+    SPOON_MANAGER="$SCRIPT_DIR/spoon_manager.sh"
+    if [ -x "$SPOON_MANAGER" ]; then
+        "$SPOON_MANAGER" spend "$3" "$task_text"
+    else
+        echo "Error: Spoon manager not found" >&2
+        exit 1
+    fi
+    ;;
+
   list)
     # List all current tasks with line numbers
     echo "--- TODO ---"
@@ -337,6 +371,9 @@ case "$1" in
     echo "  start <task_number>         : Start timer for task"
     echo "  stop                        : Stop active timer"
     echo "  time <task_number>          : Show total time for task"
+    echo ""
+    echo "Energy Management:"
+    echo "  spend <task_id> <count>     : Spend spoons on a task"
     exit 1
     ;;
 esac

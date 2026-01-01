@@ -44,7 +44,11 @@ spend_spoons() {
         return 1
     fi
 
-    local activity="$2"
+
+
+    # Sanitize activity (remove pipes and newlines)
+    local raw_activity="${2:-General Activity}"
+    local activity=$(echo "$raw_activity" | tr -d '|\n' | head -c 100)
     local today=$(date +%Y-%m-%d)
     local time=$(date +%H:%M)
     

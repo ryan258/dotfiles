@@ -176,6 +176,11 @@ alias t-start="todo.sh start"
 alias t-stop="todo.sh stop"
 alias t-status="time_tracker.sh status"
 
+# Spoon Budget
+alias spoons="spoon_manager.sh"
+alias s-check="spoon_manager.sh check"
+alias s-spend="spoon_manager.sh spend"
+
 # Health tracking
 alias health="health.sh"
 alias meds="meds.sh"
