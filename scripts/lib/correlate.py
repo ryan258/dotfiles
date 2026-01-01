@@ -63,9 +63,13 @@ def correlate(file1, file2, date_col_1=1, val_col_1=2, date_col_2=1, val_col_2=2
     # Find common dates
     common_dates = sorted(set(data1.keys()) & set(data2.keys()))
     
-    if len(common_dates) < 5:
-        print("Error: Not enough overlapping data points (minimum 5)")
+    if len(common_dates) == 0:
+        print(f"Error: No overlapping dates between {file1} and {file2}", file=sys.stderr)
         sys.exit(1)
+    elif len(common_dates) < 5:
+        print(f"Warning: Only {len(common_dates)} overlapping data points (recommended minimum: 5)", file=sys.stderr)
+        # Continue anyway
+
         
     x = [data1[d] for d in common_dates]
     y = [data2[d] for d in common_dates]

@@ -1,72 +1,84 @@
 # Daily Cheat Sheet
+
 ## Your One-Page Reference for Brain-Fog Days
 
 ---
 
 ## 🌅 Morning
-| Command | What It Does |
-|---------|--------------|
-| `startday` | Morning briefing (auto-runs once daily) |
-| `focus "my main thing today"` | Set daily intention |
-| `todo top` | See top 3 tasks only |
-| `g suggest` | Where should I work today? |
+
+| Command                       | What It Does                            |
+| ----------------------------- | --------------------------------------- |
+| `startday`                    | Morning briefing (auto-runs once daily) |
+| `focus "my main thing today"` | Set daily intention                     |
+| `todo top`                    | See top 3 tasks only                    |
+| `g suggest`                   | Where should I work today?              |
 
 ---
 
 ## 📝 Tasks
-| Command | What It Does |
-|---------|--------------|
-| `todo "task description"` | Add a task |
-| `todo` | See all tasks |
-| `todo top` | Top 3 only |
-| `todo done 1` | Mark task 1 complete |
-| `todo bump 5` | Move task 5 to top |
-| `todo debug 2` | Get AI help with task 2 |
+
+| Command                   | What It Does            |
+| ------------------------- | ----------------------- |
+| `todo "task description"` | Add a task              |
+| `todo`                    | See all tasks           |
+| `todo top`                | Top 3 only              |
+| `todo done 1`             | Mark task 1 complete    |
+| `todo bump 5`             | Move task 5 to top      |
+| `t-start 1`               | Start timer for task 1  |
+| `t-stop`                  | Stop timer              |
+| `todo debug 2`            | Get AI help with task 2 |
 
 ---
 
 ## 💭 Journaling
-| Command | What It Does |
-|---------|--------------|
-| `journal "quick thought"` | Quick entry |
-| `dump` | Free-form editor journaling |
-| `journal list` | See recent entries |
-| `journal search "keyword"` | Find past entries |
+
+| Command                    | What It Does                |
+| -------------------------- | --------------------------- |
+| `journal "quick thought"`  | Quick entry                 |
+| `dump`                     | Free-form editor journaling |
+| `journal list`             | See recent entries          |
+| `journal search "keyword"` | Find past entries           |
 
 ---
 
 ## 🏥 Health
-| Command | What It Does |
-|---------|--------------|
-| `health energy 7` | Rate energy 1-10 |
-| `health symptom "headache"` | Log a symptom |
-| `meds log "Med Name"` | Log medication dose |
-| `meds check` | What's due now? |
-| `health dashboard` | 30-day trends |
+
+| Command                     | What It Does             |
+| --------------------------- | ------------------------ |
+| `health energy 7`           | Rate energy 1-10         |
+| `health symptom "headache"` | Log a symptom            |
+| `meds log "Med Name"`       | Log medication dose      |
+| `meds check`                | What's due now?          |
+| `spoons init 12`            | Start daily spoon budget |
+| `spoons spend 2`            | Log spoon usage          |
+| `health dashboard`          | 30-day trends            |
 
 ---
 
 ## 🧭 Navigation
-| Command | What It Does |
-|---------|--------------|
-| `g` | Show bookmarks |
-| `g recent` | Recently visited dirs |
-| `g suggest` | Smart suggestions |
-| `g save myname` | Save this directory |
+
+| Command         | What It Does          |
+| --------------- | --------------------- |
+| `g`             | Show bookmarks        |
+| `g recent`      | Recently visited dirs |
+| `g suggest`     | Smart suggestions     |
+| `g save myname` | Save this directory   |
 
 ---
 
 ## 🤖 AI Helpers (All Free)
-| Command | When to Use |
-|---------|-------------|
-| `tech "question"` | Debug code, fix errors |
-| `content "topic"` | Write blog posts, guides |
-| `creative "idea"` | Stories, creative projects |
-| `strategy "question"` | Big decisions, planning |
-| `stoic "struggle"` | Mindset, perspective |
-| `ai_suggest` | Not sure which AI to use? |
+
+| Command               | When to Use                |
+| --------------------- | -------------------------- |
+| `tech "question"`     | Debug code, fix errors     |
+| `content "topic"`     | Write blog posts, guides   |
+| `creative "idea"`     | Stories, creative projects |
+| `strategy "question"` | Big decisions, planning    |
+| `stoic "struggle"`    | Mindset, perspective       |
+| `ai_suggest`          | Not sure which AI to use?  |
 
 **Pipe code to AI:**
+
 ```bash
 cat script.sh | tech --stream
 ```
@@ -74,55 +86,61 @@ cat script.sh | tech --stream
 ---
 
 ## 📊 Check-Ins
-| Command | What It Does |
-|---------|--------------|
-| `status` | Mid-day: where am I? |
+
+| Command       | What It Does             |
+| ------------- | ------------------------ |
+| `status`      | Mid-day: where am I?     |
 | `goodevening` | Evening wrap-up + backup |
-| `weekreview` | Weekly summary |
+| `weekreview`  | Weekly summary           |
 
 ---
 
 ## 🔍 Finding Things
-| Command | What It Does |
-|---------|--------------|
-| `findtext "search"` | Search file contents |
-| `findbig` | 10 largest files |
-| `tidy` | Clean Downloads folder |
+
+| Command             | What It Does           |
+| ------------------- | ---------------------- |
+| `findtext "search"` | Search file contents   |
+| `findbig`           | 10 largest files       |
+| `tidy`              | Clean Downloads folder |
 
 ---
 
 ## 📚 Blog (if BLOG_DIR set)
-| Command | What It Does |
-|---------|--------------|
-| `blog status` | See drafts and stubs |
-| `blog ideas` | Mine journal for topics |
-| `blog generate "Title" -p persona -s section` | AI create post |
+
+| Command                                       | What It Does            |
+| --------------------------------------------- | ----------------------- |
+| `blog status`                                 | See drafts and stubs    |
+| `blog ideas`                                  | Mine journal for topics |
+| `blog generate "Title" -p persona -s section` | AI create post          |
 
 **Personas:** `thoughtful-guide`, `practical-tip`, `technical-deep-dive`, `personal-story`
 
 ---
 
 ## 🛠 Quick Utilities
-| Command | What It Does |
-|---------|--------------|
-| `break` | 15-min break reminder |
-| `pomo` | 25-min Pomodoro |
-| `remind +30m "text"` | Schedule reminder |
-| `done long-command` | Notify when complete |
+
+| Command                 | What It Does           |
+| ----------------------- | ---------------------- |
+| `break`                 | 15-min break reminder  |
+| `pomo`                  | 25-min Pomodoro        |
+| `remind +30m "text"`    | Schedule reminder      |
+| `done long-command`     | Notify when complete   |
 | `clip save name "text"` | Save clipboard snippet |
-| `whatis commandname` | What does this do? |
+| `whatis commandname`    | What does this do?     |
 
 ---
 
 ## 🆘 Overwhelmed?
 
 **When you can't focus:**
+
 ```bash
 focus "Just one thing"
 todo top
 ```
 
 **When you're stuck:**
+
 ```bash
 todo debug 1           # AI analyzes task
 status                 # Where am I?
@@ -130,6 +148,7 @@ dump                   # Brain dump to journal
 ```
 
 **When you need a reset:**
+
 ```bash
 break                  # Take 15 minutes
 health energy 4        # Log low energy
@@ -139,6 +158,7 @@ stoic "I'm struggling" # Get perspective
 ---
 
 ## 🌙 End of Day
+
 ```bash
 goodevening            # Celebrate wins + backup
 todo clear             # Clean up completed
@@ -158,6 +178,7 @@ focus clear            # Reset for tomorrow
 ---
 
 ## 📖 More Help
+
 - `docs/discover.md` - Full feature discovery guide
 - `docs/happy-path.md` - Daily workflow walkthrough
 - `docs/ai-examples.md` - Real AI examples

@@ -181,6 +181,10 @@ alias spoons="spoon_manager.sh"
 alias s-check="spoon_manager.sh check"
 alias s-spend="spoon_manager.sh spend"
 
+# Correlation & Reports
+alias correlate="correlate.sh"
+alias daily-report="generate_report.sh daily"
+
 # Health tracking
 alias health="health.sh"
 alias meds="meds.sh"

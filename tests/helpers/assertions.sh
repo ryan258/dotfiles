@@ -8,6 +8,15 @@ fail() {
     return 1
 }
 
+# Assert that a file exists
+# Usage: assert_file_exists <file>
+assert_file_exists() {
+  local file="$1"
+  if [ ! -f "$file" ]; then
+    fail "File '$file' does not exist"
+  fi
+}
+
 # Assert that a file contains a specific string
 # Usage: assert_file_contains <file> <string>
 assert_file_contains() {

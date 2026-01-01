@@ -7,7 +7,9 @@ This document outlines the ideal daily workflow using your context-recovery syst
 ## Morning Routine (Automatic)
 
 ### What Happens
+
 When you open your first terminal of the day, `startday` runs automatically (only once per calendar day) and shows:
+
 - 🎯 Focus for today (if you set one with `focus "..."`)
 - Yesterday's journal entries (what you were working on)
 - Active GitHub projects (pushed in last 7 days from any machine)
@@ -20,6 +22,7 @@ When you open your first terminal of the day, `startday` runs automatically (onl
 - Your top 3 priority tasks (not the full overwhelming list)
 
 ### What You Do
+
 **Nothing!** Just read the output. It brings back yesterday's context.
 
 ```bash
@@ -31,6 +34,7 @@ startday
 ## Morning: Capture Your Intentions
 
 ### Set Today's Focus
+
 Give your morning dashboard an anchor:
 
 ```bash
@@ -41,7 +45,18 @@ focus clear      # When you want to reset
 
 Whatever you set here appears at the top of `startday` (and you can re-run `startday` manually anytime).
 
+### Check Your Energy (Spoons)
+
+Initialize your daily energy budget based on how you feel:
+
+```bash
+spoons init 12     # Good day
+spoons init 8      # Average day
+spoons init 4      # Rough day (flare)
+```
+
 ### Add Today's Tasks
+
 As ideas come to you, quickly add them:
 
 ```bash
@@ -51,11 +66,13 @@ todo add "Call doctor about prescription"
 ```
 
 **Shortcut:**
+
 ```bash
 ta "Quick task"    # Alias for 'todo add'
 ```
 
 ### Check What's On Your Plate
+
 ```bash
 todo list          # See all tasks
 # or
@@ -69,15 +86,27 @@ todo top 3
 ```
 
 ### Prioritize Tasks
+
 Move important tasks to the top of your list:
 
 ```bash
 todo bump 5        # Move task #5 to the top
 ```
 
+### Start Working
+
+Track your focus time to manage pacing:
+
+```bash
+t-start 1          # Start timing task #1
+# ... work ...
+t-stop             # Stop timer
+```
+
 ## During the Day: Stay Grounded
 
 ### Mid-Day Context Check
+
 When you lose track of what you're doing (brain fog moment):
 
 ```bash
@@ -85,6 +114,7 @@ status
 ```
 
 This shows:
+
 - Where you are (directory, git branch)
 - Last journal entry
 - Today's journal entries
@@ -97,7 +127,17 @@ g suggest | head -3   # Top smart directory suggestions
 ```
 
 ### Journal Important Moments
+
 Capture context as things happen:
+
+### Manage Energy
+
+If you do something draining, log it:
+
+```bash
+spoons spend 2 "Video call"
+spoons check       # See how many you have left
+```
 
 ```bash
 journal "Figured out the authentication bug - it was the token expiry"
@@ -107,16 +147,19 @@ journal "blog idea: write about MS and developer tools"
 ```
 
 **Shortcut:**
+
 ```bash
 j "Quick note"     # Alias for 'journal'
 ```
 
 **Need to brain dump paragraphs?**
+
 ```bash
 dump               # Opens $EDITOR, saves everything to the journal for today
 ```
 
 **Search Your Past:**
+
 ```bash
 journal search "authentication"    # Find when you worked on auth
 journal search "blog idea"         # Find all your blog ideas
@@ -124,6 +167,7 @@ journal onthisday                  # See what you did this day in previous years
 ```
 
 ### Mark Tasks Complete
+
 As you finish things:
 
 ```bash
@@ -142,6 +186,7 @@ todo undo         # Restores the most recently completed task
 ## Evening: Close the Loop
 
 ### End of Day Summary
+
 Before you finish for the day:
 
 ```bash
@@ -149,6 +194,7 @@ goodevening
 ```
 
 This shows:
+
 - Tasks you completed today
 - Today's journal entries
 - **Gamified progress:** Celebrates tasks completed and journal entries logged (progress is progress!)
@@ -172,6 +218,7 @@ weekreview --file    # Saves to ~/Documents/Reviews/Weekly/YYYY-W##.md
 ```
 
 Shows:
+
 - Completed tasks from last 7 days
 - Journal entries from last 7 days
 - Git contributions this week
@@ -185,6 +232,7 @@ setup_weekly_review    # Schedules next Sunday's export via schedule.sh
 ## Health Tracking
 
 ### Track Appointments
+
 ```bash
 health add "Neurologist follow-up" "2025-12-15 14:00"
 health add "Physical therapy" "2025-11-10 09:30"
@@ -192,6 +240,7 @@ health list                           # See appointments with countdown
 ```
 
 ### Track Daily Health
+
 Log symptoms and energy levels to spot patterns:
 
 ```bash
@@ -210,6 +259,7 @@ health dashboard                      # Average energy, symptom frequency, patte
 ```
 
 ### Export for Doctor Visits
+
 Before medical appointments:
 
 ```bash
@@ -218,6 +268,7 @@ health export 30                      # Export last 30 days to markdown file
 ```
 
 ### Medication Tracking
+
 Set up and track medications:
 
 ```bash
@@ -267,6 +318,7 @@ systemlog                              # See what automated tasks ran
 ## Navigation Helpers
 
 ### Save Important Project Locations
+
 The `g` command replaces the old `goto`/`back`/`workspace` tools with intelligent state management:
 
 ```bash
@@ -283,17 +335,20 @@ g myproject                           # (must be sourced to cd)
 ```
 
 ### Jump to Recent Directories
+
 ```bash
 g -r               # Show recent directory history
 g recent           # Same thing
 ```
 
 ### List All Bookmarks
+
 ```bash
 g list             # See all saved locations
 ```
 
 ### Let the System Suggest & Tidy
+
 ```bash
 g suggest | head -3    # Smart suggestions based on frequency + recency
 g prune --auto         # Remove bookmarks whose directories disappeared
@@ -302,12 +357,14 @@ g prune --auto         # Remove bookmarks whose directories disappeared
 ## Productivity Power Tools
 
 ### Focus Timer (Pomodoro)
+
 ```bash
 pomo               # 25-minute focused work timer
 break              # 15-minute break timer (or customize)
 ```
 
 ### Knowledge Management
+
 ```bash
 howto add git-workflow                # Save a how-to guide
 howto git-workflow                    # Read the guide later
@@ -315,18 +372,21 @@ howto search "docker"                 # Search all guides
 ```
 
 ### Schedule Future Reminders
+
 ```bash
 schedule "2:30 PM" "remind 'Call Mom'"
 schedule "tomorrow 9am" "todo add 'Review PR'"
 ```
 
 ### Look Up Commands
+
 ```bash
 whatis gs                             # What does 'gs' alias do?
 whatis todo                           # Look up any command
 ```
 
 ### System Validation
+
 ```bash
 dotfiles_check                        # Verify entire system health
 systemlog                             # View automation activity log
@@ -335,11 +395,13 @@ systemlog                             # View automation activity log
 ### AI Assistance (New!)
 
 **Get context-aware suggestions:**
+
 ```bash
 ai-suggest                            # AI recommends dispatchers based on your current work
 ```
 
 **Quick AI help:**
+
 ```bash
 # Debug code
 cat script.sh | tech
@@ -355,6 +417,7 @@ echo "feeling overwhelmed by tasks" | stoic
 ```
 
 **Advanced AI features:**
+
 ```bash
 # Multi-specialist project planning
 dispatch project "launch new blog series" > brief.md
@@ -370,47 +433,47 @@ content --context "guide topic"
 
 ## Quick Reference Card
 
-| Command | What It Does |
-|---------|--------------|
-| `startday` | Morning briefing with context recovery |
-| `status` | Mid-day context check |
-| `goodevening` | End-of-day summary with gamification |
-| `next` | Show only your top priority task |
-| `journal "msg"` or `j "msg"` | Capture a moment |
-| `journal search "<term>"` | Find past journal entries |
-| `journal onthisday` | See this day in previous years |
-| `dump` | Long-form journaling via your `$EDITOR` |
-| `todo add "task"` or `ta "task"` | Add a task |
-| `todo list` or `t` | See all tasks |
-| `todo top 3` | See top 3 priorities |
-| `todo bump <num>` | Move task to top |
-| `todo done <num>` | Complete a task |
-| `todo commit <num>` | Commit code + complete task |
-| `todo undo` | Restore the most recently completed task |
-| `health energy <1-10>` | Log energy level |
-| `health symptom "..."` | Log symptoms |
-| `health dashboard` | 30-day health trends |
-| `meds check` | Check medication schedule |
-| `meds dashboard` | Adherence tracking |
-| `weekreview --file` | Weekly summary saved to Markdown |
-| `setup_weekly_review` | Schedule the weekly export |
-| `focus` / `focus show` | Set or view today's focus |
-| `g save <name>` | Bookmark this directory |
-| `g <name>` | Jump to bookmark (with venv/apps) |
-| `g suggest` | Smart directory suggestions |
-| `pomo` | 25-minute Pomodoro timer |
-| `howto <name>` | Personal how-to wiki |
-| `systemlog` | View automation activity |
-| **AI Assistance** | |
-| `ai-suggest` | Get AI dispatcher suggestions for current context |
-| `tech` | Debug code/scripts (pipe input) |
-| `creative "<idea>"` | Generate story packages |
-| `content "<topic>"` | Create SEO content guides |
-| `strategy` | Strategic analysis (pipe input) |
-| `stoic` | Stoic coaching (pipe input) |
-| `journal analyze` | AI insights from last 7 days |
-| `dispatch project "<desc>"` | Multi-specialist project planning |
-| `dhp-chain d1 d2 -- "input"` | Chain multiple AI specialists |
+| Command                          | What It Does                                      |
+| -------------------------------- | ------------------------------------------------- |
+| `startday`                       | Morning briefing with context recovery            |
+| `status`                         | Mid-day context check                             |
+| `goodevening`                    | End-of-day summary with gamification              |
+| `next`                           | Show only your top priority task                  |
+| `journal "msg"` or `j "msg"`     | Capture a moment                                  |
+| `journal search "<term>"`        | Find past journal entries                         |
+| `journal onthisday`              | See this day in previous years                    |
+| `dump`                           | Long-form journaling via your `$EDITOR`           |
+| `todo add "task"` or `ta "task"` | Add a task                                        |
+| `todo list` or `t`               | See all tasks                                     |
+| `todo top 3`                     | See top 3 priorities                              |
+| `todo bump <num>`                | Move task to top                                  |
+| `todo done <num>`                | Complete a task                                   |
+| `todo commit <num>`              | Commit code + complete task                       |
+| `todo undo`                      | Restore the most recently completed task          |
+| `health energy <1-10>`           | Log energy level                                  |
+| `health symptom "..."`           | Log symptoms                                      |
+| `health dashboard`               | 30-day health trends                              |
+| `meds check`                     | Check medication schedule                         |
+| `meds dashboard`                 | Adherence tracking                                |
+| `weekreview --file`              | Weekly summary saved to Markdown                  |
+| `setup_weekly_review`            | Schedule the weekly export                        |
+| `focus` / `focus show`           | Set or view today's focus                         |
+| `g save <name>`                  | Bookmark this directory                           |
+| `g <name>`                       | Jump to bookmark (with venv/apps)                 |
+| `g suggest`                      | Smart directory suggestions                       |
+| `pomo`                           | 25-minute Pomodoro timer                          |
+| `howto <name>`                   | Personal how-to wiki                              |
+| `systemlog`                      | View automation activity                          |
+| **AI Assistance**                |                                                   |
+| `ai-suggest`                     | Get AI dispatcher suggestions for current context |
+| `tech`                           | Debug code/scripts (pipe input)                   |
+| `creative "<idea>"`              | Generate story packages                           |
+| `content "<topic>"`              | Create SEO content guides                         |
+| `strategy`                       | Strategic analysis (pipe input)                   |
+| `stoic`                          | Stoic coaching (pipe input)                       |
+| `journal analyze`                | AI insights from last 7 days                      |
+| `dispatch project "<desc>"`      | Multi-specialist project planning                 |
+| `dhp-chain d1 d2 -- "input"`     | Chain multiple AI specialists                     |
 
 ## The Most Important Rules
 
@@ -429,23 +492,27 @@ content --context "guide topic"
 ## Tips for Bad Brain Fog Days
 
 1. **Use `next` instead of `todo list`**: Looking at a full task list can be overwhelming
+
    ```bash
    next      # Just see task #1, that's all you need right now
    ```
 
 2. **Remind yourself of the plan**: When the morning feels fuzzy
+
    ```bash
    focus show    # Re-read the focus you set earlier
    startday      # Re-run the dashboard if you need the full picture
    ```
 
 3. **Smaller tasks**: Break everything into tiny pieces
+
    ```bash
    todo add "Read auth code - just 10 minutes"
    todo add "Write 1 paragraph of blog post"
    ```
 
 4. **Log your health data**: Track the correlation between symptoms and productivity
+
    ```bash
    health energy 3
    health symptom "Heavy fog today, fatigue"
@@ -453,33 +520,39 @@ content --context "guide topic"
    ```
 
 5. **Use status liberally**: Every time you lose your place
+
    ```bash
    status    # Run this often, no shame
    ```
 
 6. **Capture more context, quickly**: When words are messy
+
    ```bash
    dump      # Opens your editor for a long-form brain dump
    j "short thought"   # Keep breadcrumbs searchable
    ```
 
 7. **Use search when confused**: Your past self left breadcrumbs
+
    ```bash
    journal search "what was I working on"
    journal search "authentication"     # Find that work you did before
    ```
 
 8. **Let navigation nudge you**: When you can't remember the project path
+
    ```bash
    g suggest | head -3   # Smart guesses based on what you use most
    ```
 
 9. **Undo mistakes immediately**: If you complete the wrong task
+
    ```bash
    todo undo
    ```
 
 10. **Let AI help when thinking is hard**: On foggy days, offload mental work
+
     ```bash
     ai-suggest                                    # "What should I do?"
     journal analyze                                # "What patterns am I missing?"
@@ -488,6 +561,7 @@ content --context "guide topic"
     ```
 
 11. **Take a Pomodoro**: 25 minutes of focus, then break
+
     ```bash
     pomo      # Timer + notification when done
     ```
@@ -497,6 +571,7 @@ content --context "guide topic"
 ## Data Location
 
 All your data is centralized in `~/.config/dotfiles-data/`:
+
 - `journal.txt` - All journal entries (searchable)
 - `todo.txt` & `todo_done.txt` - Task lists with timestamps
 - `health.txt` - Health appointments, symptoms, energy ratings

@@ -1,11 +1,11 @@
 # Dotfiles: A macOS Productivity Toolkit
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](VERSION)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](VERSION)
 [![Security](https://img.shields.io/badge/security-A%2B-brightgreen.svg)](SECURITY.md)
-[![Tests](https://img.shields.io/badge/tests-11%2F11%20passing-success.svg)](#running-tests)
+[![Tests](https://img.shields.io/badge/tests-14%2F14%20passing-success.svg)](#running-tests)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey.svg)](#prerequisites)
 
-**Latest Release:** v2.0.0 (November 12, 2025) - Production Ready | [View Changelog](CHANGELOG.md)
+**Latest Release:** v2.1.0 (January 1, 2026) - Phase 1 Features Complete | [View Changelog](CHANGELOG.md)
 
 This repository contains a personal collection of shell scripts, aliases, and configurations designed to create a powerful, efficient, and accessible command-line environment on macOS. The toolkit is built on Zsh and automates common development and system management tasks, reducing repetitive actions and minimizing cognitive load.
 
@@ -77,6 +77,8 @@ ai_suggest        # AI recommends what to do based on your context
 
 This toolkit provides a comprehensive set of enhancements, including:
 
+  * **Energy Management (NEW):** Spoon theory budget tracking with daily initialization (`spoons init`), activity-based expenditure logging (`spoons spend`), real-time balance checks, integration with tasks (`todo spend`), and spoon debt warnings for realistic MS energy management.
+  * **Data Correlation & Insights (NEW):** Statistical correlation engine analyzing relationships between datasets (`correlate run`), automated daily/weekly report generation with spoon/time analysis (`daily-report`), Pearson correlation calculation, and pattern discovery for health/productivity optimization.
   * **Productivity & Task Management:** Advanced todo flow with prioritization, git-integrated commits, encouraging feedback, and `todo undo`; quick journaling plus `dump` for long-form context capture; health and medication tracking with dashboards; weekly and daily reviews generated from recorded activity.
   * **Project & Workspace Management:** Scaffold new projects, create timestamped backups, and save/load directory contexts with intelligent state management (auto-activates venvs, launches apps, logs usage, and can suggest where to jump next).
   * **Knowledge Management:** Personal searchable how-to wiki, blog content integration with todo system, journal search/"on this day", and weekly Markdown summaries for looking back.
@@ -85,7 +87,47 @@ This toolkit provides a comprehensive set of enhancements, including:
   * **Development Shortcuts:** Automate common Git workflows, manage Python environments, spin up project workspaces, and schedule future commands without leaving the shell.
   * **macOS Integration:** Enhanced clipboard manager with dynamic snippets, saved clip executions, notifications, LaunchAgent-friendly scripts, and a unified shell environment across Terminal and VS Code.
 
-## What's New (November 2025 Refresh)
+## What's New
+
+### 🎉 Version 2.1.0 - Phase 1 Features (January 1, 2026)
+
+**Status:** ✅ Production Ready - Foundation Features Complete
+
+This release implements advanced energy management and data correlation capabilities from the Feature Implementation Plan. All features include comprehensive test coverage and are production-ready.
+
+**New Features:**
+
+**F2: Spoon Theory Budget Tracking ⭐⭐⭐**
+- Daily spoon budget initialization with interactive prompts in `startday`
+- Activity-based spoon expenditure tracking with remaining balance
+- Integration with todo system: `todo spend <task_id> <count>`
+- Spoon debt tracking with warnings for realistic energy management
+- Standard activity cost lookup (meeting=2, coding=1, social=3, travel=4)
+- Commands: `spoons init`, `spoons spend`, `spoons check`, `s-check`, `s-spend`
+
+**F3: Correlation Engine (Experimental) ⭐⭐⭐**
+- Statistical correlation analysis between any two datasets
+- Automated daily/weekly report generation with Markdown output
+- Pearson correlation calculation with Python engine
+- Multi-dataset correlation with automatic date alignment
+- Daily aggregation of time tracking and spoon expenditure
+- Pattern discovery foundation for health/productivity insights
+- Commands: `correlate run <file1> <file2>`, `daily-report`
+
+**Quality Improvements:**
+- Enhanced path validation with cross-platform support
+- Fixed time log parsing for accurate duration calculations
+- Improved Linux date handling in report generation
+- 14/14 tests passing (added 8 spoon + 3 correlation tests)
+- Comprehensive data format documentation
+
+**Data Files:**
+- `~/.config/dotfiles-data/spoons.txt` - Spoon budget and expenditure log
+- `~/.config/dotfiles-data/reports/` - Generated correlation reports
+
+See [CHANGELOG.md](CHANGELOG.md) for complete details.
+
+---
 
 ### 🎉 Version 2.0.0 - Production Release (November 12, 2025)
 

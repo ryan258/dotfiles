@@ -12,6 +12,17 @@ CORRELATE_PY="$LIB_DIR/correlate.py"
 # Usage: correlate_two_datasets <file1> <file2> [date_col1] [val_col1] [date_col2] [val_col2]
 # Column indices are 0-based
 correlate_two_datasets() {
+    # Check dependencies
+    if ! command -v python3 &> /dev/null; then
+        echo "Error: python3 is required but not installed" >&2
+        return 1
+    fi
+    
+    if [ ! -f "$CORRELATE_PY" ]; then
+        echo "Error: correlate.py not found at $CORRELATE_PY" >&2
+        return 1
+    fi
+
     local file1="$1"
     local file2="$2"
     local d1="${3:-1}"

@@ -1,18 +1,22 @@
 # Unified Roadmap
 
-_Last updated: November 14, 2025 (comprehensive codebase review)_
+_Last updated: January 1, 2026 (Phase 1 features complete: F2 Spoon Budget, F3 Correlation Engine)_
 
 ## 0. Vision & Constraints
+
 - **Goal:** Run the dotfiles + AI Staff HQ toolchain as a dependable assistant that also drives the ryanleej.com publishing workflow (while remaining flexible enough to point at other Hugo projects).
 - **Platform:** macOS and Linux Terminal environments; blog builds are triggered server-side (DigitalOcean) after we push to the repo—local scripts should prepare commits/pushes rather than deploy directly.
 - **Technology:** This project is committed to a shell-first approach. Python or other languages should be minimized to avoid complexity. The `ai-staff-hq` submodule is treated as read-only. Limited Python usage (e.g., blog validation) is acceptable for complex parsing tasks where shell alternatives would be significantly more complex.
 - **Guiding themes:** reliability first, transparent automation, AI-assisted content ops, and low-friction routines for days with limited energy.
 
 ## 1. Priority Snapshot
-- **✅ Completed (v2.0.0 production release):**
-  - **Core Infrastructure:** 59 automation scripts, 10 AI dispatchers with streaming support, shared library architecture, spec-driven workflow templates, cross-platform date utilities
-  - **Reliability:** All critical bugs resolved (R1-R10, R13-R16), 11/11 BATS tests passing, zero known critical issues
-  - **Security:** A+ security grade, input validation, path sanitization, credential redaction, comprehensive security documentation
+
+- **✅ Completed (v2.1.0 - January 1, 2026):**
+  - **Core Infrastructure:** 62 automation scripts, 10 AI dispatchers with streaming support, shared library architecture, spec-driven workflow templates, cross-platform date utilities
+  - **Energy Management (F2):** Spoon theory budget tracking with daily initialization, activity-based expenditure, debt tracking, startday/todo integration
+  - **Data Correlation (F3):** Statistical correlation engine with Python-based Pearson calculation, daily report generation, multi-dataset analysis, automatic data aggregation
+  - **Reliability:** All critical bugs resolved, 14/14 BATS tests passing (11 core + 8 spoon + 3 correlation), zero known critical issues
+  - **Security:** A+ security grade, enhanced path validation, input sanitization, credential redaction, comprehensive security documentation
   - **AI Integration:** 41 AI Staff HQ specialists active, dynamic squad configuration, optimized free models, real-time streaming, multi-specialist orchestration
   - **Blog Workflow:** End-to-end publishing pipeline with draft management, AI-powered generation/refinement, validation, workflow orchestration, and git hooks
   - **Documentation:** Professional-grade README, CHANGELOG, SECURITY.md, TROUBLESHOOTING.md, comprehensive usage guides
@@ -28,16 +32,29 @@ _Last updated: November 14, 2025 (comprehensive codebase review)_
   - Enhanced observability: usage dashboards, API budget tracking, performance monitoring
 
 ## 2. Workstreams & Task Backlog
+
 Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observability, Workflow, Blog, Testing, and Staff Library respectively.
 
 ### 2.3 Observability, Streaming & Governance
+
 - **Completed:** O1-O3 moved to `CHANGELOG.md` (Nov 20, 2025) covering streaming exit codes, dispatcher usage logging, and context redaction.
 - [ ] **O4 · API key governance** - _Not yet implemented_. Plan: Support per-dispatcher keys/aliases, rotation reminders, `dispatcher auth test` command, metadata caching for proactive warnings.
 - [ ] **O5 · Rate limiting & budget alerts** - _Not yet implemented_. Plan: Implement exponential backoff for retries, detect 429 responses, and add monthly budget warnings based on cost tracking.
 
 ### 2.4 Workflow & UX Improvements · Publishing & Deployment — completed (see `CHANGELOG.md`)
 
+### Phase 1: Context & Energy (Completed)
+
+**Goal:** Build the "external brain" and energy management system.
+
+- [x] **F1: Context Capture** (Save/Restore workspace state) - **Completed**
+- [x] **F2: Spoon Theory Budget** (Energy tracking) - **Completed**
+- [x] **F3: Correlation Engine** (Connect energy to output) - **Completed**
+
+### Phase 2: Workflow Enhancements (Next) — completed (see `CHANGELOG.md`)
+
 ### 2.5 Blog & Publishing Program
+
 **Design Philosophy:** Tooling works with any Hugo repository (configurable via `BLOG_DIR` in `.env`), defaults to `ryanleej.com`. Deployments happen server-side (DigitalOcean) after git push—local scripts prepare commits/pushes only.
 
 **Current Status:** Core publishing pipeline complete (B1, B2, B3-B6, B12). Content lifecycle features pending (B7-B11).
@@ -49,19 +66,21 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 #### Phase C · Publishing & Deployment — completed (see `CHANGELOG.md`)
 
 #### Phase D · Content Lifecycle Features
+
 - [ ] **B8 · Idea syncing** - _Not yet implemented_. Current `blog ideas` only proxies to `journal search`. Plan: Build `blog ideas sync/generate/prioritize/next` to tie journal themes + `content-backlog.md` into `todo.txt`.
 - [ ] **B9 · Version management** - _Not yet implemented_. Plan: `blog version bump/check/history` commands following `VERSIONING-POLICY.md` with auto journal logging.
 - [ ] **B10 · Metrics & exemplars** - _Not yet implemented_. Plan: `blog metrics` for analytics, `blog exemplar` for North Star template showcase.
 - [ ] **B11 · Social automation** - _Not yet implemented_. Plan: `blog social --platform <name>` generates platform-specific content, creates todos for manual sharing.
 
-
 ### 2.6 Testing, Docs & Ops
+
 - **Completed:** T0 moved to `CHANGELOG.md` (BATS test suite for `todo.sh`).
 - [ ] **T1 · Morning hook smoke test** - _Not yet implemented_. Plan: Add CI/cron check `zsh -ic startday` to ensure login hooks never regress.
 - [ ] **T2 · Happy-path rehearsal** - _Not yet implemented_. Plan: Document and run weekly `startday → status → goodevening` test flow to ensure brain-fog-friendly workflows remain reliable.
 - [ ] **T3 · GitHub helper setup checklist** - _Not yet implemented_. Plan: Maintain PAT instructions in sync with README/onboarding documentation. Current setup documented in TROUBLESHOOTING.md.
 
 ### 2.7 AI Staff HQ (Specialist Library & Tooling)
+
 **Current Status:** 41 specialists active across 9 categories. All specialists have YAML definitions with activation patterns, system prompts, and integration templates.
 
 **Integration Status:** 10 active dispatchers use specialists via dynamic squad configuration (`squads.json`). Spec-driven workflow supports all specialists via templates in `~/dotfiles/templates/`.
@@ -72,12 +91,18 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 - [ ] **S3 · Documentation refresh** - _Not yet implemented_. Plan: Update `ai-staff-hq/ROADMAP.md` and supporting docs to reflect 41-specialist baseline, v3 structure, spec workflow, and integration patterns.
 
 ### 2.8 Code Quality & Technical Debt (from Fixit Audit)
+
 - **Completed:** Q1-Q5 moved to `CHANGELOG.md` (unused variable cleanup, return-value masking fixes, subshell scope corrections, safer parsing, and style/quoting improvements).
 
 ## 3. Project Status Summary
 
-### ✅ Production-Ready Components (v2.0.0)
-**Daily Workflows:** Morning routine (`startday.sh`), evening routine (`goodevening.sh`), mid-day dashboard (`status.sh`), task management (`todo.sh`), journaling (`journal.sh`), focus anchors, health tracking, medication management.
+### ✅ Production-Ready Components (v2.1.0)
+
+**Daily Workflows:** Morning routine with spoon initialization (`startday.sh`), evening routine (`goodevening.sh`), mid-day dashboard (`status.sh`), task management with spoon tracking (`todo.sh`), journaling (`journal.sh`), focus anchors, health tracking, medication management.
+
+**Energy Management:** Spoon theory budget tracking (`spoon_manager.sh`), daily spoon initialization, activity-based expenditure tracking, debt warnings, integration with tasks and daily routines.
+
+**Data Analysis:** Correlation engine (`correlate.sh`), daily report generation (`generate_report.sh`), statistical pattern analysis, Pearson correlation calculation, automated data aggregation.
 
 **Productivity Tools:** Smart navigation (`g.sh`), project management, file organization, archive management, clipboard management, application launcher, scheduling, reminders.
 
@@ -88,34 +113,42 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 **Infrastructure:** Shared libraries, robust error handling, cross-platform date utilities, comprehensive validation, security hardening, professional documentation.
 
 ### 🚧 In Progress & Next Steps
+
 **Near-term (1-2 weeks):**
+
 - O4: API key governance and rotation management
 - B2: Persona-aware blog generation
 
 **Mid-term (1-2 months):**
+
 - T1-T3: Automated testing and smoke tests
 - B7-B11: Blog content lifecycle features
 - Enhanced observability and analytics
 
 **Long-term (3+ months):**
+
 - S1-S3: AI Staff HQ expansion to 107 specialists
 - Advanced workflow automation
 - Usage dashboards and budget tracking
 
 ### 📚 Reference Documents
+
 - **CHANGELOG.md** - Complete version history and shipped features (v2.0.0 release notes)
 - **SECURITY.md** - Security policy and vulnerability reporting
 - **TROUBLESHOOTING.md** - Common issues and solutions
 - Historic planning docs (`blindspots.md`, `review.md`, `ROADMAP-REVIEW*.md`) preserved for context
 
-### 📊 Quality Metrics (November 14, 2025)
-- **Test Coverage:** 11/11 BATS tests passing
+### 📊 Quality Metrics (January 1, 2026)
+
+- **Test Coverage:** 14/14 BATS tests passing (11 core + 8 spoon budget + 3 correlation)
 - **Critical Bugs:** 0 known issues
-- **Security Grade:** A+ (comprehensive audit complete)
+- **Security Grade:** A+ (comprehensive audit complete, enhanced path validation)
 - **Code Quality:** A+ (shellcheck compliant, proper error handling)
-- **Platform Support:** macOS (primary), Linux (cross-platform utilities)
-- **Scripts:** 59 automation scripts, 10 AI dispatchers, 4 advanced AI features
-- **Documentation:** 8 comprehensive docs, inline help for all commands
+- **Platform Support:** macOS (primary), Linux (cross-platform utilities including date handling)
+- **Scripts:** 62 automation scripts, 10 AI dispatchers, 4 advanced AI features
+- **Libraries:** 8 shared libraries (time tracking, spoon budget, correlation engine, date utils, context capture, and 3 AI libraries)
+- **Documentation:** 8 comprehensive docs, inline help for all commands, data format documentation
 
 ---
+
 _This roadmap is a living document. Update it inline rather than creating parallel planning docs to maintain a single source of truth. Last comprehensive review: November 14, 2025._
