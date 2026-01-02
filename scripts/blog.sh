@@ -23,6 +23,14 @@ else
     exit 1
 fi
 
+# Source lifecycle library
+if [ -f "$SCRIPT_DIR/lib/blog_lifecycle.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/blog_lifecycle.sh"
+else
+    echo "Warning: Lifecycle library not found at $SCRIPT_DIR/lib/blog_lifecycle.sh" >&2
+fi
+
 # Allow per-user overrides via .env without leaking secrets broadly.
 if [ -f "$HOME/dotfiles/.env" ]; then
     # shellcheck disable=SC1090
@@ -275,10 +283,7 @@ function recent() {
     done
 }
 
-function ideas() {
-    echo "💡 Searching for blog ideas in journal..."
-    "$SCRIPT_DIR/journal.sh" search "blog idea"
-}
+
 
 function generate() {
     shift # remove subcommand label

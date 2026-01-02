@@ -67,10 +67,10 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 
 #### Phase D · Content Lifecycle Features
 
-- [ ] **B8 · Idea syncing** - _Not yet implemented_. Current `blog ideas` only proxies to `journal search`. Plan: Build `blog ideas sync/generate/prioritize/next` to tie journal themes + `content-backlog.md` into `todo.txt`.
-- [ ] **B9 · Version management** - _Not yet implemented_. Plan: `blog version bump/check/history` commands following `VERSIONING-POLICY.md` with auto journal logging.
-- [ ] **B10 · Metrics & exemplars** - _Not yet implemented_. Plan: `blog metrics` for analytics, `blog exemplar` for North Star template showcase.
-- [ ] **B11 · Social automation** - _Not yet implemented_. Plan: `blog social --platform <name>` generates platform-specific content, creates todos for manual sharing.
+- [x] **B8 · Idea syncing** - **Completed**. Implemented `blog ideas sync/list/add`.
+- [x] **B9 · Version management** - **Completed**. Implemented `blog version bump/show/history` obeying `VERSIONING-POLICY.md`.
+- [x] **B10 · Metrics & exemplars** - **Completed**. Implemented `blog metrics` and `blog exemplar`.
+- [x] **B11 · Social automation** - **Completed**. Implemented `blog social` using `dhp-copy` AI.
 
 ### 2.6 Testing, Docs & Ops
 
