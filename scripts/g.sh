@@ -1,6 +1,7 @@
 #!/bin/bash
 # g.sh - Consolidated navigation and state management script
-set -euo pipefail
+# IMPORTANT: This script is SOURCED, not executed. Must use 'return' not 'exit'
+# to avoid killing the parent shell
 
 # --- Configuration ---
 BOOKMARKS_FILE="$HOME/.config/dotfiles-data/dir_bookmarks"
@@ -22,21 +23,21 @@ case "${1:-list}" in
   -s|save)
     # Save a bookmark
     shift
-    if [ -z "$1" ]; then
+    if [ -z "${1:-}" ]; then
       echo "Usage: g save <bookmark_name> [-a app1,app2] [on-enter-command]"
-      exit 1
+      return 1
     fi
     BOOKMARK_NAME="$1"
     # Validate bookmark name
     if ! [[ "$BOOKMARK_NAME" =~ ^[a-zA-Z0-9_-]+$ ]]; then
       echo "Error: Invalid bookmark name '$BOOKMARK_NAME'." >&2
       echo "Bookmark names can only contain alphanumeric characters, hyphens, and underscores." >&2
-      exit 1
+      return 1
     fi
     shift
     APPS=""
-    if [ "$1" == "-a" ]; then
-      APPS="$2"
+    if [ "${1:-}" = "-a" ]; then
+      APPS="${2:-}"
       shift 2
     fi
     ON_ENTER_CMD="$*"
@@ -68,7 +69,7 @@ case "${1:-list}" in
     # Suggest directories based on frequency and recency
     if [ ! -f "$USAGE_LOG" ]; then
         echo "No usage data to suggest from."
-        exit 1
+        return 1
     fi
 
     NOW=$(date +%s)
@@ -99,11 +100,11 @@ case "${1:-list}" in
     # Remove dead bookmarks (directories that no longer exist)
     if [ ! -f "$BOOKMARKS_FILE" ]; then
       echo "No bookmarks file found."
-      exit 0
+      return 0
     fi
 
     AUTO_MODE=false
-    if [ "${2:-}" == "--auto" ]; then
+    if [ "${2:-}" = "--auto" ]; then
       AUTO_MODE=true
     fi
 
@@ -155,12 +156,12 @@ case "${1:-list}" in
     BOOKMARK_NAME="$1"
     if [ ! -f "$BOOKMARKS_FILE" ]; then
       echo "Error: No bookmarks saved." >&2
-      exit 1
+      return 1
     fi
-    BOOKMARK_DATA=$(grep -F "^$BOOKMARK_NAME:" "$BOOKMARKS_FILE" | head -n 1 || true)
+    BOOKMARK_DATA=$(grep "^$BOOKMARK_NAME:" "$BOOKMARKS_FILE" | head -n 1 || true)
     if [ -z "$BOOKMARK_DATA" ]; then
       echo "Error: Bookmark '$BOOKMARK_NAME' not found."
-      exit 1
+      return 1
     fi
     DIR=$(echo "$BOOKMARK_DATA" | cut -d':' -f2)
     ON_ENTER_CMD=$(echo "$BOOKMARK_DATA" | cut -d':' -f3)
@@ -182,7 +183,7 @@ case "${1:-list}" in
     # Launch apps if they exist
     if [ -n "$APPS" ] && [ -f "$APP_LAUNCHER" ]; then
         echo "Launching apps: $APPS"
-        $APP_LAUNCHER $APPS
+        $APP_LAUNCHER $APPS || echo "  (Note: Configure favorite apps with 'app add <name> <full-app-name>')"
     fi
 
     # Execute on-enter command if it exists

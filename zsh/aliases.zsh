@@ -225,7 +225,7 @@ alias weekreview="week_in_review.sh"
 # =============================================================================
 
 # Smart navigation
-alias g="source g.sh"
+alias g="source $HOME/dotfiles/scripts/g.sh"
 
 # File operations
 alias openf="open_file.sh"
