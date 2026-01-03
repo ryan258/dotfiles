@@ -1125,7 +1125,8 @@ case "$1" in
         recent
         ;;
     ideas|idea|i)
-        ideas
+        shift
+        blog_ideas "$@"
         ;;
     generate|gen|g)
         generate "$@"
@@ -1153,9 +1154,46 @@ case "$1" in
             exit 1
         fi
         ;;
+    version|ver)
+        shift
+        blog_version "$@"
+        ;;
+    metrics|stats)
+        shift
+        blog_metrics "$@"
+        ;;
+    exemplar|ex)
+        shift
+        blog_exemplar "$@"
+        ;;
+    social|promote)
+        shift
+        blog_social "$@"
+        ;;
     *)
-        echo "Usage: blog {status|stubs|random|recent|ideas|generate|refine|draft|workflow|publish|validate|hooks install}"
+        echo "Usage: blog <command> [args]"
         echo ""
+        echo "Management:"
+        echo "  status       Show system status"
+        echo "  stubs        List content stubs"
+        echo "  random       Open a random content stub"
+        echo "  recent       List recently modified posts"
+        echo "  ideas        Manage ideas (list|add|sync)"
+        echo "  version      Manage version (show|bump|history)"
+        echo "  metrics      Show blog statistics"
+        echo ""
+        echo "Content:"
+        echo "  draft        Create a new draft (alias for scaffolder)"
+        echo "  generate     Generate content with AI"
+        echo "  refine       Refine content with AI"
+        echo "  workflow     Run full draft->outline->content workflow"
+        echo "  social       Generate social media content"
+        echo "  exemplar     View section exemplar"
+        echo ""
+        echo "Ops:"
+        echo "  publish      Validate and prepare for deploy"
+        echo "  validate     Run local validation"
+        echo "  hooks        Install git hooks"
         echo "AI-powered commands:"
         echo "  blog g / blog generate [options] \"topic\"  - Generate content (supports -p persona, -a archetype, -s section, -f file)"
         echo "  blog r / blog refine <file-path>          - Polish and improve existing content"

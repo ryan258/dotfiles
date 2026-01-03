@@ -27,10 +27,19 @@ function blog_ideas() {
             ;;
         sync)
             echo "🔄 Syncing ideas from journal..."
-            # Simple grep for now, could be more sophisticated
-            # Look for lines starting with "Idea:" or containing "#idea" in recent journal entries
-            local recent_ideas
-            recent_ideas=$(find "$HOME/.config/dotfiles-data/journal" -type f -mtime -7 -print0 | xargs -0 grep -h -iE "^Idea:|#idea")
+            # Syncing from journal.txt or journal directory
+            local journal_source="$HOME/.config/dotfiles-data/journal.txt"
+            local recent_ideas=""
+            
+            if [ -f "$journal_source" ]; then
+                # Search in the single journal file
+                recent_ideas=$(grep -iE "^Idea:|#idea" "$journal_source" | tail -n 20 || true)
+            elif [ -d "$HOME/.config/dotfiles-data/journal" ]; then
+                 # Fallback to directory search if it exists
+                 recent_ideas=$(find "$HOME/.config/dotfiles-data/journal" -type f -mtime -7 -print0 | xargs -0 grep -h -iE "^Idea:|#idea" || true)
+            else
+                echo "Warning: Journal source not found ($journal_source or journal directory)." >&2
+            fi
             
             if [ -n "$recent_ideas" ]; then
                 echo "Found recent ideas:"
@@ -207,37 +216,31 @@ function blog_social() {
     
     echo "🤖 Generating $platform content for $(basename "$file_path")..."
     
-    if command -v dhp-copy.sh &> /dev/null; then # Assuming 'copy' alias maps to dhp-copy.sh or similar
-        # actually the alias is usually 'dhp-copy' or just 'copy' -> but inside scripts we should use full name if possible or the alias if sourced.
-        # The quick reference says 'copy' uses 'Llama 4 Maverick'. Let's check typical script pattern. 
-        # usually aliases like 'copy' are shell functions.
-        # We'll try 'dhp-copy' if it exists, otherwise fall back to 'copy' command if available. 
-        # Wait, the user instructions say 'dhp-chain creative narrative copy'. So 'dhp-copy' is likely the command.
-        
-        local copy_cmd="dhp-copy"  # Implicit assumption based on naming convention
-        if ! command -v "$copy_cmd" &>/dev/null; then
-             # Try finding it in bin/
-             if [ -f "$HOME/dotfiles/bin/dhp-copy" ]; then
-                 copy_cmd="$HOME/dotfiles/bin/dhp-copy"
-             elif command -v copy &>/dev/null; then
-                 copy_cmd="copy"
-             else
-                 echo "Error: 'dhp-copy' or 'copy' command not available." >&2
-                 return 1
-             fi
-        fi
-        
-        {
-            echo "Create a social media post for $platform based on this blog post."
-            echo "Keep it engaging and appropriate for the platform."
-            echo "---"
-            cat "$file_path"
-        } | "$copy_cmd" "Social media post for $platform"
-        
-        echo ""
-        echo "✅ Generated."
-    else
-        echo "Error: AI copy specialist not found." >&2
-        return 1
+    # Try to find the copy command
+    local copy_cmd="dhp-copy"
+    if ! command -v "$copy_cmd" &>/dev/null; then
+            # Try finding it in bin/
+            if [ -f "$HOME/dotfiles/bin/dhp-copy" ]; then
+                copy_cmd="$HOME/dotfiles/bin/dhp-copy"
+            elif [ -f "$HOME/dotfiles/bin/dhp-copy.sh" ]; then
+                copy_cmd="$HOME/dotfiles/bin/dhp-copy.sh"
+            elif command -v copy &>/dev/null; then
+                copy_cmd="copy"
+            elif command -v dhp-copy.sh &>/dev/null; then
+                copy_cmd="dhp-copy.sh"
+            else
+                echo "Error: 'dhp-copy' or 'copy' command not available." >&2
+                return 1
+            fi
     fi
+    
+    {
+        echo "Instruction: Create a social media post for $platform based on this blog post."
+        echo "Keep it engaging and appropriate for the platform."
+        echo "---"
+        cat "$file_path"
+    } | "$copy_cmd"
+    
+    echo ""
+    echo "✅ Generated."
 }

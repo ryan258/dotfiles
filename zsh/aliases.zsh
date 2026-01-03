@@ -159,6 +159,7 @@ alias battery="pmset -g batt"             # Battery status
 alias howto="howto.sh"
 alias whatis="whatis.sh"
 alias dotfiles_check="dotfiles_check.sh"
+alias dotfiles-check="dotfiles_check.sh"  # Alternative with hyphen
 # =============================================================================
 
 # Task & Time Management

@@ -44,6 +44,7 @@ case "${1:-}" in
             echo "Remaining spoons: $remaining"
         else
             echo "No spoon budget found for today."
+            exit 1
         fi
         ;;
     cost)

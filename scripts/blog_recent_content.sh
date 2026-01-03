@@ -63,11 +63,15 @@ def parse_date(raw):
         raw = raw[:-1] + '+00:00'
     for fmt in ("%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d"):
         try:
-            return datetime.strptime(raw, fmt)
+            dt = datetime.strptime(raw, fmt)
+            # Remove timezone info for consistency
+            return dt.replace(tzinfo=None) if dt.tzinfo else dt
         except ValueError:
             continue
     try:
-        return datetime.fromisoformat(raw)
+        dt = datetime.fromisoformat(raw)
+        # Remove timezone info for consistency
+        return dt.replace(tzinfo=None) if dt.tzinfo else dt
     except Exception:
         return None
 
