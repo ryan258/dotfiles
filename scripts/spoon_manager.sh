@@ -12,12 +12,13 @@ set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib/spoon_budget.sh"
 
 show_help() {
-    echo "Usage: $(basename "$0") {init|spend|check|cost}"
+    echo "Usage: $(basename "$0") {init|spend|check|history|cost}"
     echo ""
     echo "Commands:"
     echo "  init <count>                   Initialize daily spoons (default: 12)"
     echo "  spend <count> [activity]       Spend spoons on an activity"
     echo "  check                          Show remaining spoons"
+    echo "  history [days]                 Show spoon history (default: 7 days)"
     echo "  cost <activity_type>           Show standard cost for activity type"
 }
 
@@ -46,6 +47,9 @@ case "${1:-}" in
             echo "No spoon budget found for today."
             exit 1
         fi
+        ;;
+    history)
+        get_spoon_history "${2:-7}"
         ;;
     cost)
         if [ -z "${2:-}" ]; then

@@ -107,9 +107,42 @@ get_remaining_spoons() {
 # Usage: get_spoon_history <days>
 get_spoon_history() {
     local days="${1:-7}"
-    # This would parse the log and return a summary.
-    # Simplified placeholder:
-    grep "^BUDGET" "$SPOON_LOG" | tail -n "$days"
+    
+    echo "=== Spoon History (Last $days days) ==="
+    echo "Date       Budget     Used Remaining"
+    echo "---------- ------     ---- ---------"
+    
+    if [ ! -f "$SPOON_LOG" ] || [ ! -s "$SPOON_LOG" ]; then
+         echo "No spoon history found."
+         return 0
+    fi
+    
+    # We need to process unique dates from the log
+    # Sort | Uniq | tail -n days
+    
+    local relevant_dates
+    relevant_dates=$(grep "BUDGET" "$SPOON_LOG" | cut -d'|' -f2 | sort -u | tail -n "$days")
+    
+    while IFS= read -r date; do
+        if [ -z "$date" ]; then continue; fi
+        
+        # Get budget
+        local budget_line=$(grep "^BUDGET|$date" "$SPOON_LOG" | tail -n 1)
+        local budget=$(echo "$budget_line" | cut -d'|' -f3)
+        
+        # Get final remaining for that day
+        local last_spend=$(grep "^SPEND|$date" "$SPOON_LOG" | tail -n 1)
+        local remaining="$budget"
+        if [ -n "$last_spend" ]; then
+            remaining=$(echo "$last_spend" | cut -d'|' -f6)
+        fi
+        
+        # Calculate used
+        local used=$((budget - remaining))
+        
+        printf "%-10s %6s %8s %9s\n" "$date" "$budget" "$used" "$remaining"
+        
+    done <<< "$relevant_dates"
 }
 
 # Predict spoons for a date (Mock/placeholder for AI)

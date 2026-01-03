@@ -14,12 +14,21 @@ fi
 
 # --- CONFIGURATION ---
 SPOON_MANAGER="$SCRIPT_DIR/spoon_manager.sh"
+FOCUS_FILE="$HOME/.config/dotfiles-data/daily_focus.txt"
 
-# 1. Initialize Daily Spoons (Energy Budget)
+# 1. Daily Focus (if set)
+if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
+    echo "🎯 TODAY'S FOCUS:"
+    echo "  $(cat "$FOCUS_FILE")"
+    echo ""
+fi
+
+# 2. Initialize Daily Spoons (Energy Budget)
 echo "🥣 SPOON CHECK:"
 if [ -x "$SPOON_MANAGER" ]; then
     # Check if already initialized
     if ! "$SPOON_MANAGER" check &>/dev/null; then
+        # Not initialized yet - prompt for spoons
         # Check if running interactively
         if [ -t 0 ]; then
             echo -n "  How many spoons do you have today? [12]: "
@@ -34,7 +43,7 @@ if [ -x "$SPOON_MANAGER" ]; then
             echo "  Invalid input, defaulting to 12."
             spoons_count=12
         fi
-        
+
         "$SPOON_MANAGER" init "$spoons_count" | sed 's/^/  /'
     else
         # Already initialized, just show status
