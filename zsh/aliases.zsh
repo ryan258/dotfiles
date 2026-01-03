@@ -250,6 +250,11 @@ alias topmem="process_manager.sh memory"
 alias netstatus="network_info.sh status"
 alias netspeed="network_info.sh speed"
 
+# Calendar management
+alias gcal="gcal.sh"
+# Note: 'calendar' also aliased to gcal.sh, overrides system command
+alias calendar="gcal.sh"
+
 # =============================================================================
 # PRODUCTIVITY & AUTOMATION SCRIPTS
 # =============================================================================

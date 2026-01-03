@@ -200,9 +200,23 @@ fi
 
 # --- SCHEDULED TASKS ---
 echo ""
-echo "🗓️  SCHEDULED TASKS:"
+echo "🗓️  TODAY'S SCHEDULE:"
+CALENDAR_SCRIPT="$HOME/dotfiles/scripts/gcal.sh"
+if [ -x "$CALENDAR_SCRIPT" ]; then
+    # Show agenda. If auth fails, gcal.sh will exit non-zero.
+    # We capture output. If it fails due to creds, we show a hint.
+    if OUTPUT=$("$CALENDAR_SCRIPT" agenda 1 2>&1); then
+        echo "$OUTPUT" | sed 's/^/  /'
+    else
+        echo "  (Authentication required. Run 'gcal auth')"
+    fi
+else
+    echo "  (calendar script not found)"
+fi
+echo ""
+echo "⏳ SCHEDULED JOBS (atq):"
 if command -v atq >/dev/null 2>&1; then
-    atq | sed 's/^/  /' || echo "  (No scheduled tasks)"
+    atq | sed 's/^/  /' || echo "  (No background jobs)"
 else
     echo "  (at command not available)"
 fi
