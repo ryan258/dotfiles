@@ -183,14 +183,16 @@ scripts/setup_weekly_review.sh
 
 ### Daily Focus Intention
 ```bash
-focus "Write one blog post"
+focus set "Write one blog post"
 focus show             # See current focus
-focus clear            # Clear it
+focus done             # Mark complete + archive to history
+focus history          # Review past completions
+focus clear            # Clear without archiving
 ```
 
 **Displayed prominently in `startday`.**
 
-**Why this matters:** When you're scattered, one clear intention anchors you.
+**Why this matters:** When you're scattered, one clear intention anchors you. History tracking helps you see what you actually accomplish over time.
 
 ---
 
@@ -468,10 +470,12 @@ startday
 # - Your focus: "Finish auth refactor"
 # - GitHub: Last worked on repo "myapp"
 # - Suggested dir: ~/projects/myapp
+# - Today's calendar events (if gcal configured)
 # - Top 3 tasks
 
 # Jump right in:
 g myapp                # Auto-activates venv if present
+gcal agenda            # Check today's schedule
 status                 # Quick reminder of where you are
 todo top               # Just 3 things
 ```
@@ -483,15 +487,18 @@ todo top               # Just 3 things
 
 ```bash
 health energy 4        # Log low energy
-focus "One PR review"  # Set minimal intention
+spoons init 6          # Acknowledge limited budget
+focus set "One PR review"  # Set minimal intention
 todo top               # See top 3, pick easiest
 break                  # Set 15-min break timer
 
 # Work on one thing
+spoons spend 3 "Code review"
 # Break reminder arrives
 # Don't push it
 
 goodevening            # Celebrate what you DID do
+focus done             # Archive completion
 ```
 
 ---
@@ -532,14 +539,21 @@ health export appointments.txt
 
 ```bash
 health energy 9        # Track the good day
-focus "Ship feature X"
+spoons init 18         # Extra spoons today!
+focus set "Ship feature X"
+gcal agenda            # Check if anything scheduled
 todo                   # All tasks visible
 
 # Work on multiple things
+# Log spoon usage to understand good-day capacity
+spoons spend 2 "Planning"
+spoons spend 3 "Coding"
 git add -A && git commit -m "Progress"
 my-progress            # See what you accomplished
 
 # Evening:
+focus done             # Archive the win
+spoons history         # See the pattern
 goodevening            # Celebration + backup
 weekreview             # Optional: see the bigger picture
 ```
@@ -581,9 +595,12 @@ weekreview             # Optional: see the bigger picture
 ### Day 1: Just Observe
 ```bash
 startday               # See what it shows
+focus set "Learn the system"  # Set intention
+spoons init 12         # Start energy tracking
 todo "Try one thing"   # Add one task
 journal "Day 1"        # One entry
 goodevening            # Evening routine
+focus done             # Complete the focus
 ```
 
 ### Week 1: Add Health Tracking

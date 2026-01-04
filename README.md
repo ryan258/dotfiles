@@ -77,9 +77,9 @@ ai_suggest        # AI recommends what to do based on your context
 
 This toolkit provides a comprehensive set of enhancements, including:
 
-  * **Energy Management (NEW):** Spoon theory budget tracking with daily initialization (`spoons init`), activity-based expenditure logging (`spoons spend`), real-time balance checks, integration with tasks (`todo spend`), and spoon debt warnings for realistic MS energy management.
+  * **Energy Management:** Spoon theory budget tracking with daily initialization (`spoons init`), activity-based expenditure logging (`spoons spend`), real-time balance checks, usage history tracking (`spoons history`), integration with tasks (`todo spend`), and spoon debt warnings for realistic MS energy management.
   * **Data Correlation & Insights (NEW):** Statistical correlation engine analyzing relationships between datasets (`correlate run`), automated daily/weekly report generation with spoon/time analysis (`daily-report`), Pearson correlation calculation, and pattern discovery for health/productivity optimization.
-  * **Productivity & Task Management:** Advanced todo flow with prioritization, git-integrated commits, encouraging feedback, and `todo undo`; quick journaling plus `dump` for long-form context capture; health and medication tracking with dashboards; weekly and daily reviews generated from recorded activity.
+  * **Productivity & Task Management:** Advanced todo flow with prioritization, git-integrated commits, encouraging feedback, and `todo undo`; daily focus tracking with history (`focus set`, `focus done`, `focus history`); quick journaling plus `dump` for long-form context capture; health and medication tracking with dashboards; Google Calendar integration for schedule viewing and event creation; weekly and daily reviews generated from recorded activity.
   * **Project & Workspace Management:** Scaffold new projects, create timestamped backups, and save/load directory contexts with intelligent state management (auto-activates venvs, launches apps, logs usage, and can suggest where to jump next).
   * **Knowledge Management:** Personal searchable how-to wiki, blog content integration with todo system, journal search/"on this day", and weekly Markdown summaries for looking back.
   * **System & Network Diagnostics:** Quick hardware, CPU, and memory snapshots, battery status, network troubleshooting, system validation, and audit logging so automation never feels opaque.
@@ -517,6 +517,9 @@ All script data is centralized in `~/.config/dotfiles-data/` for easy backup and
   * `dir_bookmarks`, `dir_history`, `dir_usage.log` – Smart navigation bookmarks, history, and frequency scores
   * `favorite_apps` – Application launcher shortcuts
   * `daily_focus.txt` – Stores the current focus surfaced by `startday`
+  * `focus_history.log` – Archive of completed focus entries with dates
+  * `spoons.txt` – Spoon theory budget and expenditure log
+  * `google_creds.json`, `google_token_cache.json` – Google Calendar OAuth credentials (secure)
   * `clipboard_history/` – Saved clipboard snippets (supports dynamic/executable snippets)
   * `how-to/` – Personal how-to wiki articles
 
@@ -551,7 +554,9 @@ Many scripts can be called directly. Some, marked with `(source)`, provide extra
 | `dump`         | Launches `$EDITOR` for long-form brain dumps, appending the result to `journal.txt` with a timestamp. |
 | `health`       | Track appointments, symptoms, and energy levels with `dashboard` for 30-day trend analysis. |
 | `meds`         | Medication tracking system with `check`, `log`, `remind`, and `dashboard` for adherence monitoring. |
-| `focus`        | Set, show, or clear the day's focus message surfaced by `startday`. |
+| `spoons`       | Spoon theory budget manager with `init`, `spend`, `check`, and `history` commands for energy tracking. |
+| `focus`        | Set, show, complete, or clear the day's focus with history tracking (`set`, `done`, `history`, `clear`). |
+| `gcal`         | Google Calendar integration - view agenda, add events, list calendars via OAuth device flow. |
 | `startday`     | Automated morning routine with focus reminder, GitHub activity, blog status/draft visibility, suggested directories, health snapshot, weekly review link, stale tasks, and top priorities. |
 | `goodevening`  | End-of-day summary with gamified wins, project safety checks, data validation (expects `data_validate.sh`), and automated backups. |
 | `weekreview`   | Weekly recap of tasks, journal entries, and git commits; use `--file` to export to Markdown. |

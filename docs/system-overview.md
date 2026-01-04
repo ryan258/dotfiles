@@ -404,6 +404,9 @@ Additional Protection:
 ├── health.txt, medications.txt
 ├── dir_bookmarks, dir_history, dir_usage.log
 ├── daily_focus.txt
+├── focus_history.log
+├── spoons.txt
+├── google_creds.json, google_token_cache.json
 ├── system.log, dispatcher_usage.log
 ├── clipboard_history/
 ├── how-to/
@@ -429,13 +432,15 @@ weekreview      # Weekly summary
 todo            # Task management
 journal         # Quick entries
 dump            # Long-form journaling
-focus           # Daily intention
+focus           # Daily intention with history
+gcal            # Google Calendar integration
 ```
 
 ### 🏥 Health
 ```
 health          # Energy, symptoms, appointments
 meds            # Medication tracking
+spoons          # Energy budget with history
 ```
 
 ### 🧭 Navigation

@@ -38,8 +38,9 @@ copy --temperature 0.55 "Balanced marketing copy"
 
 ### 5. Morning Context Recovery
 ```bash
-focus "Finish AI blog draft"
-startday  # Uses strategy dispatcher for briefing suggestions
+focus set "Finish AI blog draft"
+gcal agenda 7          # Check week's schedule
+startday               # Uses strategy dispatcher for briefing suggestions
 ```
 
 ### 6. Journal Analysis

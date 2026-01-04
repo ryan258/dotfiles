@@ -9,9 +9,12 @@
 | Command                       | What It Does                            |
 | ----------------------------- | --------------------------------------- |
 | `startday`                    | Morning briefing (auto-runs once daily) |
-| `focus "my main thing today"` | Set daily intention                     |
+| `focus set "my thing today"`  | Set daily intention                     |
+| `focus show`                  | View current focus                      |
+| `spoons init 12`              | Start daily energy budget               |
 | `todo top`                    | See top 3 tasks only                    |
 | `g suggest`                   | Where should I work today?              |
+| `gcal agenda 7`               | View week's calendar                    |
 
 ---
 
@@ -51,6 +54,8 @@
 | `meds check`                | What's due now?          |
 | `spoons init 12`            | Start daily spoon budget |
 | `spoons spend 2`            | Log spoon usage          |
+| `spoons check`              | See remaining spoons     |
+| `spoons history`            | View spoon usage history |
 | `health dashboard`          | 30-day trends            |
 
 ---
@@ -160,9 +165,10 @@ stoic "I'm struggling" # Get perspective
 ## 🌙 End of Day
 
 ```bash
+focus done             # Mark focus complete + archive to history
 goodevening            # Celebrate wins + backup
 todo clear             # Clean up completed
-focus clear            # Reset for tomorrow
+gcal agenda 1          # Preview tomorrow's schedule
 ```
 
 ---

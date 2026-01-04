@@ -38,12 +38,14 @@ startday
 Give your morning dashboard an anchor:
 
 ```bash
-focus "Ship the insights capsule"
+focus set "Ship the insights capsule"
 focus show       # Remind yourself later in the day
-focus clear      # When you want to reset
+focus done       # Mark complete and archive to history
+focus history    # Review past focus entries
+focus clear      # Clear without archiving
 ```
 
-Whatever you set here appears at the top of `startday` (and you can re-run `startday` manually anytime).
+Whatever you set here appears at the top of `startday` (and you can re-run `startday` manually anytime). Use `focus done` at day's end to build a history of completed focus items.
 
 ### Check Your Energy (Spoons)
 
@@ -137,6 +139,7 @@ If you do something draining, log it:
 ```bash
 spoons spend 2 "Video call"
 spoons check       # See how many you have left
+spoons history     # Review past usage patterns
 ```
 
 ```bash
@@ -457,7 +460,12 @@ content --context "guide topic"
 | `meds dashboard`                 | Adherence tracking                                |
 | `weekreview --file`              | Weekly summary saved to Markdown                  |
 | `setup_weekly_review`            | Schedule the weekly export                        |
-| `focus` / `focus show`           | Set or view today's focus                         |
+| `focus set "..."` / `focus show` | Set or view today's focus                         |
+| `focus done`                     | Complete focus and archive to history             |
+| `focus history`                  | Review past focus entries                         |
+| `spoons history`                 | View spoon usage history                          |
+| `gcal agenda [days]`             | View Google Calendar (default: today)             |
+| `gcal add "Event"`               | Quick-add calendar event                          |
 | `g save <name>`                  | Bookmark this directory                           |
 | `g <name>`                       | Jump to bookmark (with venv/apps)                 |
 | `g suggest`                      | Smart directory suggestions                       |

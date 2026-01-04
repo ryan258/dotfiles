@@ -85,12 +85,14 @@ goodevening
 ### Set Your Daily Focus
 
 ```bash
-focus "One thing I'm focusing on today"
-focus show    # See current focus
-focus clear   # Clear it
+focus set "One thing I'm focusing on today"
+focus show        # See current focus
+focus done        # Mark complete and archive to history
+focus history     # View past focus entries
+focus clear       # Clear without archiving
 ```
 
-**What it does:** Keeps you anchored to your main intention for the day.
+**What it does:** Keeps you anchored to your main intention for the day. Track completion history to see patterns.
 
 ---
 
@@ -185,15 +187,18 @@ health list
 
 ---
 
-### Spoon Theory Budget (NEW)
+### Spoon Theory Budget
 
 ```bash
 spoons init 12        # Start day with 12 spoons
 spoons spend 3 "Work" # Log energy use
 spoons check          # See remaining
+spoons history        # View past 7 days usage
+spoons history 30     # View 30 days
+spoons cost meeting   # Show standard cost for activity type
 ```
 
-**What it does:** Helps you manage energy like a currency. Warns you when you're running low.
+**What it does:** Helps you manage energy like a currency. Warns you when you're running low. Track patterns over time.
 
 ---
 
@@ -207,9 +212,25 @@ health summary     # Overview of recent health data
 
 ---
 
+### Google Calendar Integration
+
+```bash
+gcal auth              # One-time setup (OAuth device flow)
+gcal agenda            # Today's events
+gcal agenda 7          # Next 7 days
+gcal add "Meeting with Bob tomorrow at 2pm"
+gcal list              # List all calendars
+```
+
+**What it does:** View your schedule and add events without leaving the terminal. No browser needed.
+
+**First-time setup:** Run `gcal auth` and follow the prompts to connect your Google account.
+
+---
+
 ## Getting Things Done
 
-### Time Your Tasks (NEW)
+### Time Your Tasks
 
 ```bash
 t-start 1          # Start timer for task #1
@@ -217,7 +238,7 @@ t-stop             # Stop current timer
 t-status           # What am I working on?
 ```
 
-**What it does:** Tracks exactly where your time goes. Integates with `goodevening` to show daily totals.
+**What it does:** Tracks exactly where your time goes. Integrates with `goodevening` to show daily totals.
 
 ---
 

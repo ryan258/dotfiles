@@ -29,10 +29,13 @@ goodevening     # Evening: celebrate wins + auto-backup
 
 ### 2. Productivity Tools
 ```bash
-todo "task"     # Task management
-journal "note"  # Quick journaling
-health energy 7 # Track energy 1-10
-g suggest       # Where should I work today?
+todo "task"        # Task management
+journal "note"     # Quick journaling
+health energy 7    # Track energy 1-10
+spoons init 12     # Daily energy budget
+focus set "thing"  # Set daily intention
+g suggest          # Where should I work today?
+gcal agenda        # View today's calendar
 ```
 
 ### 3. AI Helpers (10 Free Specialists)
@@ -159,6 +162,8 @@ goodevening     # Celebrate + backup
 |---------|--------------|
 | `health energy 7` | Rate energy 1-10 |
 | `meds log "Med"` | Log medication |
+| `spoons init 12` | Daily energy budget |
+| `spoons history` | Usage patterns |
 | `health dashboard` | 30-day trends |
 
 ### Navigation
