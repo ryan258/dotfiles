@@ -261,6 +261,16 @@ todo top 5     # Top 5
 
 ---
 
+### Remove Tasks Permanently
+
+Sometimes you added something by mistake.
+
+```bash
+todo rm 1           # Remove task #1 forever (no archive)
+```
+
+---
+
 ### Complete Tasks
 
 ```bash

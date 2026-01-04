@@ -162,6 +162,32 @@ case "${1:-}" in
     echo "All tasks cleared."
     ;;
 
+  rm)
+    # Remove a task permanently (without archiving).
+    task_num="${2:-}"
+    if [ -z "$task_num" ]; then
+        echo "Error: Please specify the task number to remove."
+        echo "Usage: $0 rm <task_number>"
+        exit 1
+    fi
+    # Validate Task ID is numeric
+    if ! [[ "$task_num" =~ ^[0-9]+$ ]]; then
+        echo "Error: Task ID must be a number" >&2
+        exit 1
+    fi
+
+    # Validate task exists
+    task_line=$(sed -n "${task_num}p" "$TODO_FILE")
+    if [ -z "$task_line" ]; then
+        echo "Error: Task $task_num not found."
+        exit 1
+    fi
+    
+    # Remove it from the todo file
+    sed -i.bak "${task_num}d" "$TODO_FILE"
+    echo "Task $task_num removed permanently."
+    ;;
+
   commit)
     # Commit and mark a task as done.
     if [ -z "$2" ]; then
@@ -349,12 +375,13 @@ case "${1:-}" in
     ;;
 
   "")
-    echo "Usage: $0 {add|list|done|clear|commit|bump|top|undo|debug|delegate|start|stop|time}"
+    echo "Usage: $0 {add|list|done|rm|clear|commit|bump|top|undo|debug|delegate|start|stop|time}"
     echo ""
     echo "Task Management:"
     echo "  add <'task text'>           : Add a new task"
     echo "  list                        : Show all current tasks"
     echo "  done <task_number>          : Mark a task as complete"
+    echo "  rm <task_number>            : Remove a task properly (no archive)"
     echo "  clear                       : Clear all tasks"
     echo "  undo                        : Restore the most recently completed task"
     echo ""
@@ -381,12 +408,13 @@ case "${1:-}" in
 
   *)
     echo "Error: Unknown command '${1:-}'" >&2
-    echo "Usage: $0 {add|list|done|clear|commit|bump|top|undo|debug|delegate|start|stop|time}"
+    echo "Usage: $0 {add|list|done|rm|clear|commit|bump|top|undo|debug|delegate|start|stop|time}"
     echo ""
     echo "Task Management:"
     echo "  add <'task text'>           : Add a new task"
     echo "  list                        : Show all current tasks"
     echo "  done <task_number>          : Mark a task as complete"
+    echo "  rm <task_number>            : Remove a task properly (no archive)"
     echo "  clear                       : Clear all tasks"
     echo "  undo                        : Restore the most recently completed task"
     echo ""

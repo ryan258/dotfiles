@@ -26,6 +26,7 @@
 | `todo`                        | See all tasks           |
 | `todo top`                    | Top 3 only              |
 | `todo done 1`                 | Mark task 1 complete    |
+| `todo rm 1`                   | Delete task 1 (no save) |
 | `todo bump 5`                 | Move task 5 to top      |
 | `t-start 1`                   | Start timer for task 1  |
 | `t-stop`                      | Stop timer              |
