@@ -14,7 +14,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 TIME_TRACKER="$SCRIPT_DIR/time_tracker.sh"
 
 # --- Main Logic ---
-case "$1" in
+
+# --- Main Logic ---
+
+case "${1:-}" in
   add)
     # Add a new task. Example: todo.sh add "Water the plants"
     shift # Removes 'add' from the arguments
@@ -345,8 +348,39 @@ case "$1" in
     echo "  todo done $task_num"
     ;;
 
+  "")
+    echo "Usage: $0 {add|list|done|clear|commit|bump|top|undo|debug|delegate|start|stop|time}"
+    echo ""
+    echo "Task Management:"
+    echo "  add <'task text'>           : Add a new task"
+    echo "  list                        : Show all current tasks"
+    echo "  done <task_number>          : Mark a task as complete"
+    echo "  clear                       : Clear all tasks"
+    echo "  undo                        : Restore the most recently completed task"
+    echo ""
+    echo "Prioritization:"
+    echo "  bump <task_number>          : Move a task to the top of the list"
+    echo "  top [count]                 : Show the top N tasks (default: 3)"
+    echo ""
+    echo "Git Integration:"
+    echo "  commit <task_number> ['msg']: Commit and mark a task as done"
+    echo ""
+    echo "AI-Powered Commands:"
+    echo "  debug <task_number>         : Debug a task using AI technical specialist"
+    echo "  delegate <task_num> <type>  : Delegate task to AI (tech|creative|content)"
+    echo ""
+    echo "Time Tracking:"
+    echo "  start <task_number>         : Start timer for task"
+    echo "  stop                        : Stop active timer"
+    echo "  time <task_number>          : Show total time for task"
+    echo ""
+    echo "Energy Management:"
+    echo "  spend <task_id> <count>     : Spend spoons on a task"
+    exit 1
+    ;;
+
   *)
-    echo "Error: Unknown command '$1'" >&2
+    echo "Error: Unknown command '${1:-}'" >&2
     echo "Usage: $0 {add|list|done|clear|commit|bump|top|undo|debug|delegate|start|stop|time}"
     echo ""
     echo "Task Management:"

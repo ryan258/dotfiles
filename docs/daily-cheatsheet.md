@@ -6,30 +6,30 @@
 
 ## 🌅 Morning
 
-| Command                       | What It Does                            |
-| ----------------------------- | --------------------------------------- |
-| `startday`                    | Morning briefing (auto-runs once daily) |
-| `focus set "my thing today"`  | Set daily intention                     |
-| `focus show`                  | View current focus                      |
-| `spoons init 12`              | Start daily energy budget               |
-| `todo top`                    | See top 3 tasks only                    |
-| `g suggest`                   | Where should I work today?              |
-| `gcal agenda 7`               | View week's calendar                    |
+| Command                      | What It Does                            |
+| ---------------------------- | --------------------------------------- |
+| `startday`                   | Morning briefing (auto-runs once daily) |
+| `focus set "my thing today"` | Set daily intention                     |
+| `focus show`                 | View current focus                      |
+| `spoons init 12`             | Start daily energy budget               |
+| `todo top`                   | See top 3 tasks only                    |
+| `g suggest`                  | Where should I work today?              |
+| `gcal agenda 7`              | View week's calendar                    |
 
 ---
 
 ## 📝 Tasks
 
-| Command                   | What It Does            |
-| ------------------------- | ----------------------- |
-| `todo "task description"` | Add a task              |
-| `todo`                    | See all tasks           |
-| `todo top`                | Top 3 only              |
-| `todo done 1`             | Mark task 1 complete    |
-| `todo bump 5`             | Move task 5 to top      |
-| `t-start 1`               | Start timer for task 1  |
-| `t-stop`                  | Stop timer              |
-| `todo debug 2`            | Get AI help with task 2 |
+| Command                       | What It Does            |
+| ----------------------------- | ----------------------- |
+| `todo add "task description"` | Add a task              |
+| `todo`                        | See all tasks           |
+| `todo top`                    | Top 3 only              |
+| `todo done 1`                 | Mark task 1 complete    |
+| `todo bump 5`                 | Move task 5 to top      |
+| `t-start 1`                   | Start timer for task 1  |
+| `t-stop`                      | Stop timer              |
+| `todo debug 2`                | Get AI help with task 2 |
 
 ---
 
@@ -37,7 +37,8 @@
 
 | Command                    | What It Does                |
 | -------------------------- | --------------------------- |
-| `journal "quick thought"`  | Quick entry                 |
+| `journal add "thought"`    | Quick entry                 |
+| `ja "thought"`             | Quick entry (alias)         |
 | `dump`                     | Free-form editor journaling |
 | `journal list`             | See recent entries          |
 | `journal search "keyword"` | Find past entries           |

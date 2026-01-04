@@ -20,6 +20,22 @@ COMMITS_CACHE_TTL="${HEALTH_COMMITS_CACHE_TTL:-3600}"
 COMMITS_LOOKBACK_DAYS="${HEALTH_COMMITS_LOOKBACK_DAYS:-90}"
 
 # --- Helper Functions ---
+get_file_mtime() {
+    local file="$1"
+    if command -v stat >/dev/null 2>&1; then
+        if stat -f %m "$file" >/dev/null 2>&1; then
+            stat -f %m "$file"
+        else
+            stat -c %Y "$file"
+        fi
+    else
+        python3 - "$file" <<'PY'
+import os, sys
+print(int(os.path.getmtime(sys.argv[1])))
+PY
+    fi
+}
+
 correlate_tasks() {
     local recent_data="$1"
     local todo_done_file="$HOME/.config/dotfiles-data/todo_done.txt"
@@ -30,49 +46,81 @@ correlate_tasks() {
         return
     fi
 
-    # Build associative array of tasks per day
-    declare -A tasks_by_day
-    while IFS= read -r line; do
-        if [[ "$line" =~ ^\[([0-9]{4}-[0-9]{2}-[0-9]{2}) ]]; then
-            day="${BASH_REMATCH[1]}"
-            tasks_by_day[$day]=$(( ${tasks_by_day[$day]:-0} + 1 ))
+    # Use awk to map tasks to dates and correlate with energy
+    # Pass 1: todo_done.txt (counts tasks per day)
+    # Pass 2: recent_data (stdin) reads energy and aggregates
+    awk -F'|' '
+    FNR==NR {
+        # Processing todo_done.txt
+        # Line format: [YYYY-MM-DD HH:MM:SS] Task text
+        if ($0 ~ /^\[/) {
+             # Extract date: [2025-01-01 -> 2025-01-01
+             date = substr($1, 2, 10)
+             tasks[date]++
+        }
+        next
+    }
+    {
+        # Processing recent_data from stdin
+        # Format: ENERGY|YYYY-MM-DD HH:MM|VALUE
+        if ($1 == "ENERGY") {
+            date = substr($2, 1, 10)
+            energy = $3
+            count = (date in tasks) ? tasks[date] : 0
+            
+            if (energy <= 4) {
+                low_sum += count
+                low_count++
+            } else if (energy >= 7) {
+                high_sum += count
+                high_count++
+            }
+        }
+    }
+    END {
+        low_avg = (low_count > 0) ? low_sum / low_count : 0
+        high_avg = (high_count > 0) ? high_sum / high_count : 0
+        printf "  - Avg tasks on low energy days (1-4): %.1f\n", low_avg
+        printf "  - Avg tasks on high energy days (7-10): %.1f\n", high_avg
+    }
+    ' "$todo_done_file" - <<< "$recent_data"
+}
+
+generate_commit_cache() {
+    local projects_dir="$HOME/Projects"
+    local cache_file="$COMMITS_CACHE_FILE"
+    
+    # Check TTL
+    if [ -f "$cache_file" ]; then
+        local now=$(date +%s)
+        local mtime=$(get_file_mtime "$cache_file")
+        local age=$((now - mtime))
+        if [ "$age" -lt "$COMMITS_CACHE_TTL" ]; then
+            return 0 # Cache is valid
         fi
-    done < "$todo_done_file"
-
-    local low_energy_tasks=0
-    local low_energy_days=0
-    local high_energy_tasks=0
-    local high_energy_days=0
-
-    # Correlate energy levels with task completion
-    while IFS='|' read -r type timestamp energy; do
-        if [ "$type" = "ENERGY" ]; then
-            day="${timestamp:0:10}"
-            tasks=${tasks_by_day[$day]:-0}
-
-            if [ "$energy" -le 4 ]; then
-                low_energy_tasks=$((low_energy_tasks + tasks))
-                low_energy_days=$((low_energy_days + 1))
-            elif [ "$energy" -ge 7 ]; then
-                high_energy_tasks=$((high_energy_tasks + tasks))
-                high_energy_days=$((high_energy_days + 1))
-            fi
-        fi
-    done < <(echo "$recent_data")
-
-    local avg_low_energy_tasks="0.0"
-    local avg_high_energy_tasks="0.0"
-
-    if [ "$low_energy_days" -gt 0 ]; then
-        avg_low_energy_tasks=$(awk "BEGIN {printf \"%.1f\", $low_energy_tasks / $low_energy_days}")
     fi
 
-    if [ "$high_energy_days" -gt 0 ]; then
-        avg_high_energy_tasks=$(awk "BEGIN {printf \"%.1f\", $high_energy_tasks / $high_energy_days}")
-    fi
+    # Regenerate cache: YYYY-MM-DD COUNT
+    echo "  (Regenerating git commit cache...)" >&2
+    
+    local tmp_cache="$cache_file.tmp"
+    
+    # Find all .git directories to depth 2 (e.g. ~/Projects/repo/.git)
+    # Using subshell + || true to prevent find exit code 1 from triggering set -e
+    (find "$projects_dir" -maxdepth 3 -type d -name ".git" 2>/dev/null || true) | while read -r gitdir; do
+        proj_dir=$(dirname "$gitdir")
+        # Get one date per commit
+        git -C "$proj_dir" log --all --since="${COMMITS_LOOKBACK_DAYS} days ago" --pretty=format:%cs 2>/dev/null || true
+        echo "" # Ensure newline between repos
+    done | (grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}' || true) | sort | uniq -c | awk '{print $2, $1}' > "$tmp_cache"
 
-    echo "  - Avg tasks on low energy days (1-4): $avg_low_energy_tasks"
-    echo "  - Avg tasks on high energy days (7-10): $avg_high_energy_tasks"
+    # Validate temp file has content or at least didn't fail catastrophically
+    # In this case, empty file is valid (no commits).
+    # We rely on 'set -e' catching failures in 'find'/'git' if we hadn't piped them.
+    # But in a pipeline, intermediate failures might be masked.
+    # However, '|| true' on the pipeline end ensures we don't exit for empty grep results.
+    
+    mv "$tmp_cache" "$cache_file"
 }
 
 correlate_commits() {
@@ -85,52 +133,50 @@ correlate_commits() {
         return
     fi
 
-    # Build associative array of commits per day
-    declare -A commits_by_day
-    if ! load_commit_cache commits_by_day; then
-        while IFS= read -r gitdir; do
-            proj_dir=$(dirname "$gitdir")
-            (cd "$proj_dir" && git log --all --since="${COMMITS_LOOKBACK_DAYS} days ago" --pretty=format:%cs 2>/dev/null || true) | while read -r day; do
-                commits_by_day[$day]=$(( ${commits_by_day[$day]:-0} + 1 ))
-            done
-        done < <(find "$projects_dir" -maxdepth 2 -type d -name ".git" 2>/dev/null || true)
-        save_commit_cache commits_by_day
+    generate_commit_cache
+    
+    if [ ! -f "$COMMITS_CACHE_FILE" ]; then
+         echo "  - Avg commits on low energy days: N/A (cache failed)"
+         echo "  - Avg commits on high energy days: N/A (cache failed)"
+         return
     fi
 
-    local low_energy_commits=0
-    local low_energy_days=0
-    local high_energy_commits=0
-    local high_energy_days=0
+ 
 
-    # Correlate energy levels with git commits
-    while IFS='|' read -r type timestamp energy; do
-        if [ "$type" = "ENERGY" ]; then
-            day="${timestamp:0:10}"
-            commits=${commits_by_day[$day]:-0}
-
-            if [ "$energy" -le 4 ]; then
-                low_energy_commits=$((low_energy_commits + commits))
-                low_energy_days=$((low_energy_days + 1))
-            elif [ "$energy" -ge 7 ]; then
-                high_energy_commits=$((high_energy_commits + commits))
-                high_energy_days=$((high_energy_days + 1))
-            fi
-        fi
-    done < <(echo "$recent_data")
-
-    local avg_low_energy_commits="0.0"
-    local avg_high_energy_commits="0.0"
-
-    if [ "$low_energy_days" -gt 0 ]; then
-        avg_low_energy_commits=$(awk "BEGIN {printf \"%.1f\", $low_energy_commits / $low_energy_days}")
-    fi
-
-    if [ "$high_energy_days" -gt 0 ]; then
-        avg_high_energy_commits=$(awk "BEGIN {printf \"%.1f\", $high_energy_commits / $high_energy_days}")
-    fi
-
-    echo "  - Avg commits on low energy days (1-4): $avg_low_energy_commits"
-    echo "  - Avg commits on high energy days (7-10): $avg_high_energy_commits"
+    # Correct AWK invocation for mixed delimiters:
+    awk '
+    BEGIN { FS=" " } 
+    FNR==NR {
+        # Cache file: YYYY-MM-DD COUNT (space separated)
+        commits[$1] = $2
+        next
+    }
+    {
+        # Input data: ENERGY|YYYY-MM-DD HH:MM|VALUE (pipe separated)
+        # We split manually to be safe
+        split($0, parts, "|")
+        if (parts[1] == "ENERGY") {
+            date = substr(parts[2], 1, 10)
+            energy = parts[3]
+            
+            count = (date in commits) ? commits[date] : 0
+            
+            if (energy <= 4) {
+                low_sum += count
+                low_count++
+            } else if (energy >= 7) {
+                high_sum += count
+                high_count++
+            }
+        }
+    }
+    END {
+        low_avg = (low_count > 0) ? low_sum / low_count : 0
+        high_avg = (high_count > 0) ? high_sum / high_count : 0
+        printf "  - Avg commits on low energy days (1-4): %.1f\n", low_avg
+        printf "  - Avg commits on high energy days (7-10): %.1f\n", high_avg
+    }
+    ' "$COMMITS_CACHE_FILE" - <<< "$recent_data"
 }
 
 # --- Main Command Handler ---
@@ -520,52 +566,6 @@ EOF
         exit 1
         ;;
 esac
-get_file_mtime() {
-    local file="$1"
-    if command -v stat >/dev/null 2>&1; then
-        if stat -f %m "$file" >/dev/null 2>&1; then
-            stat -f %m "$file"
-        else
-            stat -c %Y "$file"
-        fi
-    else
-        python3 - "$file" <<'PY'
-import os, sys
-print(int(os.path.getmtime(sys.argv[1])))
-PY
-    fi
-}
 
-load_commit_cache() {
-    local target_array="$1"
-    if [ ! -f "$COMMITS_CACHE_FILE" ]; then
-        return 1
-    fi
 
-    local now mtime age
-    now=$(date +%s)
-    mtime=$(get_file_mtime "$COMMITS_CACHE_FILE")
-    age=$((now - mtime))
-    if [ "$age" -ge "$COMMITS_CACHE_TTL" ]; then
-        return 1
-    fi
 
-    while read -r day count; do
-        [ -z "$day" ] && continue
-        eval "$target_array[\"\$day\"]=\$count"
-    done < "$COMMITS_CACHE_FILE"
-    return 0
-}
-
-save_commit_cache() {
-    local src_array="$1"
-    mkdir -p "$CACHE_DIR"
-    local tmp_file="$COMMITS_CACHE_FILE.tmp"
-    : > "$tmp_file"
-    eval "local keys=(\"\${!$src_array[@]}\")"
-    for day in "${keys[@]}"; do
-        eval "local value=\"\${$src_array[\"$day\"]}\""
-        printf "%s %s\n" "$day" "$value" >> "$tmp_file"
-    done
-    mv "$tmp_file" "$COMMITS_CACHE_FILE"
-}

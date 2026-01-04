@@ -2,6 +2,20 @@
 set -euo pipefail
 
 DATA_DIR="$HOME/.config/dotfiles-data"
+AUTO_FIX=false
+
+
+if [[ "${1:-}" == "-h" ]] || [[ "${1:-}" == "--help" ]]; then
+  echo "Usage: $(basename "$0") [--fix]"
+  echo "Validates presence and permissions of dotfiles data."
+  echo "  --fix   Automatically fix insecure file permissions (chmod 600)"
+  exit 0
+fi
+
+if [[ "${1:-}" == "--fix" ]]; then
+  AUTO_FIX=true
+fi
+
 REQUIRED_ITEMS=(
   "todo.txt"
   "todo_done.txt"
@@ -11,7 +25,7 @@ REQUIRED_ITEMS=(
   "dir_history"
   "dir_usage.log"
   "system.log"
-  "medications.txt" # Added medications.txt as a sensitive file
+  # medications.txt is optional
 )
 
 SENSITIVE_FILES=(
@@ -53,9 +67,16 @@ for item in "${SENSITIVE_FILES[@]}"; do
   if [ -f "$path" ]; then
     CURRENT_PERMS=$(stat -f %A "$path")
     if [ "$CURRENT_PERMS" != "600" ]; then
-      echo "  ⚠️  WARNING: Sensitive file ($item) has insecure permissions ($CURRENT_PERMS). Should be 600." >&2
-      # Do not increment STATUS to fail the script, as this is a warning.
-      # User can decide to fix it.
+      if [ "$AUTO_FIX" = true ]; then
+        echo "  ⚠️  WARNING: Sensitive file ($item) has insecure permissions ($CURRENT_PERMS). Auto-fixing..." >&2
+        if ! chmod 600 "$path"; then
+           echo "  ❌ ERROR: Failed to auto-fix permissions for $path" >&2
+           STATUS=1
+        fi
+      else
+        echo "  ⚠️  WARNING: Sensitive file ($item) has insecure permissions ($CURRENT_PERMS). Should be 600." >&2
+        # Use --fix to automatically correct permissions.
+      fi
     fi
   fi
 done

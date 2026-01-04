@@ -195,6 +195,7 @@ alias next="todo.sh top 1"
 alias t="todo.sh list"          # Show todo list
 alias j="journal.sh"            # Add journal entry
 alias ta="todo.sh add"          # Add todo task
+alias ja="journal.sh add"       # Add journal entry
 
 # Information & Utilities
 alias weather="weather.sh"

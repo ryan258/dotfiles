@@ -245,8 +245,8 @@ t-status           # What am I working on?
 ### Add Tasks Lightning-Fast
 
 ```bash
-todo "Call doctor"
-todo "Review PR #123" "Fix bug in auth"  # Add multiple
+todo add "Call doctor"
+todo add "Review PR #123" "Fix bug in auth"  # Add multiple
 ```
 
 ---
@@ -314,7 +314,9 @@ todo undo
 ### Quick Journal Entry
 
 ```bash
-journal "Had a good insight about the project architecture"
+journal add "Had a good insight about the project architecture"
+# OR use the alias:
+ja "Had a good insight about the project architecture"
 ```
 
 ---
@@ -652,6 +654,14 @@ dotfiles-check      # Validates everything
 ```
 
 **What it does:** Checks scripts, dependencies, data directories, GitHub token, AI dispatchers.
+
+### Fix Permissions
+
+If validation warns about insecure permissions, run:
+
+```bash
+./scripts/data_validate.sh --fix
+```
 
 ---
 

@@ -16,10 +16,12 @@ fi
 JOURNAL_FILE="$HOME/.config/dotfiles-data/journal.txt"
 
 # --- Main Logic ---
+
+# --- Main Logic ---
 case "${1:-add}" in
   add)
     # Add a new journal entry.
-    shift # Removes 'add' from the arguments
+    if [ $# -gt 0 ]; then shift; fi # Removes 'add' if present
     ENTRY="$*"
     if [ -z "$ENTRY" ]; then
         echo "Usage: journal <text>"
