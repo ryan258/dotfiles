@@ -26,6 +26,12 @@ def main():
         help="Creative brief or request"
     )
 
+    # Validate brief
+    args = parser.parse_known_args()[0]
+    if not args.brief or not args.brief.strip():
+        print("Error: creative brief cannot be empty", file=sys.stderr)
+        return 1
+
     # Parallel execution
     parser.add_argument(
         "--parallel",

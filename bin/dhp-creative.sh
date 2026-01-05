@@ -60,18 +60,20 @@ echo "---"
 ENHANCED_BRIEF="$USER_BRIEF
 
 --- CREATIVE REQUIREMENTS ---
-Deliver a 'First-Pass Story Package':
-1. Generate a 3-Act structure with 5-7 key story beats
-2. Create character profiles for main protagonists
-3. Develop sensory blocks for atmosphere (sound, smell, feeling)
-4. Include world-building elements as needed
+Deliver a 'Complete Story Masterpiece':
+1. Develop a comprehensive story foundation (structure, characters, world-building).
+2. WRITE THE COMPLETE STORY PROSE (approx. 2000-3000 words).
+   - Must be fully written, scene-by-scene.
+   - Use high-quality narrative prose, dialogue, and sensory details.
+   - Do NOT just summarize acts; WRITE them.
+3. Integrate all elements into a single masterpiece document.
 
-DELIVERABLE: Return a single, well-formatted markdown document with all creative elements integrated."
+DELIVERABLE: Return a single, well-formatted markdown document containing the full story prose."
 
 # --- 8. EXECUTE SWARM ORCHESTRATION ---
 
 # Build Python wrapper command
-PYTHON_CMD="uv run python \"$DOTFILES_DIR/bin/dhp-swarm-creative.py\""
+PYTHON_CMD="uv run --project \"$AI_STAFF_DIR\" python \"$DOTFILES_DIR/bin/dhp-swarm-creative.py\""
 
 # Pass enhanced brief
 PYTHON_CMD="$PYTHON_CMD \"$ENHANCED_BRIEF\""

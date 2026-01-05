@@ -223,7 +223,7 @@ DELIVERABLE: Return a single, well-formatted Hugo markdown document."
 # --- 7. EXECUTE SWARM ORCHESTRATION ---
 
 # Build Python wrapper command
-PYTHON_CMD="uv run python \"$DOTFILES_DIR/bin/dhp-swarm-content.py\""
+PYTHON_CMD="uv run --project \"$AI_STAFF_DIR\" python \"$DOTFILES_DIR/bin/dhp-swarm-content.py\""
 
 # Pass enhanced brief
 PYTHON_CMD="$PYTHON_CMD \"$ENHANCED_BRIEF\""
