@@ -6,6 +6,8 @@
 
 > **🚀 UPGRADE:** The `content`, `creative`, and `dhp-*` tools now use the **Swarm Orchestration** engine. This means instead of one AI, you get a dynamic team coordinated by a Chief of Staff.
 
+> **⚙️ CONFIGURATION:** All models listed below are **defaults** tailored for each role. You can change any of them in your `.env` file (see `dotfiles/.env`).
+
 ---
 
 ## 🐝 What is Swarm Orchestration?
@@ -23,7 +25,7 @@ When you run `content "Topic"` or `creative "Idea"`, the system now:
 
 ## 🛠 1. Technical (`tech`)
 
-**Model:** DeepSeek R1 (excellent reasoning)
+**Default Model:** DeepSeek R1 (Configurable in `.env`)
 **Alias:** `tech`
 
 ### When to Use
@@ -70,7 +72,7 @@ EOF
 
 ## ✍️ 2. Content (`content`)
 
-**Model:** Qwen3 Coder
+**Default Model:** Qwen3 Coder (Configurable in `.env`)
 **Alias:** `content`
 
 ### When to Use
@@ -111,7 +113,7 @@ echo "How to use AI for personal productivity" | content
 
 ## 🎨 3. Creative (`creative`)
 
-**Model:** Llama 4 Maverick
+**Default Model:** Llama 4 Maverick (Configurable in `.env`)
 **Alias:** `creative`
 
 ### When to Use
@@ -146,7 +148,7 @@ creative "Essay about finding productivity systems that work with MS"
 
 ## 📝 4. Copywriting (`copy`)
 
-**Model:** Llama 4 Maverick
+**Default Model:** Llama 4 Maverick (Configurable in `.env`)
 **Alias:** `copy`
 
 ### When to Use
@@ -181,7 +183,7 @@ copy "CTA for newsletter signup, focus on practical tips"
 
 ## 🧭 5. Strategy (`strategy`)
 
-**Model:** Polaris Alpha
+**Default Model:** Polaris Alpha (Configurable in `.env`)
 **Alias:** `strategy`
 **Role:** Your Chief of Staff
 
@@ -228,7 +230,7 @@ strategy "My blog gets traffic but no engagement. What should I do?"
 
 ## 🎯 6. Brand (`brand`)
 
-**Model:** Polaris Alpha
+**Default Model:** Polaris Alpha (Configurable in `.env`)
 **Alias:** `brand`
 
 ### When to Use
@@ -269,7 +271,7 @@ brand "Define voice and tone for content about MS that's honest but not depressi
 
 ## 📊 7. Market Research (`market`)
 
-**Model:** Polaris Alpha
+**Default Model:** Polaris Alpha (Configurable in `.env`)
 **Alias:** `market`
 
 ### When to Use
@@ -309,7 +311,7 @@ market "Who are the main voices in MS + productivity space?"
 
 ## 🧘 8. Stoic Coaching (`stoic`)
 
-**Model:** Gemma 3 9B
+**Default Model:** Gemma 3 9B (Configurable in `.env`)
 **Alias:** `stoic`
 
 ### When to Use
@@ -356,7 +358,7 @@ stoic "How do I stay motivated when progress is so slow?"
 
 ## 🔬 9. Research (`research`)
 
-**Model:** Gemma 3 9B
+**Default Model:** Gemma 3 9B (Configurable in `.env`)
 **Alias:** `research`
 
 ### When to Use
@@ -396,7 +398,7 @@ research "Explain how AI language models work at a high level"
 
 ## 📖 10. Narrative (`narrative`)
 
-**Model:** Llama 4 Maverick
+**Default Model:** Llama 4 Maverick (Configurable in `.env`)
 **Alias:** `narrative`
 
 ### When to Use
