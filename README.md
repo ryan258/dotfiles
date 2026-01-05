@@ -5,7 +5,7 @@
 [![Tests](https://img.shields.io/badge/tests-14%2F14%20passing-success.svg)](#running-tests)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey.svg)](#prerequisites)
 
-**Latest Release:** v2.1.0 (January 1, 2026) - Phase 1 Features Complete | [View Changelog](CHANGELOG.md)
+**Latest Release:** v2.2.0 (January 5, 2026) - Swarm Orchestration System | [View Changelog](CHANGELOG.md)
 
 This repository contains a personal collection of shell scripts, aliases, and configurations designed to create a powerful, efficient, and accessible command-line environment on macOS. The toolkit is built on Zsh and automates common development and system management tasks, reducing repetitive actions and minimizing cognitive load.
 
@@ -16,10 +16,11 @@ This repository contains a personal collection of shell scripts, aliases, and co
 **→ [📍 START HERE - 5 Minute Orientation](docs/start-here.md)**
 
 Quick links:
+
 - **[📋 Daily Cheat Sheet](docs/daily-cheatsheet.md)** - One-page reference
 - **[🔍 Discover Features](docs/discover.md)** - What can you do?
 - **[🧠 MS-Friendly Features](docs/ms-friendly-features.md)** - How it helps
-- **[🤖 AI Quick Reference](docs/ai-quick-reference.md)** - Your 10 AI specialists
+- **[🤖 AI Quick Reference](docs/ai-quick-reference.md)** - Your Swarm of 50+ specialists
 - **[📚 Documentation Index](docs/README.md)** - All guides
 
 **Validate everything is working:** `dotfiles-check`
@@ -30,21 +31,23 @@ Quick links:
 
 This setup is guided by a few key principles:
 
-  * **Efficiency:** Every script and alias is designed to save keystrokes and streamline complex operations into simple commands.
-  * **Accessibility:** By simplifying workflows and providing clear feedback, the toolkit aims to be usable and helpful even on low-energy days.
-  * **Robustness:** Scripts are written defensively, with checks for dependencies and safe error handling (`set -euo pipefail`).
-  * **Seamless Integration:** The tools deeply integrate with macOS-specific features like `osascript` for notifications, `pmset` for battery status, and Finder for file operations.
+- **Efficiency:** Every script and alias is designed to save keystrokes and streamline complex operations into simple commands.
+- **Accessibility:** By simplifying workflows and providing clear feedback, the toolkit aims to be usable and helpful even on low-energy days.
+- **Robustness:** Scripts are written defensively, with checks for dependencies and safe error handling (`set -euo pipefail`).
+- **Seamless Integration:** The tools deeply integrate with macOS-specific features like `osascript` for notifications, `pmset` for battery status, and Finder for file operations.
 
 ## 🚀 Quick Start - Discover What You Have
 
 **New to the system or forgot what's available?** Start here:
 
 ### For Brain-Fog Days
+
 - **[Daily Cheat Sheet](docs/daily-cheatsheet.md)** - One-page reference of your most-used commands
 - **[MS-Friendly Features Guide](docs/ms-friendly-features.md)** - How the system supports you through energy fluctuations
 - **[Happy Path](docs/happy-path.md)** - Daily workflow walkthrough
 
 ### Discover Features by What You Want to Do
+
 - **[Feature Discovery Guide](docs/discover.md)** - Complete guide organized by use case
   - Daily essentials (morning/evening routines)
   - When you're overwhelmed (low-energy helpers)
@@ -52,19 +55,21 @@ This setup is guided by a few key principles:
   - Getting things done (tasks and priorities)
   - Capturing ideas (journaling)
   - Finding stuff fast (navigation and search)
-  - AI assistants (your 10 free specialists)
+  - AI assistants (your 50+ free specialists via Swarm)
   - Working on projects
   - Publishing content
   - System maintenance
 
 ### AI Quick Reference
-- **[AI Quick Reference](docs/ai-quick-reference.md)** - Your 10 free AI specialists with real examples
+
+- **[AI Quick Reference](docs/ai-quick-reference.md)** - Your 50+ AI specialists with real examples
   - When to use each AI
   - Practical examples
-  - Advanced features (chaining, context injection)
+  - Swarm Orchestration (multi-agent)
   - Troubleshooting
 
 ### Validation
+
 ```bash
 dotfiles-check    # Verify everything is working
 whatis <command>  # Get help on any command
@@ -77,17 +82,32 @@ ai_suggest        # AI recommends what to do based on your context
 
 This toolkit provides a comprehensive set of enhancements, including:
 
-  * **Energy Management:** Spoon theory budget tracking with daily initialization (`spoons init`), activity-based expenditure logging (`spoons spend`), real-time balance checks, usage history tracking (`spoons history`), integration with tasks (`todo spend`), and spoon debt warnings for realistic MS energy management.
-  * **Data Correlation & Insights (NEW):** Statistical correlation engine analyzing relationships between datasets (`correlate run`), automated daily/weekly report generation with spoon/time analysis (`daily-report`), Pearson correlation calculation, and pattern discovery for health/productivity optimization.
-  * **Productivity & Task Management:** Advanced todo flow with prioritization, git-integrated commits, encouraging feedback, and `todo undo`; daily focus tracking with history (`focus set`, `focus done`, `focus history`); quick journaling plus `dump` for long-form context capture; health and medication tracking with dashboards; Google Calendar integration for schedule viewing and event creation; weekly and daily reviews generated from recorded activity.
-  * **Project & Workspace Management:** Scaffold new projects, create timestamped backups, and save/load directory contexts with intelligent state management (auto-activates venvs, launches apps, logs usage, and can suggest where to jump next).
-  * **Knowledge Management:** Personal searchable how-to wiki, blog content integration with todo system, journal search/"on this day", and weekly Markdown summaries for looking back.
-  * **System & Network Diagnostics:** Quick hardware, CPU, and memory snapshots, battery status, network troubleshooting, system validation, and audit logging so automation never feels opaque.
-  * **File & Archive Utilities:** Effortlessly organize `~/Downloads`, find large or duplicate files, manage/inspect archives, and run interactive clutter reviews to keep surfaces clean.
-  * **Development Shortcuts:** Automate common Git workflows, manage Python environments, spin up project workspaces, and schedule future commands without leaving the shell.
-  * **macOS Integration:** Enhanced clipboard manager with dynamic snippets, saved clip executions, notifications, LaunchAgent-friendly scripts, and a unified shell environment across Terminal and VS Code.
+- **Energy Management:** Spoon theory budget tracking with daily initialization (`spoons init`), activity-based expenditure logging (`spoons spend`), real-time balance checks, usage history tracking (`spoons history`), integration with tasks (`todo spend`), and spoon debt warnings for realistic MS energy management.
+- **Data Correlation & Insights (NEW):** Statistical correlation engine analyzing relationships between datasets (`correlate run`), automated daily/weekly report generation with spoon/time analysis (`daily-report`), Pearson correlation calculation, and pattern discovery for health/productivity optimization.
+- **Productivity & Task Management:** Advanced todo flow with prioritization, git-integrated commits, encouraging feedback, and `todo undo`; daily focus tracking with history (`focus set`, `focus done`, `focus history`); quick journaling plus `dump` for long-form context capture; health and medication tracking with dashboards; Google Calendar integration for schedule viewing and event creation; weekly and daily reviews generated from recorded activity.
+- **Project & Workspace Management:** Scaffold new projects, create timestamped backups, and save/load directory contexts with intelligent state management (auto-activates venvs, launches apps, logs usage, and can suggest where to jump next).
+- **Knowledge Management:** Personal searchable how-to wiki, blog content integration with todo system, journal search/"on this day", and weekly Markdown summaries for looking back.
+- **System & Network Diagnostics:** Quick hardware, CPU, and memory snapshots, battery status, network troubleshooting, system validation, and audit logging so automation never feels opaque.
+- **File & Archive Utilities:** Effortlessly organize `~/Downloads`, find large or duplicate files, manage/inspect archives, and run interactive clutter reviews to keep surfaces clean.
+- **Development Shortcuts:** Automate common Git workflows, manage Python environments, spin up project workspaces, and schedule future commands without leaving the shell.
+- **macOS Integration:** Enhanced clipboard manager with dynamic snippets, saved clip executions, notifications, LaunchAgent-friendly scripts, and a unified shell environment across Terminal and VS Code.
 
 ## What's New
+
+### 🤖 Version 2.2.0 - Swarm Orchestration (January 5, 2026)
+
+**Status:** ✅ Production Ready
+
+The AI workflow has been completely re-engineered with **Swarm Orchestration**, a dynamic multi-agent system that replaces static dispatching with intelligent team coordination.
+
+**Highlights:**
+
+- **Dynamic Specialist Selection:** Instead of 10 static roles, a Chief of Staff agent analyzes your request and dynamically selects the perfect team from **66 specialized agents** (e.g., "Historical Storyteller", "React Native Expert", "Stoic Coach").
+- **Parallel Execution:** Tasks are broken down and executed in parallel waves, significantly speeding up complex workflows.
+- **Self-Healing:** If a specialist fails, the system automatically tries an alternative or escalates to the Chief of Staff.
+- **Seamless Upgrade:** The `content`, `creative`, and `dhp-*` tools now use the Swarm engine by default. You use them exactly the same way, but get smarter, faster results.
+
+See [docs/ai-quick-reference.md](docs/ai-quick-reference.md) for details on the new capabilities.
 
 ### 🎉 Version 2.1.0 - Phase 1 Features (January 1, 2026)
 
@@ -98,6 +118,7 @@ This release implements advanced energy management and data correlation capabili
 **New Features:**
 
 **F2: Spoon Theory Budget Tracking ⭐⭐⭐**
+
 - Daily spoon budget initialization with interactive prompts in `startday`
 - Activity-based spoon expenditure tracking with remaining balance
 - Integration with todo system: `todo spend <task_id> <count>`
@@ -106,6 +127,7 @@ This release implements advanced energy management and data correlation capabili
 - Commands: `spoons init`, `spoons spend`, `spoons check`, `s-check`, `s-spend`
 
 **F3: Correlation Engine (Experimental) ⭐⭐⭐**
+
 - Statistical correlation analysis between any two datasets
 - Automated daily/weekly report generation with Markdown output
 - Pearson correlation calculation with Python engine
@@ -115,6 +137,7 @@ This release implements advanced energy management and data correlation capabili
 - Commands: `correlate run <file1> <file2>`, `daily-report`
 
 **Quality Improvements:**
+
 - Enhanced path validation with cross-platform support
 - Fixed time log parsing for accurate duration calculations
 - Improved Linux date handling in report generation
@@ -122,6 +145,7 @@ This release implements advanced energy management and data correlation capabili
 - Comprehensive data format documentation
 
 **Data Files:**
+
 - `~/.config/dotfiles-data/spoons.txt` - Spoon budget and expenditure log
 - `~/.config/dotfiles-data/reports/` - Generated correlation reports
 
@@ -136,6 +160,7 @@ See [CHANGELOG.md](CHANGELOG.md) for complete details.
 This major release represents a comprehensive security audit and hardening of the entire dotfiles system. After multiple review cycles and extensive testing, all 10 critical issues have been resolved. The system is production-ready with enhanced security, monitoring, cross-platform compatibility, and professional documentation.
 
 **Highlights:**
+
 - **Security Hardening:** Path validation, input sanitization, credential redaction, test isolation
 - **Cross-Platform Compatibility:** macOS and Linux support with OS-specific detection
 - **Enhanced Error Handling:** Robust error detection in all dispatchers and scripts
@@ -144,6 +169,7 @@ This major release represents a comprehensive security audit and hardening of th
 - **API Improvements:** Fixed all dispatcher signatures, enhanced logging, cooldown mechanism
 
 **Critical Fixes:**
+
 - Fixed jq JSON payload builder preventing API parameter injection
 - Implemented cross-platform path validation using Python
 - Resolved all macOS/Linux compatibility issues (stat, find, realpath)
@@ -157,32 +183,32 @@ See [CHANGELOG.md](CHANGELOG.md) for complete details.
 
 Upgraded all AI dispatchers with cost-effective models and structured workflow system:
 
-  * **Optimized Free Models:** All 10 dispatchers now use task-specific free models from OpenRouter (DeepSeek R1, Llama 4, Qwen3, etc.)
-  * **Spec Template System:** New `spec` command opens structured templates in your editor for comprehensive AI requests
-  * **Template Library:** 8 dispatcher-specific templates guide you through filling in all relevant context
-  * **Automatic Archival:** Completed specs saved to `~/.config/dotfiles-data/specs/` for reuse and documentation
-  * **Backward Compatible:** Falls back to legacy model variables and defaults automatically
+- **Optimized Free Models:** All 10 dispatchers now use task-specific free models from OpenRouter (DeepSeek R1, Llama 4, Qwen3, etc.)
+- **Spec Template System:** New `spec` command opens structured templates in your editor for comprehensive AI requests
+- **Template Library:** 8 dispatcher-specific templates guide you through filling in all relevant context
+- **Automatic Archival:** Completed specs saved to `~/.config/dotfiles-data/specs/` for reuse and documentation
+- **Backward Compatible:** Falls back to legacy model variables and defaults automatically
 
 ### Previous: Dispatcher Robustness & Streaming (November 8, 2025)
 
 Major improvements to AI dispatcher reliability and user experience:
 
-  * **Real-Time Streaming:** All 10 AI dispatchers support `--stream` flag for real-time output as AI generates responses
-  * **Robust Error Handling:** No more silent failures - API errors are caught and reported clearly with proper exit codes
-  * **Shared Library:** Centralized API logic in `bin/dhp-lib.sh` eliminates ~1,500 lines of duplicate code
-  * **Better Feedback:** See progress in real-time during long AI tasks, catch errors immediately
-  * **AI Staff HQ v3:** Upgraded to latest specialist organization with 41 YAML files
+- **Real-Time Streaming:** All 10 AI dispatchers support `--stream` flag for real-time output as AI generates responses
+- **Robust Error Handling:** No more silent failures - API errors are caught and reported clearly with proper exit codes
+- **Shared Library:** Centralized API logic in `bin/dhp-lib.sh` eliminates ~1,500 lines of duplicate code
+- **Better Feedback:** See progress in real-time during long AI tasks, catch errors immediately
+- **AI Staff HQ v3:** Upgraded to latest specialist organization with 41 YAML files
 
 ### Quality-of-Life Upgrades (November 7, 2025)
 
 Round 2 shipped earlier this month and we immediately layered on quality-of-life upgrades to tighten the daily loop:
 
-  * **Focus & Daily Anchor:** A new `focus` command stores the day's intention so `startday` can surface it at the very top of your morning briefing.
-  * **Smarter Morning Briefing:** `startday` now pulls GitHub activity, syncs blog stubs to todos, highlights suggested directories via `g suggest`, and links to the latest weekly review file when it's Monday.
-  * **Weekly Review Automation:** `week_in_review.sh --file` writes a Markdown recap to `~/Documents/Reviews/Weekly/`, and `setup_weekly_review.sh` can schedule it so Sunday summaries appear automatically.
-  * **Safety Nets & Backups:** `goodevening` validates structured data (expects `scripts/data_validate.sh`) before running `backup_data.sh`, so nightly backups only proceed when files look healthy.
-  * **Task Flow Upgrades:** `todo undo` rescues accidental completions, and both `todo add`/`todo done` cheer you on. Pair that with the new `dump` script for long-form journaling on foggy days.
-  * **Navigation Intelligence:** `g.sh` logs directory usage and can suggest where to jump next; `g prune --auto` keeps dead bookmarks out of the way.
+- **Focus & Daily Anchor:** A new `focus` command stores the day's intention so `startday` can surface it at the very top of your morning briefing.
+- **Smarter Morning Briefing:** `startday` now pulls GitHub activity, syncs blog stubs to todos, highlights suggested directories via `g suggest`, and links to the latest weekly review file when it's Monday.
+- **Weekly Review Automation:** `week_in_review.sh --file` writes a Markdown recap to `~/Documents/Reviews/Weekly/`, and `setup_weekly_review.sh` can schedule it so Sunday summaries appear automatically.
+- **Safety Nets & Backups:** `goodevening` validates structured data (expects `scripts/data_validate.sh`) before running `backup_data.sh`, so nightly backups only proceed when files look healthy.
+- **Task Flow Upgrades:** `todo undo` rescues accidental completions, and both `todo add`/`todo done` cheer you on. Pair that with the new `dump` script for long-form journaling on foggy days.
+- **Navigation Intelligence:** `g.sh` logs directory usage and can suggest where to jump next; `g prune --auto` keeps dead bookmarks out of the way.
 
 See `CHANGELOG.md` for the play-by-play of the latest blindspots and fixes.
 
@@ -245,6 +271,7 @@ spec strategy       # Strategic analysis with constraints
 ```
 
 **Benefits:**
+
 - **Structured thinking:** Templates ensure you provide all relevant context
 - **Better AI output:** Comprehensive input = higher quality responses
 - **Reusability:** Save and iterate on successful patterns
@@ -265,6 +292,7 @@ creative "Story idea"  # Default behavior, no streaming
 ```
 
 **Benefits:**
+
 - See progress immediately during long AI tasks
 - Better UX for creative and content generation
 - Same robust error handling in both modes
@@ -273,9 +301,11 @@ creative "Story idea"  # Default behavior, no streaming
 ### 10 Active AI Dispatchers
 
 **Technical (1):**
+
 - `tech` / `dhp-tech` - Code debugging, optimization, technical analysis
 
 Invoke dispatchers using the single-word aliases (shortcuts to the `dhp-*` scripts); you can also use the `dispatch` wrapper if you prefer a unified entry point:
+
 ```bash
 tech "Optimize this function"
 cat script.sh | tech --stream
@@ -284,19 +314,23 @@ content --temperature 0.4 --max-tokens 800 "Brain fog morning primer"
 ```
 
 **Creative (3):**
+
 - `creative` / `dhp-creative` - Complete story packages (horror specialty)
 - `narrative` / `dhp-narrative` - Story structure, plot development, character arcs
 - `copy` / `dhp-copy` - Sales copy, email sequences, landing pages
 
 **Strategy & Analysis (3):**
+
 - `strategy` / `dhp-strategy` - Strategic insights via Chief of Staff
 - `brand` / `dhp-brand` - Brand positioning, voice/tone, competitive analysis
 - `market` / `dhp-market` - SEO research, trends, audience insights
 
 **Content (1):**
+
 - `content` / `dhp-content` - SEO-optimized guides and evergreen content
 
 **Personal Development (2):**
+
 - `stoic` / `dhp-stoic` - Mindset coaching through stoic principles
 - `research` / `dhp-research` - Knowledge organization and synthesis
 
@@ -305,26 +339,32 @@ content --temperature 0.4 --max-tokens 800 "Brain fog morning primer"
 AI specialists are deeply integrated into daily workflows:
 
 **Blog Workflow:**
+
 ```bash
 blog generate -p "Calm Coach" -a guide -s guides/brain-fog "Energy-first planning walkthrough"
 blog refine my-post.md         # AI-polish existing draft
 ```
+
 Set `BLOG_DIR` in `dotfiles/.env` to point at your personal writing repo (examples: `$HOME/Projects/blog`, `$HOME/Projects/site/content`, `$HOME/Projects/articles`). Leaving it unset cleanly disables these commands for shared installs.
 
 **Swipe Logging (optional):**
+
 ```bash
 # Enable in .env: SWIPE_LOG_ENABLED=true (defaults to ~/Documents/swipe.md)
 swipe dispatch tech "Summarize today's wins"
 ```
+
 Use `swipe` to wrap any command and automatically append the output + command to your swipe log. Disable anytime via `.env`.
 
 **Todo Integration:**
+
 ```bash
 todo debug 1                   # AI debug a technical task
 todo delegate 3 creative       # Delegate task to AI specialist
 ```
 
 **Journal Analysis:**
+
 ```bash
 journal analyze                # AI insights from last 7 days
 journal mood                   # Sentiment analysis (14 days)
@@ -333,12 +373,14 @@ journal themes                 # Theme extraction (30 days)
 
 **Optional Daily AI Features:**
 Set in `.env` to enable:
+
 - `AI_BRIEFING_ENABLED=true` - Morning AI focus suggestion (cached daily)
 - `AI_REFLECTION_ENABLED=true` - Evening AI reflection on accomplishments
 
 ### Advanced AI Features
 
 **Multi-Specialist Orchestration:**
+
 ```bash
 dhp-project "Launch new blog series on AI productivity"
 # or: ai-project "project description"
@@ -349,6 +391,7 @@ dhp-project "Launch new blog series on AI productivity"
 ```
 
 **Context-Aware Suggestions:**
+
 ```bash
 ai-suggest
 
@@ -360,6 +403,7 @@ ai-suggest
 ```
 
 **Dispatcher Chaining:**
+
 ```bash
 dhp-chain creative narrative copy -- "lighthouse keeper finds artifact"
 # or: ai-chain dispatcher1 dispatcher2 -- "input"
@@ -370,6 +414,7 @@ dhp-chain creative narrative copy -- "lighthouse keeper finds artifact"
 ```
 
 **Local Context Injection:**
+
 ```bash
 dhp-content --context "Guide on productivity with AI"
 # Includes: git status, top tasks, recent blog topics
@@ -384,6 +429,7 @@ dhp-content --full-context "Comprehensive guide topic"
 ### Setup Requirements
 
 1. **Environment Configuration:** Copy `.env.example` to `.env` and add your OpenRouter API key:
+
    ```bash
    cp .env.example .env
    # Edit .env and add your OPENROUTER_API_KEY
@@ -392,6 +438,7 @@ dhp-content --full-context "Comprehensive guide topic"
 2. **Get an API Key:** Sign up at [OpenRouter](https://openrouter.ai/) and create an API key (free tier available)
 
 3. **Configure Models:** The `.env` file includes optimized free models (DeepSeek, Llama 4, Qwen3) as defaults
+
    - Cost-effective: All models are free tier on OpenRouter
    - Task-specific: Each dispatcher uses a model optimized for its specialty
    - Customizable: Change any model in `.env` to your preference
@@ -409,12 +456,14 @@ dhp-content --full-context "Comprehensive guide topic"
 ### Error Handling & Reliability
 
 **Robust Error Detection (November 8, 2025):**
+
 - All dispatchers check for API errors and report them clearly
 - No more silent failures with fake "SUCCESS" messages
 - Proper exit codes (non-zero on failures) for script integration
 - Example error: `Error: API returned an error: Invalid API key`
 
 **Shared Library:**
+
 - Centralized API logic in `bin/dhp-lib.sh` and common setup/parsing logic in `bin/dhp-shared.sh`.
 - Consistent error handling and setup across all dispatchers.
 - API or setup changes only require updating one or two files.
@@ -423,6 +472,7 @@ dhp-content --full-context "Comprehensive guide topic"
 ### Full AI Workforce Access
 
 The 10 dispatchers provide access to 42+ specialists across 7 departments:
+
 - **Creative:** Art Director, Copywriter, Narrative Designer, Sound Designer, and more
 - **Strategy:** Chief of Staff, Brand Builder, Market Analyst, Creative Strategist
 - **Technical:** Automation Specialist, Prompt Engineer, Toolmaker, Productivity Architect
@@ -435,11 +485,11 @@ See `bin/README.md` for detailed dispatcher documentation, `ROADMAP.md` for impl
 
 ## Daily Loop at a Glance
 
-  * `startday` launches automatically once per calendar day on your first shell, greeting you with the day's focus, fresh GitHub pushes, suggested directories, current blog status/drafts, and health reminders.
-  * Capture intentions with `focus "Ship the review"` (clear with `focus clear`) so your morning dashboard anchors you immediately.
-  * Use `status` for midday course-correction, `todo` for prioritized tasks (`bump`, `top`, `undo`, `commit`), and `dump`/`journal` to keep context searchable.
-  * Close out with `goodevening` to celebrate wins, spot risky repos, validate data, and trigger `backup_data.sh`.
-  * Run `weekreview --file` or schedule it with `setup_weekly_review.sh` for an automatic Sunday recap saved to `~/Documents/Reviews/Weekly/`.
+- `startday` launches automatically once per calendar day on your first shell, greeting you with the day's focus, fresh GitHub pushes, suggested directories, current blog status/drafts, and health reminders.
+- Capture intentions with `focus "Ship the review"` (clear with `focus clear`) so your morning dashboard anchors you immediately.
+- Use `status` for midday course-correction, `todo` for prioritized tasks (`bump`, `top`, `undo`, `commit`), and `dump`/`journal` to keep context searchable.
+- Close out with `goodevening` to celebrate wins, spot risky repos, validate data, and trigger `backup_data.sh`.
+- Run `weekreview --file` or schedule it with `setup_weekly_review.sh` for an automatic Sunday recap saved to `~/Documents/Reviews/Weekly/`.
 
 Need the expanded playbook? Check `docs/happy-path.md` for the brain-fog-friendly walkthrough.
 
@@ -447,14 +497,14 @@ Need the expanded playbook? Check `docs/happy-path.md` for the brain-fog-friendl
 
 This setup assumes you are on macOS with Zsh (the default shell). You will also need:
 
-  * **Homebrew:** The missing package manager for macOS.
-  * **Core CLIs:** `jq`, `curl`, and `gawk` (the bootstrap script installs/updates them for you).
-  * **macOS Specific Tools:** `osascript` (for notifications and automation), `pmset` (for battery status).
-  * **Optional Extras:** Install with Homebrew for specific workflows:
-      * `ffmpeg`: Convert video to audio.
-      * `imagemagick`: Resize images.
-      * `ghostscript`: Compress PDFs.
-      * `unrar`: Extract `.rar` archives.
+- **Homebrew:** The missing package manager for macOS.
+- **Core CLIs:** `jq`, `curl`, and `gawk` (the bootstrap script installs/updates them for you).
+- **macOS Specific Tools:** `osascript` (for notifications and automation), `pmset` (for battery status).
+- **Optional Extras:** Install with Homebrew for specific workflows:
+  - `ffmpeg`: Convert video to audio.
+  - `imagemagick`: Resize images.
+  - `ghostscript`: Compress PDFs.
+  - `unrar`: Extract `.rar` archives.
 
 ## Installation
 
@@ -475,6 +525,7 @@ This setup assumes you are on macOS with Zsh (the default shell). You will also 
     ```
 
     This will:
+
     - Install Homebrew (if needed)
     - Install required dependencies (jq, curl, gawk)
     - Create the data directory at `~/.config/dotfiles-data/`
@@ -500,28 +551,28 @@ If you prefer manual installation:
 
 This setup uses a modern Zsh structure to keep your home directory clean:
 
-  * `~/.zshenv`: This is the first file Zsh reads. It sets the `$ZDOTDIR` variable, telling Zsh to look for its configuration files inside `~/dotfiles/zsh/`.
-  * `~/dotfiles/zsh/.zprofile`: This file runs once at login and is the correct place to manage your `$PATH`, ensuring compatibility with macOS tools.
-  * `~/dotfiles/zsh/.zshrc`: This runs every time you open a new shell. It sources your aliases and other interactive configurations.
-  * `~/dotfiles/zsh/aliases.zsh`: This is where the magic happens! It contains hundreds of shortcuts and helper functions that form the core of the workflow.
+- `~/.zshenv`: This is the first file Zsh reads. It sets the `$ZDOTDIR` variable, telling Zsh to look for its configuration files inside `~/dotfiles/zsh/`.
+- `~/dotfiles/zsh/.zprofile`: This file runs once at login and is the correct place to manage your `$PATH`, ensuring compatibility with macOS tools.
+- `~/dotfiles/zsh/.zshrc`: This runs every time you open a new shell. It sources your aliases and other interactive configurations.
+- `~/dotfiles/zsh/aliases.zsh`: This is where the magic happens! It contains hundreds of shortcuts and helper functions that form the core of the workflow.
 
 ### Data Storage
 
 All script data is centralized in `~/.config/dotfiles-data/` for easy backup and management:
 
-  * `journal.txt` – Timestamped journal entries (searchable with `journal search`)
-  * `todo.txt` & `todo_done.txt` – Active and completed tasks with timestamps
-  * `health.txt` – Health appointments, symptom logs, and energy ratings
-  * `medications.txt` – Medication schedules and dose logs
-  * `system.log` – Central audit log for all automated actions
-  * `dir_bookmarks`, `dir_history`, `dir_usage.log` – Smart navigation bookmarks, history, and frequency scores
-  * `favorite_apps` – Application launcher shortcuts
-  * `daily_focus.txt` – Stores the current focus surfaced by `startday`
-  * `focus_history.log` – Archive of completed focus entries with dates
-  * `spoons.txt` – Spoon theory budget and expenditure log
-  * `google_creds.json`, `google_token_cache.json` – Google Calendar OAuth credentials (secure)
-  * `clipboard_history/` – Saved clipboard snippets (supports dynamic/executable snippets)
-  * `how-to/` – Personal how-to wiki articles
+- `journal.txt` – Timestamped journal entries (searchable with `journal search`)
+- `todo.txt` & `todo_done.txt` – Active and completed tasks with timestamps
+- `health.txt` – Health appointments, symptom logs, and energy ratings
+- `medications.txt` – Medication schedules and dose logs
+- `system.log` – Central audit log for all automated actions
+- `dir_bookmarks`, `dir_history`, `dir_usage.log` – Smart navigation bookmarks, history, and frequency scores
+- `favorite_apps` – Application launcher shortcuts
+- `daily_focus.txt` – Stores the current focus surfaced by `startday`
+- `focus_history.log` – Archive of completed focus entries with dates
+- `spoons.txt` – Spoon theory budget and expenditure log
+- `google_creds.json`, `google_token_cache.json` – Google Calendar OAuth credentials (secure)
+- `clipboard_history/` – Saved clipboard snippets (supports dynamic/executable snippets)
+- `how-to/` – Personal how-to wiki articles
 
 This single directory is automatically backed up daily by `goodevening.sh` to `~/Backups/dotfiles_data/`.
 
@@ -533,50 +584,50 @@ Below is a summary of the most common commands. For a complete list, see `script
 
 ### Key Aliases
 
-| Alias      | Description                                               |
-| :--------- | :-------------------------------------------------------- |
-| `update`   | Update and upgrade all Homebrew packages.           |
-| `gs`, `gaa`, `gc` | Standard shortcuts for `git status`, `git add .`, `git commit`. |
-| `ll`, `la`, `lt` | Enhanced `ls` commands for detailed, sorted views.    |
-| `..`, `...`  | Navigate up one or two parent directories.            |
-| `info`     | A dashboard showing weather and current to-do items.      |
-| `status`   | A dashboard showing your current work context (directory, git), journal, and tasks.     |
-| `cleanup`  | Organizes the `~/Downloads` folder and lists large files. |
+| Alias             | Description                                                                         |
+| :---------------- | :---------------------------------------------------------------------------------- |
+| `update`          | Update and upgrade all Homebrew packages.                                           |
+| `gs`, `gaa`, `gc` | Standard shortcuts for `git status`, `git add .`, `git commit`.                     |
+| `ll`, `la`, `lt`  | Enhanced `ls` commands for detailed, sorted views.                                  |
+| `..`, `...`       | Navigate up one or two parent directories.                                          |
+| `info`            | A dashboard showing weather and current to-do items.                                |
+| `status`          | A dashboard showing your current work context (directory, git), journal, and tasks. |
+| `cleanup`         | Organizes the `~/Downloads` folder and lists large files.                           |
 
 ### Core Scripts
 
 Many scripts can be called directly. Some, marked with `(source)`, provide extra functionality when sourced (e.g., `source script.sh`).
 
-| Command        | Description                                                                 |
-| :------------- | :-------------------------------------------------------------------------- |
-| `todo`         | Advanced todo list manager with `add`, `list`, `done`, `undo`, `commit`, `bump`, `top` plus encouraging feedback and git integration. |
-| `journal`      | Timestamped journal with `search`, `onthisday`, and quick capture aliases for building your second brain. |
-| `dump`         | Launches `$EDITOR` for long-form brain dumps, appending the result to `journal.txt` with a timestamp. |
-| `health`       | Track appointments, symptoms, and energy levels with `dashboard` for 30-day trend analysis. |
-| `meds`         | Medication tracking system with `check`, `log`, `remind`, and `dashboard` for adherence monitoring. |
-| `spoons`       | Spoon theory budget manager with `init`, `spend`, `check`, and `history` commands for energy tracking. |
-| `focus`        | Set, show, complete, or clear the day's focus with history tracking (`set`, `done`, `history`, `clear`). |
-| `gcal`         | Google Calendar integration - view agenda, add events, list calendars via OAuth device flow. |
-| `startday`     | Automated morning routine with focus reminder, GitHub activity, blog status/draft visibility, suggested directories, health snapshot, weekly review link, stale tasks, and top priorities. |
-| `goodevening`  | End-of-day summary with gamified wins, project safety checks, data validation (expects `data_validate.sh`), and automated backups. |
-| `weekreview`   | Weekly recap of tasks, journal entries, and git commits; use `--file` to export to Markdown. |
-| `setup_weekly_review` | Schedule `weekreview --file` via the friendly `schedule.sh` wrapper for Sunday evenings. |
-| `g` (source)   | Unified navigation system – bookmarks, recent dirs, usage logging, suggestions, auto-venv activation, on-enter commands, and optional app launching. |
-| `blog`         | Blog workflow tools: `status`, `stubs`, `random`, `sync` (to todos), `ideas` (search journal). |
-| `howto`        | Personal searchable how-to wiki for storing and retrieving complex workflows. |
-| `schedule`     | User-friendly wrapper for `at` command to schedule future commands and reminders. |
-| `whatis`       | Look up what an alias or command does by searching aliases and documentation. |
-| `dotfiles_check` | System validation - verifies all scripts, dependencies, data directories, and GitHub token. |
-| `backup`       | Creates a timestamped backup of the current project directory. |
-| `newproject`   | Interactively scaffolds a new project with a standard directory structure. |
-| `newpython`    | Bootstraps a Python project with a virtual environment and `.gitignore`. |
-| `projects`     | Find and get details about forgotten projects from GitHub. |
-| `review_clutter` | Interactive tool to archive or delete old files from Desktop/Downloads. |
-| `graballtext`  | Capture readable text from the repo into `all_text_contents.txt` for quick review or search. |
-| `done`         | Run any long command and get a system notification when it's finished. |
-| `pomo`         | Start a 25-minute Pomodoro timer with break reminder (alias for `take_a_break 25`). |
-| `next`         | Show only your top priority task (alias for `todo top 1`). |
-| `systemlog`    | View the last 20 automation events from the central audit log. |
+| Command               | Description                                                                                                                                                                                |
+| :-------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `todo`                | Advanced todo list manager with `add`, `list`, `done`, `undo`, `commit`, `bump`, `top` plus encouraging feedback and git integration.                                                      |
+| `journal`             | Timestamped journal with `search`, `onthisday`, and quick capture aliases for building your second brain.                                                                                  |
+| `dump`                | Launches `$EDITOR` for long-form brain dumps, appending the result to `journal.txt` with a timestamp.                                                                                      |
+| `health`              | Track appointments, symptoms, and energy levels with `dashboard` for 30-day trend analysis.                                                                                                |
+| `meds`                | Medication tracking system with `check`, `log`, `remind`, and `dashboard` for adherence monitoring.                                                                                        |
+| `spoons`              | Spoon theory budget manager with `init`, `spend`, `check`, and `history` commands for energy tracking.                                                                                     |
+| `focus`               | Set, show, complete, or clear the day's focus with history tracking (`set`, `done`, `history`, `clear`).                                                                                   |
+| `gcal`                | Google Calendar integration - view agenda, add events, list calendars via OAuth device flow.                                                                                               |
+| `startday`            | Automated morning routine with focus reminder, GitHub activity, blog status/draft visibility, suggested directories, health snapshot, weekly review link, stale tasks, and top priorities. |
+| `goodevening`         | End-of-day summary with gamified wins, project safety checks, data validation (expects `data_validate.sh`), and automated backups.                                                         |
+| `weekreview`          | Weekly recap of tasks, journal entries, and git commits; use `--file` to export to Markdown.                                                                                               |
+| `setup_weekly_review` | Schedule `weekreview --file` via the friendly `schedule.sh` wrapper for Sunday evenings.                                                                                                   |
+| `g` (source)          | Unified navigation system – bookmarks, recent dirs, usage logging, suggestions, auto-venv activation, on-enter commands, and optional app launching.                                       |
+| `blog`                | Blog workflow tools: `status`, `stubs`, `random`, `sync` (to todos), `ideas` (search journal).                                                                                             |
+| `howto`               | Personal searchable how-to wiki for storing and retrieving complex workflows.                                                                                                              |
+| `schedule`            | User-friendly wrapper for `at` command to schedule future commands and reminders.                                                                                                          |
+| `whatis`              | Look up what an alias or command does by searching aliases and documentation.                                                                                                              |
+| `dotfiles_check`      | System validation - verifies all scripts, dependencies, data directories, and GitHub token.                                                                                                |
+| `backup`              | Creates a timestamped backup of the current project directory.                                                                                                                             |
+| `newproject`          | Interactively scaffolds a new project with a standard directory structure.                                                                                                                 |
+| `newpython`           | Bootstraps a Python project with a virtual environment and `.gitignore`.                                                                                                                   |
+| `projects`            | Find and get details about forgotten projects from GitHub.                                                                                                                                 |
+| `review_clutter`      | Interactive tool to archive or delete old files from Desktop/Downloads.                                                                                                                    |
+| `graballtext`         | Capture readable text from the repo into `all_text_contents.txt` for quick review or search.                                                                                               |
+| `done`                | Run any long command and get a system notification when it's finished.                                                                                                                     |
+| `pomo`                | Start a 25-minute Pomodoro timer with break reminder (alias for `take_a_break 25`).                                                                                                        |
+| `next`                | Show only your top priority task (alias for `todo top 1`).                                                                                                                                 |
+| `systemlog`           | View the last 20 automation events from the central audit log.                                                                                                                             |
 
 ### Clipboard Workflows
 
@@ -586,17 +637,19 @@ Make the macOS clipboard part of your shell toolkit—`docs/clipboard.md` walks 
 
 Adding your own commands is easy:
 
-  * **To add a new alias:** Open `~/dotfiles/zsh/aliases.zsh` and add your shortcut in the relevant section.
-  * **To add a new script (automated):**
-    ```bash
-    new_script my_tool
-    ```
-    This automatically creates `scripts/my_tool.sh` with proper headers, makes it executable, and adds an alias to `aliases.zsh`.
+- **To add a new alias:** Open `~/dotfiles/zsh/aliases.zsh` and add your shortcut in the relevant section.
+- **To add a new script (automated):**
 
-  * **To add a new script (manual):**
-    1.  Place the new script file in `~/dotfiles/scripts/`.
-    2.  Make it executable: `chmod +x ~/dotfiles/scripts/your_script.sh`.
-    3.  (Optional) Add a convenient alias for it in `aliases.zsh`.
+  ```bash
+  new_script my_tool
+  ```
+
+  This automatically creates `scripts/my_tool.sh` with proper headers, makes it executable, and adds an alias to `aliases.zsh`.
+
+- **To add a new script (manual):**
+  1.  Place the new script file in `~/dotfiles/scripts/`.
+  2.  Make it executable: `chmod +x ~/dotfiles/scripts/your_script.sh`.
+  3.  (Optional) Add a convenient alias for it in `aliases.zsh`.
 
 ## Maintenance
 
@@ -645,11 +698,13 @@ Encountering issues? Check our [Troubleshooting Guide](TROUBLESHOOTING.md) for s
 The test suite uses [BATS (Bash Automated Testing System)](https://github.com/bats-core/bats-core).
 
 Install BATS:
+
 ```bash
 brew install bats-core
 ```
 
 Run tests:
+
 ```bash
 bats tests/test_todo.sh
 ```

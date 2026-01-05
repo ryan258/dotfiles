@@ -1,4 +1,5 @@
 # System Overview
+
 ## How Your Dotfiles System Works
 
 A visual guide to understanding the architecture and data flow.
@@ -132,40 +133,40 @@ Optional:
                     ▼
          ┌──────────────────────┐
          │  Dispatcher Layer    │
-         │  (10 specialists)    │
+         │  (Swarm Orchestration)│
          └──────────┬───────────┘
                     │
       ┌─────────────┼─────────────┐
       ▼             ▼             ▼
   ┌──────┐    ┌──────────┐   ┌────────┐
-  │ tech │    │ content  │   │ stoic  │
-  └──┬───┘    └────┬─────┘   └───┬────┘
-     │             │             │
-     │    ┌────────┼────────┐    │
-     │    ▼        ▼        ▼    │
-     │  brand   market  strategy │
-     │                           │
-     └────────────┬──────────────┘
-                  ▼
-         ┌─────────────────┐
-         │   dhp-lib.sh    │ ◄── Shared API library
-         └────────┬────────┘
-                  ▼
-         ┌─────────────────┐
-         │ OpenRouter API  │
-         └────────┬────────┘
-                  ▼
-         ┌─────────────────┐
-         │  AI Staff HQ    │
-         │ (41 specialists)│
-         └────────┬────────┘
-                  ▼
-         ┌─────────────────┐
-         │   AI Response   │
-         └────────┬────────┘
-                  │
-                  ├── Display to terminal
-                  └── Save to ~/.config/dotfiles-data/ai-output/
+  │ tech │    │  content │   │ stoic  │
+  └──────┘    └──────────┘   └────────┘
+                    │
+                    ▼
+           ┌──────────────────┐
+           │   Swarm Engine   │
+           │ (Chief of Staff) │
+           └────────┬─────────┘
+                    │
+           ┌────────┴─────────┐
+           ▼                  ▼
+  ┌────────────────┐  ┌────────────────┐
+  │ Task Analyzer  │  │ Capability Idx │
+  └────────────────┘  └────────────────┘
+           │                  │
+           ▼                  ▼
+  ┌────────────────────────────────────┐
+  │          Parallel Execution         │
+  │     (66 Specialists / 6 Depts)     │
+  └─────────────────┬──────────────────┘
+                    │
+                    ▼
+           ┌─────────────────┐
+           │   AI Response   │
+           └────────┬────────┘
+                    │
+                    ├── Display to terminal
+                    └── Save to ~/.config/dotfiles-data/ai-output/
 
 Advanced Features:
   dhp-chain    ──► Sequential processing through multiple AIs
@@ -420,6 +421,7 @@ Additional Protection:
 ## 🎯 Command Categories
 
 ### 🌅 Daily Routines
+
 ```
 startday        # Morning briefing (auto-runs)
 status          # Mid-day check-in
@@ -428,6 +430,7 @@ weekreview      # Weekly summary
 ```
 
 ### 📝 Productivity
+
 ```
 todo            # Task management
 journal         # Quick entries
@@ -437,6 +440,7 @@ gcal            # Google Calendar integration
 ```
 
 ### 🏥 Health
+
 ```
 health          # Energy, symptoms, appointments
 meds            # Medication tracking
@@ -444,6 +448,7 @@ spoons          # Energy budget with history
 ```
 
 ### 🧭 Navigation
+
 ```
 g               # Bookmarks and suggestions
 ..              # Up one directory
@@ -451,6 +456,7 @@ g               # Bookmarks and suggestions
 ```
 
 ### 🤖 AI Helpers
+
 ```
 tech            # Technical debugging
 content         # Content creation
@@ -461,12 +467,14 @@ ai_suggest      # Context-aware recommendations
 ```
 
 ### 📚 Content
+
 ```
 blog            # Publishing pipeline
 howto           # Personal wiki
 ```
 
 ### 🔧 Utilities
+
 ```
 findtext        # Search file contents
 findbig         # Largest files
@@ -477,6 +485,7 @@ break           # Break timer
 ```
 
 ### 🔍 System
+
 ```
 dotfiles-check  # System validation
 whatis          # Command help
@@ -490,6 +499,7 @@ battery         # Battery status
 ## 🎓 Learning Path
 
 ### Week 1: Core Daily Loop
+
 ```
 Day 1-2:  Observe startday and goodevening
 Day 3-4:  Start using todo (add, done, top)
@@ -497,6 +507,7 @@ Day 5-7:  Add journal entries
 ```
 
 ### Week 2: Health Tracking
+
 ```
 Day 8-10:  Track energy daily (health energy 7)
 Day 11-12: Log medications (meds log "Med")
@@ -504,6 +515,7 @@ Day 13-14: Review dashboards
 ```
 
 ### Week 3: Navigation
+
 ```
 Day 15-17: Use g save to bookmark projects
 Day 18-19: Try g suggest for smart navigation
@@ -511,6 +523,7 @@ Day 20-21: Set up on-enter commands
 ```
 
 ### Week 4: AI Integration
+
 ```
 Day 22-24: Try one AI (start with stoic or tech)
 Day 25-26: Use content with --context flag
@@ -518,6 +531,7 @@ Day 27-28: Experiment with ai_suggest
 ```
 
 ### Month 2+: Advanced Features
+
 ```
 • Set up blog integration
 • Create spec templates for common tasks
@@ -559,17 +573,20 @@ A: Yes! Most features work cross-platform. Some macOS-specific features (notific
 ## 📖 Next Steps
 
 1. **Read the guides:**
+
    - [Daily Cheat Sheet](daily-cheatsheet.md) - One-page reference
    - [Feature Discovery](discover.md) - What can you do?
    - [MS-Friendly Features](ms-friendly-features.md) - How it helps
    - [AI Quick Reference](ai-quick-reference.md) - Your AI team
 
 2. **Validate your system:**
+
    ```bash
    dotfiles-check
    ```
 
 3. **Try the daily loop:**
+
    ```bash
    startday        # Morning
    status          # Mid-day
@@ -577,6 +594,7 @@ A: Yes! Most features work cross-platform. Some macOS-specific features (notific
    ```
 
 4. **Explore one category:**
+
    - Pick something that interests you (health tracking, AI, navigation)
    - Read the relevant section in [discover.md](discover.md)
    - Try 2-3 commands
