@@ -25,7 +25,7 @@ When you run `content "Topic"` or `creative "Idea"`, the system now:
 
 ## 🛠 1. Technical (`tech`)
 
-**Default Model:** DeepSeek R1 (Configurable in `.env`)
+**Default Model:** DeepSeek R1 (`TECH_MODEL`)
 **Alias:** `tech`
 
 ### When to Use
@@ -72,7 +72,7 @@ EOF
 
 ## ✍️ 2. Content (`content`)
 
-**Default Model:** Qwen3 Coder (Configurable in `.env`)
+**Default Model:** Qwen3 Coder (`CONTENT_MODEL`)
 **Alias:** `content`
 
 ### When to Use
@@ -113,7 +113,7 @@ echo "How to use AI for personal productivity" | content
 
 ## 🎨 3. Creative (`creative`)
 
-**Default Model:** Llama 4 Maverick (Configurable in `.env`)
+**Default Model:** Llama 4 Maverick (`CREATIVE_MODEL`)
 **Alias:** `creative`
 
 ### When to Use
@@ -148,7 +148,7 @@ creative "Essay about finding productivity systems that work with MS"
 
 ## 📝 4. Copywriting (`copy`)
 
-**Default Model:** Llama 4 Maverick (Configurable in `.env`)
+**Default Model:** Llama 4 Maverick (`CREATIVE_MODEL`)
 **Alias:** `copy`
 
 ### When to Use
@@ -183,7 +183,7 @@ copy "CTA for newsletter signup, focus on practical tips"
 
 ## 🧭 5. Strategy (`strategy`)
 
-**Default Model:** Polaris Alpha (Configurable in `.env`)
+**Default Model:** Polaris Alpha (`STRATEGY_MODEL`)
 **Alias:** `strategy`
 **Role:** Your Chief of Staff
 
@@ -230,7 +230,7 @@ strategy "My blog gets traffic but no engagement. What should I do?"
 
 ## 🎯 6. Brand (`brand`)
 
-**Default Model:** Polaris Alpha (Configurable in `.env`)
+**Default Model:** Polaris Alpha (`STRATEGY_MODEL`)
 **Alias:** `brand`
 
 ### When to Use
@@ -271,7 +271,7 @@ brand "Define voice and tone for content about MS that's honest but not depressi
 
 ## 📊 7. Market Research (`market`)
 
-**Default Model:** Polaris Alpha (Configurable in `.env`)
+**Default Model:** Polaris Alpha (`MARKET_MODEL`)
 **Alias:** `market`
 
 ### When to Use
@@ -311,7 +311,7 @@ market "Who are the main voices in MS + productivity space?"
 
 ## 🧘 8. Stoic Coaching (`stoic`)
 
-**Default Model:** Gemma 3 9B (Configurable in `.env`)
+**Default Model:** Gemma 3 9B (`STOIC_MODEL`)
 **Alias:** `stoic`
 
 ### When to Use
@@ -358,7 +358,7 @@ stoic "How do I stay motivated when progress is so slow?"
 
 ## 🔬 9. Research (`research`)
 
-**Default Model:** Gemma 3 9B (Configurable in `.env`)
+**Default Model:** Gemma 3 9B (`RESEARCH_MODEL`)
 **Alias:** `research`
 
 ### When to Use
@@ -398,7 +398,7 @@ research "Explain how AI language models work at a high level"
 
 ## 📖 10. Narrative (`narrative`)
 
-**Default Model:** Llama 4 Maverick (Configurable in `.env`)
+**Default Model:** Llama 4 Maverick (`CREATIVE_MODEL`)
 **Alias:** `narrative`
 
 ### When to Use
