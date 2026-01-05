@@ -1,6 +1,6 @@
 # Unified Roadmap
 
-_Last updated: January 1, 2026 (Phase 1 features complete: F2 Spoon Budget, F3 Correlation Engine)_
+_Last updated: January 4, 2026 (Phase 1 features complete; content lifecycle features shipped; ai_suggest health/meds context added)_
 
 ## 0. Vision & Constraints
 
@@ -15,18 +15,18 @@ _Last updated: January 1, 2026 (Phase 1 features complete: F2 Spoon Budget, F3 C
   - **Core Infrastructure:** 62 automation scripts, 10 AI dispatchers with streaming support, shared library architecture, spec-driven workflow templates, cross-platform date utilities
   - **Energy Management (F2):** Spoon theory budget tracking with daily initialization, activity-based expenditure, debt tracking, startday/todo integration
   - **Data Correlation (F3):** Statistical correlation engine with Python-based Pearson calculation, daily report generation, multi-dataset analysis, automatic data aggregation
+  - **Workflow Intelligence (W2):** ai_suggest includes energy scoring and medication adherence signals for context-aware recommendations
   - **Reliability:** All critical bugs resolved, 14/14 BATS tests passing (11 core + 8 spoon + 3 correlation), zero known critical issues
   - **Security:** A+ security grade, enhanced path validation, input sanitization, credential redaction, comprehensive security documentation
   - **AI Integration:** 41 AI Staff HQ specialists active, dynamic squad configuration, optimized free models, real-time streaming, multi-specialist orchestration
   - **Blog Workflow:** End-to-end publishing pipeline with draft management, AI-powered generation/refinement, validation, workflow orchestration, and git hooks
   - **Documentation:** Professional-grade README, CHANGELOG, SECURITY.md, TROUBLESHOOTING.md, comprehensive usage guides
-- **Now (workflow enhancements):**
-  - Enhance `ai_suggest` with health.sh energy scoring and medication adherence signals (W2) for truly context-aware dispatcher recommendations
+- **Now (governance & reliability):**
   - Ship API key governance features (O4): per-dispatcher keys, rotation reminders, auth testing, proactive warnings
-- **Next (testing & content lifecycle):**
+- **Next (testing & deployment):**
   - Implement automated testing coverage (T1-T3): morning hook smoke tests, happy-path rehearsals, GitHub helper setup validation
-  - Build out blog content lifecycle features (B8-B11): idea syncing, version management, metrics/exemplars, social automation
   - Add multi-deploy adapter support (B7) for Netlify/Vercel/rsync beyond default DigitalOcean push model
+  - Implement rate limiting & budget alerts (O5): 429 detection, backoff, monthly budget warnings
 - **Later (specialist expansion & analytics):**
   - Continue AI Staff HQ expansion (S1-S3): remaining 66 specialists, validation tooling, documentation refresh
   - Enhanced observability: usage dashboards, API budget tracking, performance monitoring
@@ -51,13 +51,13 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 - [x] **F2: Spoon Theory Budget** (Energy tracking) - **Completed**
 - [x] **F3: Correlation Engine** (Connect energy to output) - **Completed**
 
-### Phase 2: Workflow Enhancements (Next) — completed (see `CHANGELOG.md`)
+### Phase 2: Workflow Enhancements — completed (see `CHANGELOG.md`)
 
 ### 2.5 Blog & Publishing Program
 
 **Design Philosophy:** Tooling works with any Hugo repository (configurable via `BLOG_DIR` in `.env`), defaults to `ryanleej.com`. Deployments happen server-side (DigitalOcean) after git push—local scripts prepare commits/pushes only.
 
-**Current Status:** Core publishing pipeline complete (B1, B2, B3-B6, B12). Content lifecycle features pending (B7-B11).
+**Current Status:** Core publishing pipeline complete (B1, B2, B3-B6, B12). Content lifecycle features complete (B8-B11). Deployment adapter work pending (B7).
 
 #### Phase A · Blog Script Enhancements — completed (see `CHANGELOG.md`)
 
@@ -65,7 +65,7 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 
 #### Phase C · Publishing & Deployment — completed (see `CHANGELOG.md`)
 
-#### Phase D · Content Lifecycle Features
+#### Phase D · Content Lifecycle Features — completed (see `CHANGELOG.md`)
 
 - [x] **B8 · Idea syncing** - **Completed**. Implemented `blog ideas sync/list/add`.
 - [x] **B9 · Version management** - **Completed**. Implemented `blog version bump/show/history` obeying `VERSIONING-POLICY.md`.
@@ -117,13 +117,11 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 **Near-term (1-2 weeks):**
 
 - O4: API key governance and rotation management
-- B2: Persona-aware blog generation
+- T1: Morning hook smoke test
 
 **Mid-term (1-2 months):**
 
-- T1-T3: Automated testing and smoke tests
-- B7-B11: Blog content lifecycle features
-- Enhanced observability and analytics
+- T2-T3: Happy-path rehearsal and GitHub helper setup checklist
 
 **Long-term (3+ months):**
 
@@ -138,7 +136,7 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 - **TROUBLESHOOTING.md** - Common issues and solutions
 - Historic planning docs (`blindspots.md`, `review.md`, `ROADMAP-REVIEW*.md`) preserved for context
 
-### 📊 Quality Metrics (January 1, 2026)
+### 📊 Quality Metrics (January 4, 2026)
 
 - **Test Coverage:** 14/14 BATS tests passing (11 core + 8 spoon budget + 3 correlation)
 - **Critical Bugs:** 0 known issues
@@ -151,4 +149,4 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 
 ---
 
-_This roadmap is a living document. Update it inline rather than creating parallel planning docs to maintain a single source of truth. Last comprehensive review: November 14, 2025._
+_This roadmap is a living document. Update it inline rather than creating parallel planning docs to maintain a single source of truth. Last comprehensive review: January 4, 2026._

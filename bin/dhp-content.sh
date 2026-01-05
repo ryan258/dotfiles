@@ -163,88 +163,97 @@ if [ -n "$PERSONA_NAME" ]; then
     fi
 fi
 
-STAFF_TO_LOAD=()
-if command -v get_squad_staff >/dev/null 2>&1; then
-    while IFS= read -r staff; do
-        [ -n "$staff" ] && STAFF_TO_LOAD+=("$staff")
-    done < <(get_squad_staff "content" 2>/dev/null)
-fi
-if [ ${#STAFF_TO_LOAD[@]} -eq 0 ]; then
-    STAFF_TO_LOAD=(
-        "strategy/chief-of-staff.yaml"
-        "strategy/market-analyst.yaml"
-        "producers/copywriter.yaml"
-    )
-fi
+# --- 4. PREPARE OUTPUT ---
 mkdir -p "$PROJECTS_DIR"
 SLUG=$(echo "$USER_BRIEF" | tr '[:upper:]' '[:lower:]' | tr -s '[:punct:][:space:]' '-' | cut -c 1-50)
 OUTPUT_FILE="$PROJECTS_DIR/${SLUG}.md"
 
-echo "Activating 'AI-Staff-HQ' for Content Workflow via OpenRouter (Model: $MODEL)..."
+echo "Activating 'AI-Staff-HQ' Swarm Orchestration for Content Workflow..."
 echo "Brief: $USER_BRIEF"
 [ -n "$PERSONA_NAME" ] && echo "Persona: $PERSONA_NAME"
+echo "Model: $MODEL"
 echo "Saving to: $OUTPUT_FILE"
 echo "---"
 
-# --- 4. THE "MASTER PROMPT" (THE PAYLOAD) ---
-MASTER_PROMPT_FILE=$(mktemp)
-trap 'rm -f "$MASTER_PROMPT_FILE"' EXIT
-
-# 4a. Add the "Chief of Staff" first
-cat "$AI_STAFF_DIR/staff/${STAFF_TO_LOAD[0]}" > "$MASTER_PROMPT_FILE"
-
-# 4b. Add the rest of the team
-for ((i=1; i<${#STAFF_TO_LOAD[@]}; i++)); do
-    STAFF_FILE="$AI_STAFF_DIR/staff/${STAFF_TO_LOAD[$i]}"
-    echo -e "\n\n--- SUPPORTING AGENT: $(basename "$STAFF_FILE") ---\n\n" >> "$MASTER_PROMPT_FILE"
-    cat "$STAFF_FILE" >> "$MASTER_PROMPT_FILE"
-done
-
-# 4c. Add the final instructions
+# --- 5. GATHER CONTEXT (if requested) ---
 LOCAL_CONTEXT=""
 if [ "$USE_CONTEXT" = true ] && command -v gather_context &> /dev/null; then
+    echo "Gathering local context..." >&2
     LOCAL_CONTEXT=$(gather_context "${CONTEXT_MODE:---minimal}")
 fi
 
-echo -e "\n\n--- MASTER INSTRUCTION (THE DISPATCH) ---
+# --- 6. BUILD ENHANCED BRIEF ---
+ENHANCED_BRIEF="$USER_BRIEF"
 
-You are the **Chief of Staff**. Your supporting agent profiles are loaded above.
+# Add context if available
+if [ -n "$LOCAL_CONTEXT" ]; then
+    ENHANCED_BRIEF="$ENHANCED_BRIEF
 
-Your mission is to coordinate this team to execute on the following user brief and deliver a 'First-Draft Skeleton' for a new evergreen guide.
+--- LOCAL CONTEXT (Automatically Injected) ---
+$LOCAL_CONTEXT
 
-**USER BRIEF:**
-\"$USER_BRIEF\"
-
-$(if [ -n "$LOCAL_CONTEXT" ]; then echo -e "\n**LOCAL CONTEXT (Automatically Injected):**\n$LOCAL_CONTEXT\n\nUse this context to:\n- Avoid duplicating recent blog topics\n- Reference related tasks or projects\n- Align with current git branch/project work\n- Build on recent journal themes\n"; fi)
-
-$(if [ -n "$PERSONA_PLAYBOOK" ]; then echo -e "\n**PERSONA PLAYBOOK (${PERSONA_NAME}):**\n$PERSONA_PLAYBOOK\n\nApply this perspective consistently across the outline, tone, and recommendations.\n"; fi)
-
-**YOUR COORDINATION PLAN:**
-1.  **Assign to \`market-analyst\` (acting as The Pathfinder):** Research the topic to identify key questions, search intent, and related concepts for a comprehensive guide. The output should be a list of 5-7 core topics or questions to answer.
-2.  **Assign to \`copywriter\`:** Using the market analyst's research, generate a 'First-Draft Skeleton' of the guide. The structure should be a well-organized outline with section headers, brief descriptions for each section, and placeholder text where the full content will go.
-3.  **Format for Hugo:** The final deliverable must be a single, clean markdown document ready for a Hugo static site. It must include a complete front matter section with \`title\`, \`date\`, and \`draft: true\`.
-
-**DELIVERABLE:**
-Return a single, well-formatted Hugo-ready markdown document.
-" >> "$MASTER_PROMPT_FILE"
-
-# --- 5. FIRE! ---
-
-# Read the master prompt content
-PROMPT_CONTENT=$(cat "$MASTER_PROMPT_FILE")
-
-# Execute the API call with error handling and optional streaming
-if [ "$USE_STREAMING" = true ]; then
-    call_openrouter "$MODEL" "$PROMPT_CONTENT" "--stream" "dhp-content" | tee "$OUTPUT_FILE"
-else
-    call_openrouter "$MODEL" "$PROMPT_CONTENT" "" "dhp-content" | tee "$OUTPUT_FILE"
+Use this context to:
+- Avoid duplicating recent blog topics
+- Reference related tasks or projects
+- Align with current git branch/project work
+- Build on recent journal themes"
 fi
 
-# Check if API call succeeded
+# Add persona if specified
+if [ -n "$PERSONA_PLAYBOOK" ]; then
+    ENHANCED_BRIEF="$ENHANCED_BRIEF
+
+--- PERSONA PLAYBOOK ($PERSONA_NAME) ---
+$PERSONA_PLAYBOOK
+
+Apply this perspective consistently across the outline, tone, and recommendations."
+fi
+
+# Add content-specific instructions
+ENHANCED_BRIEF="$ENHANCED_BRIEF
+
+--- CONTENT REQUIREMENTS ---
+Deliver a 'First-Draft Skeleton' for a new evergreen guide:
+1. Research the topic to identify key questions, search intent, and related concepts
+2. Create a well-organized outline with section headers and brief descriptions
+3. Format as Hugo-ready markdown with complete front matter (title, date, draft: true)
+
+DELIVERABLE: Return a single, well-formatted Hugo markdown document."
+
+# --- 7. EXECUTE SWARM ORCHESTRATION ---
+
+# Build Python wrapper command
+PYTHON_CMD="uv run python \"$DOTFILES_DIR/bin/dhp-swarm-content.py\""
+
+# Pass enhanced brief
+PYTHON_CMD="$PYTHON_CMD \"$ENHANCED_BRIEF\""
+
+# Add model override if specified
+if [ -n "$MODEL" ]; then
+    PYTHON_CMD="$PYTHON_CMD --model \"$MODEL\""
+fi
+
+# Add temperature if specified
+if [ -n "$TEMPERATURE" ]; then
+    PYTHON_CMD="$PYTHON_CMD --temperature $TEMPERATURE"
+fi
+
+# Add parallel execution flags (default: enabled)
+PYTHON_CMD="$PYTHON_CMD --parallel --max-parallel 5"
+
+# Auto-approve (non-interactive)
+PYTHON_CMD="$PYTHON_CMD --auto-approve"
+
+# Execute swarm orchestration
+echo "Executing swarm orchestration..." >&2
+eval "$PYTHON_CMD" 2>&1 | tee "$OUTPUT_FILE"
+
+# Check if swarm execution succeeded
 if [ "${PIPESTATUS[0]}" -eq 0 ]; then
     echo -e "\n---"
-    echo "SUCCESS: 'First-Draft Skeleton' saved to $OUTPUT_FILE"
+    echo "✓ SUCCESS: Content generated via swarm orchestration"
+    echo "  Output: $OUTPUT_FILE"
 else
-    echo "FAILED: Content generation encountered an error."
+    echo "✗ FAILED: Swarm orchestration encountered an error"
     exit 1
 fi

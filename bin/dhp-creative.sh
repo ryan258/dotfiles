@@ -45,79 +45,65 @@ if [ ! -d "$AI_STAFF_DIR" ]; then
 fi
 
 # --- 5. THE "GATLIN GUN" ASSEMBLY ---
-STAFF_TO_LOAD=()
-if command -v get_squad_staff >/dev/null 2>&1; then
-    while IFS= read -r staff; do
-        [ -n "$staff" ] && STAFF_TO_LOAD+=("$staff")
-    done < <(get_squad_staff "creative" 2>/dev/null)
-fi
-if [ ${#STAFF_TO_LOAD[@]} -eq 0 ]; then
-    STAFF_TO_LOAD=(
-        "strategy/chief-of-staff.yaml"
-        "producers/narrative-designer.yaml"
-        "strategy/creative-strategist.yaml"
-        "health-lifestyle/meditation-instructor.yaml"
-    )
-fi
+# --- 6. PREPARE OUTPUT ---
 mkdir -p "$PROJECTS_DIR"
 SLUG=$(echo "$USER_BRIEF" | tr '[:upper:]' '[:lower:]' | tr -s '[:punct:][:space:]' '-' | cut -c 1-50)
 OUTPUT_FILE="$PROJECTS_DIR/${SLUG}.md"
 
-echo "Activating 'AI-Staff-HQ' via OpenRouter (Model: $MODEL)..."
+echo "Activating 'AI-Staff-HQ' Swarm Orchestration for Creative Workflow..."
 echo "Brief: $USER_BRIEF"
+echo "Model: $MODEL"
 echo "Saving to: $OUTPUT_FILE"
 echo "---"
 
-# --- 6. THE "MASTER PROMPT" (THE PAYLOAD) ---
-MASTER_PROMPT_FILE=$(mktemp)
-trap 'rm -f "$MASTER_PROMPT_FILE"' EXIT
+# --- 7. BUILD ENHANCED BRIEF ---
+ENHANCED_BRIEF="$USER_BRIEF
 
-# 6a. Add the "Chief of Staff" first
-cat "$AI_STAFF_DIR/staff/${STAFF_TO_LOAD[0]}" > "$MASTER_PROMPT_FILE"
+--- CREATIVE REQUIREMENTS ---
+Deliver a 'First-Pass Story Package':
+1. Generate a 3-Act structure with 5-7 key story beats
+2. Create character profiles for main protagonists
+3. Develop sensory blocks for atmosphere (sound, smell, feeling)
+4. Include world-building elements as needed
 
-# 6b. Add the rest of the team
-for ((i=1; i<${#STAFF_TO_LOAD[@]}; i++)); do
-    STAFF_FILE="$AI_STAFF_DIR/staff/${STAFF_TO_LOAD[$i]}"
-    echo -e "\n\n--- SUPPORTING AGENT: $(basename "$STAFF_FILE") ---\n\n" >> "$MASTER_PROMPT_FILE"
-    cat "$STAFF_FILE" >> "$MASTER_PROMPT_FILE"
-done
+DELIVERABLE: Return a single, well-formatted markdown document with all creative elements integrated."
 
-# 6c. Add the final instructions
-cat <<EOF >> "$MASTER_PROMPT_FILE"
+# --- 8. EXECUTE SWARM ORCHESTRATION ---
 
+# Build Python wrapper command
+PYTHON_CMD="uv run python \"$DOTFILES_DIR/bin/dhp-swarm-creative.py\""
 
---- MASTER INSTRUCTION (THE DISPATCH) ---
+# Pass enhanced brief
+PYTHON_CMD="$PYTHON_CMD \"$ENHANCED_BRIEF\""
 
-You are the **Chief of Staff**. Your supporting agent profiles are loaded above.
-
-Your mission is to coordinate this team to execute on the following user brief and deliver a 'First-Pass Story Package' in a single, clean markdown response.
-
-**USER BRIEF:**
-"$USER_BRIEF"
-
-**YOUR COORDINATION PLAN:**
-1.  **Assign to \`narrative-designer\`:** Generate a 3-Act structure and 5-7 key story beats.
-2.  **Assign to \`creative-strategist\`:** Generate a character profile for the protagonist.
-3.  **Assign to \`meditation-instructor\` (acting as The Sensorium):** Generate 3 'sensory blocks' of ambient horror for this concept. Specifically focus on sound, smell, and the *feeling* of the "echoes" mentioned in the brief.
-
-**DELIVERABLE:**
-Return a single, well-formatted markdown document. Do not speak *as* the team, speak *as* the Chief of Staff presenting the team's coordinated work.
-EOF
-
-# --- 7. FIRE! ---
-PROMPT_CONTENT=$(cat "$MASTER_PROMPT_FILE")
-
-if [ "$USE_STREAMING" = true ]; then
-    DHP_TEMPERATURE="$PARAM_TEMPERATURE" DHP_MAX_TOKENS="$PARAM_MAX_TOKENS" call_openrouter "$MODEL" "$PROMPT_CONTENT" "--stream" "dhp-creative" | tee "$OUTPUT_FILE"
-else
-    DHP_TEMPERATURE="$PARAM_TEMPERATURE" DHP_MAX_TOKENS="$PARAM_MAX_TOKENS" call_openrouter "$MODEL" "$PROMPT_CONTENT" "" "dhp-creative" | tee "$OUTPUT_FILE"
+# Add model override if specified
+if [ -n "$MODEL" ]; then
+    PYTHON_CMD="$PYTHON_CMD --model \"$MODEL\""
 fi
 
-# Check if API call succeeded
+# Add temperature (creative work benefits from higher temperature)
+if [ -n "$PARAM_TEMPERATURE" ]; then
+    PYTHON_CMD="$PYTHON_CMD --temperature $PARAM_TEMPERATURE"
+else
+    PYTHON_CMD="$PYTHON_CMD --temperature 0.9"  # Default higher for creativity
+fi
+
+# Add parallel execution flags
+PYTHON_CMD="$PYTHON_CMD --parallel --max-parallel 5"
+
+# Auto-approve (non-interactive)
+PYTHON_CMD="$PYTHON_CMD --auto-approve"
+
+# Execute swarm orchestration
+echo "Executing creative swarm orchestration..." >&2
+eval "$PYTHON_CMD" 2>&1 | tee "$OUTPUT_FILE"
+
+# Check if swarm execution succeeded
 if [ "${PIPESTATUS[0]}" -eq 0 ]; then
     echo -e "\n---"
-    echo "SUCCESS: 'First-Pass Story Package' saved to $OUTPUT_FILE"
+    echo "✓ SUCCESS: Creative content generated via swarm orchestration"
+    echo "  Output: $OUTPUT_FILE"
 else
-    echo "FAILED: Story generation encountered an error."
+    echo "✗ FAILED: Swarm orchestration encountered an error"
     exit 1
 fi
