@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Swarm orchestrator for creative workflows - Python CLI wrapper."""
+"""Swarm orchestrator - Generic Python CLI wrapper."""
 
 import argparse
 import sys
@@ -15,22 +15,17 @@ from workflows.schemas.swarm import SwarmConfig
 
 
 def main():
-    """Main entry point for creative swarm orchestration."""
+    """Main entry point for swarm orchestration."""
     parser = argparse.ArgumentParser(
-        description="Swarm orchestrator for creative workflows"
+        description="Swarm orchestrator for AI Staff HQ"
     )
 
     # Required arguments
     parser.add_argument(
         "brief",
-        help="Creative brief or request"
+        nargs="?",  # Optional positional argument
+        help="User brief or request (use '-' or omit to read from stdin)"
     )
-
-    # Validate brief
-    args = parser.parse_known_args()[0]
-    if not args.brief or not args.brief.strip():
-        print("Error: creative brief cannot be empty", file=sys.stderr)
-        return 1
 
     # Parallel execution
     parser.add_argument(
@@ -97,6 +92,20 @@ def main():
 
     args = parser.parse_args()
 
+    # Determine brief content
+    brief_content = ""
+    if args.brief and args.brief != "-":
+        brief_content = args.brief
+    else:
+        # Read from stdin if valid
+        if not sys.stdin.isatty():
+            brief_content = sys.stdin.read()
+    
+    # Validation
+    if not brief_content or not brief_content.strip():
+        print("Error: brief cannot be empty. Provide as argument or via stdin.", file=sys.stderr)
+        return 1
+
     try:
         # Paths
         staff_dir = AI_STAFF_HQ / "staff"
@@ -119,7 +128,7 @@ def main():
 
         # Execute swarm
         result = runner.run_swarm(
-            args.brief,
+            brief_content,
             use_squad=args.squad,
         )
 

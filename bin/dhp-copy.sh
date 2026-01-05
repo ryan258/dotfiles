@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# dhp-copy.sh - Copywriter dispatcher
+# dhp-copy.sh - Copywriter dispatcher (Swarm Edition)
 # Sales copy, email sequences, landing pages
 
 # Source shared libraries
@@ -12,7 +12,6 @@ dhp_setup_env
 
 # --- 2. FLAG PARSING ---
 dhp_parse_flags "$@"
-# After dhp_parse_flags, the remaining arguments are in "$@"
 set -- "$@"
 
 # --- 3. VALIDATION & INPUT ---
@@ -32,47 +31,52 @@ fi
 
 # --- 4. MODEL & STAFF ---
 MODEL="${CREATIVE_MODEL:-${DHP_CREATIVE_MODEL:-meta-llama/llama-4-maverick:free}}"
-STAFF_FILE="$AI_STAFF_DIR/staff/producers/copywriter.yaml"
-if [ ! -f "$STAFF_FILE" ]; then
-    echo "Error: Copywriter specialist not found at $STAFF_FILE" >&2; exit 1
-fi
-
-# --- 5. OUTPUT SETUP ---
 OUTPUT_DIR=$(default_output_dir "$HOME/Documents/AI_Staff_HQ_Outputs/Creative/Copywriting" "DHP_COPY_OUTPUT_DIR")
 mkdir -p "$OUTPUT_DIR"
 SLUG=$(echo "$PIPED_CONTENT" | tr '[:upper:]' '[:lower:]' | tr -s '[:punct:][:space:]' '-' | cut -c 1-50)
 OUTPUT_FILE="$OUTPUT_DIR/${SLUG}.md"
 
-echo "Activating 'Copywriter' via OpenRouter (Model: $MODEL)..." >&2
+echo "Activating 'AI-Staff-HQ' Swarm for Copywriting..." >&2
+echo "Model: $MODEL"
 echo "Saving to: $OUTPUT_FILE" >&2
 echo "---" >&2
 
-# --- 6. PROMPT ASSEMBLY ---
-MASTER_PROMPT=$(cat "$STAFF_FILE")
-MASTER_PROMPT+="
+# --- 5. BUILD ENHANCED BRIEF ---
+ENHANCED_BRIEF="$PIPED_CONTENT
 
---- COPYWRITING REQUEST ---
-$PIPED_CONTENT
+--- COPYWRITING OBJECTIVES ---
+Develop compelling copy including:
+1. Attention-grabbing headlines and subheadlines
+2. Benefit-driven body copy emphasizing value propositions
+3. Clear, strong Calls-to-Action (CTA)
+4. Persuasive rhetoric tailored to the target audience
 
-Provide compelling copy with:
-1. Attention-grabbing headlines
-2. Benefit-driven body copy
-3. Clear call-to-action
-4. Persuasive messaging that converts
-"
+DELIVERABLE: A ready-to-use copy document with formatting."
 
-# --- 7. EXECUTION ---
-if [ "$USE_STREAMING" = true ]; then
-    call_openrouter "$MODEL" "$MASTER_PROMPT" "--stream" "dhp-copy" | tee "$OUTPUT_FILE"
-else
-    call_openrouter "$MODEL" "$MASTER_PROMPT" "" "dhp-copy" | tee "$OUTPUT_FILE"
+# --- 6. EXECUTION ---
+PYTHON_CMD="uv run --project \"$AI_STAFF_DIR\" python \"$DOTFILES_DIR/bin/dhp-swarm.py\""
+
+if [ -n "$MODEL" ]; then
+    PYTHON_CMD="$PYTHON_CMD --model \"$MODEL\""
 fi
 
-# Check if API call succeeded
+if [ -n "$PARAM_TEMPERATURE" ]; then
+    PYTHON_CMD="$PYTHON_CMD --temperature $PARAM_TEMPERATURE"
+else
+    # Balance persuasion with clarity
+    PYTHON_CMD="$PYTHON_CMD --temperature 0.7"
+fi
+
+PYTHON_CMD="$PYTHON_CMD --parallel --max-parallel 5"
+PYTHON_CMD="$PYTHON_CMD --auto-approve"
+
+echo "Executing copywriting swarm..." >&2
+echo "$ENHANCED_BRIEF" | eval "$PYTHON_CMD" | tee "$OUTPUT_FILE"
+
 if [ "${PIPESTATUS[0]}" -eq 0 ]; then
     echo -e "\n---" >&2
-    echo "SUCCESS: 'Copywriter' copy complete." >&2
+    echo "✓ SUCCESS: Copywriting completed via swarm" >&2
 else
-    echo "FAILED: 'Copywriter' encountered an error." >&2
+    echo "✗ FAILED: Swarm orchestration encountered an error" >&2
     exit 1
 fi

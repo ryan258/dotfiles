@@ -1,5 +1,8 @@
 #!/bin/bash
-set -e # Exit immediately if a command fails
+set -e
+
+# dhp-tech.sh - Technical Analyst dispatcher (Swarm Edition)
+# Code analysis, bug fixing, automation engineering
 
 # Source shared libraries
 source "$(dirname "$0")/dhp-shared.sh"
@@ -9,7 +12,6 @@ dhp_setup_env
 
 # --- 2. FLAG PARSING ---
 dhp_parse_flags "$@"
-# After dhp_parse_flags, the remaining arguments are in "$@"
 set -- "$@"
 
 # --- 3. VALIDATION & INPUT ---
@@ -20,75 +22,62 @@ dhp_get_input "$@"
 
 if [ -z "$PIPED_CONTENT" ]; then
     echo "Usage:" >&2
-    echo "  cat <your_script.sh> | $0 [options]" >&2
-    echo "  $0 [options] \"Describe the bug in foo()\"" >&2
-    echo "Options:" >&2
-    echo "  --stream    Enable real-time streaming output" >&2
-    echo "" >&2
-    echo "Error: No input provided." >&2
+    echo "  cat <script> | $0 [options]" >&2
+    echo "  $0 [options] \"Describe bug\"" >&2
     exit 1
 fi
 
 # --- 4. MODEL & STAFF ---
 MODEL="${TECH_MODEL:-${DHP_TECH_MODEL:-deepseek/deepseek-r1-0528:free}}"
-STAFF_FILE="$AI_STAFF_DIR/staff/tech/automation-specialist.yaml"
-if [ ! -d "$AI_STAFF_DIR" ]; then
-    echo "Error: AI Staff directory not found at $AI_STAFF_DIR" >&2
-    exit 1
-fi
-
-# --- 5. OUTPUT SETUP ---
 OUTPUT_DIR=$(default_output_dir "$HOME/Documents/AI_Staff_HQ_Outputs/Technical/Code_Analysis" "DHP_TECH_OUTPUT_DIR")
 mkdir -p "$OUTPUT_DIR"
 SLUG=$(echo "$PIPED_CONTENT" | tr '[:upper:]' '[:lower:]' | tr -s '[:punct:][:space:]' '-' | cut -c 1-50)
 OUTPUT_FILE="$OUTPUT_DIR/${SLUG}.md"
 
-echo "Activating 'The Technician' via OpenRouter (Model: $MODEL)..." >&2
+echo "Activating 'AI-Staff-HQ' Swarm for Technical Analysis..." >&2
+echo "Model: $MODEL"
 echo "Saving to: $OUTPUT_FILE" >&2
 echo "---" >&2
 
-# --- 6. PROMPT ASSEMBLY ---
-MASTER_PROMPT_FILE=$(mktemp)
-trap 'rm -f "$MASTER_PROMPT_FILE"' EXIT
+# --- 5. BUILD ENHANCED BRIEF ---
+ENHANCED_BRIEF="Analyze the following code/request:
 
-# 6a. Add the "Technician" persona
-cat "$STAFF_FILE" > "$MASTER_PROMPT_FILE"
-
-# 6b. Add the final instructions and the user's piped-in code
-echo -e "\n\n--- MASTER INSTRUCTION (THE DISPATCH) ---
-
-You are **The Technician**. Your persona is loaded above.
-
-Your mission is to analyze the following script provided by the user, identify the bug or error, explain the cause, and provide the corrected code.
-
-**USER'S SCRIPT (PIPED INPUT):**
----
 \`\`\`
 $PIPED_CONTENT
 \`\`\`
----
 
-**DELIVERABLE:**
-Return a single, clean markdown response with three sections:
-1.  **Bug Analysis:** A brief explanation of the bug.
-2.  **The Fix:** A clear description of the change you made.
-3.  **Corrected Code:** The complete, corrected script.
-" >> "$MASTER_PROMPT_FILE"
+--- TECHNICAL OBJECTIVES ---
+1. Analyze the provided code or request for bugs, errors, or optimization opportunities.
+2. Identify the root cause of any issues.
+3. Provide the corrected code or solution.
+4. Explain the fix and any best practices applied.
 
-# --- 7. EXECUTION ---
-PROMPT_CONTENT=$(cat "$MASTER_PROMPT_FILE")
+DELIVERABLE: A technical report including Bug Analysis, The Fix, and Corrected Code block."
 
-if [ "$USE_STREAMING" = true ]; then
-    call_openrouter "$MODEL" "$PROMPT_CONTENT" "--stream" "dhp-tech" | tee "$OUTPUT_FILE"
-else
-    call_openrouter "$MODEL" "$PROMPT_CONTENT" "" "dhp-tech" | tee "$OUTPUT_FILE"
+# --- 6. EXECUTE SWARM ORCHESTRATION ---
+PYTHON_CMD="uv run --project \"$AI_STAFF_DIR\" python \"$DOTFILES_DIR/bin/dhp-swarm.py\""
+
+if [ -n "$MODEL" ]; then
+    PYTHON_CMD="$PYTHON_CMD --model \"$MODEL\""
 fi
 
-# Check if API call succeeded
+if [ -n "$PARAM_TEMPERATURE" ]; then
+    PYTHON_CMD="$PYTHON_CMD --temperature $PARAM_TEMPERATURE"
+else
+    # Technical work usually benefits from lower temperature
+    PYTHON_CMD="$PYTHON_CMD --temperature 0.2"
+fi
+
+PYTHON_CMD="$PYTHON_CMD --parallel --max-parallel 5"
+PYTHON_CMD="$PYTHON_CMD --auto-approve"
+
+echo "Executing technical swarm..." >&2
+echo "$ENHANCED_BRIEF" | eval "$PYTHON_CMD" | tee "$OUTPUT_FILE"
+
 if [ "${PIPESTATUS[0]}" -eq 0 ]; then
     echo -e "\n---" >&2
-    echo "SUCCESS: 'The Technician' has completed the analysis." >&2
+    echo "✓ SUCCESS: Technical analysis completed" >&2
 else
-    echo "FAILED: 'The Technician' encountered an error." >&2
+    echo "✗ FAILED: Swarm orchestration encountered an error" >&2
     exit 1
 fi

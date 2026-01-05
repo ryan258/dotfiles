@@ -48,12 +48,31 @@ content "Write a comprehensive guide to Bash scripting for beginners"
 creative "A cyberpunk story about a rogue AI"
 ```
 
-### 3. Advanced Chaining (`dhp-chain`)
+### 3. Strategy & Analysis Suite
+
+**Now fully Swarm-Powered:**
+
+- `market`: Market research & trends
+- `brand`: Brand strategy & positioning
+- `tech`: Technical analysis & code review
+- `strategy`: High-level strategic planning
+- `research`: Deep-dive synthesis
+- `stoic`: Philosophical coaching
+- `copy`: Marketing copywriting
+- `narrative`: Store structure & pacing
+
+### 4. Advanced Chaining (`dhp-chain`)
 
 **Use for:** Manual pipelines where you want specific specialists in order.
 
 ```bash
-dhp-chain creative narrative copy -- "Launch a product"
+dhp-chain market brand -- "Launch a product"
+```
+
+Or pipe explicit data:
+
+```bash
+cat market-report.md | brand
 ```
 
 ---
@@ -97,19 +116,19 @@ Each dispatcher alias maps to a specific variable in `.env`.
 
 ## ⚡️ Advanced Usage
 
-### Python Wrapper
+### Python Wrapper (`bin/dhp-swarm.py`)
 
-For granular control, you can use the Python wrapper directly. This is useful for debugging or integrating into other scripts.
+For granular control, you can use the Python wrapper directly. It now accepts the brief via **stdin** or as an argument (stdin preferred for large inputs).
 
 ```bash
-# Run with debug logging
-uv run python bin/dhp-swarm-content.py "Your prompt" --debug
+# Run with debug logging (via argument)
+uv run python bin/dhp-swarm.py "Your prompt" --debug
+
+# Run via stdin (Robust for large content)
+cat large-report.md | uv run python bin/dhp-swarm.py --model "anthropic/claude-3-opus"
 
 # Force sequential execution (disable parallel waves)
-uv run python bin/dhp-swarm-content.py "Your prompt" --no-parallel
-
-# Set a specific model for this run only
-uv run python bin/dhp-swarm-content.py "Your prompt" --model "anthropic/claude-3-opus"
+echo "Prompt" | uv run python bin/dhp-swarm.py --no-parallel
 ```
 
 ---

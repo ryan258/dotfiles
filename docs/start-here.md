@@ -41,7 +41,7 @@ g suggest          # Where should I work today?
 gcal agenda        # View today's calendar
 ```
 
-### 3. AI Helpers (10 Free Specialists)
+### 3. AI Helpers (Swarm-Powered Team)
 
 ```bash
 tech "question"            # Technical debugging

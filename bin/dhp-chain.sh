@@ -92,7 +92,7 @@ for dispatcher in "${DISPATCHERS[@]}"; do
         creative|dhp-creative)
             # Creative uses arguments, not stdin, so we need special handling
             DISPATCHER_SCRIPT="$DOTFILES_DIR/bin/dhp-creative.sh"
-            CURRENT_OUTPUT=$("$DISPATCHER_SCRIPT" "$CURRENT_OUTPUT" 2>&1)
+            CURRENT_OUTPUT=$("$DISPATCHER_SCRIPT" "$CURRENT_OUTPUT")
             echo "$CURRENT_OUTPUT" >&2
             echo "" >&2
             ((STEP++))
@@ -101,7 +101,7 @@ for dispatcher in "${DISPATCHERS[@]}"; do
         content|dhp-content)
             # Content also uses arguments
             DISPATCHER_SCRIPT="$DOTFILES_DIR/bin/dhp-content.sh"
-            CURRENT_OUTPUT=$("$DISPATCHER_SCRIPT" "$CURRENT_OUTPUT" 2>&1)
+            CURRENT_OUTPUT=$("$DISPATCHER_SCRIPT" "$CURRENT_OUTPUT")
             echo "$CURRENT_OUTPUT" >&2
             echo "" >&2
             ((STEP++))
@@ -136,7 +136,7 @@ for dispatcher in "${DISPATCHERS[@]}"; do
     esac
 
     # Process through dispatcher (stdin-based)
-    CURRENT_OUTPUT=$(echo "$CURRENT_OUTPUT" | "$DISPATCHER_SCRIPT" 2>&1)
+    CURRENT_OUTPUT=$(echo "$CURRENT_OUTPUT" | "$DISPATCHER_SCRIPT")
 
     # Show intermediate output
     echo "$CURRENT_OUTPUT" >&2

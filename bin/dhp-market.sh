@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# dhp-market.sh - Market Analyst dispatcher
+# dhp-market.sh - Market Analyst dispatcher (Swarm Edition)
 # SEO research, trend analysis, audience insights
 
 # Source shared libraries
@@ -12,7 +12,6 @@ dhp_setup_env
 
 # --- 2. FLAG PARSING ---
 dhp_parse_flags "$@"
-# After dhp_parse_flags, the remaining arguments are in "$@"
 set -- "$@"
 
 # --- 3. VALIDATION & INPUT ---
@@ -32,47 +31,55 @@ fi
 
 # --- 4. MODEL & STAFF ---
 MODEL="${MARKET_MODEL:-${DHP_STRATEGY_MODEL:-meta-llama/llama-4-scout:free}}"
-STAFF_FILE="$AI_STAFF_DIR/staff/strategy/market-analyst.yaml"
-if [ ! -f "$STAFF_FILE" ]; then
-    echo "Error: Market Analyst specialist not found at $STAFF_FILE" >&2; exit 1
-fi
-
-# --- 5. OUTPUT SETUP ---
 OUTPUT_DIR=$(default_output_dir "$HOME/Documents/AI_Staff_HQ_Outputs/Strategy/Market_Research" "DHP_MARKET_OUTPUT_DIR")
 mkdir -p "$OUTPUT_DIR"
 SLUG=$(echo "$PIPED_CONTENT" | tr '[:upper:]' '[:lower:]' | tr -s '[:punct:][:space:]' '-' | cut -c 1-50)
 OUTPUT_FILE="$OUTPUT_DIR/${SLUG}.md"
 
-echo "Activating 'Market Analyst' via OpenRouter (Model: $MODEL)..." >&2
+echo "Activating 'AI-Staff-HQ' Swarm for Market Analysis..." >&2
+echo "Brief: $PIPED_CONTENT"
+echo "Model: $MODEL"
 echo "Saving to: $OUTPUT_FILE" >&2
 echo "---" >&2
 
-# --- 6. PROMPT ASSEMBLY ---
-MASTER_PROMPT=$(cat "$STAFF_FILE")
-MASTER_PROMPT+="
+# --- 5. BUILD ENHANCED BRIEF ---
+# We inject specific market analysis requirements into the brief
+ENHANCED_BRIEF="$PIPED_CONTENT
 
---- MARKET ANALYSIS REQUEST ---
-$PIPED_CONTENT
+--- MARKET ANALYSIS OBJECTIVES ---
+Conduct a comprehensive market analysis covering:
+1. Keyword opportunities and SEO potential (high volume, low competition)
+2. Current market trends, emerging patterns, and unmet needs
+3. Target audience insights (demographics, psychographics, pain points)
+4. Competitive landscape overview (major players, gaps, positioning)
 
-Provide market analysis with:
-1. Keyword opportunities and SEO potential
-2. Current market trends and gaps
-3. Target audience insights
-4. Competitive landscape overview
-"
+DELIVERABLE: A detailed market analysis report with actionable strategic recommendations."
 
-# --- 7. EXECUTION ---
-if [ "$USE_STREAMING" = true ]; then
-    call_openrouter "$MODEL" "$MASTER_PROMPT" "--stream" "dhp-market" | tee "$OUTPUT_FILE"
-else
-    call_openrouter "$MODEL" "$MASTER_PROMPT" "" "dhp-market" | tee "$OUTPUT_FILE"
+# --- 6. EXECUTE SWARM ORCHESTRATION ---
+PYTHON_CMD="uv run --project \"$AI_STAFF_DIR\" python \"$DOTFILES_DIR/bin/dhp-swarm.py\""
+
+if [ -n "$MODEL" ]; then
+    PYTHON_CMD="$PYTHON_CMD --model \"$MODEL\""
 fi
 
-# Check if API call succeeded
+# Market analysis benefits from precision, so we might want lower temperature? 
+# But swarm defaults are usually fine. Let's keep defaults or use params.
+if [ -n "$PARAM_TEMPERATURE" ]; then
+    PYTHON_CMD="$PYTHON_CMD --temperature $PARAM_TEMPERATURE"
+fi
+
+# Enable parallel execution
+PYTHON_CMD="$PYTHON_CMD --parallel --max-parallel 5"
+PYTHON_CMD="$PYTHON_CMD --auto-approve"
+
+# Execute
+echo "Executing market analysis swarm..." >&2
+echo "$ENHANCED_BRIEF" | eval "$PYTHON_CMD" | tee "$OUTPUT_FILE"
+
 if [ "${PIPESTATUS[0]}" -eq 0 ]; then
     echo -e "\n---" >&2
-    echo "SUCCESS: 'Market Analyst' analysis complete." >&2
+    echo "✓ SUCCESS: Market analysis generated via swarm" >&2
 else
-    echo "FAILED: 'Market Analyst' encountered an error." >&2
+    echo "✗ FAILED: Swarm orchestration encountered an error" >&2
     exit 1
 fi

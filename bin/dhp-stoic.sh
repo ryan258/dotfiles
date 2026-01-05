@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# dhp-stoic.sh - Stoic Coach dispatcher
+# dhp-stoic.sh - Stoic Coach dispatcher (Swarm Edition)
 # Mindset coaching, reflections, journaling prompts
 
 # Source shared libraries
@@ -12,7 +12,6 @@ dhp_setup_env
 
 # --- 2. FLAG PARSING ---
 dhp_parse_flags "$@"
-# After dhp_parse_flags, the remaining arguments are in "$@"
 set -- "$@"
 
 # --- 3. VALIDATION & INPUT ---
@@ -32,49 +31,52 @@ fi
 
 # --- 4. MODEL & STAFF ---
 MODEL="${STOIC_MODEL:-${FALLBACK_GENERAL:-mistralai/mistral-small-3.1-24b-instruct:free}}"
-STAFF_FILE="$AI_STAFF_DIR/staff/health-lifestyle/stoic-coach.yaml"
-if [ ! -f "$STAFF_FILE" ]; then
-    echo "Error: Stoic Coach specialist not found at $STAFF_FILE" >&2; exit 1
-fi
-
-# --- 5. OUTPUT SETUP ---
 OUTPUT_DIR=$(default_output_dir "$HOME/Documents/AI_Staff_HQ_Outputs/Personal_Development/Stoic_Coaching" "DHP_STOIC_OUTPUT_DIR")
 mkdir -p "$OUTPUT_DIR"
 SLUG=$(echo "$PIPED_CONTENT" | tr '[:upper:]' '[:lower:]' | tr -s '[:punct:][:space:]' '-' | cut -c 1-50)
 OUTPUT_FILE="$OUTPUT_DIR/${SLUG}.md"
 
-echo "Activating 'Stoic Coach' via OpenRouter (Model: $MODEL)..." >&2
+echo "Activating 'AI-Staff-HQ' Swarm for Stoic Coaching..." >&2
+echo "Model: $MODEL"
 echo "Saving to: $OUTPUT_FILE" >&2
 echo "---" >&2
 
-# --- 6. PROMPT ASSEMBLY ---
-MASTER_PROMPT=$(cat "$STAFF_FILE")
-MASTER_PROMPT+="
+# --- 5. BUILD ENHANCED BRIEF ---
+ENHANCED_BRIEF="$PIPED_CONTENT
 
---- STOIC COACHING REQUEST ---
-$PIPED_CONTENT
+--- STOICO COACHING OBJECTIVES ---
+Provide guidance based on Stoic philosophy:
+1. Reframe the user's situation through Stoic principles (View from Above, Dichotomy of Control)
+2. Distinguish clearly between what is within control vs. outside it
+3. Recommend practical actions, exercises, or reflections
+4. Cite relevant teachings (Marcus Aurelius, Seneca, Epictetus) where appropriate
 
-Provide stoic-inspired guidance with:
-1. Reframe the situation through stoic principles
-2. What is within your control vs. outside it
-3. A practical action or reflection
-4. A relevant stoic quote or teaching
+DELIVERABLE: A compassionate but firm coaching response, practical and grounded."
 
-Keep it grounded, practical, and encouraging.
-"
+# --- 6. EXECUTE SWARM ORCHESTRATION ---
+PYTHON_CMD="uv run --project \"$AI_STAFF_DIR\" python \"$DOTFILES_DIR/bin/dhp-swarm.py\""
 
-# --- 7. EXECUTION ---
-if [ "$USE_STREAMING" = true ]; then
-    call_openrouter "$MODEL" "$MASTER_PROMPT" "--stream" "dhp-stoic" | tee "$OUTPUT_FILE"
-else
-    call_openrouter "$MODEL" "$MASTER_PROMPT" "" "dhp-stoic" | tee "$OUTPUT_FILE"
+if [ -n "$MODEL" ]; then
+    PYTHON_CMD="$PYTHON_CMD --model \"$MODEL\""
 fi
 
-# Check if API call succeeded
+if [ -n "$PARAM_TEMPERATURE" ]; then
+    PYTHON_CMD="$PYTHON_CMD --temperature $PARAM_TEMPERATURE"
+else
+    # Stoic advice should be calm and reasoned (lower temp)
+    PYTHON_CMD="$PYTHON_CMD --temperature 0.3"
+fi
+
+PYTHON_CMD="$PYTHON_CMD --parallel --max-parallel 5"
+PYTHON_CMD="$PYTHON_CMD --auto-approve"
+
+echo "Executing stoic swarm..." >&2
+echo "$ENHANCED_BRIEF" | eval "$PYTHON_CMD" | tee "$OUTPUT_FILE"
+
 if [ "${PIPESTATUS[0]}" -eq 0 ]; then
     echo -e "\n---" >&2
-    echo "SUCCESS: 'Stoic Coach' guidance complete." >&2
+    echo "✓ SUCCESS: Stoic guidance completed via swarm" >&2
 else
-    echo "FAILED: 'Stoic Coach' encountered an error." >&2
+    echo "✗ FAILED: Swarm orchestration encountered an error" >&2
     exit 1
 fi

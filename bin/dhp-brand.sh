@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# dhp-brand.sh - Brand Builder dispatcher
+# dhp-brand.sh - Brand Builder dispatcher (Swarm Edition)
 # Brand positioning, voice/tone, competitive analysis
 
 # Source shared libraries
@@ -12,8 +12,7 @@ dhp_setup_env
 
 # --- 2. FLAG PARSING ---
 dhp_parse_flags "$@"
-# After dhp_parse_flags, the remaining arguments are in "$@"
-set -- "$@" 
+set -- "$@"
 
 # --- 3. VALIDATION & INPUT ---
 validate_dependencies curl jq
@@ -32,47 +31,52 @@ fi
 
 # --- 4. MODEL & STAFF ---
 MODEL="${STRATEGY_MODEL:-${DHP_STRATEGY_MODEL:-openrouter/polaris-alpha}}"
-STAFF_FILE="$AI_STAFF_DIR/staff/strategy/brand-builder.yaml"
-if [ ! -f "$STAFF_FILE" ]; then
-    echo "Error: Brand Builder specialist not found at $STAFF_FILE" >&2; exit 1
-fi
-
-# --- 5. OUTPUT SETUP ---
 OUTPUT_DIR=$(default_output_dir "$HOME/Documents/AI_Staff_HQ_Outputs/Strategy/Brand" "DHP_BRAND_OUTPUT_DIR")
 mkdir -p "$OUTPUT_DIR"
 SLUG=$(echo "$PIPED_CONTENT" | tr '[:upper:]' '[:lower:]' | tr -s '[:punct:][:space:]' '-' | cut -c 1-50)
 OUTPUT_FILE="$OUTPUT_DIR/${SLUG}.md"
 
-echo "Activating 'Brand Builder' via OpenRouter (Model: $MODEL)..." >&2
+echo "Activating 'AI-Staff-HQ' Swarm for Brand Strategy..." >&2
+echo "Model: $MODEL"
 echo "Saving to: $OUTPUT_FILE" >&2
 echo "---" >&2
 
-# --- 6. PROMPT ASSEMBLY ---
-MASTER_PROMPT=$(cat "$STAFF_FILE")
-MASTER_PROMPT+="
+# --- 5. BUILD ENHANCED BRIEF ---
+ENHANCED_BRIEF="$PIPED_CONTENT
 
---- BRAND ANALYSIS REQUEST ---
-$PIPED_CONTENT
-
-Provide brand positioning analysis with:
+--- BRAND STRATEGY OBJECTIVES ---
+Develop a comprehensive brand strategy covering:
 1. Core brand attributes and values
-2. Voice and tone recommendations
+2. Voice and tone recommendations (with specific style examples)
 3. Competitive differentiation opportunities
-4. Key messaging pillars
-"
+4. Key messaging pillars and tagline explorations
 
-# --- 7. EXECUTION ---
-if [ "$USE_STREAMING" = true ]; then
-    call_openrouter "$MODEL" "$MASTER_PROMPT" "--stream" "dhp-brand" | tee "$OUTPUT_FILE"
-else
-    call_openrouter "$MODEL" "$MASTER_PROMPT" "" "dhp-brand" | tee "$OUTPUT_FILE"
+DELIVERABLE: A detailed brand strategy document or playbook."
+
+# --- 6. EXECUTION ---
+PYTHON_CMD="uv run --project \"$AI_STAFF_DIR\" python \"$DOTFILES_DIR/bin/dhp-swarm.py\""
+
+if [ -n "$MODEL" ]; then
+    PYTHON_CMD="$PYTHON_CMD --model \"$MODEL\""
 fi
 
-# Check if API call succeeded
+# Brand work is creative, so higher temp
+if [ -n "$PARAM_TEMPERATURE" ]; then
+    PYTHON_CMD="$PYTHON_CMD --temperature $PARAM_TEMPERATURE"
+else
+    PYTHON_CMD="$PYTHON_CMD --temperature 0.7"
+fi
+
+PYTHON_CMD="$PYTHON_CMD --parallel --max-parallel 5"
+PYTHON_CMD="$PYTHON_CMD --auto-approve"
+
+echo "Executing brand swarm..." >&2
+echo "$ENHANCED_BRIEF" | eval "$PYTHON_CMD" | tee "$OUTPUT_FILE"
+
 if [ "${PIPESTATUS[0]}" -eq 0 ]; then
     echo -e "\n---" >&2
-    echo "SUCCESS: 'Brand Builder' analysis complete." >&2
+    echo "✓ SUCCESS: Brand strategy generated via swarm" >&2
 else
-    echo "FAILED: 'Brand Builder' encountered an error." >&2
+    echo "✗ FAILED: Swarm orchestration encountered an error" >&2
     exit 1
 fi

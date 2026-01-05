@@ -4,7 +4,7 @@
 
 **All free-tier models.** Use them without guilt or cost concerns.
 
-> **🚀 UPGRADE:** The `content`, `creative`, and `dhp-*` tools now use the **Swarm Orchestration** engine. This means instead of one AI, you get a dynamic team coordinated by a Chief of Staff.
+> **🚀 COMPLETE MIGRATION:** All dispatcher tools (`content`, `creative`, `tech`, `market`, `strategy`, etc.) now use the **Universal Swarm Engine**. Instead of one AI, you get a dynamic team coordinated by a Chief of Staff.
 
 > **⚙️ CONFIGURATION:** All models listed below are **defaults** tailored for each role. You can change any of them in your `.env` file (see `dotfiles/.env`).
 
@@ -12,7 +12,7 @@
 
 ## 🐝 What is Swarm Orchestration?
 
-When you run `content "Topic"` or `creative "Idea"`, the system now:
+When you run _any_ command (e.g., `market "Analyze..."` or `tech "Debug..."`), the system now:
 
 1. **Plans:** A Chief of Staff analyzes your request and breaks it into atomic tasks.
 2. **Staffs:** Dynamic matching selects the perfect specialists from **66 agents** (e.g., "Historical Storyteller", "React Native Expert", "Stoic Coach").

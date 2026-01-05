@@ -435,9 +435,9 @@ tidy
 
 ---
 
-## AI Assistants
+## AI Assistants (Swarm Intelligence)
 
-You have **10 AI specialists** on call. They're all free-tier models, so use them generously.
+You have **10 AI Departments** on call. Each command launches a **Swarm** of specialized agents to handle your request. They're all free-tier models, so use them generously.
 
 ### 1. Technical Help (`tech`)
 
@@ -553,7 +553,7 @@ narrative "Analyze this story structure" < draft.md
 dhp-chain creative narrative copy -- "story about overcoming limitations"
 ```
 
-**Full project brief (5 specialists in sequence):**
+**Full project brief (Mega-Swarm):**
 
 ```bash
 dhp-project "Launch a blog series about productivity with chronic illness"

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# dhp-narrative.sh - Narrative Designer dispatcher
+# dhp-narrative.sh - Narrative Designer dispatcher (Swarm Edition)
 # Story structure, plot development, character arcs
 
 # Source shared libraries
@@ -12,7 +12,6 @@ dhp_setup_env
 
 # --- 2. FLAG PARSING ---
 dhp_parse_flags "$@"
-# After dhp_parse_flags, the remaining arguments are in "$@"
 set -- "$@"
 
 # --- 3. VALIDATION & INPUT ---
@@ -32,47 +31,52 @@ fi
 
 # --- 4. MODEL & STAFF ---
 MODEL="${CREATIVE_MODEL:-${DHP_CREATIVE_MODEL:-meta-llama/llama-4-maverick:free}}"
-STAFF_FILE="$AI_STAFF_DIR/staff/producers/narrative-designer.yaml"
-if [ ! -f "$STAFF_FILE" ]; then
-    echo "Error: Narrative Designer specialist not found at $STAFF_FILE" >&2; exit 1
-fi
-
-# --- 5. OUTPUT SETUP ---
 OUTPUT_DIR=$(default_output_dir "$HOME/Documents/AI_Staff_HQ_Outputs/Creative/Narratives" "DHP_NARRATIVE_OUTPUT_DIR")
 mkdir -p "$OUTPUT_DIR"
 SLUG=$(echo "$PIPED_CONTENT" | tr '[:upper:]' '[:lower:]' | tr -s '[:punct:][:space:]' '-' | cut -c 1-50)
 OUTPUT_FILE="$OUTPUT_DIR/${SLUG}.md"
 
-echo "Activating 'Narrative Designer' via OpenRouter (Model: $MODEL)..." >&2
+echo "Activating 'AI-Staff-HQ' Swarm for Narrative Design..." >&2
+echo "Model: $MODEL"
 echo "Saving to: $OUTPUT_FILE" >&2
 echo "---" >&2
 
-# --- 6. PROMPT ASSEMBLY ---
-MASTER_PROMPT=$(cat "$STAFF_FILE")
-MASTER_PROMPT+="
+# --- 5. BUILD ENHANCED BRIEF ---
+ENHANCED_BRIEF="$PIPED_CONTENT
 
---- NARRATIVE DESIGN REQUEST ---
-$PIPED_CONTENT
+--- NARRATIVE DESIGN OBJECTIVES ---
+Analyze and develop the narrative with focus on:
+1. Story structure (3-act, Hero's Journey, or alternative models)
+2. Plot coherence and scene progression
+3. Character arcs, motivations, and conflicts
+4. Key dramatic moments and pacing recommendations
 
-Provide narrative design with:
-1. Story structure analysis (3-act, Hero's Journey, etc.)
-2. Plot development suggestions
-3. Character arc recommendations
-4. Key dramatic moments and beats
-"
+DELIVERABLE: A comprehensive narrative design document tailored to the story concept."
 
-# --- 7. EXECUTION ---
-if [ "$USE_STREAMING" = true ]; then
-    call_openrouter "$MODEL" "$MASTER_PROMPT" "--stream" "dhp-narrative" | tee "$OUTPUT_FILE"
-else
-    call_openrouter "$MODEL" "$MASTER_PROMPT" "" "dhp-narrative" | tee "$OUTPUT_FILE"
+# --- 6. EXECUTE SWARM ORCHESTRATION ---
+PYTHON_CMD="uv run --project \"$AI_STAFF_DIR\" python \"$DOTFILES_DIR/bin/dhp-swarm.py\""
+
+if [ -n "$MODEL" ]; then
+    PYTHON_CMD="$PYTHON_CMD --model \"$MODEL\""
 fi
 
-# Check if API call succeeded
+if [ -n "$PARAM_TEMPERATURE" ]; then
+    PYTHON_CMD="$PYTHON_CMD --temperature $PARAM_TEMPERATURE"
+else
+    # Balance creation with structure
+    PYTHON_CMD="$PYTHON_CMD --temperature 0.8"
+fi
+
+PYTHON_CMD="$PYTHON_CMD --parallel --max-parallel 5"
+PYTHON_CMD="$PYTHON_CMD --auto-approve"
+
+echo "Executing narrative swarm..." >&2
+echo "$ENHANCED_BRIEF" | eval "$PYTHON_CMD" | tee "$OUTPUT_FILE"
+
 if [ "${PIPESTATUS[0]}" -eq 0 ]; then
     echo -e "\n---" >&2
-    echo "SUCCESS: 'Narrative Designer' analysis complete." >&2
+    echo "✓ SUCCESS: Narrative design completed via swarm" >&2
 else
-    echo "FAILED: 'Narrative Designer' encountered an error." >&2
+    echo "✗ FAILED: Swarm orchestration encountered an error" >&2
     exit 1
 fi

@@ -87,10 +87,10 @@ dhp_get_input() {
         fi
 
         # Check for maximum length (e.g., 50KB)
-        MAX_INPUT_BYTES=51200 # 50 * 1024 bytes
+        MAX_INPUT_BYTES=5242880 # 5MB
         INPUT_BYTES=$(echo -n "$PIPED_CONTENT" | wc -c)
         if [ "$INPUT_BYTES" -gt "$MAX_INPUT_BYTES" ]; then
-            echo "Error: Input exceeds maximum allowed size of $((MAX_INPUT_BYTES / 1024))KB." >&2
+            echo "Error: Input exceeds maximum allowed size of $((MAX_INPUT_BYTES / 1024 / 1024))MB." >&2
             exit 1
         fi
     fi

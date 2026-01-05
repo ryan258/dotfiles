@@ -223,10 +223,7 @@ DELIVERABLE: Return a single, well-formatted Hugo markdown document."
 # --- 7. EXECUTE SWARM ORCHESTRATION ---
 
 # Build Python wrapper command
-PYTHON_CMD="uv run --project \"$AI_STAFF_DIR\" python \"$DOTFILES_DIR/bin/dhp-swarm-content.py\""
-
-# Pass enhanced brief
-PYTHON_CMD="$PYTHON_CMD \"$ENHANCED_BRIEF\""
+PYTHON_CMD="uv run --project \"$AI_STAFF_DIR\" python \"$DOTFILES_DIR/bin/dhp-swarm.py\""
 
 # Add model override if specified
 if [ -n "$MODEL" ]; then
@@ -246,7 +243,7 @@ PYTHON_CMD="$PYTHON_CMD --auto-approve"
 
 # Execute swarm orchestration
 echo "Executing swarm orchestration..." >&2
-eval "$PYTHON_CMD" 2>&1 | tee "$OUTPUT_FILE"
+echo "$ENHANCED_BRIEF" | eval "$PYTHON_CMD" | tee "$OUTPUT_FILE"
 
 # Check if swarm execution succeeded
 if [ "${PIPESTATUS[0]}" -eq 0 ]; then
