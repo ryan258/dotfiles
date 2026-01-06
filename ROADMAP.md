@@ -86,9 +86,10 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 **Integration Status:** 10 active dispatchers use specialists via dynamic squad configuration (`squads.json`). Spec-driven workflow supports all specialists via templates in `~/dotfiles/templates/`.
 
 - **Completed:** S0 moved to `CHANGELOG.md` (41 specialists shipped, dynamic squads integrated).
-- [ ] **S1 · Extended coverage** - _Not yet implemented_. Plan: Implement remaining 66 niche specialists (culinary, audio/podcast, publishing, wellness, specialty commerce) to reach 107 total.
-- [ ] **S2 · Specialist validator** - _Not yet implemented_. Plan: Build lint/validation tooling for YAML schema validation and quality checks. Create CLI/CI entry point. Target: `ai-staff-hq/tools/`.
-- [ ] **S3 · Documentation refresh** - _Not yet implemented_. Plan: Update `ai-staff-hq/ROADMAP.md` and supporting docs to reflect 41-specialist baseline, v3 structure, spec workflow, and integration patterns.
+- [ ] **S1 · Extended coverage** - _Not yet implemented_. Plan: Implement remaining 66 niche specialists (culinary, audio/podcast, publishing, wellness, specialty commerce) to reach 107 specialists.
+- [ ] **S2 · Specialist validator** - _Not yet implemented_. Plan: Build lint/validation tooling for YAML schema validation.
+- [x] **S3 · Documentation refresh** - **Completed**. Implemented `dhp-swarm` CLI documentation, updated `README.md` and `ROADMAP.md` for Phase 4 Swarm Orchestration features (streaming, verbose logging).
+- [x] **S4 · Swarm CLI Engine** - **Completed**. Implemented `bin/dhp-swarm.py` with parallel execution, streaming, and verbose observability.
 
 ### 2.8 Code Quality & Technical Debt (from Fixit Audit)
 

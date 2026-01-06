@@ -87,6 +87,7 @@ load_persona_block() {
 # Parse flags
 USE_CONTEXT=false
 USE_STREAMING=false
+USE_VERBOSE=false
 PERSONA_NAME=""
 while [[ "$1" == --* ]]; do
     case "$1" in
@@ -101,6 +102,10 @@ while [[ "$1" == --* ]]; do
       ;;
     --stream)
             USE_STREAMING=true
+            shift
+            ;;
+        --verbose)
+            USE_VERBOSE=true
             shift
             ;;
         --persona)
@@ -126,18 +131,19 @@ MODEL="${CONTENT_MODEL:-${DHP_CONTENT_MODEL:-qwen/qwen3-coder:free}}"
 
 # Check if the user provided a brief
 if [ -z "$1" ]; then
-    echo "Usage: $0 [--context|--full-context] [--persona NAME] [--stream] \"Topic for your new guide\"" >&2
+    echo "Usage: $0 [options] \"Topic for your new guide\"" >&2
     echo "" >&2
     echo "Options:" >&2
     echo "  --context       Include minimal local context (git, top tasks)" >&2
     echo "  --full-context  Include full context (journal, todos, README, git)" >&2
     echo "  --persona NAME  Inject persona playbook from docs/personas.md" >&2
-    echo "  --stream        Enable real-time streaming output" >&2
+    echo "  --verbose       Show detailed progress (wave counts, specialist names, timings)" >&2
+    echo "  --stream        Stream task outputs as JSON events" >&2
     echo "" >&2
     echo "Examples:" >&2
     echo "  $0 \"Guide on productivity with AI\"" >&2
     echo "  $0 --context --persona calm-coach \"Best practices for bash scripting\"" >&2
-    echo "  $0 --stream --context \"Advanced Git workflows\"" >&2
+    echo "  $0 --verbose --stream --context \"Advanced Git workflows\"" >&2
     exit 1
 fi
 
@@ -240,6 +246,14 @@ PYTHON_CMD="$PYTHON_CMD --parallel --max-parallel 5"
 
 # Auto-approve (non-interactive)
 PYTHON_CMD="$PYTHON_CMD --auto-approve"
+
+if [ "$USE_VERBOSE" = "true" ]; then
+    PYTHON_CMD="$PYTHON_CMD --verbose"
+fi
+
+if [ "$USE_STREAMING" = "true" ]; then
+    PYTHON_CMD="$PYTHON_CMD --stream"
+fi
 
 # Execute swarm orchestration
 echo "Executing swarm orchestration..." >&2

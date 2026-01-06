@@ -75,6 +75,18 @@ Or pipe explicit data:
 cat market-report.md | brand
 ```
 
+### 5. Observability Flags
+
+All `content`, `creative`, and strategy commands now support enhanced observability:
+
+```bash
+# See exactly what's happening (waves, specialist assignment)
+creative "Sci-fi story concept" --verbose
+
+# Stream output as JSON events (for integrations)
+market "Competitor analysis" --stream
+```
+
 ---
 
 ## 🛠 Configuration & Model Control
@@ -122,10 +134,10 @@ For granular control, you can use the Python wrapper directly. It now accepts th
 
 ```bash
 # Run with debug logging (via argument)
-uv run python bin/dhp-swarm.py "Your prompt" --debug
+uv run python bin/dhp-swarm.py "Your prompt" --verbose
 
 # Run via stdin (Robust for large content)
-cat large-report.md | uv run python bin/dhp-swarm.py --model "anthropic/claude-3-opus"
+cat large-report.md | uv run python bin/dhp-swarm.py --model "anthropic/claude-3-opus" --stream
 
 # Force sequential execution (disable parallel waves)
 echo "Prompt" | uv run python bin/dhp-swarm.py --no-parallel

@@ -76,6 +76,16 @@ def main():
         action="store_true",
         help="Enable verbose debugging output"
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Show detailed progress including specialist names and timings"
+    )
+    parser.add_argument(
+        "--stream",
+        action="store_true",
+        help="Stream task outputs as JSON events to stderr"
+    )
 
     # Backward compatibility
     parser.add_argument(
@@ -124,6 +134,8 @@ def main():
             model_override=args.model,
             temperature=args.temperature,
             auto_approve=args.auto_approve,
+            verbose=args.verbose,
+            stream_output=args.stream,
         )
 
         # Execute swarm

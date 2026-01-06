@@ -33,18 +33,26 @@ dhp_setup_env() {
     fi
 }
 
-# Function to parse common flags like --stream
-# Sets a global variable USE_STREAMING
-# It removes the parsed flags from the arguments list.
+# Function to parse common flags like --stream, --verbose
+# Sets global variables: USE_STREAMING, USE_VERBOSE, PARAM_TEMPERATURE, PARAM_MAX_TOKENS
+# Stores remaining non-flag arguments in REMAINING_ARGS array for caller to use
+# Usage:
+#   dhp_parse_flags "$@"
+#   set -- "${REMAINING_ARGS[@]}"
 dhp_parse_flags() {
     USE_STREAMING=false
+    USE_VERBOSE=false
     PARAM_TEMPERATURE=""
     PARAM_MAX_TOKENS=""
-    local temp_args=()
+    REMAINING_ARGS=()
     while [[ "$#" -gt 0 ]]; do
         case "$1" in
             --stream)
                 USE_STREAMING=true
+                shift
+                ;;
+            --verbose)
+                USE_VERBOSE=true
                 shift
                 ;;
             --temperature)
@@ -56,13 +64,11 @@ dhp_parse_flags() {
                 shift 2
                 ;;
             *)
-                temp_args+=("$1")
+                REMAINING_ARGS+=("$1")
                 shift
                 ;;
         esac
     done
-    # Restore non-flag arguments
-    set -- "${temp_args[@]}"
 }
 
 

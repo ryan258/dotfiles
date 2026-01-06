@@ -12,7 +12,7 @@ dhp_setup_env
 
 # --- 2. FLAG PARSING ---
 dhp_parse_flags "$@"
-set -- "$@"
+set -- "${REMAINING_ARGS[@]}"
 
 # --- 3. VALIDATION & INPUT ---
 validate_dependencies curl jq
@@ -25,7 +25,8 @@ if [ -z "$PIPED_CONTENT" ]; then
     echo "  echo \"prompt\" | $0 [options]" >&2
     echo "  $0 [options] \"prompt\"" >&2
     echo "Options:" >&2
-    echo "  --stream    Enable real-time streaming output" >&2
+    echo "  --verbose   Show detailed progress (wave counts, specialist names, timings)" >&2
+    echo "  --stream    Stream task outputs as JSON events" >&2
     exit 1
 fi
 
@@ -69,6 +70,14 @@ fi
 
 PYTHON_CMD="$PYTHON_CMD --parallel --max-parallel 5"
 PYTHON_CMD="$PYTHON_CMD --auto-approve"
+
+if [ "$USE_VERBOSE" = "true" ]; then
+    PYTHON_CMD="$PYTHON_CMD --verbose"
+fi
+
+if [ "$USE_STREAMING" = "true" ]; then
+    PYTHON_CMD="$PYTHON_CMD --stream"
+fi
 
 echo "Executing brand swarm..." >&2
 echo "$ENHANCED_BRIEF" | eval "$PYTHON_CMD" | tee "$OUTPUT_FILE"

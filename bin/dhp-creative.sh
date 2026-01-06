@@ -15,8 +15,8 @@ fi
 
 # --- 2. FLAG PARSING ---
 dhp_parse_flags "$@"
-# After dhp_parse_flags, the remaining arguments are in "$@"
-set -- "$@"
+# After dhp_parse_flags, the remaining arguments are in REMAINING_ARGS
+set -- "${REMAINING_ARGS[@]}"
 
 # --- 3. VALIDATION & INPUT ---
 validate_dependencies curl jq
@@ -26,10 +26,11 @@ dhp_get_input "$@"
 USER_BRIEF="$PIPED_CONTENT"
 
 if [ -z "$USER_BRIEF" ]; then
-    echo "Usage: $0 [--stream] \"Your story idea or logline\"" >&2
+    echo "Usage: $0 [options] \"Your story idea or logline\"" >&2
     echo "" >&2
     echo "Options:" >&2
-    echo "  --stream         Enable real-time streaming output" >&2
+    echo "  --verbose        Show detailed progress (wave counts, specialist names, timings)" >&2
+    echo "  --stream         Stream task outputs as JSON events" >&2
     echo "  --temperature    Set the creativity level (e.g., 0.7)" >&2
     echo "  --max-tokens     Set the maximum response length (e.g., 1024)" >&2
     exit 1
@@ -93,6 +94,14 @@ PYTHON_CMD="$PYTHON_CMD --parallel --max-parallel 5"
 
 # Auto-approve (non-interactive)
 PYTHON_CMD="$PYTHON_CMD --auto-approve"
+
+if [ "$USE_VERBOSE" = "true" ]; then
+    PYTHON_CMD="$PYTHON_CMD --verbose"
+fi
+
+if [ "$USE_STREAMING" = "true" ]; then
+    PYTHON_CMD="$PYTHON_CMD --stream"
+fi
 
 # Execute swarm orchestration
 echo "Executing creative swarm orchestration..." >&2
