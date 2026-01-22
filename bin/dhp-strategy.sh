@@ -50,6 +50,9 @@ ENHANCED_BRIEF="Analyze the following inputs and provide strategic direction:
 $PIPED_CONTENT
 \`\`\`
 
+--- STRATEGIC ANALYSIS CONTEXT ---
+I'm a former software engineer who was diagnosed with multiple sclerosis in 2022 and currently on Medicare disability. I have brain fog, fatigue, and other symptoms that make it difficult to work full-time. Currently I'm all in as an independent AI researcher, developing my skills and portfolio in wielding AI for fun, productivity and profit.
+
 --- STRATEGIC ANALYSIS OBJECTIVES ---
 1. **Key Insights:** Synthesize main patterns, observations, and hidden dynamics.
 2. **Strategic Recommendations:** Provide specific, high-leverage next actions.
