@@ -1,55 +1,17 @@
 #!/bin/bash
 set -e # Exit immediately if a command fails
 
-# --- 1. CONFIGURATION ---
-DOTFILES_DIR="$HOME/dotfiles"
-AI_STAFF_DIR="$DOTFILES_DIR/ai-staff-hq"
+# Source shared libraries
+source "$(dirname "$0")/dhp-shared.sh"
 
-# Source environment variables
-if [ -f "$DOTFILES_DIR/.env" ]; then
-  source "$DOTFILES_DIR/.env"
-fi
+# Note: dhp-content.sh has unique requirements (Personas, Context) that
+# go beyond validate_dependencies. We handle those here before dispatching.
 
-# Source shared library
-if [ -f "$DOTFILES_DIR/bin/dhp-lib.sh" ]; then
-  source "$DOTFILES_DIR/bin/dhp-lib.sh"
-else
-  echo "Error: Shared library dhp-lib.sh not found" >&2
-  exit 1
-fi
+# --- 1. SETUP ---
+dhp_setup_env
 
-# Shared utils
-if [ -f "$DOTFILES_DIR/bin/dhp-utils.sh" ]; then
-  source "$DOTFILES_DIR/bin/dhp-utils.sh"
-fi
-
-# Source squad configuration helpers if available
-if [ -f "$DOTFILES_DIR/bin/dhp-config.sh" ]; then
-  # shellcheck disable=SC1090
-  source "$DOTFILES_DIR/bin/dhp-config.sh"
-fi
-
-# Set output directory with fallback
-PROJECTS_DIR=$(default_output_dir "$HOME/Documents/AI_Staff_HQ_Outputs/Content/Guides" "DHP_CONTENT_OUTPUT_DIR")
-
-# Persona playbook discovery
-if [ -z "${PERSONA_PLAYBOOK_FILE:-}" ]; then
-    if [ -f "$DOTFILES_DIR/docs/personas.md" ]; then
-        PERSONA_PLAYBOOK_FILE="$DOTFILES_DIR/docs/personas.md"
-    elif [ -f "$DOTFILES_DIR/PERSONAS.md" ]; then
-        PERSONA_PLAYBOOK_FILE="$DOTFILES_DIR/PERSONAS.md"
-    else
-        PERSONA_PLAYBOOK_FILE="$DOTFILES_DIR/docs/personas.md"
-    fi
-fi
-
-# Source context library
-if [ -f "$DOTFILES_DIR/bin/dhp-context.sh" ]; then
-  source "$DOTFILES_DIR/bin/dhp-context.sh"
-fi
-
-# Helpers --------------------------------------------------------------
-slugify() {
+# Helpers for this script specifically
+slugify_local() {
     local value="$1"
     value=$(echo "$value" | tr '[:upper:]' '[:lower:]')
     value=$(echo "$value" | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')
@@ -84,23 +46,27 @@ load_persona_block() {
     ' "$file"
 }
 
-# Parse flags
+# --- 2. CUSTOM FLAG PARSING ---
+# We use a custom parser here because of --persona and --context which are unique to content
 USE_CONTEXT=false
 USE_STREAMING=false
 USE_VERBOSE=false
 PERSONA_NAME=""
-while [[ "$1" == --* ]]; do
+REMAINING_ARGS_LOCAL=()
+CONTEXT_MODE=""
+
+while [[ "$#" -gt 0 ]]; do
     case "$1" in
         --context)
             USE_CONTEXT=true
             shift
-      ;;
-    --full-context)
-      USE_CONTEXT=true
-      CONTEXT_MODE="--full"
-      shift
-      ;;
-    --stream)
+            ;;
+        --full-context)
+            USE_CONTEXT=true
+            CONTEXT_MODE="--full"
+            shift
+            ;;
+        --stream)
             USE_STREAMING=true
             shift
             ;;
@@ -112,25 +78,30 @@ while [[ "$1" == --* ]]; do
             PERSONA_NAME="$2"
             shift 2
             ;;
+        --temperature)
+            PARAM_TEMPERATURE="$2"
+            shift 2
+            ;;
+        --max-tokens)
+            PARAM_MAX_TOKENS="$2"
+            shift 2
+            ;;
         *)
-            echo "Unknown flag: $1" >&2
-            exit 1
+            REMAINING_ARGS_LOCAL+=("$1")
+            shift
             ;;
     esac
 done
 
-# --- 2. VALIDATION ---
-# Check for required tools
+# Restore args for dhp_get_input
+set -- "${REMAINING_ARGS_LOCAL[@]}"
+
+# --- 3. INPUT GATHERING ---
 validate_dependencies curl jq
-
-# Check for Environment Variables
 ensure_api_key OPENROUTER_API_KEY
+dhp_get_input "$@"
 
-# Load model from .env, fallback to legacy variable, then default
-MODEL="${CONTENT_MODEL:-${DHP_CONTENT_MODEL:-qwen/qwen3-coder:free}}"
-
-# Check if the user provided a brief
-if [ -z "$1" ]; then
+if [ -z "$PIPED_CONTENT" ]; then
     echo "Usage: $0 [options] \"Topic for your new guide\"" >&2
     echo "" >&2
     echo "Options:" >&2
@@ -140,61 +111,53 @@ if [ -z "$1" ]; then
     echo "  --verbose       Show detailed progress (wave counts, specialist names, timings)" >&2
     echo "  --stream        Stream task outputs as JSON events" >&2
     echo "" >&2
-    echo "Examples:" >&2
-    echo "  $0 \"Guide on productivity with AI\"" >&2
-    echo "  $0 --context --persona calm-coach \"Best practices for bash scripting\"" >&2
-    echo "  $0 --verbose --stream --context \"Advanced Git workflows\"" >&2
     exit 1
 fi
 
-# Check if the AI_STAFF_DIR exists
-if [ ! -d "$AI_STAFF_DIR" ]; then
-    echo "Error: AI Staff directory not found at $AI_STAFF_DIR" >&2
-    exit 1
-fi
+# --- 4. PREPARE CONTEXT & PERSONA for System Brief ---
 
-# --- 3. THE "GATLIN GUN" ASSEMBLY ---
-USER_BRIEF="$1"
-PERSONA_PLAYBOOK=""
+# Persona
+PERSONA_BLOCK=""
 if [ -n "$PERSONA_NAME" ]; then
+    # Persona playbook discovery
+    if [ -z "${PERSONA_PLAYBOOK_FILE:-}" ]; then
+        if [ -f "$DOTFILES_DIR/docs/personas.md" ]; then
+            PERSONA_PLAYBOOK_FILE="$DOTFILES_DIR/docs/personas.md"
+        elif [ -f "$DOTFILES_DIR/PERSONAS.md" ]; then
+            PERSONA_PLAYBOOK_FILE="$DOTFILES_DIR/PERSONAS.md"
+        else
+            PERSONA_PLAYBOOK_FILE="$DOTFILES_DIR/docs/personas.md"
+        fi
+    fi
+
     if [ ! -f "$PERSONA_PLAYBOOK_FILE" ]; then
         echo "Error: Persona file not found at $PERSONA_PLAYBOOK_FILE" >&2
         exit 1
     fi
-    PERSONA_SLUG=$(slugify "$PERSONA_NAME")
-    PERSONA_PLAYBOOK=$(load_persona_block "$PERSONA_SLUG" "$PERSONA_PLAYBOOK_FILE")
-    if [ -z "$PERSONA_PLAYBOOK" ]; then
+    PERSONA_SLUG=$(slugify_local "$PERSONA_NAME")
+    PERSONA_DATA=$(load_persona_block "$PERSONA_SLUG" "$PERSONA_PLAYBOOK_FILE")
+    if [ -z "$PERSONA_DATA" ]; then
         echo "Error: Persona '$PERSONA_NAME' not found in $PERSONA_PLAYBOOK_FILE" >&2
         exit 1
     fi
+    PERSONA_BLOCK="
+--- PERSONA PLAYBOOK ($PERSONA_NAME) ---
+$PERSONA_DATA
+
+Apply this perspective consistently across the outline, tone, and recommendations."
 fi
 
-# --- 4. PREPARE OUTPUT ---
-mkdir -p "$PROJECTS_DIR"
-SLUG=$(echo "$USER_BRIEF" | tr '[:upper:]' '[:lower:]' | tr -s '[:punct:][:space:]' '-' | cut -c 1-50)
-OUTPUT_FILE="$PROJECTS_DIR/${SLUG}.md"
-
-echo "Activating 'AI-Staff-HQ' Swarm Orchestration for Content Workflow..."
-echo "Brief: $USER_BRIEF"
-[ -n "$PERSONA_NAME" ] && echo "Persona: $PERSONA_NAME"
-echo "Model: $MODEL"
-echo "Saving to: $OUTPUT_FILE"
-echo "---"
-
-# --- 5. GATHER CONTEXT (if requested) ---
-LOCAL_CONTEXT=""
-if [ "$USE_CONTEXT" = true ] && command -v gather_context &> /dev/null; then
-    echo "Gathering local context..." >&2
-    LOCAL_CONTEXT=$(gather_context "${CONTEXT_MODE:---minimal}")
-fi
-
-# --- 6. BUILD ENHANCED BRIEF ---
-ENHANCED_BRIEF="$USER_BRIEF"
-
-# Add context if available
-if [ -n "$LOCAL_CONTEXT" ]; then
-    ENHANCED_BRIEF="$ENHANCED_BRIEF
-
+# Context
+CONTEXT_BLOCK=""
+# Source context library if needed
+if [ "$USE_CONTEXT" = true ]; then
+    if [ -f "$DOTFILES_DIR/bin/dhp-context.sh" ]; then
+        source "$DOTFILES_DIR/bin/dhp-context.sh"
+        if command -v gather_context &> /dev/null; then
+            echo "Gathering local context..." >&2
+            LOCAL_CONTEXT=$(gather_context "${CONTEXT_MODE:---minimal}")
+            if [ -n "$LOCAL_CONTEXT" ]; then
+                CONTEXT_BLOCK="
 --- LOCAL CONTEXT (Automatically Injected) ---
 $LOCAL_CONTEXT
 
@@ -203,20 +166,16 @@ Use this context to:
 - Reference related tasks or projects
 - Align with current git branch/project work
 - Build on recent journal themes"
+            fi
+        fi
+    fi
 fi
 
-# Add persona if specified
-if [ -n "$PERSONA_PLAYBOOK" ]; then
-    ENHANCED_BRIEF="$ENHANCED_BRIEF
+# --- 5. DISPATCH ---
 
---- PERSONA PLAYBOOK ($PERSONA_NAME) ---
-$PERSONA_PLAYBOOK
-
-Apply this perspective consistently across the outline, tone, and recommendations."
-fi
-
-# Add content-specific instructions
-ENHANCED_BRIEF="$ENHANCED_BRIEF
+# Construct the FULL System Brief
+SYSTEM_BRIEF_CONTENT="$CONTEXT_BLOCK
+$PERSONA_BLOCK
 
 --- CONTENT REQUIREMENTS ---
 Deliver a 'First-Draft Skeleton' for a new evergreen guide:
@@ -226,45 +185,18 @@ Deliver a 'First-Draft Skeleton' for a new evergreen guide:
 
 DELIVERABLE: Return a single, well-formatted Hugo markdown document."
 
-# --- 7. EXECUTE SWARM ORCHESTRATION ---
+# Re-export manual flags to global vars for dhp_dispatch usage
+export USE_VERBOSE
+export USE_STREAMING
+export PARAM_TEMPERATURE
+export PARAM_MAX_TOKENS
 
-# Build Python wrapper command
-PYTHON_CMD="uv run --project \"$AI_STAFF_DIR\" python \"$DOTFILES_DIR/bin/dhp-swarm.py\""
-
-# Add model override if specified
-if [ -n "$MODEL" ]; then
-    PYTHON_CMD="$PYTHON_CMD --model \"$MODEL\""
-fi
-
-# Add temperature if specified
-if [ -n "$TEMPERATURE" ]; then
-    PYTHON_CMD="$PYTHON_CMD --temperature $TEMPERATURE"
-fi
-
-# Add parallel execution flags (default: enabled)
-PYTHON_CMD="$PYTHON_CMD --parallel --max-parallel 5"
-
-# Auto-approve (non-interactive)
-PYTHON_CMD="$PYTHON_CMD --auto-approve"
-
-if [ "$USE_VERBOSE" = "true" ]; then
-    PYTHON_CMD="$PYTHON_CMD --verbose"
-fi
-
-if [ "$USE_STREAMING" = "true" ]; then
-    PYTHON_CMD="$PYTHON_CMD --stream"
-fi
-
-# Execute swarm orchestration
-echo "Executing swarm orchestration..." >&2
-echo "$ENHANCED_BRIEF" | eval "$PYTHON_CMD" | tee "$OUTPUT_FILE"
-
-# Check if swarm execution succeeded
-if [ "${PIPESTATUS[0]}" -eq 0 ]; then
-    echo -e "\n---"
-    echo "✓ SUCCESS: Content generated via swarm orchestration"
-    echo "  Output: $OUTPUT_FILE"
-else
-    echo "✗ FAILED: Swarm orchestration encountered an error"
-    exit 1
-fi
+dhp_dispatch \
+    "Content Workflow" \
+    "qwen/qwen3-coder:free" \
+    "$HOME/Documents/AI_Staff_HQ_Outputs/Content/Guides" \
+    "CONTENT_MODEL" \
+    "DHP_CONTENT_OUTPUT_DIR" \
+    "$SYSTEM_BRIEF_CONTENT" \
+    "" \
+    "${REMAINING_ARGS_LOCAL[@]}"

@@ -45,10 +45,11 @@ stop_timer() {
     local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
     
     # Get active timer details
-    local active_line=$(grep "^START" "$TIME_LOG" | tail -n 1)
+    # Use || true to prevent set -e exit if grep finds nothing
+    local active_line=$(grep "^START" "$TIME_LOG" 2>/dev/null | tail -n 1 || true)
     
     # If no start record found, or last record was STOP
-    local last_line=$(tail -n 1 "$TIME_LOG" 2>/dev/null)
+    local last_line=$(tail -n 1 "$TIME_LOG" 2>/dev/null || true)
     if [[ -z "$active_line" ]] || [[ "$last_line" == STOP* ]]; then
         echo "Error: No active timer found." >&2
         return 1

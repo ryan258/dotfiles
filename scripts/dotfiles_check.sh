@@ -66,7 +66,20 @@ fi
 # 5. Prune dead bookmarks
 echo "[5/7] Pruning dead directory bookmarks..."
 if [ -f "$SCRIPTS_DIR/g.sh" ]; then
-  "$SCRIPTS_DIR/g.sh" prune --auto
+  # g.sh is a library, so we source it in a subshell to run the prune command
+  (
+    source "$SCRIPTS_DIR/g.sh"
+    # Check if the function exists before calling
+    if command -v prune_bookmarks >/dev/null 2>&1; then
+        prune_bookmarks --auto
+    elif command -v g >/dev/null 2>&1; then
+        g prune --auto
+    else
+        # If g.sh was just aliases, maybe it doesn't expose a command we can run easily script-side.
+        # But assuming the user intends to prune:
+        echo "  ⚠️  Unable to run 'g prune' from check script."
+    fi
+  ) || echo "  ⚠️  Bookmark pruning failed (non-critical)"
 else
   echo "  ⚠️  WARNING: g.sh not found, skipping bookmark pruning."
 fi

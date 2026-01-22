@@ -71,3 +71,9 @@ PY
     echo "$canonical_path"
     return 0
 }
+
+export -f validate_dependencies
+export -f ensure_api_key
+export -f default_output_dir
+export -f read_dispatcher_input
+export -f validate_path
