@@ -9,9 +9,9 @@ source "$(dirname "$0")/dhp-shared.sh"
 
 dhp_dispatch \
     "Brand Strategy" \
-    "openrouter/polaris-alpha" \
+    "xiaomi/mimo-v2-flash:free" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Strategy/Brand" \
-    "DHP_BRAND_MODEL" \
+    "BRAND_MODEL" \
     "DHP_BRAND_OUTPUT_DIR" \
     "
 --- BRAND STRATEGY OBJECTIVES ---

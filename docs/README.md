@@ -41,7 +41,7 @@ Welcome to your dotfiles documentation! Start with one of the guides below based
   - Low-friction workflows
 
 ### AI Assistance
-- **[🤖 AI Quick Reference](ai-quick-reference.md)** - Your 10 free AI specialists with examples
+- **[🤖 AI Quick Reference](ai-quick-reference.md)** - Your 10 dispatcher commands + 68 specialists with examples
   - Technical help (`tech`)
   - Content creation (`content`)
   - Creative writing (`creative`)
@@ -122,8 +122,8 @@ Welcome to your dotfiles documentation! Start with one of the guides below based
   - AI Staff HQ integration
 
 ### Script References
-- **[⚙️ Scripts README](../scripts/README.md)** - All 56 scripts explained (14KB)
-- **[🔤 Aliases README](../scripts/README_aliases.md)** - 150+ alias reference (10KB)
+- **[⚙️ Scripts README](../scripts/README.md)** - All 66 scripts explained (14KB)
+- **[🔤 Aliases README](../scripts/README_aliases.md)** - 200+ alias reference (10KB)
 - **[🤖 AI Dispatchers README](../bin/README.md)** - Complete dispatcher documentation (21KB)
 
 ### Version History & Planning
@@ -178,7 +178,7 @@ whatis g
 whatis health
 
 # Get AI suggestions
-ai_suggest
+ai-suggest
 
 # See all aliases
 alias
@@ -263,7 +263,7 @@ grep "keyword" ~/dotfiles/*.md
    ```bash
    dotfiles-check    # System validation
    whatis <command>  # Command help
-   ai_suggest        # AI recommendations
+   ai-suggest        # AI recommendations
    ```
 
 3. **Read troubleshooting:**

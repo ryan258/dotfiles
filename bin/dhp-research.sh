@@ -9,9 +9,9 @@ source "$(dirname "$0")/dhp-shared.sh"
 
 dhp_dispatch \
     "Research Synthesis" \
-    "z-ai/glm-4.5-air:free" \
+    "xiaomi/mimo-v2-flash:free" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Personal_Development/Research" \
-    "DHP_RESEARCH_MODEL" \
+    "RESEARCH_MODEL" \
     "DHP_RESEARCH_OUTPUT_DIR" \
     "
 --- RESEARCH SYNTHESIS OBJECTIVES ---

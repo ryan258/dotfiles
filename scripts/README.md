@@ -7,7 +7,7 @@ This folder collects shell utilities that streamline day-to-day work on macOS—
 ### AI Staff HQ Integration (Phase 6 - November 10, 2025)
 
 **10 Active AI Dispatchers + Advanced Features:**
-- Optimized free models (DeepSeek R1, Llama 4, Qwen3) - no API costs
+- Optimized free model (`xiaomi/mimo-v2-flash:free`) via OpenRouter - no API costs
 - Spec template system for structured AI requests (`spec` command)
 - Real-time streaming support (`--stream` flag)
 - Integrated into todo, journal, blog workflows

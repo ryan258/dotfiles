@@ -82,7 +82,7 @@ _handle_api_error() {
         printf "\n💡 Fix: Free models require opting in to data sharing.\n" >&2
         printf "   1. Visit: https://openrouter.ai/settings/privacy\n" >&2
         printf "   2. Enable 'Free model publication' OR\n" >&2
-        printf "   3. Use a paid model (e.g., set TECH_MODEL=\"openai/gpt-4o-mini\" in ~/.env)\n" >&2
+        printf "   3. Use a paid model (set TECH_MODEL in ~/.env)\n" >&2
     fi
     return 1
 }

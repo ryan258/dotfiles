@@ -82,7 +82,7 @@
 | `creative "idea"`     | Stories, creative projects |
 | `strategy "question"` | Big decisions, planning    |
 | `stoic "struggle"`    | Mindset, perspective       |
-| `ai_suggest`          | Not sure which AI to use?  |
+| `ai-suggest`          | Not sure which AI to use?  |
 
 **Pipe code to AI:**
 
@@ -108,7 +108,7 @@ cat script.sh | tech --stream
 | ------------------- | ---------------------- |
 | `findtext "search"` | Search file contents   |
 | `findbig`           | 10 largest files       |
-| `tidy`              | Clean Downloads folder |
+| `tidydown`          | Clean Downloads folder |
 
 ---
 
@@ -131,7 +131,7 @@ cat script.sh | tech --stream
 | `break`                 | 15-min break reminder  |
 | `pomo`                  | 25-min Pomodoro        |
 | `remind +30m "text"`    | Schedule reminder      |
-| `done long-command`     | Notify when complete   |
+| `did long-command`      | Notify when complete   |
 | `clip save name "text"` | Save clipboard snippet |
 | `whatis commandname`    | What does this do?     |
 

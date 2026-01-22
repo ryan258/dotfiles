@@ -54,9 +54,9 @@ $Current_Dir
 
 dhp_dispatch \
     "Morphling Agent" \
-    "anthropic/claude-3.5-sonnet" \
+    "xiaomi/mimo-v2-flash:free" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Morphling" \
-    "DHP_MORPHLING_MODEL" \
+    "MORPHLING_MODEL" \
     "DHP_MORPHLING_OUTPUT_DIR" \
     "
 --- MORPHLING PROTOCOL ACTIVATED ---

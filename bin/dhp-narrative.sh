@@ -9,9 +9,9 @@ source "$(dirname "$0")/dhp-shared.sh"
 
 dhp_dispatch \
     "Narrative Design" \
-    "meta-llama/llama-4-maverick:free" \
+    "xiaomi/mimo-v2-flash:free" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Creative/Narratives" \
-    "DHP_CREATIVE_MODEL" \
+    "CREATIVE_MODEL" \
     "DHP_NARRATIVE_OUTPUT_DIR" \
     "
 --- NARRATIVE DESIGN OBJECTIVES ---

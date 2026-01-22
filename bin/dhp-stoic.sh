@@ -9,9 +9,9 @@ source "$(dirname "$0")/dhp-shared.sh"
 
 dhp_dispatch \
     "Stoic Coaching" \
-    "mistralai/mistral-small-3.1-24b-instruct:free" \
+    "xiaomi/mimo-v2-flash:free" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Personal_Development/Stoic_Coaching" \
-    "DHP_STOIC_MODEL" \
+    "STOIC_MODEL" \
     "DHP_STOIC_OUTPUT_DIR" \
     "
 --- STOIC COACHING OBJECTIVES ---

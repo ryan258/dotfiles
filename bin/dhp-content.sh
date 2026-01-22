@@ -193,7 +193,7 @@ export PARAM_MAX_TOKENS
 
 dhp_dispatch \
     "Content Workflow" \
-    "qwen/qwen3-coder:free" \
+    "xiaomi/mimo-v2-flash:free" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Content/Guides" \
     "CONTENT_MODEL" \
     "DHP_CONTENT_OUTPUT_DIR" \

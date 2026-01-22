@@ -1,6 +1,6 @@
 # Swarm Orchestration Guide
 
-**Swarm Orchestration** (v2.2.0) transforms your static AI commands into a dynamic, multi-agent system. Instead of dispatching a request to a single "Strategy" or "Content" model, the system now coordinates a team of **66 specialized agents** to execute your task in parallel.
+**Swarm Orchestration** (v2.2.0) transforms your static AI commands into a dynamic, multi-agent system. Instead of dispatching a request to a single "Strategy" or "Content" model, the system now coordinates a team of **68 specialized agents** to execute your task in parallel.
 
 ---
 
@@ -22,7 +22,7 @@ graph TD
 ```
 
 1.  **Chief of Staff Analysis**: Your request is analyzed to understand the intent, context, and required skills.
-2.  **Dynamic Staffing**: The system searches an index of **66 specialists** across 6 departments (Strategy, Tech, Content, Creative, Market, Internal) to find the perfect match for each sub-task.
+2.  **Dynamic Staffing**: The system searches an index of **68 specialists** across 7 departments (strategy, producers, commerce, tech, health-lifestyle, knowledge, meta) to find the perfect match for each sub-task.
 3.  **Parallel Waves**: Tasks that can run simultaneously are grouped into "waves" for maximum speed.
 4.  **Synthesis**: The Chief of Staff reviews all outputs and compiles them into a single, cohesive response.
 
@@ -99,16 +99,16 @@ Each dispatcher alias maps to a specific variable in `.env`.
 
 | Alias       | Variable         | Default Description                    |
 | :---------- | :--------------- | :------------------------------------- |
-| `tech`      | `TECH_MODEL`     | DeepSeek R1 (Reasoning expert)         |
-| `content`   | `CONTENT_MODEL`  | Qwen3 Coder (Technical writing)        |
-| `creative`  | `CREATIVE_MODEL` | Llama 4 Maverick (Storytelling)        |
-| `copy`      | `CREATIVE_MODEL` | Llama 4 Maverick (Copywriting)         |
-| `narrative` | `CREATIVE_MODEL` | Llama 4 Maverick (Narrative structure) |
-| `strategy`  | `STRATEGY_MODEL` | Polaris Alpha (Reasoning & Planning)   |
-| `brand`     | `STRATEGY_MODEL` | Polaris Alpha (Strategic positioning)  |
-| `market`    | `MARKET_MODEL`   | Llama 4 Scout (Long-context analysis)  |
-| `research`  | `RESEARCH_MODEL` | Gemma 3 9B (Knowledge synthesis)       |
-| `stoic`     | `STOIC_MODEL`    | Gemma 3 9B (Philosophical coaching)    |
+| `tech`      | `TECH_MODEL`     | Xiaomi MiMo v2 Flash (OpenRouter free) |
+| `content`   | `CONTENT_MODEL`  | Xiaomi MiMo v2 Flash (OpenRouter free) |
+| `creative`  | `CREATIVE_MODEL` | Xiaomi MiMo v2 Flash (OpenRouter free) |
+| `copy`      | `CREATIVE_MODEL` | Xiaomi MiMo v2 Flash (OpenRouter free) |
+| `narrative` | `CREATIVE_MODEL` | Xiaomi MiMo v2 Flash (OpenRouter free) |
+| `strategy`  | `STRATEGY_MODEL` | Xiaomi MiMo v2 Flash (OpenRouter free) |
+| `brand`     | `BRAND_MODEL` (fallback: `STRATEGY_MODEL`) | Xiaomi MiMo v2 Flash (OpenRouter free) |
+| `market`    | `MARKET_MODEL`   | Xiaomi MiMo v2 Flash (OpenRouter free) |
+| `research`  | `RESEARCH_MODEL` | Xiaomi MiMo v2 Flash (OpenRouter free) |
+| `stoic`     | `STOIC_MODEL`    | Xiaomi MiMo v2 Flash (OpenRouter free) |
 
 ### How to Change a Model
 
@@ -120,8 +120,8 @@ Each dispatcher alias maps to a specific variable in `.env`.
 3.  Update the value to any OpenRouter model ID.
 
     ```bash
-    # Example: Upgrade Tech Dispatcher to Claude 3.5 Sonnet
-    TECH_MODEL="anthropic/claude-3.5-sonnet"
+    # Example: Set Tech Dispatcher model (default)
+    TECH_MODEL="xiaomi/mimo-v2-flash:free"
     ```
 
 ---
@@ -137,7 +137,7 @@ For granular control, you can use the Python wrapper directly. It now accepts th
 uv run python bin/dhp-swarm.py "Your prompt" --verbose
 
 # Run via stdin (Robust for large content)
-cat large-report.md | uv run python bin/dhp-swarm.py --model "anthropic/claude-3-opus" --stream
+cat large-report.md | uv run python bin/dhp-swarm.py --model "xiaomi/mimo-v2-flash:free" --stream
 
 # Force sequential execution (disable parallel waves)
 echo "Prompt" | uv run python bin/dhp-swarm.py --no-parallel

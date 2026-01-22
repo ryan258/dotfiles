@@ -1,6 +1,6 @@
 # Dotfiles: A macOS Productivity Toolkit
 
-[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](VERSION)
+[![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)](VERSION)
 [![Security](https://img.shields.io/badge/security-A%2B-brightgreen.svg)](SECURITY.md)
 [![Tests](https://img.shields.io/badge/tests-14%2F14%20passing-success.svg)](#running-tests)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey.svg)](#prerequisites)
@@ -20,7 +20,7 @@ Quick links:
 - **[📋 Daily Cheat Sheet](docs/daily-cheatsheet.md)** - One-page reference
 - **[🔍 Discover Features](docs/discover.md)** - What can you do?
 - **[🧠 MS-Friendly Features](docs/ms-friendly-features.md)** - How it helps
-- **[🤖 AI Quick Reference](docs/ai-quick-reference.md)** - Your Swarm of 50+ specialists
+- **[🤖 AI Quick Reference](docs/ai-quick-reference.md)** - Your Swarm of 68 specialists
 - **[📚 Documentation Index](docs/README.md)** - All guides
 
 **Validate everything is working:** `dotfiles-check`
@@ -55,14 +55,14 @@ This setup is guided by a few key principles:
   - Getting things done (tasks and priorities)
   - Capturing ideas (journaling)
   - Finding stuff fast (navigation and search)
-  - AI assistants (your 50+ free specialists via Swarm)
+  - AI assistants (your 68 free specialists via Swarm)
   - Working on projects
   - Publishing content
   - System maintenance
 
 ### AI Quick Reference
 
-- **[AI Quick Reference](docs/ai-quick-reference.md)** - Your 50+ AI specialists with real examples
+- **[AI Quick Reference](docs/ai-quick-reference.md)** - Your 68 AI specialists with real examples
   - When to use each AI
   - Practical examples
   - Swarm Orchestration (multi-agent)
@@ -73,7 +73,7 @@ This setup is guided by a few key principles:
 ```bash
 dotfiles-check    # Verify everything is working
 whatis <command>  # Get help on any command
-ai_suggest        # AI recommends what to do based on your context
+ai-suggest        # AI recommends what to do based on your context
 ```
 
 **Remember:** Everything is designed for minimum cognitive load. No command requires more than a few keystrokes.
@@ -102,7 +102,7 @@ The AI workflow has been completely re-engineered with **Swarm Orchestration**, 
 
 **Highlights:**
 
-- **Dynamic Specialist Selection:** Instead of 10 static roles, a Chief of Staff agent analyzes your request and dynamically selects the perfect team from **66 specialized agents** (e.g., "Historical Storyteller", "React Native Expert", "Stoic Coach").
+- **Dynamic Specialist Selection:** Instead of 10 static roles, a Chief of Staff agent analyzes your request and dynamically selects the perfect team from **68 specialized agents** (e.g., "Historical Storyteller", "React Native Expert", "Stoic Coach").
 - **Parallel Execution:** Tasks are broken down and executed in parallel waves, significantly speeding up complex workflows.
 - **Self-Healing:** If a specialist fails, the system automatically tries an alternative or escalates to the Chief of Staff.
 - **Seamless Upgrade:** The `content`, `creative`, and `dhp-*` tools now use the Swarm engine by default. You use them exactly the same way, but get smarter, faster results.
@@ -183,7 +183,7 @@ See [CHANGELOG.md](CHANGELOG.md) for complete details.
 
 Upgraded all AI dispatchers with cost-effective models and structured workflow system:
 
-- **Optimized Free Models:** All 10 dispatchers now use task-specific free models from OpenRouter (DeepSeek R1, Llama 4, Qwen3, etc.)
+- **Optimized Free Models:** All 10 dispatchers now use a unified free model via OpenRouter (Xiaomi MiMo v2 Flash)
 - **Spec Template System:** New `spec` command opens structured templates in your editor for comprehensive AI requests
 - **Template Library:** 8 dispatcher-specific templates guide you through filling in all relevant context
 - **Automatic Archival:** Completed specs saved to `~/.config/dotfiles-data/specs/` for reuse and documentation
@@ -197,7 +197,7 @@ Major improvements to AI dispatcher reliability and user experience:
 - **Robust Error Handling:** No more silent failures - API errors are caught and reported clearly with proper exit codes
 - **Shared Library:** Centralized API logic in `bin/dhp-lib.sh` eliminates ~1,500 lines of duplicate code
 - **Better Feedback:** See progress in real-time during long AI tasks, catch errors immediately
-- **AI Staff HQ v3:** Upgraded to latest specialist organization with 41 YAML files
+- **AI Staff HQ v3:** Upgraded to latest specialist organization with 68 YAML files
 
 ### Quality-of-Life Upgrades (November 7, 2025)
 
@@ -345,7 +345,7 @@ blog generate -p "Calm Coach" -a guide -s guides/brain-fog "Energy-first plannin
 blog refine my-post.md         # AI-polish existing draft
 ```
 
-Set `BLOG_DIR` in `dotfiles/.env` to point at your personal writing repo (examples: `$HOME/Projects/blog`, `$HOME/Projects/site/content`, `$HOME/Projects/articles`). Leaving it unset cleanly disables these commands for shared installs.
+Set `BLOG_DIR` in `~/dotfiles/.env` to point at your personal writing repo (examples: `$HOME/Projects/blog`, `$HOME/Projects/site/content`, `$HOME/Projects/articles`). Leaving it unset cleanly disables these commands for shared installs.
 
 **Swipe Logging (optional):**
 
@@ -437,7 +437,7 @@ dhp-content --full-context "Comprehensive guide topic"
 
 2. **Get an API Key:** Sign up at [OpenRouter](https://openrouter.ai/) and create an API key (free tier available)
 
-3. **Configure Models:** The `.env` file includes optimized free models (DeepSeek, Llama 4, Qwen3) as defaults
+3. **Configure Models:** The `.env` file defaults all dispatchers to `xiaomi/mimo-v2-flash:free` via OpenRouter
 
    - Cost-effective: All models are free tier on OpenRouter
    - Task-specific: Each dispatcher uses a model optimized for its specialty
@@ -471,7 +471,7 @@ dhp-content --full-context "Comprehensive guide topic"
 
 ### Full AI Workforce Access
 
-The 10 dispatchers provide access to 42+ specialists across 7 departments:
+The 10 dispatchers provide access to 68 specialists across 7 departments:
 
 - **Creative:** Art Director, Copywriter, Narrative Designer, Sound Designer, and more
 - **Strategy:** Chief of Staff, Brand Builder, Market Analyst, Creative Strategist
@@ -624,7 +624,7 @@ Many scripts can be called directly. Some, marked with `(source)`, provide extra
 | `projects`            | Find and get details about forgotten projects from GitHub.                                                                                                                                 |
 | `review_clutter`      | Interactive tool to archive or delete old files from Desktop/Downloads.                                                                                                                    |
 | `graballtext`         | Capture readable text from the repo into `all_text_contents.txt` for quick review or search.                                                                                               |
-| `done`                | Run any long command and get a system notification when it's finished.                                                                                                                     |
+| `did`                 | Run any long command and get a system notification when it's finished.                                                                                                                     |
 | `pomo`                | Start a 25-minute Pomodoro timer with break reminder (alias for `take_a_break 25`).                                                                                                        |
 | `next`                | Show only your top priority task (alias for `todo top 1`).                                                                                                                                 |
 | `systemlog`           | View the last 20 automation events from the central audit log.                                                                                                                             |

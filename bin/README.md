@@ -45,8 +45,8 @@ This directory contains 10 AI dispatcher scripts plus 4 advanced features that p
 **Purpose:** Debug code, optimize scripts, provide technical analysis
 
 **Input:** Reads from stdin
-**Model:** `DHP_TECH_MODEL` (default: fast, capable model)
-**Specialist:** `ai-staff-hq/staff/technical/automation-specialist.yaml`
+**Model:** `TECH_MODEL` (default: `xiaomi/mimo-v2-flash:free`)
+**Specialist:** `ai-staff-hq/staff/tech/automation-specialist.yaml`
 
 **Usage:**
 ```bash
@@ -77,7 +77,7 @@ echo "TypeError: undefined is not a function" | tech
 **Purpose:** Generate complete story packages with beat sheets, characters, sensory details
 
 **Input:** Story idea or logline as argument
-**Model:** `DHP_CREATIVE_MODEL` (default: GPT-4o)
+**Model:** `CREATIVE_MODEL` (default: `xiaomi/mimo-v2-flash:free`)
 **Specialists:** Chief of Staff, Narrative Designer, Creative Strategist, Meditation Instructor
 **Output Location:** Configurable via `CREATIVE_OUTPUT_DIR` (default: `~/Projects/creative-writing/`)
 
@@ -104,7 +104,7 @@ dhp-creative.sh --stream "Software engineer's AI becomes sentient"
 **Purpose:** Story structure analysis, plot development, character arcs
 
 **Input:** Reads from stdin
-**Model:** `DHP_CREATIVE_MODEL`
+**Model:** `CREATIVE_MODEL`
 **Specialist:** `ai-staff-hq/staff/producers/narrative-designer.yaml`
 
 **Usage:**
@@ -131,7 +131,7 @@ echo "Character goes from selfish to selfless" | narrative
 **Purpose:** Sales copy, email sequences, landing pages, conversion-focused messaging
 
 **Input:** Reads from stdin
-**Model:** `DHP_CREATIVE_MODEL`
+**Model:** `CREATIVE_MODEL`
 **Specialist:** `ai-staff-hq/staff/producers/copywriter.yaml`
 
 **Usage:**
@@ -158,7 +158,7 @@ echo "SaaS tool for content creators - convert visitors" | copy
 **Purpose:** SEO-optimized evergreen guides and blog content
 
 **Input:** Topic as argument
-**Model:** `DHP_CONTENT_MODEL` (default: GPT-4o)
+**Model:** `CONTENT_MODEL` (default: `xiaomi/mimo-v2-flash:free`)
 **Specialists:** Chief of Staff, Market Analyst, Copywriter
 **Output Location:** Configurable via `CONTENT_OUTPUT_DIR` (falls back to `$BLOG_DIR/content/guides/`)
 
@@ -192,7 +192,7 @@ dhp-content.sh --stream --context "Advanced Git workflows"
 **Purpose:** Strategic analysis, insights, patterns, and actionable recommendations
 
 **Input:** Reads from stdin
-**Model:** `DHP_STRATEGY_MODEL` (defaults to `DHP_CONTENT_MODEL`)
+**Model:** `STRATEGY_MODEL` (defaults to `DEFAULT_MODEL` / `xiaomi/mimo-v2-flash:free`)
 **Specialist:** `ai-staff-hq/staff/strategy/chief-of-staff.yaml`
 
 **Usage:**
@@ -224,7 +224,7 @@ cat weekly-metrics.txt | strategy
 **Purpose:** Brand positioning, voice/tone development, competitive analysis
 
 **Input:** Reads from stdin
-**Model:** `DHP_STRATEGY_MODEL`
+**Model:** `BRAND_MODEL` (falls back to `STRATEGY_MODEL`)
 **Specialist:** `ai-staff-hq/staff/strategy/brand-builder.yaml`
 
 **Usage:**
@@ -251,7 +251,7 @@ echo "Analyze positioning vs. other AI content creators" | brand
 **Purpose:** SEO keyword research, trend analysis, audience insights
 
 **Input:** Reads from stdin
-**Model:** `DHP_STRATEGY_MODEL`
+**Model:** `STRATEGY_MODEL`
 **Specialist:** `ai-staff-hq/staff/strategy/market-analyst.yaml`
 
 **Usage:**
@@ -280,7 +280,7 @@ echo "Who's searching for AI writing assistance?" | market
 **Purpose:** Mindset coaching through stoic principles, reframing challenges
 
 **Input:** Reads from stdin
-**Model:** `DHP_STRATEGY_MODEL`
+**Model:** `STRATEGY_MODEL`
 **Specialist:** `ai-staff-hq/staff/health-lifestyle/stoic-coach.yaml`
 
 **Usage:**
@@ -307,7 +307,7 @@ echo "Feeling stuck in analysis paralysis" | stoic
 **Purpose:** Research organization, source summarization, knowledge synthesis
 
 **Input:** Reads from stdin
-**Model:** `DHP_STRATEGY_MODEL`
+**Model:** `STRATEGY_MODEL`
 **Specialist:** `ai-staff-hq/staff/strategy/academic-researcher.yaml`
 
 **Usage:**
@@ -372,10 +372,13 @@ All dispatchers require:
 
 2. **Model Configuration** in `.env`:
    ```bash
-   DHP_TECH_MODEL=openai/gpt-4o-mini       # Fast for debugging
-   DHP_CREATIVE_MODEL=openai/gpt-4o        # Creative tasks
-   DHP_CONTENT_MODEL=openai/gpt-4o         # Content & strategy
-   DHP_STRATEGY_MODEL=openai/gpt-4o        # Optional, defaults to content
+   DEFAULT_MODEL=xiaomi/mimo-v2-flash:free
+   TECH_MODEL=xiaomi/mimo-v2-flash:free
+   CREATIVE_MODEL=xiaomi/mimo-v2-flash:free
+   CONTENT_MODEL=xiaomi/mimo-v2-flash:free
+   STRATEGY_MODEL=xiaomi/mimo-v2-flash:free
+   BRAND_MODEL=xiaomi/mimo-v2-flash:free   # Optional brand override
+   MORPHLING_MODEL=xiaomi/mimo-v2-flash:free
    ```
 
 3. **AI-Staff-HQ Submodule** at `~/dotfiles/ai-staff-hq/`
@@ -440,7 +443,7 @@ if [ -z "$OPENROUTER_API_KEY" ]; then
     echo "Error: OPENROUTER_API_KEY not set." >&2; exit 1
 fi
 
-MODEL="${DHP_YOUR_MODEL}"
+MODEL="${YOUR_MODEL}"
 if [ -z "$MODEL" ]; then
     echo "Error: Model not configured." >&2; exit 1
 fi

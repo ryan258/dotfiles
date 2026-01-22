@@ -19,7 +19,7 @@ A visual guide to understanding the architecture and data flow.
 │                       COMMAND LAYER                              │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
 │  │   Aliases    │  │   Scripts    │  │      AI      │          │
-│  │  (150+ cmds) │  │  (56 files)  │  │ (10 dispatch)│          │
+│  │  (200+ cmds) │  │  (66 files)  │  │ (10 dispatch)│          │
 │  └──────────────┘  └──────────────┘  └──────────────┘          │
 └──────────────────────────┬───────────────────────────────────────┘
                            │
@@ -157,7 +157,7 @@ Optional:
            ▼                  ▼
   ┌────────────────────────────────────┐
   │          Parallel Execution         │
-  │     (66 Specialists / 6 Depts)     │
+  │     (68 Specialists / 7 Depts)     │
   └─────────────────┬──────────────────┘
                     │
                     ▼
@@ -166,7 +166,7 @@ Optional:
            └────────┬────────┘
                     │
                     ├── Display to terminal
-                    └── Save to ~/.config/dotfiles-data/ai-output/
+                    └── Save to ~/Documents/AI_Staff_HQ_Outputs/ (default)
 
 Advanced Features:
   dhp-chain    ──► Sequential processing through multiple AIs
@@ -345,9 +345,9 @@ Additional Protection:
 ├── zsh/                    # Shell configuration
 │   ├── .zshrc             # Interactive shell setup
 │   ├── .zprofile          # Login shell setup
-│   └── aliases.zsh        # 150+ command shortcuts
+│   └── aliases.zsh        # 200+ command shortcuts
 │
-├── scripts/               # Core automation (56 files)
+├── scripts/               # Core automation (66 files)
 │   ├── todo.sh           # Task management
 │   ├── journal.sh        # Journaling system
 │   ├── startday.sh       # Morning briefing
@@ -366,7 +366,7 @@ Additional Protection:
 │   └── ... (19 more)
 │
 ├── ai-staff-hq/          # AI specialist definitions (submodule)
-│   ├── staff/            # 41 YAML specialist files
+│   ├── staff/            # 68 YAML specialist files
 │   └── squads.json       # Dispatcher→specialist mapping
 │
 ├── templates/            # Spec-driven workflow templates
@@ -412,8 +412,9 @@ Additional Protection:
 ├── clipboard_history/
 ├── how-to/
 ├── specs/
-├── cache/
-└── ai-output/
+└── cache/
+
+~/Documents/AI_Staff_HQ_Outputs/  # Default AI output folders (override in .env)
 ```
 
 ---
@@ -463,7 +464,7 @@ content         # Content creation
 creative        # Story generation
 strategy        # Strategic decisions
 stoic           # Mindset coaching
-ai_suggest      # Context-aware recommendations
+ai-suggest      # Context-aware recommendations
 ```
 
 ### 📚 Content
@@ -478,7 +479,7 @@ howto           # Personal wiki
 ```
 findtext        # Search file contents
 findbig         # Largest files
-tidy            # Clean Downloads
+tidydown        # Clean Downloads
 clip            # Clipboard manager
 remind          # Scheduled reminders
 break           # Break timer
@@ -527,7 +528,7 @@ Day 20-21: Set up on-enter commands
 ```
 Day 22-24: Try one AI (start with stoic or tech)
 Day 25-26: Use content with --context flag
-Day 27-28: Experiment with ai_suggest
+Day 27-28: Experiment with ai-suggest
 ```
 
 ### Month 2+: Advanced Features
@@ -537,7 +538,7 @@ Day 27-28: Experiment with ai_suggest
 • Create spec templates for common tasks
 • Chain AI dispatchers
 • Customize workflows
-• Explore all 56 scripts
+• Explore all 66 scripts
 ```
 
 ---
@@ -554,7 +555,7 @@ A: Yes, automatically every evening via `goodevening`. Manual backup: `backup-da
 A: Run `dotfiles-check` - validates scripts, dependencies, AI dispatchers, and data.
 
 **Q: Which AI should I use?**
-A: Run `ai_suggest` for context-aware recommendations based on your current situation.
+A: Run `ai-suggest` for context-aware recommendations based on your current situation.
 
 **Q: I forgot what a command does.**
 A: Run `whatis <command>` for documentation.
@@ -602,7 +603,7 @@ A: Yes! Most features work cross-platform. Some macOS-specific features (notific
 5. **Ask for help:**
    ```bash
    whatis <command>    # Documentation
-   ai_suggest          # What should I do?
+   ai-suggest          # What should I do?
    ```
 
 ---

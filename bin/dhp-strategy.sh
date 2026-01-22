@@ -9,9 +9,9 @@ source "$(dirname "$0")/dhp-shared.sh"
 
 dhp_dispatch \
     "Strategic Analysis" \
-    "openrouter/polaris-alpha" \
+    "xiaomi/mimo-v2-flash:free" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Strategy/Analysis" \
-    "DHP_STRATEGY_MODEL" \
+    "STRATEGY_MODEL" \
     "DHP_STRATEGY_OUTPUT_DIR" \
     "Analyze the following inputs and provide strategic direction:
 

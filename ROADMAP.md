@@ -1,6 +1,6 @@
 # Unified Roadmap
 
-_Last updated: January 4, 2026 (Phase 1 features complete; content lifecycle features shipped; ai_suggest health/meds context added)_
+_Last updated: January 22, 2026 (Phase 1 features complete; content lifecycle features shipped; ai-suggest health/meds context added)_
 
 ## 0. Vision & Constraints
 
@@ -12,13 +12,13 @@ _Last updated: January 4, 2026 (Phase 1 features complete; content lifecycle fea
 ## 1. Priority Snapshot
 
 - **✅ Completed (v2.1.0 - January 1, 2026):**
-  - **Core Infrastructure:** 62 automation scripts, 10 AI dispatchers with streaming support, shared library architecture, spec-driven workflow templates, cross-platform date utilities
+  - **Core Infrastructure:** 66 automation scripts, 10 AI dispatchers with streaming support, shared library architecture, spec-driven workflow templates, cross-platform date utilities
   - **Energy Management (F2):** Spoon theory budget tracking with daily initialization, activity-based expenditure, debt tracking, startday/todo integration
   - **Data Correlation (F3):** Statistical correlation engine with Python-based Pearson calculation, daily report generation, multi-dataset analysis, automatic data aggregation
-  - **Workflow Intelligence (W2):** ai_suggest includes energy scoring and medication adherence signals for context-aware recommendations
+  - **Workflow Intelligence (W2):** ai-suggest includes energy scoring and medication adherence signals for context-aware recommendations
   - **Reliability:** All critical bugs resolved, 14/14 BATS tests passing (11 core + 8 spoon + 3 correlation), zero known critical issues
   - **Security:** A+ security grade, enhanced path validation, input sanitization, credential redaction, comprehensive security documentation
-  - **AI Integration:** 41 AI Staff HQ specialists active, dynamic squad configuration, optimized free models, real-time streaming, multi-specialist orchestration
+  - **AI Integration:** 68 AI Staff HQ specialists active, dynamic squad configuration, optimized free models, real-time streaming, multi-specialist orchestration
   - **Blog Workflow:** End-to-end publishing pipeline with draft management, AI-powered generation/refinement, validation, workflow orchestration, and git hooks
   - **Documentation:** Professional-grade README, CHANGELOG, SECURITY.md, TROUBLESHOOTING.md, comprehensive usage guides
 - **Now (governance & reliability):**
@@ -81,11 +81,11 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 
 ### 2.7 AI Staff HQ (Specialist Library & Tooling)
 
-**Current Status:** 41 specialists active across 9 categories. All specialists have YAML definitions with activation patterns, system prompts, and integration templates.
+**Current Status:** 68 specialists active across 7 departments. All specialists have YAML definitions with activation patterns, system prompts, and integration templates.
 
 **Integration Status:** 10 active dispatchers use specialists via dynamic squad configuration (`squads.json`). Spec-driven workflow supports all specialists via templates in `~/dotfiles/templates/`.
 
-- **Completed:** S0 moved to `CHANGELOG.md` (41 specialists shipped, dynamic squads integrated).
+- **Completed:** S0 moved to `CHANGELOG.md` (68 specialists shipped, dynamic squads integrated).
 - [ ] **S1 · Extended coverage** - _Not yet implemented_. Plan: Implement remaining 66 niche specialists (culinary, audio/podcast, publishing, wellness, specialty commerce) to reach 107 specialists.
 - [ ] **S2 · Specialist validator** - _Not yet implemented_. Plan: Build lint/validation tooling for YAML schema validation.
 - [x] **S3 · Documentation refresh** - **Completed**. Implemented `dhp-swarm` CLI documentation, updated `README.md` and `ROADMAP.md` for Phase 4 Swarm Orchestration features (streaming, verbose logging).
@@ -109,7 +109,7 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 
 **Blog Publishing:** Complete end-to-end workflow from idea generation through validation to publish-ready commits. AI-powered content generation and refinement.
 
-**AI Integration:** 10 active dispatchers with real-time streaming, 41 AI specialists, dynamic squad configuration, spec-driven workflow templates, context injection, multi-specialist orchestration.
+**AI Integration:** 10 active dispatchers with real-time streaming, 68 AI specialists, dynamic squad configuration, spec-driven workflow templates, context injection, multi-specialist orchestration.
 
 **Infrastructure:** Shared libraries, robust error handling, cross-platform date utilities, comprehensive validation, security hardening, professional documentation.
 
@@ -144,7 +144,7 @@ Task IDs (`R`, `C`, `O`, `W`, `B`, `T`, `S`) map to Reliability, Config, Observa
 - **Security Grade:** A+ (comprehensive audit complete, enhanced path validation)
 - **Code Quality:** A+ (shellcheck compliant, proper error handling)
 - **Platform Support:** macOS (primary), Linux (cross-platform utilities including date handling)
-- **Scripts:** 62 automation scripts, 10 AI dispatchers, 4 advanced AI features
+- **Scripts:** 66 automation scripts, 10 AI dispatchers, 4 advanced AI features
 - **Libraries:** 8 shared libraries (time tracking, spoon budget, correlation engine, date utils, context capture, and 3 AI libraries)
 - **Documentation:** 8 comprehensive docs, inline help for all commands, data format documentation
 

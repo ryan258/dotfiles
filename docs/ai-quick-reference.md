@@ -1,12 +1,12 @@
 # AI Quick Reference
 
-## Swarm Intelligence: 66+ Specialists at Your Command
+## Swarm Intelligence: 68 Specialists at Your Command
 
 **All free-tier models.** Use them without guilt or cost concerns.
 
 > **🚀 COMPLETE MIGRATION:** All dispatcher tools (`content`, `creative`, `tech`, `market`, `strategy`, etc.) now use the **Universal Swarm Engine**. Instead of one AI, you get a dynamic team coordinated by a Chief of Staff.
 
-> **⚙️ CONFIGURATION:** All models listed below are **defaults** tailored for each role. You can change any of them in your `.env` file (see `dotfiles/.env`).
+> **⚙️ CONFIGURATION:** All models listed below are **defaults** tailored for each role. You can change any of them in your `.env` file (see `~/dotfiles/.env`).
 
 ---
 
@@ -15,7 +15,7 @@
 When you run _any_ command (e.g., `market "Analyze..."` or `tech "Debug..."`), the system now:
 
 1. **Plans:** A Chief of Staff analyzes your request and breaks it into atomic tasks.
-2. **Staffs:** Dynamic matching selects the perfect specialists from **66 agents** (e.g., "Historical Storyteller", "React Native Expert", "Stoic Coach").
+2. **Staffs:** Dynamic matching selects the perfect specialists from **68 agents** (e.g., "Historical Storyteller", "React Native Expert", "Stoic Coach").
 3. **Executes:** Tasks run in parallel waves for maximum speed.
 4. **Synthesizes:** The Chief of Staff compiles all work into a cohesive final result.
 
@@ -25,7 +25,7 @@ When you run _any_ command (e.g., `market "Analyze..."` or `tech "Debug..."`), t
 
 ## 🛠 1. Technical (`tech`)
 
-**Default Model:** DeepSeek R1 (`TECH_MODEL`)
+**Default Model:** Xiaomi MiMo v2 Flash (`TECH_MODEL`)
 **Alias:** `tech`
 
 ### When to Use
@@ -72,7 +72,7 @@ EOF
 
 ## ✍️ 2. Content (`content`)
 
-**Default Model:** Qwen3 Coder (`CONTENT_MODEL`)
+**Default Model:** Xiaomi MiMo v2 Flash (`CONTENT_MODEL`)
 **Alias:** `content`
 
 ### When to Use
@@ -113,7 +113,7 @@ echo "How to use AI for personal productivity" | content
 
 ## 🎨 3. Creative (`creative`)
 
-**Default Model:** Llama 4 Maverick (`CREATIVE_MODEL`)
+**Default Model:** Xiaomi MiMo v2 Flash (`CREATIVE_MODEL`)
 **Alias:** `creative`
 
 ### When to Use
@@ -148,7 +148,7 @@ creative "Essay about finding productivity systems that work with MS"
 
 ## 📝 4. Copywriting (`copy`)
 
-**Default Model:** Llama 4 Maverick (`CREATIVE_MODEL`)
+**Default Model:** Xiaomi MiMo v2 Flash (`CREATIVE_MODEL`)
 **Alias:** `copy`
 
 ### When to Use
@@ -183,7 +183,7 @@ copy "CTA for newsletter signup, focus on practical tips"
 
 ## 🧭 5. Strategy (`strategy`)
 
-**Default Model:** Polaris Alpha (`STRATEGY_MODEL`)
+**Default Model:** Xiaomi MiMo v2 Flash (`STRATEGY_MODEL`)
 **Alias:** `strategy`
 **Role:** Your Chief of Staff
 
@@ -230,7 +230,7 @@ strategy "My blog gets traffic but no engagement. What should I do?"
 
 ## 🎯 6. Brand (`brand`)
 
-**Default Model:** Polaris Alpha (`STRATEGY_MODEL`)
+**Default Model:** Xiaomi MiMo v2 Flash (`BRAND_MODEL`, fallback: `STRATEGY_MODEL`)
 **Alias:** `brand`
 
 ### When to Use
@@ -271,7 +271,7 @@ brand "Define voice and tone for content about MS that's honest but not depressi
 
 ## 📊 7. Market Research (`market`)
 
-**Default Model:** Polaris Alpha (`MARKET_MODEL`)
+**Default Model:** Xiaomi MiMo v2 Flash (`MARKET_MODEL`)
 **Alias:** `market`
 
 ### When to Use
@@ -311,7 +311,7 @@ market "Who are the main voices in MS + productivity space?"
 
 ## 🧘 8. Stoic Coaching (`stoic`)
 
-**Default Model:** Gemma 3 9B (`STOIC_MODEL`)
+**Default Model:** Xiaomi MiMo v2 Flash (`STOIC_MODEL`)
 **Alias:** `stoic`
 
 ### When to Use
@@ -358,7 +358,7 @@ stoic "How do I stay motivated when progress is so slow?"
 
 ## 🔬 9. Research (`research`)
 
-**Default Model:** Gemma 3 9B (`RESEARCH_MODEL`)
+**Default Model:** Xiaomi MiMo v2 Flash (`RESEARCH_MODEL`)
 **Alias:** `research`
 
 ### When to Use
@@ -398,7 +398,7 @@ research "Explain how AI language models work at a high level"
 
 ## 📖 10. Narrative (`narrative`)
 
-**Default Model:** Llama 4 Maverick (`CREATIVE_MODEL`)
+**Default Model:** Xiaomi MiMo v2 Flash (`CREATIVE_MODEL`)
 **Alias:** `narrative`
 
 ### When to Use
@@ -463,7 +463,7 @@ dhp-project "Launch a blog series about productivity with chronic illness"
 ### Context-Aware Suggestions
 
 ```bash
-ai_suggest
+ai-suggest
 ```
 
 **What it does:** Analyzes your current situation and recommends which AI to use.
@@ -606,11 +606,13 @@ content "long article" --stream
 
 ### Save Output
 
-All dispatcher output is automatically saved to:
+All dispatcher output is automatically saved to (default):
 
 ```
-~/.config/dotfiles-data/ai-output/<dispatcher>/<timestamp>.md
+~/Documents/AI_Staff_HQ_Outputs/<category>/<dispatcher>/<slug>.md
 ```
+
+Override per dispatcher with `DHP_*_OUTPUT_DIR` in `~/dotfiles/.env`.
 
 **To archive manually:**
 
@@ -694,7 +696,7 @@ tail ~/.config/dotfiles-data/system.log
 | Feeling stuck mentally   | `stoic`      |
 | Learn something new      | `research`   |
 | Story structure feedback | `narrative`  |
-| Not sure which to use    | `ai_suggest` |
+| Not sure which to use    | `ai-suggest` |
 
 ---
 
@@ -706,6 +708,6 @@ tail ~/.config/dotfiles-data/system.log
 ✅ Use `--context` to include **your recent data**
 ✅ All output is **automatically saved**
 ✅ **Chain** multiple AIs for complex tasks
-✅ Run `ai_suggest` when you're **not sure** what to do
+✅ Run `ai-suggest` when you're **not sure** what to do
 
 **The AI is here to help. Use it like you'd use a coworker - frequently and without hesitation.** 🤖

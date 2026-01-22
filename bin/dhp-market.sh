@@ -9,9 +9,9 @@ source "$(dirname "$0")/dhp-shared.sh"
 
 dhp_dispatch \
     "Market Analysis" \
-    "meta-llama/llama-4-scout:free" \
+    "xiaomi/mimo-v2-flash:free" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Strategy/Market_Research" \
-    "DHP_MARKET_MODEL" \
+    "MARKET_MODEL" \
     "DHP_MARKET_OUTPUT_DIR" \
     "
 --- MARKET ANALYSIS OBJECTIVES ---

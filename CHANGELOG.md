@@ -1,8 +1,23 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** January 1, 2026
+**Last Updated:** January 22, 2026
 
 This document tracks all major implementations, improvements, and fixes to the Daily Context System.
+
+---
+
+## Version 2.2.0 (January 5, 2026) - Swarm Orchestration
+
+**Status:** ✅ Production Ready
+
+This release introduces Swarm Orchestration for all AI dispatchers, upgrading the AI workflow from single‑agent calls to coordinated multi‑agent execution.
+
+### Highlights
+- **Universal Swarm Engine:** All `dhp-*` dispatchers route through `bin/dhp-swarm.py` for unified orchestration.
+- **Dynamic Specialist Selection:** Requests are decomposed and staffed automatically using the capability index.
+- **Parallel Execution:** Tasks execute in waves to reduce latency and increase throughput.
+- **Observability:** Added `--verbose` progress output and `--stream` JSON events for long or integrated runs.
+- **Documentation:** Updated Swarm guidance and quick reference materials to reflect the new engine.
 
 ---
 

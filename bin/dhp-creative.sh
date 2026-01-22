@@ -9,9 +9,9 @@ source "$(dirname "$0")/dhp-shared.sh"
 
 dhp_dispatch \
     "Creative Workflow" \
-    "meta-llama/llama-4-maverick:free" \
+    "xiaomi/mimo-v2-flash:free" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Creative/Stories" \
-    "DHP_CREATIVE_MODEL" \
+    "CREATIVE_MODEL" \
     "DHP_CREATIVE_OUTPUT_DIR" \
     "
 --- CREATIVE REQUIREMENTS ---

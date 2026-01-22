@@ -148,7 +148,24 @@ dhp_dispatch() {
     fi
 
     # 4. Configuration (Model & Output)
-    local model_final="${!env_model_var:-${DHP_STRATEGY_MODEL:-$default_model}}"
+    # Primary env var is passed in (e.g., TECH_MODEL); fall back to legacy DHP_* if set.
+    local model_primary="${!env_model_var:-}"
+    local legacy_var="DHP_${env_model_var}"
+    local model_legacy="${!legacy_var:-}"
+    local strategy_override="${STRATEGY_MODEL:-${DHP_STRATEGY_MODEL:-}}"
+    local default_model_env="${DEFAULT_MODEL:-${DHP_DEFAULT_MODEL:-}}"
+    local model_final=""
+    if [ -n "$model_primary" ]; then
+        model_final="$model_primary"
+    elif [ -n "$model_legacy" ]; then
+        model_final="$model_legacy"
+    elif [ -n "$default_model_env" ]; then
+        model_final="$default_model_env"
+    elif [ -n "$strategy_override" ]; then
+        model_final="$strategy_override"
+    else
+        model_final="$default_model"
+    fi
     
     # Resolve Output Directory
     local output_dir_final

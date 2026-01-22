@@ -2,7 +2,7 @@
 
 Practical examples showing dispatcher usage patterns in the dotfiles environment.
 
-> **Note:** These examples use the current dispatcher setup with configurable models (DeepSeek R1, Llama 4, Qwen3, etc.). Model selection is configured via `.env` variables.
+> **Note:** These examples use the current dispatcher setup with configurable models. The default is `xiaomi/mimo-v2-flash:free`, configured via `.env` variables.
 
 ## Basic Usage Patterns
 

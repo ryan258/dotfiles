@@ -17,7 +17,7 @@ Examples:
 - `ll` instead of `ls -lah`
 - `..` instead of `cd ..`
 
-**150+ aliases** mean you rarely need to remember full paths or commands.
+**200+ aliases** mean you rarely need to remember full paths or commands.
 
 ---
 
@@ -249,7 +249,7 @@ content "blog topic" --full-context   # Includes git status + README
 
 ### AI Suggests What to Do
 ```bash
-ai_suggest
+ai-suggest
 ```
 
 **Analyzes:**
@@ -629,7 +629,7 @@ tech "question"        # Or stoic, or content
 ```bash
 whatis <command>       # What does this do?
 dotfiles-check         # Is everything working?
-ai_suggest             # What should I do next?
+ai-suggest             # What should I do next?
 ```
 
 **Documentation:**

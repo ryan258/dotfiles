@@ -31,7 +31,7 @@ if [ -z "$PIPED_CONTENT" ]; then
 fi
 
 # --- 4. MODEL & STAFF ---
-MODEL="${CREATIVE_MODEL:-${DHP_CREATIVE_MODEL:-meta-llama/llama-4-maverick:free}}"
+MODEL="${CREATIVE_MODEL:-${DHP_CREATIVE_MODEL:-${DEFAULT_MODEL:-xiaomi/mimo-v2-flash:free}}}"
 OUTPUT_DIR=$(default_output_dir "$HOME/Documents/AI_Staff_HQ_Outputs/Creative/Copywriting" "DHP_COPY_OUTPUT_DIR")
 mkdir -p "$OUTPUT_DIR"
 SLUG=$(echo "$PIPED_CONTENT" | tr '[:upper:]' '[:lower:]' | tr -s '[:punct:][:space:]' '-' | cut -c 1-50)

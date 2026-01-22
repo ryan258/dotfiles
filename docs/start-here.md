@@ -47,7 +47,7 @@ gcal agenda        # View today's calendar
 tech "question"            # Technical debugging
 content "blog topic"       # Write content
 stoic "I'm struggling"     # Mindset coaching
-ai_suggest                 # Which AI should I use?
+ai-suggest                 # Which AI should I use?
 ```
 
 ---
@@ -82,7 +82,7 @@ journal add "Exploring my dotfiles system - Day 1"
 ### Minute 4: Try One AI
 
 ```bash
-ai_suggest      # Get a recommendation
+ai-suggest      # Get a recommendation
 # Then try the suggested AI:
 stoic "I want to understand this system better"
 ```
@@ -197,7 +197,7 @@ goodevening     # Celebrate + backup
 | `tech "question"`  | Debug code       |
 | `content "topic"`  | Write content    |
 | `stoic "struggle"` | Get perspective  |
-| `ai_suggest`       | Which AI to use? |
+| `ai-suggest`       | Which AI to use? |
 
 ### Help
 
@@ -239,7 +239,7 @@ goodevening     # Celebrate + backup
 ### Path 4: "I Want to Use AI"
 
 **Read:** [AI Quick Reference](ai-quick-reference.md)
-**Try:** `ai_suggest` then one dispatcher
+**Try:** `ai-suggest` then one dispatcher
 **Try:** `spec tech` for structured prompting
 **Time:** 15 minutes
 
@@ -293,7 +293,7 @@ whatis health
 dotfiles-check
 
 # AI suggestions
-ai_suggest
+ai-suggest
 ```
 
 ### Guides by Topic
@@ -317,8 +317,8 @@ See `~/dotfiles/TROUBLESHOOTING.md` for common issues.
 ✅ **Low cognitive load** - Designed for brain-fog days
 ✅ **Auto-backup** - Data saved nightly via `goodevening`
 ✅ **Forgiving** - `todo undo`, git-backed, validation
-✅ **Free AI** - Use all 10 specialists without cost
-✅ **Help available** - `whatis`, `ai_suggest`, docs
+✅ **Free AI** - Use all 10 dispatchers (68 specialists) without cost
+✅ **Help available** - `whatis`, `ai-suggest`, docs
 
 ---
 

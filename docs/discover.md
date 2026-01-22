@@ -428,7 +428,7 @@ findbig                # 10 largest files/dirs
 ### Clean Up Downloads
 
 ```bash
-tidy
+tidydown
 ```
 
 **What it does:** Interactive cleanup of your Downloads folder. Super satisfying.
@@ -437,7 +437,7 @@ tidy
 
 ## AI Assistants (Swarm Intelligence)
 
-You have **10 AI Departments** on call. Each command launches a **Swarm** of specialized agents to handle your request. They're all free-tier models, so use them generously.
+You have **10 AI dispatcher commands** on call. Each command launches a **Swarm** of specialized agents to handle your request. They're all free-tier models, so use them generously.
 
 ### 1. Technical Help (`tech`)
 
@@ -447,7 +447,7 @@ cat broken_script.sh | tech --stream
 ```
 
 **When to use:** Debugging code, optimizing scripts, understanding errors.
-**Model:** DeepSeek R1 (excellent at technical reasoning)
+**Model:** Xiaomi MiMo v2 Flash (`xiaomi/mimo-v2-flash:free`)
 
 ---
 
@@ -459,7 +459,7 @@ echo "topic: productivity with MS" | content --context
 ```
 
 **When to use:** Blog posts, guides, SEO-optimized content.
-**Model:** Qwen3 Coder
+**Model:** Xiaomi MiMo v2 Flash (`xiaomi/mimo-v2-flash:free`)
 **Pro tip:** Use `--context` to include your recent journal and todos.
 
 ---
@@ -562,7 +562,7 @@ dhp-project "Launch a blog series about productivity with chronic illness"
 **Get AI suggestions based on your current context:**
 
 ```bash
-ai_suggest
+ai-suggest
 ```
 
 **What it does:** Analyzes your current directory, todos, journal, and time of day to recommend relevant AI specialists.
@@ -574,8 +574,8 @@ ai_suggest
 ### Start a New Project
 
 ```bash
-start-project       # Interactive wizard
-mkproject-py        # Python project with venv
+newproject          # Interactive wizard
+newpy               # Python project with venv
 ```
 
 ---
@@ -678,7 +678,7 @@ If validation warns about insecure permissions, run:
 ### Organize Files
 
 ```bash
-file-org            # Sort by type/date/size
+organize bytype     # Sort by type (or bydate/bysize)
 ```
 
 ---
@@ -686,7 +686,7 @@ file-org            # Sort by type/date/size
 ### Find Duplicates
 
 ```bash
-dup-find            # Checksum-based duplicate detection
+finddupes           # Checksum-based duplicate detection
 ```
 
 ---
@@ -694,7 +694,7 @@ dup-find            # Checksum-based duplicate detection
 ### Clean Up Old Files
 
 ```bash
-review-clutter      # Interactive archive/delete
+review_clutter.sh   # Interactive archive/delete
 ```
 
 ---
@@ -728,7 +728,7 @@ sysinfo             # Hardware, CPU, memory, disk
 ### Copy Text from All Files
 
 ```bash
-grab-all-text > output.txt
+graballtext > output.txt
 ```
 
 **What it does:** Concatenates all readable files (skips git, binaries). Great for AI context.
@@ -738,8 +738,8 @@ grab-all-text > output.txt
 ### Get Notified When Command Finishes
 
 ```bash
-done npm install
-done long-running-script.sh
+did npm install
+did long-running-script.sh
 ```
 
 **What it does:** Runs the command, sends macOS notification when done.
@@ -859,7 +859,7 @@ blog ideas && blog generate "Title" -p thoughtful-guide && blog status
 - `docs/ai-examples.md` - Real AI dispatcher examples
 - `docs/clipboard.md` - Clipboard workflow examples
 - `bin/README.md` - Complete AI dispatcher guide
-- `scripts/README.md` - All 56 scripts explained
+- `scripts/README.md` - All 66 scripts explained
 
 ### Validation
 
