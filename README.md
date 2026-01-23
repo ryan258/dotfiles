@@ -214,7 +214,7 @@ See `CHANGELOG.md` for the play-by-play of the latest blindspots and fixes.
 
 ## AI Staff HQ Integration
 
-**NEW:** Your dotfiles now include a complete AI workforce powered by **10 active dispatchers** plus **4 advanced features** (multi-specialist orchestration, context-aware suggestions, dispatcher chaining, and local context injection) accessing 42 specialized professionals through the [AI-Staff-HQ](https://github.com/ryan258/AI-Staff-HQ) submodule.
+**NEW:** Your dotfiles now include a complete AI workforce powered by **10 active dispatchers** plus **4 advanced features** (multi-specialist orchestration, context-aware suggestions, dispatcher chaining, and local context injection) accessing 68 specialized professionals through the [AI-Staff-HQ](https://github.com/ryan258/AI-Staff-HQ) submodule.
 
 ### Quick Start with Dispatchers
 
@@ -472,13 +472,13 @@ dhp-content --full-context "Comprehensive guide topic"
 
 The 10 dispatchers provide access to 68 specialists across 7 departments:
 
-- **Creative:** Art Director, Copywriter, Narrative Designer, Sound Designer, and more
-- **Strategy:** Chief of Staff, Brand Builder, Market Analyst, Creative Strategist
-- **Technical:** Automation Specialist, Prompt Engineer, Toolmaker, Productivity Architect
-- **Personal:** Stoic Coach, Patient Advocate, Head Librarian
-- **Kitchen:** Executive Chef, Nutritionist, Sommelier (11 specialists)
-- **Commercialization:** Literary Agent
-- **Specialized:** Historical Storyteller, Futurist, Transmedia Producer, and more
+- **Strategy (13):** Chief of Staff, Market Analyst, Brand Builder, Creative Strategist, Data Analyst, Trend Forecaster, Academic Researcher, Learning Scientist, Ethicist, and more
+- **Producers (15):** Art Director, Copywriter, Narrative Designer, Creative Writer, Beta Reader, Mythologist, Narrator, and more
+- **Commerce (10):** Social Media Strategist, SEO Specialist, Conversion Optimizer, Pricing Strategist, Real Estate specialists
+- **Tech (12):** Automation Specialist, Prompt Engineer, Toolmaker, Productivity Architect, Software Architect, Cybersecurity Specialist
+- **Health/Lifestyle (9):** Stoic Coach, Wellness Coach, Habit Architect, Meditation Instructor, Cognitive Behavioral Therapist
+- **Knowledge (8):** Librarian Babel, Business Lawyer, Tax Strategist, Investment Advisor, Financial Therapist
+- **Meta (1):** Morphling (universal adaptive specialist)
 
 See `bin/README.md` for detailed dispatcher documentation, `ROADMAP.md` for implementation status, and `CHANGELOG.md` for complete feature history.
 

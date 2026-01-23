@@ -134,9 +134,11 @@ Every script in `$SCRIPTS_DIR` has a corresponding wrapper function which ensure
 - `research` / `dhp-research` – Knowledge synthesis and organization
 - `narrative` / `dhp-narrative` – Story structure and plot analysis
 - `copy` / `dhp-copy` – Marketing copy and sales messaging
+- `morphling` / `dhp-morphling` – Universal adaptive specialist that auto-adapts to any task
 - `ai-suggest` – Context-aware dispatcher suggestions
 - `ai-project` / `dhp-project` – Multi-specialist orchestration
 - `ai-chain` / `dhp-chain` – Sequential dispatcher chaining
+- `swipe <command>` – Wrapper that logs command output to swipe file (enable via `SWIPE_LOG_ENABLED=true` in `.env`)
 
 **Flags:** All dispatchers support `--stream` for real-time output
 **Setup:** `cp .env.example .env` and add your OPENROUTER_API_KEY

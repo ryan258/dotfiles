@@ -84,7 +84,8 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 - `dotfiles_check.sh` – System validation script (doctor) that dynamically discovers all scripts and AI dispatchers (68+), verifying dependencies like `rclone`.
 - `backup_data.sh` – Automated backup of entire `~/.config/dotfiles-data/` directory to `~/Backups` and Google Drive.
 - `new_script.sh <name>` – Automate adding new scripts with proper headers, executable permissions, and alias creation.
-- `spec_helper.sh` – **NEW** Spec template workflow - opens structured templates for comprehensive AI dispatcher input.
+- `spec_helper.sh` – Spec template workflow - opens structured templates for comprehensive AI dispatcher input. **Note:** The `spec` alias sources this file to enable template editing workflow.
+- `correlate.sh {run|find-patterns|explain}` – **Correlation Engine** for statistical analysis between datasets. Use `correlate run <file1> <file2>` to calculate Pearson correlation between two time-series files. Supports custom column indices for date/value parsing.
 
 ### Project & Directory Management
 
@@ -140,7 +141,15 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 
 - `weather.sh` – Fetch the forecast for the default city (edit the `city` variable to change it).
 - `cheatsheet.sh` – Display commonly-used commands for quick reference, including AI dispatcher quick start.
-- `ai_suggest.sh` – **NEW** Context-aware AI dispatcher suggestions based on your current environment.
+- `ai_suggest.sh` – Context-aware AI dispatcher suggestions based on your current environment.
+
+### Time Tracking
+
+- `t-start <task_id>` – Start a timer for a task (integrates with todo system)
+- `t-stop` – Stop the active timer and log duration
+- `t-status` – Check if a timer is active and show elapsed time
+
+**Data File:** `~/.config/dotfiles-data/time_tracking.txt`
 
 ### AI Staff HQ Dispatchers (10 Active)
 

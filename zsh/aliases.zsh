@@ -445,12 +445,6 @@ if command -v ggrep >/dev/null 2>&1; then
 else
     alias grep='grep'
 fi
-# Portable grep coloring
-if command -v ggrep >/dev/null 2>&1; then
-  alias grep='ggrep --color=auto'
-else
-  alias grep='grep'
-fi
 
 # =============================================================================
 # BLOG WORKFLOW
@@ -485,6 +479,8 @@ alias stoic="$HOME/dotfiles/bin/dhp-stoic.sh"
 alias research="$HOME/dotfiles/bin/dhp-research.sh"
 alias narrative="$HOME/dotfiles/bin/dhp-narrative.sh"
 alias copy="$HOME/dotfiles/bin/dhp-copy.sh"
+alias morphling="$HOME/dotfiles/bin/dhp-morphling.sh"
+alias dhp-morphling="$HOME/dotfiles/bin/dhp-morphling.sh"
 alias dhp="$HOME/dotfiles/bin/dhp-tech.sh"  # Default to tech dispatcher
 
 # Advanced AI Features (Phase 5)

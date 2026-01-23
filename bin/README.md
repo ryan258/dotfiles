@@ -26,6 +26,7 @@ This directory contains 10 AI dispatcher scripts plus 4 advanced features that p
 | `dhp-research.sh` | `research` | Knowledge synthesis | stdin |
 | `dhp-narrative.sh` | `narrative` | Story structure | stdin |
 | `dhp-copy.sh` | `copy` | Marketing copy | stdin |
+| `dhp-morphling.sh` | `morphling` | Universal adaptive | argument |
 
 ## Advanced Features
 
@@ -326,6 +327,48 @@ cat multiple-sources.txt | research
 - `--stream` - Enable real-time streaming output
 
 **Output:** Key themes, structured organization, connections, next research directions
+
+---
+
+## Universal Adaptive Specialist
+
+### `dhp-morphling.sh` (Morphling)
+
+**Purpose:** Universal "shapeshifting" specialist that auto-adapts to any task by analyzing context
+
+**Input:** Task description as argument
+**Model:** `MORPHLING_MODEL` (default: `xiaomi/mimo-v2-flash:free`)
+**Specialist:** `ai-staff-hq/staff/meta/morphling.yaml`
+**Output Location:** `~/Documents/AI_Staff_HQ_Outputs/Morphling/`
+
+**Usage:**
+```bash
+# Let Morphling analyze context and adapt
+morphling "Review this code for security issues"
+
+# Use in any directory - it gathers context automatically
+cd ~/Projects/my-app && morphling "What should I focus on next?"
+
+# Pipe content for analysis
+cat error.log | morphling "Diagnose this issue"
+```
+
+**Context Gathering:**
+Morphling automatically gathers:
+- Git branch and status (if in a repo)
+- Directory structure (depth 2, using `tree` or `fd`)
+- Current working directory
+
+**How It Works:**
+1. Gathers environmental context (git, directory structure, working dir)
+2. Analyzes your request alongside the context
+3. Determines the optimal persona/role for the task
+4. Shapeshifts into that expert and executes
+
+**Best For:**
+- When you're unsure which specialist to use
+- General-purpose tasks that span multiple domains
+- Quick context-aware assistance in any project
 
 ---
 
@@ -779,6 +822,38 @@ export EDITOR="nano"           # Nano
 - **Consistency** - Same format every time improves AI output
 - **Documentation** - Archived specs serve as project history
 - **Less context switching** - Editor + dispatcher in one workflow
+
+---
+
+---
+
+## Swipe Logging
+
+### `swipe.sh` - Output Logging Wrapper
+
+**Purpose:** Wrap any command and automatically log its output to a swipe file
+
+**Usage:**
+```bash
+# Log any command output
+swipe tech "Summarize today's wins"
+swipe creative "Story idea"
+
+# Works with any dispatcher alias
+swipe market "Analyze competitors"
+```
+
+**Configuration:**
+```bash
+# Enable in .env
+SWIPE_LOG_ENABLED=true
+SWIPE_LOG_FILE=~/Documents/swipe.md  # Optional, defaults to this
+
+# Disable logging (commands still run, just no logging)
+SWIPE_LOG_ENABLED=false
+```
+
+**Output Format:** Commands are logged to the swipe file as timestamped markdown entries with the command and its output preserved in code blocks.
 
 ---
 

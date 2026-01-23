@@ -34,11 +34,13 @@ goodevening     # Evening: celebrate wins + auto-backup
 ```bash
 todo add "task"        # Task management
 journal add "note"     # Quick journaling
-health energy 7    # Track energy 1-10
-spoons init 12     # Daily energy budget
-focus set "thing"  # Set daily intention
-g suggest          # Where should I work today?
-gcal agenda        # View today's calendar
+health energy 7        # Track energy 1-10
+spoons init 12         # Daily energy budget
+focus set "thing"      # Set daily intention
+focus done             # Mark focus complete + archive
+focus history          # View past focus entries
+g suggest              # Where should I work today?
+gcal agenda            # View today's calendar
 ```
 
 ### 3. AI Helpers (Swarm-Powered Team)

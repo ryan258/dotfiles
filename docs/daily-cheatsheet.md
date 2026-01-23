@@ -11,6 +11,9 @@
 | `startday`                   | Morning briefing (auto-runs once daily) |
 | `focus set "my thing today"` | Set daily intention                     |
 | `focus show`                 | View current focus                      |
+| `focus done`                 | Mark focus complete + archive           |
+| `focus history`              | View past focus entries                 |
+| `focus clear`                | Clear current focus                     |
 | `spoons init 12`             | Start daily energy budget               |
 | `todo top`                   | See top 3 tasks only                    |
 | `g suggest`                  | Where should I work today?              |
@@ -82,6 +85,7 @@
 | `creative "idea"`     | Stories, creative projects |
 | `strategy "question"` | Big decisions, planning    |
 | `stoic "struggle"`    | Mindset, perspective       |
+| `morphling "any task"`| Auto-adapts to any need    |
 | `ai-suggest`          | Not sure which AI to use?  |
 
 **Pipe code to AI:**
