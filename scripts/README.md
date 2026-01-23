@@ -7,6 +7,7 @@ This folder collects shell utilities that streamline day-to-day work on macOS—
 ### AI Staff HQ Integration (Phase 6 - November 10, 2025)
 
 **10 Active AI Dispatchers + Advanced Features:**
+
 - Optimized free model (`xiaomi/mimo-v2-flash:free`) via OpenRouter - no API costs
 - Spec template system for structured AI requests (`spec` command)
 - Real-time streaming support (`--stream` flag)
@@ -32,6 +33,7 @@ This folder collects shell utilities that streamline day-to-day work on macOS—
 ### Data Storage
 
 All script data files are centralized in `~/.config/dotfiles-data/` for easy backup and organization:
+
 - `journal.txt` – Journal entries (searchable, AI-analyzable)
 - `todo.txt` & `todo_done.txt` – Task lists (with timestamps, AI-delegatable)
 - `health.txt` – Health appointments, symptoms, energy ratings
@@ -45,19 +47,19 @@ All script data files are centralized in `~/.config/dotfiles-data/` for easy bac
 
 Automated daily backups to `~/Backups/dotfiles_data/` via `goodevening.sh`.
 
-Many helper scripts (for example `goto.sh`, `dev_shortcuts.sh env`, and `recent_dirs.sh`) can change your current directory when they are *sourced* instead of executed. To use them that way, call `source ~/scripts/<script>.sh ...` or set up aliases/functions in your shell configuration.
+Many helper scripts (for example `goto.sh`, `dev_shortcuts.sh env`, and `recent_dirs.sh`) can change your current directory when they are _sourced_ instead of executed. To use them that way, call `source ~/scripts/<script>.sh ...` or set up aliases/functions in your shell configuration.
 
 ### Optional Dependencies
 
 Install these tools with Homebrew if you plan to use the related scripts:
 
-| Tool | Used By | Install |
-| ---- | ------- | ------- |
-| `ffmpeg` | `media_converter.sh video2audio` | `brew install ffmpeg` |
-| `imagemagick` | `media_converter.sh resize_image` | `brew install imagemagick` |
-| `ghostscript` | `media_converter.sh pdf_compress` | `brew install ghostscript` |
-| `jq` | Various JSON helpers (recommended) | `brew install jq` |
-| `unrar` | `archive_manager.sh extract *.rar` | `brew install unrar` |
+| Tool          | Used By                            | Install                    |
+| ------------- | ---------------------------------- | -------------------------- |
+| `ffmpeg`      | `media_converter.sh video2audio`   | `brew install ffmpeg`      |
+| `imagemagick` | `media_converter.sh resize_image`  | `brew install imagemagick` |
+| `ghostscript` | `media_converter.sh pdf_compress`  | `brew install ghostscript` |
+| `jq`          | Various JSON helpers (recommended) | `brew install jq`          |
+| `unrar`       | `archive_manager.sh extract *.rar` | `brew install unrar`       |
 
 ## Usage Reference
 
@@ -74,7 +76,7 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 - `startday.sh` – **AI-Enhanced** morning routine: syncs blog stubs to todos, shows yesterday's context, active GitHub projects, blog status, health reminders, stale tasks (>7 days), scheduled commands, top 3 priorities, plus optional AI briefing.
 - `goodevening.sh` – **AI-Enhanced** end-of-day wrap-up with gamified progress tracking, project safety checks (uncommitted changes, large diffs, stale branches, unpushed commits), task cleanup, automated data backup, plus optional AI reflection.
 - `status.sh` – Mid-day dashboard showing your current work context (directory, git), journal, and top 3 tasks.
-- `projects.sh {forgotten|recall <name>}` – Find and get details about forgotten projects from GitHub.
+- `gh-projects.sh {forgotten|recall <name>}` – Find and get details about forgotten projects from GitHub.
 - `blog.sh {status|stubs|random|recent|sync|ideas|generate|refine}` – **AI-Enhanced** blog workflow: status tracking, optional stub management, todo sync, journal search, plus AI content generation (`generate` accepts raw briefs/drafts, `-p persona`, `-a archetype`, `-s section`, auto-loads exemplar snippets per `BLOG_SECTION_EXEMPLARS`, and writes directly into the correct Hugo content folder) and refinement (`refine`).
 - `greeting.sh` – Quick context summaries for the start of a session.
 - `howto.sh {add|<name>|search}` – Personal searchable how-to wiki for complex workflows.
@@ -145,6 +147,7 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 **Location:** `~/dotfiles/bin/` (see `/bin/README.md` for full documentation)
 
 **Quick Access via Spec Templates:**
+
 ```bash
 spec tech           # Technical debugging template
 spec creative       # Story generation template
@@ -156,6 +159,7 @@ spec stoic          # Stoic coaching template
 ```
 
 **Direct Access (Traditional):**
+
 ```bash
 cat script.sh | tech --stream     # Debug with streaming
 creative "story idea"              # Generate story package
@@ -164,6 +168,7 @@ echo "challenge" | stoic           # Stoic coaching
 ```
 
 **Dispatchers Available:**
+
 - **Technical:** `dhp-tech.sh` (tech) - Debugging, code optimization
 - **Creative:** `dhp-creative.sh` (creative), `dhp-narrative.sh` (narrative), `dhp-copy.sh` (copy)
 - **Content:** `dhp-content.sh` (content) - SEO-optimized guides
@@ -171,12 +176,14 @@ echo "challenge" | stoic           # Stoic coaching
 - **Personal:** `dhp-stoic.sh` (stoic), `dhp-research.sh` (research)
 
 **Advanced Features:**
+
 - `ai-suggest` - Context-aware dispatcher suggestions
 - `dhp-project` - Multi-specialist orchestration
 - `dhp-chain` - Sequential dispatcher chaining
 - Context injection via `--context` and `--full-context` flags
 
 **All dispatchers support:**
+
 - Real-time streaming (`--stream` flag)
 - Optimized free models (no API costs)
 - Robust error handling

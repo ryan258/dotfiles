@@ -32,7 +32,21 @@ case "${1:-show}" in
       echo "Usage: focus set \"Your task here\""
       exit 1
     fi
-    # Ensure directory exists
+    
+    # 1. Archive existing focus if present (so we don't lose it)
+    if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
+        old_focus=$(cat "$FOCUS_FILE")
+        today=$(date +%Y-%m-%d)
+        mkdir -p "$(dirname "$HISTORY_FILE")"
+        touch "$HISTORY_FILE"
+        
+        # Sanitize and log as 'replaced' or just log it
+        # We'll treat it as a completed/past focus for the day
+        focus_clean=$(echo "$old_focus" | tr '|' '-')
+        echo "$today|$focus_clean (Replaced)" >> "$HISTORY_FILE"
+    fi
+
+    # 2. Set new focus
     mkdir -p "$(dirname "$FOCUS_FILE")"
     echo "$*" > "$FOCUS_FILE"
     echo "🎯 Focus set: $*"

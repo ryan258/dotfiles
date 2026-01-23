@@ -180,7 +180,7 @@ correlate_commits() {
 }
 
 # --- Main Command Handler ---
-case "$1" in
+case "${1:-}" in
     add)
         if [ -z "$2" ] || [ -z "$3" ]; then
             echo "Usage: health add \"description\" \"YYYY-MM-DD HH:MM\""
@@ -231,17 +231,31 @@ case "$1" in
 
         echo "🏥 UPCOMING HEALTH APPOINTMENTS:"
         appt_found=false
+        
+        # Calculate TODAY_EPOCH (Midnight)
+        TODAY_STR=$(date +%Y-%m-%d)
+        TODAY_EPOCH=$(timestamp_to_epoch "$TODAY_STR")
+
         if grep -q "^APPT|" "$HEALTH_FILE" 2>/dev/null; then
-            current_epoch=$(date +%s)
             grep "^APPT|" "$HEALTH_FILE" | sort -t'|' -k2 | while IFS='|' read -r type appt_date desc; do
                 appt_epoch=$(timestamp_to_epoch "$appt_date")
                 if [ "$appt_epoch" -le 0 ]; then
                     continue
                 fi
-                days_until=$(( ( appt_epoch - current_epoch ) / 86400 ))
+                
+                # Calculate difference in days (Midnight to Midnight)
+                diff_seconds=$(( appt_epoch - TODAY_EPOCH ))
+                days_until=$(( diff_seconds / 86400 ))
+                
                 if [ "$days_until" -ge 0 ]; then
-                    echo "  • $desc - $appt_date (in $days_until days)"
                     appt_found=true
+                    if [ "$days_until" -eq 0 ]; then
+                        echo "  • $desc - $appt_date (Today)"
+                    elif [ "$days_until" -eq 1 ]; then
+                        echo "  • $desc - $appt_date (Tomorrow)"
+                    else
+                        echo "  • $desc - $appt_date (in $days_until days)"
+                    fi
                 fi
             done
         fi

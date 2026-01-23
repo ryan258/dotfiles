@@ -379,6 +379,7 @@ case "${1:-}" in
     echo ""
     echo "Task Management:"
     echo "  add <'task text'>           : Add a new task"
+    echo "  up                          : Open todo file in editor"
     echo "  list                        : Show all current tasks"
     echo "  done <task_number>          : Mark a task as complete"
     echo "  rm <task_number>            : Remove a task properly (no archive)"
@@ -406,12 +407,25 @@ case "${1:-}" in
     exit 1
     ;;
 
+  up|update)
+    # Open the todo file in the editor
+    if command -v code >/dev/null 2>&1; then
+        code "$TODO_FILE"
+    elif [ -n "${EDITOR:-}" ]; then
+        "$EDITOR" "$TODO_FILE"
+    else
+        open "$TODO_FILE"
+    fi
+    echo "Opening todo file..."
+    ;;
+
   *)
     echo "Error: Unknown command '${1:-}'" >&2
-    echo "Usage: $0 {add|list|done|rm|clear|commit|bump|top|undo|debug|delegate|start|stop|time}"
+    echo "Usage: $0 {add|up|list|done|rm|clear|commit|bump|top|undo|debug|delegate|start|stop|time}"
     echo ""
     echo "Task Management:"
     echo "  add <'task text'>           : Add a new task"
+    echo "  up                          : Open todo file in editor"
     echo "  list                        : Show all current tasks"
     echo "  done <task_number>          : Mark a task as complete"
     echo "  rm <task_number>            : Remove a task properly (no archive)"

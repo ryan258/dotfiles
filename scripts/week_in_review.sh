@@ -12,10 +12,11 @@ else
   exit 1
 fi
 
-if ! command -v gawk >/dev/null 2>&1; then
-  echo "Error: gawk is required to run week_in_review." >&2
-  exit 1
-fi
+# gawk check removed 
+# if ! command -v gawk >/dev/null 2>&1; then
+#   echo "Error: gawk is required to run week_in_review." >&2
+#   exit 1
+# fi
 
 # --- Configuration ---
 OUTPUT_FILE=""
@@ -63,9 +64,13 @@ output "========================================"
 # --- Completed Tasks ---
 output "\n## Recently Completed Tasks ##"
 TASK_CUTOFF="$(date_shift_days "-$LOOKBACK_DAYS" "%Y-%m-%d")"
-gawk -v cutoff="$TASK_CUTOFF" '
-    match($0, /\[([0-9]{4}-[0-9]{2}-[0-9]{2})/, m) {
-        if (m[1] >= cutoff) {
+awk -v cutoff="$TASK_CUTOFF" '
+    match($0, /\[[0-9]{4}-[0-9]{2}-[0-9]{2}/) {
+        # Extract YYYY-MM-DD (length 10) after skipping first char [ (index RSTART)
+        # Actually RSTART points to start of match aka "["
+        # So we want substring from RSTART+1 of length 10
+        date_str = substr($0, RSTART+1, 10)
+        if (date_str >= cutoff) {
             print
         }
     }
@@ -73,9 +78,10 @@ gawk -v cutoff="$TASK_CUTOFF" '
 
 # --- Journal Entries ---
 output "\n## Recent Journal Entries ##"
-gawk -v cutoff="$TASK_CUTOFF" '
-    match($0, /\[([0-9]{4}-[0-9]{2}-[0-9]{2})/, m) {
-        if (m[1] >= cutoff) {
+awk -v cutoff="$TASK_CUTOFF" '
+    match($0, /\[[0-9]{4}-[0-9]{2}-[0-9]{2}/) {
+        date_str = substr($0, RSTART+1, 10)
+        if (date_str >= cutoff) {
             print
         }
     }

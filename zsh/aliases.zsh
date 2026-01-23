@@ -207,7 +207,7 @@ alias newproject="start_project.sh"
 alias newpython="mkproject_py.sh"
 alias newpy="mkproject_py.sh"
 alias progress="my_progress.sh"
-alias projects="projects.sh"
+alias projects="gh-projects.sh"
 
 # File & System Management
 alias backup="backup_project.sh"

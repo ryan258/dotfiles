@@ -16,11 +16,38 @@ fi
 SPOON_MANAGER="$SCRIPT_DIR/spoon_manager.sh"
 FOCUS_FILE="$HOME/.config/dotfiles-data/daily_focus.txt"
 
-# 1. Daily Focus (if set)
-if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
-    echo "🎯 TODAY'S FOCUS:"
-    echo "  $(cat "$FOCUS_FILE")"
+# 1. Daily Focus
+FOCUS_SCRIPT="$HOME/dotfiles/scripts/focus.sh"
+if [ -t 0 ]; then
+    # Interactive mode
+    if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
+        CURRENT_FOCUS=$(cat "$FOCUS_FILE")
+        echo "🎯 TODAY'S FOCUS: $CURRENT_FOCUS"
+        echo -n "   Update focus? [y/N]: "
+        read -r update_focus
+        if [[ "$update_focus" =~ ^[yY] ]]; then
+            echo -n "   Enter new focus: "
+            read -r new_focus
+            if [ -n "$new_focus" ] && [ -x "$FOCUS_SCRIPT" ]; then
+                "$FOCUS_SCRIPT" set "$new_focus"
+            fi
+        fi
+    else
+        echo "🎯 NO FOCUS SET."
+        echo -n "   What is your main focus for today? (Enter to skip): "
+        read -r new_focus
+        if [ -n "$new_focus" ] && [ -x "$FOCUS_SCRIPT" ]; then
+            "$FOCUS_SCRIPT" set "$new_focus" >/dev/null
+            echo "   Focus set to: $new_focus"
+        fi
+    fi
     echo ""
+else
+    # Non-interactive mode: just display if present
+    if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
+        echo "🎯 TODAY'S FOCUS: $(cat "$FOCUS_FILE")"
+        echo ""
+    fi
 fi
 
 # 2. Initialize Daily Spoons (Energy Budget)
@@ -165,15 +192,30 @@ echo "🏥 HEALTH:"
 HEALTH_FILE="$HOME/.config/dotfiles-data/health.txt"
 if [ -f "$HEALTH_FILE" ] && [ -s "$HEALTH_FILE" ]; then
     # Show upcoming appointments
+    # Show upcoming appointments
+    TODAY_STR=$(date +%Y-%m-%d)
+    TODAY_EPOCH=$(parse_timestamp "$TODAY_STR")
+    
     if grep -q "^APPT|" "$HEALTH_FILE" 2>/dev/null; then
         grep "^APPT|" "$HEALTH_FILE" | sort -t'|' -k2 | while IFS='|' read -r type appt_date desc; do
             appt_epoch=$(parse_timestamp "$appt_date")
             if [ "$appt_epoch" -le 0 ]; then
                 continue
             fi
-            days_until=$(( ( appt_epoch - $(date +%s) ) / 86400 ))
+            
+            # Calculate difference in days (Midnight to Midnight)
+            # Add partial day rounding just in case, but usually integer division of 86400 works for dates
+            diff_seconds=$(( appt_epoch - TODAY_EPOCH ))
+            days_until=$(( diff_seconds / 86400 ))
+            
             if [ "$days_until" -ge 0 ]; then
-                echo "  • $desc - $appt_date (in $days_until days)"
+                if [ "$days_until" -eq 1 ]; then
+                     echo "  • $desc - $appt_date (Tomorrow)"
+                elif [ "$days_until" -eq 0 ]; then
+                     echo "  • $desc - $appt_date (Today)"
+                else
+                     echo "  • $desc - $appt_date (in $days_until days)"
+                fi
             fi
         done
     fi

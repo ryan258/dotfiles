@@ -218,13 +218,26 @@ case "${1:-add}" in
     echo "✅ Theme analysis complete"
     ;;
 
+  up|update)
+    # Open the journal file in the editor
+    if command -v code >/dev/null 2>&1; then
+        code "$JOURNAL_FILE"
+    elif [ -n "${EDITOR:-}" ]; then
+        "$EDITOR" "$JOURNAL_FILE"
+    else
+        open "$JOURNAL_FILE"
+    fi
+    echo "Opening journal file..."
+    ;;
+
   *)
     echo "Error: Unknown command '$1'" >&2
     echo "Usage: journal <text>"
-    echo "   or: journal {list|search|onthisday|analyze|mood|themes}"
+    echo "   or: journal {up|list|search|onthisday|analyze|mood|themes}"
     echo ""
     echo "Standard commands:"
     echo "  journal <text>              : Add a quick journal entry"
+    echo "  up                          : Open journal file in editor"
     echo "  list                        : Show last 5 entries"
     echo "  search [--recent] <term>    : Search for a term in journal"
     echo "  onthisday                   : Show entries from this day in past years"
