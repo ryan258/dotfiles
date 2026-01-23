@@ -13,6 +13,7 @@ This document complements the `~/.zsh_aliases` file. It explains the purpose of 
 ## Recent Enhancements (November 2025)
 
 ### Phase 6: AI Staff HQ Integration (November 10, 2025)
+
 - **10 AI Dispatchers**: tech, creative, content, strategy, brand, market, stoic, research, narrative, copy
 - **Spec Template System**: `spec` command for structured AI requests (8 templates)
 - **Optimized Free Models**: DeepSeek R1, Llama 4, Qwen3 - no API costs
@@ -21,6 +22,7 @@ This document complements the `~/.zsh_aliases` file. It explains the purpose of 
 - **Advanced Features**: ai-suggest, dhp-project, dhp-chain, context injection
 
 ### Previous Phases: Foundation & Core Features
+
 - **Advanced Task Management**: `todo commit`, `todo bump`, `todo top` with stale task tracking
 - **Health & Medication Tracking**: `health dashboard`, `meds dashboard` with 30-day trend analysis
 - **Enhanced Journal**: `journal search`, `journal onthisday` for building your second brain
@@ -32,34 +34,34 @@ This document complements the `~/.zsh_aliases` file. It explains the purpose of 
 
 ## Helper Functions
 
-| Function | Description |
-| -------- | ----------- |
-| `exists <cmd>` | True if a command is on `PATH`. |
-| `script_exists <script>` | Returns success when `$SCRIPTS_DIR/<script>` exists and is executable. |
+| Function                      | Description                                                                 |
+| ----------------------------- | --------------------------------------------------------------------------- |
+| `exists <cmd>`                | True if a command is on `PATH`.                                             |
+| `script_exists <script>`      | Returns success when `$SCRIPTS_DIR/<script>` exists and is executable.      |
 | `run_script <script> [args…]` | Dispatch helper used by most wrappers—logs an error if a script is missing. |
 
 These helpers make the rest of the file resilient—aliases are only created if the backing command exists.
 
 ## Navigation
 
-| Alias | Expands To | Notes |
-| ----- | ---------- | ----- |
-| `..`, `...`, `....` | `cd ../`, etc. | Rapid parent directory navigation. |
-| `ll`, `la`, `l`, `lt`, `lh` | Variants of `ls`. | Tailored listings for macOS. |
-| `here`, `tree`, `newest`, `biggest`, `count` | Directory inspection helpers. | `tree` uses `find`; `newest` and `biggest` show top 10 items. |
-| `downloads`, `down`, `documents`, `docs`, `desktop`, `desk`, `scripts`, `home` | `cd` shortcuts. | `scripts` respects `$SCRIPTS_DIR`. |
-| `cd()` | Overrides builtin to record history. | Calls `recent_dirs.sh add` when available. |
+| Alias                                                                          | Expands To                           | Notes                                                         |
+| ------------------------------------------------------------------------------ | ------------------------------------ | ------------------------------------------------------------- |
+| `..`, `...`, `....`                                                            | `cd ../`, etc.                       | Rapid parent directory navigation.                            |
+| `ll`, `la`, `l`, `lt`, `lh`                                                    | Variants of `ls`.                    | Tailored listings for macOS.                                  |
+| `here`, `tree`, `newest`, `biggest`, `count`                                   | Directory inspection helpers.        | `tree` uses `find`; `newest` and `biggest` show top 10 items. |
+| `downloads`, `down`, `documents`, `docs`, `desktop`, `desk`, `scripts`, `home` | `cd` shortcuts.                      | `scripts` respects `$SCRIPTS_DIR`.                            |
+| `cd()`                                                                         | Overrides builtin to record history. | Calls `recent_dirs.sh add` when available.                    |
 
 ## System & File Management
 
-| Alias | Command | Purpose |
-| ----- | ------- | ------- |
-| `update` | `brew update && brew upgrade` | Refresh Homebrew packages. |
-| `brewclean`, `brewinfo` | `brew cleanup`, `brew list --versions` | Routine maintenance. |
-| `myip`, `localip`, `mem`, `cpu`, `psg` | System information snippets. |
-| `rm`, `cp`, `mv` | Interactive variants. | Adds confirmation prompts. |
-| `untar`, `targz`, `ff`, `grep`, `showfiles`, `hidefiles`, `spotlight` | File utilities. |
-| `du`, `df`, `diskspace`, `ping`, `flushdns`, `c`, `cls`, `now`, `timestamp` | Mixed convenience commands. |
+| Alias                                                                       | Command                                | Purpose                    |
+| --------------------------------------------------------------------------- | -------------------------------------- | -------------------------- |
+| `update`                                                                    | `brew update && brew upgrade`          | Refresh Homebrew packages. |
+| `brewclean`, `brewinfo`                                                     | `brew cleanup`, `brew list --versions` | Routine maintenance.       |
+| `myip`, `localip`, `mem`, `cpu`, `psg`                                      | System information snippets.           |
+| `rm`, `cp`, `mv`                                                            | Interactive variants.                  | Adds confirmation prompts. |
+| `untar`, `targz`, `ff`, `grep`, `showfiles`, `hidefiles`, `spotlight`       | File utilities.                        |
+| `du`, `df`, `diskspace`, `ping`, `flushdns`, `c`, `cls`, `now`, `timestamp` | Mixed convenience commands.            |
 
 ## Editors & Apps
 
@@ -72,11 +74,11 @@ Standard `git` abbreviations like `gs`, `gaa`, `gc`, `gd`, `gco`, and `glog` cov
 
 ## Clipboard Helpers
 
-| Function/Alias | Usage |
-| -------------- | ----- |
-| `copy <text>` | Pipe text into the clipboard (`copy reminder text`). |
-| `copyfile <path>` | Send a file’s contents to the clipboard. |
-| `paste` | `pbpaste`. |
+| Function/Alias    | Usage                                                |
+| ----------------- | ---------------------------------------------------- |
+| `copy <text>`     | Pipe text into the clipboard (`copy reminder text`). |
+| `copyfile <path>` | Send a file’s contents to the clipboard.             |
+| `paste`           | `pbpaste`.                                           |
 
 `clip` plus `clipsave`, `clipload`, and `cliplist` wrap `clipboard_manager.sh` (when present) for saved snippets.
 
@@ -88,9 +90,9 @@ Every script in `$SCRIPTS_DIR` has a corresponding wrapper function which ensure
 
 ### Task & Notes (AI-Enhanced)
 
-- `todo`, `t`, `todoadd`, `todolist`, `tododone` – **AI-Enhanced** task management with `commit`, `bump`, `top`, `debug` (AI debugging), `delegate` (route to AI specialist)
+- `todo`, `t`, `todoadd`, `todolist`, `tododone` – **AI-Enhanced** task management with `commit`, `bump`, `top`, `debug` (AI debugging), `delegate` (route to AI specialist), `up` (quick edit)
 - `next` – Show only your top priority task (`todo top 1`)
-- `journal`, `j` – **AI-Enhanced** journal with `search`, `onthisday`, `analyze` (7-day AI insights), `mood` (14-day sentiment), `themes` (30-day patterns)
+- `journal`, `j` – **AI-Enhanced** journal with `search`, `onthisday`, `up` (quick edit), `analyze` (7-day AI insights), `mood` (14-day sentiment), `themes` (30-day patterns)
 - `health` – Comprehensive health tracking with symptoms, energy ratings, and `dashboard` for trends
 - `meds` – Medication tracking with adherence monitoring and `remind` for automation
 - `remind` – macOS notifications via `remind_me.sh`
@@ -106,7 +108,7 @@ Every script in `$SCRIPTS_DIR` has a corresponding wrapper function which ensure
 - `g` – **Unified navigation** (replaces goto/back/workspace) with auto-venv activation and app launching
 - ~~`goto`~~ – Deprecated, use `g` instead
 - ~~`back`~~, ~~`recent`~~ – Deprecated, use `g -r` instead
-- `newproject`, `newpython`, `newpy`
+- `newproject`, `newpython`, `newpy`, `projects` (find forgotten projects)
 - `progress`, `backup`, `findbig`, `tidydown`, `organize`, `openf`, `finddupes`
 - `review_clutter` – Interactive tool to archive/delete old Desktop and Downloads files
 - `startday`, `goodevening`, `weekreview`
@@ -169,26 +171,26 @@ Every script in `$SCRIPTS_DIR` has a corresponding wrapper function which ensure
 
 ## Compound Helpers
 
-| Alias | Description |
-| ----- | ----------- |
-| `info` | Weather + todo list summary. |
-| `status` | Journal + todo list snapshot. |
-| `overview` | System info + battery summary. |
-| `cleanup` | Organize `~/Downloads` and list large files. |
-| `quickbackup` | Run `backup_project.sh` and print success message. |
-| `devstart` | Activate the dev venv and open VS Code (requires both). |
-| `gitcheck` | Show recent progress then `git status`. |
+| Alias         | Description                                             |
+| ------------- | ------------------------------------------------------- |
+| `info`        | Weather + todo list summary.                            |
+| `status`      | Journal + todo list snapshot.                           |
+| `overview`    | System info + battery summary.                          |
+| `cleanup`     | Organize `~/Downloads` and list large files.            |
+| `quickbackup` | Run `backup_project.sh` and print success message.      |
+| `devstart`    | Activate the dev venv and open VS Code (requires both). |
+| `gitcheck`    | Show recent progress then `git status`.                 |
 
 ## Utility Functions
 
-| Function | Purpose |
-| -------- | ------- |
-| `mkcd <dir>` | Create and `cd` into a directory. |
-| `backup_file <path>` | Append a timestamped copy beside the original. |
-| `pman <topic>` | Render man pages into Preview. |
-| `search <pattern>` | `find . -name "*pattern*" -type f`. |
-| `morning` | Weather, todo list, and Git status for the current repo. |
-| `endday` | End-of-day checklist and Git summary. |
+| Function             | Purpose                                                  |
+| -------------------- | -------------------------------------------------------- |
+| `mkcd <dir>`         | Create and `cd` into a directory.                        |
+| `backup_file <path>` | Append a timestamped copy beside the original.           |
+| `pman <topic>`       | Render man pages into Preview.                           |
+| `search <pattern>`   | `find . -name "*pattern*" -type f`.                      |
+| `morning`            | Weather, todo list, and Git status for the current repo. |
+| `endday`             | End-of-day checklist and Git summary.                    |
 
 ## Tips
 

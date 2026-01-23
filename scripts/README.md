@@ -67,8 +67,8 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 
 ### Productivity & Planning
 
-- `journal.sh {add|list|search|onthisday|analyze|mood|themes}` – **AI-Enhanced** journal with searchable history plus AI-powered analysis (7 days), sentiment tracking (14 days), and theme extraction (30 days). Building your second brain.
-- `todo.sh {add|list|done|clear|commit|bump|top|debug|delegate}` – **AI-Enhanced** todo list with git integration (`commit`), prioritization (`bump`, `top`), timestamp tracking, plus AI debugging (`debug`) and task delegation to specialists (`delegate`).
+- `journal.sh {add|list|search|onthisday|analyze|mood|themes|up}` – **AI-Enhanced** journal with searchable history, AI-powered analysis, and `up` command to quickly edit the file.
+- `todo.sh {add|list|done|clear|commit|bump|top|debug|delegate|up}` – **AI-Enhanced** todo list with git integration (`commit`), prioritization (`bump`, `top`), `up` for quick editing, and AI debugging/delegation.
 - `health.sh {add|symptom|energy|list|summary|dashboard|export|remove}` – Track appointments, log symptoms, rate energy levels (1-10), view 30-day trend dashboards, and export reports for doctors.
 - `meds.sh {add|log|list|check|history|dashboard|remove|remind}` – Medication tracking with adherence monitoring, automated reminders (for cron), and 30-day dashboards.
 - `week_in_review.sh` – Summarise recent todos, journal entries, and commits from the last seven days.
@@ -81,8 +81,8 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 - `greeting.sh` – Quick context summaries for the start of a session.
 - `howto.sh {add|<name>|search}` – Personal searchable how-to wiki for complex workflows.
 - `schedule.sh "<time>" "<command>"` – User-friendly wrapper for macOS `at` command to schedule future commands.
-- `dotfiles_check.sh` – System validation script (doctor) that checks scripts, dependencies, data directory, GitHub token, and AI dispatchers (10/10).
-- `backup_data.sh` – Automated backup of entire `~/.config/dotfiles-data/` directory (called by `goodevening.sh`).
+- `dotfiles_check.sh` – System validation script (doctor) that dynamically discovers all scripts and AI dispatchers (68+), verifying dependencies like `rclone`.
+- `backup_data.sh` – Automated backup of entire `~/.config/dotfiles-data/` directory to `~/Backups` and Google Drive.
 - `new_script.sh <name>` – Automate adding new scripts with proper headers, executable permissions, and alias creation.
 - `spec_helper.sh` – **NEW** Spec template workflow - opens structured templates for comprehensive AI dispatcher input.
 
@@ -91,7 +91,7 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 - `g.sh {<bookmark>|-r|recent|save|-s|list}` – **Unified navigation system** that replaces goto/back/workspace_manager. Bookmarks directories, tracks recent history, auto-activates Python venvs, launches associated apps, and runs on-enter commands. Must be sourced for directory changes.
 - `start_project.sh` – Interactive scaffold for generic projects (`src/`, `docs/`, `assets/`). Source it to automatically `cd` into the new folder.
 - `mkproject_py.sh` – Bootstrap a Python project with a virtualenv, `.gitignore`, and starter `main.py`.
-- `backup_project.sh` – Run inside any directory to rsync it to `~/Backups` with a timestamped name.
+- `backup_project.sh` – Run inside any directory to rsync it to `~/Backups` and optionally sync to Google Drive (`gdrive`) via `rclone`.
 - `dev_shortcuts.sh {server|json|env|gitquick}` – Handy dev helpers: `dev_shortcuts.sh server 9000`, `dev_shortcuts.sh json data.json`, `dev_shortcuts.sh env` (source for auto-activation), or `dev_shortcuts.sh gitquick "Fix build"`.
 - ~~`workspace_manager.sh`~~ – **Deprecated:** Use `g.sh` instead for enhanced state management.
 - ~~`recent_dirs.sh`~~ – **Deprecated:** Use `g.sh -r` instead.

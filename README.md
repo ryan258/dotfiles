@@ -438,7 +438,6 @@ dhp-content --full-context "Comprehensive guide topic"
 2. **Get an API Key:** Sign up at [OpenRouter](https://openrouter.ai/) and create an API key (free tier available)
 
 3. **Configure Models:** The `.env` file defaults all dispatchers to `xiaomi/mimo-v2-flash:free` via OpenRouter
-
    - Cost-effective: All models are free tier on OpenRouter
    - Task-specific: Each dispatcher uses a model optimized for its specialty
    - Customizable: Change any model in `.env` to your preference
@@ -525,7 +524,6 @@ This setup assumes you are on macOS with Zsh (the default shell). You will also 
     ```
 
     This will:
-
     - Install Homebrew (if needed)
     - Install required dependencies (jq, curl, gawk)
     - Create the data directory at `~/.config/dotfiles-data/`
@@ -617,11 +615,11 @@ Many scripts can be called directly. Some, marked with `(source)`, provide extra
 | `howto`               | Personal searchable how-to wiki for storing and retrieving complex workflows.                                                                                                              |
 | `schedule`            | User-friendly wrapper for `at` command to schedule future commands and reminders.                                                                                                          |
 | `whatis`              | Look up what an alias or command does by searching aliases and documentation.                                                                                                              |
-| `dotfiles_check`      | System validation - verifies all scripts, dependencies, data directories, and GitHub token.                                                                                                |
-| `backup`              | Creates a timestamped backup of the current project directory.                                                                                                                             |
+| `dotfiles_check`      | System validation - verifies all scripts, dependencies, data directories, AI dispatchers (68+), and `rclone`.                                                                              |
+| `backup`              | Creates a timestamped backup of the current project directory (local + Google Drive).                                                                                                      |
 | `newproject`          | Interactively scaffolds a new project with a standard directory structure.                                                                                                                 |
 | `newpython`           | Bootstraps a Python project with a virtual environment and `.gitignore`.                                                                                                                   |
-| `projects`            | Find and get details about forgotten projects from GitHub.                                                                                                                                 |
+| `gh-projects`         | Find and get details about forgotten projects from GitHub.                                                                                                                                 |
 | `review_clutter`      | Interactive tool to archive or delete old files from Desktop/Downloads.                                                                                                                    |
 | `graballtext`         | Capture readable text from the repo into `all_text_contents.txt` for quick review or search.                                                                                               |
 | `did`                 | Run any long command and get a system notification when it's finished.                                                                                                                     |
