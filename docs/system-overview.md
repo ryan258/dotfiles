@@ -19,7 +19,7 @@ A visual guide to understanding the architecture and data flow.
 │                       COMMAND LAYER                              │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
 │  │   Aliases    │  │   Scripts    │  │      AI      │          │
-│  │  (200+ cmds) │  │  (66 files)  │  │ (10 dispatch)│          │
+│  │  (200+ cmds) │  │  (66 files)  │  │ (11 dispatch)│          │
 │  └──────────────┘  └──────────────┘  └──────────────┘          │
 └──────────────────────────┬───────────────────────────────────────┘
                            │
@@ -265,9 +265,9 @@ Bookmarks (saved with 'g save'):
 ┌─────────────────────────────────────────────────────────────┐
 │  Health Data Collection                                      │
 ├──────────────┬────────────────┬──────────────────────────────┤
-│ health       │ meds log       │ journal entries              │
-│ energy 7     │ "Med Name"     │ (symptom mentions)           │
-└──────┬───────┴────────┬───────┴──────────┬───────────────────┘
+│ health       │ health fog 6   │ meds log       │ journal    │
+│ energy 7     │ (brain fog)    │ "Med Name"     │ entries    │
+└──────┬───────┴────────┬───────┴────────┬───────┴─────┬──────┘
        │                │                  │
        ├────────────────┼──────────────────┤
        ▼                ▼                  ▼
@@ -283,6 +283,7 @@ Bookmarks (saved with 'g save'):
               │  Analytics       │
               ├──────────────────┤
               │ health dashboard │ ◄── 30-day trends
+              │ health check     │ ◄── Circuit breaker
               │ meds dashboard   │ ◄── Adherence
               │ health summary   │ ◄── Correlations
               │ journal mood     │ ◄── AI sentiment
@@ -294,6 +295,11 @@ Bookmarks (saved with 'g save'):
                 • Git commits
                 • Symptom patterns
                 • Medication adherence
+
+Circuit Breaker (health check):
+  • Energy ≤ 3 → STOP cognitive work
+  • Fog ≥ 6    → Extend deadlines, admin only
+  • Otherwise  → OPERATIONAL
 ```
 
 ---
@@ -444,6 +450,8 @@ gcal            # Google Calendar integration
 
 ```
 health          # Energy, symptoms, appointments
+health fog      # Brain fog tracking (1-10)
+health check    # Circuit breaker status
 meds            # Medication tracking
 spoons          # Energy budget with history
 ```
@@ -462,7 +470,8 @@ g               # Bookmarks and suggestions
 tech            # Technical debugging
 content         # Content creation
 creative        # Story generation
-strategy        # Strategic decisions
+strategy        # R&D strategy, capability planning
+finance         # Tax, S-Corp, financial advice
 stoic           # Mindset coaching
 ai-suggest      # Context-aware recommendations
 ```

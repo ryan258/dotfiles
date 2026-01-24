@@ -22,13 +22,40 @@ if [ -f "$HOME/dotfiles/.env" ]; then
     source "$HOME/dotfiles/.env"
 fi
 
-echo "=== Evening Close-Out — $(date '+%Y-%m-%d %H:%M') ==="
+
+# 1. Determine "Today"
+# Usage: goodevening.sh [YYYY-MM-DD]
+if [ -n "${1:-}" ]; then
+    TODAY="$1"
+    echo "📅 Overriding date to: $TODAY"
+else
+    STATE_DIR="${STATE_DIR:-$HOME/.config/dotfiles-data}"
+    CURRENT_DAY_FILE="$STATE_DIR/current_day"
+
+    if [ -f "$CURRENT_DAY_FILE" ]; then
+        TODAY=$(cat "$CURRENT_DAY_FILE")
+        # If the file is extremely old (e.g. > 24 hours), fallback to actual today to prevent stale state bugs
+        FILE_AGE=$(( $(date +%s) - $(date -r "$CURRENT_DAY_FILE" +%s) ))
+        if [ "$FILE_AGE" -gt 86400 ]; then
+             TODAY=$(date +%Y-%m-%d)
+        fi
+    else
+        # Fallback logic
+        HOUR=$(date +%H)
+        if [ "$HOUR" -lt 4 ]; then
+            TODAY=$(date_shift_days -1 "%Y-%m-%d")
+        else
+            TODAY=$(date +%Y-%m-%d)
+        fi
+    fi
+fi
+
+echo "=== Evening Close-Out for $TODAY — $(date '+%Y-%m-%d %H:%M') ==="
 
 # 1. Show completed tasks from today
 echo ""
 echo "✅ COMPLETED TODAY:"
 if [ -f "$TODO_DONE_FILE" ]; then
-    TODAY=$(date +%Y-%m-%d)
     COMPLETED_TASKS=$(grep "\[$TODAY" "$TODO_DONE_FILE" || true)
     if [ -n "$COMPLETED_TASKS" ]; then
         echo "$COMPLETED_TASKS" | sed 's/^/  • /'
@@ -41,7 +68,7 @@ fi
 echo ""
 echo "📝 TODAY'S JOURNAL:"
 if [ -f "$JOURNAL_FILE" ]; then
-    TODAY=$(date +%Y-%m-%d)
+    # TODAY is valid
     JOURNAL_ENTRIES=$(grep "\[$TODAY" "$JOURNAL_FILE" || true)
     if [ -n "$JOURNAL_ENTRIES" ]; then
         echo "$JOURNAL_ENTRIES" | sed 's/^/  • /'
@@ -61,7 +88,7 @@ if [ -x "$TIME_TRACKER" ]; then
     # Since report command in wrapper calls generate_time_report which is a stub...
     # We should actually implement a simple daily summary here or in the library.
     # For now, let's just list the entries for today from the log file manually or via a simple grep
-    TODAY=$(date +%Y-%m-%d)
+    # TODAY is valid
     TIME_LOG="$HOME/.config/dotfiles-data/time_tracking.txt"
     if [ -f "$TIME_LOG" ]; then
         TODAY_ENTRIES=$(grep "|$TODAY" "$TIME_LOG" || true)
@@ -84,8 +111,8 @@ fi
 # --- Gamify Progress ---
 echo ""
 echo "🌟 TODAY'S WINS:"
-TASKS_COMPLETED=$(grep -c "\[$(date +%Y-%m-%d)" "$TODO_DONE_FILE" || true)
-JOURNAL_ENTRIES=$(grep -c "\[$(date +%Y-%m-%d)" "$JOURNAL_FILE" || true)
+TASKS_COMPLETED=$(grep -c "\[$TODAY" "$TODO_DONE_FILE" || true)
+JOURNAL_ENTRIES=$(grep -c "\[$TODAY" "$JOURNAL_FILE" || true)
 
 if [ "$TASKS_COMPLETED" -gt 0 ]; then
     echo "  🎉 Win: You completed $TASKS_COMPLETED task(s) today. Progress is progress."
@@ -211,6 +238,7 @@ if [ -f "$TODO_DONE_FILE" ]; then
         }
         $0 !~ /^\[/ { print } # print lines without date
     ' "$TODO_DONE_FILE" > "${TODO_DONE_FILE}.tmp" && mv "${TODO_DONE_FILE}.tmp" "$TODO_DONE_FILE"
+    chmod 600 "$TODO_DONE_FILE"
     echo "  (Old completed tasks removed)"
 fi
 
@@ -235,14 +263,19 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     echo "🤖 AI REFLECTION:"
 
     # Gather today's data
-    TODAY=$(date +%Y-%m-%d)
+    # TODAY is already set globally (handling overrides)
     TODAY_TASKS=$(grep "\[$TODAY" "$TODO_DONE_FILE" 2>/dev/null || echo "")
     TODAY_JOURNAL=$(grep "\[$TODAY" "$JOURNAL_FILE" 2>/dev/null || echo "")
 
-    if command -v dhp-strategy.sh &> /dev/null && [ -n "$TODAY_TASKS$TODAY_JOURNAL" ]; then
+    if [ -z "$TODAY_TASKS$TODAY_JOURNAL" ]; then
+        echo "  (No tasks or journal entries to reflect on for $TODAY)"
+    elif ! command -v dhp-strategy.sh &> /dev/null; then
+         echo "  (AI Staff tools not found in PATH)"
+    else
         # Generate reflection via AI
         REFLECTION=$({
-            echo "Provide a brief daily reflection (2-3 sentences) based on today's activities:"
+            echo "Provide a brief daily reflection (2-3 sentences) that specifically looks for insights gained, knowledge patterns, and capability improvements."
+            echo "Celebrate learning and deep understanding, not just output or revenue."
             echo ""
             if [ -n "$TODAY_TASKS" ]; then
                 echo "Completed tasks:"
@@ -255,15 +288,13 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
                 echo ""
             fi
             echo "Provide:"
-            echo "- One key accomplishment to celebrate"
-            echo "- One suggestion for tomorrow"
+            echo "- One insight or capability gained today"
+            echo "- One curiosity to follow tomorrow"
             echo ""
-            echo "Keep it encouraging and actionable."
+            echo "Keep it thoughtful and insight-oriented."
         } | dhp-strategy.sh 2>/dev/null || echo "Unable to generate AI reflection at this time.")
 
         echo "$REFLECTION" | sed 's/^/  /'
-    else
-        echo "  (Enable AI reflection: Set AI_REFLECTION_ENABLED=true in .env)"
     fi
 fi
 

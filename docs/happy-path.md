@@ -29,6 +29,9 @@ When you open your first terminal of the day, `startday` runs automatically (onl
 # Startday runs automatically on first terminal open
 # If you want to run it manually:
 startday
+
+# Force a fresh AI briefing (clears cache):
+startday refresh
 ```
 
 ## Morning: Capture Your Intentions
@@ -56,6 +59,23 @@ spoons init 12     # Good day
 spoons init 8      # Average day
 spoons init 4      # Rough day (flare)
 ```
+
+### Log Brain Fog & Check Circuit Breaker
+
+Track brain fog independently from energy, and let the system tell you when to stop:
+
+```bash
+health fog 3       # Light fog (1-10 scale)
+health fog 7       # Heavy fog
+
+# Circuit breaker check - should you keep working?
+health check
+# Returns: ✅ OPERATIONAL or 🛑 CIRCUIT BREAKER TRIPPED
+```
+
+**Circuit breaker trips when:**
+- Energy ≤ 3 → "STOP high-cognitive tasks"
+- Fog ≥ 6 → "EXTEND deadlines, admin work only"
 
 ### Add Today's Tasks
 
@@ -194,7 +214,12 @@ Before you finish for the day:
 
 ```bash
 goodevening
+
+# Or close out a specific date (useful for late nights):
+goodevening 2026-01-20
 ```
+
+**Session persistence:** `startday` records the current date, and `goodevening` uses it automatically. If you start work at 11pm and finish at 2am, `goodevening` will close out the correct day.
 
 This shows:
 
@@ -454,6 +479,8 @@ content --context "guide topic"
 | `todo commit <num>`              | Commit code + complete task                       |
 | `todo undo`                      | Restore the most recently completed task          |
 | `health energy <1-10>`           | Log energy level                                  |
+| `health fog <1-10>`              | Log brain fog level                               |
+| `health check`                   | Circuit breaker status (OK to work?)              |
 | `health symptom "..."`           | Log symptoms                                      |
 | `health dashboard`               | 30-day health trends                              |
 | `meds check`                     | Check medication schedule                         |
@@ -477,7 +504,8 @@ content --context "guide topic"
 | `tech`                           | Debug code/scripts (pipe input)                   |
 | `creative "<idea>"`              | Generate story packages                           |
 | `content "<topic>"`              | Create SEO content guides                         |
-| `strategy`                       | Strategic analysis (pipe input)                   |
+| `strategy`                       | R&D strategy, capability planning (pipe input)    |
+| `finance`                        | Tax, S-Corp, financial advice                     |
 | `stoic`                          | Stoic coaching (pipe input)                       |
 | `journal analyze`                | AI insights from last 7 days                      |
 | `dispatch project "<desc>"`      | Multi-specialist project planning                 |

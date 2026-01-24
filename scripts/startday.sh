@@ -12,7 +12,21 @@ else
     exit 1
 fi
 
+# Support "refresh" to force new AI briefing
+if [[ "${1:-}" == "refresh" ]]; then
+    rm -f "$HOME/.config/dotfiles-data/.ai_briefing_cache"
+    echo "🔄 Cache cleared. Forcing new session data..."
+fi
+
+
 # --- CONFIGURATION ---
+STATE_DIR="${STATE_DIR:-$HOME/.config/dotfiles-data}"
+mkdir -p "$STATE_DIR"
+CURRENT_DAY_FILE="$STATE_DIR/current_day"
+
+# Persist the start date of this session
+date +%Y-%m-%d > "$CURRENT_DAY_FILE"
+
 SPOON_MANAGER="$SCRIPT_DIR/spoon_manager.sh"
 FOCUS_FILE="$HOME/.config/dotfiles-data/daily_focus.txt"
 
@@ -307,7 +321,8 @@ if [ "${AI_BRIEFING_ENABLED:-false}" = "true" ]; then
         if command -v dhp-strategy.sh &> /dev/null && [ -n "$RECENT_JOURNAL" ]; then
             # Generate briefing via AI
             BRIEFING=$({
-                echo "Provide a brief daily focus suggestion (2-3 sentences) based on:"
+                echo "Provide a daily focus suggestion (2-3 sentences) that prioritizes insight seeking, knowledge acquisition, and capability building over monetization or productivity for its own sake."
+                echo "The user is an R&D lab, not a factory. Valuing learning and understanding is the priority."
                 echo ""
                 echo "Recent journal entries:"
                 echo "$RECENT_JOURNAL"
@@ -315,7 +330,7 @@ if [ "${AI_BRIEFING_ENABLED:-false}" = "true" ]; then
                 echo "Top tasks:"
                 echo "$TODAY_TASKS"
                 echo ""
-                echo "Keep it actionable and encouraging."
+                echo "Keep it curious, insightful, and encouraging."
             } | dhp-strategy.sh 2>/dev/null || echo "Unable to generate AI briefing at this time.")
 
             # Cache the briefing

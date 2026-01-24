@@ -2,6 +2,11 @@
 # Common utilities shared across all scripts
 # Provides: validation, logging, data access, error handling, security
 
+if [ -n "${COMMON_SH_LOADED:-}" ]; then
+    return 0
+fi
+readonly COMMON_SH_LOADED=true
+
 #=============================================================================
 # Script Directory Resolution
 #=============================================================================

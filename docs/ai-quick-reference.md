@@ -185,50 +185,98 @@ copy "CTA for newsletter signup, focus on practical tips"
 
 **Default Model:** Xiaomi MiMo v2 Flash (`STRATEGY_MODEL`)
 **Alias:** `strategy`
-**Role:** Your Chief of Staff
+**Role:** Your Chief of Staff for R&D and Capability
 
 ### When to Use
 
-- Big decisions
-- Prioritization
-- Planning
-- Problem-solving
-- Direction setting
+- R&D direction and capability building
+- Research prioritization
+- Skill development planning
+- Risk/opportunity assessment
+- **NOT for:** Tax, S-Corp, or financial questions (use `finance` instead)
 
 ### Examples
 
-**Big decision:**
+**R&D direction:**
 
 ```bash
-strategy "Should I focus on technical writing or personal essays?"
+strategy "Should I focus on learning RAG or fine-tuning next?"
 ```
 
-**Prioritization:**
+**Capability prioritization:**
 
 ```bash
-strategy "I have 3 blog ideas and limited energy. How do I choose?" <<'EOF'
-Ideas:
-1. Technical guide to bash automation
-2. Personal story about MS diagnosis
-3. Productivity tips for chronic illness
+strategy "I have 3 research directions and limited energy. How do I choose?" <<'EOF'
+Directions:
+1. Deep dive into Claude Code hooks
+2. Build a local LLM testing framework
+3. Explore multi-agent orchestration
 EOF
 ```
 
-**Planning:**
+**Research planning:**
 
 ```bash
-strategy "Help me plan a blog series on productivity with chronic illness"
+strategy "Help me plan a capability-building series on AI tooling"
 ```
 
-**Problem-solving:**
+**Health/energy strategy:**
 
 ```bash
-strategy "My blog gets traffic but no engagement. What should I do?"
+strategy "How do I maximize learning output on variable-energy days?"
 ```
 
 ---
 
-## 🎯 6. Brand (`brand`)
+## 💰 6. Finance (`finance`)
+
+**Default Model:** Xiaomi MiMo v2 Flash (`FINANCE_MODEL`)
+**Alias:** `finance`
+**Role:** Financial Strategy Specialist
+
+### When to Use
+
+- Tax optimization (S-Corp, Section 174 R&D credits)
+- Medicare/disability income considerations
+- Entity structure decisions (LLC vs S-Corp)
+- Financial administration checklists
+- **NOT for:** R&D strategy or capability planning (use `strategy` instead)
+
+### Examples
+
+**Tax planning:**
+
+```bash
+finance "What forms do I need to file for S-Corp election?"
+```
+
+**R&D credits:**
+
+```bash
+finance "How do I document my AI research for Section 174 R&D credits?"
+```
+
+**Medicare considerations:**
+
+```bash
+finance "How should I structure income relative to Medicare SGA limits?"
+```
+
+**Entity structure:**
+
+```bash
+finance "Compare LLC vs S-Corp for a single-member R&D lab"
+```
+
+**Administrative checklist:**
+
+```bash
+finance "What logs should I keep for home office deduction as an R&D lab?"
+```
+
+---
+
+## 🎯 7. Brand (`brand`)
 
 **Default Model:** Xiaomi MiMo v2 Flash (`BRAND_MODEL`, fallback: `STRATEGY_MODEL`)
 **Alias:** `brand`
@@ -269,7 +317,7 @@ brand "Define voice and tone for content about MS that's honest but not depressi
 
 ---
 
-## 📊 7. Market Research (`market`)
+## 📊 8. Market Research (`market`)
 
 **Default Model:** Xiaomi MiMo v2 Flash (`MARKET_MODEL`)
 **Alias:** `market`
@@ -309,7 +357,7 @@ market "Who are the main voices in MS + productivity space?"
 
 ---
 
-## 🧘 8. Stoic Coaching (`stoic`)
+## 🧘 9. Stoic Coaching (`stoic`)
 
 **Default Model:** Xiaomi MiMo v2 Flash (`STOIC_MODEL`)
 **Alias:** `stoic`
@@ -356,7 +404,7 @@ stoic "How do I stay motivated when progress is so slow?"
 
 ---
 
-## 🔬 9. Research (`research`)
+## 🔬 10. Research (`research`)
 
 **Default Model:** Xiaomi MiMo v2 Flash (`RESEARCH_MODEL`)
 **Alias:** `research`
@@ -396,7 +444,7 @@ research "Explain how AI language models work at a high level"
 
 ---
 
-## 📖 10. Narrative (`narrative`)
+## 📖 11. Narrative (`narrative`)
 
 **Default Model:** Xiaomi MiMo v2 Flash (`CREATIVE_MODEL`)
 **Alias:** `narrative`
@@ -684,19 +732,20 @@ tail ~/.config/dotfiles-data/system.log
 
 ## 📊 Which AI When?
 
-| Situation                | Use This     |
-| ------------------------ | ------------ |
-| Code is broken           | `tech`       |
-| Need blog content        | `content`    |
-| Writing a story          | `creative`   |
-| Need marketing copy      | `copy`       |
-| Big decision             | `strategy`   |
-| Define brand             | `brand`      |
-| Research audience        | `market`     |
-| Feeling stuck mentally   | `stoic`      |
-| Learn something new      | `research`   |
-| Story structure feedback | `narrative`  |
-| Not sure which to use    | `ai-suggest` |
+| Situation                   | Use This     |
+| --------------------------- | ------------ |
+| Code is broken              | `tech`       |
+| Need blog content           | `content`    |
+| Writing a story             | `creative`   |
+| Need marketing copy         | `copy`       |
+| R&D direction, capabilities | `strategy`   |
+| Tax, S-Corp, finances       | `finance`    |
+| Define brand                | `brand`      |
+| Research audience           | `market`     |
+| Feeling stuck mentally      | `stoic`      |
+| Learn something new         | `research`   |
+| Story structure feedback    | `narrative`  |
+| Not sure which to use       | `ai-suggest` |
 
 ---
 

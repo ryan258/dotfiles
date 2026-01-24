@@ -176,13 +176,15 @@ goodevening     # Celebrate + backup
 
 ### Health
 
-| Command            | What It Does        |
-| ------------------ | ------------------- |
-| `health energy 7`  | Rate energy 1-10    |
-| `meds log "Med"`   | Log medication      |
-| `spoons init 12`   | Daily energy budget |
-| `spoons history`   | Usage patterns      |
-| `health dashboard` | 30-day trends       |
+| Command            | What It Does                   |
+| ------------------ | ------------------------------ |
+| `health energy 7`  | Rate energy 1-10               |
+| `health fog 6`     | Rate brain fog 1-10            |
+| `health check`     | Circuit breaker (OK to work?)  |
+| `meds log "Med"`   | Log medication                 |
+| `spoons init 12`   | Daily energy budget            |
+| `spoons history`   | Usage patterns                 |
+| `health dashboard` | 30-day trends                  |
 
 ### Navigation
 
@@ -194,12 +196,14 @@ goodevening     # Celebrate + backup
 
 ### AI
 
-| Command            | What It Does     |
-| ------------------ | ---------------- |
-| `tech "question"`  | Debug code       |
-| `content "topic"`  | Write content    |
-| `stoic "struggle"` | Get perspective  |
-| `ai-suggest`       | Which AI to use? |
+| Command             | What It Does         |
+| ------------------- | -------------------- |
+| `tech "question"`   | Debug code           |
+| `content "topic"`   | Write content        |
+| `strategy "topic"`  | R&D/capability plans |
+| `finance "topic"`   | Tax/S-Corp advice    |
+| `stoic "struggle"`  | Get perspective      |
+| `ai-suggest`        | Which AI to use?     |
 
 ### Help
 
@@ -269,7 +273,7 @@ goodevening     # Celebrate + backup
 
 ### Week 3
 
-- Explore all 10 AI dispatchers
+- Explore all 11 AI dispatchers
 - Set up blog integration (if you write)
 - Create bookmarks for common directories
 
@@ -319,7 +323,7 @@ See `~/dotfiles/TROUBLESHOOTING.md` for common issues.
 ✅ **Low cognitive load** - Designed for brain-fog days
 ✅ **Auto-backup** - Data saved nightly via `goodevening`
 ✅ **Forgiving** - `todo undo`, git-backed, validation
-✅ **Free AI** - Use all 10 dispatchers (68 specialists) without cost
+✅ **Free AI** - Use all 11 dispatchers (68 specialists) without cost
 ✅ **Help available** - `whatis`, `ai-suggest`, docs
 
 ---

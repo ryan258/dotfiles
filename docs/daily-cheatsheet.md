@@ -9,12 +9,14 @@
 | Command                      | What It Does                            |
 | ---------------------------- | --------------------------------------- |
 | `startday`                   | Morning briefing (auto-runs once daily) |
+| `startday refresh`           | Force new AI briefing (clears cache)    |
 | `focus set "my thing today"` | Set daily intention                     |
 | `focus show`                 | View current focus                      |
 | `focus done`                 | Mark focus complete + archive           |
 | `focus history`              | View past focus entries                 |
 | `focus clear`                | Clear current focus                     |
 | `spoons init 12`             | Start daily energy budget               |
+| `health check`               | Check if OK to work (circuit breaker)   |
 | `todo top`                   | See top 3 tasks only                    |
 | `g suggest`                  | Where should I work today?              |
 | `gcal agenda 7`              | View week's calendar                    |
@@ -51,17 +53,19 @@
 
 ## 🏥 Health
 
-| Command                     | What It Does             |
-| --------------------------- | ------------------------ |
-| `health energy 7`           | Rate energy 1-10         |
-| `health symptom "headache"` | Log a symptom            |
-| `meds log "Med Name"`       | Log medication dose      |
-| `meds check`                | What's due now?          |
-| `spoons init 12`            | Start daily spoon budget |
-| `spoons spend 2`            | Log spoon usage          |
-| `spoons check`              | See remaining spoons     |
-| `spoons history`            | View spoon usage history |
-| `health dashboard`          | 30-day trends            |
+| Command                     | What It Does                        |
+| --------------------------- | ----------------------------------- |
+| `health energy 7`           | Rate energy 1-10                    |
+| `health fog 6`              | Rate brain fog 1-10                 |
+| `health check`              | Circuit breaker status check        |
+| `health symptom "headache"` | Log a symptom                       |
+| `meds log "Med Name"`       | Log medication dose                 |
+| `meds check`                | What's due now?                     |
+| `spoons init 12`            | Start daily spoon budget            |
+| `spoons spend 2`            | Log spoon usage                     |
+| `spoons check`              | See remaining spoons                |
+| `spoons history`            | View spoon usage history            |
+| `health dashboard`          | 30-day trends                       |
 
 ---
 
@@ -78,15 +82,16 @@
 
 ## 🤖 AI Helpers (All Free)
 
-| Command               | When to Use                |
-| --------------------- | -------------------------- |
-| `tech "question"`     | Debug code, fix errors     |
-| `content "topic"`     | Write blog posts, guides   |
-| `creative "idea"`     | Stories, creative projects |
-| `strategy "question"` | Big decisions, planning    |
-| `stoic "struggle"`    | Mindset, perspective       |
-| `morphling "any task"`| Auto-adapts to any need    |
-| `ai-suggest`          | Not sure which AI to use?  |
+| Command               | When to Use                     |
+| --------------------- | ------------------------------- |
+| `tech "question"`     | Debug code, fix errors          |
+| `content "topic"`     | Write blog posts, guides        |
+| `creative "idea"`     | Stories, creative projects      |
+| `strategy "question"` | R&D decisions, capability plans |
+| `finance "question"`  | Tax, S-Corp, financial advice   |
+| `stoic "struggle"`    | Mindset, perspective            |
+| `morphling "any task"`| Auto-adapts to any need         |
+| `ai-suggest`          | Not sure which AI to use?       |
 
 **Pipe code to AI:**
 
@@ -98,11 +103,12 @@ cat script.sh | tech --stream
 
 ## 📊 Check-Ins
 
-| Command       | What It Does             |
-| ------------- | ------------------------ |
-| `status`      | Mid-day: where am I?     |
-| `goodevening` | Evening wrap-up + backup |
-| `weekreview`  | Weekly summary           |
+| Command                  | What It Does                     |
+| ------------------------ | -------------------------------- |
+| `status`                 | Mid-day: where am I?             |
+| `goodevening`            | Evening wrap-up + backup         |
+| `goodevening 2026-01-20` | Close out a specific date        |
+| `weekreview`             | Weekly summary                   |
 
 ---
 
@@ -163,6 +169,8 @@ dump                   # Brain dump to journal
 ```bash
 break                  # Take 15 minutes
 health energy 4        # Log low energy
+health fog 7           # Log brain fog level
+health check           # Circuit breaker: should I stop?
 stoic "I'm struggling" # Get perspective
 ```
 

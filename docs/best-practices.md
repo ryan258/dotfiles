@@ -104,7 +104,7 @@ echo "challenge" | stoic       # For mindset
 
 ❌ **DON'T:**
 
-- Try to learn all 10 dispatchers at once
+- Try to learn all 11 dispatchers at once
 - Set up complex chaining workflows
 - Integrate AI into every workflow immediately
 

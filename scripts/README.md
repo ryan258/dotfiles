@@ -69,12 +69,12 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 
 - `journal.sh {add|list|search|onthisday|analyze|mood|themes|up}` – **AI-Enhanced** journal with searchable history, AI-powered analysis, and `up` command to quickly edit the file.
 - `todo.sh {add|list|done|clear|commit|bump|top|debug|delegate|up}` – **AI-Enhanced** todo list with git integration (`commit`), prioritization (`bump`, `top`), `up` for quick editing, and AI debugging/delegation.
-- `health.sh {add|symptom|energy|list|summary|dashboard|export|remove}` – Track appointments, log symptoms, rate energy levels (1-10), view 30-day trend dashboards, and export reports for doctors.
+- `health.sh {add|symptom|energy|fog|check|list|summary|dashboard|export|remove}` – Track appointments, log symptoms, rate energy (1-10) and brain fog (1-10). Includes **Circuit Breaker** (`check`) to validate if you should be working based on energy/fog levels.
 - `meds.sh {add|log|list|check|history|dashboard|remove|remind}` – Medication tracking with adherence monitoring, automated reminders (for cron), and 30-day dashboards.
 - `week_in_review.sh` – Summarise recent todos, journal entries, and commits from the last seven days.
 - `my_progress.sh` – Show your latest Git commits in the current repository.
-- `startday.sh` – **AI-Enhanced** morning routine: syncs blog stubs to todos, shows yesterday's context, active GitHub projects, blog status, health reminders, stale tasks (>7 days), scheduled commands, top 3 priorities, plus optional AI briefing.
-- `goodevening.sh` – **AI-Enhanced** end-of-day wrap-up with gamified progress tracking, project safety checks (uncommitted changes, large diffs, stale branches, unpushed commits), task cleanup, automated data backup, plus optional AI reflection.
+- `startday.sh [refresh]` – **AI-Enhanced** morning routine: syncs blog stubs to todos, shows yesterday's context, active GitHub projects, blog status, health reminders, stale tasks (>7 days), scheduled commands, top 3 priorities, plus optional AI briefing. Use `refresh` to force a new AI briefing.
+- `goodevening.sh [YYYY-MM-DD]` – **AI-Enhanced** end-of-day wrap-up with gamified progress tracking, project safety checks (uncommitted changes, large diffs, stale branches, unpushed commits), task cleanup, automated data backup, plus optional AI reflection. Accepts optional date argument to log/reflect on a past day.
 - `status.sh` – Mid-day dashboard showing your current work context (directory, git), journal, and top 3 tasks.
 - `gh-projects.sh {forgotten|recall <name>}` – Find and get details about forgotten projects from GitHub.
 - `blog.sh {status|stubs|random|recent|sync|ideas|generate|refine}` – **AI-Enhanced** blog workflow: status tracking, optional stub management, todo sync, journal search, plus AI content generation (`generate` accepts raw briefs/drafts, `-p persona`, `-a archetype`, `-s section`, auto-loads exemplar snippets per `BLOG_SECTION_EXEMPLARS`, and writes directly into the correct Hugo content folder) and refinement (`refine`).
@@ -98,7 +98,7 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 - ~~`recent_dirs.sh`~~ – **Deprecated:** Use `g.sh -r` instead.
 - ~~`goto.sh`~~ – **Deprecated:** Use `g.sh` instead.
 
-### System & Network Utilities
+- `logs.sh {view|search|rotate|stats|analyze|tail|errors}` – System log management. View entry counts, search errors, or tail the live system log.
 
 - `system_info.sh` – Snapshot of hardware, CPU, memory, disk, and public IP information.
 - `network_info.sh {status|scan|speed|fix}` – Check Wi-Fi details, list networks, run a download test, or flush DNS and toggle Wi-Fi power.
@@ -181,7 +181,7 @@ echo "challenge" | stoic           # Stoic coaching
 - **Technical:** `dhp-tech.sh` (tech) - Debugging, code optimization
 - **Creative:** `dhp-creative.sh` (creative), `dhp-narrative.sh` (narrative), `dhp-copy.sh` (copy)
 - **Content:** `dhp-content.sh` (content) - SEO-optimized guides
-- **Strategy:** `dhp-strategy.sh` (strategy), `dhp-brand.sh` (brand), `dhp-market.sh` (market)
+- **Strategy:** `dhp-strategy.sh` (strategy), `dhp-finance.sh` (finance), `dhp-brand.sh` (brand), `dhp-market.sh` (market)
 - **Personal:** `dhp-stoic.sh` (stoic), `dhp-research.sh` (research)
 
 **Advanced Features:**

@@ -14,7 +14,7 @@
 - [Getting Things Done](#getting-things-done) - Task management
 - [Capturing Ideas](#capturing-ideas) - Journaling and notes
 - [Finding Stuff Fast](#finding-stuff-fast) - Search and navigation
-- [AI Assistants](#ai-assistants) - Your 10 AI helpers
+- [AI Assistants](#ai-assistants) - Your 11 AI helpers
 - [Working on Projects](#working-on-projects) - Development workflows
 - [Publishing Content](#publishing-content) - Blog and writing
 - [System Maintenance](#system-maintenance) - Keep things tidy
@@ -437,7 +437,7 @@ tidydown
 
 ## AI Assistants (Swarm Intelligence)
 
-You have **10 AI dispatcher commands** on call. Each command launches a **Swarm** of specialized agents to handle your request. They're all free-tier models, so use them generously.
+You have **11 AI dispatcher commands** on call. Each command launches a **Swarm** of specialized agents to handle your request. They're all free-tier models, so use them generously.
 
 ### 1. Technical Help (`tech`)
 
@@ -487,15 +487,29 @@ copy "Email sequence for new blog subscribers"
 ### 5. Strategic Thinking (`strategy`)
 
 ```bash
-strategy "Should I focus on technical writing or personal essays?"
+strategy "Should I focus on learning RAG or fine-tuning next?"
 ```
 
-**When to use:** Big decisions, planning, prioritization.
-**Acts as:** Your Chief of Staff.
+**When to use:** R&D direction, capability building, research prioritization.
+**Acts as:** Your Chief of Staff for R&D and capability planning.
+**Note:** For tax/S-Corp/financial questions, use `finance` instead.
 
 ---
 
-### 6. Brand Development (`brand`)
+### 6. Financial Strategy (`finance`)
+
+```bash
+finance "What forms do I need to file for S-Corp election?"
+finance "How do I document my AI research for Section 174 R&D credits?"
+```
+
+**When to use:** Tax optimization, S-Corp/LLC decisions, Medicare considerations, R&D credits.
+**Acts as:** Your Financial Strategy specialist.
+**Note:** For R&D direction and capability planning, use `strategy` instead.
+
+---
+
+### 7. Brand Development (`brand`)
 
 ```bash
 brand "Help me define my personal brand as a developer with MS"
@@ -505,7 +519,7 @@ brand "Help me define my personal brand as a developer with MS"
 
 ---
 
-### 7. Market Research (`market`)
+### 8. Market Research (`market`)
 
 ```bash
 market "What's the audience for MS + productivity content?"
@@ -515,7 +529,7 @@ market "What's the audience for MS + productivity content?"
 
 ---
 
-### 8. Stoic Coaching (`stoic`)
+### 9. Stoic Coaching (`stoic`)
 
 ```bash
 stoic "I'm frustrated with my energy limitations today"
@@ -525,7 +539,7 @@ stoic "I'm frustrated with my energy limitations today"
 
 ---
 
-### 9. Research (`research`)
+### 10. Research (`research`)
 
 ```bash
 research "Summarize recent research on MS and cognitive function"
@@ -535,7 +549,7 @@ research "Summarize recent research on MS and cognitive function"
 
 ---
 
-### 10. Narrative Structure (`narrative`)
+### 11. Narrative Structure (`narrative`)
 
 ```bash
 narrative "Analyze this story structure" < draft.md

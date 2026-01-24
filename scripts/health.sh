@@ -406,6 +406,61 @@ cmd_export() {
     esac
 }
 
+
+cmd_fog() {
+    local rating="$1"
+    if [ -z "$rating" ]; then
+        echo "Usage: $(basename "$0") fog <1-10>"
+        exit 1
+    fi
+    validate_range "$rating" 1 10 "fog rating" || exit 1
+    
+    local timestamp=$(date '+%Y-%m-%d %H:%M')
+    echo "FOG|$timestamp|$rating" >> "$HEALTH_FILE"
+    echo "Logged brain fog level: $rating/10"
+    
+    # Trigger check immediately
+    cmd_check
+}
+
+cmd_check() {
+    # Circuit Breaker Logic
+    # Returns 0 if OPERATIONAL, 1 if RECOVERY RECOMMENDED
+
+    if [ ! -s "$HEALTH_FILE" ]; then
+        echo "No health data. System: OPERATIONAL (Default)"
+        return 0
+    fi
+
+    local today=$(date '+%Y-%m-%d')
+    local last_energy=$(grep "^ENERGY|" "$HEALTH_FILE" 2>/dev/null | tail -1 | cut -d'|' -f3)
+    local last_fog=$(grep "^FOG|" "$HEALTH_FILE" 2>/dev/null | tail -1 | cut -d'|' -f3)
+    
+    # Check Energy (Low Energy Rule)
+    if [ -n "$last_energy" ]; then
+        if [ "$last_energy" -le 3 ]; then
+            echo "🛑 CIRCUIT BREAKER TRIPPED: Low Energy ($last_energy/10)"
+            echo "   Action: STOP high-cognitive tasks."
+            echo "   Recommendation: Rest, active recovery, or Low Energy Menu items."
+            return 1
+        fi
+    fi
+
+    # Check Fog (High Fog Rule)
+    if [ -n "$last_fog" ]; then
+        if [ "$last_fog" -ge 6 ]; then
+             echo "🛑 CIRCUIT BREAKER TRIPPED: High Brain Fog ($last_fog/10)"
+             echo "   Action: EXTEND deadlines by 24h."
+             echo "   Recommendation: No strategic decisions. Admin/Rote work only."
+             return 1
+        fi
+    fi
+
+    echo "✅ SYSTEM OPERATIONAL"
+    echo "   Energy: ${last_energy:-N/A}/10 | Fog: ${last_fog:-N/A}/10"
+    return 0
+}
+
 # --- Main Dispatcher ---
 main() {
     local cmd="${1:-}"
@@ -415,6 +470,8 @@ main() {
         add)        cmd_add "$@" ;;
         symptom)    cmd_symptom "$@" ;;
         energy)     cmd_energy "$@" ;;
+        fog)        cmd_fog "$@" ;;
+        check)      cmd_check "$@" ;;
         list)       cmd_list "$@" ;;
         summary)    cmd_summary "$@" ;;
         remove)     cmd_remove "$@" ;;
@@ -424,7 +481,7 @@ main() {
             ;;
              
         *)
-            echo "Usage: $(basename "$0") {add|symptom|energy|list|summary|dashboard|remove|export}"
+            echo "Usage: $(basename "$0") {add|symptom|energy|fog|check|list|summary|dashboard|remove|export}"
             exit 1
             ;;
     esac

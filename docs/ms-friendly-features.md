@@ -94,6 +94,27 @@ health summary         # 30-day overview
 
 ---
 
+### Brain Fog Tracking & Circuit Breaker
+**Problem:** Pushing through fog makes everything worse.
+**Solution:** Track fog separately and let the system tell you when to stop.
+
+```bash
+health fog 3           # Light fog (1-10 scale)
+health fog 7           # Heavy fog
+
+# Circuit breaker - the system checks your state:
+health check
+```
+
+**Circuit breaker rules:**
+- **Energy ≤ 3** → 🛑 "STOP high-cognitive tasks. Rest or Low Energy Menu."
+- **Fog ≥ 6** → 🛑 "EXTEND deadlines by 24h. Admin/rote work only."
+- **Otherwise** → ✅ "SYSTEM OPERATIONAL"
+
+**Why this matters:** You don't have to judge whether you should keep working. The system decides based on objective data you logged.
+
+---
+
 ### Medication Adherence
 **Problem:** "Did I take my meds this morning?"
 **Solution:** Track every dose.
@@ -226,7 +247,7 @@ todo debug 3           # AI analyzes task 3
 todo delegate 5 tech   # Send task 5 to tech AI
 ```
 
-**All 10 AI dispatchers are free-tier.** Use them without guilt.
+**All 11 AI dispatchers are free-tier.** Use them without guilt.
 
 ---
 
@@ -487,6 +508,9 @@ todo top               # Just 3 things
 
 ```bash
 health energy 4        # Log low energy
+health fog 5           # Log fog level
+health check           # Circuit breaker: ✅ OPERATIONAL (energy 4 > 3, fog 5 < 6)
+
 spoons init 6          # Acknowledge limited budget
 focus set "One PR review"  # Set minimal intention
 todo top               # See top 3, pick easiest
@@ -500,6 +524,20 @@ spoons spend 3 "Code review"
 goodevening            # Celebrate what you DID do
 focus done             # Archive completion
 ```
+
+### Scenario 2b: Circuit Breaker Day
+**You wake up and log your state:**
+
+```bash
+health energy 2        # Very low
+health fog 7           # Heavy fog
+health check
+# Output: 🛑 CIRCUIT BREAKER TRIPPED: Low Energy (2/10)
+#         Action: STOP high-cognitive tasks.
+#         Recommendation: Rest, active recovery, or Low Energy Menu items.
+```
+
+**What you do:** Accept it. No strategic work today. Maybe light admin, maybe just rest. The system gave you permission to stop.
 
 ---
 
