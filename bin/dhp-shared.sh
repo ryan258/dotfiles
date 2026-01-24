@@ -130,7 +130,11 @@ dhp_dispatch() {
     dhp_setup_env
     # Pass the remaining arguments (user args) to the flag parser
     dhp_parse_flags "$@"
-    set -- "${REMAINING_ARGS[@]}"
+    if [ ${#REMAINING_ARGS[@]} -gt 0 ]; then
+        set -- "${REMAINING_ARGS[@]}"
+    else
+        set --
+    fi
 
     # 2. Validation
     validate_dependencies curl jq
