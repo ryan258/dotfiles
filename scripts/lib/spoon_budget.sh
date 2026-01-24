@@ -5,18 +5,32 @@
 
 set -euo pipefail
 
+# Source common utilities
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$SCRIPT_DIR/common.sh" ]]; then
+    source "$SCRIPT_DIR/common.sh"
+fi
+
+# Source config for paths
+if [[ -f "$SCRIPT_DIR/config.sh" ]]; then
+    source "$SCRIPT_DIR/config.sh"
+fi
+
 DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-SPOON_LOG="$DATA_DIR/spoons.txt"
+SPOON_LOG="${SPOON_LOG:-$DATA_DIR/spoons.txt}"
+DEFAULT_DAILY_SPOONS="${DEFAULT_DAILY_SPOONS:-12}"
 
 mkdir -p "$DATA_DIR"
 
 # Initialize daily spoon budget
 # Usage: init_daily_spoons <count> [date]
 init_daily_spoons() {
-    local count="$1"
+    local count="${1:-$DEFAULT_DAILY_SPOONS}"
 
-    # Validate count is a positive integer
-    if ! [[ "$count" =~ ^[0-9]+$ ]]; then
+    # Use common validation if available, otherwise inline
+    if type validate_numeric &>/dev/null; then
+        validate_numeric "$count" "spoon count" || return 1
+    elif ! [[ "$count" =~ ^[0-9]+$ ]]; then
         echo "Error: Count must be a positive integer" >&2
         return 1
     fi
@@ -37,18 +51,23 @@ init_daily_spoons() {
 # Usage: spend_spoons <count> <activity>
 spend_spoons() {
     local count="$1"
-    
-    # Validate count is a positive integer
-    if ! [[ "$count" =~ ^[0-9]+$ ]]; then
+
+    # Use common validation if available
+    if type validate_numeric &>/dev/null; then
+        validate_numeric "$count" "spoon count" || return 1
+    elif ! [[ "$count" =~ ^[0-9]+$ ]]; then
         echo "Error: Count must be a positive integer" >&2
         return 1
     fi
 
-
-
-    # Sanitize activity (remove pipes and newlines)
+    # Sanitize activity using common function if available
     local raw_activity="${2:-General Activity}"
-    local activity=$(echo "$raw_activity" | tr -d '|\n' | head -c 100)
+    local activity
+    if type sanitize_input &>/dev/null; then
+        activity=$(sanitize_input "$raw_activity" | head -c 100)
+    else
+        activity=$(echo "$raw_activity" | tr -d '|\n' | head -c 100)
+    fi
     local today=$(date +%Y-%m-%d)
     local time=$(date +%H:%M)
     

@@ -1,30 +1,33 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # --- A quick command-line journal ---
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
-if [ -f "$DATE_UTILS" ]; then
-    # shellcheck disable=SC1090
-    source "$DATE_UTILS"
-else
-    echo "Error: date utilities not found at $DATE_UTILS" >&2
-    exit 1
-fi
+source "$SCRIPT_DIR/lib/common.sh"
+require_lib "date_utils.sh"
 
-JOURNAL_FILE="$HOME/.config/dotfiles-data/journal.txt"
+JOURNAL_FILE="${JOURNAL_FILE:-$HOME/.config/dotfiles-data/journal.txt}"
+
+# Ensure journal file exists
+touch "$JOURNAL_FILE"
+
+# Cleanup
+cleanup() {
+    # Placeholder for future temp file cleanup
+    :
+}
+trap cleanup EXIT
 
 # --- Main Logic ---
 
-# --- Main Logic ---
 case "${1:-add}" in
   add)
     # Add a new journal entry.
     if [ $# -gt 0 ]; then shift; fi # Removes 'add' if present
     ENTRY="$*"
     if [ -z "$ENTRY" ]; then
-        echo "Usage: journal <text>"
+        echo "Usage: $(basename "$0") <text>"
         exit 1
     fi
     TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
@@ -34,7 +37,7 @@ case "${1:-add}" in
 
   list)
     # List the last 5 entries.
-    if [ -f "$JOURNAL_FILE" ]; then
+    if [[ -s "$JOURNAL_FILE" ]]; then
         echo "--- Last 5 Journal Entries ---"
         tail -n 5 "$JOURNAL_FILE"
     else
@@ -63,12 +66,12 @@ case "${1:-add}" in
     done
 
     if [ $# -eq 0 ]; then
-        echo "Usage: journal search [--recent|--oldest] <term>"
+        echo "Usage: $(basename "$0") search [--recent|--oldest] <term>"
         exit 1
     fi
 
-    if [ ! -f "$JOURNAL_FILE" ]; then
-        echo "Journal is empty. Add entries with: journal \"text\""
+    if [[ ! -s "$JOURNAL_FILE" ]]; then
+        echo "Journal is empty. Add entries with: $(basename "$0") \"text\""
         exit 0
     fi
 
@@ -112,7 +115,7 @@ case "${1:-add}" in
 
     if [ -z "$RECENT_ENTRIES" ]; then
         echo "No journal entries found in the last 7 days."
-        echo "Add entries with: journal 'your thoughts here'"
+        echo "Add entries with: $(basename "$0") 'your thoughts here'"
         exit 0
     fi
 
@@ -232,8 +235,8 @@ case "${1:-add}" in
 
   *)
     echo "Error: Unknown command '$1'" >&2
-    echo "Usage: journal <text>"
-    echo "   or: journal {up|list|search|onthisday|analyze|mood|themes}"
+    echo "Usage: $(basename "$0") <text>"
+    echo "   or: $(basename "$0") {up|list|search|onthisday|analyze|mood|themes}"
     echo ""
     echo "Standard commands:"
     echo "  journal <text>              : Add a quick journal entry"

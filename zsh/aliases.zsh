@@ -237,6 +237,9 @@ alias organize="file_organizer.sh"
 # =============================================================================
 # SYSTEM MONITORING SCRIPTS (macOS)
 alias systemlog="tail -n 20 ~/.config/dotfiles-data/system.log"
+alias logs="logs.sh"
+alias logtail="logs.sh tail"
+alias logerrors="logs.sh errors"
 # =============================================================================
 
 # System information

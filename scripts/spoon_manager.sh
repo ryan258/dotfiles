@@ -8,8 +8,13 @@
 
 set -euo pipefail
 
-# Source the shared library
-source "$(dirname "${BASH_SOURCE[0]}")/lib/spoon_budget.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source common utilities first (for validation functions)
+source "$SCRIPT_DIR/lib/common.sh"
+
+# Source the spoon budget library
+source "$SCRIPT_DIR/lib/spoon_budget.sh"
 
 show_help() {
     echo "Usage: $(basename "$0") {init|spend|check|history|cost}"
@@ -24,11 +29,8 @@ show_help() {
 
 case "${1:-}" in
     init)
-        count="${2:-12}"
-        if ! [[ "$count" =~ ^[0-9]+$ ]]; then
-             echo "Error: Count must be a positive integer" >&2
-             exit 1
-        fi
+        count="${2:-$DEFAULT_DAILY_SPOONS}"
+        validate_numeric "$count" "spoon count" || exit 1
         init_daily_spoons "$count"
         ;;
     spend)

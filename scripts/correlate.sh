@@ -5,42 +5,54 @@
 
 set -euo pipefail
 
-# Source the shared library
-source "$(dirname "${BASH_SOURCE[0]}")/lib/correlation_engine.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source common utilities
+source "$SCRIPT_DIR/lib/common.sh"
+
+# Source the correlation engine library
+source "$SCRIPT_DIR/lib/correlation_engine.sh"
 
 DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
 
-validate_safe_path() {
+# Resolve to an absolute path with best-effort portability (macOS/Linux)
+resolve_path() {
+    local path="$1"
+    if command -v python3 >/dev/null 2>&1; then
+        python3 - "$path" <<'PY'
+import os, sys
+print(os.path.realpath(sys.argv[1]))
+PY
+    else
+        if [[ "$path" = /* ]]; then
+            echo "$path"
+        else
+            echo "$(pwd -P)/$path"
+        fi
+    fi
+}
+
+# Wrapper for path validation that allows multiple safe directories
+validate_correlate_path() {
     local file="$1"
 
     # Check file exists
-    if [ ! -f "$file" ]; then
+    if [[ ! -f "$file" ]]; then
         echo "Error: File not found: $file" >&2
         return 1
     fi
 
-    # Get real path (cross-platform)
+    # Get real path
     local real_file
-    if command -v realpath &>/dev/null; then
-        real_file=$(realpath "$file" 2>/dev/null || echo "$file")
-    elif command -v python3 &>/dev/null; then
-        # Fallback for macOS without realpath
-        real_file=$(python3 -c "import os; print(os.path.realpath('$file'))" 2>/dev/null || echo "$file")
-    else
-        # Last resort: use the file as-is
-        real_file="$file"
-    fi
+    real_file=$(resolve_path "$file")
 
     # Get real DATA_DIR path
     local data_real
-    if command -v realpath &>/dev/null; then
-        data_real=$(realpath "$DATA_DIR" 2>/dev/null || echo "$DATA_DIR")
-    else
-        data_real="$DATA_DIR"
-    fi
+    data_real=$(resolve_path "$DATA_DIR")
 
     # Allow files in DATA_DIR, /tmp, /var/tmp, or current working directory
-    local pwd_real=$(pwd)
+    local pwd_real
+    pwd_real=$(pwd -P)
 
     if [[ "$real_file" == "$data_real"* ]] || \
        [[ "$real_file" == "/tmp"* ]] || \
@@ -49,9 +61,7 @@ validate_safe_path() {
         return 0
     fi
 
-    # Reject system directories
     echo "Error: File must be in DATA_DIR ($DATA_DIR), /tmp, or current directory" >&2
-    echo "Attempted: $real_file" >&2
     return 1
 }
 
@@ -73,43 +83,44 @@ show_help() {
 
 case "${1:-}" in
     run)
-        if [ -z "${2:-}" ] || [ -z "${3:-}" ]; then
+        if [[ -z "${2:-}" ]] || [[ -z "${3:-}" ]]; then
             echo "Error: Datasets required" >&2
             echo "Usage: $(basename "$0") run <file1> <file2>" >&2
             exit 1
         fi
-        
+
         file1="$2"
         file2="$3"
         d1="${4:-1}"
         v1="${5:-2}"
         d2="${6:-1}"
         v2="${7:-2}"
-        
-        # Validate safe paths (basic check against system dirs)
-        validate_safe_path "$file1" || exit 1
-        validate_safe_path "$file2" || exit 1
-        
-        # Validate indices are numeric
-        if ! [[ "$d1" =~ ^[0-9]+$ ]] || ! [[ "$v1" =~ ^[0-9]+$ ]] || \
-           ! [[ "$d2" =~ ^[0-9]+$ ]] || ! [[ "$v2" =~ ^[0-9]+$ ]]; then
-            echo "Error: Column indices must be numbers" >&2
-            exit 1
-        fi
-        
+
+        # Validate safe paths
+        validate_correlate_path "$file1" || exit 1
+        validate_correlate_path "$file2" || exit 1
+
+        # Validate indices are numeric using common library
+        validate_numeric "$d1" "date column 1" || exit 1
+        validate_numeric "$v1" "value column 1" || exit 1
+        validate_numeric "$d2" "date column 2" || exit 1
+        validate_numeric "$v2" "value column 2" || exit 1
+
         correlate_two_datasets "$file1" "$file2" "$d1" "$v1" "$d2" "$v2"
         ;;
-        
+
     find-patterns)
-        if [ -z "${2:-}" ]; then
+        if [[ -z "${2:-}" ]]; then
             echo "Error: File required" >&2
             exit 1
         fi
-        find_patterns "$2" "general"
+        echo "Pattern detection is not yet implemented."
+        echo "This feature will analyze data for recurring patterns."
         ;;
-        
+
     explain)
-        echo "Correlation explanation features Coming Soon (tm)"
+        echo "Correlation explanation is not yet implemented."
+        echo "This feature will provide insights on correlation results."
         ;;
         
     *)

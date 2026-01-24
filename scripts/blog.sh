@@ -2,6 +2,12 @@
 # blog.sh - Tools for managing the blog content workflow.
 set -euo pipefail
 
+# Cleanup
+cleanup() {
+    :
+}
+trap cleanup EXIT
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
 if [ -f "$DATE_UTILS" ]; then

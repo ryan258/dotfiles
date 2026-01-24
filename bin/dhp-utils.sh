@@ -1,8 +1,20 @@
 #!/bin/bash
+# dhp-utils.sh: Utility functions for AI dispatchers
 
+# Try to source common library for shared functions
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
+if [[ -f "$DOTFILES_DIR/scripts/lib/common.sh" ]]; then
+    source "$DOTFILES_DIR/scripts/lib/common.sh"
+fi
+
+# Validate required commands are available
+# Usage: validate_dependencies curl jq python3
 validate_dependencies() {
     for cmd in "$@"; do
-        if ! command -v "$cmd" >/dev/null 2>&1; then
+        # Use common library if available
+        if type require_cmd &>/dev/null; then
+            require_cmd "$cmd" || return 1
+        elif ! command -v "$cmd" >/dev/null 2>&1; then
             echo "Error: '$cmd' is not installed. Please install it." >&2
             return 1
         fi
