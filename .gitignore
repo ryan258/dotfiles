@@ -25,3 +25,9 @@ scripts/mtg_*.py
 ry.md
 commit.md
 logs/
+__pycache__/
+*.pyc
+
+brain/data/
+brain/.venv/
+brain/brain.log

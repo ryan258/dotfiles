@@ -1,0 +1,53 @@
+[
+  {
+    "id": "branched_conv",
+    "title": "Branched Conversation",
+    "create_time": 1672531200.0,
+    "current_node": "node_3b",
+    "mapping": {
+      "node_1": {
+        "id": "node_1",
+        "parent": null,
+        "message": {
+          "id": "msg_1",
+          "author": { "role": "user" },
+          "create_time": 100,
+          "content": { "content_type": "text", "parts": ["Root Question"] }
+        }
+      },
+      "node_2a": {
+        "id": "node_2a",
+        "parent": "node_1",
+        "message": {
+          "id": "msg_2a",
+          "author": { "role": "assistant" },
+          "create_time": 101,
+          "content": { "content_type": "text", "parts": ["Branch A Answer"] }
+        }
+      },
+      "node_2b": {
+        "id": "node_2b",
+        "parent": "node_1",
+        "message": {
+          "id": "msg_2b",
+          "author": { "role": "assistant" },
+          "create_time": 102,
+          "content": {
+            "content_type": "text",
+            "parts": ["Branch B Answer (Selected)"]
+          }
+        }
+      },
+      "node_3b": {
+        "id": "node_3b",
+        "parent": "node_2b",
+        "message": {
+          "id": "msg_3b",
+          "author": { "role": "user" },
+          "create_time": 103,
+          "content": { "content_type": "text", "parts": ["Follow up on B"] }
+        }
+      }
+    }
+  }
+]
