@@ -55,34 +55,39 @@ Develop compelling copy including:
 DELIVERABLE: A ready-to-use copy document with formatting."
 
 # --- 6. EXECUTION ---
-PYTHON_CMD="uv run --project \"$AI_STAFF_DIR\" python \"$DOTFILES_DIR/bin/dhp-swarm.py\""
+# Use array construction to safely handle arguments without eval
+CMD_ARGS=(
+    "uv" "run"
+    "--project" "$AI_STAFF_DIR"
+    "python" "$DOTFILES_DIR/bin/dhp-swarm.py"
+)
 
 if [ -n "$MODEL" ]; then
-    PYTHON_CMD="$PYTHON_CMD --model \"$MODEL\""
+    CMD_ARGS+=("--model" "$MODEL")
 fi
 
 if [ -n "$PARAM_TEMPERATURE" ]; then
-    PYTHON_CMD="$PYTHON_CMD --temperature $PARAM_TEMPERATURE"
+    CMD_ARGS+=("--temperature" "$PARAM_TEMPERATURE")
 else
     # Balance persuasion with clarity
-    PYTHON_CMD="$PYTHON_CMD --temperature 0.7"
+    CMD_ARGS+=("--temperature" "0.7")
 fi
 
-PYTHON_CMD="$PYTHON_CMD --parallel --max-parallel 5"
-PYTHON_CMD="$PYTHON_CMD --auto-approve"
+CMD_ARGS+=("--parallel" "--max-parallel" "5")
+CMD_ARGS+=("--auto-approve")
 
 if [ "$USE_VERBOSE" = "true" ]; then
-    PYTHON_CMD="$PYTHON_CMD --verbose"
+    CMD_ARGS+=("--verbose")
 fi
 
 if [ "$USE_STREAMING" = "true" ]; then
-    PYTHON_CMD="$PYTHON_CMD --stream"
+    CMD_ARGS+=("--stream")
 fi
 
 echo "Executing copywriting swarm..." >&2
-echo "$ENHANCED_BRIEF" | eval "$PYTHON_CMD" | tee "$OUTPUT_FILE"
+echo "$ENHANCED_BRIEF" | "${CMD_ARGS[@]}" | tee "$OUTPUT_FILE"
 
-if [ "${PIPESTATUS[0]}" -eq 0 ]; then
+if [ "${PIPESTATUS[1]}" -eq 0 ]; then
     echo -e "\n---" >&2
     echo "✓ SUCCESS: Copywriting completed via swarm" >&2
 else

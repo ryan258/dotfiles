@@ -1,5 +1,6 @@
 #!/bin/bash
 # dhp-config.sh: shared helpers for dispatcher configuration
+set -euo pipefail
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
 DHP_SQUADS_FILE="${DHP_SQUADS_FILE:-$DOTFILES_DIR/ai-staff-hq/squads.json}"

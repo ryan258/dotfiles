@@ -2,6 +2,7 @@
 
 # dhp-context.sh: Context Injection Library for AI Dispatchers
 # Source this file to gather local context for AI prompts
+set -euo pipefail
 
 # This script provides functions to gather relevant context:
 # - gather_context() - Main function to collect all context

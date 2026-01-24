@@ -2,10 +2,10 @@
 
 [![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)](VERSION)
 [![Security](https://img.shields.io/badge/security-A%2B-brightgreen.svg)](SECURITY.md)
-[![Tests](https://img.shields.io/badge/tests-14%2F14%20passing-success.svg)](#running-tests)
+[![Tests](https://img.shields.io/badge/tests-15%2F15%20passing-success.svg)](#running-tests)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey.svg)](#prerequisites)
 
-**Latest Release:** v2.2.0 (January 5, 2026) - Swarm Orchestration System | [View Changelog](CHANGELOG.md)
+**Latest Release:** v2.2.0 (January 23, 2026) - Swarm Orchestration System | [View Changelog](CHANGELOG.md)
 
 This repository contains a personal collection of shell scripts, aliases, and configurations designed to create a powerful, efficient, and accessible command-line environment on macOS. The toolkit is built on Zsh and automates common development and system management tasks, reducing repetitive actions and minimizing cognitive load.
 
@@ -141,7 +141,7 @@ This release implements advanced energy management and data correlation capabili
 - Enhanced path validation with cross-platform support
 - Fixed time log parsing for accurate duration calculations
 - Improved Linux date handling in report generation
-- 14/14 tests passing (added 8 spoon + 3 correlation tests)
+- 15/15 tests passing (added 8 spoon + 3 correlation tests)
 - Comprehensive data format documentation
 
 **Data Files:**

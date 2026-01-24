@@ -3,6 +3,7 @@
 # dhp-lib.sh: Shared Library for AI Dispatchers
 # Provides error handling and streaming support functions
 # Source this file in dispatcher scripts: source "$DOTFILES_DIR/bin/dhp-lib.sh"
+set -euo pipefail
 
 # --- Configuration ---
 DISPATCHER_USAGE_LOG="$HOME/.config/dotfiles-data/dispatcher_usage.log"

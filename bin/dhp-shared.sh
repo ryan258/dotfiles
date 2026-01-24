@@ -2,6 +2,7 @@
 
 # dhp-shared.sh: Shared library for DHP dispatcher scripts
 # This script provides common setup, flag parsing, and input handling functions.
+set -euo pipefail
 
 # Function to set up the environment for DHP scripts
 # Sources .env, dhp-lib.sh, and dhp-utils.sh
