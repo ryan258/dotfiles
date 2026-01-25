@@ -86,6 +86,10 @@ while [[ "$#" -gt 0 ]]; do
             PARAM_MAX_TOKENS="$2"
             shift 2
             ;;
+        --brain)
+            USE_BRAIN=true
+            shift
+            ;;
         *)
             REMAINING_ARGS_LOCAL+=("$1")
             shift
@@ -94,7 +98,11 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 # Restore args for dhp_get_input
-set -- "${REMAINING_ARGS_LOCAL[@]}"
+if [ ${#REMAINING_ARGS_LOCAL[@]} -gt 0 ]; then
+    set -- "${REMAINING_ARGS_LOCAL[@]}"
+else
+    set --
+fi
 
 # --- 3. INPUT GATHERING ---
 validate_dependencies curl jq
@@ -190,6 +198,7 @@ export USE_VERBOSE
 export USE_STREAMING
 export PARAM_TEMPERATURE
 export PARAM_MAX_TOKENS
+export USE_BRAIN
 
 dhp_dispatch \
     "Content Workflow" \
@@ -199,4 +208,4 @@ dhp_dispatch \
     "DHP_CONTENT_OUTPUT_DIR" \
     "$SYSTEM_BRIEF_CONTENT" \
     "" \
-    "${REMAINING_ARGS_LOCAL[@]}"
+    "$@"

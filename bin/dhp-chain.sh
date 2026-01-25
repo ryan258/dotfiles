@@ -36,6 +36,7 @@ fi
 
 # Parse arguments
 DISPATCHERS=()
+COMMON_FLAGS=()
 INITIAL_INPUT=""
 SAVE_FILE=""
 
@@ -50,6 +51,10 @@ while [ $# -gt 0 ]; do
             shift
             SAVE_FILE="$1"
             shift
+            ;;
+        --brain)
+            shift
+            COMMON_FLAGS+=("--brain")
             ;;
         *)
             DISPATCHERS+=("$1")
@@ -92,7 +97,7 @@ for dispatcher in "${DISPATCHERS[@]}"; do
         creative|dhp-creative)
             # Creative uses arguments, not stdin, so we need special handling
             DISPATCHER_SCRIPT="$DOTFILES_DIR/bin/dhp-creative.sh"
-            CURRENT_OUTPUT=$("$DISPATCHER_SCRIPT" "$CURRENT_OUTPUT")
+            CURRENT_OUTPUT=$("$DISPATCHER_SCRIPT" "$CURRENT_OUTPUT" "${COMMON_FLAGS[@]}")
             echo "$CURRENT_OUTPUT" >&2
             echo "" >&2
             ((STEP++))
@@ -101,7 +106,7 @@ for dispatcher in "${DISPATCHERS[@]}"; do
         content|dhp-content)
             # Content also uses arguments
             DISPATCHER_SCRIPT="$DOTFILES_DIR/bin/dhp-content.sh"
-            CURRENT_OUTPUT=$("$DISPATCHER_SCRIPT" "$CURRENT_OUTPUT")
+            CURRENT_OUTPUT=$("$DISPATCHER_SCRIPT" "$CURRENT_OUTPUT" "${COMMON_FLAGS[@]}")
             echo "$CURRENT_OUTPUT" >&2
             echo "" >&2
             ((STEP++))
@@ -136,7 +141,8 @@ for dispatcher in "${DISPATCHERS[@]}"; do
     esac
 
     # Process through dispatcher (stdin-based)
-    CURRENT_OUTPUT=$(echo "$CURRENT_OUTPUT" | "$DISPATCHER_SCRIPT")
+    # We append common flags like --brain
+    CURRENT_OUTPUT=$(echo "$CURRENT_OUTPUT" | "$DISPATCHER_SCRIPT" "${COMMON_FLAGS[@]}")
 
     # Show intermediate output
     echo "$CURRENT_OUTPUT" >&2

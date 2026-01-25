@@ -78,6 +78,9 @@ python3 ingestion/ingest.py conversations.json --project my-project
 
 # Dry run (parse only, don't insert)
 python3 ingestion/ingest.py export.json --dry-run
+
+# Query the Hive Mind (from dotfiles)
+bin/dhp-memory-search "Content Workflow: test"
 ```
 
 ## Service Management

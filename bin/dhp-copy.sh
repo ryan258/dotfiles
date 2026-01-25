@@ -11,8 +11,14 @@ source "$(dirname "$0")/dhp-shared.sh"
 dhp_setup_env
 
 # --- 2. FLAG PARSING ---
+# Initialize array to prevent unbound variable error
+REMAINING_ARGS=()
 dhp_parse_flags "$@"
-set -- "${REMAINING_ARGS[@]}"
+if [ ${#REMAINING_ARGS[@]} -gt 0 ]; then
+    set -- "${REMAINING_ARGS[@]}"
+else
+    set --
+fi
 
 # --- 3. VALIDATION & INPUT ---
 validate_dependencies curl jq
@@ -88,6 +94,8 @@ echo "Executing copywriting swarm..." >&2
 echo "$ENHANCED_BRIEF" | "${CMD_ARGS[@]}" | tee "$OUTPUT_FILE"
 
 if [ "${PIPESTATUS[1]}" -eq 0 ]; then
+    dhp_save_artifact "$OUTPUT_FILE" "$SLUG" "copywriting" "dhp,copywriting,swarm" "ai-staff-hq" "copy"
+
     echo -e "\n---" >&2
     echo "✓ SUCCESS: Copywriting completed via swarm" >&2
 else

@@ -45,6 +45,7 @@ dhp_parse_flags() {
     USE_VERBOSE="${USE_VERBOSE:-false}"
     PARAM_TEMPERATURE="${PARAM_TEMPERATURE:-}"
     PARAM_MAX_TOKENS="${PARAM_MAX_TOKENS:-}"
+    USE_BRAIN="${USE_BRAIN:-false}"
     REMAINING_ARGS=()
     while [[ "$#" -gt 0 ]]; do
         case "$1" in
@@ -63,6 +64,10 @@ dhp_parse_flags() {
             --max-tokens)
                 PARAM_MAX_TOKENS="$2"
                 shift 2
+                ;;
+            --brain)
+                USE_BRAIN=true
+                shift
                 ;;
             *)
                 REMAINING_ARGS+=("$1")
@@ -109,6 +114,70 @@ slugify() {
     local text="$1"
     # Lowercase, replace non-alphanumeric with -, trim
     echo "$text" | tr '[:upper:]' '[:lower:]' | tr -s '[:punct:][:space:]' '-' | sed 's/^-//;s/-$//' | cut -c 1-50
+}
+
+# Function to save artifact to Brain (Interactive or Auto)
+# Usage: dhp_save_artifact "OUTPUT_FILE" "SLUG" "SERVICE_NAME" "TAGS" "PROJECT" "TYPE"
+dhp_save_artifact() {
+    local output_file="$1"
+    local slug="$2"
+    local service_name="$3"
+    local tags="$4"
+    local project="${5:-ai-staff-hq}"
+    local type="${6:-generation}"
+
+    local should_save=false
+
+    if [ "$USE_BRAIN" = "true" ]; then
+        should_save=true
+        echo "🧠 Auto-saving to Hive Mind..." >&2
+    else
+        # Interactive mode: Check if we are connected to a terminal
+        # simple check: -t 1 checks if stdout is a terminal, but we might be piping stdout.
+        # check /dev/tty readability.
+        if [ -r /dev/tty ] && [ -t 2 ]; then
+            # If stdout is captured (not a TTY), show a preview before prompting
+            if [ ! -t 1 ] && [ -f "$output_file" ]; then
+                echo -e "\n--- OUTPUT PREVIEW (First 20 lines) ---" > /dev/tty
+                head -n 20 "$output_file" > /dev/tty
+                echo -e "...\n---------------------------------------" > /dev/tty
+            fi
+
+            # Read from TTY to bypass stdin which might be used for input
+            echo -n "Save to Hive Mind? [y/N] " > /dev/tty
+            if read -n 1 -r response < /dev/tty; then
+                echo "" > /dev/tty # Newline
+                if [[ "$response" =~ ^[Yy]$ ]]; then
+                    should_save=true
+                    echo "🧠 Interactive save confirmed..." >&2
+                fi
+            else
+                echo "" > /dev/tty
+            fi
+        fi
+    fi
+
+    if [ "$should_save" = "true" ]; then
+        if [ -f "$output_file" ]; then
+            if ! "$DOTFILES_DIR/bin/dhp-memory" \
+                --title "$(tr '[:lower:]' '[:upper:]' <<< "${service_name:0:1}")${service_name:1}: $slug" \
+                --tags "$tags" \
+                --project "$project" \
+                --type "$type" < "$output_file"; then
+                if [ "$USE_BRAIN" = "true" ]; then
+                    echo "Error: Failed to save to Brain." >&2
+                    return 1
+                fi
+                echo "Warning: Failed to save to Brain." >&2
+            fi
+        else
+            if [ "$USE_BRAIN" = "true" ]; then
+                echo "Error: Output file not found, cannot save to Brain." >&2
+                return 1
+            fi
+            echo "Warning: Output file not found, cannot save to Brain." >&2
+        fi
+    fi
 }
 
 # Centralized Dispatcher Function
@@ -228,16 +297,21 @@ $PIPED_CONTENT"
     local exit_code=${PIPESTATUS[1]} # output of python command
     
     if [ "$exit_code" -eq 0 ]; then
+        # Unified interactive/auto-save logic
+        dhp_save_artifact "$output_file" "$slug" "$service_name" "dhp,swarm,$service_name" "ai-staff-hq" "generation"
+
         echo -e "\n---" >&2
         echo "✓ SUCCESS: $service_name completed" >&2
     else
         echo "✗ FAILED: Swarm orchestration encountered an error" >&2
         return 1
     fi
+
 }
 
 export -f dhp_setup_env
 export -f dhp_parse_flags
 export -f dhp_get_input
 export -f slugify
+export -f dhp_save_artifact
 export -f dhp_dispatch

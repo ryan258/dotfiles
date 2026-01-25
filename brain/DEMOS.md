@@ -203,6 +203,9 @@ dhp-research.sh "Compare transformer architectures for long-context"
 
 # Methodology analysis
 dhp-research.sh --verbose "Best practices for LLM evaluation benchmarks"
+
+# Query the Brain for recent memories
+bin/dhp-memory-search "Content Workflow: test" --project ai-staff-hq
 ```
 
 **Specialists:** Academic Researcher, Learning Scientist, Knowledge Base
