@@ -202,7 +202,7 @@ export USE_BRAIN
 
 dhp_dispatch \
     "Content Workflow" \
-    "xiaomi/mimo-v2-flash:free" \
+    "moonshotai/kimi-k2:free" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Content/Guides" \
     "CONTENT_MODEL" \
     "DHP_CONTENT_OUTPUT_DIR" \

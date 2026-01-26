@@ -5,6 +5,7 @@ This directory contains 10 AI dispatcher scripts plus 4 advanced features that p
 **Status:** ✅ 10/10 Dispatchers Active + 4 Advanced Features (Phases 1-3, 5-6 Complete)
 
 **Latest Update (November 8, 2025):**
+
 - ✅ All dispatchers support real-time streaming with `--stream` flag
 - ✅ Robust error handling via shared library (`dhp-lib.sh`)
 - ✅ No more silent failures - API errors reported clearly
@@ -14,28 +15,28 @@ This directory contains 10 AI dispatcher scripts plus 4 advanced features that p
 
 ## Quick Reference
 
-| Dispatcher | Alias | Purpose | Input Method |
-|------------|-------|---------|--------------|
-| `dhp-tech.sh` | `tech` | Technical debugging | stdin |
-| `dhp-creative.sh` | `creative` | Story packages | argument |
-| `dhp-content.sh` | `content` | SEO content | argument |
-| `dhp-strategy.sh` | `strategy` | Strategic analysis | stdin |
-| `dhp-brand.sh` | `brand` | Brand positioning | stdin |
-| `dhp-market.sh` | `market` | Market research | stdin |
-| `dhp-stoic.sh` | `stoic` | Stoic coaching | stdin |
-| `dhp-research.sh` | `research` | Knowledge synthesis | stdin |
-| `dhp-narrative.sh` | `narrative` | Story structure | stdin |
-| `dhp-copy.sh` | `copy` | Marketing copy | stdin |
-| `dhp-morphling.sh` | `morphling` | Universal adaptive | argument |
+| Dispatcher         | Alias       | Purpose             | Input Method |
+| ------------------ | ----------- | ------------------- | ------------ |
+| `dhp-tech.sh`      | `tech`      | Technical debugging | stdin        |
+| `dhp-creative.sh`  | `creative`  | Story packages      | argument     |
+| `dhp-content.sh`   | `content`   | SEO content         | argument     |
+| `dhp-strategy.sh`  | `strategy`  | Strategic analysis  | stdin        |
+| `dhp-brand.sh`     | `brand`     | Brand positioning   | stdin        |
+| `dhp-market.sh`    | `market`    | Market research     | stdin        |
+| `dhp-stoic.sh`     | `stoic`     | Stoic coaching      | stdin        |
+| `dhp-research.sh`  | `research`  | Knowledge synthesis | stdin        |
+| `dhp-narrative.sh` | `narrative` | Story structure     | stdin        |
+| `dhp-copy.sh`      | `copy`      | Marketing copy      | stdin        |
+| `dhp-morphling.sh` | `morphling` | Universal adaptive  | argument     |
 
 ## Advanced Features
 
-| Feature | Alias | Purpose | Usage |
-|---------|-------|---------|-------|
-| `dhp-project.sh` | `ai-project` | Multi-specialist orchestration | argument |
-| `dhp-chain.sh` | `ai-chain` | Sequential dispatcher chaining | special |
-| `ai_suggest.sh` | `ai-suggest` | Context-aware suggestions | none |
-| `dhp-context.sh` | `ai-context` | Local context injection library | source |
+| Feature          | Alias        | Purpose                         | Usage    |
+| ---------------- | ------------ | ------------------------------- | -------- |
+| `dhp-project.sh` | `ai-project` | Multi-specialist orchestration  | argument |
+| `dhp-chain.sh`   | `ai-chain`   | Sequential dispatcher chaining  | special  |
+| `ai_suggest.sh`  | `ai-suggest` | Context-aware suggestions       | none     |
+| `dhp-context.sh` | `ai-context` | Local context injection library | source   |
 
 ---
 
@@ -46,10 +47,11 @@ This directory contains 10 AI dispatcher scripts plus 4 advanced features that p
 **Purpose:** Debug code, optimize scripts, provide technical analysis
 
 **Input:** Reads from stdin
-**Model:** `TECH_MODEL` (default: `xiaomi/mimo-v2-flash:free`)
+**Model:** `TECH_MODEL` (default: `moonshotai/kimi-k2:free`)
 **Specialist:** `ai-staff-hq/staff/tech/automation-specialist.yaml`
 
 **Usage:**
+
 ```bash
 # Debug a script
 cat broken-script.sh | tech
@@ -65,6 +67,7 @@ echo "TypeError: undefined is not a function" | tech
 ```
 
 **Flags:**
+
 - `--stream` - Enable real-time streaming output
 
 **Output:** Bug analysis, fix explanation, corrected code printed to stdout
@@ -78,11 +81,12 @@ echo "TypeError: undefined is not a function" | tech
 **Purpose:** Generate complete story packages with beat sheets, characters, sensory details
 
 **Input:** Story idea or logline as argument
-**Model:** `CREATIVE_MODEL` (default: `xiaomi/mimo-v2-flash:free`)
+**Model:** `CREATIVE_MODEL` (default: `moonshotai/kimi-k2:free`)
 **Specialists:** Chief of Staff, Narrative Designer, Creative Strategist, Meditation Instructor
 **Output Location:** Configurable via `CREATIVE_OUTPUT_DIR` (default: `~/Projects/creative-writing/`)
 
 **Usage:**
+
 ```bash
 creative "A lighthouse keeper finds a mysterious artifact"
 
@@ -94,6 +98,7 @@ dhp-creative.sh --stream "Software engineer's AI becomes sentient"
 ```
 
 **Flags:**
+
 - `--stream` - Enable real-time streaming output
 
 **Output:** Markdown file with complete story package saved to projects directory
@@ -109,6 +114,7 @@ dhp-creative.sh --stream "Software engineer's AI becomes sentient"
 **Specialist:** `ai-staff-hq/staff/producers/narrative-designer.yaml`
 
 **Usage:**
+
 ```bash
 # Analyze story structure
 echo "My hero starts weak, gains power, faces dark reflection" | narrative
@@ -121,6 +127,7 @@ echo "Character goes from selfish to selfless" | narrative
 ```
 
 **Flags:**
+
 - `--stream` - Enable real-time streaming output
 
 **Output:** Story structure analysis, plot suggestions, character arc recommendations
@@ -136,6 +143,7 @@ echo "Character goes from selfish to selfless" | narrative
 **Specialist:** `ai-staff-hq/staff/producers/copywriter.yaml`
 
 **Usage:**
+
 ```bash
 # Generate sales copy
 echo "Product: AI-powered task manager for ADHD" | copy
@@ -148,6 +156,7 @@ echo "SaaS tool for content creators - convert visitors" | copy
 ```
 
 **Flags:**
+
 - `--stream` - Enable real-time streaming output
 
 **Output:** Compelling copy with headlines, body, and call-to-action
@@ -159,11 +168,12 @@ echo "SaaS tool for content creators - convert visitors" | copy
 **Purpose:** SEO-optimized evergreen guides and blog content
 
 **Input:** Topic as argument
-**Model:** `CONTENT_MODEL` (default: `xiaomi/mimo-v2-flash:free`)
+**Model:** `CONTENT_MODEL` (default: `moonshotai/kimi-k2:free`)
 **Specialists:** Chief of Staff, Market Analyst, Copywriter
 **Output Location:** Configurable via `CONTENT_OUTPUT_DIR` (falls back to `$BLOG_DIR/content/guides/`)
 
 **Usage:**
+
 ```bash
 content "Guide on overcoming creative blocks with AI"
 
@@ -178,6 +188,7 @@ dhp-content.sh --stream --context "Advanced Git workflows"
 ```
 
 **Flags:**
+
 - `--stream` - Enable real-time streaming output
 - `--context` - Include minimal local context (git, top tasks)
 - `--full-context` - Include full context (journal, todos, README, git)
@@ -193,10 +204,11 @@ dhp-content.sh --stream --context "Advanced Git workflows"
 **Purpose:** Strategic analysis, insights, patterns, and actionable recommendations
 
 **Input:** Reads from stdin
-**Model:** `STRATEGY_MODEL` (defaults to `DEFAULT_MODEL` / `xiaomi/mimo-v2-flash:free`)
+**Model:** `STRATEGY_MODEL` (defaults to `DEFAULT_MODEL` / `moonshotai/kimi-k2:free`)
 **Specialist:** `ai-staff-hq/staff/strategy/chief-of-staff.yaml`
 
 **Usage:**
+
 ```bash
 # Analyze journal entries
 tail -20 ~/.config/dotfiles-data/journal.txt | strategy
@@ -209,11 +221,13 @@ cat weekly-metrics.txt | strategy
 ```
 
 **Flags:**
+
 - `--stream` - Enable real-time streaming output
 
 **Output:** Key insights, strategic recommendations, risks/opportunities
 
 **Integrated with:**
+
 - `journal analyze` (7-day insights)
 - `journal mood` (14-day sentiment)
 - `journal themes` (30-day patterns)
@@ -229,6 +243,7 @@ cat weekly-metrics.txt | strategy
 **Specialist:** `ai-staff-hq/staff/strategy/brand-builder.yaml`
 
 **Usage:**
+
 ```bash
 # Brand positioning
 echo "Tech blog focused on AI for creative work" | brand
@@ -241,6 +256,7 @@ echo "Analyze positioning vs. other AI content creators" | brand
 ```
 
 **Flags:**
+
 - `--stream` - Enable real-time streaming output
 
 **Output:** Brand attributes, voice recommendations, differentiation opportunities, messaging pillars
@@ -256,6 +272,7 @@ echo "Analyze positioning vs. other AI content creators" | brand
 **Specialist:** `ai-staff-hq/staff/strategy/market-analyst.yaml`
 
 **Usage:**
+
 ```bash
 # SEO research
 echo "Keywords for AI productivity tools content" | market
@@ -268,6 +285,7 @@ echo "Who's searching for AI writing assistance?" | market
 ```
 
 **Flags:**
+
 - `--stream` - Enable real-time streaming output
 
 **Output:** Keyword opportunities, market trends, audience insights, competitive landscape
@@ -285,6 +303,7 @@ echo "Who's searching for AI writing assistance?" | market
 **Specialist:** `ai-staff-hq/staff/health-lifestyle/stoic-coach.yaml`
 
 **Usage:**
+
 ```bash
 # Handle overwhelm
 echo "Overwhelmed by too many tasks and perfectionism" | stoic
@@ -297,6 +316,7 @@ echo "Feeling stuck in analysis paralysis" | stoic
 ```
 
 **Flags:**
+
 - `--stream` - Enable real-time streaming output
 
 **Output:** Stoic reframe, control analysis, practical action, relevant quote
@@ -312,6 +332,7 @@ echo "Feeling stuck in analysis paralysis" | stoic
 **Specialist:** `ai-staff-hq/staff/strategy/academic-researcher.yaml`
 
 **Usage:**
+
 ```bash
 # Synthesize research
 cat research-notes.md | research
@@ -324,6 +345,7 @@ cat multiple-sources.txt | research
 ```
 
 **Flags:**
+
 - `--stream` - Enable real-time streaming output
 
 **Output:** Key themes, structured organization, connections, next research directions
@@ -337,11 +359,12 @@ cat multiple-sources.txt | research
 **Purpose:** Universal "shapeshifting" specialist that auto-adapts to any task by analyzing context
 
 **Input:** Task description as argument
-**Model:** `MORPHLING_MODEL` (default: `xiaomi/mimo-v2-flash:free`)
+**Model:** `MORPHLING_MODEL` (default: `moonshotai/kimi-k2:free`)
 **Specialist:** `ai-staff-hq/staff/meta/morphling.yaml`
 **Output Location:** `~/Documents/AI_Staff_HQ_Outputs/Morphling/`
 
 **Usage:**
+
 ```bash
 # Let Morphling analyze context and adapt
 morphling "Review this code for security issues"
@@ -355,17 +378,20 @@ cat error.log | morphling "Diagnose this issue"
 
 **Context Gathering:**
 Morphling automatically gathers:
+
 - Git branch and status (if in a repo)
 - Directory structure (depth 2, using `tree` or `fd`)
 - Current working directory
 
 **How It Works:**
+
 1. Gathers environmental context (git, directory structure, working dir)
 2. Analyzes your request alongside the context
 3. Determines the optimal persona/role for the task
 4. Shapeshifts into that expert and executes
 
 **Best For:**
+
 - When you're unsure which specialist to use
 - General-purpose tasks that span multiple domains
 - Quick context-aware assistance in any project
@@ -377,18 +403,21 @@ Morphling automatically gathers:
 These dispatchers are deeply integrated into daily workflow commands:
 
 ### Blog Workflow (`scripts/blog.sh`)
+
 ```bash
 blog generate <stub-name>  # Uses dhp-content.sh
 blog refine <file>          # Uses dhp-content.sh
 ```
 
 ### Todo Integration (`scripts/todo.sh`)
+
 ```bash
 todo debug <num>            # Uses dhp-tech.sh
 todo delegate <num> <type>  # Routes to appropriate dispatcher
 ```
 
 ### Journal Analysis (`scripts/journal.sh`)
+
 ```bash
 journal analyze             # Uses dhp-strategy.sh
 journal mood                # Uses dhp-strategy.sh
@@ -396,6 +425,7 @@ journal themes              # Uses dhp-strategy.sh
 ```
 
 ### Daily Automation (Optional)
+
 ```bash
 # Set in .env:
 AI_BRIEFING_ENABLED=true    # Uses dhp-strategy.sh in startday
@@ -409,19 +439,21 @@ AI_REFLECTION_ENABLED=true  # Uses dhp-strategy.sh in goodevening
 All dispatchers require:
 
 1. **OpenRouter API Key** in `.env`:
+
    ```bash
    OPENROUTER_API_KEY=your_key_here
    ```
 
 2. **Model Configuration** in `.env`:
+
    ```bash
-   DEFAULT_MODEL=xiaomi/mimo-v2-flash:free
-   TECH_MODEL=xiaomi/mimo-v2-flash:free
-   CREATIVE_MODEL=xiaomi/mimo-v2-flash:free
-   CONTENT_MODEL=xiaomi/mimo-v2-flash:free
-   STRATEGY_MODEL=xiaomi/mimo-v2-flash:free
-   BRAND_MODEL=xiaomi/mimo-v2-flash:free   # Optional brand override
-   MORPHLING_MODEL=xiaomi/mimo-v2-flash:free
+   DEFAULT_MODEL=moonshotai/kimi-k2:free
+   TECH_MODEL=moonshotai/kimi-k2:free
+   CREATIVE_MODEL=moonshotai/kimi-k2:free
+   CONTENT_MODEL=moonshotai/kimi-k2:free
+   STRATEGY_MODEL=moonshotai/kimi-k2:free
+   BRAND_MODEL=moonshotai/kimi-k2:free   # Optional brand override
+   MORPHLING_MODEL=moonshotai/kimi-k2:free
    ```
 
 3. **AI-Staff-HQ Submodule** at `~/dotfiles/ai-staff-hq/`
@@ -431,6 +463,7 @@ All dispatchers require:
 ## Error Handling
 
 All dispatchers include:
+
 - ✅ Dependency checks (curl, jq)
 - ✅ API key validation
 - ✅ Model configuration validation
@@ -442,12 +475,14 @@ All dispatchers include:
 ## Testing
 
 Verify all dispatchers are working:
+
 ```bash
 bash ~/dotfiles/scripts/dotfiles_check.sh
 # Should report: "✅ Found 10/10 dispatchers"
 ```
 
 Test individual dispatcher:
+
 ```bash
 echo "Test input" | tech
 ```
@@ -542,6 +577,7 @@ echo "SUCCESS: 'Specialist Name' complete." >&2
 **Output:** Comprehensive markdown project brief to stdout
 
 **Usage:**
+
 ```bash
 dhp-project "Launch new blog series on AI productivity"
 
@@ -553,6 +589,7 @@ dhp-project "New product launch strategy" > project-brief.md
 ```
 
 **Workflow:**
+
 1. **Market Analyst** - Researches topic, identifies opportunities
 2. **Brand Builder** - Defines positioning and messaging
 3. **Chief of Staff** - Creates strategic plan and timeline
@@ -572,6 +609,7 @@ dhp-project "New product launch strategy" > project-brief.md
 **Output:** Final result after all processing steps
 
 **Usage:**
+
 ```bash
 # Story generation → structure analysis → marketing hook
 dhp-chain creative narrative copy -- "lighthouse keeper finds mysterious artifact"
@@ -587,9 +625,11 @@ dhp-chain creative narrative -- "story idea" --save story-brief.md
 ```
 
 **Available Dispatchers:**
+
 - tech, creative, content, strategy, brand, market, stoic, research, narrative, copy
 
 **Features:**
+
 - Progress display after each step
 - Intermediate outputs shown to stderr
 - Final output to stdout
@@ -605,11 +645,13 @@ dhp-chain creative narrative -- "story idea" --save story-brief.md
 **Output:** Contextual suggestions to stdout
 
 **Usage:**
+
 ```bash
 ai-suggest
 ```
 
 **Context Analysis:**
+
 - Current directory and project type
 - Git repository status and recent commits
 - Active todo items and priorities
@@ -619,6 +661,7 @@ ai-suggest
 - Time of day (morning/evening suggestions)
 
 **Example Output:**
+
 ```
 📍 Your Current Context:
 Current directory: /Users/you/blog
@@ -649,6 +692,7 @@ Recent commits:
 
 **`gather_context [--minimal|--full]`**
 Collects all relevant local context:
+
 ```bash
 source dhp-context.sh
 gather_context --minimal    # Git + top 3 tasks
@@ -657,24 +701,28 @@ gather_context --full       # Everything (journal, todos, README, git)
 
 **`get_git_context [commit_count]`**
 Repository and commit history:
+
 ```bash
 get_git_context 10  # Last 10 commits
 ```
 
 **`get_recent_journal [days]`**
 Recent journal entries:
+
 ```bash
 get_recent_journal 7  # Last 7 days
 ```
 
 **`get_active_todos [limit]`**
 Active task list:
+
 ```bash
 get_active_todos 5  # Top 5 tasks
 ```
 
 **`get_project_readme`**
 Project README (first 50 lines):
+
 ```bash
 get_project_readme
 ```
@@ -682,6 +730,7 @@ get_project_readme
 **Context Injection in Dispatchers:**
 
 Example: `dhp-content.sh` with context flags:
+
 ```bash
 # Minimal context (git status, top tasks)
 dhp-content --context "Guide on productivity with AI"
@@ -691,6 +740,7 @@ dhp-content --full-context "Comprehensive guide topic"
 ```
 
 **Benefits:**
+
 - Prevents duplicate content creation
 - Aligns AI output with current work
 - Includes relevant project context automatically
@@ -728,40 +778,48 @@ spec stoic     # Opens stoic-spec.txt template
 Each dispatcher has a custom-tailored template:
 
 **`tech-spec.txt`** - Technical debugging and analysis
+
 - Issue description, expected vs. current behavior
 - Environment context and recent changes
 - Areas to investigate, output format
 
 **`creative-spec.txt`** - Creative writing projects
+
 - Story type, length, setting, protagonist
 - Core conflict, tone, structure
 - Elements to avoid
 
 **`content-spec.txt`** - Content creation
+
 - Title/topic, target audience, length
 - Structure (opening, body, conclusion)
 - SEO keywords, tone, inclusions
 
 **`strategy-spec.txt`** - Strategic analysis
+
 - Current state, decision/question
 - Constraints (time, resources, requirements)
 - Options to evaluate, criteria
 
 **`market-spec.txt`** - Market research
+
 - Research focus, key questions
 - Comparison baseline, use case
 - Depth required
 
 **`research-spec.txt`** - Knowledge synthesis
+
 - Source material, analysis scope
 - Depth required, output format, tone
 
 **`stoic-spec.txt`** - Stoic coaching
+
 - Situation, emotional state
 - What you've tried, reflection questions
 - Expected output type
 
 **`dispatcher-spec-template.txt`** - Generic fallback
+
 - Used for any dispatcher without a specific template
 
 ### Reusing Specs
@@ -785,6 +843,7 @@ code ~/.config/dotfiles-data/specs/20251110-100534-creative.txt
 If you prefer not to use the spec templates:
 
 **Heredoc (recommended for multi-line input):**
+
 ```bash
 tech <<EOF
 Your multi-line
@@ -793,6 +852,7 @@ EOF
 ```
 
 **Backslash continuation:**
+
 ```bash
 tech "Line 1 \
 Line 2 \
@@ -800,6 +860,7 @@ Line 3"
 ```
 
 **Direct piping:**
+
 ```bash
 echo "Quick question or analysis request" | tech
 ```
@@ -834,6 +895,7 @@ export EDITOR="nano"           # Nano
 **Purpose:** Wrap any command and automatically log its output to a swipe file
 
 **Usage:**
+
 ```bash
 # Log any command output
 swipe tech "Summarize today's wins"
@@ -844,6 +906,7 @@ swipe market "Analyze competitors"
 ```
 
 **Configuration:**
+
 ```bash
 # Enable in .env
 SWIPE_LOG_ENABLED=true

@@ -54,7 +54,7 @@ $Current_Dir
 
 dhp_dispatch \
     "Morphling Agent" \
-    "xiaomi/mimo-v2-flash:free" \
+    "moonshotai/kimi-k2:free" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Morphling" \
     "MORPHLING_MODEL" \
     "DHP_MORPHLING_OUTPUT_DIR" \

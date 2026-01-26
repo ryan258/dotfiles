@@ -326,6 +326,7 @@ dhp-project.sh "Plan a virtual conference for AI practitioners"
 ```
 
 **Phases:**
+
 1. Market Research (Market Analyst)
 2. Brand Positioning (Brand Builder)
 3. Strategic Planning (Chief of Staff)
@@ -433,34 +434,37 @@ for doc in results['documents'][0]:
 
 ## Common Flags Reference
 
-| Flag | Description | Supported By |
-|------|-------------|--------------|
-| `--verbose` | Show detailed progress | All workflows |
-| `--stream` | Stream JSON events to stderr | All workflows |
-| `--context` | Include local project context | content |
-| `--full-context` | Include full repo context | content |
-| `--persona "Name"` | Inject persona playbook | content |
-| `--temperature <0-1>` | Control creativity | content, copy, creative |
-| `--max-tokens <n>` | Limit output length | content, copy, creative |
-| `--save <file>` | Save output to file | chain |
-| `--debug` | Verbose debugging | swarm runner |
-| `--model <id>` | Override model | swarm runner |
+| Flag                  | Description                   | Supported By            |
+| --------------------- | ----------------------------- | ----------------------- |
+| `--verbose`           | Show detailed progress        | All workflows           |
+| `--stream`            | Stream JSON events to stderr  | All workflows           |
+| `--context`           | Include local project context | content                 |
+| `--full-context`      | Include full repo context     | content                 |
+| `--persona "Name"`    | Inject persona playbook       | content                 |
+| `--temperature <0-1>` | Control creativity            | content, copy, creative |
+| `--max-tokens <n>`    | Limit output length           | content, copy, creative |
+| `--save <file>`       | Save output to file           | chain                   |
+| `--debug`             | Verbose debugging             | swarm runner            |
+| `--model <id>`        | Override model                | swarm runner            |
 
 ---
 
 ## Tips
 
 1. **Combine with Unix pipes** - All workflows accept piped input
+
    ```bash
    cat brief.md | dhp-brand.sh --verbose
    ```
 
 2. **Chain for complex projects** - Use `dhp-chain.sh` to build pipelines
+
    ```bash
    dhp-chain.sh market brand content copy -- "new product idea"
    ```
 
 3. **Store valuable outputs** - Use the Brain to build a knowledge base
+
    ```bash
    dhp-research.sh "topic" | tee output.md && # save and display
    ```
@@ -471,7 +475,7 @@ for doc in results['documents'][0]:
 
 ---
 
-## Dispatcher Reference (bin/dhp-*)
+## Dispatcher Reference (bin/dhp-\*)
 
 Complete reference for all dispatcher scripts in `~/dotfiles/bin/`.
 
@@ -907,26 +911,26 @@ Not invoked directly - sourced by other scripts.
 
 ### Global Configuration
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `OPENROUTER_API_KEY` | API key for OpenRouter | Required |
-| `DEFAULT_MODEL` | Default model for all dispatchers | `xiaomi/mimo-v2-flash:free` |
-| `API_COOLDOWN_SECONDS` | Delay between API calls | `0` |
+| Variable               | Description                       | Default                   |
+| ---------------------- | --------------------------------- | ------------------------- |
+| `OPENROUTER_API_KEY`   | API key for OpenRouter            | Required                  |
+| `DEFAULT_MODEL`        | Default model for all dispatchers | `moonshotai/kimi-k2:free` |
+| `API_COOLDOWN_SECONDS` | Delay between API calls           | `0`                       |
 
 ### Per-Dispatcher Model Overrides
 
-| Variable | Dispatcher |
-|----------|------------|
-| `CONTENT_MODEL` | dhp-content.sh |
-| `CREATIVE_MODEL` | dhp-creative.sh, dhp-copy.sh, dhp-narrative.sh |
-| `BRAND_MODEL` | dhp-brand.sh |
-| `MARKET_MODEL` | dhp-market.sh |
-| `STRATEGY_MODEL` | dhp-strategy.sh |
-| `FINANCE_MODEL` | dhp-finance.sh |
-| `TECH_MODEL` | dhp-tech.sh |
-| `RESEARCH_MODEL` | dhp-research.sh |
-| `STOIC_MODEL` | dhp-stoic.sh |
-| `MORPHLING_MODEL` | dhp-morphling.sh |
+| Variable          | Dispatcher                                     |
+| ----------------- | ---------------------------------------------- |
+| `CONTENT_MODEL`   | dhp-content.sh                                 |
+| `CREATIVE_MODEL`  | dhp-creative.sh, dhp-copy.sh, dhp-narrative.sh |
+| `BRAND_MODEL`     | dhp-brand.sh                                   |
+| `MARKET_MODEL`    | dhp-market.sh                                  |
+| `STRATEGY_MODEL`  | dhp-strategy.sh                                |
+| `FINANCE_MODEL`   | dhp-finance.sh                                 |
+| `TECH_MODEL`      | dhp-tech.sh                                    |
+| `RESEARCH_MODEL`  | dhp-research.sh                                |
+| `STOIC_MODEL`     | dhp-stoic.sh                                   |
+| `MORPHLING_MODEL` | dhp-morphling.sh                               |
 
 ### Output Directory Overrides
 

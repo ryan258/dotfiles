@@ -447,7 +447,7 @@ cat broken_script.sh | tech --stream
 ```
 
 **When to use:** Debugging code, optimizing scripts, understanding errors.
-**Model:** Xiaomi MiMo v2 Flash (`xiaomi/mimo-v2-flash:free`)
+**Model:** Xiaomi MiMo v2 Flash (`moonshotai/kimi-k2:free`)
 
 ---
 
@@ -459,7 +459,7 @@ echo "topic: productivity with MS" | content --context
 ```
 
 **When to use:** Blog posts, guides, SEO-optimized content.
-**Model:** Xiaomi MiMo v2 Flash (`xiaomi/mimo-v2-flash:free`)
+**Model:** Xiaomi MiMo v2 Flash (`moonshotai/kimi-k2:free`)
 **Pro tip:** Use `--context` to include your recent journal and todos.
 
 ---

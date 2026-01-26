@@ -9,7 +9,7 @@ source "$(dirname "$0")/dhp-shared.sh"
 
 dhp_dispatch \
     "Market Analysis" \
-    "xiaomi/mimo-v2-flash:free" \
+    "moonshotai/kimi-k2:free" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Strategy/Market_Research" \
     "MARKET_MODEL" \
     "DHP_MARKET_OUTPUT_DIR" \

@@ -8,7 +8,7 @@ This folder collects shell utilities that streamline day-to-day work on macOS—
 
 **10 Active AI Dispatchers + Advanced Features:**
 
-- Optimized free model (`xiaomi/mimo-v2-flash:free`) via OpenRouter - no API costs
+- Optimized free model (`moonshotai/kimi-k2:free`) via OpenRouter - no API costs
 - Spec template system for structured AI requests (`spec` command)
 - Real-time streaming support (`--stream` flag)
 - Integrated into todo, journal, blog workflows

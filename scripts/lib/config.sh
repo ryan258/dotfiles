@@ -59,15 +59,15 @@ get_model() {
     fi
 
     case "$type" in
-        TECH) echo "${TECH_MODEL:-xiaomi/mimo-v2-flash:free}" ;;
-        STRATEGY) echo "${STRATEGY_MODEL:-xiaomi/mimo-v2-flash:free}" ;;
-        CREATIVE) echo "${CREATIVE_MODEL:-xiaomi/mimo-v2-flash:free}" ;;
-        CONTENT) echo "${CONTENT_MODEL:-xiaomi/mimo-v2-flash:free}" ;;
-        STOIC) echo "${STOIC_MODEL:-xiaomi/mimo-v2-flash:free}" ;;
-        RESEARCH) echo "${RESEARCH_MODEL:-xiaomi/mimo-v2-flash:free}" ;;
-        MARKET) echo "${MARKET_MODEL:-xiaomi/mimo-v2-flash:free}" ;;
-        BRAND) echo "${BRAND_MODEL:-xiaomi/mimo-v2-flash:free}" ;;
-        DEFAULT|*) echo "${DEFAULT_MODEL:-xiaomi/mimo-v2-flash:free}" ;;
+        TECH) echo "${TECH_MODEL:-moonshotai/kimi-k2:free}" ;;
+        STRATEGY) echo "${STRATEGY_MODEL:-moonshotai/kimi-k2:free}" ;;
+        CREATIVE) echo "${CREATIVE_MODEL:-moonshotai/kimi-k2:free}" ;;
+        CONTENT) echo "${CONTENT_MODEL:-moonshotai/kimi-k2:free}" ;;
+        STOIC) echo "${STOIC_MODEL:-moonshotai/kimi-k2:free}" ;;
+        RESEARCH) echo "${RESEARCH_MODEL:-moonshotai/kimi-k2:free}" ;;
+        MARKET) echo "${MARKET_MODEL:-moonshotai/kimi-k2:free}" ;;
+        BRAND) echo "${BRAND_MODEL:-moonshotai/kimi-k2:free}" ;;
+        DEFAULT|*) echo "${DEFAULT_MODEL:-moonshotai/kimi-k2:free}" ;;
     esac
 }
 

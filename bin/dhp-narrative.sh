@@ -9,7 +9,7 @@ source "$(dirname "$0")/dhp-shared.sh"
 
 dhp_dispatch \
     "Narrative Design" \
-    "xiaomi/mimo-v2-flash:free" \
+    "moonshotai/kimi-k2:free" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Creative/Narratives" \
     "CREATIVE_MODEL" \
     "DHP_NARRATIVE_OUTPUT_DIR" \

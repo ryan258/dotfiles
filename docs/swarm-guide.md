@@ -97,18 +97,18 @@ The system is designed to be fully configurable via your `.env` file. You can sw
 
 Each dispatcher alias maps to a specific variable in `.env`.
 
-| Alias       | Variable         | Default Description                    |
-| :---------- | :--------------- | :------------------------------------- |
-| `tech`      | `TECH_MODEL`     | Xiaomi MiMo v2 Flash (OpenRouter free) |
-| `content`   | `CONTENT_MODEL`  | Xiaomi MiMo v2 Flash (OpenRouter free) |
-| `creative`  | `CREATIVE_MODEL` | Xiaomi MiMo v2 Flash (OpenRouter free) |
-| `copy`      | `CREATIVE_MODEL` | Xiaomi MiMo v2 Flash (OpenRouter free) |
-| `narrative` | `CREATIVE_MODEL` | Xiaomi MiMo v2 Flash (OpenRouter free) |
-| `strategy`  | `STRATEGY_MODEL` | Xiaomi MiMo v2 Flash (OpenRouter free) |
+| Alias       | Variable                                   | Default Description                    |
+| :---------- | :----------------------------------------- | :------------------------------------- |
+| `tech`      | `TECH_MODEL`                               | Xiaomi MiMo v2 Flash (OpenRouter free) |
+| `content`   | `CONTENT_MODEL`                            | Xiaomi MiMo v2 Flash (OpenRouter free) |
+| `creative`  | `CREATIVE_MODEL`                           | Xiaomi MiMo v2 Flash (OpenRouter free) |
+| `copy`      | `CREATIVE_MODEL`                           | Xiaomi MiMo v2 Flash (OpenRouter free) |
+| `narrative` | `CREATIVE_MODEL`                           | Xiaomi MiMo v2 Flash (OpenRouter free) |
+| `strategy`  | `STRATEGY_MODEL`                           | Xiaomi MiMo v2 Flash (OpenRouter free) |
 | `brand`     | `BRAND_MODEL` (fallback: `STRATEGY_MODEL`) | Xiaomi MiMo v2 Flash (OpenRouter free) |
-| `market`    | `MARKET_MODEL`   | Xiaomi MiMo v2 Flash (OpenRouter free) |
-| `research`  | `RESEARCH_MODEL` | Xiaomi MiMo v2 Flash (OpenRouter free) |
-| `stoic`     | `STOIC_MODEL`    | Xiaomi MiMo v2 Flash (OpenRouter free) |
+| `market`    | `MARKET_MODEL`                             | Xiaomi MiMo v2 Flash (OpenRouter free) |
+| `research`  | `RESEARCH_MODEL`                           | Xiaomi MiMo v2 Flash (OpenRouter free) |
+| `stoic`     | `STOIC_MODEL`                              | Xiaomi MiMo v2 Flash (OpenRouter free) |
 
 ### How to Change a Model
 
@@ -121,7 +121,7 @@ Each dispatcher alias maps to a specific variable in `.env`.
 
     ```bash
     # Example: Set Tech Dispatcher model (default)
-    TECH_MODEL="xiaomi/mimo-v2-flash:free"
+    TECH_MODEL="moonshotai/kimi-k2:free"
     ```
 
 ---
@@ -137,7 +137,7 @@ For granular control, you can use the Python wrapper directly. It now accepts th
 uv run python bin/dhp-swarm.py "Your prompt" --verbose
 
 # Run via stdin (Robust for large content)
-cat large-report.md | uv run python bin/dhp-swarm.py --model "xiaomi/mimo-v2-flash:free" --stream
+cat large-report.md | uv run python bin/dhp-swarm.py --model "moonshotai/kimi-k2:free" --stream
 
 # Force sequential execution (disable parallel waves)
 echo "Prompt" | uv run python bin/dhp-swarm.py --no-parallel

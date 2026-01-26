@@ -9,7 +9,7 @@ source "$(dirname "$0")/dhp-shared.sh"
 
 dhp_dispatch \
     "Technical Analysis" \
-    "xiaomi/mimo-v2-flash:free" \
+    "moonshotai/kimi-k2:free" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Technical/Code_Analysis" \
     "TECH_MODEL" \
     "DHP_TECH_OUTPUT_DIR" \

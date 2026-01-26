@@ -9,7 +9,7 @@ source "$(dirname "$0")/dhp-shared.sh"
 
 dhp_dispatch \
     "Financial Strategy" \
-    "xiaomi/mimo-v2-flash:free" \
+    "moonshotai/kimi-k2:free" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Strategy/Finance" \
     "FINANCE_MODEL" \
     "DHP_FINANCE_OUTPUT_DIR" \

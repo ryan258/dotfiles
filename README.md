@@ -437,7 +437,7 @@ dhp-content --full-context "Comprehensive guide topic"
 
 2. **Get an API Key:** Sign up at [OpenRouter](https://openrouter.ai/) and create an API key (free tier available)
 
-3. **Configure Models:** The `.env` file defaults all dispatchers to `xiaomi/mimo-v2-flash:free` via OpenRouter
+3. **Configure Models:** The `.env` file defaults all dispatchers to `moonshotai/kimi-k2:free` via OpenRouter
    - Cost-effective: All models are free tier on OpenRouter
    - Task-specific: Each dispatcher uses a model optimized for its specialty
    - Customizable: Change any model in `.env` to your preference
