@@ -58,3 +58,6 @@ add-zsh-hook chpwd __log_directory_change
 
 # Added by Antigravity
 export PATH="/Users/ryanjohnson/.antigravity/antigravity/bin:$PATH"
+
+# KVOID Alias (Accessible Mode)
+alias k='cd /Users/ryanjohnson/Projects/production-house_audio-plays--ambient-horror && uv run ./kvoid'

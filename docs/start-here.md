@@ -24,9 +24,10 @@ You have **3 systems** working together:
 ### 1. Daily Routines (Autopilot)
 
 ```bash
-startday        # Morning briefing (runs automatically once per day)
-status          # Mid-day: "Where am I? What am I doing?"
-goodevening     # Evening: celebrate wins + auto-backup
+startday           # Morning briefing (runs automatically once per day)
+startday refresh   # Force fresh update (clears cache)
+status             # Mid-day: "Where am I? What am I doing?"
+goodevening        # Evening: celebrate wins + auto-backup
 ```
 
 ### 2. Productivity Tools
@@ -176,15 +177,15 @@ goodevening     # Celebrate + backup
 
 ### Health
 
-| Command            | What It Does                   |
-| ------------------ | ------------------------------ |
-| `health energy 7`  | Rate energy 1-10               |
-| `health fog 6`     | Rate brain fog 1-10            |
-| `health check`     | Circuit breaker (OK to work?)  |
-| `meds log "Med"`   | Log medication                 |
-| `spoons init 12`   | Daily energy budget            |
-| `spoons history`   | Usage patterns                 |
-| `health dashboard` | 30-day trends                  |
+| Command            | What It Does                  |
+| ------------------ | ----------------------------- |
+| `health energy 7`  | Rate energy 1-10              |
+| `health fog 6`     | Rate brain fog 1-10           |
+| `health check`     | Circuit breaker (OK to work?) |
+| `meds log "Med"`   | Log medication                |
+| `spoons init 12`   | Daily energy budget           |
+| `spoons history`   | Usage patterns                |
+| `health dashboard` | 30-day trends                 |
 
 ### Navigation
 
@@ -196,14 +197,14 @@ goodevening     # Celebrate + backup
 
 ### AI
 
-| Command             | What It Does         |
-| ------------------- | -------------------- |
-| `tech "question"`   | Debug code           |
-| `content "topic"`   | Write content        |
-| `strategy "topic"`  | R&D/capability plans |
-| `finance "topic"`   | Tax/S-Corp advice    |
-| `stoic "struggle"`  | Get perspective      |
-| `ai-suggest`        | Which AI to use?     |
+| Command            | What It Does         |
+| ------------------ | -------------------- |
+| `tech "question"`  | Debug code           |
+| `content "topic"`  | Write content        |
+| `strategy "topic"` | R&D/capability plans |
+| `finance "topic"`  | Tax/S-Corp advice    |
+| `stoic "struggle"` | Get perspective      |
+| `ai-suggest`       | Which AI to use?     |
 
 ### Help
 
