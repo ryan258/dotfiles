@@ -12,32 +12,67 @@ else
 fi
 
 # --- Configuration ---
-SYSTEM_LOG_FILE="$HOME/.config/dotfiles-data/system.log"
-TODO_DONE_FILE="$HOME/.config/dotfiles-data/todo_done.txt"
-JOURNAL_FILE="$HOME/.config/dotfiles-data/journal.txt"
-PROJECTS_DIR=~/Projects
+if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/config.sh"
+else
+    if [ -f "$SCRIPT_DIR/../.env" ]; then
+        # shellcheck disable=SC1090
+        source "$SCRIPT_DIR/../.env"
+    fi
+fi
 
-# Load environment variables for optional AI features
-if [ -f "$HOME/dotfiles/.env" ]; then
-    source "$HOME/dotfiles/.env"
+STATE_DIR="${DATA_DIR:-${STATE_DIR:-$HOME/.config/dotfiles-data}}"
+mkdir -p "$STATE_DIR"
+
+SYSTEM_LOG_FILE="${SYSTEM_LOG:-$STATE_DIR/system.log}"
+TODO_DONE_FILE="${DONE_FILE:-${TODO_DONE_FILE:-$STATE_DIR/todo_done.txt}}"
+JOURNAL_FILE="${JOURNAL_FILE:-$STATE_DIR/journal.txt}"
+FOCUS_FILE="${FOCUS_FILE:-$STATE_DIR/daily_focus.txt}"
+PROJECTS_DIR="${PROJECTS_DIR:-$HOME/Projects}"
+
+BLOG_SCRIPT="$SCRIPT_DIR/blog.sh"
+BLOG_STATUS_DIR="${BLOG_STATUS_DIR:-${BLOG_DIR:-}}"
+BLOG_CONTENT_ROOT="${BLOG_CONTENT_DIR:-}"
+if [ -z "$BLOG_CONTENT_ROOT" ] && [ -n "$BLOG_STATUS_DIR" ]; then
+    BLOG_CONTENT_ROOT="$BLOG_STATUS_DIR/content"
+fi
+BLOG_READY=false
+if [ -f "$BLOG_SCRIPT" ] && [ -n "$BLOG_STATUS_DIR" ] && [ -d "$BLOG_STATUS_DIR" ]; then
+    BLOG_READY=true
 fi
 
 
 # 1. Determine "Today"
-# Usage: goodevening.sh [YYYY-MM-DD]
-if [ -n "${1:-}" ]; then
-    TODAY="$1"
+# Usage: goodevening.sh [--refresh|-r] [YYYY-MM-DD]
+FORCE_CURRENT_DAY=false
+DATE_OVERRIDE=""
+
+for arg in "$@"; do
+    case "$arg" in
+        refresh|--refresh|-r)
+            FORCE_CURRENT_DAY=true
+            ;;
+        *)
+            DATE_OVERRIDE="$arg"
+            ;;
+    esac
+done
+
+if [ -n "$DATE_OVERRIDE" ]; then
+    TODAY="$DATE_OVERRIDE"
     echo "📅 Overriding date to: $TODAY"
 else
-    STATE_DIR="${STATE_DIR:-$HOME/.config/dotfiles-data}"
     CURRENT_DAY_FILE="$STATE_DIR/current_day"
 
     if [ -f "$CURRENT_DAY_FILE" ]; then
         TODAY=$(cat "$CURRENT_DAY_FILE")
-        # If the file is extremely old (e.g. > 24 hours), fallback to actual today to prevent stale state bugs
-        FILE_AGE=$(( $(date +%s) - $(date -r "$CURRENT_DAY_FILE" +%s) ))
-        if [ "$FILE_AGE" -gt 86400 ]; then
-             TODAY=$(date +%Y-%m-%d)
+        if [ "$FORCE_CURRENT_DAY" = false ]; then
+            # If the file is extremely old (e.g. > 24 hours), fallback to actual today to prevent stale state bugs
+            FILE_AGE=$(( $(date +%s) - $(date -r "$CURRENT_DAY_FILE" +%s) ))
+            if [ "$FILE_AGE" -gt 86400 ]; then
+                 TODAY=$(date +%Y-%m-%d)
+            fi
         fi
     else
         # Fallback logic
@@ -51,6 +86,15 @@ else
 fi
 
 echo "=== Evening Close-Out for $TODAY — $(date '+%Y-%m-%d %H:%M') ==="
+
+# --- Focus ---
+echo ""
+echo "🎯 TODAY'S FOCUS:"
+if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
+    echo "  $(cat "$FOCUS_FILE")"
+else
+    echo "  (No focus set)"
+fi
 
 # 1. Show completed tasks from today
 echo ""
@@ -89,7 +133,7 @@ if [ -x "$TIME_TRACKER" ]; then
     # We should actually implement a simple daily summary here or in the library.
     # For now, let's just list the entries for today from the log file manually or via a simple grep
     # TODAY is valid
-    TIME_LOG="$HOME/.config/dotfiles-data/time_tracking.txt"
+    TIME_LOG="${TIME_LOG:-$STATE_DIR/time_tracking.txt}"
     if [ -f "$TIME_LOG" ]; then
         TODAY_ENTRIES=$(grep "|$TODAY" "$TIME_LOG" || true)
         if [ -n "$TODAY_ENTRIES" ]; then
@@ -106,6 +150,47 @@ if [ -x "$TIME_TRACKER" ]; then
     fi
 else
     echo "  (Time tracker not found)"
+fi
+
+# --- ACTIVE PROJECTS (from GitHub) ---
+echo ""
+echo "🚀 RECENT PUSHES (last 7 days):"
+HELPER_SCRIPT="$SCRIPT_DIR/github_helper.sh"
+RECENT_PUSHES=""
+if [ -f "$HELPER_SCRIPT" ]; then
+    if ! command -v jq >/dev/null 2>&1; then
+        echo "  ⚠️ jq not found; cannot parse GitHub activity."
+    elif GITHUB_REPOS=$("$HELPER_SCRIPT" list_repos 2>/dev/null); then
+        repo_lines=$(echo "$GITHUB_REPOS" | jq -r '.[] | "\(.pushed_at) \(.name)"')
+        while read -r line; do
+            [ -z "$line" ] && continue
+            pushed_at_str=$(echo "$line" | awk '{print $1}')
+            repo_name=$(echo "$line" | awk '{$1=""; print $0}' | xargs) # handle repo names with spaces
+
+            pushed_at_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$pushed_at_str" +%s 2>/dev/null || continue)
+            NOW=$(date +%s)
+            DAYS_AGO=$(( (NOW - pushed_at_epoch) / 86400 ))
+
+            if [ "$DAYS_AGO" -le 7 ]; then
+                if [ "$DAYS_AGO" -eq 0 ]; then
+                    day_text="today"
+                elif [ "$DAYS_AGO" -eq 1 ]; then
+                    day_text="yesterday"
+                else
+                    day_text="$DAYS_AGO days ago"
+                fi
+                entry="$repo_name (pushed $day_text)"
+                echo "  • $entry"
+                RECENT_PUSHES+="${entry}"$'\n'
+            else
+                break
+            fi
+        done <<< "$repo_lines"
+    else
+        echo "  ⚠️ Unable to fetch GitHub activity. Check your token or network."
+    fi
+else
+    echo "  (github_helper.sh not found)"
 fi
 
 # --- Gamify Progress ---
@@ -221,6 +306,21 @@ else
 fi
 
 
+# --- BLOG STATUS ---
+if [ "$BLOG_READY" = true ]; then
+    echo ""
+    if ! BLOG_DIR="$BLOG_STATUS_DIR" "$BLOG_SCRIPT" status; then
+        echo "  ⚠️ Blog status unavailable (check BLOG_STATUS_DIR or BLOG_DIR configuration)."
+    fi
+    if [ -f "$SCRIPT_DIR/blog_recent_content.sh" ]; then
+        echo ""
+        echo "📰 LATEST BLOG CONTENT:"
+        if ! BLOG_CONTENT_DIR="$BLOG_CONTENT_ROOT" "$SCRIPT_DIR/blog_recent_content.sh" 3; then
+            echo "  ⚠️ Unable to list recent content (check BLOG_CONTENT_DIR)."
+        fi
+    fi
+fi
+
 
 # 7. Clear completed tasks older than 7 days
 echo ""
@@ -266,16 +366,27 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     # TODAY is already set globally (handling overrides)
     TODAY_TASKS=$(grep "\[$TODAY" "$TODO_DONE_FILE" 2>/dev/null || echo "")
     TODAY_JOURNAL=$(grep "\[$TODAY" "$JOURNAL_FILE" 2>/dev/null || echo "")
+    FOCUS_CONTEXT=""
+    if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
+        FOCUS_CONTEXT=$(cat "$FOCUS_FILE")
+    fi
 
-    if [ -z "$TODAY_TASKS$TODAY_JOURNAL" ]; then
-        echo "  (No tasks or journal entries to reflect on for $TODAY)"
+    if [ -z "$TODAY_TASKS$TODAY_JOURNAL$FOCUS_CONTEXT$RECENT_PUSHES" ]; then
+        echo "  (No focus, pushes, tasks, or journal entries to reflect on for $TODAY)"
     elif ! command -v dhp-strategy.sh &> /dev/null; then
          echo "  (AI Staff tools not found in PATH)"
     else
         # Generate reflection via AI
         REFLECTION=$({
-            echo "Provide a brief daily reflection (2-3 sentences) that specifically looks for insights gained, knowledge patterns, and capability improvements."
-            echo "Celebrate learning and deep understanding, not just output or revenue."
+            echo "Provide a brief daily reflection (3-5 sentences)."
+            echo "Primary signals are today's focus and recent GitHub pushes; use them first."
+            echo "Secondary signals are tasks and journal entries."
+            echo ""
+            echo "Today's focus:"
+            echo "${FOCUS_CONTEXT:-"(no focus set)"}"
+            echo ""
+            echo "Recent GitHub pushes (last 7 days):"
+            echo "${RECENT_PUSHES:-"(none)"}"
             echo ""
             if [ -n "$TODAY_TASKS" ]; then
                 echo "Completed tasks:"
@@ -289,9 +400,10 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
             fi
             echo "Provide:"
             echo "- One insight or capability gained today"
-            echo "- One curiosity to follow tomorrow"
+            echo "- One outcome suggested by the pushes"
+            echo "- One smallest next step for tomorrow"
             echo ""
-            echo "Keep it thoughtful and insight-oriented."
+            echo "Keep it thoughtful, reflective, and energy-aware."
         } | dhp-strategy.sh 2>/dev/null || echo "Unable to generate AI reflection at this time.")
 
         echo "$REFLECTION" | sed 's/^/  /'
