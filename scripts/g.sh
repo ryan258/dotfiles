@@ -168,9 +168,6 @@ case "${1:-list}" in
     VENV_PATH=$(echo "$BOOKMARK_DATA" | cut -d':' -f4)
     APPS=$(echo "$BOOKMARK_DATA" | cut -d':' -f5)
 
-    # Log directory visit for smart suggestions
-    echo "$(date +%s):$DIR" >> "$USAGE_LOG"
-
     # Change directory
     cd "$DIR"
 

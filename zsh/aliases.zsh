@@ -355,11 +355,6 @@ search() {
     find . -name "*$1*" -type f
 }
 
-# Enhanced cd that tracks history for the suggestion engine
-cd() {
-    builtin cd "$@" && echo "$(date +%s):$(pwd)" >> "$HOME/.config/dotfiles-data/dir_usage.log"
-}
-
 # Quick git status and todo check
 morning() {
     echo "=== Morning Briefing ==="

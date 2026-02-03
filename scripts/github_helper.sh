@@ -187,7 +187,26 @@ _github_api_call() {
 # Lists all repositories for the configured user, sorted by most recently pushed.
 # Fetches up to 100 repositories.
 list_repos() {
-    _github_api_call "/users/$USERNAME/repos?sort=pushed&per_page=100"
+    local json_data
+    if ! json_data=$(_github_api_call "/users/$USERNAME/repos?sort=pushed&per_page=100"); then
+        echo "Error: Failed to fetch repositories" >&2
+        return 1
+    fi
+
+    local filter="."
+
+    if [ "${GITHUB_EXCLUDE_FORKS:-false}" = "true" ]; then
+        filter+=" | map(select(.fork == false))"
+    fi
+
+    if [ -n "${GITHUB_EXCLUDE_REPOS:-}" ]; then
+        # Use jq to parse the comma-separated list and filter
+        # We use --arg to pass the environment variable safely
+        echo "$json_data" | jq --arg exclude "$GITHUB_EXCLUDE_REPOS" \
+            "(\$exclude | split(\",\") | map(gsub(\"^\\s+|\\s+$\";\"\"))) as \$ex_list | $filter | map(select(.name as \$n | \$ex_list | index(\$n) | not))"
+    else
+        echo "$json_data" | jq "$filter"
+    fi
 }
 
 # Gets raw JSON data for a specific repository.

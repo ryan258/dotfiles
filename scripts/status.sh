@@ -3,11 +3,23 @@ set -euo pipefail
 # status.sh - Provides a mid-day context recovery dashboard.
 
 # --- Configuration ---
-JOURNAL_FILE="$HOME/.config/dotfiles-data/journal.txt"
-TODO_FILE="$HOME/.config/dotfiles-data/todo.txt"
-PROJECTS_DIR=~/Projects
+STATE_DIR="${STATE_DIR:-$HOME/.config/dotfiles-data}"
+FOCUS_FILE="${FOCUS_FILE:-$STATE_DIR/daily_focus.txt}"
+JOURNAL_FILE="${JOURNAL_FILE:-$STATE_DIR/journal.txt}"
+TODO_FILE="${TODO_FILE:-$STATE_DIR/todo.txt}"
+PROJECTS_DIR="${PROJECTS_DIR:-$HOME/Projects}"
+
+# --- Focus ---
+echo ""
+echo "🎯 TODAY'S FOCUS:"
+if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
+    echo "  $(cat "$FOCUS_FILE")"
+else
+    echo "  (No focus set)"
+fi
 
 # --- Display Header ---
+echo ""
 echo "🧭 WHERE YOU ARE:"
 CURRENT_DIR=$(pwd)
 echo "  • Current directory: $CURRENT_DIR"
@@ -44,6 +56,31 @@ if [[ "$CURRENT_DIR" == "$PROJECTS_DIR"* ]]; then
     fi
 else
     echo "  (Not in a project directory under $PROJECTS_DIR)"
+fi
+
+# --- Health Check (interactive only) ---
+HEALTH_SCRIPT="${HEALTH_SCRIPT:-$HOME/dotfiles/scripts/health.sh}"
+if [ -t 0 ] && [ -x "$HEALTH_SCRIPT" ]; then
+    echo ""
+    echo -n "🏥 Log Energy/Fog levels? [y/N]: "
+    read -r log_health
+    if [[ "$log_health" =~ ^[yY] ]]; then
+        echo -n "   Energy Level (1-10): "
+        read -r energy
+        if [[ "$energy" =~ ^[0-9]+$ ]] && [ "$energy" -ge 1 ] && [ "$energy" -le 10 ]; then
+            "$HEALTH_SCRIPT" energy "$energy" | sed 's/^/   /'
+        elif [ -n "$energy" ]; then
+            echo "   (Skipped: must be 1-10)"
+        fi
+
+        echo -n "   Brain Fog Level (1-10): "
+        read -r fog
+        if [[ "$fog" =~ ^[0-9]+$ ]] && [ "$fog" -ge 1 ] && [ "$fog" -le 10 ]; then
+            "$HEALTH_SCRIPT" fog "$fog" | sed 's/^/   /'
+        elif [ -n "$fog" ]; then
+            echo "   (Skipped: must be 1-10)"
+        fi
+    fi
 fi
 
 # --- Tasks ---
