@@ -286,10 +286,10 @@ create_temp_file() {
 # Usage: require_lib "date_utils.sh"
 require_lib() {
     local lib_name="$1"
-    
+
     # Try relative to current script first
     local lib_path="$SCRIPT_DIR/lib/$lib_name"
-    
+
     if [[ ! -f "$lib_path" ]]; then
         # Try relative to common.sh location
         lib_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$lib_name"
@@ -301,4 +301,66 @@ require_lib() {
         echo "Error: Required library not found: $lib_name" >&2
         exit 1
     fi
+}
+
+#=============================================================================
+# Path Validation
+#=============================================================================
+
+# Validate and canonicalize a path, ensuring it's within user's home directory
+# Usage: validated=$(validate_path "$path")
+# Returns: 0 on success (prints canonicalized path), 1 on failure (prints error)
+validate_path() {
+    local input_path="$1"
+    if [[ -z "$input_path" ]]; then
+        echo "Error: validate_path requires a path argument." >&2
+        return 1
+    fi
+
+    local canonical_path=""
+
+    # Try shell-native realpath first (available on macOS 12.3+ and Linux)
+    if command -v realpath &>/dev/null; then
+        canonical_path=$(realpath -m "$input_path" 2>/dev/null) || canonical_path=""
+    fi
+
+    # Fallback to Python if realpath failed or unavailable
+    if [[ -z "$canonical_path" ]]; then
+        if command -v python3 &>/dev/null; then
+            canonical_path=$(python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$input_path" 2>/dev/null) || canonical_path=""
+        elif command -v python &>/dev/null; then
+            canonical_path=$(python -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$input_path" 2>/dev/null) || canonical_path=""
+        fi
+    fi
+
+    # Final fallback: manual resolution for simple cases
+    if [[ -z "$canonical_path" ]]; then
+        # Expand ~ and resolve . and ..
+        case "$input_path" in
+            ~/*) input_path="$HOME/${input_path#\~/}" ;;
+            ~) input_path="$HOME" ;;
+        esac
+        if [[ -d "$input_path" ]]; then
+            canonical_path=$(cd "$input_path" && pwd -P 2>/dev/null) || canonical_path=""
+        elif [[ -f "$input_path" ]]; then
+            local dir_part file_part
+            dir_part=$(dirname "$input_path")
+            file_part=$(basename "$input_path")
+            canonical_path=$(cd "$dir_part" && pwd -P 2>/dev/null)/"$file_part" || canonical_path=""
+        fi
+    fi
+
+    if [[ -z "$canonical_path" ]]; then
+        echo "Error: Cannot canonicalize path: '$input_path'" >&2
+        return 1
+    fi
+
+    # Ensure the path is within the user's home directory
+    if [[ "$canonical_path" != "$HOME" ]] && [[ "$canonical_path" != "$HOME"/* ]]; then
+        echo "Error: Path '$canonical_path' is outside the allowed home directory." >&2
+        return 1
+    fi
+
+    echo "$canonical_path"
+    return 0
 }

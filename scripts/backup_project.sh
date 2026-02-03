@@ -2,7 +2,7 @@
 # backup_project.sh - Creates incremental backups using rsync
 
 # Stop the script if any command fails
-set -e
+set -euo pipefail
 
 # Source shared utilities
 if [ -f "$HOME/dotfiles/bin/dhp-utils.sh" ]; then

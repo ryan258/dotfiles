@@ -27,13 +27,7 @@ mkdir -p "$DATA_DIR"
 init_daily_spoons() {
     local count="${1:-$DEFAULT_DAILY_SPOONS}"
 
-    # Use common validation if available, otherwise inline
-    if type validate_numeric &>/dev/null; then
-        validate_numeric "$count" "spoon count" || return 1
-    elif ! [[ "$count" =~ ^[0-9]+$ ]]; then
-        echo "Error: Count must be a positive integer" >&2
-        return 1
-    fi
+    validate_numeric "$count" "spoon count" || return 1
 
     local date="${2:-$(date +%Y-%m-%d)}"
     
@@ -52,22 +46,12 @@ init_daily_spoons() {
 spend_spoons() {
     local count="$1"
 
-    # Use common validation if available
-    if type validate_numeric &>/dev/null; then
-        validate_numeric "$count" "spoon count" || return 1
-    elif ! [[ "$count" =~ ^[0-9]+$ ]]; then
-        echo "Error: Count must be a positive integer" >&2
-        return 1
-    fi
+    validate_numeric "$count" "spoon count" || return 1
 
-    # Sanitize activity using common function if available
+    # Sanitize activity
     local raw_activity="${2:-General Activity}"
     local activity
-    if type sanitize_input &>/dev/null; then
-        activity=$(sanitize_input "$raw_activity" | head -c 100)
-    else
-        activity=$(echo "$raw_activity" | tr -d '|\n' | head -c 100)
-    fi
+    activity=$(sanitize_input "$raw_activity" | head -c 100)
     local today=$(date +%Y-%m-%d)
     local time=$(date +%H:%M)
     

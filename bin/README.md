@@ -26,7 +26,7 @@ This directory contains 10 AI dispatcher scripts plus 4 advanced features that p
 | `dhp-stoic.sh`     | `stoic`     | Stoic coaching      | stdin        |
 | `dhp-research.sh`  | `research`  | Knowledge synthesis | stdin        |
 | `dhp-narrative.sh` | `narrative` | Story structure     | stdin        |
-| `dhp-copy.sh`      | `copy`      | Marketing copy      | stdin        |
+| `dhp-copy.sh`      | `aicopy`    | Marketing copy      | stdin        |
 | `dhp-morphling.sh` | `morphling` | Universal adaptive  | argument     |
 
 ## Advanced Features
@@ -146,13 +146,13 @@ echo "Character goes from selfish to selfless" | narrative
 
 ```bash
 # Generate sales copy
-echo "Product: AI-powered task manager for ADHD" | copy
+echo "Product: AI-powered task manager for ADHD" | aicopy
 
 # Email sequence with streaming
-echo "Launch sequence for new course on creative writing" | copy --stream
+echo "Launch sequence for new course on creative writing" | aicopy --stream
 
 # Landing page copy
-echo "SaaS tool for content creators - convert visitors" | copy
+echo "SaaS tool for content creators - convert visitors" | aicopy
 ```
 
 **Flags:**
@@ -612,7 +612,7 @@ dhp-project "New product launch strategy" > project-brief.md
 
 ```bash
 # Story generation → structure analysis → marketing hook
-dhp-chain creative narrative copy -- "lighthouse keeper finds mysterious artifact"
+dhp-chain creative narrative aicopy -- "lighthouse keeper finds mysterious artifact"
 
 # Market research → brand strategy → content plan
 dhp-chain market brand content -- "AI productivity tools for developers"
@@ -626,7 +626,7 @@ dhp-chain creative narrative -- "story idea" --save story-brief.md
 
 **Available Dispatchers:**
 
-- tech, creative, content, strategy, brand, market, stoic, research, narrative, copy
+- tech, creative, content, strategy, brand, market, stoic, research, narrative, aicopy
 
 **Features:**
 

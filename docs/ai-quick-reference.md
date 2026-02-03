@@ -146,10 +146,10 @@ creative "Essay about finding productivity systems that work with MS"
 
 ---
 
-## 📝 4. Copywriting (`copy`)
+## 📝 4. Copywriting (`aicopy`)
 
 **Default Model:** Xiaomi MiMo v2 Flash (`CREATIVE_MODEL`)
-**Alias:** `copy`
+**Alias:** `aicopy`
 
 ### When to Use
 
@@ -164,19 +164,19 @@ creative "Essay about finding productivity systems that work with MS"
 **Email sequence:**
 
 ```bash
-copy "3-email welcome sequence for blog subscribers interested in productivity with chronic illness"
+aicopy "3-email welcome sequence for blog subscribers interested in productivity with chronic illness"
 ```
 
 **Landing page:**
 
 ```bash
-copy "Landing page for a productivity course for people with MS"
+aicopy "Landing page for a productivity course for people with MS"
 ```
 
 **Call-to-action:**
 
 ```bash
-copy "CTA for newsletter signup, focus on practical tips"
+aicopy "CTA for newsletter signup, focus on practical tips"
 ```
 
 ---
@@ -483,10 +483,10 @@ narrative "Help me develop a character who has MS but it's not their defining tr
 ### Chain Multiple Specialists
 
 ```bash
-dhp-chain creative narrative copy -- "Blog post about automation helping with chronic illness"
+dhp-chain creative narrative aicopy -- "Blog post about automation helping with chronic illness"
 ```
 
-**What it does:** Passes your prompt through creative → narrative → copy in sequence.
+**What it does:** Passes your prompt through creative → narrative → aicopy in sequence.
 
 ---
 
@@ -553,7 +553,7 @@ blog generate "Managing Energy with MS" -p thoughtful-guide -s guides
 blog refine drafts/managing-energy.md -p technical-deep-dive
 
 # 4. Get marketing copy
-copy "Social media promotion for this blog post" < drafts/managing-energy.md
+aicopy "Social media promotion for this blog post" < drafts/managing-energy.md
 ```
 
 ---
@@ -737,7 +737,7 @@ tail ~/.config/dotfiles-data/system.log
 | Code is broken              | `tech`       |
 | Need blog content           | `content`    |
 | Writing a story             | `creative`   |
-| Need marketing copy         | `copy`       |
+| Need marketing copy         | `aicopy`     |
 | R&D direction, capabilities | `strategy`   |
 | Tax, S-Corp, finances       | `finance`    |
 | Define brand                | `brand`      |

@@ -227,7 +227,6 @@ echo "🏥 HEALTH:"
 HEALTH_FILE="${HEALTH_FILE:-$STATE_DIR/health.txt}"
 if [ -f "$HEALTH_FILE" ] && [ -s "$HEALTH_FILE" ]; then
     # Show upcoming appointments
-    # Show upcoming appointments
     TODAY_STR=$(date +%Y-%m-%d)
     TODAY_EPOCH=$(parse_timestamp "$TODAY_STR")
     
@@ -318,7 +317,7 @@ else
 fi
 
 # --- AI BRIEFING (Optional) ---
-if [ "${AI_BRIEFING_ENABLED:-false}" = "true" ]; then
+if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
     echo ""
     echo "🤖 AI BRIEFING:"
 

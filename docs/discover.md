@@ -474,10 +474,10 @@ creative "Story idea: a developer learning to work with chronic illness"
 
 ---
 
-### 4. Marketing Copy (`copy`)
+### 4. Marketing Copy (`aicopy`)
 
 ```bash
-copy "Email sequence for new blog subscribers"
+aicopy "Email sequence for new blog subscribers"
 ```
 
 **When to use:** Marketing emails, landing pages, calls-to-action.
@@ -564,7 +564,7 @@ narrative "Analyze this story structure" < draft.md
 **Chain multiple specialists:**
 
 ```bash
-dhp-chain creative narrative copy -- "story about overcoming limitations"
+dhp-chain creative narrative aicopy -- "story about overcoming limitations"
 ```
 
 **Full project brief (Mega-Swarm):**

@@ -125,7 +125,7 @@ Every AI dispatcher accepts the `--stream` flag:
 - `stoic --stream` - Stoic coaching
 - `research --stream` - Knowledge synthesis
 - `narrative --stream` - Story structure
-- `copy --stream` - Marketing copy
+- `aicopy --stream` - Marketing copy
 
 ---
 
@@ -242,35 +242,35 @@ cat story-outline.md | narrative --stream
 
 ---
 
-### Marketing Copy (`copy` / `dhp-copy`)
+### Marketing Copy (`aicopy` / `dhp-copy`)
 
 **Example 1: Product launch email**
 ```bash
-echo "Product: AI-powered daily planner for ADHD. Audience: Busy professionals struggling with focus. Goal: 20% email open rate" | copy
+echo "Product: AI-powered daily planner for ADHD. Audience: Busy professionals struggling with focus. Goal: 20% email open rate" | aicopy
 ```
 
 **Example 2: Landing page hero section**
 ```bash
-echo "SaaS tool: AI code review for developers. Benefit: Catch bugs before production. Call-to-action: Start free trial" | copy
+echo "SaaS tool: AI code review for developers. Benefit: Catch bugs before production. Call-to-action: Start free trial" | aicopy
 ```
 
 **Example 3: Social media campaign**
 ```bash
-echo "Launch campaign for online course about building AI products. Platform: Twitter/X. Tone: Educational but approachable" | copy
+echo "Launch campaign for online course about building AI products. Platform: Twitter/X. Tone: Educational but approachable" | aicopy
 ```
 
 **Example 4: Long-form copy with streaming**
 ```bash
-echo "Complete email sequence (5 emails) for SaaS product launch. Product: AI code review tool. Audience: Engineering teams" | copy --stream
+echo "Complete email sequence (5 emails) for SaaS product launch. Product: AI code review tool. Audience: Engineering teams" | aicopy --stream
 ```
 
 **Copy-Ready Template:**
 ```bash
 # Basic usage
-echo "Product: [NAME]. Audience: [TARGET]. Goal: [CONVERSION]" | copy
+echo "Product: [NAME]. Audience: [TARGET]. Goal: [CONVERSION]" | aicopy
 
 # Long-form copy with streaming
-echo "Complex copy request" | copy --stream
+echo "Complex copy request" | aicopy --stream
 ```
 
 ---
@@ -538,7 +538,7 @@ ai-suggest
 
 **Example 1: Story development pipeline**
 ```bash
-dhp-chain creative narrative copy -- "A programmer discovers a bug that breaks the fourth wall"
+dhp-chain creative narrative aicopy -- "A programmer discovers a bug that breaks the fourth wall"
 ```
 
 **Example 2: Content strategy pipeline**
@@ -566,7 +566,7 @@ dhp-chain dispatcher1 dispatcher2 -- "YOUR_INPUT" --save output.md
 ```
 
 **Available for chaining:**
-- tech, creative, content, strategy, brand, market, stoic, research, narrative, copy
+- tech, creative, content, strategy, brand, market, stoic, research, narrative, aicopy
 
 ---
 
@@ -692,7 +692,7 @@ content "Complete guide to AI productivity tools for developers"
 blog refine ~/projects/blog/content/guides/ai-productivity-tools.md
 
 # 4. Create promotional copy
-echo "Blog post: AI productivity tools for developers. Platform: Twitter. Goal: Drive traffic" | copy
+echo "Blog post: AI productivity tools for developers. Platform: Twitter. Goal: Drive traffic" | aicopy
 ```
 
 ---
@@ -728,7 +728,7 @@ echo "How to structure a story about an AI that goes from helpful to dangerous p
 dhp-chain creative narrative -- "Smart home AI protector becomes dangerous"
 
 # 4. Create marketing hook
-echo "Short story about overprotective AI. Target: sci-fi readers. Platform: Medium" | copy
+echo "Short story about overprotective AI. Target: sci-fi readers. Platform: Medium" | aicopy
 ```
 
 ---
@@ -767,7 +767,7 @@ cat market-research.txt | brand > brand-positioning.txt
 cat brand-positioning.txt | content "Guide topic based on research" > content-outline.md
 
 # 4. Create promotional copy
-cat content-outline.md | copy > promotional-copy.txt
+cat content-outline.md | aicopy > promotional-copy.txt
 ```
 
 ---
@@ -782,7 +782,7 @@ content --stream "Complete 5000-word guide to building AI agent systems" > ai-ag
 # Content appears on screen as it's written to the file
 
 # 3. Create marketing materials with streaming
-cat ai-agents-guide.md | copy --stream "Create launch email, Twitter thread, and LinkedIn post" > marketing-materials.md
+cat ai-agents-guide.md | aicopy --stream "Create launch email, Twitter thread, and LinkedIn post" > marketing-materials.md
 
 # 4. Get strategic insights on content performance potential
 cat ai-agents-guide.md | strategy --stream "How should I promote this content for maximum reach?"
@@ -862,7 +862,7 @@ creative "haunted house story"
 
 ✅ **Better:**
 ```bash
-dhp-chain creative narrative copy -- "Modern haunted house story where the house is a smart home with a tragic past"
+dhp-chain creative narrative aicopy -- "Modern haunted house story where the house is a smart home with a tragic past"
 # Generates concept → analyzes structure → creates marketing hook
 ```
 
@@ -896,7 +896,7 @@ cat all-my-notes.md | research > synthesized-research.md
 - 🏛️ **Handle mindset challenges** → `stoic`
 - 📚 **Synthesize research** → `research`
 - 📕 **Analyze story structure** → `narrative`
-- ✍️ **Write marketing copy** → `copy`
+- ✍️ **Write marketing copy** → `aicopy`
 - 🚀 **Plan complex project** → `dhp-project`
 - 🔗 **Chain multiple specialists** → `dhp-chain`
 - 💡 **Get context suggestions** → `ai-suggest`

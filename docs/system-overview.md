@@ -170,7 +170,7 @@ Optional:
 
 Advanced Features:
   dhp-chain    ──► Sequential processing through multiple AIs
-  dhp-project  ──► 5-specialist orchestration (market→brand→strategy→content→copy)
+  dhp-project  ──► 5-specialist orchestration (market→brand→strategy→content→aicopy)
   --context    ──► Inject recent journal + todos
   --full-context ──► Inject git status + README + todos + journal
 ```

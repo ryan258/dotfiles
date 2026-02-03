@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
 # --- My Personal Command Cheatsheet ---
 # Add any commands or notes you tend to forget.
@@ -69,7 +70,7 @@ echo "    cat script.sh | tech --stream  # Debug with real-time streaming"
 echo "    creative 'story'             # Story package"
 echo "    creative --stream 'story'    # Story with streaming"
 echo "    narrative 'plot' | narrative # Plot structure"
-echo "    copy 'product' | copy        # Sales copy"
+echo "    aicopy 'product' | aicopy    # Sales copy"
 echo "    <input> | strategy           # Strategic analysis"
 echo "    <input> | brand              # Brand positioning"
 echo "    <input> | market             # Market research"

@@ -1,8 +1,45 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** January 22, 2026
+**Last Updated:** February 3, 2026
 
 This document tracks all major implementations, improvements, and fixes to the Daily Context System.
+
+---
+
+## Version 2.2.1 (February 3, 2026) - Codebase Health Fixes
+
+**Status:** ✅ Production Ready
+
+This release addresses issues identified during a comprehensive codebase health review.
+
+### Alias Conflict Resolution
+- **`copy` → `aicopy`**: Resolved conflict between `copy` alias (previously mapped to `dhp-copy.sh`) and macOS `pbcopy` clipboard utility
+- `copy` now correctly maps to `pbcopy` for clipboard operations
+- `aicopy` is the new alias for the AI copywriting dispatcher (`dhp-copy.sh`)
+
+### Configuration Enhancements (`scripts/lib/config.sh`)
+- Added `COPY_MODEL` configuration for the copywriting dispatcher
+- Added `NARRATIVE_MODEL` configuration for the narrative dispatcher
+- Added `MORPHLING_MODEL` configuration for the morphling dispatcher
+- Added `FOCUS_FILE` path configuration
+- Added `BRIEFING_CACHE_FILE` path configuration
+
+### Library Improvements (`scripts/lib/common.sh`)
+- Added `validate_path()` function for secure path validation
+- Prevents path traversal attacks and validates file/directory existence
+
+### Default Value Alignment
+- Changed `AI_BRIEFING_ENABLED` default from `false` to `true` in config to match documentation
+
+### Error Handling Improvements
+- Scripts now consistently use `set -euo pipefail` for robust error handling
+- Improved fail-fast behavior across core scripts
+
+### Documentation Updates
+- Updated `bin/README.md` with correct `aicopy` alias
+- Updated `docs/ai-examples.md` with `aicopy` examples
+- Updated `docs/flex.md` quick reference table
+- Updated `scripts/cheatsheet.sh` with current aliases
 
 ---
 
@@ -417,7 +454,7 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 
 **Dispatcher Aliases (21 total):**
 - ✅ Added full-name aliases: `dhp-tech`, `dhp-creative`, `dhp-content`, etc.
-- ✅ Added shorthand aliases: `tech`, `creative`, `content`, `strategy`, `brand`, `market`, `stoic`, `research`, `narrative`, `copy`
+- ✅ Added shorthand aliases: `tech`, `creative`, `content`, `strategy`, `brand`, `market`, `stoic`, `research`, `narrative`, `aicopy`
 - ✅ Added default alias: `dhp` → `dhp-tech.sh`
 
 **System Validation:**

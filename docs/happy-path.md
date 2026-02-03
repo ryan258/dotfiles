@@ -451,7 +451,7 @@ echo "feeling overwhelmed by tasks" | stoic
 dispatch project "launch new blog series" > brief.md
 
 # Chain multiple AI specialists
-dhp-chain creative narrative copy -- "story idea"
+dhp-chain creative narrative aicopy -- "story idea"
 
 # Content with context injection
 content --context "guide topic"

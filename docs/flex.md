@@ -35,7 +35,7 @@ content --stream "Complete guide to X"
 ```bash
 content --temperature 0.35 "Deterministic guide output"
 creative --temperature 0.85 "High-creativity story generation"
-copy --temperature 0.55 "Balanced marketing copy"
+aicopy --temperature 0.55 "Balanced marketing copy"
 ```
 
 ## Workflow Integration Examples
@@ -109,8 +109,8 @@ dhp-project "Launch new blog series on AI productivity"
 ### 13. Dispatcher Chaining
 
 ```bash
-dhp-chain creative narrative copy -- "lighthouse keeper finds artifact"
-# Sequential: creative → narrative → copy
+dhp-chain creative narrative aicopy -- "lighthouse keeper finds artifact"
+# Sequential: creative → narrative → aicopy
 # Use --save <file> to save output
 ```
 
@@ -160,7 +160,7 @@ swipe content --context "Guide about fog-friendly workflows"
 | `stoic`     | `dhp-stoic.sh`     | Mindset coaching through stoic principles           |
 | `research`  | `dhp-research.sh`  | Knowledge organization and synthesis                |
 | `narrative` | `dhp-narrative.sh` | Story structure, plot development, character arcs   |
-| `copy`      | `dhp-copy.sh`      | Sales copy, email sequences, landing pages          |
+| `aicopy`    | `dhp-copy.sh`      | Sales copy, email sequences, landing pages          |
 
 ## Tips
 

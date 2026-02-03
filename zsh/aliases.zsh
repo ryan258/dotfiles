@@ -68,7 +68,7 @@ alias targz="tar -czvf"                   # Create tar.gz archive
 
 # File search (macOS compatible)
 alias ff="find . -name"                   # Find files by name
-alias grep="grep --color=auto"            # Colorized grep
+# grep alias with color is defined later with portable ggrep detection
 
 # macOS specific file operations
 alias showfiles="defaults write com.apple.finder AppleShowAllFiles YES && killall Finder"
@@ -437,11 +437,11 @@ alias wr='with-req --'
 # Quick information:
 # info                      # Weather + todos
 # overview                  # System info + battery devenv='dev_shortcuts.sh env'
-# Portable grep coloring
+# Portable grep coloring (prefer GNU grep if available)
 if command -v ggrep >/dev/null 2>&1; then
     alias grep='ggrep --color=auto'
 else
-    alias grep='grep'
+    alias grep='grep --color=auto'
 fi
 
 # =============================================================================
@@ -476,7 +476,7 @@ alias market="$HOME/dotfiles/bin/dhp-market.sh"
 alias stoic="$HOME/dotfiles/bin/dhp-stoic.sh"
 alias research="$HOME/dotfiles/bin/dhp-research.sh"
 alias narrative="$HOME/dotfiles/bin/dhp-narrative.sh"
-alias copy="$HOME/dotfiles/bin/dhp-copy.sh"
+alias aicopy="$HOME/dotfiles/bin/dhp-copy.sh"
 alias morphling="$HOME/dotfiles/bin/dhp-morphling.sh"
 alias dhp-morphling="$HOME/dotfiles/bin/dhp-morphling.sh"
 alias dhp="$HOME/dotfiles/bin/dhp-tech.sh"  # Default to tech dispatcher

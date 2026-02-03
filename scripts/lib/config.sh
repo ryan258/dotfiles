@@ -41,6 +41,8 @@ HEALTH_FILE="${HEALTH_FILE:-$DATA_DIR/health.txt}"
 SPOON_LOG="${SPOON_LOG:-$DATA_DIR/spoons.txt}"
 TIME_LOG="${TIME_LOG:-$DATA_DIR/time_tracking.txt}"
 SYSTEM_LOG="${SYSTEM_LOG:-$DATA_DIR/system.log}"
+FOCUS_FILE="${FOCUS_FILE:-$DATA_DIR/daily_focus.txt}"
+BRIEFING_CACHE_FILE="${BRIEFING_CACHE_FILE:-$DATA_DIR/.ai_briefing_cache}"
 
 #=============================================================================
 # Model Configuration - SINGLE SOURCE OF TRUTH
@@ -67,6 +69,9 @@ get_model() {
         RESEARCH) echo "${RESEARCH_MODEL:-moonshotai/kimi-k2:free}" ;;
         MARKET) echo "${MARKET_MODEL:-moonshotai/kimi-k2:free}" ;;
         BRAND) echo "${BRAND_MODEL:-moonshotai/kimi-k2:free}" ;;
+        COPY) echo "${COPY_MODEL:-moonshotai/kimi-k2:free}" ;;
+        NARRATIVE) echo "${NARRATIVE_MODEL:-moonshotai/kimi-k2:free}" ;;
+        MORPHLING) echo "${MORPHLING_MODEL:-moonshotai/kimi-k2:free}" ;;
         DEFAULT|*) echo "${DEFAULT_MODEL:-moonshotai/kimi-k2:free}" ;;
     esac
 }

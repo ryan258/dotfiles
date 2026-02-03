@@ -394,7 +394,7 @@ ai-suggest
 - 🏛️ Process a challenge → `stoic`
 - 📊 Research market/SEO → `market`
 - 📖 Develop story structure → `narrative`
-- ✍️ Write marketing copy → `copy`
+- ✍️ Write marketing copy → `aicopy`
 - 🎨 Position brand → `brand`
 - 📚 Synthesize research → `research`
 
@@ -515,7 +515,7 @@ content --stream "Analysis for review only"
 
 ```bash
 # Chain when output of one enhances input to next
-dhp-chain creative narrative copy -- "story idea"
+dhp-chain creative narrative aicopy -- "story idea"
 
 # Market research → positioning → content
 dhp-chain market brand content -- "AI tools for developers"
@@ -1023,7 +1023,7 @@ todo add "Write AI productivity guide"
 todo commit 1
 
 # 5. Promote (streaming for longer copy)
-cat outline.md | copy --stream > promotional-copy.txt
+cat outline.md | aicopy --stream > promotional-copy.txt
 ```
 
 ---

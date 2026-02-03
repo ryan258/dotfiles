@@ -58,7 +58,7 @@ creative "A cyberpunk story about a rogue AI"
 - `strategy`: High-level strategic planning
 - `research`: Deep-dive synthesis
 - `stoic`: Philosophical coaching
-- `copy`: Marketing copywriting
+- `aicopy`: Marketing copywriting
 - `narrative`: Store structure & pacing
 
 ### 4. Advanced Chaining (`dhp-chain`)
@@ -102,7 +102,7 @@ Each dispatcher alias maps to a specific variable in `.env`.
 | `tech`      | `TECH_MODEL`                               | Xiaomi MiMo v2 Flash (OpenRouter free) |
 | `content`   | `CONTENT_MODEL`                            | Xiaomi MiMo v2 Flash (OpenRouter free) |
 | `creative`  | `CREATIVE_MODEL`                           | Xiaomi MiMo v2 Flash (OpenRouter free) |
-| `copy`      | `CREATIVE_MODEL`                           | Xiaomi MiMo v2 Flash (OpenRouter free) |
+| `aicopy`    | `CREATIVE_MODEL`                           | Xiaomi MiMo v2 Flash (OpenRouter free) |
 | `narrative` | `CREATIVE_MODEL`                           | Xiaomi MiMo v2 Flash (OpenRouter free) |
 | `strategy`  | `STRATEGY_MODEL`                           | Xiaomi MiMo v2 Flash (OpenRouter free) |
 | `brand`     | `BRAND_MODEL` (fallback: `STRATEGY_MODEL`) | Xiaomi MiMo v2 Flash (OpenRouter free) |
