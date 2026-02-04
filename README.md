@@ -11,6 +11,12 @@ This repository contains a personal collection of shell scripts, aliases, and co
 
 ---
 
+## TL;DR
+
+- **If you only read one doc:** [Start Here](docs/start-here.md).
+- Run `dotfiles-check` to verify setup.
+- Use the daily loop: `startday` → work → `goodevening`.
+
 ## 👋 **New Here? Forgot What You Have?**
 
 **→ [📍 START HERE - 5 Minute Orientation](docs/start-here.md)**
@@ -18,7 +24,7 @@ This repository contains a personal collection of shell scripts, aliases, and co
 Quick links:
 
 - **[📋 Daily Cheat Sheet](docs/daily-cheatsheet.md)** - One-page reference
-- **[🔍 Discover Features](docs/discover.md)** - What can you do?
+- **[🔍 Feature Discovery](docs/start-here.md)** - Use-case index inside Start Here
 - **[🧠 MS-Friendly Features](docs/ms-friendly-features.md)** - How it helps
 - **[🤖 AI Quick Reference](docs/ai-quick-reference.md)** - Your Swarm of 68 specialists
 - **[📚 Documentation Index](docs/README.md)** - All guides
@@ -48,7 +54,7 @@ This setup is guided by a few key principles:
 
 ### Discover Features by What You Want to Do
 
-- **[Feature Discovery Guide](docs/discover.md)** - Complete guide organized by use case
+- **[Start Here](docs/start-here.md)** - Use-case index inside Start Here
   - Daily essentials (morning/evening routines)
   - When you're overwhelmed (low-energy helpers)
   - Managing health (energy, symptoms, medications)
@@ -183,7 +189,7 @@ See [CHANGELOG.md](CHANGELOG.md) for complete details.
 
 Upgraded all AI dispatchers with cost-effective models and structured workflow system:
 
-- **Optimized Free Models:** All 10 dispatchers now use a unified free model via OpenRouter (Xiaomi MiMo v2 Flash)
+- **Optimized Defaults:** Dispatcher models are configured in `.env` and fall back to `moonshotai/kimi-k2:free` when unset
 - **Spec Template System:** New `spec` command opens structured templates in your editor for comprehensive AI requests
 - **Template Library:** 8 dispatcher-specific templates guide you through filling in all relevant context
 - **Automatic Archival:** Completed specs saved to `~/.config/dotfiles-data/specs/` for reuse and documentation
@@ -193,7 +199,7 @@ Upgraded all AI dispatchers with cost-effective models and structured workflow s
 
 Major improvements to AI dispatcher reliability and user experience:
 
-- **Real-Time Streaming:** All 10 AI dispatchers support `--stream` flag for real-time output as AI generates responses
+- **Real-Time Streaming:** All 12 AI dispatchers support `--stream` flag for real-time output as AI generates responses
 - **Robust Error Handling:** No more silent failures - API errors are caught and reported clearly with proper exit codes
 - **Shared Library:** Centralized API logic in `bin/dhp-lib.sh` eliminates ~1,500 lines of duplicate code
 - **Better Feedback:** See progress in real-time during long AI tasks, catch errors immediately
@@ -214,7 +220,7 @@ See `CHANGELOG.md` for the play-by-play of the latest blindspots and fixes.
 
 ## AI Staff HQ Integration
 
-**NEW:** Your dotfiles now include a complete AI workforce powered by **10 active dispatchers** plus **4 advanced features** (multi-specialist orchestration, context-aware suggestions, dispatcher chaining, and local context injection) accessing 68 specialized professionals through the [AI-Staff-HQ](https://github.com/ryan258/AI-Staff-HQ) submodule.
+**NEW:** Your dotfiles now include a complete AI workforce powered by **12 active dispatchers** plus **4 advanced features** (multi-specialist orchestration, context-aware suggestions, dispatcher chaining, and local context injection) accessing 68 specialized professionals through the [AI-Staff-HQ](https://github.com/ryan258/AI-Staff-HQ) submodule.
 
 ### Quick Start with Dispatchers
 
@@ -236,7 +242,7 @@ echo "Optimize this function" | tech  # Get technical advice
 creative "lighthouse keeper story"              # Generate story package
 creative --stream "astronaut on Europa"         # Stream story generation
 narrative "analyze plot structure"              # Story structure analysis
-copy "product launch email"                     # Marketing copy
+aicopy "product launch email"                   # Marketing copy
 
 # Strategy & Analysis
 echo "Brand positioning for tech blog" | brand    # Brand analysis
@@ -448,7 +454,7 @@ dhp-content --full-context "Comprehensive guide topic"
 5. **Verify Installation:** Run the system check:
    ```bash
    bash scripts/dotfiles_check.sh
-   # Should report: "✅ Found 10/10 dispatchers"
+# Should report: "✅ Found 12/12 dispatchers"
    # And: "✅ All systems OK!"
    ```
 
@@ -470,7 +476,7 @@ dhp-content --full-context "Comprehensive guide topic"
 
 ### Full AI Workforce Access
 
-The 10 dispatchers provide access to 68 specialists across 7 departments:
+The 12 dispatchers provide access to 68 specialists across 7 departments:
 
 - **Strategy (13):** Chief of Staff, Market Analyst, Brand Builder, Creative Strategist, Data Analyst, Trend Forecaster, Academic Researcher, Learning Scientist, Ethicist, and more
 - **Producers (15):** Art Director, Copywriter, Narrative Designer, Creative Writer, Beta Reader, Mythologist, Narrator, and more
@@ -569,7 +575,7 @@ All script data is centralized in `~/.config/dotfiles-data/` for easy backup and
 - `focus_history.log` – Archive of completed focus entries with dates
 - `spoons.txt` – Spoon theory budget and expenditure log
 - `google_creds.json`, `google_token_cache.json` – Google Calendar OAuth credentials (secure)
-- `clipboard_history/` – Saved clipboard snippets (supports dynamic/executable snippets)
+- `clipboard_history.txt` – Saved clipboard snippets (pipe-delimited, `\n`-escaped content)
 - `how-to/` – Personal how-to wiki articles
 
 This single directory is automatically backed up daily by `goodevening.sh` to `~/Backups/dotfiles_data/`.
@@ -690,6 +696,16 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Troubleshooting
 
 Encountering issues? Check our [Troubleshooting Guide](TROUBLESHOOTING.md) for solutions to common problems.
+
+---
+
+## Related Docs
+
+- [Start Here](docs/start-here.md)
+- [Documentation Index](docs/README.md)
+- [Daily Cheat Sheet](docs/daily-cheatsheet.md)
+- [AI Quick Reference](docs/ai-quick-reference.md)
+- [Troubleshooting](TROUBLESHOOTING.md)
 
 ### Running Tests
 

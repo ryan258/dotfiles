@@ -2,6 +2,12 @@
 
 > "The goal is a pivot from building infrastructure to generating capability. This roadmap decouples tasks from the calendar, allowing progress to match your biology."
 
+## TL;DR
+
+- Pick tasks based on today’s energy, not the calendar.
+- If `health check` trips, stop high‑energy work.
+- Use this roadmap as a menu, not a deadline list.
+
 ## 🛑 Circuit Breaker Rules
 
 _If `health.sh check` returns "CIRCUIT BREAKER TRIPPED":_
@@ -63,3 +69,12 @@ _These generate stress without immediate capability gain. Avoid until Phase 3._
 - [ ] S-Corp Formation / Legal Entity Setup
 - [ ] Complex Tax Accounting / Payroll
 - [ ] Micro-consulting / Synchronous Sales Calls
+
+---
+
+## Related Docs
+
+- [Start Here](start-here.md)
+- [System Overview](system-overview.md)
+- [Best Practices](best-practices.md)
+- [Troubleshooting](../TROUBLESHOOTING.md)

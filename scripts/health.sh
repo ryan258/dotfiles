@@ -6,8 +6,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 require_lib "date_utils.sh"
 
-HEALTH_FILE="${HEALTH_FILE:-$HOME/.config/dotfiles-data/health.txt}"
-CACHE_DIR="${CACHE_DIR:-$HOME/.config/dotfiles-data/cache}"
+DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
+HEALTH_FILE="${HEALTH_FILE:-$DATA_DIR/health.txt}"
+CACHE_DIR="${CACHE_DIR:-$DATA_DIR/cache}"
 mkdir -p "$CACHE_DIR"
 
 COMMITS_CACHE_FILE="$CACHE_DIR/health_commits.cache"
@@ -43,7 +44,7 @@ PY
 
 correlate_tasks() {
     local recent_data="$1"
-    local todo_done_file="$HOME/.config/dotfiles-data/todo_done.txt"
+    local todo_done_file="${DONE_FILE:-$DATA_DIR/todo_done.txt}"
 
     if [ ! -f "$todo_done_file" ]; then
         echo "  - Avg tasks on low energy days: N/A (no todo data)"
@@ -54,8 +55,8 @@ correlate_tasks() {
     # Use awk to map tasks to dates and correlate with energy
     awk -F'|' '
     FNR==NR {
-        if ($0 ~ /^\[/) {
-             date = substr($1, 2, 10)
+        if (NF >= 2) {
+             date = substr($1, 1, 10)
              tasks[date]++
         }
         next
@@ -172,6 +173,9 @@ cmd_add() {
         echo "Usage: $(basename "$0") add \"description\" \"YYYY-MM-DD HH:MM\""
         exit 1
     fi
+    desc=$(sanitize_input "$desc")
+    desc=${desc//$'\n'/\\n}
+    time_str=$(sanitize_input "$time_str")
     echo "APPT|$time_str|$desc" >> "$HEALTH_FILE"
     echo "Added: $desc on $time_str"
 }
@@ -183,6 +187,8 @@ cmd_symptom() {
         exit 1
     fi
     local timestamp=$(date '+%Y-%m-%d %H:%M')
+    symptom_note=$(sanitize_input "$symptom_note")
+    symptom_note=${symptom_note//$'\n'/\\n}
     echo "SYMPTOM|$timestamp|$symptom_note" >> "$HEALTH_FILE"
     echo "Logged symptom: $symptom_note"
 }

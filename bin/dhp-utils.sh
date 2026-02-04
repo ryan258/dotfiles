@@ -1,6 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # dhp-utils.sh: Utility functions for AI dispatchers
-set -euo pipefail
+# NOTE: SOURCED file. Do NOT use set -euo pipefail.
+
+if [[ -n "${_DHP_UTILS_LOADED:-}" ]]; then
+    return 0
+fi
+readonly _DHP_UTILS_LOADED=true
 
 # Try to source common library for shared functions
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
@@ -50,64 +55,12 @@ read_dispatcher_input() {
     fi
 }
 
-# validate_path: Canonicalizes a path and checks if it's within the user's home directory.
-# Usage: validate_path <path>
-# Returns: 0 on success (prints canonicalized path), 1 on failure (prints error)
-# Note: Uses shell-native approach with Python fallback for robustness
-validate_path() {
-    local input_path="$1"
-    if [[ -z "$input_path" ]]; then
-        echo "Error: validate_path requires a path argument." >&2
+if ! type validate_path &>/dev/null; then
+    validate_path() {
+        echo "Error: validate_path unavailable (common.sh not loaded)." >&2
         return 1
-    fi
-
-    local canonical_path=""
-
-    # Try shell-native realpath first (available on macOS 12.3+ and Linux)
-    if command -v realpath &>/dev/null; then
-        canonical_path=$(realpath -m "$input_path" 2>/dev/null) || canonical_path=""
-    fi
-
-    # Fallback to Python if realpath failed or unavailable
-    if [[ -z "$canonical_path" ]]; then
-        if command -v python3 &>/dev/null; then
-            canonical_path=$(python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$input_path" 2>/dev/null) || canonical_path=""
-        elif command -v python &>/dev/null; then
-            canonical_path=$(python -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$input_path" 2>/dev/null) || canonical_path=""
-        fi
-    fi
-
-    # Final fallback: manual resolution for simple cases
-    if [[ -z "$canonical_path" ]]; then
-        # Expand ~ and resolve . and ..
-        case "$input_path" in
-            ~/*) input_path="$HOME/${input_path#\~/}" ;;
-            ~) input_path="$HOME" ;;
-        esac
-        if [[ -d "$input_path" ]]; then
-            canonical_path=$(cd "$input_path" && pwd -P 2>/dev/null) || canonical_path=""
-        elif [[ -f "$input_path" ]]; then
-            local dir_part file_part
-            dir_part=$(dirname "$input_path")
-            file_part=$(basename "$input_path")
-            canonical_path=$(cd "$dir_part" && pwd -P 2>/dev/null)/"$file_part" || canonical_path=""
-        fi
-    fi
-
-    if [[ -z "$canonical_path" ]]; then
-        echo "Error: Cannot canonicalize path: '$input_path'" >&2
-        return 1
-    fi
-
-    # Ensure the path is within the user's home directory
-    if [[ "$canonical_path" != "$HOME" ]] && [[ "$canonical_path" != "$HOME"/* ]]; then
-        echo "Error: Path '$canonical_path' is outside the allowed home directory." >&2
-        return 1
-    fi
-
-    echo "$canonical_path"
-    return 0
-}
+    }
+fi
 
 export -f validate_dependencies
 export -f ensure_api_key

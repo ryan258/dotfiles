@@ -1,12 +1,25 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
 # dhp-lib.sh: Shared Library for AI Dispatchers
 # Provides error handling and streaming support functions
 # Source this file in dispatcher scripts: source "$DOTFILES_DIR/bin/dhp-lib.sh"
-set -euo pipefail
+# NOTE: SOURCED file. Do NOT use set -euo pipefail.
+
+if [[ -n "${_DHP_LIB_LOADED:-}" ]]; then
+    return 0
+fi
+readonly _DHP_LIB_LOADED=true
+
+# Resolve dotfiles root for shared config
+DHP_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$DHP_LIB_DIR/.." && pwd)}"
+
+if [[ -f "$DOTFILES_DIR/scripts/lib/config.sh" ]]; then
+    # shellcheck disable=SC1090
+    source "$DOTFILES_DIR/scripts/lib/config.sh"
+fi
 
 # --- Configuration ---
-DISPATCHER_USAGE_LOG="$HOME/.config/dotfiles-data/dispatcher_usage.log"
+DISPATCHER_USAGE_LOG="${DISPATCHER_USAGE_LOG:-${DATA_DIR:-$HOME/.config/dotfiles-data}/dispatcher_usage.log}"
 
 # --- Private Helper Functions ---
 
@@ -45,6 +58,7 @@ _log_api_call() {
     local total_cost
     total_cost=$(awk "BEGIN {printf \"%.6f\", $cost_input + $cost_output}")
 
+    mkdir -p "$(dirname "$DISPATCHER_USAGE_LOG")"
     printf "[%s] DISPATCHER: %s, MODEL: %s, PROMPT_TOKENS: %s, COMPLETION_TOKENS: %s, EST_COST: $%s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "$dispatcher_name" "$model" "$prompt_tokens" "$completion_tokens" "$total_cost" >> "$DISPATCHER_USAGE_LOG"
 }
 

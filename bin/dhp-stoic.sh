@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 # dhp-stoic.sh - Stoic Coach dispatcher (Swarm Edition)
 # Mindset coaching, reflections, journaling prompts

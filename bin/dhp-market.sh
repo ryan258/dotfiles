@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 # dhp-market.sh - Market Analyst dispatcher (Swarm Edition)
 # SEO research, trend analysis, audience insights

@@ -2,6 +2,12 @@
 
 Define every publishing persona you want to reuse for blog generation in this file (or, if you prefer to keep them at the repo root, set them in `PERSONAS.md`). The loader looks for level-2 headings (`## Persona Name`) and treats everything until the next level-2 heading as the persona playbook.
 
+## TL;DR
+
+- Add personas as `## Persona Name` blocks.
+- Use `blog generate -p "Persona"` to apply them.
+- Keep each persona concise and consistent.
+
 ```markdown
 ## Calm Coach
 - Tone: Encouraging...
@@ -119,3 +125,11 @@ Tone guidance: validating, pragmatic, anchored in “one pile at a time”.
 4. **Piling Test:** Does this solve a pile or create one?
 5. **Fog-proof Language:** Simple, direct, CLARITY-compliant.
 6. **Proof-ready:** Include prompts, shortcut steps, or screenshots (per `GUIDE-WRITING-STANDARDS.md`).
+
+---
+
+## Related Docs
+
+- [My MS Site Integration](my-ms-site-integration.md)
+- [AI Quick Reference](ai-quick-reference.md)
+- [Troubleshooting](../TROUBLESHOOTING.md)

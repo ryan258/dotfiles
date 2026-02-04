@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # Cross-platform date helpers for shell scripts.
 # Provides fallback implementations so we avoid direct reliance on BSD-only `date -v`.
+# NOTE: SOURCED file. Do NOT use set -euo pipefail.
+
+if [[ -n "${_DATE_UTILS_LOADED:-}" ]]; then
+    return 0
+fi
+readonly _DATE_UTILS_LOADED=true
 
 _dotfiles_date_python_shift() {
     local offset="$1"

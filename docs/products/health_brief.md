@@ -4,6 +4,12 @@
 **Status:** Enterprise Grade / Production Ready
 **One-Liner:** A bio-rhythm intelligence tool that correlates energy levels with productivity output to prevent burnout.
 
+## TL;DR
+
+- Track energy, fog, and appointments in `health.txt`.
+- Use `health check` and `health dashboard` for feedback.
+- Designed to prevent overwork and burnout.
+
 ## The Problem
 
 For developers with chronic illness (MS, Long Covid, burnout), standard productivity tools are dangerous because they ignore biology. They optimize for "more" rather than "sustainable," leading to boom-and-bust crash cycles.
@@ -53,3 +59,12 @@ $ health.sh dashboard
 ## Value Proposition
 
 It turns "listening to your body" from a vague concept into a hard data point. It gives you permission to rest based on data, not just feelings.
+
+---
+
+## Related Docs
+
+- [MS-Friendly Features](../ms-friendly-features.md)
+- [System Overview](../system-overview.md)
+- [Start Here](../start-here.md)
+- [Troubleshooting](../../TROUBLESHOOTING.md)

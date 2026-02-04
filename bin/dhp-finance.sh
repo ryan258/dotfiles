@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e # Exit immediately if a command fails
+#!/usr/bin/env bash
+set -euo pipefail
 
 # dhp-finance.sh - Financial Strategy dispatcher
 # Dedicated to Tax, S-Corp, R&D Credits, and Financial Administration

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # scripts/correlate.sh
 # CLI Wrapper for Correlation Engine
@@ -74,11 +74,11 @@ show_help() {
     echo "       d1/v1: Date/Value column index for file 1 (0-based)"
     echo "       d2/v2: Date/Value column index for file 2 (0-based)"
     echo ""
-    echo "  find-patterns <file>"
-    echo "       Find recurring patterns in a single dataset (Not Implemented)"
+    echo "  find-patterns <file> [d] [v]"
+    echo "       Find recurring patterns in a single dataset."
     echo ""
-    echo "  explain <correlation_id>"
-    echo "       Explain a correlation insight (Not Implemented)"
+    echo "  explain <r|file>"
+    echo "       Explain a correlation coefficient (r) or read it from a file."
 }
 
 case "${1:-}" in
@@ -114,13 +114,39 @@ case "${1:-}" in
             echo "Error: File required" >&2
             exit 1
         fi
-        echo "Pattern detection is not yet implemented."
-        echo "This feature will analyze data for recurring patterns."
+        file="$2"
+        d="${3:-1}"
+        v="${4:-2}"
+
+        validate_correlate_path "$file" || exit 1
+        validate_numeric "$d" "date column" || exit 1
+        validate_numeric "$v" "value column" || exit 1
+
+        find_patterns "$file" "$d" "$v"
         ;;
 
     explain)
-        echo "Correlation explanation is not yet implemented."
-        echo "This feature will provide insights on correlation results."
+        if [[ -z "${2:-}" ]]; then
+            echo "Error: Correlation coefficient or file required" >&2
+            exit 1
+        fi
+
+        input="$2"
+        r=""
+
+        if [[ -f "$input" ]]; then
+            validate_correlate_path "$input" || exit 1
+            r=$(grep -Eo "[-+]?[0-9]*\\.?[0-9]+" "$input" | head -n 1)
+        else
+            r="$input"
+        fi
+
+        if ! [[ "$r" =~ ^-?[0-9]*\.?[0-9]+$ ]]; then
+            echo "Error: Invalid correlation coefficient: $input" >&2
+            exit 1
+        fi
+
+        generate_insight_text "$r"
         ;;
         
     *)

@@ -473,7 +473,8 @@ Tests live in `tests/` with pattern `test_<module>.sh`
 ### Test Structure
 
 ```bash
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 # Test suite for <module>
 
 TEST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -537,7 +538,7 @@ run_tests
 2. Add alias in `zsh/aliases.zsh`
 3. Add model config to `.env.example`
 4. Document in `bin/README.md`
-5. Update `docs/ai-examples.md` with usage examples
+5. Update `docs/ai-quick-reference.md` with usage examples
 
 ### Adding a New Library (Sourced File)
 

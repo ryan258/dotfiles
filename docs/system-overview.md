@@ -6,6 +6,12 @@ A visual guide to understanding the architecture and data flow.
 
 ---
 
+## TL;DR
+
+- Commands live in `scripts/` and `bin/`, data in `~/.config/dotfiles-data/`.
+- The daily loop is `startday` → work → `goodevening`.
+- Use `dotfiles-check` if anything feels off.
+
 ## 🏗 System Architecture
 
 ```
@@ -19,7 +25,7 @@ A visual guide to understanding the architecture and data flow.
 │                       COMMAND LAYER                              │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
 │  │   Aliases    │  │   Scripts    │  │      AI      │          │
-│  │  (200+ cmds) │  │  (66 files)  │  │ (11 dispatch)│          │
+│  │  (200+ cmds) │  │  (66 files)  │  │ (12 dispatch)│          │
 │  └──────────────┘  └──────────────┘  └──────────────┘          │
 └──────────────────────────┬───────────────────────────────────────┘
                            │
@@ -31,7 +37,7 @@ A visual guide to understanding the architecture and data flow.
 │  • journal.txt                                                   │
 │  • health.txt, medications.txt                                  │
 │  • dir_bookmarks, dir_history, dir_usage.log                   │
-│  • clipboard_history/, how-to/, specs/                         │
+│  • clipboard_history.txt, how-to/, specs/                      │
 │  • system.log, dispatcher_usage.log                            │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -386,7 +392,7 @@ Additional Protection:
 │   └── test_meds.sh
 │
 ├── docs/                 # User documentation
-│   ├── discover.md            # Feature discovery guide ⭐ NEW
+│   ├── start-here.md          # Feature discovery index ⭐ NEW
 │   ├── daily-cheatsheet.md    # One-page reference ⭐ NEW
 │   ├── ms-friendly-features.md # Accessibility guide ⭐ NEW
 │   ├── ai-quick-reference.md  # AI examples ⭐ NEW
@@ -415,7 +421,7 @@ Additional Protection:
 ├── spoons.txt
 ├── google_creds.json, google_token_cache.json
 ├── system.log, dispatcher_usage.log
-├── clipboard_history/
+├── clipboard_history.txt
 ├── how-to/
 ├── specs/
 └── cache/
@@ -585,7 +591,7 @@ A: Yes! Most features work cross-platform. Some macOS-specific features (notific
 1. **Read the guides:**
 
    - [Daily Cheat Sheet](daily-cheatsheet.md) - One-page reference
-   - [Feature Discovery](discover.md) - What can you do?
+   - [Start Here](start-here.md) - Feature discovery index
    - [MS-Friendly Features](ms-friendly-features.md) - How it helps
    - [AI Quick Reference](ai-quick-reference.md) - Your AI team
 
@@ -606,7 +612,7 @@ A: Yes! Most features work cross-platform. Some macOS-specific features (notific
 4. **Explore one category:**
 
    - Pick something that interests you (health tracking, AI, navigation)
-   - Read the relevant section in [discover.md](discover.md)
+   - Read the relevant section in [start-here.md](start-here.md)
    - Try 2-3 commands
 
 5. **Ask for help:**
@@ -618,3 +624,13 @@ A: Yes! Most features work cross-platform. Some macOS-specific features (notific
 ---
 
 **You've built an incredible system. This overview helps you see how all the pieces fit together. Now go discover what it can do for you!** 🚀
+
+---
+
+## Related Docs
+
+- [Start Here](start-here.md)
+- [Daily Cheat Sheet](daily-cheatsheet.md)
+- [Happy Path](happy-path.md)
+- [AI Quick Reference](ai-quick-reference.md)
+- [Troubleshooting](../TROUBLESHOOTING.md)

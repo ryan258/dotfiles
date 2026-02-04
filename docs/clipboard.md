@@ -2,6 +2,12 @@
 
 macOS ships with `pbcopy` and `pbpaste`, two tiny commands that turn the system clipboard into a first-class shell tool. Combined with pipes and redirects, they let you capture command output, pre-process snippets, and paste them back anywhere without touching the mouse.
 
+## TL;DR
+
+- Use `pbcopy` and `pbpaste` to move data through pipelines.
+- Use `clip save` / `clip load` for reusable snippets.
+- Snippets live in `~/.config/dotfiles-data/clipboard_history.txt`.
+
 ## Essentials
 
 - **Copy anything:** `echo "Hello" | pbcopy` or `pbcopy < path/to/file`
@@ -44,7 +50,7 @@ pbpaste | jq '.summary'                        # inspect a copied JSON blob
 
 ## Saved Snippet Toolbox (`clip`)
 
-The repo ships with a `clip` helper that stores clipboard snippets in `~/.config/dotfiles-data/clipboard_history/`:
+The repo ships with a `clip` helper that stores clipboard snippets in `~/.config/dotfiles-data/clipboard_history.txt`:
 
 ```bash
 clip save standup    # Save the current clipboard as "standup"
@@ -52,8 +58,8 @@ clip list            # Preview the first part of each saved clip
 clip load standup    # Restore the snippet to your clipboard
 ```
 
-- Files are plain text, so you can edit them in your editor.
-- Make a clip executable (`chmod +x ~/.config/dotfiles-data/clipboard_history/my_snippet`) and `clip load my_snippet` will run it before piping the output back to your clipboard—perfect for reusable formatters.
+- Entries are stored as pipe-delimited lines: `YYYY-MM-DD HH:MM:SS|name|content`.
+- Multi-line content is stored with `\n` escapes.
 - `clip peek` gives you a quick look at whatever is currently sitting in the clipboard.
 
 ## Real-World Workflows
@@ -123,5 +129,16 @@ clipfmt prettier --parser markdown
 - `pbcopy` reads until EOF—remember to press `Ctrl+D` when typing interactively.
 - Large blobs (> few MB) can bloat the clipboard; clear with `pbcopy < /dev/null`.
 - Remote shells (e.g., SSH) do not have access to your local clipboard; use tools like `pbcopy` via `ssh -t` or rely on `tmux` copy modes instead.
+
+---
+
+## Related Docs
+
+- [Start Here](start-here.md)
+- [Daily Cheat Sheet](daily-cheatsheet.md)
+- [Best Practices](best-practices.md)
+- [Troubleshooting](../TROUBLESHOOTING.md)
+
+---
 
 Stay in flow by letting the clipboard handle the shuffling—your hands stay on the keyboard, and your brain stays focused.

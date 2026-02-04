@@ -5,8 +5,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
-SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:-$HOME/.config/dotfiles-data/system.log}"
-DISPATCHER_LOG="${DISPATCHER_USAGE_LOG:-$HOME/.config/dotfiles-data/dispatcher_usage.log}"
+SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:-${SYSTEM_LOG:-$HOME/.config/dotfiles-data/system.log}}"
+DISPATCHER_LOG="${DISPATCHER_LOG:-${DISPATCHER_USAGE_LOG:-$HOME/.config/dotfiles-data/dispatcher_usage.log}}"
 
 show_help() {
     cat << 'EOF'

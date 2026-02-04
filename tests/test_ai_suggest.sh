@@ -34,7 +34,7 @@ teardown() {
     echo "MED|TestMed|00:00" > "$TEST_DATA_DIR/.config/dotfiles-data/medications.txt"
 
     cat > "$TEST_DATA_DIR/mock_meds.sh" <<'EOF'
-#!/bin/bash
+#!/usr/bin/env bash
 echo "💊 MEDICATION CHECK:"
 echo "  ⚠️  TestMed (00:00) - NOT TAKEN YET"
 EOF

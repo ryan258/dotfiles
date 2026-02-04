@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e # Exit immediately if a command fails
+#!/usr/bin/env bash
+set -euo pipefail
 
 # dhp-creative.sh - Creative Writer dispatcher (Swarm Edition)
 # Story telling, script writing, creative direction

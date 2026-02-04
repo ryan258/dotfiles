@@ -1,10 +1,24 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # --- dump.sh: Brain dump - multi-paragraph capture via editor ---
 
-JOURNAL_FILE="$HOME/.config/dotfiles-data/journal.txt"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+require_lib "config.sh"
+
+JOURNAL_FILE="$JOURNAL_FILE"
 TEMP_FILE=$(mktemp)
+
+encode_journal_content() {
+    python3 - <<'PY'
+import sys, codecs
+data = sys.stdin.read()
+encoded = codecs.encode(data, "unicode_escape").decode("ascii")
+encoded = encoded.replace("|", r"\|")
+sys.stdout.write(encoded)
+PY
+}
 
 # Pre-populate with header
 cat > "$TEMP_FILE" << HEADER
@@ -21,11 +35,15 @@ content_lines=$(tail -n +4 "$TEMP_FILE" | grep -vc '^$' | tr -d ' ')
 
 if [ "$content_lines" -gt 0 ]; then
     # Append entire dump to journal with timestamp
+    TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
     {
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] BRAIN DUMP:"
+        echo "BRAIN DUMP:"
         tail -n +4 "$TEMP_FILE"
         echo ""
-    } >> "$JOURNAL_FILE"
+    } | encode_journal_content | {
+        read -r ENCODED
+        echo "$TIMESTAMP|$ENCODED" >> "$JOURNAL_FILE"
+    }
     echo "✅ Brain dump captured to journal ($content_lines lines)"
 else
     echo "⚠️  No content written, nothing saved"

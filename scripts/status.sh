@@ -1,9 +1,16 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 # status.sh - Provides a mid-day context recovery dashboard.
 
 # --- Configuration ---
-STATE_DIR="${STATE_DIR:-$HOME/.config/dotfiles-data}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/config.sh"
+fi
+
+DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
+STATE_DIR="${STATE_DIR:-$DATA_DIR}"
 FOCUS_FILE="${FOCUS_FILE:-$STATE_DIR/daily_focus.txt}"
 JOURNAL_FILE="${JOURNAL_FILE:-$STATE_DIR/journal.txt}"
 TODO_FILE="${TODO_FILE:-$STATE_DIR/todo.txt}"
@@ -24,6 +31,15 @@ echo "🧭 WHERE YOU ARE:"
 CURRENT_DIR=$(pwd)
 echo "  • Current directory: $CURRENT_DIR"
 
+# --- Context Snapshots ---
+CONTEXT_ROOT="${CONTEXT_ROOT:-$DATA_DIR/contexts}"
+if [ -d "$CONTEXT_ROOT" ]; then
+    CONTEXT_COUNT=$(find "$CONTEXT_ROOT" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$CONTEXT_COUNT" -gt 0 ]; then
+        echo "  • Context snapshots: $CONTEXT_COUNT (context.sh list)"
+    fi
+fi
+
 # --- Git Information ---
 if [ -d ".git" ] || git rev-parse --git-dir > /dev/null 2>&1; then
     GIT_BRANCH=$(git branch --show-current)
@@ -41,7 +57,12 @@ echo ""
 echo "📝 TODAY'S JOURNAL (since midnight):"
 if [ -f "$JOURNAL_FILE" ]; then
     TODAY=$(date +%Y-%m-%d)
-    grep "\[$TODAY" "$JOURNAL_FILE" | sed 's/^/  /' || echo "  (No entries for today yet)"
+    TODAY_ENTRIES=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {print "  "$0}' "$JOURNAL_FILE")
+    if [ -n "$TODAY_ENTRIES" ]; then
+        echo "$TODAY_ENTRIES"
+    else
+        echo "  (No entries for today yet)"
+    fi
 fi
 
 # --- Active Project ---
@@ -59,7 +80,8 @@ else
 fi
 
 # --- Health Check (interactive only) ---
-HEALTH_SCRIPT="${HEALTH_SCRIPT:-$HOME/dotfiles/scripts/health.sh}"
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
+HEALTH_SCRIPT="${HEALTH_SCRIPT:-$DOTFILES_DIR/scripts/health.sh}"
 if [ -t 0 ] && [ -x "$HEALTH_SCRIPT" ]; then
     echo ""
     echo -n "🏥 Log Energy/Fog levels? [y/N]: "

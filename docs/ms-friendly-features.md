@@ -5,6 +5,12 @@ This system was built with MS challenges in mind: brain fog, fatigue, energy flu
 
 ---
 
+## TL;DR
+
+- Use `startday`, `status`, and `goodevening` for low-effort context recovery.
+- Track energy with `health` and `spoons` to avoid overextending.
+- Use `todo top` and `focus` to keep scope small.
+
 ## 🧠 Brain Fog Protection
 
 ### Minimal Keystrokes
@@ -247,7 +253,7 @@ todo debug 3           # AI analyzes task 3
 todo delegate 5 tech   # Send task 5 to tech AI
 ```
 
-**All 11 AI dispatchers are free-tier.** Use them without guilt.
+**All 12 AI dispatchers are free-tier.** Use them without guilt.
 
 ---
 
@@ -671,10 +677,20 @@ ai-suggest             # What should I do next?
 ```
 
 **Documentation:**
-- `docs/discover.md` - Feature discovery
+- `docs/start-here.md` - Feature Discovery section
 - `docs/daily-cheatsheet.md` - One-page reference
 - `docs/happy-path.md` - Daily walkthrough
 - `TROUBLESHOOTING.md` - Common issues
+
+---
+
+## Related Docs
+
+- [Start Here](start-here.md)
+- [Daily Cheat Sheet](daily-cheatsheet.md)
+- [Happy Path](happy-path.md)
+- [System Overview](system-overview.md)
+- [Troubleshooting](../TROUBLESHOOTING.md)
 
 ---
 

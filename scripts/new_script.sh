@@ -1,7 +1,18 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # --- new_script.sh: New Script Creation Utility ---
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$SCRIPT_DIR/lib/common.sh"
+fi
+
+if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$SCRIPT_DIR/lib/config.sh"
+fi
 
 if [ -z "$1" ]; then
   echo "Usage: new_script.sh <script_name> [--force]"
@@ -12,10 +23,30 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-SCRIPT_NAME="$1"
-SCRIPTS_DIR="$(dirname "$0")"
+SCRIPT_NAME_RAW="$1"
+SCRIPT_NAME=$(sanitize_input "$SCRIPT_NAME_RAW")
+SCRIPT_NAME=${SCRIPT_NAME//$'\n'/ }
+
+if [ -z "$SCRIPT_NAME" ]; then
+  echo "Error: Script name is required." >&2
+  exit 1
+fi
+if [[ "$SCRIPT_NAME" == -* ]]; then
+  echo "Error: Script name cannot start with '-'." >&2
+  exit 1
+fi
+if ! [[ "$SCRIPT_NAME" =~ ^[A-Za-z0-9_-]+$ ]]; then
+  echo "Error: Script name can only contain letters, numbers, '_' and '-'." >&2
+  exit 1
+fi
+
+SCRIPTS_DIR="$SCRIPT_DIR"
+SCRIPTS_DIR=$(validate_path "$SCRIPTS_DIR") || exit 1
 SCRIPT_PATH="$SCRIPTS_DIR/$SCRIPT_NAME.sh"
-ALIASES_FILE="$HOME/dotfiles/zsh/aliases.zsh"
+
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+ALIASES_FILE="$DOTFILES_DIR/zsh/aliases.zsh"
+ALIASES_FILE=$(validate_path "$ALIASES_FILE") || exit 1
 
 # --- Collision Detection ---
 FORCE_MODE=false
@@ -68,7 +99,7 @@ fi
 
 echo "Creating new script at $SCRIPT_PATH..."
 cat << EOF > "$SCRIPT_PATH"
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # --- $SCRIPT_NAME.sh ---

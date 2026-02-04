@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 # dhp-project.sh: Multi-Specialist Project Orchestrator
 # Coordinates multiple AI specialists for complex projects

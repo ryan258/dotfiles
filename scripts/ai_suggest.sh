@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # ai_suggest.sh: Context-Aware Dispatcher Suggestion System
@@ -14,11 +14,16 @@ else
     exit 1
 fi
 
-DATA_DIR="$HOME/.config/dotfiles-data"
-TODO_FILE="$DATA_DIR/todo.txt"
-JOURNAL_FILE="$DATA_DIR/journal.txt"
-HEALTH_FILE="$DATA_DIR/health.txt"
-MEDS_FILE="$DATA_DIR/medications.txt"
+if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/config.sh"
+fi
+
+DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
+TODO_FILE="${TODO_FILE:-$DATA_DIR/todo.txt}"
+JOURNAL_FILE="${JOURNAL_FILE:-$DATA_DIR/journal.txt}"
+HEALTH_FILE="${HEALTH_FILE:-$DATA_DIR/health.txt}"
+MEDS_FILE="${MEDS_FILE:-$DATA_DIR/medications.txt}"
 
 echo "🔍 Analyzing your current context..."
 echo ""
@@ -109,7 +114,7 @@ fi
 if [ -f "$JOURNAL_FILE" ]; then
     # Get last 3 days of journal entries
     THREE_DAYS_AGO=$(date_shift_days -3 "%Y-%m-%d")
-    RECENT_JOURNAL=$(awk -v cutoff="$THREE_DAYS_AGO" '$0 ~ /^\[/ { if ($1 >= "["cutoff) print }' "$JOURNAL_FILE" 2>/dev/null | tail -10)
+    RECENT_JOURNAL=$(awk -F'|' -v cutoff="$THREE_DAYS_AGO" 'NF>=2 { if (substr($1,1,10) >= cutoff) print }' "$JOURNAL_FILE" 2>/dev/null | tail -10)
 
     if [ -n "$RECENT_JOURNAL" ]; then
         CONTEXT+="Recent journal entries: $(echo "$RECENT_JOURNAL" | wc -l | tr -d ' ')\n"

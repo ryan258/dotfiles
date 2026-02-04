@@ -1,6 +1,27 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # process_manager.sh - Find and manage processes on macOS
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/common.sh"
+fi
+
+sanitize_pattern() {
+    local value
+    value=$(sanitize_input "$1")
+    value=${value//$'\n'/ }
+    if [[ -z "$value" ]]; then
+        echo "Error: Process name is required." >&2
+        return 1
+    fi
+    if [[ "$value" == -* ]]; then
+        echo "Error: Process name cannot start with '-'." >&2
+        return 1
+    fi
+    printf '%s' "$value"
+}
 
 case "$1" in
     find)
@@ -8,8 +29,9 @@ case "$1" in
             echo "Usage: $0 find <process_name>"
             exit 1
         fi
-        echo "Searching for processes containing '$2'..."
-        pgrep -fl "$2"
+        pattern=$(sanitize_pattern "$2") || exit 1
+        echo "Searching for processes containing '$pattern'..."
+        pgrep -fl "$pattern"
         ;;
     
     top)
@@ -28,19 +50,20 @@ case "$1" in
             exit 1
         fi
         
-        PIDS=$(pgrep -i "$2")
+        pattern=$(sanitize_pattern "$2") || exit 1
+        PIDS=$(pgrep -i "$pattern")
         if [ -z "$PIDS" ]; then
-            echo "No processes found matching '$2'"
+            echo "No processes found matching '$pattern'"
             exit 1
         fi
         
-        echo "Found processes matching '$2':"
-        pgrep -fl "$2"
+        echo "Found processes matching '$pattern':"
+        pgrep -fl "$pattern"
         echo ""
         IFS= read -r -p "Kill these processes? (y/n): " confirm
         
         if [[ "$confirm" == [yY] ]]; then
-            pkill -i "$2"
+            pkill -i "$pattern"
             echo "Processes killed."
         else
             echo "Operation cancelled."

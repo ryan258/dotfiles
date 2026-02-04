@@ -4,6 +4,12 @@ This document outlines the ideal daily workflow using your context-recovery syst
 
 > **Dispatcher Tip:** Use the single-word aliases (they map directly to the `dhp-*` scripts) for everyday prompts. When you want a unified interface, `dispatch <squad> "brief"` works too.
 
+## TL;DR
+
+- Start your day with `startday`, end with `goodevening`.
+- Use `focus`, `todo top`, and `health check` on low‑energy days.
+- Run `status` anytime you feel lost.
+
 ## Morning Routine (Automatic)
 
 ### What Happens
@@ -151,6 +157,12 @@ g suggest | head -3   # Top smart directory suggestions
 ### Journal Important Moments
 
 Capture context as things happen:
+
+```bash
+context.sh capture "after-standup"
+context.sh list
+context.sh restore after-standup
+```
 
 ### Manage Energy
 
@@ -457,7 +469,7 @@ dhp-chain creative narrative aicopy -- "story idea"
 content --context "guide topic"
 ```
 
-**See full examples:** `cat ~/dotfiles/docs/ai-examples.md`
+**See full examples:** `cat ~/dotfiles/docs/ai-quick-reference.md`
 
 ## Quick Reference Card
 
@@ -615,7 +627,7 @@ All your data is centralized in `~/.config/dotfiles-data/`:
 - `system.log` - Audit trail of all automation activity
 - `dir_bookmarks`, `dir_history`, `dir_usage.log` - Smart navigation bookmarks, history, and suggestion weights
 - `daily_focus.txt` - Stores the focus message surfaced by `startday`
-- `clipboard_history/` - Saved clipboard snippets
+- `clipboard_history.txt` - Saved clipboard snippets (pipe-delimited, `\n`-escaped content)
 - `how-to/` - Your personal how-to wiki articles
 
 **Weekly Reviews:** `weekreview --file` saves Markdown summaries to `~/Documents/Reviews/Weekly/`.
@@ -623,6 +635,16 @@ All your data is centralized in `~/.config/dotfiles-data/`:
 **Automatic Backups:** This directory is automatically backed up daily to `~/Backups/dotfiles_data/` by `goodevening`. Your data is safe.
 
 **View Activity:** Run `systemlog` anytime to see what automated tasks have run (backups, blog status refreshes, task cleanups, etc.).
+
+---
+
+## Related Docs
+
+- [Start Here](start-here.md)
+- [Daily Cheat Sheet](daily-cheatsheet.md)
+- [System Overview](system-overview.md)
+- [AI Quick Reference](ai-quick-reference.md)
+- [Troubleshooting](../TROUBLESHOOTING.md)
 
 ---
 

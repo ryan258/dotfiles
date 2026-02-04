@@ -1,10 +1,24 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # --- focus.sh: Set or display the focus for the day ---
 
-FOCUS_FILE="$HOME/.config/dotfiles-data/daily_focus.txt"
-HISTORY_FILE="$HOME/.config/dotfiles-data/focus_history.log"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$SCRIPT_DIR/lib/common.sh"
+fi
+
+DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
+FOCUS_FILE="${FOCUS_FILE:-$DATA_DIR/daily_focus.txt}"
+HISTORY_FILE="${FOCUS_HISTORY_FILE:-$DATA_DIR/focus_history.log}"
+
+sanitize_focus_text() {
+  local value
+  value=$(sanitize_input "$1")
+  value=${value//$'\n'/ }
+  printf '%s' "$value"
+}
 
 show_usage() {
   echo "Usage: focus <command> [args]"
@@ -39,17 +53,17 @@ case "${1:-show}" in
         today=$(date +%Y-%m-%d)
         mkdir -p "$(dirname "$HISTORY_FILE")"
         touch "$HISTORY_FILE"
-        
-        # Sanitize and log as 'replaced' or just log it
-        # We'll treat it as a completed/past focus for the day
-        focus_clean=$(echo "$old_focus" | tr '|' '-')
+
+        # Sanitize and log as 'replaced'
+        focus_clean=$(sanitize_focus_text "$old_focus")
         echo "$today|$focus_clean (Replaced)" >> "$HISTORY_FILE"
     fi
 
     # 2. Set new focus
     mkdir -p "$(dirname "$FOCUS_FILE")"
-    echo "$*" > "$FOCUS_FILE"
-    echo "🎯 Focus set: $*"
+    focus_text=$(sanitize_focus_text "$*")
+    echo "$focus_text" > "$FOCUS_FILE"
+    echo "🎯 Focus set: $focus_text"
     ;;
   done)
     if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
@@ -59,8 +73,7 @@ case "${1:-show}" in
       mkdir -p "$(dirname "$HISTORY_FILE")"
       touch "$HISTORY_FILE"
       
-      # Sanitize pipes in focus text before logging to prevent corruption
-      focus_clean=$(echo "$focus_text" | tr '|' '-')
+      focus_clean=$(sanitize_focus_text "$focus_text")
       
       echo "$today|$focus_clean" >> "$HISTORY_FILE"
       rm -f "$FOCUS_FILE"
@@ -90,7 +103,8 @@ case "${1:-show}" in
     # But strictly speaking, the case statement handles $1. 
     # If $1 is not one of the above keywords, treat it as the focus text (implicit set)
     mkdir -p "$(dirname "$FOCUS_FILE")"
-    echo "$*" > "$FOCUS_FILE"
-    echo "🎯 Focus set: $*"
+    focus_text=$(sanitize_focus_text "$*")
+    echo "$focus_text" > "$FOCUS_FILE"
+    echo "🎯 Focus set: $focus_text"
     ;;
 esac

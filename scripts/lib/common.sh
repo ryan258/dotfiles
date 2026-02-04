@@ -24,6 +24,12 @@ elif [[ -f "$SCRIPT_DIR/../lib/file_ops.sh" ]]; then
     source "$SCRIPT_DIR/../lib/file_ops.sh"
 fi
 
+if [[ -f "$SCRIPT_DIR/lib/config.sh" ]]; then
+    source "$SCRIPT_DIR/lib/config.sh"
+elif [[ -f "$SCRIPT_DIR/../lib/config.sh" ]]; then
+    source "$SCRIPT_DIR/../lib/config.sh"
+fi
+
 #=============================================================================
 # Exit Code Constants
 #=============================================================================
@@ -90,7 +96,8 @@ validate_file_exists() {
 # Usage: get_todo_line 5
 get_todo_line() {
     local task_num="$1"
-    local todo_file="${TODO_FILE:-$HOME/.config/dotfiles-data/todo.txt}"
+    local data_dir="${DATA_DIR:-$HOME/.config/dotfiles-data}"
+    local todo_file="${TODO_FILE:-$data_dir/todo.txt}"
 
     validate_numeric "$task_num" "task number" || return 1
     validate_file_exists "$todo_file" "todo file" || return 1
@@ -121,7 +128,8 @@ get_todo_priority() {
 # Count total tasks
 # Usage: count_todos
 count_todos() {
-    local todo_file="${TODO_FILE:-$HOME/.config/dotfiles-data/todo.txt}"
+    local data_dir="${DATA_DIR:-$HOME/.config/dotfiles-data}"
+    local todo_file="${TODO_FILE:-$data_dir/todo.txt}"
 
     if [[ -f "$todo_file" ]]; then
         wc -l < "$todo_file" | tr -d ' '
@@ -134,7 +142,7 @@ count_todos() {
 # Logging
 #=============================================================================
 
-SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:-$HOME/.config/dotfiles-data/system.log}"
+SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:-${SYSTEM_LOG:-$HOME/.config/dotfiles-data/system.log}}"
 
 # Log a message with timestamp
 # Usage: log_message "info" "Script started"
@@ -157,6 +165,11 @@ log_error() { log_message "ERROR" "$1" "${2:-}"; }
 # Error Handling
 #=============================================================================
 
+# Check if script is being sourced or executed
+is_sourced() {
+    [[ "${BASH_SOURCE[0]}" != "${0}" ]]
+}
+
 # Standard error exit with logging
 # Usage: die "Error message" [exit_code]
 die() {
@@ -165,6 +178,10 @@ die() {
 
     log_error "$message"
     echo "Error: $message" >&2
+    
+    if is_sourced; then
+        return "$exit_code"
+    fi
     exit "$exit_code"
 }
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # gcal.sh - Pure Bash Google Calendar Client
@@ -6,10 +6,28 @@ set -euo pipefail
 # Dependencies: curl, jq
 
 # --- Configuration ---
-DATA_DIR="$HOME/.config/dotfiles-data"
-CREDS_FILE="$DATA_DIR/google_creds.json"
-TOKEN_FILE="$DATA_DIR/google_token_cache.json"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/common.sh"
+fi
+
+if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/config.sh"
+fi
+
+DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
+CREDS_FILE="${GCAL_CREDS_FILE:-$DATA_DIR/google_creds.json}"
+TOKEN_FILE="${GCAL_TOKEN_FILE:-$DATA_DIR/google_token_cache.json}"
 mkdir -p "$DATA_DIR"
+
+sanitize_line() {
+    local value
+    value=$(sanitize_input "$1")
+    value=${value//$'\n'/ }
+    printf '%s' "$value"
+}
 
 # Prevent sourcing
 if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
@@ -62,6 +80,8 @@ cmd_auth() {
     echo ""
     read -rp "Enter Client ID: " CLIENT_ID
     read -rp "Enter Client Secret: " CLIENT_SECRET
+    CLIENT_ID=$(sanitize_line "$CLIENT_ID")
+    CLIENT_SECRET=$(sanitize_line "$CLIENT_SECRET")
     
     # 1. Request Device Code
     RESPONSE=$(curl -s -d "client_id=$CLIENT_ID" \
@@ -276,7 +296,7 @@ case "${1:-agenda}" in
     add)
         check_deps
         shift
-        EVENT_TEXT="${*:-}"
+        EVENT_TEXT=$(sanitize_line "${*:-}")
         if [ -z "$EVENT_TEXT" ]; then
             echo "Usage: calendar add \"Meeting with Bob tomorrow at 2pm\""
             exit 1

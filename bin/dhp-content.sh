@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e # Exit immediately if a command fails
+#!/usr/bin/env bash
+set -euo pipefail
 
 # Source shared libraries
 source "$(dirname "$0")/dhp-shared.sh"

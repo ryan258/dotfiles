@@ -1,6 +1,19 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # text_processor.sh - Text file processing utilities
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/common.sh"
+fi
+
+sanitize_arg() {
+    local value
+    value=$(sanitize_input "$1")
+    value=${value//$'\n'/ }
+    printf '%s' "$value"
+}
 
 case "$1" in
     count)
@@ -9,7 +22,8 @@ case "$1" in
             exit 1
         fi
         
-        FILE="$2"
+        FILE=$(sanitize_arg "$2")
+        FILE=$(validate_path "$FILE") || exit 1
         if [ ! -f "$FILE" ]; then
             echo "File not found: $FILE"
             exit 1
@@ -28,8 +42,9 @@ case "$1" in
             exit 1
         fi
         
-        PATTERN="$2"
-        FILE="$3"
+        PATTERN=$(sanitize_arg "$2")
+        FILE=$(sanitize_arg "$3")
+        FILE=$(validate_path "$FILE") || exit 1
 
         if [ ! -f "$FILE" ]; then
             echo "File not found: $FILE"
@@ -47,9 +62,10 @@ case "$1" in
             exit 1
         fi
         
-        OLD_TEXT="$2"
-        NEW_TEXT="$3"
-        FILE="$4"
+        OLD_TEXT=$(sanitize_arg "$2")
+        NEW_TEXT=$(sanitize_arg "$3")
+        FILE=$(sanitize_arg "$4")
+        FILE=$(validate_path "$FILE") || exit 1
         
         if [ ! -f "$FILE" ]; then
             echo "File not found: $FILE"
@@ -88,7 +104,8 @@ PY
             exit 1
         fi
         
-        FILE="$2"
+        FILE=$(sanitize_arg "$2")
+        FILE=$(validate_path "$FILE") || exit 1
         if [ ! -f "$FILE" ]; then
             echo "File not found: $FILE"
             exit 1

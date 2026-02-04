@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 # startday.sh - Enhanced morning routine
 
@@ -41,6 +41,14 @@ fi
 
 # Persist the start date of this session
 date +%Y-%m-%d > "$CURRENT_DAY_FILE"
+
+CONTEXT_CAPTURE_ON_START="${CONTEXT_CAPTURE_ON_START:-false}"
+if [ "$CONTEXT_CAPTURE_ON_START" = "true" ]; then
+    CONTEXT_SCRIPT="$SCRIPT_DIR/context.sh"
+    if [ -x "$CONTEXT_SCRIPT" ]; then
+        "$CONTEXT_SCRIPT" capture "startday-$(date +%Y%m%d-%H%M)" >/dev/null 2>&1 || true
+    fi
+fi
 
 SPOON_MANAGER="$SCRIPT_DIR/spoon_manager.sh"
 

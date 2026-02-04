@@ -100,7 +100,7 @@ fi
 echo ""
 echo "✅ COMPLETED TODAY:"
 if [ -f "$TODO_DONE_FILE" ]; then
-    COMPLETED_TASKS=$(grep "\[$TODAY" "$TODO_DONE_FILE" || true)
+    COMPLETED_TASKS=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {print}' "$TODO_DONE_FILE")
     if [ -n "$COMPLETED_TASKS" ]; then
         echo "$COMPLETED_TASKS" | sed 's/^/  • /'
     else
@@ -113,7 +113,7 @@ echo ""
 echo "📝 TODAY'S JOURNAL:"
 if [ -f "$JOURNAL_FILE" ]; then
     # TODAY is valid
-    JOURNAL_ENTRIES=$(grep "\[$TODAY" "$JOURNAL_FILE" || true)
+    JOURNAL_ENTRIES=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {print}' "$JOURNAL_FILE")
     if [ -n "$JOURNAL_ENTRIES" ]; then
         echo "$JOURNAL_ENTRIES" | sed 's/^/  • /'
     else
@@ -124,24 +124,14 @@ fi
 # 3. Time Tracking Summary
 echo ""
 echo "⏱️  TIME TRACKED TODAY:"
-# Correctly define SCRIPT_DIR if not already available or redeclare to be safe
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
-TIME_TRACKER="${SCRIPT_DIR}/time_tracker.sh"
-if [ -x "$TIME_TRACKER" ]; then
-    # We use a subshell or call a function to get today's report
-    # Since report command in wrapper calls generate_time_report which is a stub...
-    # We should actually implement a simple daily summary here or in the library.
-    # For now, let's just list the entries for today from the log file manually or via a simple grep
-    # TODAY is valid
-    TIME_LOG="${TIME_LOG:-$STATE_DIR/time_tracking.txt}"
+TIME_TRACKING_LIB="$SCRIPT_DIR/lib/time_tracking.sh"
+if [ -f "$TIME_TRACKING_LIB" ]; then
+    # shellcheck disable=SC1090
+    source "$TIME_TRACKING_LIB"
     if [ -f "$TIME_LOG" ]; then
-        TODAY_ENTRIES=$(grep "|$TODAY" "$TIME_LOG" || true)
-        if [ -n "$TODAY_ENTRIES" ]; then
-             echo "  (Time reporting details coming in Phase 1)"
-             echo "$TODAY_ENTRIES" | head -n 5 | sed 's/^/  • /' 
-             if [ $(echo "$TODAY_ENTRIES" | wc -l) -gt 5 ]; then
-                echo "  • ... and more"
-             fi
+        total_seconds=$(get_total_time_for_date "$TODAY")
+        if [ "$total_seconds" -gt 0 ]; then
+            echo "  Total: $(format_duration "$total_seconds")"
         else
             echo "  (No time tracked today)"
         fi
@@ -149,7 +139,7 @@ if [ -x "$TIME_TRACKER" ]; then
         echo "  (No time log found)"
     fi
 else
-    echo "  (Time tracker not found)"
+    echo "  (Time tracking library not found)"
 fi
 
 # --- ACTIVE PROJECTS (from GitHub) ---
@@ -196,8 +186,8 @@ fi
 # --- Gamify Progress ---
 echo ""
 echo "🌟 TODAY'S WINS:"
-TASKS_COMPLETED=$(grep -c "\[$TODAY" "$TODO_DONE_FILE" || true)
-JOURNAL_ENTRIES=$(grep -c "\[$TODAY" "$JOURNAL_FILE" || true)
+TASKS_COMPLETED=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {count++} END {print count+0}' "$TODO_DONE_FILE")
+JOURNAL_ENTRIES=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {count++} END {print count+0}' "$JOURNAL_FILE")
 
 if [ "$TASKS_COMPLETED" -gt 0 ]; then
     echo "  🎉 Win: You completed $TASKS_COMPLETED task(s) today. Progress is progress."
@@ -327,16 +317,17 @@ echo ""
 echo "🧹 Tidying up old completed tasks..."
 if [ -f "$TODO_DONE_FILE" ]; then
     CUTOFF_DATE_STR=$(date_shift_days -7 "%Y-%m-%d")
-    tasks_to_remove=$(awk -v cutoff="$CUTOFF_DATE_STR" '$0 ~ /^\[/ { date_str = substr($1, 2, 10); if (date_str < cutoff) { print } }' "$TODO_DONE_FILE" | wc -l | tr -d ' ')
+    tasks_to_remove=$(awk -F'|' -v cutoff="$CUTOFF_DATE_STR" 'NF>=2 { date_str = substr($1, 1, 10); if (date_str < cutoff) { count++ } } END { print count+0 }' "$TODO_DONE_FILE")
     echo "$(date): goodevening.sh - Cleaned $tasks_to_remove old tasks." >> "$SYSTEM_LOG_FILE"
-    awk -v cutoff="$CUTOFF_DATE_STR" '
-        $0 ~ /^\[/ {
-            date_str = substr($1, 2, 10)
+    awk -F'|' -v cutoff="$CUTOFF_DATE_STR" '
+        NF >= 2 {
+            date_str = substr($1, 1, 10)
             if (date_str >= cutoff) {
                 print
             }
+            next
         }
-        $0 !~ /^\[/ { print } # print lines without date
+        { print }
     ' "$TODO_DONE_FILE" > "${TODO_DONE_FILE}.tmp" && mv "${TODO_DONE_FILE}.tmp" "$TODO_DONE_FILE"
     chmod 600 "$TODO_DONE_FILE"
     echo "  (Old completed tasks removed)"
@@ -364,8 +355,8 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
 
     # Gather today's data
     # TODAY is already set globally (handling overrides)
-    TODAY_TASKS=$(grep "\[$TODAY" "$TODO_DONE_FILE" 2>/dev/null || echo "")
-    TODAY_JOURNAL=$(grep "\[$TODAY" "$JOURNAL_FILE" 2>/dev/null || echo "")
+    TODAY_TASKS=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {print}' "$TODO_DONE_FILE" 2>/dev/null || echo "")
+    TODAY_JOURNAL=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {print}' "$JOURNAL_FILE" 2>/dev/null || echo "")
     FOCUS_CONTEXT=""
     if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
         FOCUS_CONTEXT=$(cat "$FOCUS_FILE")

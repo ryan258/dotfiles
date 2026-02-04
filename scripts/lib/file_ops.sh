@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 # Atomic file operations to prevent data loss
+# NOTE: SOURCED file. Do NOT use set -euo pipefail.
+
+if [[ -n "${_FILE_OPS_LOADED:-}" ]]; then
+    return 0
+fi
+readonly _FILE_OPS_LOADED=true
 
 # Atomic write: writes to temp file, then moves atomically
 # Usage: atomic_write "content" "/path/to/file"

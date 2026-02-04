@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 # dhp-chain.sh: Dispatcher Chaining Helper
 # Enables easy sequential processing through multiple AI specialists

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # tests/helpers/mock_ai.sh
 # Mock AI dispatcher for BATS tests
@@ -17,7 +17,7 @@ mock_ai_response() {
     
     # We create a temporary script that acts as the AI dispatcher
     cat <<'EOF' > "$TEST_DIR/$script_name"
-#!/bin/bash
+#!/usr/bin/env bash
 printf '%s\n' "$MOCK_AI_RESPONSE"
 EOF
     chmod +x "$TEST_DIR/$script_name"

@@ -1,6 +1,12 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # remind_me.sh - Simple reminder system using macOS notifications
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/common.sh"
+fi
 
 if [ $# -lt 2 ]; then
     echo "Usage: $0 <time> <reminder_message>"
@@ -11,9 +17,11 @@ if [ $# -lt 2 ]; then
     exit 1
 fi
 
-TIME="$1"
+TIME=$(sanitize_input "$1")
+TIME=${TIME//$'\n'/ }
 shift
-MESSAGE="$*"
+MESSAGE=$(sanitize_input "$*")
+MESSAGE=${MESSAGE//$'\n'/ }
 
 # Escape notification strings for AppleScript
 escape_applescript() {

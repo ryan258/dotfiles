@@ -1,6 +1,24 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/blog_lifecycle.sh
+# NOTE: SOURCED file. Do NOT use set -euo pipefail.
+
+if [[ -n "${_BLOG_LIFECYCLE_LOADED:-}" ]]; then
+    return 0
+fi
+readonly _BLOG_LIFECYCLE_LOADED=true
 # Lifecycle management tools (Idea Sync, Versioning, Metrics, Social) for blog.sh
+
+BLOG_LIFECYCLE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$BLOG_LIFECYCLE_DIR/common.sh" ]]; then
+    source "$BLOG_LIFECYCLE_DIR/common.sh"
+fi
+
+if [[ -f "$BLOG_LIFECYCLE_DIR/config.sh" ]]; then
+    source "$BLOG_LIFECYCLE_DIR/config.sh"
+fi
+
+DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
+JOURNAL_FILE="${JOURNAL_FILE:-$DATA_DIR/journal.txt}"
 
 # --- Subcommand: ideas ---
 function blog_ideas() {
@@ -22,21 +40,23 @@ function blog_ideas() {
                 echo "Usage: blog ideas add \"Your idea here\"" >&2
                 return 1
             fi
+            idea=$(sanitize_input "$idea")
+            idea=${idea//$'\n'/ }
             echo "- [ ] $idea" >> "$BLOG_DIR/content-backlog.md"
             echo "✅ Added to backlog: $idea"
             ;;
         sync)
             echo "🔄 Syncing ideas from journal..."
             # Syncing from journal.txt or journal directory
-            local journal_source="$HOME/.config/dotfiles-data/journal.txt"
+            local journal_source="$JOURNAL_FILE"
             local recent_ideas=""
             
             if [ -f "$journal_source" ]; then
                 # Search in the single journal file
                 recent_ideas=$(grep -iE "^Idea:|#idea" "$journal_source" | tail -n 20 || true)
-            elif [ -d "$HOME/.config/dotfiles-data/journal" ]; then
+            elif [ -d "$DATA_DIR/journal" ]; then
                  # Fallback to directory search if it exists
-                 recent_ideas=$(find "$HOME/.config/dotfiles-data/journal" -type f -mtime -7 -print0 | xargs -0 grep -h -iE "^Idea:|#idea" || true)
+                 recent_ideas=$(find "$DATA_DIR/journal" -type f -mtime -7 -print0 | xargs -0 grep -h -iE "^Idea:|#idea" || true)
             else
                 echo "Warning: Journal source not found ($journal_source or journal directory)." >&2
             fi

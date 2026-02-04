@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # file_organizer.sh - Organize files by type, date, or size
 set -euo pipefail
 

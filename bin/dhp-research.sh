@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 # dhp-research.sh - Academic Researcher dispatcher (Swarm Edition)
 # Research organization, source summarization, knowledge synthesis

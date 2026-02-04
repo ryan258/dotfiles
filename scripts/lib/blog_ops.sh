@@ -1,5 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/blog_ops.sh
+# NOTE: SOURCED file. Do NOT use set -euo pipefail.
+
+if [[ -n "${_BLOG_OPS_LOADED:-}" ]]; then
+    return 0
+fi
+readonly _BLOG_OPS_LOADED=true
 
 # --- Subcommand: status ---
 function status() {

@@ -1,10 +1,17 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # tidy_downloads.sh - macOS version with proper directory handling
 set -euo pipefail
 
 DRY_RUN=false
 FORCE_MODE=false
-IGNORE_FILE="$HOME/.config/dotfiles-data/tidy_ignore.txt"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$SCRIPT_DIR/lib/config.sh"
+fi
+
+DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
+IGNORE_FILE="${IGNORE_FILE:-${TIDY_IGNORE_FILE:-$DATA_DIR/tidy_ignore.txt}}"
 
 # Parse arguments
 for arg in "$@"; do

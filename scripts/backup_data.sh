@@ -1,13 +1,21 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+
 # Source shared utilities
-if [ -f "$HOME/dotfiles/bin/dhp-utils.sh" ]; then
+if [ -f "$DOTFILES_DIR/bin/dhp-utils.sh" ]; then
     # shellcheck disable=SC1090
-    source "$HOME/dotfiles/bin/dhp-utils.sh"
+    source "$DOTFILES_DIR/bin/dhp-utils.sh"
 else
     echo "Error: Shared utility library dhp-utils.sh not found." >&2
     exit 1
+fi
+
+if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/config.sh"
 fi
 
 # Validate dependencies
@@ -18,9 +26,13 @@ fi
 # Configuration
 BACKUP_DIR_DEFAULT="$HOME/Backups/dotfiles_data"
 BACKUP_DIR="${DOTFILES_BACKUP_DIR:-$BACKUP_DIR_DEFAULT}"
-SOURCE_DIR="$HOME/.config/dotfiles-data"
+SOURCE_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
 GDRIVE_REMOTE="gdrive"
 GDRIVE_FOLDER="Backups/dotfiles_data"
+
+# Validate paths
+SOURCE_DIR=$(validate_path "$SOURCE_DIR") || exit 1
+BACKUP_DIR=$(validate_path "$BACKUP_DIR") || exit 1
 
 # Pre-flight checks
 if [ ! -d "$SOURCE_DIR" ] || [ ! -r "$SOURCE_DIR" ]; then
@@ -60,4 +72,3 @@ if command -v rclone >/dev/null 2>&1; then
 else
     echo "ℹ️ rclone not installed. Skipping offsite backup."
 fi
-

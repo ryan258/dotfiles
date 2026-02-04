@@ -1,9 +1,12 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
 # scripts/lib/spoon_budget.sh
 # Shared library for Spoon Theory budget tracking
+# NOTE: SOURCED file. Do NOT use set -euo pipefail.
 
-set -euo pipefail
+if [[ -n "${_SPOON_BUDGET_LOADED:-}" ]]; then
+    return 0
+fi
+readonly _SPOON_BUDGET_LOADED=true
 
 # Source common utilities
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -52,6 +55,7 @@ spend_spoons() {
     local raw_activity="${2:-General Activity}"
     local activity
     activity=$(sanitize_input "$raw_activity" | head -c 100)
+    activity=${activity//$'\n'/\\n}
     local today=$(date +%Y-%m-%d)
     local time=$(date +%H:%M)
     

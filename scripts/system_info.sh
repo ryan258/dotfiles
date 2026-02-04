@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # system_info.sh - Quick system overview for macOS
 set -euo pipefail
 

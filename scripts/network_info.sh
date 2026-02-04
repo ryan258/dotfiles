@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # network_info.sh - Network diagnostics for macOS
 set -euo pipefail
 

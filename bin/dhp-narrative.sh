@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 # dhp-narrative.sh - Narrative Designer dispatcher (Swarm Edition)
 # Story structure, plot development, character arcs

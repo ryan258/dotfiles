@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # scripts/time_tracker.sh
 # CLI Wrapper for time tracking functionality
@@ -18,7 +18,9 @@ show_help() {
     echo "  start <task_id> [description]  Start timer for a task"
     echo "  stop [task_id]                 Stop the active timer"
     echo "  status                         Show currently active timer"
-    echo "  report                         Show time usage"
+    echo "  report [start end]             Show time usage (YYYY-MM-DD range)"
+    echo "  report --days <n>              Show last N days (default 7)"
+    echo "  report --summary               Show total time only"
     echo "  check <task_id>                Get total time for a task"
 }
 
@@ -53,7 +55,8 @@ case "${1:-}" in
         echo "Total time for task $2: $(format_duration "$time")"
         ;;
     report)
-        generate_time_report
+        shift || true
+        generate_time_report "$@"
         ;;
     *)
         show_help

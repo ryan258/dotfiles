@@ -1,10 +1,30 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # --- howto.sh: A personal, searchable how-to wiki ---
 
-HOWTO_DIR="$HOME/.config/dotfiles-data/how-to"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$SCRIPT_DIR/lib/common.sh"
+fi
+
+DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
+HOWTO_DIR="${HOWTO_DIR:-$DATA_DIR/how-to}"
+HOWTO_DIR=$(validate_path "$HOWTO_DIR") || exit 1
 mkdir -p "$HOWTO_DIR"
+
+validate_howto_name() {
+  local name="$1"
+  if [[ -z "$name" ]]; then
+    echo "Error: Name is required." >&2
+    exit 1
+  fi
+  if ! [[ "$name" =~ ^[A-Za-z0-9._-]+$ ]]; then
+    echo "Error: Name can only contain letters, numbers, '.', '_' and '-'." >&2
+    exit 1
+  fi
+}
 
 case "${1:-list}" in
   add)
@@ -16,7 +36,16 @@ case "${1:-list}" in
         echo "Error: EDITOR environment variable is not set."
         exit 1
     fi
-    "$EDITOR" "$HOWTO_DIR/$2.txt"
+    name=$(sanitize_input "$2")
+    name=${name//$'\n'/ }
+    validate_howto_name "$name"
+    file_path="$HOWTO_DIR/$name.txt"
+    file_path=$(validate_path "$file_path") || exit 1
+    if [[ "$file_path" != "$HOWTO_DIR/"* ]]; then
+      echo "Error: Invalid file path." >&2
+      exit 1
+    fi
+    "$EDITOR" "$file_path"
     ;;
 
   search)
@@ -24,7 +53,9 @@ case "${1:-list}" in
       echo "Usage: howto search <term>"
       exit 1
     fi
-    grep -i -r "$2" "$HOWTO_DIR"
+    term=$(sanitize_input "$2")
+    term=${term//$'\n'/ }
+    grep -i -r -- "$term" "$HOWTO_DIR"
     ;;
 
   list)
@@ -39,8 +70,17 @@ case "${1:-list}" in
     ;;
 
   *)
-    if [ -f "$HOWTO_DIR/$1.txt" ]; then
-      cat "$HOWTO_DIR/$1.txt"
+    name=$(sanitize_input "$1")
+    name=${name//$'\n'/ }
+    validate_howto_name "$name"
+    file_path="$HOWTO_DIR/$name.txt"
+    file_path=$(validate_path "$file_path") || exit 1
+    if [[ "$file_path" != "$HOWTO_DIR/"* ]]; then
+      echo "Error: Invalid file path." >&2
+      exit 1
+    fi
+    if [ -f "$file_path" ]; then
+      cat "$file_path"
     else
       echo "Error: How-to '$1' not found."
       exit 1

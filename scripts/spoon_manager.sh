@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # scripts/spoon_manager.sh
 # CLI Wrapper for Spoon Theory budget tracking

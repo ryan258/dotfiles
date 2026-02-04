@@ -1,8 +1,15 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # gh-projects.sh - Find and recall forgotten projects from GitHub.
 set -euo pipefail
 
-HELPER_SCRIPT="$HOME/dotfiles/scripts/github_helper.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/common.sh"
+fi
+
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+HELPER_SCRIPT="$DOTFILES_DIR/scripts/github_helper.sh"
 
 if [ ! -x "$HELPER_SCRIPT" ]; then
     echo "Error: GitHub helper script not found or not executable." >&2
@@ -42,7 +49,12 @@ function recall() {
         return
     fi
     
-    PROJECT_NAME="$1"
+    PROJECT_NAME=$(sanitize_input "$1")
+    PROJECT_NAME=${PROJECT_NAME//$'\n'/ }
+    if ! [[ "$PROJECT_NAME" =~ ^[A-Za-z0-9._-]+$ ]]; then
+        echo "Error: Project name contains invalid characters." >&2
+        return 1
+    fi
     
     echo "📦 Project: $PROJECT_NAME"
     

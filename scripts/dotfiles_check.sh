@@ -1,12 +1,17 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # --- dotfiles_check.sh: System Validation Script ---
 
-SCRIPTS_DIR="$(dirname "$0")"
-PROJECT_ROOT="$(cd "$SCRIPTS_DIR/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 BIN_DIR="$PROJECT_ROOT/bin"
 STAFF_DIR="$PROJECT_ROOT/ai-staff-hq/staff"
+
+if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/config.sh"
+fi
 
 echo "🩺 Running Dotfiles System Check..."
 
@@ -14,8 +19,8 @@ ERROR_COUNT=0
 WARNING_COUNT=0
 
 # 1. Check for executable scripts in scripts/
-echo "[1/4] Checking scripts permissions..."
-if [ -d "$SCRIPTS_DIR" ]; then
+echo "[1/8] Checking scripts permissions..."
+if [ -d "$SCRIPT_DIR" ]; then
     while IFS= read -r script_path; do
         script_name=$(basename "$script_path")
         # skip this script itself and any hidden files
@@ -27,15 +32,15 @@ if [ -d "$SCRIPTS_DIR" ]; then
             echo "  ❌ ERROR: Script is not executable: $script_name"
             ERROR_COUNT=$((ERROR_COUNT + 1))
         fi
-    done < <(find "$SCRIPTS_DIR" -maxdepth 1 -name "*.sh")
+    done < <(find "$SCRIPT_DIR" -maxdepth 1 -name "*.sh")
 else
-     echo "  ❌ ERROR: Scripts directory not found at $SCRIPTS_DIR"
+     echo "  ❌ ERROR: Scripts directory not found at $SCRIPT_DIR"
      ERROR_COUNT=$((ERROR_COUNT + 1))
 fi
 
 # 2. Check for data directory
-echo "[2/4] Checking for data directory..."
-DATA_DIR="$HOME/.config/dotfiles-data"
+echo "[2/8] Checking for data directory..."
+DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
 if [ ! -d "$DATA_DIR" ]; then
   echo "  ❌ ERROR: Data directory not found at $DATA_DIR"
   ERROR_COUNT=$((ERROR_COUNT + 1))
@@ -43,7 +48,7 @@ fi
 
 # 3. Check for binary dependencies
 DEPENDENCIES=("jq" "curl" "gawk" "osascript" "rclone")
-echo "[3/4] Checking for binary dependencies in PATH..."
+echo "[3/8] Checking for binary dependencies in PATH..."
 for cmd in "${DEPENDENCIES[@]}"; do
   if ! command -v "$cmd" >/dev/null 2>&1; then
     echo "  ❌ ERROR: Command not found in PATH: $cmd"
@@ -52,18 +57,19 @@ for cmd in "${DEPENDENCIES[@]}"; do
 done
 
 # 4. Check for GitHub token
-echo "[4/4] Checking for GitHub token..."
-GITHUB_TOKEN_FILE="$HOME/.github_token"
-if [ ! -f "$GITHUB_TOKEN_FILE" ]; then
-  echo "  ⚠️  WARNING: GitHub token not found at $GITHUB_TOKEN_FILE. Some features like project listing will fail."
+echo "[4/8] Checking for GitHub token..."
+GITHUB_TOKEN_FILE="${GITHUB_TOKEN_FILE:-$DATA_DIR/github_token}"
+LEGACY_GITHUB_TOKEN_FILE="$HOME/.github_token"
+if [ ! -f "$GITHUB_TOKEN_FILE" ] && [ ! -f "$LEGACY_GITHUB_TOKEN_FILE" ]; then
+  echo "  ⚠️  WARNING: GitHub token not found at $GITHUB_TOKEN_FILE (or legacy $LEGACY_GITHUB_TOKEN_FILE). Some features like project listing will fail."
   WARNING_COUNT=$((WARNING_COUNT + 1))
 fi
 
 # 5. Prune dead bookmarks
-echo "[5/7] Pruning dead directory bookmarks..."
-if [ -f "$SCRIPTS_DIR/g.sh" ]; then
+echo "[5/8] Pruning dead directory bookmarks..."
+if [ -f "$SCRIPT_DIR/g.sh" ]; then
   (
-    source "$SCRIPTS_DIR/g.sh"
+    source "$SCRIPT_DIR/g.sh"
     if command -v prune_bookmarks >/dev/null 2>&1; then
         prune_bookmarks --auto >/dev/null 2>&1 || true
     elif command -v g >/dev/null 2>&1; then
@@ -73,7 +79,7 @@ if [ -f "$SCRIPTS_DIR/g.sh" ]; then
 fi
 
 # 6. Check AI Staff HQ Dispatchers (Dynamic Discovery)
-echo "[6/7] Checking AI Staff HQ dispatcher system..."
+echo "[6/8] Checking AI Staff HQ dispatcher system..."
 if [ ! -d "$STAFF_DIR" ]; then
     echo "  ⚠️  WARNING: Staff directory not found at $STAFF_DIR. Skipping dispatcher check."
     WARNING_COUNT=$((WARNING_COUNT + 1))
@@ -101,10 +107,46 @@ else
 fi
 
 
-# 7. Validate .env configuration using validate_env.sh
-echo "[7/7] Validating .env configuration..."
-if [ -x "$SCRIPTS_DIR/validate_env.sh" ]; then
-    if ! "$SCRIPTS_DIR/validate_env.sh" >/dev/null 2>&1; then
+# 7. Check documentation status
+echo "[7/8] Checking documentation status..."
+DOCS_DIR="$PROJECT_ROOT/docs"
+DOCS_INDEX="$DOCS_DIR/README.md"
+ARCHIVE_INDEX="$DOCS_DIR/archive/ARCHIVE.md"
+CANONICAL_DOCS=(
+  "docs/README.md"
+  "docs/start-here.md"
+  "docs/daily-cheatsheet.md"
+  "docs/happy-path.md"
+  "docs/system-overview.md"
+  "docs/best-practices.md"
+  "docs/ai-quick-reference.md"
+  "docs/clipboard.md"
+  "docs/ms-friendly-features.md"
+  "docs/ROADMAP-ENERGY.md"
+  "docs/products/health_brief.md"
+)
+
+if [ ! -f "$DOCS_INDEX" ]; then
+  echo "  ❌ ERROR: Docs index missing at $DOCS_INDEX"
+  ERROR_COUNT=$((ERROR_COUNT + 1))
+else
+  for doc_path in "${CANONICAL_DOCS[@]}"; do
+    if [ ! -f "$PROJECT_ROOT/$doc_path" ]; then
+      echo "  ⚠️  WARNING: Missing doc: $doc_path"
+      WARNING_COUNT=$((WARNING_COUNT + 1))
+    fi
+  done
+fi
+
+if [ -d "$DOCS_DIR/archive" ] && [ ! -f "$ARCHIVE_INDEX" ]; then
+  echo "  ⚠️  WARNING: Docs archive index missing at $ARCHIVE_INDEX"
+  WARNING_COUNT=$((WARNING_COUNT + 1))
+fi
+
+# 8. Validate .env configuration using validate_env.sh
+echo "[8/8] Validating .env configuration..."
+if [ -x "$SCRIPT_DIR/validate_env.sh" ]; then
+    if ! "$SCRIPT_DIR/validate_env.sh" >/dev/null 2>&1; then
         # We silence output here as validate_env often prints its own specific errors
         echo "  ❌ ERROR: .env validation failed (run validate_env.sh for details)"
         ERROR_COUNT=$((ERROR_COUNT + 1))

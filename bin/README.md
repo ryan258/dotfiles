@@ -1,10 +1,10 @@
 # AI Staff HQ Dispatcher System
 
-This directory contains 10 AI dispatcher scripts plus 4 advanced features that provide instant access to specialized AI professionals from the [AI-Staff-HQ](https://github.com/ryan258/AI-Staff-HQ) workforce. Each dispatcher is a high-speed orchestration layer that connects your workflow to the right specialist via OpenRouter API.
+This directory contains 12 AI dispatcher scripts plus 4 advanced features that provide instant access to specialized AI professionals from the [AI-Staff-HQ](https://github.com/ryan258/AI-Staff-HQ) workforce. Each dispatcher is a high-speed orchestration layer that connects your workflow to the right specialist via OpenRouter API.
 
-**Status:** ✅ 10/10 Dispatchers Active + 4 Advanced Features (Phases 1-3, 5-6 Complete)
+**Status:** ✅ 12/12 Dispatchers Active + 4 Advanced Features (Phases 1-3, 5-6 Complete)
 
-**Latest Update (November 8, 2025):**
+**Latest Update (February 3, 2026):**
 
 - ✅ All dispatchers support real-time streaming with `--stream` flag
 - ✅ Robust error handling via shared library (`dhp-lib.sh`)
@@ -28,6 +28,7 @@ This directory contains 10 AI dispatcher scripts plus 4 advanced features that p
 | `dhp-narrative.sh` | `narrative` | Story structure     | stdin        |
 | `dhp-copy.sh`      | `aicopy`    | Marketing copy      | stdin        |
 | `dhp-morphling.sh` | `morphling` | Universal adaptive  | argument     |
+| `dhp-finance.sh`   | (none)      | Financial strategy  | stdin/arg    |
 
 ## Advanced Features
 
@@ -292,6 +293,30 @@ echo "Who's searching for AI writing assistance?" | market
 
 ---
 
+### `dhp-finance.sh` (Financial Strategy)
+
+**Purpose:** Tax and admin strategy (S‑Corp, R&D credits, Medicare SGA constraints)
+
+**Input:** Reads from stdin or arguments
+**Model:** `FINANCE_MODEL` (default: `moonshotai/kimi-k2:free`)
+**Usage:**
+
+```bash
+# Direct invocation
+dhp-finance.sh "S-Corp vs LLC tradeoffs for an R&D lab"
+
+# Unified entry point (no alias)
+dispatch finance "Medicare SGA safe income planning"
+```
+
+**Flags:**
+
+- `--stream` - Enable real-time streaming output
+
+**Output:** Focused financial strategy and administrative checklist
+
+---
+
 ## Personal Development
 
 ### `dhp-stoic.sh` (Stoic Coach)
@@ -478,7 +503,7 @@ Verify all dispatchers are working:
 
 ```bash
 bash ~/dotfiles/scripts/dotfiles_check.sh
-# Should report: "✅ Found 10/10 dispatchers"
+# Should report: "✅ Found 12/12 dispatchers"
 ```
 
 Test individual dispatcher:
@@ -504,8 +529,8 @@ echo "Test input" | tech
 ### Dispatcher Template
 
 ```bash
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 DOTFILES_DIR="$HOME/dotfiles"
 AI_STAFF_DIR="$DOTFILES_DIR/ai-staff-hq"
@@ -931,5 +956,5 @@ SWIPE_LOG_ENABLED=false
 ---
 
 **Last Updated:** November 10, 2025
-**Status:** Production-ready, 10 dispatchers + 4 advanced features + spec workflow operational
+**Status:** Production-ready, 12 dispatchers + 4 advanced features + spec workflow operational
 **Phase:** 1, 2, 3, 5, 6 Complete (Infrastructure, Workflow Integration, Dispatcher Expansion, Advanced Features, Model Configuration + Spec System)

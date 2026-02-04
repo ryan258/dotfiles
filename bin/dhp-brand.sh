@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 # dhp-brand.sh - Brand Builder dispatcher (Swarm Edition)
 # Brand positioning, voice/tone, competitive analysis

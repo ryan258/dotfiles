@@ -1,8 +1,12 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
 # dhp-shared.sh: Shared library for DHP dispatcher scripts
 # This script provides common setup, flag parsing, and input handling functions.
-set -euo pipefail
+# NOTE: SOURCED file. Do NOT use set -euo pipefail.
+
+if [[ -n "${_DHP_SHARED_LOADED:-}" ]]; then
+    return 0
+fi
+readonly _DHP_SHARED_LOADED=true
 
 # Function to set up the environment for DHP scripts
 # Sources .env, dhp-lib.sh, and dhp-utils.sh
@@ -26,7 +30,7 @@ dhp_setup_env() {
         source "$DOTFILES_DIR/bin/dhp-lib.sh"
     else
         echo "Error: Shared library dhp-lib.sh not found" >&2
-        exit 1
+        return 1
     fi
 
     if [ -f "$DOTFILES_DIR/bin/dhp-utils.sh" ]; then
@@ -95,7 +99,7 @@ dhp_get_input() {
         # Check for null bytes
         if [ "$(printf '%s' "$PIPED_CONTENT" | tr -d '\0' | wc -c)" -ne "$(printf '%s' "$PIPED_CONTENT" | wc -c)" ]; then
             echo "Error: Input contains null bytes, which are not allowed." >&2
-            exit 1
+            return 1
         fi
 
         # Check for maximum length (e.g., 50KB)
@@ -103,7 +107,7 @@ dhp_get_input() {
         INPUT_BYTES=$(echo -n "$PIPED_CONTENT" | wc -c)
         if [ "$INPUT_BYTES" -gt "$MAX_INPUT_BYTES" ]; then
             echo "Error: Input exceeds maximum allowed size of $((MAX_INPUT_BYTES / 1024 / 1024))MB." >&2
-            exit 1
+            return 1
         fi
     fi
 }

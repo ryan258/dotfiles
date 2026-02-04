@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # done.sh - Run commands with completion notifications (macOS version)
 set -euo pipefail
 

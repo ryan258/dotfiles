@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # dhp-memory: Save content to the Hive Mind
 set -euo pipefail
 

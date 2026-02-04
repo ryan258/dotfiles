@@ -1,6 +1,16 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # dev_shortcuts.sh - Development workflow shortcuts for macOS
-set -euo pipefail
+# NOTE: Dual-use. When sourced, do NOT enable strict mode.
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/common.sh"
+fi
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    set -euo pipefail
+fi
 
 is_sourced() {
     if [ -n "$ZSH_VERSION" ]; then
@@ -18,7 +28,10 @@ is_sourced() {
 case "$1" in
     server)
         # Quick development server
-        PORT=${2:-8000}
+        PORT_RAW=${2:-8000}
+        PORT=$(sanitize_input "$PORT_RAW")
+        PORT=${PORT//$'\n'/ }
+        validate_range "$PORT" 1 65535 "port" || exit 1
         echo "Starting development server on port $PORT..."
         echo "Access at: http://localhost:$PORT"
         python3 -m http.server "$PORT"
@@ -30,8 +43,15 @@ case "$1" in
             echo "Pretty printing JSON from clipboard:"
             pbpaste | python3 -m json.tool
         else
-            echo "Pretty printing JSON from file: $2"
-            python3 -m json.tool "$2"
+            FILE=$(sanitize_input "$2")
+            FILE=${FILE//$'\n'/ }
+            FILE=$(validate_path "$FILE") || exit 1
+            if [ ! -f "$FILE" ]; then
+                echo "File not found: $FILE" >&2
+                exit 1
+            fi
+            echo "Pretty printing JSON from file: $FILE"
+            python3 -m json.tool "$FILE"
         fi
         ;;
     
@@ -58,7 +78,8 @@ case "$1" in
             echo "Usage: dev gitquick <commit_message>"
             exit 1
         fi
-        COMMIT_MESSAGE="$*"
+        COMMIT_MESSAGE=$(sanitize_input "$*")
+        COMMIT_MESSAGE=${COMMIT_MESSAGE//$'\n'/ }
         git add .
         git commit -m "$COMMIT_MESSAGE"
         git push

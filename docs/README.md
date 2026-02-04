@@ -4,6 +4,21 @@ Welcome to your dotfiles documentation! Start with one of the guides below based
 
 ---
 
+## TL;DR
+
+- Start with [Start Here](start-here.md).
+- Keep [Daily Cheat Sheet](daily-cheatsheet.md) open while learning.
+- Use [AI Quick Reference](ai-quick-reference.md) for dispatcher help.
+
+## Docs Owner
+
+- **Owner:** Ryan Johnson
+- **Purpose:** Keep docs accurate, low-noise, and aligned with current scripts.
+
+## Maintenance Rule
+
+- Update `docs/README.md` whenever docs change.
+
 ## 🚀 **New? Start Here**
 
 **[📍 Start Here (5-Minute Orientation)](start-here.md)**
@@ -26,7 +41,7 @@ Welcome to your dotfiles documentation! Start with one of the guides below based
 
 ### Discover Features
 
-- **[🔍 Feature Discovery Guide](discover.md)** - Complete guide organized by what you want to do
+- **[📍 Start Here](start-here.md)** - Use-case index and quick paths
   - Daily essentials (morning/evening routines)
   - When you're overwhelmed
   - Managing health
@@ -46,13 +61,12 @@ Welcome to your dotfiles documentation! Start with one of the guides below based
 
 ### AI Assistance
 
-- **[🤖 AI Quick Reference](ai-quick-reference.md)** - Your 11 dispatcher commands + 68 specialists with examples
+- **[🤖 AI Quick Reference](ai-quick-reference.md)** - Dispatcher map, flags, workflows, and examples
   - Technical help (`tech`)
   - Content creation (`content`)
   - Creative writing (`creative`)
   - Strategic thinking (`strategy`)
   - Stoic coaching (`stoic`)
-  - And 5 more specialists
   - Advanced features (chaining, context injection)
 
 ---
@@ -102,13 +116,6 @@ Welcome to your dotfiles documentation! Start with one of the guides below based
   - Technical deep-dive
   - Personal story
 
-### AI Examples
-
-- **[💡 AI Examples](ai-examples.md)** - Real AI dispatcher examples
-  - Concrete use cases
-  - Example prompts
-  - Expected outputs
-
 ### Best Practices
 
 - **[✅ Best Practices](best-practices.md)** - Usage best practices
@@ -116,12 +123,12 @@ Welcome to your dotfiles documentation! Start with one of the guides below based
   - Tips and tricks
   - Common patterns
 
-### Flexibility
+### Customization
 
-- **[🔧 Flex Guide](flex.md)** - Flexibility and customization
-  - Customization options
-  - Environment variables
-  - Extending the system
+- **[✅ Best Practices](best-practices.md)** - Usage best practices
+  - Recommended workflows
+  - Tips and tricks
+  - Common patterns
 
 ---
 
@@ -151,7 +158,6 @@ Welcome to your dotfiles documentation! Start with one of the guides below based
 ### Capabilities & R&D
 
 - **[🔋 Energy-Contingent Roadmap](ROADMAP-ENERGY.md)** - Strategic roadmap aligned with bio-rhythms.
-- **[📦 GraphRunner Product Brief](products/graph_runner_brief.md)** - Enterprise-grade orchestration engine.
 - **[🏥 Health System Product Brief](products/health_brief.md)** - Bio-rhythm intelligence tool.
 
 ---
@@ -160,7 +166,7 @@ Welcome to your dotfiles documentation! Start with one of the guides below based
 
 ### "I forgot what I have"
 
-→ [Feature Discovery Guide](discover.md)
+→ [Start Here](start-here.md) (Feature Discovery section)
 
 ### "I need a quick reference"
 
@@ -181,7 +187,7 @@ Welcome to your dotfiles documentation! Start with one of the guides below based
 
 ### "How do I do X?"
 
-→ [Feature Discovery Guide](discover.md) (organized by use case)
+→ [Start Here](start-here.md) (Feature Discovery section)
 
 ### "Something isn't working"
 
@@ -190,7 +196,7 @@ Welcome to your dotfiles documentation! Start with one of the guides below based
 
 ### "I want to customize"
 
-→ [Flex Guide](flex.md)
+→ [Best Practices](best-practices.md)
 → Edit `~/.env`
 
 ---
@@ -227,16 +233,14 @@ docs/
 ├── README.md                   ⭐ This index
 ├── start-here.md              ⭐ 5-minute orientation
 ├── daily-cheatsheet.md        ⭐ One-page reference
-├── discover.md                ⭐ Feature discovery
 ├── ms-friendly-features.md    ⭐ Accessibility guide
-├── ai-quick-reference.md      ⭐ AI examples
+├── ai-quick-reference.md      ⭐ AI usage + examples
 ├── system-overview.md         ⭐ Architecture diagrams
 ├── happy-path.md              Daily workflow
 ├── best-practices.md          Best practices
 ├── clipboard.md               Clipboard workflows
 ├── personas.md                Blog personas
-├── ai-examples.md             AI examples
-├── flex.md                    Customization
+├── products/health_brief.md   Health product brief
 └── my-ms-site-integration.md  Blog integration
 ```
 
@@ -248,7 +252,7 @@ docs/
 
 1. [Start Here (5 minutes)](start-here.md)
 2. [Daily Cheat Sheet](daily-cheatsheet.md)
-3. [Feature Discovery Guide](discover.md) - Browse what interests you
+3. Review the Feature Discovery section in Start Here
 
 ### After First Week?
 
@@ -259,8 +263,7 @@ docs/
 ### Ready to Customize?
 
 1. [Best Practices](best-practices.md)
-2. [Flex Guide](flex.md)
-3. Edit `.env` file
+2. Edit `.env` file
 
 ---
 
@@ -269,7 +272,7 @@ docs/
 ### Keep These Handy
 
 - **[Daily Cheat Sheet](daily-cheatsheet.md)** - Print or keep open
-- **[Feature Discovery](discover.md)** - Bookmark for reference
+- **[Start Here](start-here.md)** - Feature Discovery section
 
 ### Brain-Fog-Friendly Reading
 
@@ -294,7 +297,7 @@ grep "keyword" ~/dotfiles/*.md
 
 1. **Check the docs:**
    - Start with [Daily Cheat Sheet](daily-cheatsheet.md)
-   - Then [Feature Discovery](discover.md)
+   - Then [Start Here](start-here.md)
 
 2. **Use in-terminal help:**
 
@@ -312,6 +315,15 @@ grep "keyword" ~/dotfiles/*.md
    tech "How do I..."
    stoic "I'm stuck on..."
    ```
+
+---
+
+## Related Docs
+
+- [Main README](../README.md)
+- [Start Here](start-here.md)
+- [Daily Cheat Sheet](daily-cheatsheet.md)
+- [Troubleshooting](../TROUBLESHOOTING.md)
 
 ---
 

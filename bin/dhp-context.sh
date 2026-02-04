@@ -1,8 +1,12 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
 # dhp-context.sh: Context Injection Library for AI Dispatchers
 # Source this file to gather local context for AI prompts
-set -euo pipefail
+# NOTE: SOURCED file. Do NOT use set -euo pipefail.
+
+if [[ -n "${_DHP_CONTEXT_LOADED:-}" ]]; then
+    return 0
+fi
+readonly _DHP_CONTEXT_LOADED=true
 
 # This script provides functions to gather relevant context:
 # - gather_context() - Main function to collect all context
@@ -11,9 +15,17 @@ set -euo pipefail
 # - get_git_context() - Recent commits and repo info
 # - get_project_readme() - README from current directory
 
-DATA_DIR="$HOME/.config/dotfiles-data"
-TODO_FILE="$DATA_DIR/todo.txt"
-JOURNAL_FILE="$DATA_DIR/journal.txt"
+DHP_CONTEXT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$DHP_CONTEXT_DIR/.." && pwd)}"
+
+if [[ -f "$DOTFILES_DIR/scripts/lib/config.sh" ]]; then
+    # shellcheck disable=SC1090
+    source "$DOTFILES_DIR/scripts/lib/config.sh"
+fi
+
+DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
+TODO_FILE="${TODO_FILE:-$DATA_DIR/todo.txt}"
+JOURNAL_FILE="${JOURNAL_FILE:-$DATA_DIR/journal.txt}"
 
 # redact_sensitive_info: Redacts common sensitive patterns from a string.
 # Usage: redact_sensitive_info <input_string>
@@ -48,7 +60,7 @@ get_recent_journal() {
     cutoff_date=$(date -v-"${days}"d "+%Y-%m-%d" 2>/dev/null || date -d "${days} days ago" "+%Y-%m-%d" 2>/dev/null)
 
     # Extract recent entries
-    awk -v cutoff="$cutoff_date" '$0 ~ /^\[/ { if ($1 >= "["cutoff) print }' "$JOURNAL_FILE" 2>/dev/null | tail -20
+    awk -F'|' -v cutoff="$cutoff_date" 'NF>=2 { if (substr($1,1,10) >= cutoff) print }' "$JOURNAL_FILE" 2>/dev/null | tail -20
 }
 
 # Get active todo items

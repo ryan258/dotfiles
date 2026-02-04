@@ -1,5 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/blog_gen.sh
+# NOTE: SOURCED file. Do NOT use set -euo pipefail.
+
+if [[ -n "${_BLOG_GEN_LOADED:-}" ]]; then
+    return 0
+fi
+readonly _BLOG_GEN_LOADED=true
 
 function generate() {
     shift # remove subcommand label

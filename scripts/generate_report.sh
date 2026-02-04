@@ -1,22 +1,42 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # scripts/generate_report.sh
 # Generates daily/weekly summaries and correlations
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/common.sh"
+fi
+
+if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/config.sh"
+fi
+
 DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-REPORTS_DIR="$DATA_DIR/reports"
+REPORTS_DIR="${REPORTS_DIR:-$DATA_DIR/reports}"
+REPORTS_DIR=$(validate_path "$REPORTS_DIR") || exit 1
 mkdir -p "$REPORTS_DIR"
 
-TIME_LOG="$DATA_DIR/time_tracking.txt"
-SPOON_LOG="$DATA_DIR/spoons.txt"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TIME_LOG="${TIME_LOG:-$DATA_DIR/time_tracking.txt}"
+SPOON_LOG="${SPOON_LOG:-$DATA_DIR/spoons.txt}"
 CORRELATE_CMD="$SCRIPT_DIR/correlate.sh"
 
-REPORT_TYPE="${1:-daily}"
+REPORT_TYPE_RAW="${1:-daily}"
+REPORT_TYPE=$(sanitize_input "$REPORT_TYPE_RAW")
+REPORT_TYPE=${REPORT_TYPE//$'\n'/ }
+if ! [[ "$REPORT_TYPE" =~ ^[A-Za-z0-9._-]+$ ]]; then
+    echo "Error: Invalid report type '$REPORT_TYPE'." >&2
+    echo "Use letters, numbers, '.', '_' or '-' only." >&2
+    exit 1
+fi
+
 TODAY=$(date +%Y-%m-%d)
 REPORT_FILE="$REPORTS_DIR/report-$REPORT_TYPE-$TODAY.md"
+REPORT_FILE=$(validate_path "$REPORT_FILE") || exit 1
 
 # Use existing libraries for consistent logic and date handling
 TIME_LIB="$SCRIPT_DIR/lib/time_tracking.sh"

@@ -1,6 +1,6 @@
 # Personal macOS Scripts Toolkit
 
-This folder collects shell utilities that streamline day-to-day work on macOS—from note taking and reminders to system diagnostics and media conversion, plus **AI-powered workflows** through 10 specialized AI dispatchers. Scripts are intended to be run from Terminal and assume the default macOS tools (`bash`, `python3`, `osascript`, `find`, `zip`, etc.) plus a few optional Homebrew installs for advanced features.
+This folder collects shell utilities that streamline day-to-day work on macOS—from note taking and reminders to system diagnostics and media conversion, plus **AI-powered workflows** through 12 specialized AI dispatchers. Scripts are intended to be run from Terminal and assume the default macOS tools (`bash`, `python3`, `osascript`, `find`, `zip`, etc.) plus a few optional Homebrew installs for advanced features.
 
 ## What's New (November 2025)
 
@@ -41,7 +41,7 @@ All script data files are centralized in `~/.config/dotfiles-data/` for easy bac
 - `system.log` – Central audit log for automation
 - `dir_bookmarks` & `dir_history` – Directory navigation data
 - `favorite_apps` – Application launcher shortcuts
-- `clipboard_history/` – Saved clipboard snippets (supports dynamic snippets)
+- `clipboard_history.txt` – Saved clipboard snippets (pipe-delimited, `\n`-escaped content)
 - `how-to/` – Personal how-to wiki articles
 - `specs/` – Archived AI dispatcher spec templates (NEW)
 
@@ -79,13 +79,14 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 - `gh-projects.sh {forgotten|recall <name>}` – Find and get details about forgotten projects from GitHub.
 - `blog.sh {status|stubs|random|recent|sync|ideas|generate|refine}` – **AI-Enhanced** blog workflow: status tracking, optional stub management, todo sync, journal search, plus AI content generation (`generate` accepts raw briefs/drafts, `-p persona`, `-a archetype`, `-s section`, auto-loads exemplar snippets per `BLOG_SECTION_EXEMPLARS`, and writes directly into the correct Hugo content folder) and refinement (`refine`).
 - `greeting.sh` – Quick context summaries for the start of a session.
+- `context.sh {capture|list|show|path|restore}` – Capture and restore working context snapshots.
 - `howto.sh {add|<name>|search}` – Personal searchable how-to wiki for complex workflows.
 - `schedule.sh "<time>" "<command>"` – User-friendly wrapper for macOS `at` command to schedule future commands.
 - `dotfiles_check.sh` – System validation script (doctor) that dynamically discovers all scripts and AI dispatchers (68+), verifying dependencies like `rclone`.
 - `backup_data.sh` – Automated backup of entire `~/.config/dotfiles-data/` directory to `~/Backups` and Google Drive.
 - `new_script.sh <name>` – Automate adding new scripts with proper headers, executable permissions, and alias creation.
 - `spec_helper.sh` – Spec template workflow - opens structured templates for comprehensive AI dispatcher input. **Note:** The `spec` alias sources this file to enable template editing workflow.
-- `correlate.sh {run|find-patterns|explain}` – **Correlation Engine** for statistical analysis between datasets. Use `correlate run <file1> <file2>` to calculate Pearson correlation between two time-series files. Supports custom column indices for date/value parsing.
+- `correlate.sh {run|find-patterns|explain}` – **Correlation Engine** for statistical analysis between datasets. Use `correlate run <file1> <file2>` to calculate Pearson correlation between two time-series files; use `find-patterns` to spot trends and weekly patterns; `explain` converts `r` into plain‑English insight.
 
 ### Project & Directory Management
 

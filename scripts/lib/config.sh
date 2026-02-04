@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # Unified configuration management for dotfiles
 # Single source of truth for models, paths, and settings
+# NOTE: SOURCED file. Do NOT use set -euo pipefail.
+
+if [[ -n "${_DOTFILES_CONFIG_LOADED:-}" ]]; then
+    return 0
+fi
+readonly _DOTFILES_CONFIG_LOADED=true
 
 #=============================================================================
 # Environment Loading
@@ -43,6 +49,22 @@ TIME_LOG="${TIME_LOG:-$DATA_DIR/time_tracking.txt}"
 SYSTEM_LOG="${SYSTEM_LOG:-$DATA_DIR/system.log}"
 FOCUS_FILE="${FOCUS_FILE:-$DATA_DIR/daily_focus.txt}"
 BRIEFING_CACHE_FILE="${BRIEFING_CACHE_FILE:-$DATA_DIR/.ai_briefing_cache}"
+CLIPBOARD_FILE="${CLIPBOARD_FILE:-$DATA_DIR/clipboard_history.txt}"
+DISPATCHER_USAGE_LOG="${DISPATCHER_USAGE_LOG:-$DATA_DIR/dispatcher_usage.log}"
+MEDS_FILE="${MEDS_FILE:-$DATA_DIR/medications.txt}"
+DIR_BOOKMARKS_FILE="${DIR_BOOKMARKS_FILE:-$DATA_DIR/dir_bookmarks}"
+DIR_HISTORY_FILE="${DIR_HISTORY_FILE:-$DATA_DIR/dir_history}"
+DIR_USAGE_LOG="${DIR_USAGE_LOG:-$DATA_DIR/dir_usage.log}"
+FAVORITE_APPS_FILE="${FAVORITE_APPS_FILE:-$DATA_DIR/favorite_apps}"
+FOCUS_HISTORY_FILE="${FOCUS_HISTORY_FILE:-$DATA_DIR/focus_history.log}"
+SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:-$SYSTEM_LOG}"
+REPORTS_DIR="${REPORTS_DIR:-$DATA_DIR/reports}"
+HOWTO_DIR="${HOWTO_DIR:-$DATA_DIR/how-to}"
+SPEC_ARCHIVE_DIR="${SPEC_ARCHIVE_DIR:-$DATA_DIR/specs}"
+TIDY_IGNORE_FILE="${TIDY_IGNORE_FILE:-$DATA_DIR/tidy_ignore.txt}"
+BREAKS_LOG="${BREAKS_LOG:-$DATA_DIR/health_breaks.log}"
+GCAL_CREDS_FILE="${GCAL_CREDS_FILE:-$DATA_DIR/google_creds.json}"
+GCAL_TOKEN_FILE="${GCAL_TOKEN_FILE:-$DATA_DIR/google_token_cache.json}"
 
 #=============================================================================
 # Model Configuration - SINGLE SOURCE OF TRUTH

@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e # Exit immediately if a command fails
+#!/usr/bin/env bash
+set -euo pipefail
 
 # dhp-strategy.sh - Strategic Analysis dispatcher (Swarm Edition)
 # High-level analysis, synthesis, and decision support

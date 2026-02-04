@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 # dhp-morphling.sh - Universal "Morphling" Dispatcher (Swarm Edition)
 # Adapts to any task by ingesting local context and shapeshifting.

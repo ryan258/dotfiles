@@ -1,9 +1,12 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
 # scripts/lib/correlation_engine.sh
 # Shared library for data correlation
+# NOTE: SOURCED file. Do NOT use set -euo pipefail.
 
-set -euo pipefail
+if [[ -n "${_CORRELATION_ENGINE_LOADED:-}" ]]; then
+    return 0
+fi
+readonly _CORRELATION_ENGINE_LOADED=true
 
 LIB_DIR="$(dirname "${BASH_SOURCE[0]}")"
 CORRELATE_PY="$LIB_DIR/correlate.py"
@@ -43,12 +46,28 @@ correlate_two_datasets() {
 }
 
 # Find recurring patterns in a single dataset
-# Usage: find_patterns <data_file> <pattern_type>
+# Usage: find_patterns <data_file> [date_col] [value_col]
 find_patterns() {
     local file="$1"
-    local type="$2"
-    # TODO: Implement pattern recognition logic
-    echo "Pattern finding not implemented yet"
+    local date_col="${2:-1}"
+    local value_col="${3:-2}"
+
+    if ! command -v python3 &> /dev/null; then
+        echo "Error: python3 is required but not installed" >&2
+        return 1
+    fi
+
+    if [ ! -f "$CORRELATE_PY" ]; then
+        echo "Error: correlate.py not found at $CORRELATE_PY" >&2
+        return 1
+    fi
+
+    if [ ! -f "$file" ]; then
+        echo "Error: File $file not found" >&2
+        return 1
+    fi
+
+    python3 "$CORRELATE_PY" patterns "$file" --d "$date_col" --v "$value_col"
 }
 
 # Predict value based on historical correlations

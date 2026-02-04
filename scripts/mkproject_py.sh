@@ -1,19 +1,40 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # mkproject_py.sh - Sets up a complete Python project with virtual environment
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/common.sh"
+fi
+
 # Ask for the project name
 IFS= read -r -p "Enter your Python project name: " project_name
+project_name=$(sanitize_input "$project_name")
+project_name=${project_name//$'\n'/ }
+
+if [[ -z "$project_name" ]]; then
+    echo "Error: Project name is required."
+    exit 1
+fi
+
+if ! [[ "$project_name" =~ ^[A-Za-z0-9._-]+$ ]]; then
+    echo "Error: Project name can only contain letters, numbers, '.', '_' and '-'." >&2
+    exit 1
+fi
 
 # Check if a directory with that name already exists
-if [ -d "$project_name" ]; then
+project_path="$(pwd)/$project_name"
+project_path=$(validate_path "$project_path") || exit 1
+
+if [ -d "$project_path" ]; then
     echo "Error: Directory '$project_name' already exists."
     exit 1
 fi
 
 echo "Creating project directory: $project_name"
-mkdir "$project_name"
-cd "$project_name" || exit 1
+mkdir "$project_path"
+cd "$project_path" || exit 1
 
 echo "Setting up Python virtual environment in 'venv'..."
 python3 -m venv venv

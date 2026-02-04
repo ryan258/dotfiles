@@ -7,7 +7,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 require_lib "date_utils.sh"
 
-JOURNAL_FILE="${JOURNAL_FILE:-$HOME/.config/dotfiles-data/journal.txt}"
+DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
+JOURNAL_FILE="${JOURNAL_FILE:-$DATA_DIR/journal.txt}"
 
 # Ensure journal file exists
 touch "$JOURNAL_FILE"
@@ -31,7 +32,9 @@ case "${1:-add}" in
         exit 1
     fi
     TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
-    printf '[%s] %s\n' "$TIMESTAMP" "$ENTRY" >> "$JOURNAL_FILE"
+    ENTRY=$(sanitize_input "$ENTRY")
+    ENTRY=${ENTRY//$'\n'/\\n}
+    printf '%s|%s\n' "$TIMESTAMP" "$ENTRY" >> "$JOURNAL_FILE"
     echo "Entry added to journal."
     ;;
 
@@ -111,7 +114,7 @@ case "${1:-add}" in
 
     # Get entries from last 7 days
     SEVEN_DAYS_AGO=$(date_shift_days -7 "%Y-%m-%d")
-    RECENT_ENTRIES=$(awk -v cutoff="$SEVEN_DAYS_AGO" '$0 ~ /^\[/ { if ($1 >= "["cutoff) print }' "$JOURNAL_FILE")
+    RECENT_ENTRIES=$(awk -F'|' -v cutoff="$SEVEN_DAYS_AGO" 'NF>=2 { if (substr($1,1,10) >= cutoff) print }' "$JOURNAL_FILE")
 
     if [ -z "$RECENT_ENTRIES" ]; then
         echo "No journal entries found in the last 7 days."
@@ -152,7 +155,7 @@ case "${1:-add}" in
 
     # Get entries from last 14 days
     FOURTEEN_DAYS_AGO=$(date_shift_days -14 "%Y-%m-%d")
-    RECENT_ENTRIES=$(awk -v cutoff="$FOURTEEN_DAYS_AGO" '$0 ~ /^\[/ { if ($1 >= "["cutoff) print }' "$JOURNAL_FILE")
+    RECENT_ENTRIES=$(awk -F'|' -v cutoff="$FOURTEEN_DAYS_AGO" 'NF>=2 { if (substr($1,1,10) >= cutoff) print }' "$JOURNAL_FILE")
 
     if [ -z "$RECENT_ENTRIES" ]; then
         echo "No journal entries found in the last 14 days."
@@ -191,7 +194,7 @@ case "${1:-add}" in
 
     # Get entries from last 30 days
     THIRTY_DAYS_AGO=$(date_shift_days -30 "%Y-%m-%d")
-    RECENT_ENTRIES=$(awk -v cutoff="$THIRTY_DAYS_AGO" '$0 ~ /^\[/ { if ($1 >= "["cutoff) print }' "$JOURNAL_FILE")
+    RECENT_ENTRIES=$(awk -F'|' -v cutoff="$THIRTY_DAYS_AGO" 'NF>=2 { if (substr($1,1,10) >= cutoff) print }' "$JOURNAL_FILE")
 
     if [ -z "$RECENT_ENTRIES" ]; then
         echo "No journal entries found in the last 30 days."

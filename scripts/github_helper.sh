@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # github_helper.sh - Functions for interacting with the GitHub API
 #
 # This script serves as a wrapper for GitHub API calls, handling authentication,
@@ -8,26 +8,27 @@
 set -euo pipefail
 
 # --- Configuration ---
-# Load environment variables from dotfiles configuration if present.
-# This allows for setting variables like GITHUB_USERNAME or other context
-# from the centralized .env file.
-DOTFILES_ENV="$HOME/dotfiles/.env"
-if [ -f "$DOTFILES_ENV" ]; then
-    set -a
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+
+if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
     # shellcheck disable=SC1090
-    source "$DOTFILES_ENV"
-    set +a
+    source "$SCRIPT_DIR/lib/config.sh"
+elif [ -f "$DOTFILES_DIR/scripts/lib/config.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$DOTFILES_DIR/scripts/lib/config.sh"
 fi
 
 # Define locations for the GitHub Personal Access Token (PAT).
 # TOKEN_FILE: The primary expected location for the token.
 # TOKEN_FALLBACK: A secondary/backup location (often in synced dotfiles data).
-TOKEN_FILE="$HOME/.github_token"
-TOKEN_FALLBACK="$HOME/.config/dotfiles-data/github_token"
+DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
+TOKEN_FILE="${GITHUB_TOKEN_FILE:-$HOME/.github_token}"
+TOKEN_FALLBACK="${GITHUB_TOKEN_FALLBACK:-$DATA_DIR/github_token}"
 
 # Setup local caching directory.
 # Caching prevents API rate limits and speeds up execution when offline or on slow networks.
-CACHE_DIR="$HOME/.config/dotfiles-data/cache/github"
+CACHE_DIR="${GITHUB_CACHE_DIR:-$DATA_DIR/cache/github}"
 CACHE_AVAILABLE=true
 if ! mkdir -p "$CACHE_DIR" 2>/dev/null; then
     CACHE_AVAILABLE=false

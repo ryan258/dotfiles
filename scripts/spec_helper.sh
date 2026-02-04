@@ -1,6 +1,20 @@
 #!/usr/bin/env bash
 # Spec helper for structured dispatcher inputs
+# NOTE: SOURCED file. Do NOT use set -euo pipefail.
 
+if [[ -n "${_SPEC_HELPER_LOADED:-}" ]]; then
+  return 0
+fi
+readonly _SPEC_HELPER_LOADED=true
+
+SPEC_HELPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SPEC_HELPER_DIR/lib/config.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$SPEC_HELPER_DIR/lib/config.sh"
+fi
+
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SPEC_HELPER_DIR/.." && pwd)}"
+DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
 
 spec_dispatch() {
   local dispatcher="${1}"
@@ -19,11 +33,11 @@ spec_dispatch() {
   fi
 
   # Path to dispatcher-specific template
-  local template_file="$HOME/dotfiles/templates/${dispatcher}-spec.txt"
+  local template_file="$DOTFILES_DIR/templates/${dispatcher}-spec.txt"
 
   # Fallback to generic template if specific one doesn't exist
   if [[ ! -f "$template_file" ]]; then
-    template_file="$HOME/dotfiles/templates/dispatcher-spec-template.txt"
+    template_file="$DOTFILES_DIR/templates/dispatcher-spec-template.txt"
   fi
 
   # Create temp file from template (macOS compatible)
@@ -54,7 +68,7 @@ spec_dispatch() {
   cat "$tmpfile" | "$dispatcher"
 
   # Optional: Save completed spec for reference
-  local spec_archive="$HOME/.config/dotfiles-data/specs/"
+  local spec_archive="${SPEC_ARCHIVE_DIR:-$DATA_DIR/specs}/"
   mkdir -p "$spec_archive"
   cp "$tmpfile" "$spec_archive/$(date +%Y%m%d-%H%M%S)-${dispatcher}.txt"
   echo "💾 Spec saved to $spec_archive"

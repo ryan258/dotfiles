@@ -1,6 +1,27 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # media_converter.sh - Media file conversion utilities for macOS
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/common.sh"
+fi
+
+sanitize_arg() {
+    local value
+    value=$(sanitize_input "$1")
+    value=${value//$'\n'/ }
+    printf '%s' "$value"
+}
+
+validate_output_path() {
+    local output_path="$1"
+    local output_dir
+    output_dir=$(dirname "$output_path")
+    output_dir=$(validate_path "$output_dir") || return 1
+    echo "$output_dir/$(basename "$output_path")"
+}
 
 format_bytes() {
     local bytes="$1"
@@ -28,7 +49,8 @@ case "$1" in
             exit 1
         fi
         
-        VIDEO_FILE="$2"
+        VIDEO_FILE=$(sanitize_arg "$2")
+        VIDEO_FILE=$(validate_path "$VIDEO_FILE") || exit 1
         AUDIO_FILE="${VIDEO_FILE%.*}.mp3"
         
         if [ ! -f "$VIDEO_FILE" ]; then
@@ -54,8 +76,10 @@ case "$1" in
             exit 1
         fi
         
-        IMAGE_FILE="$2"
-        WIDTH="$3"
+        IMAGE_FILE=$(sanitize_arg "$2")
+        IMAGE_FILE=$(validate_path "$IMAGE_FILE") || exit 1
+        WIDTH=$(sanitize_arg "$3")
+        validate_range "$WIDTH" 1 20000 "width" || exit 1
         OUTPUT_FILE="${IMAGE_FILE%.*}_${WIDTH}px.${IMAGE_FILE##*.}"
         
         if [ ! -f "$IMAGE_FILE" ]; then
@@ -69,6 +93,7 @@ case "$1" in
         fi
         
         echo "Resizing $IMAGE_FILE to ${WIDTH}px width..."
+        OUTPUT_FILE=$(validate_output_path "$OUTPUT_FILE") || exit 1
         convert "$IMAGE_FILE" -resize "${WIDTH}x" "$OUTPUT_FILE"
         echo "Resized image saved as: $OUTPUT_FILE"
         ;;
@@ -80,7 +105,8 @@ case "$1" in
             exit 1
         fi
         
-        PDF_FILE="$2"
+        PDF_FILE=$(sanitize_arg "$2")
+        PDF_FILE=$(validate_path "$PDF_FILE") || exit 1
         COMPRESSED_FILE="${PDF_FILE%.*}_compressed.pdf"
         
         if [ ! -f "$PDF_FILE" ]; then
@@ -94,6 +120,7 @@ case "$1" in
         fi
         
         echo "Compressing $PDF_FILE..."
+        COMPRESSED_FILE=$(validate_output_path "$COMPRESSED_FILE") || exit 1
         gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/screen \
            -dNOPAUSE -dQUIET -dBATCH -sOutputFile="$COMPRESSED_FILE" "$PDF_FILE"
         echo "Compressed PDF saved as: $COMPRESSED_FILE"
@@ -115,7 +142,12 @@ case "$1" in
         # If $2 is empty or a directory, we are in auto mode.
         if [ -z "${2:-}" ] || [ -d "${2:-}" ]; then
             if [ -n "${2:-}" ]; then
-                TARGET_DIR="$2"
+                TARGET_DIR=$(sanitize_arg "$2")
+            fi
+            TARGET_DIR=$(validate_path "$TARGET_DIR") || exit 1
+            if [ ! -d "$TARGET_DIR" ]; then
+                echo "Directory not found: $TARGET_DIR"
+                exit 1
             fi
             
             # Get directory name for filename
@@ -163,9 +195,14 @@ case "$1" in
                 exit 1
             fi
             
-            OUTPUT_FILE="$2"
+            OUTPUT_FILE=$(sanitize_arg "$2")
             shift 2
-            INPUT_FILES=("$@")
+            INPUT_FILES=()
+            for f in "$@"; do
+                f=$(sanitize_arg "$f")
+                f=$(validate_path "$f") || exit 1
+                INPUT_FILES+=("$f")
+            done
         fi
 
         if ! command -v ffmpeg &> /dev/null; then
@@ -193,6 +230,7 @@ case "$1" in
         
         FILTER_COMPLEX+="concat=n=${#INPUT_FILES[@]}:v=0:a=1[out]"
 
+        OUTPUT_FILE=$(validate_output_path "$OUTPUT_FILE") || exit 1
         ffmpeg -y "${INPUT_ARGS[@]}" -filter_complex "$FILTER_COMPLEX" -map "[out]" "$OUTPUT_FILE"
         
         echo "Stitching complete: $OUTPUT_FILE"

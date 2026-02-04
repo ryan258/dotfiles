@@ -2,6 +2,12 @@
 
 This guide covers proven strategies for maximizing productivity, maintaining data hygiene, and building sustainable workflows with your AI-augmented dotfiles system.
 
+## TL;DR
+
+- Use `startday` and `goodevening` to bookend your day.
+- Keep data clean with `data_validate --format` and backups.
+- Use `ai-suggest` to pick the right dispatcher when stuck.
+
 > **Quick note on dispatchers:** Use the single-word aliases (they invoke the `dhp-*` scripts directly) for minimal typing. When you need a unified entry point or want to reference squads from `squads.json`, use `dispatch <squad> "brief"`. All scripts have been refactored for improved robustness and maintainability.
 >
 > **Security Note:** For detailed information on security practices, how to report vulnerabilities, and credential management, please refer to our [Security Policy](../../SECURITY.md).
@@ -104,7 +110,7 @@ echo "challenge" | stoic       # For mindset
 
 ❌ **DON'T:**
 
-- Try to learn all 11 dispatchers at once
+- Try to learn all 12 dispatchers at once
 - Set up complex chaining workflows
 - Integrate AI into every workflow immediately
 
@@ -1035,7 +1041,8 @@ cat outline.md | aicopy --stream > promotional-copy.txt
 ✅ **Example: Weekly Review Automation**
 
 ```bash
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 # ~/dotfiles/scripts/weekly_ai_review.sh
 
 # Generate standard review
@@ -1330,10 +1337,20 @@ systemlog | grep "feature-name"
 ## Additional Resources
 
 - **Daily Workflow:** `~/dotfiles/docs/happy-path.md`
-- **AI Examples:** `~/dotfiles/docs/ai-examples.md`
+- **AI Quick Reference:** `~/dotfiles/docs/ai-quick-reference.md`
 - **System Overview:** `~/dotfiles/README.md`
 - **Technical Docs:** `~/dotfiles/bin/README.md`
 - **Clipboard Workflows:** `~/dotfiles/docs/clipboard.md`
+
+---
+
+## Related Docs
+
+- [Start Here](start-here.md)
+- [Happy Path](happy-path.md)
+- [System Overview](system-overview.md)
+- [AI Quick Reference](ai-quick-reference.md)
+- [Troubleshooting](../TROUBLESHOOTING.md)
 
 ---
 

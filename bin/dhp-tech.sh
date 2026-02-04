@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 # dhp-tech.sh - Technical Analyst dispatcher (Swarm Edition)
 # Code analysis, bug fixing, automation engineering

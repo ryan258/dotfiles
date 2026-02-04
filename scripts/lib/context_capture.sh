@@ -1,9 +1,17 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
 # scripts/lib/context_capture.sh
 # Shared library for context preservation
+# NOTE: SOURCED file. Do NOT use set -euo pipefail.
 
-set -euo pipefail
+if [[ -n "${_CONTEXT_CAPTURE_LOADED:-}" ]]; then
+    return 0
+fi
+readonly _CONTEXT_CAPTURE_LOADED=true
+
+CONTEXT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$CONTEXT_DIR/config.sh" ]]; then
+    source "$CONTEXT_DIR/config.sh"
+fi
 
 DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
 CONTEXT_ROOT="$DATA_DIR/contexts"

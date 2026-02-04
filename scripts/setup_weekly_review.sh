@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # --- setup_weekly_review.sh: Schedules the weekly review script ---

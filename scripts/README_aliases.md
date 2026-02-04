@@ -169,7 +169,7 @@ Every script in `$SCRIPTS_DIR` has a corresponding wrapper function which ensure
 
 - `done` – Run long commands with notification on completion
 - `app`, `launch` – Favorite app launcher (favorites in `~/.config/dotfiles-data/favorite_apps`)
-- `clip` + subcommands – Clipboard manager (saved in `~/.config/dotfiles-data/clipboard_history/`)
+- `clip` + subcommands – Clipboard manager (saved in `~/.config/dotfiles-data/clipboard_history.txt`)
 
 ## Compound Helpers
 

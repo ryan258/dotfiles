@@ -6,6 +6,35 @@ This document tracks all major implementations, improvements, and fixes to the D
 
 ---
 
+## Version 2.2.2 (February 3, 2026) - Context & Reporting Improvements
+
+**Status:** ✅ Production Ready
+
+This release completes the previously stubbed context and reporting features.
+
+### New Features
+- **Context Snapshots:** Added `context.sh` for capture/list/show/restore workflow, with optional auto‑capture on `startday` via `CONTEXT_CAPTURE_ON_START=true` and snapshot counts in `status.sh`.
+- **Time Reports:** Implemented `generate_time_report` with date ranges, `--days`, and `--summary`, plus improved `goodevening` time summaries.
+- **Correlation Patterns:** Implemented `find-patterns` and `explain` in `correlate.sh` with new pattern analysis in `scripts/lib/correlate.py`.
+- **Data Migration Tooling:** Added `scripts/migrate_data.sh` and expanded `scripts/data_validate.sh` format checks.
+- **Docs updated?** ✅
+
+### Security & Hygiene
+- Sanitized interactive inputs across scheduling, reminders, project creation, process management, and report generation.
+
+### Fixes
+- Removed duplicate strict mode in `brain/start_brain.sh`.
+- Fixed `clipboard_manager.sh` list output formatting and made `generate_time_report` errors emit to stderr.
+- Added colon‑format fallback for bookmark lookups in `g.sh` and corrected `dotfiles_check.sh` step numbering.
+
+### Documentation Stream Summary
+- Formalized the canonical doc set and consolidated content into Start Here + AI Quick Reference.
+- Added TL;DR + Related Docs blocks across canonical docs; updated doc index links to reduce hunting.
+- Added docs owner/maintenance rule and a docs status check in `scripts/dotfiles_check.sh`.
+- Completed the remediation/documentation plans, then removed the plan files and documentation archive to reduce clutter.
+
+---
+
 ## Version 2.2.1 (February 3, 2026) - Codebase Health Fixes
 
 **Status:** ✅ Production Ready

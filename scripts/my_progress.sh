@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # my_progress.sh - Shows your recent Git commits
 set -euo pipefail
 

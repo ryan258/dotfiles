@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # tests/helpers/assertions.sh
 # Custom assertions for BATS tests

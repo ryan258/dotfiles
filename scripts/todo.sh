@@ -7,8 +7,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
 # Define Paths
-TODO_FILE="${TODO_FILE:-$HOME/.config/dotfiles-data/todo.txt}"
-DONE_FILE="${DONE_FILE:-$HOME/.config/dotfiles-data/todo_done.txt}"
+DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
+TODO_FILE="${TODO_FILE:-$DATA_DIR/todo.txt}"
+DONE_FILE="${DONE_FILE:-$DATA_DIR/todo_done.txt}"
 
 # Tools
 TIME_TRACKER="$SCRIPT_DIR/time_tracker.sh"
@@ -33,8 +34,8 @@ cmd_add() {
         exit 1
     fi
 
-    # API Requirement: escape pipe characters
-    task_text="${task_text//|/\\|}"
+    task_text=$(sanitize_input "$task_text")
+    task_text=${task_text//$'\n'/\\n}
     
     # Append to file (simple append is generally safe, or we could use atomic_append if we implemented it)
     echo "$(date +%Y-%m-%d)|$task_text" >> "$TODO_FILE"
@@ -70,8 +71,10 @@ cmd_done() {
     local task_text
     task_text=$(echo "$task_line" | cut -d'|' -f2-)
 
-    # Append to done file
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $task_text" >> "$DONE_FILE"
+    # Append to done file (pipe-delimited)
+    task_text=$(sanitize_input "$task_text")
+    task_text=${task_text//$'\n'/\\n}
+    echo "$(date '+%Y-%m-%d %H:%M:%S')|$task_text" >> "$DONE_FILE"
 
     # Remove from todo file atomically
     atomic_delete_line "$task_num" "$TODO_FILE" || {
@@ -109,7 +112,12 @@ cmd_clear() {
     if [[ -s "$TODO_FILE" ]]; then
         # Move all to done
         while IFS= read -r line; do
-            [[ -n "$line" ]] && echo "[$(date '+%Y-%m-%d %H:%M:%S')] $line" >> "$DONE_FILE"
+            if [[ -n "$line" ]]; then
+                task_text=$(echo "$line" | cut -d'|' -f2-)
+                task_text=$(sanitize_input "$task_text")
+                task_text=${task_text//$'\n'/\\n}
+                echo "$(date '+%Y-%m-%d %H:%M:%S')|$task_text" >> "$DONE_FILE"
+            fi
         done < "$TODO_FILE"
     fi
     
@@ -190,9 +198,9 @@ cmd_undo() {
     last_line_num=$(wc -l < "$DONE_FILE" | tr -d ' ')
     atomic_delete_line "$last_line_num" "$DONE_FILE" || exit 1
 
-    # Extract original text (remove timestamp)
+    # Extract original text (field after timestamp)
     local task_text_to_restore
-    task_text_to_restore=$(echo "$last_done_task" | sed -E 's/^\[[0-9- :]+] //')
+    task_text_to_restore=$(echo "$last_done_task" | cut -d'|' -f2-)
 
     # Add back to todo
     echo "$(date +%Y-%m-%d)|$task_text_to_restore" >> "$TODO_FILE"

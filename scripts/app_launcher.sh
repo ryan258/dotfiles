@@ -1,8 +1,12 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # app_launcher.sh - macOS application launcher with favorites
 set -euo pipefail
 
-APPS_FILE="$HOME/.config/dotfiles-data/favorite_apps"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+require_lib "config.sh"
+
+APPS_FILE="$DATA_DIR/favorite_apps"
 
 case "$1" in
     add)
@@ -11,14 +15,20 @@ case "$1" in
             echo "Example: $0 add code 'Visual Studio Code'"
             exit 1
         fi
-        echo "$2:$3" >> "$APPS_FILE"
-        echo "Added '$2' -> '$3'"
+        if [[ "$2" == *"|"* ]] || [[ "$3" == *"|"* ]]; then
+            echo "Error: App shortname and app name cannot contain '|'" >&2
+            exit 1
+        fi
+        shortname=$(sanitize_input "$2")
+        appname=$(sanitize_input "$3")
+        echo "$shortname|$appname" >> "$APPS_FILE"
+        echo "Added '$shortname' -> '$appname'"
         ;;
     
     list)
         echo "=== Favorite Applications ==="
         if [ -f "$APPS_FILE" ]; then
-            cat "$APPS_FILE" | sed 's/:/ -> /'
+            awk -F'|' 'NF>=2 {printf "%s -> %s\n", $1, $2}' "$APPS_FILE"
         else
             echo "No favorite apps configured."
             echo "Add some with: app add <shortname> <app_name>"
@@ -40,7 +50,7 @@ case "$1" in
         fi
 
         APP_NAME=""
-        while IFS=':' read -r short app_name; do
+        while IFS='|' read -r short app_name; do
             [ -z "$short" ] && continue
             if [ "$short" = "$1" ]; then
                 APP_NAME="$app_name"

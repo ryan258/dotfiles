@@ -1,762 +1,146 @@
 # AI Quick Reference
 
-## Swarm Intelligence: 68 Specialists at Your Command
+**Purpose:** Fast, accurate usage for the AI Staff HQ dispatchers in this dotfiles repo.
 
-**All free-tier models.** Use them without guilt or cost concerns.
-
-> **🚀 COMPLETE MIGRATION:** All dispatcher tools (`content`, `creative`, `tech`, `market`, `strategy`, etc.) now use the **Universal Swarm Engine**. Instead of one AI, you get a dynamic team coordinated by a Chief of Staff.
-
-> **⚙️ CONFIGURATION:** All models listed below are **defaults** tailored for each role. You can change any of them in your `.env` file (see `~/dotfiles/.env`).
+**Defaults:** Models are configured via `.env` (`TECH_MODEL`, `CONTENT_MODEL`, `CREATIVE_MODEL`, etc.). Current defaults are documented in `bin/README.md` and `scripts/cheatsheet.sh`.
 
 ---
 
-## 🐝 What is Swarm Orchestration?
-
-When you run _any_ command (e.g., `market "Analyze..."` or `tech "Debug..."`), the system now:
-
-1. **Plans:** A Chief of Staff analyzes your request and breaks it into atomic tasks.
-2. **Staffs:** Dynamic matching selects the perfect specialists from **68 agents** (e.g., "Historical Storyteller", "React Native Expert", "Stoic Coach").
-3. **Executes:** Tasks run in parallel waves for maximum speed.
-4. **Synthesizes:** The Chief of Staff compiles all work into a cohesive final result.
-
-**You don't need to do anything different.** Just run the commands as usual.
-
----
-
-## 🛠 1. Technical (`tech`)
-
-**Default Model:** Xiaomi MiMo v2 Flash (`TECH_MODEL`)
-**Alias:** `tech`
-
-### When to Use
-
-- Debug code errors
-- Optimize scripts
-- Understand error messages
-- Code reviews
-- Performance analysis
-
-### Examples
-
-**Debug a script error:**
+## TL;DR
 
 ```bash
-tech "I'm getting 'command not found' for jq but it's installed"
-```
+# Unified entry point
+dispatch tech "Fix my script"
 
-**Pipe code for review:**
+# Direct dispatcher
+ cat scripts/todo.sh | tech --stream
 
-```bash
-cat scripts/todo.sh | tech --stream
-```
+# Content generation
+ content "Guide to energy-first planning"
 
-**Analyze an error:**
-
-```bash
-./broken_script.sh 2>&1 | tech "Why did this fail?"
-```
-
-**Optimize a function:**
-
-```bash
-echo "How can I make this bash function faster?" | tech <<'EOF'
-function slow_function() {
-    for file in $(find . -name "*.txt"); do
-        cat $file | grep "pattern"
-    done
-}
-EOF
+# Context-aware suggestion
+ ai-suggest
 ```
 
 ---
 
-## ✍️ 2. Content (`content`)
+## Dispatcher Map
 
-**Default Model:** Xiaomi MiMo v2 Flash (`CONTENT_MODEL`)
-**Alias:** `content`
+| Alias | Script | Purpose | Input |
+| --- | --- | --- | --- |
+| `tech` | `bin/dhp-tech.sh` | Debugging + technical analysis | stdin |
+| `creative` | `bin/dhp-creative.sh` | Story packages | argument |
+| `content` | `bin/dhp-content.sh` | Blog + SEO content | argument |
+| `strategy` | `bin/dhp-strategy.sh` | Strategic analysis | stdin |
+| `brand` | `bin/dhp-brand.sh` | Brand positioning | stdin |
+| `market` | `bin/dhp-market.sh` | Market research | stdin |
+| `stoic` | `bin/dhp-stoic.sh` | Stoic coaching | stdin |
+| `research` | `bin/dhp-research.sh` | Knowledge synthesis | stdin |
+| `narrative` | `bin/dhp-narrative.sh` | Story structure | stdin |
+| `aicopy` | `bin/dhp-copy.sh` | Marketing copy | stdin |
+| `morphling` | `bin/dhp-morphling.sh` | Universal adaptive | argument |
+| `dispatch finance` | `bin/dhp-finance.sh` | Financial strategy | stdin/argument |
 
-### When to Use
+**Unified Entry:** `bin/dispatch.sh` routes `dispatch <squad>` to the correct dispatcher. It also honors AI Staff HQ `squads.json` when present. Use `dispatch finance` for the finance dispatcher (no alias).
 
-- Blog posts
-- Guides and tutorials
-- SEO-optimized content
-- Technical documentation
+---
 
-### Examples
+## Common Flags
 
-**Basic content generation:**
+- `--stream` real-time output
+- `--temperature <float>` override creativity
+- `--max-tokens <int>` override length
+- `--context` inject minimal local context (supported by `content` and blog workflows)
+- `--full-context` inject full local context (supported by `content` and blog workflows)
+
+---
+
+## Spec Workflow (Structured Prompts)
+
+Use `spec <dispatcher>` to open a structured template, then auto-pipe it to the dispatcher.
 
 ```bash
-content "Write a guide about managing energy with chronic illness"
+spec tech
+spec creative
+spec content
+spec strategy
 ```
 
-**With context from your life:**
+Specs are archived under `~/.config/dotfiles-data/specs/`.
 
+---
+
+## Advanced Features
+
+- `ai-suggest` context-aware dispatcher recommendations
+- `dhp-project "idea"` multi-specialist orchestration
+- `dhp-chain creative narrative copy -- "idea"` sequential dispatcher chaining
+- `dispatch <squad>` unified entry with aliases or squads
+
+---
+
+## Usage Patterns
+
+**Piped input (stdin dispatchers):**
 ```bash
-content "Blog post about productivity with MS" --context
-# Includes: recent journal entries + active todos
+cat scripts/todo.sh | tech
+cat notes.md | strategy
 ```
 
-**Full context (includes git, README, etc.):**
-
+**Argument input (argument dispatchers):**
 ```bash
-content "Technical guide to this project" --full-context
+creative "A developer learning to pace energy"
+content "Guide to brain fog workflows"
 ```
 
-**Pipe a topic:**
-
+**Streaming output:**
 ```bash
-echo "How to use AI for personal productivity" | content
+cat large-script.sh | tech --stream
+creative --stream "Astronaut finds sentient fog"
+```
+
+**Temperature control:**
+```bash
+content --temperature 0.35 "Deterministic guide output"
+creative --temperature 0.85 "High-creativity story generation"
 ```
 
 ---
 
-## 🎨 3. Creative (`creative`)
+## Workflow Integrations
 
-**Default Model:** Xiaomi MiMo v2 Flash (`CREATIVE_MODEL`)
-**Alias:** `creative`
-
-### When to Use
-
-- Story generation
-- Creative narratives
-- Personal essays
-- Fictional scenarios
-
-### Examples
-
-**Generate a story:**
-
+**Todo delegation:**
 ```bash
-creative "A developer learning to work with chronic illness"
+todo debug 1
+todo delegate 3 creative
 ```
 
-**Story package:**
-
+**Journal analysis:**
 ```bash
-creative "Story about overcoming limitations through automation"
-# Generates: outline, character sketches, plot points, themes
-```
-
-**Personal essay:**
-
-```bash
-creative "Essay about finding productivity systems that work with MS"
-```
-
----
-
-## 📝 4. Copywriting (`aicopy`)
-
-**Default Model:** Xiaomi MiMo v2 Flash (`CREATIVE_MODEL`)
-**Alias:** `aicopy`
-
-### When to Use
-
-- Marketing copy
-- Email sequences
-- Landing pages
-- Calls-to-action
-- Product descriptions
-
-### Examples
-
-**Email sequence:**
-
-```bash
-aicopy "3-email welcome sequence for blog subscribers interested in productivity with chronic illness"
-```
-
-**Landing page:**
-
-```bash
-aicopy "Landing page for a productivity course for people with MS"
-```
-
-**Call-to-action:**
-
-```bash
-aicopy "CTA for newsletter signup, focus on practical tips"
-```
-
----
-
-## 🧭 5. Strategy (`strategy`)
-
-**Default Model:** Xiaomi MiMo v2 Flash (`STRATEGY_MODEL`)
-**Alias:** `strategy`
-**Role:** Your Chief of Staff for R&D and Capability
-
-### When to Use
-
-- R&D direction and capability building
-- Research prioritization
-- Skill development planning
-- Risk/opportunity assessment
-- **NOT for:** Tax, S-Corp, or financial questions (use `finance` instead)
-
-### Examples
-
-**R&D direction:**
-
-```bash
-strategy "Should I focus on learning RAG or fine-tuning next?"
-```
-
-**Capability prioritization:**
-
-```bash
-strategy "I have 3 research directions and limited energy. How do I choose?" <<'EOF'
-Directions:
-1. Deep dive into Claude Code hooks
-2. Build a local LLM testing framework
-3. Explore multi-agent orchestration
-EOF
-```
-
-**Research planning:**
-
-```bash
-strategy "Help me plan a capability-building series on AI tooling"
-```
-
-**Health/energy strategy:**
-
-```bash
-strategy "How do I maximize learning output on variable-energy days?"
-```
-
----
-
-## 💰 6. Finance (`finance`)
-
-**Default Model:** Xiaomi MiMo v2 Flash (`FINANCE_MODEL`)
-**Alias:** `finance`
-**Role:** Financial Strategy Specialist
-
-### When to Use
-
-- Tax optimization (S-Corp, Section 174 R&D credits)
-- Medicare/disability income considerations
-- Entity structure decisions (LLC vs S-Corp)
-- Financial administration checklists
-- **NOT for:** R&D strategy or capability planning (use `strategy` instead)
-
-### Examples
-
-**Tax planning:**
-
-```bash
-finance "What forms do I need to file for S-Corp election?"
-```
-
-**R&D credits:**
-
-```bash
-finance "How do I document my AI research for Section 174 R&D credits?"
-```
-
-**Medicare considerations:**
-
-```bash
-finance "How should I structure income relative to Medicare SGA limits?"
-```
-
-**Entity structure:**
-
-```bash
-finance "Compare LLC vs S-Corp for a single-member R&D lab"
-```
-
-**Administrative checklist:**
-
-```bash
-finance "What logs should I keep for home office deduction as an R&D lab?"
-```
-
----
-
-## 🎯 7. Brand (`brand`)
-
-**Default Model:** Xiaomi MiMo v2 Flash (`BRAND_MODEL`, fallback: `STRATEGY_MODEL`)
-**Alias:** `brand`
-
-### When to Use
-
-- Define your brand
-- Positioning
-- Messaging
-- Differentiation
-- Voice and tone
-
-### Examples
-
-**Define personal brand:**
-
-```bash
-brand "Help me define my personal brand as a developer with MS"
-```
-
-**Positioning:**
-
-```bash
-brand "How should I position myself in the productivity + chronic illness space?"
-```
-
-**Messaging:**
-
-```bash
-brand "What core message should my blog communicate?"
-```
-
-**Voice and tone:**
-
-```bash
-brand "Define voice and tone for content about MS that's honest but not depressing"
-```
-
----
-
-## 📊 8. Market Research (`market`)
-
-**Default Model:** Xiaomi MiMo v2 Flash (`MARKET_MODEL`)
-**Alias:** `market`
-
-### When to Use
-
-- Audience research
-- Trends analysis
-- Opportunity identification
-- Competitive analysis
-
-### Examples
-
-**Audience research:**
-
-```bash
-market "What's the audience for MS + productivity content?"
-```
-
-**Trends:**
-
-```bash
-market "Current trends in chronic illness content and communities"
-```
-
-**Opportunity:**
-
-```bash
-market "Gaps in existing productivity content for people with disabilities"
-```
-
-**Competitive analysis:**
-
-```bash
-market "Who are the main voices in MS + productivity space?"
-```
-
----
-
-## 🧘 9. Stoic Coaching (`stoic`)
-
-**Default Model:** Xiaomi MiMo v2 Flash (`STOIC_MODEL`)
-**Alias:** `stoic`
-
-### When to Use
-
-- Frustration with limitations
-- Dealing with unpredictability
-- Need perspective
-- Mindset challenges
-- Resilience building
-
-### Examples
-
-**Daily frustration:**
-
-```bash
-stoic "I'm frustrated with my energy limitations today"
-```
-
-**Unpredictability:**
-
-```bash
-stoic "How do I handle not knowing if tomorrow will be a good day?"
-```
-
-**Comparison trap:**
-
-```bash
-stoic "I keep comparing my output to healthy developers"
-```
-
-**Reframing:**
-
-```bash
-stoic "Help me reframe 'I can only work 2 hours' into something empowering"
-```
-
-**Long-term perspective:**
-
-```bash
-stoic "How do I stay motivated when progress is so slow?"
-```
-
----
-
-## 🔬 10. Research (`research`)
-
-**Default Model:** Xiaomi MiMo v2 Flash (`RESEARCH_MODEL`)
-**Alias:** `research`
-
-### When to Use
-
-- Learn new topics
-- Synthesize information
-- Deep dives
-- Knowledge summaries
-
-### Examples
-
-**Medical research:**
-
-```bash
-research "Summarize recent research on MS and cognitive function"
-```
-
-**Technology deep-dive:**
-
-```bash
-research "Best practices for bash scripting in 2025"
-```
-
-**Synthesis:**
-
-```bash
-research "Compare different productivity systems for people with chronic illness"
-```
-
-**Learning:**
-
-```bash
-research "Explain how AI language models work at a high level"
-```
-
----
-
-## 📖 11. Narrative (`narrative`)
-
-**Default Model:** Xiaomi MiMo v2 Flash (`CREATIVE_MODEL`)
-**Alias:** `narrative`
-
-### When to Use
-
-- Story structure analysis
-- Plot development
-- Narrative feedback
-- Character development
-
-### Examples
-
-**Analyze structure:**
-
-```bash
-cat draft.md | narrative "Analyze the story structure"
-```
-
-**Plot feedback:**
-
-```bash
-narrative "Review this plot outline for pacing" < outline.txt
-```
-
-**Character development:**
-
-```bash
-narrative "Help me develop a character who has MS but it's not their defining trait"
-```
-
----
-
-## 🚀 Advanced Features
-
-### Chain Multiple Specialists
-
-```bash
-dhp-chain creative narrative aicopy -- "Blog post about automation helping with chronic illness"
-```
-
-**What it does:** Passes your prompt through creative → narrative → aicopy in sequence.
-
----
-
-### Full Project Brief
-
-```bash
-dhp-project "Launch a blog series about productivity with chronic illness"
-```
-
-**What it does:** Runs 5 specialists in order:
-
-1. Market Analyst (audience research)
-2. Brand Builder (positioning)
-3. Chief of Staff (strategy)
-4. Content Specialist (content plan)
-5. Copywriter (marketing copy)
-
-**Output:** Comprehensive markdown project brief.
-
----
-
-### Context-Aware Suggestions
-
-```bash
-ai-suggest
-```
-
-**What it does:** Analyzes your current situation and recommends which AI to use.
-
-**Analyzes:**
-
-- Current directory
-- Git status
-- Active todos
-- Recent journal
-- Time of day
-- Health signals
-
-**Example output:**
-
-```
-You're in a blog directory with drafts.
-Recent journal mentions "energy management".
-Suggested AI specialists:
-  - content: Write about energy management
-  - creative: Turn journal into personal essay
-  - strategy: Plan blog series structure
-```
-
----
-
-## 🎯 Practical Workflows
-
-### Blog Writing Workflow
-
-```bash
-# 1. Get ideas from journal
-blog ideas
-
-# 2. Generate draft
-blog generate "Managing Energy with MS" -p thoughtful-guide -s guides
-
-# 3. Refine with AI
-blog refine drafts/managing-energy.md -p technical-deep-dive
-
-# 4. Get marketing copy
-aicopy "Social media promotion for this blog post" < drafts/managing-energy.md
-```
-
----
-
-### Technical Problem-Solving
-
-```bash
-# 1. Debug the error
-./script.sh 2>&1 | tech "What's wrong?"
-
-# 2. Get optimization suggestions
-cat script.sh | tech "How can I make this faster and safer?"
-
-# 3. Research best practices
-research "Bash error handling best practices"
-```
-
----
-
-### Personal Development
-
-```bash
-# 1. Journal about struggle
-journal "Frustrated with unpredictable energy"
-
-# 2. Get stoic perspective
-stoic "How do I handle energy unpredictability?"
-
-# 3. Turn into content
-creative "Personal essay about working with unpredictable energy"
-
-# 4. Analyze for themes
+journal analyze
+journal mood
 journal themes
 ```
 
----
-
-### Strategic Planning
-
+**Blog workflows:**
 ```bash
-# 1. Market research
-market "Audience for MS + productivity"
-
-# 2. Brand positioning
-brand "Position myself in this space"
-
-# 3. Strategy decision
-strategy "Should I focus on blog or video content?"
-
-# 4. Content plan
-content "Create 3-month content calendar" --context
+blog generate -p "Calm Coach" -a guide -s guides/brain-fog "Energy-first planning"
+blog refine path/to/post.md
 ```
 
 ---
 
-## 💡 Pro Tips
+## Troubleshooting
 
-### Use Spec Templates
-
-```bash
-spec tech       # Opens technical spec template in VS Code
-spec content    # Opens content spec template
-spec creative   # Opens creative spec template
-```
-
-**How it works:**
-
-1. Command opens template in VS Code
-2. Fill in the structured template
-3. Save and close
-4. Auto-pipes to the appropriate AI dispatcher
-5. Output saved for reuse
+- Ensure `OPENROUTER_API_KEY` is set in `.env`.
+- Verify dispatchers with `dotfiles-check`.
+- Read full dispatcher docs: `bin/README.md`.
 
 ---
 
-### Pipe Anything
+## Related Docs
 
-```bash
-cat file.txt | tech "Review this"
-echo "question" | stoic
-git diff | tech "Review these changes"
-todo | strategy "Prioritize these tasks"
-journal list 10 | narrative "Find story themes"
-```
-
----
-
-### Stream for Real-Time Output
-
-```bash
-tech "long question" --stream
-content "long article" --stream
-```
-
-**Why:** See output as it generates instead of waiting for completion.
-
----
-
-### Save Output
-
-All dispatcher output is automatically saved to (default):
-
-```
-~/Documents/AI_Staff_HQ_Outputs/<category>/<dispatcher>/<slug>.md
-```
-
-Override per dispatcher with `DHP_*_OUTPUT_DIR` in `~/dotfiles/.env`.
-
-**To archive manually:**
-
-```bash
-tech "question" > ~/Documents/saved-response.md
-```
-
----
-
-### Check Usage Logs
-
-```bash
-cat ~/.config/dotfiles-data/dispatcher_usage.log
-```
-
-**Shows:** Which dispatchers you use most, when, and estimated costs (all free).
-
----
-
-## 🆘 Troubleshooting
-
-### "No API key found"
-
-```bash
-# Check .env file
-cat ~/dotfiles/.env | grep OPENROUTER_API_KEY
-
-# If missing, add to .env:
-echo 'OPENROUTER_API_KEY=your_key_here' >> ~/dotfiles/.env
-```
-
----
-
-### "Rate limit exceeded"
-
-**Increase cooldown in `.env`:**
-
-```bash
-API_COOLDOWN_SECONDS=3
-```
-
-**Default:** 1 second between calls.
-
----
-
-### "Command not found: tech"
-
-```bash
-# Reload shell configuration
-source ~/.zshrc
-
-# Or validate system
-dotfiles-check
-```
-
----
-
-### "Dispatcher fails silently"
-
-```bash
-# Run with debug output
-bash -x $(which tech) "test question"
-
-# Check logs
-tail ~/.config/dotfiles-data/system.log
-```
-
----
-
-## 📊 Which AI When?
-
-| Situation                   | Use This     |
-| --------------------------- | ------------ |
-| Code is broken              | `tech`       |
-| Need blog content           | `content`    |
-| Writing a story             | `creative`   |
-| Need marketing copy         | `aicopy`     |
-| R&D direction, capabilities | `strategy`   |
-| Tax, S-Corp, finances       | `finance`    |
-| Define brand                | `brand`      |
-| Research audience           | `market`     |
-| Feeling stuck mentally      | `stoic`      |
-| Learn something new         | `research`   |
-| Story structure feedback    | `narrative`  |
-| Not sure which to use       | `ai-suggest` |
-
----
-
-## 🎯 Remember
-
-✅ All dispatchers are **free** - use them generously
-✅ You can **pipe** any text to any dispatcher
-✅ Use `--stream` for **real-time** output
-✅ Use `--context` to include **your recent data**
-✅ All output is **automatically saved**
-✅ **Chain** multiple AIs for complex tasks
-✅ Run `ai-suggest` when you're **not sure** what to do
-
-**The AI is here to help. Use it like you'd use a coworker - frequently and without hesitation.** 🤖
+- [Start Here](start-here.md)
+- [Best Practices](best-practices.md)
+- [Dispatcher Docs](../bin/README.md)
+- [Troubleshooting](../TROUBLESHOOTING.md)

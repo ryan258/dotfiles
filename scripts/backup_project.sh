@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # backup_project.sh - Creates incremental backups using rsync
 
 # Stop the script if any command fails

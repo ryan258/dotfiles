@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 # meds.sh - Medication tracking and reminder system
 
@@ -12,8 +12,25 @@ else
     exit 1
 fi
 
-SYSTEM_LOG_FILE="$HOME/.config/dotfiles-data/system.log"
-MEDS_FILE="$HOME/.config/dotfiles-data/medications.txt"
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/common.sh"
+fi
+
+DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
+MEDS_FILE="${MEDS_FILE:-$DATA_DIR/medications.txt}"
+SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:-${SYSTEM_LOG:-$DATA_DIR/system.log}}"
+
+sanitize_line() {
+    local value
+    value=$(sanitize_input "$1")
+    value=${value//$'\n'/ }
+    printf '%s' "$value"
+}
+
+ensure_meds_dir() {
+    mkdir -p "$(dirname "$MEDS_FILE")"
+}
 
 get_meds_today() {
     echo "${MEDS_TODAY_OVERRIDE:-$(date '+%Y-%m-%d')}"
@@ -60,8 +77,9 @@ case "$1" in
             echo "Example: meds add \"Medication Y\" \"8:00,20:00\""
             exit 1
         fi
-        med_name="$2"
-        schedule="$3"
+        med_name=$(sanitize_line "$2")
+        schedule=$(sanitize_line "$3")
+        ensure_meds_dir
         echo "MED|$med_name|$schedule" >> "$MEDS_FILE"
         echo "Added medication: $med_name ($schedule)"
         ;;
@@ -72,8 +90,8 @@ case "$1" in
             echo "Example: meds refill \"Medication X\" \"2025-12-01\""
             exit 1
         fi
-        med_name="$2"
-        refill_date="$3"
+        med_name=$(sanitize_line "$2")
+        refill_date=$(sanitize_line "$3")
         # Validate date format
         if ! [[ "$refill_date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
             echo "Error: Date must be YYYY-MM-DD"
@@ -82,9 +100,10 @@ case "$1" in
         # Remove existing refill entry for this med if exists (to update it)
         # We use a temp file approach
         if [ -f "$MEDS_FILE" ]; then
-            grep -v "^REFILL|$med_name|" "$MEDS_FILE" > "${MEDS_FILE}.tmp" || true
+            awk -F'|' -v med="$med_name" '!($1=="REFILL" && $2==med)' "$MEDS_FILE" > "${MEDS_FILE}.tmp" || true
             mv "${MEDS_FILE}.tmp" "$MEDS_FILE"
         fi
+        ensure_meds_dir
         echo "REFILL|$med_name|$refill_date" >> "$MEDS_FILE"
         echo "✅ Set refill date for $med_name: $refill_date"
         ;;
@@ -95,9 +114,10 @@ case "$1" in
             echo "Logs that you took the medication right now"
             exit 1
         fi
-        med_name="$2"
-        time_slot="${3:-}"
+        med_name=$(sanitize_line "$2")
+        time_slot=$(sanitize_line "${3:-}")
         timestamp=$(date '+%Y-%m-%d %H:%M')
+        ensure_meds_dir
         if [ -n "$time_slot" ]; then
             echo "DOSE|$timestamp|$med_name|$time_slot" >> "$MEDS_FILE"
         else
@@ -214,7 +234,7 @@ case "$1" in
             exit 0
         fi
 
-        med_name="${2:-}"
+        med_name=$(sanitize_line "${2:-}")
         days="${3:-7}"
 
         echo "📊 MEDICATION HISTORY:"
@@ -228,14 +248,14 @@ case "$1" in
         cutoff=$(date_shift_days "-${days}" "%Y-%m-%d")
 
         if [ -n "$med_name" ]; then
-            grep "^DOSE|" "$MEDS_FILE" 2>/dev/null | grep "$med_name" | awk -F'|' -v cutoff="$cutoff" '
-                $2 >= cutoff {
+            awk -F'|' -v cutoff="$cutoff" -v med="$med_name" '
+                $1=="DOSE" && $2 >= cutoff && $3 == med {
                     printf "%s: %s\n", $2, $3
                 }
             ' | sort || echo "No doses logged for $med_name"
         else
-            grep "^DOSE|" "$MEDS_FILE" 2>/dev/null | awk -F'|' -v cutoff="$cutoff" '
-                $2 >= cutoff {
+            awk -F'|' -v cutoff="$cutoff" '
+                $1=="DOSE" && $2 >= cutoff {
                     printf "%s: %s\n", $2, $3
                 }
             ' | sort || echo "No doses logged"
@@ -249,7 +269,6 @@ case "$1" in
         # --- Configuration ---
         DAYS_AGO=30
         CUTOFF_DATE=$(date_shift_days "-$DAYS_AGO" "%Y-%m-%d")
-        MEDS_FILE="$HOME/.config/dotfiles-data/medications.txt"
 
         if [ ! -f "$MEDS_FILE" ]; then
             echo "Medications file not found."
@@ -263,7 +282,7 @@ case "$1" in
 
         # --- Calculations ---
         # Get all medications
-        MEDS=$(grep "^MED|" "$MEDS_FILE" | cut -d'|' -f2)
+        MEDS=$(awk -F'|' '$1=="MED" {print $2}' "$MEDS_FILE")
 
         if [ -z "$MEDS" ]; then
             echo "No medications configured."
@@ -273,7 +292,7 @@ case "$1" in
         while IFS= read -r med; do
             [ -z "$med" ] && continue
             # Get schedule for the med
-            SCHEDULE=$(grep "^MED|$med|" "$MEDS_FILE" | cut -d'|' -f3)
+            SCHEDULE=$(awk -F'|' -v med="$med" '$1=="MED" && $2==med {print $3; exit}' "$MEDS_FILE")
             DOSES_PER_DAY=$(echo "$SCHEDULE" | tr ',' '\n' | wc -l | tr -d ' ')
 
             # Calculate expected doses
@@ -298,8 +317,8 @@ case "$1" in
             grep "^MED|" "$MEDS_FILE" 2>/dev/null | cut -d'|' -f2 | sed 's/^/  • /' || echo "No medications to remove"
             exit 1
         fi
-        med_name="$2"
-        grep -v "^MED|$med_name|" "$MEDS_FILE" > "${MEDS_FILE}.tmp" && mv "${MEDS_FILE}.tmp" "$MEDS_FILE"
+        med_name=$(sanitize_line "$2")
+        awk -F'|' -v med="$med_name" '!($1=="MED" && $2==med)' "$MEDS_FILE" > "${MEDS_FILE}.tmp" && mv "${MEDS_FILE}.tmp" "$MEDS_FILE"
         echo "Removed medication: $med_name"
         ;;
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # findbig.sh - Find the 10 largest files/folders in the current directory
 set -euo pipefail
 

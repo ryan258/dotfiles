@@ -1,6 +1,12 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # findtext.sh - A user-friendly wrapper for grep to find text in files
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/common.sh"
+fi
 
 IFS= read -r -p "What text are you searching for? " search_term
 
@@ -8,6 +14,8 @@ if [ -z "$search_term" ]; then
     echo "No search term provided. Exiting."
     exit 1
 fi
+search_term=$(sanitize_input "$search_term")
+search_term=${search_term//$'\n'/ }
 
 echo "Searching for '$search_term' in all files in the current directory..."
 
@@ -15,6 +23,6 @@ echo "Searching for '$search_term' in all files in the current directory..."
 # -r = recursive (search in all sub-folders)
 # -l = list only the names of files that contain the text
 # -i = case-insensitive (matches 'hello', 'Hello', 'HELLO', etc.)
-grep -rli "$search_term" .
+grep -rli -- "$search_term" .
 
 # ---

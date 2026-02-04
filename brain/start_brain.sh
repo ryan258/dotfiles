@@ -1,7 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # dotfiles/brain/start_brain.sh
 # Starts the ChromaDB server in the background
-
 set -euo pipefail
 
 BRAIN_DIR="$(cd "$(dirname "$0")" && pwd)"

@@ -4,6 +4,14 @@
 
 ---
 
+## TL;DR
+
+- Use `startday` and `goodevening` to open/close your day.
+- Use `todo top` when overwhelmed.
+- Use `ai-suggest` when unsure which AI to ask.
+
+---
+
 ## 🌅 Morning
 
 | Command                      | What It Does                            |
@@ -109,6 +117,8 @@ cat script.sh | tech --stream
 | `goodevening`            | Evening wrap-up + backup         |
 | `goodevening 2026-01-20` | Close out a specific date        |
 | `weekreview`             | Weekly summary                   |
+| `context.sh capture`     | Snapshot current context         |
+| `context.sh list`        | List saved context snapshots     |
 
 ---
 
@@ -199,10 +209,19 @@ gcal agenda 1          # Preview tomorrow's schedule
 
 ## 📖 More Help
 
-- `docs/discover.md` - Full feature discovery guide
+- `docs/start-here.md` - Feature Discovery section
 - `docs/happy-path.md` - Daily workflow walkthrough
-- `docs/ai-examples.md` - Real AI examples
+- `docs/ai-quick-reference.md` - AI usage + examples
 - `dotfiles-check` - System health validator
+
+---
+
+## Related Docs
+
+- [Start Here](start-here.md)
+- [Happy Path](happy-path.md)
+- [AI Quick Reference](ai-quick-reference.md)
+- [Troubleshooting](../TROUBLESHOOTING.md)
 
 ---
 

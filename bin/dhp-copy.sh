@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 # dhp-copy.sh - Copywriter dispatcher (Swarm Edition)
 # Sales copy, email sequences, landing pages
