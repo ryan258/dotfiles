@@ -1,8 +1,26 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** February 3, 2026
+**Last Updated:** February 4, 2026
 
 This document tracks all major implementations, improvements, and fixes to the Daily Context System.
+
+---
+
+## Version 2.2.3 (February 4, 2026) - Maintenance Patch
+
+**Status:** ✅ Production Ready
+
+### Fixes
+- Updated `spec_helper.sh` to use `create_temp_file()` for safer temp handling and to source shared utilities.
+- Removed a no‑op cleanup trap from `scripts/lib/blog_common.sh`.
+- `dhp-lib.sh` now honors `DEFAULT_TEMPERATURE`/`DEFAULT_MAX_TOKENS` when set (falls back to `null`).
+- Standardized `status.sh` to use `DATA_DIR` (removed `STATE_DIR` fallback).
+- Documented the `finance` dispatcher alias in the quick reference, cheatsheet, and dispatcher README.
+- `startday.sh` now shows true “yesterday” journal entries; GitHub activity errors now surface their root cause.
+- Fixed GitHub repo exclusion parsing to avoid jq escape errors.
+- `startday.sh` now prompts to update spoons even if already initialized, with a default of 10; default daily spoons updated across docs/config.
+- AI briefing now receives captured GitHub activity (instead of empty data).
+- Added GitHub commit recaps: startday shows yesterday’s commits; goodevening shows yesterday + today.
 
 ---
 

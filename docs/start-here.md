@@ -52,7 +52,7 @@ goodevening        # Evening: celebrate wins + auto-backup
 todo add "task"        # Task management
 journal add "note"     # Quick journaling
 health energy 7        # Track energy 1-10
-spoons init 12         # Daily energy budget
+spoons init 10         # Daily energy budget
 focus set "thing"      # Set daily intention
 focus done             # Mark focus complete + archive
 focus history          # View past focus entries
@@ -198,7 +198,7 @@ goodevening     # Celebrate + backup
 | `health fog 6`     | Rate brain fog 1-10           |
 | `health check`     | Circuit breaker (OK to work?) |
 | `meds log "Med"`   | Log medication                |
-| `spoons init 12`   | Daily energy budget           |
+| `spoons init 10`   | Daily energy budget           |
 | `spoons history`   | Usage patterns                |
 | `health dashboard` | 30-day trends                 |
 
@@ -249,7 +249,7 @@ goodevening     # Celebrate + backup
 - `health fog 4` Log brain fog (1-10).
 - `meds log "Med"` Log a medication.
 - `health check` Circuit breaker check.
-- `spoons init 12` Set daily spoon budget.
+- `spoons init 10` Set daily spoon budget.
 - `gcal agenda` See upcoming events.
 
 ### Tasks & Time

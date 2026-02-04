@@ -28,7 +28,7 @@ This directory contains 12 AI dispatcher scripts plus 4 advanced features that p
 | `dhp-narrative.sh` | `narrative` | Story structure     | stdin        |
 | `dhp-copy.sh`      | `aicopy`    | Marketing copy      | stdin        |
 | `dhp-morphling.sh` | `morphling` | Universal adaptive  | argument     |
-| `dhp-finance.sh`   | (none)      | Financial strategy  | stdin/arg    |
+| `dhp-finance.sh`   | `finance`   | Financial strategy  | stdin/arg    |
 
 ## Advanced Features
 
@@ -305,8 +305,11 @@ echo "Who's searching for AI writing assistance?" | market
 # Direct invocation
 dhp-finance.sh "S-Corp vs LLC tradeoffs for an R&D lab"
 
-# Unified entry point (no alias)
+# Unified entry point
 dispatch finance "Medicare SGA safe income planning"
+
+# Alias
+finance "Medicare SGA safe income planning"
 ```
 
 **Flags:**

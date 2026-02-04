@@ -20,7 +20,8 @@ show_help() {
     echo "Usage: $(basename "$0") {init|spend|check|history|cost}"
     echo ""
     echo "Commands:"
-    echo "  init <count>                   Initialize daily spoons (default: 12)"
+    echo "  init <count>                   Initialize daily spoons (default: 10)"
+    echo "  set <count>                    Update today's spoon budget"
     echo "  spend <count> [activity]       Spend spoons on an activity"
     echo "  check                          Show remaining spoons"
     echo "  history [days]                 Show spoon history (default: 7 days)"
@@ -32,6 +33,11 @@ case "${1:-}" in
         count="${2:-$DEFAULT_DAILY_SPOONS}"
         validate_numeric "$count" "spoon count" || exit 1
         init_daily_spoons "$count"
+        ;;
+    set)
+        count="${2:-$DEFAULT_DAILY_SPOONS}"
+        validate_numeric "$count" "spoon count" || exit 1
+        set_daily_spoons "$count"
         ;;
     spend)
         if [ -z "${2:-}" ]; then

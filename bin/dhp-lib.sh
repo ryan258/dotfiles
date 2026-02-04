@@ -67,8 +67,15 @@ _build_json_payload() {
     local model="$1"
     local prompt="$2"
     local stream_flag="$3"
-    local temperature="${DHP_TEMPERATURE:-${DHP_TEMPERATURE_DEFAULT:-null}}"
-    local max_tokens="${DHP_MAX_TOKENS:-${DHP_MAX_TOKENS_DEFAULT:-null}}"
+    local temperature="${DHP_TEMPERATURE:-${DEFAULT_TEMPERATURE:-${DHP_TEMPERATURE_DEFAULT:-}}}"
+    local max_tokens="${DHP_MAX_TOKENS:-${DEFAULT_MAX_TOKENS:-${DHP_MAX_TOKENS_DEFAULT:-}}}"
+
+    if [[ -z "$temperature" ]]; then
+        temperature="null"
+    fi
+    if [[ -z "$max_tokens" ]]; then
+        max_tokens="null"
+    fi
 
     jq -n \
         --arg model "$model" \

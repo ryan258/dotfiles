@@ -10,11 +10,15 @@ if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
 fi
 
 DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-STATE_DIR="${STATE_DIR:-$DATA_DIR}"
-FOCUS_FILE="${FOCUS_FILE:-$STATE_DIR/daily_focus.txt}"
-JOURNAL_FILE="${JOURNAL_FILE:-$STATE_DIR/journal.txt}"
-TODO_FILE="${TODO_FILE:-$STATE_DIR/todo.txt}"
+FOCUS_FILE="${FOCUS_FILE:-$DATA_DIR/daily_focus.txt}"
+JOURNAL_FILE="${JOURNAL_FILE:-$DATA_DIR/journal.txt}"
+TODO_FILE="${TODO_FILE:-$DATA_DIR/todo.txt}"
 PROJECTS_DIR="${PROJECTS_DIR:-$HOME/Projects}"
+
+# Source new libraries
+if [ -f "$SCRIPT_DIR/lib/health_ops.sh" ]; then
+    source "$SCRIPT_DIR/lib/health_ops.sh"
+fi
 
 # --- Focus ---
 echo ""
@@ -82,6 +86,14 @@ fi
 # --- Health Check (interactive only) ---
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
 HEALTH_SCRIPT="${HEALTH_SCRIPT:-$DOTFILES_DIR/scripts/health.sh}"
+
+# Show Health Summary
+echo ""
+echo "🏥 HEALTH STATUS:"
+if command -v show_health_summary >/dev/null 2>&1; then
+    show_health_summary
+fi
+
 if [ -t 0 ] && [ -x "$HEALTH_SCRIPT" ]; then
     echo ""
     echo -n "🏥 Log Energy/Fog levels? [y/N]: "
@@ -108,8 +120,8 @@ fi
 # --- Tasks ---
 echo ""
 echo "✅ TASKS:"
-if [ -f "$HOME/dotfiles/scripts/todo.sh" ]; then
-    "$HOME/dotfiles/scripts/todo.sh" top 3
+if [ -x "$SCRIPT_DIR/todo.sh" ]; then
+    "$SCRIPT_DIR/todo.sh" top 3
 else
     echo "  (todo.sh not found)"
 fi

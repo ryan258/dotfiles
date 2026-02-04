@@ -18,20 +18,25 @@ if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
     source "$SCRIPT_DIR/lib/config.sh"
 else
     # Fallback
-    STATE_DIR="${STATE_DIR:-$HOME/.config/dotfiles-data}"
-    CURRENT_DAY_FILE="$STATE_DIR/current_day"
+    DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
+    CURRENT_DAY_FILE="$DATA_DIR/current_day"
     # Ensure exports for compatibility if config missing
-    export FOCUS_FILE="$STATE_DIR/daily_focus.txt"
+    export FOCUS_FILE="$DATA_DIR/daily_focus.txt"
 fi
 
-# Compatibility: Map config.sh vars to local expectation if needed
-# config.sh uses DATA_DIR, startday uses STATE_DIR
-STATE_DIR="${DATA_DIR:-${STATE_DIR:-$HOME/.config/dotfiles-data}}"
+# Source new libraries
+if [ -f "$SCRIPT_DIR/lib/github_ops.sh" ]; then
+    source "$SCRIPT_DIR/lib/github_ops.sh"
+fi
+if [ -f "$SCRIPT_DIR/lib/health_ops.sh" ]; then
+    source "$SCRIPT_DIR/lib/health_ops.sh"
+fi
 
-mkdir -p "$STATE_DIR"
-CURRENT_DAY_FILE="${CURRENT_DAY_FILE:-$STATE_DIR/current_day}"
-FOCUS_FILE="${FOCUS_FILE:-$STATE_DIR/daily_focus.txt}"
-BRIEFING_CACHE="${BRIEFING_CACHE_FILE:-$STATE_DIR/.ai_briefing_cache}"
+DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
+mkdir -p "$DATA_DIR"
+CURRENT_DAY_FILE="${CURRENT_DAY_FILE:-$DATA_DIR/current_day}"
+FOCUS_FILE="${FOCUS_FILE:-$DATA_DIR/daily_focus.txt}"
+BRIEFING_CACHE="${BRIEFING_CACHE_FILE:-$DATA_DIR/.ai_briefing_cache}"
 
 # Support "refresh" to force new AI briefing
 if [[ "${1:-}" == "refresh" ]]; then
@@ -90,35 +95,47 @@ fi
 echo "🥣 SPOON CHECK:"
 if [ -x "$SPOON_MANAGER" ]; then
     # Check if already initialized
-    if ! "$SPOON_MANAGER" check &>/dev/null; then
-        # Not initialized yet - prompt for spoons
-        # Check if running interactively
+    if "$SPOON_MANAGER" check &>/dev/null; then
+        remaining=$("$SPOON_MANAGER" check | grep -oE -- '-?[0-9]+' || echo "?")
+        echo "  You have $remaining spoons remaining today."
         if [ -t 0 ]; then
-            echo -n "  How many spoons do you have today? [12]: "
+            echo -n "  Update spoon budget? [y/N]: "
+            read -r update_spoons
+            if [[ "$update_spoons" =~ ^[yY] ]]; then
+                echo -n "  How many spoons do you have today? [10]: "
+                read -r spoons_input
+                spoons_count="${spoons_input:-10}"
+                if ! [[ "$spoons_count" =~ ^[0-9]+$ ]]; then
+                    echo "  Invalid input, defaulting to 10."
+                    spoons_count=10
+                fi
+                "$SPOON_MANAGER" set "$spoons_count" | sed 's/^/  /'
+            fi
+        fi
+    else
+        # Not initialized yet - prompt for spoons
+        if [ -t 0 ]; then
+            echo -n "  How many spoons do you have today? [10]: "
             read -r spoons_input
-            spoons_count="${spoons_input:-12}"
+            spoons_count="${spoons_input:-10}"
         else
-            echo "  (Non-interactive mode: defaulting to 12)"
-            spoons_count=12
+            echo "  (Non-interactive mode: defaulting to 10)"
+            spoons_count=10
         fi
 
         if ! [[ "$spoons_count" =~ ^[0-9]+$ ]]; then
-            echo "  Invalid input, defaulting to 12."
-            spoons_count=12
+            echo "  Invalid input, defaulting to 10."
+            spoons_count=10
         fi
 
         "$SPOON_MANAGER" init "$spoons_count" | sed 's/^/  /'
-    else
-        # Already initialized, just show status
-        remaining=$("$SPOON_MANAGER" check | grep -oE '[0-9]+' || echo "?")
-        echo "  You have $remaining spoons remaining today."
     fi
 else
     echo "  (Spoon manager not found)"
 fi
 
 # --- LOGGING ---
-SYSTEM_LOG_FILE="${SYSTEM_LOG:-$STATE_DIR/system.log}"
+SYSTEM_LOG_FILE="${SYSTEM_LOG:-$DATA_DIR/system.log}"
 echo "$(date): startday.sh - Running morning routine." >> "$SYSTEM_LOG_FILE"
 
 # Load environment variables for optional AI features
@@ -138,13 +155,20 @@ if [ -f "$BLOG_SCRIPT" ] && [ -n "$BLOG_STATUS_DIR" ] && [ -d "$BLOG_STATUS_DIR"
 fi
 
 # --- YESTERDAY'S CONTEXT ---
-JOURNAL_FILE="${JOURNAL_FILE:-$STATE_DIR/journal.txt}"
+JOURNAL_FILE="${JOURNAL_FILE:-$DATA_DIR/journal.txt}"
 echo ""
 echo "📅 YESTERDAY YOU WERE:"
-# Show last 3 journal entries or git commits
 if [ -f "$JOURNAL_FILE" ]; then
     echo "Journal entries:"
-    tail -n 3 "$JOURNAL_FILE" | sed 's/^/  • /'
+    yesterday=$(date_shift_days -1 "%Y-%m-%d")
+    yesterday_entries=$(awk -F'|' -v day="$yesterday" '$1 ~ "^"day {print "  • " $0}' "$JOURNAL_FILE")
+    if [ -n "$yesterday_entries" ]; then
+        echo "$yesterday_entries"
+    else
+        echo "  (No entries for $yesterday)"
+    fi
+else
+    echo "  (Journal file not found)"
 fi
 
 # --- WEEKLY REVIEW ---
@@ -163,40 +187,32 @@ fi
 # --- ACTIVE PROJECTS (from GitHub) ---
 echo ""
 echo "🚀 ACTIVE PROJECTS (pushed to GitHub in last 7 days):"
-HELPER_SCRIPT="$SCRIPT_DIR/github_helper.sh"
-RECENT_PUSHES=""
-if [ -f "$HELPER_SCRIPT" ]; then
-    if ! command -v jq >/dev/null 2>&1; then
-        echo "  ⚠️ jq not found; cannot parse GitHub activity."
-    elif GITHUB_REPOS=$("$HELPER_SCRIPT" list_repos 2>/dev/null); then
-        repo_lines=$(echo "$GITHUB_REPOS" | jq -r '.[] | "\(.pushed_at) \(.name)"')
-        while read -r line; do
-            [ -z "$line" ] && continue
-            pushed_at_str=$(echo "$line" | awk '{print $1}')
-            repo_name=$(echo "$line" | awk '{$1=""; print $0}' | xargs) # handle repo names with spaces
-
-            pushed_at_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$pushed_at_str" +%s 2>/dev/null || continue)
-            NOW=$(date +%s)
-            DAYS_AGO=$(( (NOW - pushed_at_epoch) / 86400 ))
-
-            if [ "$DAYS_AGO" -le 7 ]; then
-                if [ "$DAYS_AGO" -eq 0 ]; then
-                    day_text="today"
-                elif [ "$DAYS_AGO" -eq 1 ]; then
-                    day_text="yesterday"
-                else
-                    day_text="$DAYS_AGO days ago"
-                fi
-                entry="$repo_name (pushed $day_text)"
-                echo "  • $entry"
-                RECENT_PUSHES+="${entry}"$'\n'
-            else
-                break
-            fi
-        done <<< "$repo_lines"
+if command -v get_recent_github_activity >/dev/null 2>&1; then
+    if RECENT_PUSHES=$(get_recent_github_activity 7); then
+        if [ -n "$RECENT_PUSHES" ]; then
+            echo "$RECENT_PUSHES"
+        else
+            echo "  (No recent pushes)"
+        fi
     else
-        echo "  ⚠️ Unable to fetch GitHub activity. Check your token or network."
+        echo "  (Unable to fetch GitHub activity. Check your token or network.)"
+        RECENT_PUSHES="(none)"
     fi
+else
+    echo "  (GitHub operations library not loaded)"
+    RECENT_PUSHES="(none)"
+fi
+
+# --- YESTERDAY'S COMMITS ---
+echo ""
+echo "🧾 YESTERDAY'S COMMITS:"
+if command -v get_commit_activity_for_date >/dev/null 2>&1; then
+    yesterday_commits=$(date_shift_days -1 "%Y-%m-%d")
+    if ! get_commit_activity_for_date "$yesterday_commits"; then
+        echo "  (Unable to fetch commit activity. Check your token or network.)"
+    fi
+else
+    echo "  (GitHub operations library not loaded)"
 fi
 
 # --- SUGGESTED DIRECTORIES ---
@@ -222,64 +238,13 @@ if [ "$BLOG_READY" = true ]; then
 fi
 
 # --- Helpers ---
-parse_timestamp() {
-    local raw="$1"
-    local epoch
-    epoch=$(timestamp_to_epoch "$raw")
-    echo "${epoch:-0}"
-}
-
 # --- HEALTH ---
 echo ""
 echo "🏥 HEALTH:"
-HEALTH_FILE="${HEALTH_FILE:-$STATE_DIR/health.txt}"
-if [ -f "$HEALTH_FILE" ] && [ -s "$HEALTH_FILE" ]; then
-    # Show upcoming appointments
-    TODAY_STR=$(date +%Y-%m-%d)
-    TODAY_EPOCH=$(parse_timestamp "$TODAY_STR")
-    
-    if grep -q "^APPT|" "$HEALTH_FILE" 2>/dev/null; then
-        grep "^APPT|" "$HEALTH_FILE" | sort -t'|' -k2 | while IFS='|' read -r type appt_date desc; do
-            appt_epoch=$(parse_timestamp "$appt_date")
-            if [ "$appt_epoch" -le 0 ]; then
-                continue
-            fi
-            
-            # Calculate difference in days (Midnight to Midnight)
-            # Add partial day rounding just in case, but usually integer division of 86400 works for dates
-            diff_seconds=$(( appt_epoch - TODAY_EPOCH ))
-            days_until=$(( diff_seconds / 86400 ))
-            
-            if [ "$days_until" -ge 0 ]; then
-                if [ "$days_until" -eq 1 ]; then
-                     echo "  • $desc - $appt_date (Tomorrow)"
-                elif [ "$days_until" -eq 0 ]; then
-                     echo "  • $desc - $appt_date (Today)"
-                else
-                     echo "  • $desc - $appt_date (in $days_until days)"
-                fi
-            fi
-        done
-    fi
-
-    # Show today's health snapshot if available
-    today=$(date '+%Y-%m-%d')
-    if grep -q "^ENERGY|$today" "$HEALTH_FILE" 2>/dev/null; then
-        today_energy=$(grep "^ENERGY|$today" "$HEALTH_FILE" | tail -1 | cut -d'|' -f3)
-        echo "  Energy level: $today_energy/10"
-    fi
-
-    if grep -q "^SYMPTOM|$today" "$HEALTH_FILE" 2>/dev/null; then
-        symptom_count=$(grep -c "^SYMPTOM|$today" "$HEALTH_FILE")
-        echo "  Symptoms logged today: $symptom_count (run 'health list' to see)"
-    fi
-
-    # If no data shown, display help
-    if ! grep -q "^APPT\|^ENERGY\|^SYMPTOM" "$HEALTH_FILE" 2>/dev/null; then
-        echo "  (no data tracked - try: health add, health energy, health symptom)"
-    fi
+if command -v show_health_summary >/dev/null 2>&1; then
+    show_health_summary
 else
-    echo "  (no data tracked - try: health add, health energy, health symptom)"
+    echo "  (Health operations library not loaded)"
 fi
 
 # --- SCHEDULED TASKS ---
@@ -306,7 +271,7 @@ else
 fi
 
 # --- STALE TASKS (older than 7 days) ---
-STALE_TODO_FILE="${TODO_FILE:-$STATE_DIR/todo.txt}"
+STALE_TODO_FILE="${TODO_FILE:-$DATA_DIR/todo.txt}"
 echo ""
 echo "⏰ STALE TASKS:"
 if [ -f "$STALE_TODO_FILE" ] && [ -s "$STALE_TODO_FILE" ]; then
@@ -315,7 +280,7 @@ if [ -f "$STALE_TODO_FILE" ] && [ -s "$STALE_TODO_FILE" ]; then
 fi
 
 # --- TODAY'S TASKS ---
-TODO_FILE="${TODO_FILE:-$STATE_DIR/todo.txt}"
+TODO_FILE="${TODO_FILE:-$DATA_DIR/todo.txt}"
 echo ""
 echo "✅ TODAY'S TASKS:"
 if [ -f "$SCRIPT_DIR/todo.sh" ]; then
@@ -330,7 +295,7 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
     echo "🤖 AI BRIEFING:"
 
     # Cache file for today's briefing
-    BRIEFING_CACHE="${BRIEFING_CACHE_FILE:-$STATE_DIR/.ai_briefing_cache}"
+    BRIEFING_CACHE="${BRIEFING_CACHE_FILE:-$DATA_DIR/.ai_briefing_cache}"
     TODAY=$(date '+%Y-%m-%d')
 
     # Check if we already have today's briefing
@@ -339,8 +304,8 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
         grep "^$TODAY|" "$BRIEFING_CACHE" | cut -d'|' -f2- | sed 's/^/  /'
     else
         # Generate new briefing
-        JOURNAL_FILE="${JOURNAL_FILE:-$STATE_DIR/journal.txt}"
-        TODO_FILE="${TODO_FILE:-$STATE_DIR/todo.txt}"
+        JOURNAL_FILE="${JOURNAL_FILE:-$DATA_DIR/journal.txt}"
+        TODO_FILE="${TODO_FILE:-$DATA_DIR/todo.txt}"
 
         # Gather context
         FOCUS_CONTEXT=""

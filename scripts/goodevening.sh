@@ -22,13 +22,19 @@ else
     fi
 fi
 
-STATE_DIR="${DATA_DIR:-${STATE_DIR:-$HOME/.config/dotfiles-data}}"
-mkdir -p "$STATE_DIR"
+# Source GitHub operations (for recent pushes + commit recap)
+if [ -f "$SCRIPT_DIR/lib/github_ops.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/github_ops.sh"
+fi
 
-SYSTEM_LOG_FILE="${SYSTEM_LOG:-$STATE_DIR/system.log}"
-TODO_DONE_FILE="${DONE_FILE:-${TODO_DONE_FILE:-$STATE_DIR/todo_done.txt}}"
-JOURNAL_FILE="${JOURNAL_FILE:-$STATE_DIR/journal.txt}"
-FOCUS_FILE="${FOCUS_FILE:-$STATE_DIR/daily_focus.txt}"
+DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
+mkdir -p "$DATA_DIR"
+
+SYSTEM_LOG_FILE="${SYSTEM_LOG:-$DATA_DIR/system.log}"
+TODO_DONE_FILE="${DONE_FILE:-${TODO_DONE_FILE:-$DATA_DIR/todo_done.txt}}"
+JOURNAL_FILE="${JOURNAL_FILE:-$DATA_DIR/journal.txt}"
+FOCUS_FILE="${FOCUS_FILE:-$DATA_DIR/daily_focus.txt}"
 PROJECTS_DIR="${PROJECTS_DIR:-$HOME/Projects}"
 
 BLOG_SCRIPT="$SCRIPT_DIR/blog.sh"
@@ -63,7 +69,7 @@ if [ -n "$DATE_OVERRIDE" ]; then
     TODAY="$DATE_OVERRIDE"
     echo "📅 Overriding date to: $TODAY"
 else
-    CURRENT_DAY_FILE="$STATE_DIR/current_day"
+    CURRENT_DAY_FILE="$DATA_DIR/current_day"
 
     if [ -f "$CURRENT_DAY_FILE" ]; then
         TODAY=$(cat "$CURRENT_DAY_FILE")
@@ -145,42 +151,52 @@ fi
 # --- ACTIVE PROJECTS (from GitHub) ---
 echo ""
 echo "🚀 RECENT PUSHES (last 7 days):"
-HELPER_SCRIPT="$SCRIPT_DIR/github_helper.sh"
-RECENT_PUSHES=""
-if [ -f "$HELPER_SCRIPT" ]; then
-    if ! command -v jq >/dev/null 2>&1; then
-        echo "  ⚠️ jq not found; cannot parse GitHub activity."
-    elif GITHUB_REPOS=$("$HELPER_SCRIPT" list_repos 2>/dev/null); then
-        repo_lines=$(echo "$GITHUB_REPOS" | jq -r '.[] | "\(.pushed_at) \(.name)"')
-        while read -r line; do
-            [ -z "$line" ] && continue
-            pushed_at_str=$(echo "$line" | awk '{print $1}')
-            repo_name=$(echo "$line" | awk '{$1=""; print $0}' | xargs) # handle repo names with spaces
-
-            pushed_at_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$pushed_at_str" +%s 2>/dev/null || continue)
-            NOW=$(date +%s)
-            DAYS_AGO=$(( (NOW - pushed_at_epoch) / 86400 ))
-
-            if [ "$DAYS_AGO" -le 7 ]; then
-                if [ "$DAYS_AGO" -eq 0 ]; then
-                    day_text="today"
-                elif [ "$DAYS_AGO" -eq 1 ]; then
-                    day_text="yesterday"
-                else
-                    day_text="$DAYS_AGO days ago"
-                fi
-                entry="$repo_name (pushed $day_text)"
-                echo "  • $entry"
-                RECENT_PUSHES+="${entry}"$'\n'
-            else
-                break
-            fi
-        done <<< "$repo_lines"
+if command -v get_recent_github_activity >/dev/null 2>&1; then
+    if recent_pushes=$(get_recent_github_activity 7); then
+        if [ -n "$recent_pushes" ]; then
+            echo "$recent_pushes"
+        else
+            echo "  (No recent pushes)"
+        fi
     else
-        echo "  ⚠️ Unable to fetch GitHub activity. Check your token or network."
+        echo "  (Unable to fetch GitHub activity. Check your token or network.)"
     fi
 else
-    echo "  (github_helper.sh not found)"
+    echo "  (GitHub operations library not loaded)"
+fi
+
+# --- COMMIT RECAP ---
+echo ""
+echo "🧾 COMMIT RECAP:"
+if command -v get_commit_activity_for_date >/dev/null 2>&1; then
+    if command -v python3 >/dev/null 2>&1; then
+        YESTERDAY=$(python3 - "$TODAY" <<'PY'
+import sys
+from datetime import datetime, timedelta
+
+dt = datetime.strptime(sys.argv[1], "%Y-%m-%d") - timedelta(days=1)
+print(dt.strftime("%Y-%m-%d"))
+PY
+)
+    else
+        if date -j -f "%Y-%m-%d" "$TODAY" -v-1d "+%Y-%m-%d" >/dev/null 2>&1; then
+            YESTERDAY=$(date -j -f "%Y-%m-%d" "$TODAY" -v-1d "+%Y-%m-%d")
+        elif command -v gdate >/dev/null 2>&1; then
+            YESTERDAY=$(gdate -d "$TODAY -1 day" "+%Y-%m-%d")
+        else
+            YESTERDAY=$(date -d "$TODAY -1 day" "+%Y-%m-%d")
+        fi
+    fi
+    echo "  Yesterday ($YESTERDAY):"
+    if ! get_commit_activity_for_date "$YESTERDAY"; then
+        echo "  (Unable to fetch commit activity. Check your token or network.)"
+    fi
+    echo "  Today ($TODAY):"
+    if ! get_commit_activity_for_date "$TODAY"; then
+        echo "  (Unable to fetch commit activity. Check your token or network.)"
+    fi
+else
+    echo "  (GitHub operations library not loaded)"
 fi
 
 # --- Gamify Progress ---

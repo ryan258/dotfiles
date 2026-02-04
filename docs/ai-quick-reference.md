@@ -39,9 +39,9 @@ dispatch tech "Fix my script"
 | `narrative` | `bin/dhp-narrative.sh` | Story structure | stdin |
 | `aicopy` | `bin/dhp-copy.sh` | Marketing copy | stdin |
 | `morphling` | `bin/dhp-morphling.sh` | Universal adaptive | argument |
-| `dispatch finance` | `bin/dhp-finance.sh` | Financial strategy | stdin/argument |
+| `finance` | `bin/dhp-finance.sh` | Financial strategy | stdin/argument |
 
-**Unified Entry:** `bin/dispatch.sh` routes `dispatch <squad>` to the correct dispatcher. It also honors AI Staff HQ `squads.json` when present. Use `dispatch finance` for the finance dispatcher (no alias).
+**Unified Entry:** `bin/dispatch.sh` routes `dispatch <squad>` to the correct dispatcher. It also honors AI Staff HQ `squads.json` when present. Use `dispatch finance` or the `finance` alias.
 
 ---
 

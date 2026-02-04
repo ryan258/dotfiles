@@ -7,12 +7,6 @@ if [[ -n "${_BLOG_COMMON_LOADED:-}" ]]; then
 fi
 readonly _BLOG_COMMON_LOADED=true
 
-# Cleanup
-cleanup() {
-    :
-}
-trap cleanup EXIT
-
 # Section mapping helper: returns "content_subdir|archetype|default_subsection"
 known_section_defaults() {
     local key="$1"

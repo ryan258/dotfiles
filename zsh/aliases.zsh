@@ -465,6 +465,7 @@ alias dhp-stoic="$HOME/dotfiles/bin/dhp-stoic.sh"
 alias dhp-research="$HOME/dotfiles/bin/dhp-research.sh"
 alias dhp-narrative="$HOME/dotfiles/bin/dhp-narrative.sh"
 alias dhp-copy="$HOME/dotfiles/bin/dhp-copy.sh"
+alias dhp-finance="$HOME/dotfiles/bin/dhp-finance.sh"
 
 # Shorthand versions for quick access
 alias tech="$HOME/dotfiles/bin/dhp-tech.sh"
@@ -478,8 +479,10 @@ alias research="$HOME/dotfiles/bin/dhp-research.sh"
 alias narrative="$HOME/dotfiles/bin/dhp-narrative.sh"
 alias aicopy="$HOME/dotfiles/bin/dhp-copy.sh"
 alias morphling="$HOME/dotfiles/bin/dhp-morphling.sh"
+alias finance="$HOME/dotfiles/bin/dhp-finance.sh"
 alias dhp-morphling="$HOME/dotfiles/bin/dhp-morphling.sh"
 alias dhp="$HOME/dotfiles/bin/dhp-tech.sh"  # Default to tech dispatcher
+alias dispatch="$HOME/dotfiles/bin/dispatch.sh"
 
 # Advanced AI Features (Phase 5)
 alias dhp-project="dhp-project.sh"           # Multi-specialist orchestration

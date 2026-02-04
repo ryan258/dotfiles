@@ -43,6 +43,10 @@ if [ -z "$USERNAME" ]; then
     echo "Error: GITHUB_USERNAME not set and git config user.name not found" >&2
     exit 1
 fi
+if [ -z "${GITHUB_USERNAME:-}" ] && [[ "$USERNAME" == *" "* ]]; then
+    echo "Error: GITHUB_USERNAME not set and git config user.name looks like a full name ('$USERNAME'). Set GITHUB_USERNAME in .env." >&2
+    exit 1
+fi
 
 # Helper to get file permissions in a cross-platform way.
 # Handles differences between BSD stat (macOS) and GNU stat (Linux).
@@ -204,10 +208,43 @@ list_repos() {
         # Use jq to parse the comma-separated list and filter
         # We use --arg to pass the environment variable safely
         echo "$json_data" | jq --arg exclude "$GITHUB_EXCLUDE_REPOS" \
-            "(\$exclude | split(\",\") | map(gsub(\"^\\s+|\\s+$\";\"\"))) as \$ex_list | $filter | map(select(.name as \$n | \$ex_list | index(\$n) | not))"
+            "(\$exclude | split(\",\") | map(gsub(\"^[[:space:]]+|[[:space:]]+$\";\"\"))) as \$ex_list | $filter | map(select(.name as \$n | \$ex_list | index(\$n) | not))"
     else
         echo "$json_data" | jq "$filter"
     fi
+}
+
+# Lists recent events for the authenticated user, with fallback to public events.
+list_user_events() {
+    local json_data
+    if ! json_data=$(_github_api_call "/user/events?per_page=100"); then
+        json_data=$(_github_api_call "/users/$USERNAME/events?per_page=100") || {
+            echo "Error: Failed to fetch user events" >&2
+            return 1
+        }
+    fi
+    echo "$json_data"
+}
+
+# Lists commits for a specific date (YYYY-MM-DD) from recent PushEvents.
+list_commits_for_date() {
+    local target_date="$1"
+    if [ -z "$target_date" ]; then
+        echo "Usage: list_commits_for_date YYYY-MM-DD" >&2
+        return 1
+    fi
+
+    local json_data
+    if ! json_data=$(list_user_events); then
+        return 1
+    fi
+
+    echo "$json_data" | jq -r --arg date "$target_date" '
+        .[] | select(.type == "PushEvent") | select(.created_at | startswith($date)) |
+        .repo.name as $repo |
+        .payload.commits[]? |
+        "\($repo)|\(.sha[0:7])|\(.message | gsub(\"[[:space:]]+\"; \" \") | gsub(\"\\\\|\"; \"/\") | sub(\"[[:space:]]+$\"; \"\"))"
+    '
 }
 
 # Gets raw JSON data for a specific repository.
@@ -247,8 +284,15 @@ case "$1" in
         shift
         get_readme_content "$@"
         ;;
+    list_user_events)
+        list_user_events
+        ;;
+    list_commits_for_date)
+        shift
+        list_commits_for_date "$@"
+        ;;
     *)
-        echo "Usage: $0 {list_repos|get_repo <repo>|get_latest_commit <repo>|get_readme_content <repo>}" >&2
+        echo "Usage: $0 {list_repos|get_repo <repo>|get_latest_commit <repo>|get_readme_content <repo>|list_user_events|list_commits_for_date YYYY-MM-DD}" >&2
         exit 1
         ;;
 esac

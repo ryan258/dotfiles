@@ -640,7 +640,7 @@ weekreview             # Optional: see the bigger picture
 ```bash
 startday               # See what it shows
 focus set "Learn the system"  # Set intention
-spoons init 12         # Start energy tracking
+spoons init 10         # Start energy tracking
 todo "Try one thing"   # Add one task
 journal "Day 1"        # One entry
 goodevening            # Evening routine

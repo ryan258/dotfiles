@@ -14,14 +14,9 @@ if [[ -f "$SCRIPT_DIR/common.sh" ]]; then
     source "$SCRIPT_DIR/common.sh"
 fi
 
-# Source config for paths
-if [[ -f "$SCRIPT_DIR/config.sh" ]]; then
-    source "$SCRIPT_DIR/config.sh"
-fi
-
 DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
 SPOON_LOG="${SPOON_LOG:-$DATA_DIR/spoons.txt}"
-DEFAULT_DAILY_SPOONS="${DEFAULT_DAILY_SPOONS:-12}"
+DEFAULT_DAILY_SPOONS="${DEFAULT_DAILY_SPOONS:-10}"
 
 mkdir -p "$DATA_DIR"
 
@@ -44,6 +39,19 @@ init_daily_spoons() {
     echo "Initialized $count spoons for $date"
 }
 
+# Set (override) daily spoon budget
+# Usage: set_daily_spoons <count> [date]
+set_daily_spoons() {
+    local count="${1:-$DEFAULT_DAILY_SPOONS}"
+
+    validate_numeric "$count" "spoon count" || return 1
+
+    local date="${2:-$(date +%Y-%m-%d)}"
+
+    echo "BUDGET|$date|$count" >> "$SPOON_LOG"
+    echo "Updated budget to $count spoons for $date"
+}
+
 # Spend spoons on an activity
 # Usage: spend_spoons <count> <activity>
 spend_spoons() {
@@ -62,8 +70,7 @@ spend_spoons() {
     # Get current remaining
     local remaining=$(get_remaining_spoons)
     
-    # If no budget set, default to 12 if not found (or error?)
-    # For now, let's assume we need a budget.
+    # If no budget set, we require initialization first.
     if [ -z "$remaining" ]; then
         echo "Error: No spoon budget initialized for today ($today)" >&2
         return 1
@@ -90,20 +97,26 @@ get_remaining_spoons() {
         return
     fi
     
-    # Find today's budget
-    local budget_line=$(grep "^BUDGET|$today" "$SPOON_LOG" | tail -n 1)
+    # Find today's budget (track line numbers for ordering)
+    local budget_line_info
+    budget_line_info=$(grep -n "^BUDGET|$today" "$SPOON_LOG" | tail -n 1 || true)
+    local budget_line="${budget_line_info#*:}"
     if [ -z "$budget_line" ]; then
         echo ""
         return
     fi
     
+    local budget_line_num="${budget_line_info%%:*}"
     local initial=$(echo "$budget_line" | cut -d'|' -f3)
     
     # Find last spend log for today to get remaining, 
     # OR sum up all spends. The spec says the log stores REMAINING, so we can just grab the last one.
-    local last_spend=$(grep "^SPEND|$today" "$SPOON_LOG" | tail -n 1)
-    
-    if [ -n "$last_spend" ]; then
+    local last_spend_info
+    last_spend_info=$(grep -n "^SPEND|$today" "$SPOON_LOG" | tail -n 1 || true)
+    local last_spend="${last_spend_info#*:}"
+    local last_spend_line_num="${last_spend_info%%:*}"
+
+    if [ -n "$last_spend" ] && [ -n "$last_spend_line_num" ] && [ "$last_spend_line_num" -gt "$budget_line_num" ]; then
         echo "$last_spend" | cut -d'|' -f6
     else
         echo "$initial"
@@ -153,13 +166,6 @@ get_spoon_history() {
 }
 
 # Predict spoons for a date (Mock/placeholder for AI)
-# Usage: predict_spoons_for_date <date>
-predict_spoons_for_date() {
-    local date="$1"
-    # TODO: Implement prediction logic using correlation engine or AI
-    echo "Prediction not implemented yet (requires AI)"
-}
-
 # Calculate cost for activity type
 # Usage: calculate_activity_cost <activity_type>
 calculate_activity_cost() {

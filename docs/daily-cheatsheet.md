@@ -23,7 +23,7 @@
 | `focus done`                 | Mark focus complete + archive           |
 | `focus history`              | View past focus entries                 |
 | `focus clear`                | Clear current focus                     |
-| `spoons init 12`             | Start daily energy budget               |
+| `spoons init 10`             | Start daily energy budget               |
 | `health check`               | Check if OK to work (circuit breaker)   |
 | `todo top`                   | See top 3 tasks only                    |
 | `g suggest`                  | Where should I work today?              |
@@ -69,7 +69,7 @@
 | `health symptom "headache"` | Log a symptom                       |
 | `meds log "Med Name"`       | Log medication dose                 |
 | `meds check`                | What's due now?                     |
-| `spoons init 12`            | Start daily spoon budget            |
+| `spoons init 10`            | Start daily spoon budget            |
 | `spoons spend 2`            | Log spoon usage                     |
 | `spoons check`              | See remaining spoons                |
 | `spoons history`            | View spoon usage history            |

@@ -61,7 +61,7 @@ Whatever you set here appears at the top of `startday` (and you can re-run `star
 Initialize your daily energy budget based on how you feel:
 
 ```bash
-spoons init 12     # Good day
+spoons init 10     # Good day
 spoons init 8      # Average day
 spoons init 4      # Rough day (flare)
 ```

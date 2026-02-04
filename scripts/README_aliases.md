@@ -133,8 +133,10 @@ Every script in `$SCRIPTS_DIR` has a corresponding wrapper function which ensure
 - `stoic` / `dhp-stoic` – Stoic coaching and mindset reframing
 - `research` / `dhp-research` – Knowledge synthesis and organization
 - `narrative` / `dhp-narrative` – Story structure and plot analysis
-- `copy` / `dhp-copy` – Marketing copy and sales messaging
+- `aicopy` / `dhp-copy` – Marketing copy and sales messaging
 - `morphling` / `dhp-morphling` – Universal adaptive specialist that auto-adapts to any task
+- `finance` / `dhp-finance` – Financial strategy and admin planning
+- `dispatch` – Unified dispatcher entry point (`dispatch <squad> "brief"`)
 - `ai-suggest` – Context-aware dispatcher suggestions
 - `ai-project` / `dhp-project` – Multi-specialist orchestration
 - `ai-chain` / `dhp-chain` – Sequential dispatcher chaining

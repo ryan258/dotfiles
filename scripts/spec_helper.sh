@@ -8,9 +8,9 @@ fi
 readonly _SPEC_HELPER_LOADED=true
 
 SPEC_HELPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [ -f "$SPEC_HELPER_DIR/lib/config.sh" ]; then
+if [ -f "$SPEC_HELPER_DIR/lib/common.sh" ]; then
   # shellcheck disable=SC1090
-  source "$SPEC_HELPER_DIR/lib/config.sh"
+  source "$SPEC_HELPER_DIR/lib/common.sh"
 fi
 
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SPEC_HELPER_DIR/.." && pwd)}"
@@ -42,7 +42,12 @@ spec_dispatch() {
 
   # Create temp file from template (macOS compatible)
   local tmpfile
-  tmpfile=$(mktemp /tmp/spec-XXXXXX)
+  if type create_temp_file &>/dev/null; then
+    tmpfile=$(create_temp_file "spec")
+  else
+    tmpfile=$(mktemp -t "spec.XXXXXX")
+    chmod 600 "$tmpfile"
+  fi
   mv "$tmpfile" "${tmpfile}.${dispatcher}-spec.txt"
   tmpfile="${tmpfile}.${dispatcher}-spec.txt"
   cat "$template_file" > "$tmpfile"
