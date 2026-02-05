@@ -36,8 +36,14 @@ When you open your first terminal of the day, `startday` runs automatically (onl
 # If you want to run it manually:
 startday
 
-# Force a fresh AI briefing (clears cache):
+# Force a fresh AI briefing (keeps GitHub cache for resilience):
 startday refresh
+
+# Full refresh (also clears GitHub cache):
+startday refresh --clear-github-cache
+
+# If GitHub sections fail, run with diagnostics:
+GITHUB_DEBUG=true startday refresh
 ```
 
 ## Morning: Capture Your Intentions

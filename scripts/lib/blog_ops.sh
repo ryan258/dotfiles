@@ -59,7 +59,7 @@ function status() {
 }
 
 # --- Subcommand: stubs ---
-function stubs() {
+stubs() {
     echo "📄 CONTENT STUBS:"
 
     STUB_FILES=$(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null || true)
@@ -102,7 +102,7 @@ function stubs() {
 }
 
 # --- Subcommand: random ---
-function random_stub() {
+random_stub() {
     echo "🎲 Opening a random stub..."
     
     mapfile -t STUB_FILES < <(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null || true)
@@ -125,7 +125,7 @@ function random_stub() {
 }
 
 # --- Subcommand: recent ---
-function recent() {
+recent() {
     echo "⏳ RECENTLY MODIFIED POSTS:"
 
     recent_files=()

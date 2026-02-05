@@ -192,34 +192,35 @@ alias meds="meds.sh"
 
 # Ultra-short aliases for frequent tasks
 alias next="todo.sh top 1"
-alias t="todo.sh list"          # Show todo list
-alias j="journal.sh"            # Add journal entry
-alias ta="todo.sh add"          # Add todo task
+alias t="$HOME/dotfiles/scripts/todo.sh list"          # Show todo list
+alias j="$HOME/dotfiles/scripts/journal.sh"            # Add journal entry
+alias ta="$HOME/dotfiles/scripts/todo.sh add"          # Add todo task
 alias ja="journal.sh add"       # Add journal entry
 
 # Information & Utilities
-alias weather="weather.sh"
-alias findtext="findtext.sh"
+alias memo="$HOME/dotfiles/scripts/memo.sh"
+alias weather="$HOME/dotfiles/scripts/weather.sh"
+alias findtext="$HOME/dotfiles/scripts/findtext.sh"
 alias graballtext="grab_all_text.sh"
 
 # Project & Development Tools
-alias newproject="start_project.sh"
-alias newpython="mkproject_py.sh"
-alias newpy="mkproject_py.sh"
-alias progress="my_progress.sh"
+alias newproject="$HOME/dotfiles/scripts/start_project.sh"
+alias newpython="$HOME/dotfiles/scripts/mkproject_py.sh"
+alias newpy="$HOME/dotfiles/scripts/mkproject_py.sh"
+alias progress="$HOME/dotfiles/scripts/my_progress.sh"
 alias projects="gh-projects.sh"
 
 # File & System Management
-alias backup="backup_project.sh"
-alias findbig="findbig.sh"
-alias unpack="unpacker.sh"
+alias backup="$HOME/dotfiles/scripts/backup_project.sh"
+alias findbig="$HOME/dotfiles/scripts/findbig.sh"
+alias unpack="$HOME/dotfiles/scripts/unpacker.sh"
 alias tidydown="tidy_downloads.sh"
 
 # Daily Routine Scripts
-alias startday="startday.sh"
-alias goodevening="goodevening.sh"
-alias greeting="greeting.sh"
-alias weekreview="week_in_review.sh"
+alias startday="$HOME/dotfiles/scripts/startday.sh"
+alias goodevening="$HOME/dotfiles/scripts/goodevening.sh"
+alias greeting="$HOME/dotfiles/scripts/greeting.sh"
+alias weekreview="$HOME/dotfiles/scripts/week_in_review.sh"
 
 # =============================================================================
 # NAVIGATION & FILE MANAGEMENT SCRIPTS

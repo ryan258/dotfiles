@@ -168,6 +168,7 @@ fi
 # --- COMMIT RECAP ---
 echo ""
 echo "🧾 COMMIT RECAP:"
+TODAY_COMMITS=""
 if command -v get_commit_activity_for_date >/dev/null 2>&1; then
     if command -v python3 >/dev/null 2>&1; then
         YESTERDAY=$(python3 - "$TODAY" <<'PY'
@@ -192,7 +193,13 @@ PY
         echo "  (Unable to fetch commit activity. Check your token or network.)"
     fi
     echo "  Today ($TODAY):"
-    if ! get_commit_activity_for_date "$TODAY"; then
+    if TODAY_COMMITS=$(get_commit_activity_for_date "$TODAY" 2>/dev/null); then
+        if [ -n "$TODAY_COMMITS" ]; then
+            echo "$TODAY_COMMITS"
+        else
+            echo "  (No commits yet today)"
+        fi
+    else
         echo "  (Unable to fetch commit activity. Check your token or network.)"
     fi
 else
@@ -378,19 +385,22 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
         FOCUS_CONTEXT=$(cat "$FOCUS_FILE")
     fi
 
-    if [ -z "$TODAY_TASKS$TODAY_JOURNAL$FOCUS_CONTEXT$RECENT_PUSHES" ]; then
-        echo "  (No focus, pushes, tasks, or journal entries to reflect on for $TODAY)"
+    if [ -z "$TODAY_TASKS$TODAY_JOURNAL$FOCUS_CONTEXT$RECENT_PUSHES$TODAY_COMMITS" ]; then
+        echo "  (No focus, pushes, commits, tasks, or journal entries to reflect on for $TODAY)"
     elif ! command -v dhp-strategy.sh &> /dev/null; then
          echo "  (AI Staff tools not found in PATH)"
     else
         # Generate reflection via AI
         REFLECTION=$({
             echo "Provide a brief daily reflection (3-5 sentences)."
-            echo "Primary signals are today's focus and recent GitHub pushes; use them first."
+            echo "Primary signals are today's focus, today's commits, and recent GitHub pushes; use them first."
             echo "Secondary signals are tasks and journal entries."
             echo ""
             echo "Today's focus:"
             echo "${FOCUS_CONTEXT:-"(no focus set)"}"
+            echo ""
+            echo "Today's commits:"
+            echo "${TODAY_COMMITS:-"(none)"}"
             echo ""
             echo "Recent GitHub pushes (last 7 days):"
             echo "${RECENT_PUSHES:-"(none)"}"
@@ -406,8 +416,8 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
                 echo ""
             fi
             echo "Provide:"
-            echo "- One insight or capability gained today"
-            echo "- One outcome suggested by the pushes"
+            echo "- One insight or capability gained today based on the commits"
+            echo "- One outcome suggested by the commits and pushes"
             echo "- One smallest next step for tomorrow"
             echo ""
             echo "Keep it thoughtful, reflective, and energy-aware."

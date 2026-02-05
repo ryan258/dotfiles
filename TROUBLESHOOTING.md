@@ -60,6 +60,31 @@ This document provides solutions to common issues encountered when setting up an
     ```
     The `bootstrap.sh` script should do this automatically if the file exists.
 
+### `startday` / `goodevening` shows GitHub fetch unavailable
+
+**Problem:** The GitHub sections show `(Unable to fetch GitHub activity. Check your token or network.)` or `(Unable to fetch commit activity. Check your token or network.)`.
+
+**Solution:**
+1.  **Run a refresh with diagnostics enabled:**
+    ```bash
+    GITHUB_DEBUG=true startday refresh
+    ```
+    If you intentionally need a cold GitHub refresh, run:
+    ```bash
+    startday refresh --clear-github-cache
+    ```
+2.  **Confirm username/token are set in `.env`:**
+    ```bash
+    GITHUB_USERNAME="your-github-login"
+    # Either set GITHUB_TOKEN or keep ~/.github_token populated
+    ```
+3.  **Note on fallback behavior:** Public GitHub endpoints now fall back to unauthenticated requests (for `/users/<name>/repos` and `/users/<name>/events`) before showing failure, so invalid/expired tokens are less disruptive for public activity views.
+4.  **Check raw network reachability:**
+    ```bash
+    curl -fsS -L --connect-timeout 5 --max-time 20 'https://api.github.com/users/<your-user>/repos?per_page=1'
+    ```
+    If this fails with `curl: (7) Failed to connect`, the issue is network/path/firewall related rather than token parsing in the script.
+
 ## macOS Specific Issues
 
 ### `date` command errors (`-v` flag not working)

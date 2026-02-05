@@ -34,6 +34,11 @@ if ! mkdir -p "$CACHE_DIR" 2>/dev/null; then
     CACHE_AVAILABLE=false
 fi
 
+# Optional diagnostics and request timeout controls.
+GITHUB_DEBUG="${GITHUB_DEBUG:-false}"
+GITHUB_CONNECT_TIMEOUT="${GITHUB_CONNECT_TIMEOUT:-5}"
+GITHUB_REQUEST_TIMEOUT="${GITHUB_REQUEST_TIMEOUT:-20}"
+
 # Determine GitHub Username:
 # 1. Try env var GITHUB_USERNAME (explicit override).
 # 2. Fallback to git config user.name (git default).
@@ -69,50 +74,19 @@ ensure_token_access() {
     local fallback_file="$2"
 
     if [ -f "$source_file" ]; then
-        local current_perms
-        current_perms=$(get_file_perms "$source_file")
-        
-        # Check for strict permissions (600)
-        if [ "$current_perms" != "600" ]; then
-            # Attempt to fix permissions in place
-            if chmod 600 "$source_file" 2>/dev/null; then
-                echo "Adjusted permissions on $source_file (was $current_perms, now 600)." >&2
-                echo "$source_file"
-                return
-            fi
-
-            # If we can't chmod (filesystem issues?), try to copy safely to fallback
-            local fallback_dir
-            fallback_dir=$(dirname "$fallback_file")
-            if [ ! -d "$fallback_dir" ]; then
-                mkdir -p "$fallback_dir" 2>/dev/null || true
-            fi
-            
-            # If fallback dir is writable, copy and secure
-            if [ -w "$fallback_dir" ] 2>/dev/null; then
-                if contents=$(cat "$source_file" 2>/dev/null); then
-                    if printf "%s" "$contents" > "$fallback_file" 2>/dev/null && chmod 600 "$fallback_file" 2>/dev/null; then
-                        echo "Copied GitHub token to $fallback_file with secure permissions." >&2
-                        echo "$fallback_file"
-                        return
-                    fi
-                fi
-            fi
-
-            # If all fixes fail, warn user but return original path (better to run insecurely than crash)
-            echo "Warning: Unable to apply secure permissions to $source_file (current perms: $current_perms)." >&2
-            echo "Please run: chmod 600 \"$source_file\" (continuing with existing permissions)." >&2
-            echo "$source_file"
-            return
+        # Try to secure it, but don't block if we can't
+        if ! chmod 600 "$source_file" 2>/dev/null; then
+             # Just warn and proceed
+             echo "Warning: Unable to secure $source_file permissions." >&2
         fi
-        
-        # File exists and has correct permissions
         echo "$source_file"
         return
     fi
 
-    # Source does not exist, check fallback
     if [ -f "$fallback_file" ]; then
+        if ! chmod 600 "$fallback_file" 2>/dev/null; then
+             echo "Warning: Unable to secure $fallback_file permissions." >&2
+        fi
         echo "$fallback_file"
         return
     fi
@@ -124,9 +98,18 @@ ensure_token_access() {
 # --- Initialization & Dependency Checks ---
 
 TOKEN_PATH=$(ensure_token_access "$TOKEN_FILE" "$TOKEN_FALLBACK")
+
+# Use environment variable if file not found
 if [ -z "$TOKEN_PATH" ]; then
-    echo "Error: GitHub token not found. Create $TOKEN_FILE (or $TOKEN_FALLBACK) with your PAT." >&2
-    exit 1
+    if [ -n "${GITHUB_TOKEN:-}" ]; then
+        TOKEN="$GITHUB_TOKEN"
+    else
+        echo "Error: GitHub token not found. Set GITHUB_TOKEN in .env or create $TOKEN_FILE." >&2
+        exit 1
+    fi
+else
+    # Load the token into memory for use in requests
+    TOKEN=$(cat "$TOKEN_PATH") 
 fi
 
 if ! command -v curl >/dev/null 2>&1; then
@@ -138,8 +121,7 @@ if ! command -v jq >/dev/null 2>&1; then
     exit 1
 fi
 
-# Load the token into memory for use in requests
-TOKEN=$(cat "$TOKEN_PATH")
+
 
 # --- Internal Helper Functions ---
 
@@ -156,6 +138,12 @@ _cache_path_for() {
     fi
 }
 
+_github_debug_log() {
+    if [ "$GITHUB_DEBUG" = "true" ]; then
+        echo "$*" >&2
+    fi
+}
+
 # Core API caller.
 # 1. Constructs full URL.
 # 2. Authenticates using Bearer token.
@@ -166,25 +154,86 @@ _github_api_call() {
     local api_url="https://api.github.com$endpoint"
     local cache_file; cache_file=$(_cache_path_for "$endpoint")
 
-    # Try live fetch
-    if response=$(curl -fsS -H "Authorization: token $TOKEN" \
+    local tmp_response
+    local primary_err
+    local fallback_err
+    local header_file
+    local fallback_attempted=false
+    tmp_response=$(mktemp -t "gh_api.XXXXXX")
+    primary_err=$(mktemp -t "gh_api_primary_err.XXXXXX")
+    fallback_err=$(mktemp -t "gh_api_fallback_err.XXXXXX")
+    header_file="${tmp_response}.headers"
+
+    # Optional scope diagnostics when debugging auth issues.
+    if [ "$GITHUB_DEBUG" = "true" ] && \
+       curl -fsS -L -I \
+            --connect-timeout "$GITHUB_CONNECT_TIMEOUT" \
+            --max-time "$GITHUB_REQUEST_TIMEOUT" \
+            -H "Authorization: token $TOKEN" \
+            "$api_url" > "$header_file" 2>/dev/null; then
+        _github_debug_log "Scopes: $(grep -i '^x-oauth-scopes:' "$header_file" | tr -d '\r' || echo "(none)")"
+    fi
+
+    if curl -fsS -L \
+         --connect-timeout "$GITHUB_CONNECT_TIMEOUT" \
+         --max-time "$GITHUB_REQUEST_TIMEOUT" \
+         -H "Authorization: token $TOKEN" \
          -H "Accept: application/vnd.github.v3+json" \
-         "$api_url" 2>/dev/null); then
-        # On success, update cache
-        if [ -n "$cache_file" ]; then
-            printf "%s" "$response" > "$cache_file"
-        fi
-        printf "%s" "$response"
-    else
-        # On failure, try fallback to cache
-        if [ -n "$cache_file" ] && [ -f "$cache_file" ]; then
-            echo "Warning: Unable to reach GitHub. Serving cached data for $endpoint." >&2
-            cat "$cache_file"
-        else
-            echo "Error: Failed to reach GitHub for $endpoint." >&2
-            return 1
+         "$api_url" -o "$tmp_response" 2>"$primary_err"; then
+
+        # Validate JSON strictly
+        if jq empty "$tmp_response" >/dev/null 2>&1; then
+            if [ -n "$cache_file" ]; then
+                cp "$tmp_response" "$cache_file"
+            fi
+            cat "$tmp_response"
+            rm -f "$tmp_response" "$primary_err" "$fallback_err" "$header_file"
+            return 0
         fi
     fi
+
+    # Public user endpoints should still work without auth.
+    if [[ "$endpoint" =~ ^/users/[^/]+/(events|repos)(\?|$) ]]; then
+        fallback_attempted=true
+        if curl -fsS -L \
+             --connect-timeout "$GITHUB_CONNECT_TIMEOUT" \
+             --max-time "$GITHUB_REQUEST_TIMEOUT" \
+             -H "Accept: application/vnd.github.v3+json" \
+             "$api_url" -o "$tmp_response" 2>"$fallback_err"; then
+
+            if jq empty "$tmp_response" >/dev/null 2>&1; then
+                if [ -n "$cache_file" ]; then
+                    cp "$tmp_response" "$cache_file"
+                fi
+                cat "$tmp_response"
+                rm -f "$tmp_response" "$primary_err" "$fallback_err" "$header_file"
+                return 0
+            fi
+            _github_debug_log "Invalid JSON from unauthenticated fallback for $endpoint"
+        fi
+    fi
+
+    if [ "$GITHUB_DEBUG" = "true" ]; then
+        _github_debug_log "Debug Warning: All fetch attempts failed for $endpoint"
+        if [ -s "$primary_err" ]; then
+            _github_debug_log "Primary Err: $(head -n 1 "$primary_err" | tr -d '\r')"
+        fi
+        if [ "$fallback_attempted" = true ] && [ -s "$fallback_err" ]; then
+            _github_debug_log "Fallback Err: $(head -n 1 "$fallback_err" | tr -d '\r')"
+        fi
+    fi
+
+    # On failure, try fallback to cache.
+    if [ -n "$cache_file" ] && [ -f "$cache_file" ]; then
+        echo "Warning: Unable to reach GitHub. Serving cached data for $endpoint." >&2
+        cat "$cache_file"
+        rm -f "$tmp_response" "$primary_err" "$fallback_err" "$header_file"
+        return 0
+    fi
+
+    rm -f "$tmp_response" "$primary_err" "$fallback_err" "$header_file"
+    echo "Error: Failed to reach GitHub for $endpoint." >&2
+    return 1
 }
 
 # --- Public Interface Functions ---
@@ -204,29 +253,35 @@ list_repos() {
         filter+=" | map(select(.fork == false))"
     fi
 
-    if [ -n "${GITHUB_EXCLUDE_REPOS:-}" ]; then
+    if [ "${GITHUB_EXCLUDE_REPOS:-}" ]; then
         # Use jq to parse the comma-separated list and filter
         # We use --arg to pass the environment variable safely
-        echo "$json_data" | jq --arg exclude "$GITHUB_EXCLUDE_REPOS" \
+        printf "%s" "$json_data" | jq --arg exclude "$GITHUB_EXCLUDE_REPOS" \
             "(\$exclude | split(\",\") | map(gsub(\"^[[:space:]]+|[[:space:]]+$\";\"\"))) as \$ex_list | $filter | map(select(.name as \$n | \$ex_list | index(\$n) | not))"
     else
-        echo "$json_data" | jq "$filter"
+        printf "%s" "$json_data" | jq "$filter"
     fi
 }
+
 
 # Lists recent events for the authenticated user, with fallback to public events.
 list_user_events() {
-    local json_data
-    if ! json_data=$(_github_api_call "/user/events?per_page=100"); then
-        json_data=$(_github_api_call "/users/$USERNAME/events?per_page=100") || {
-            echo "Error: Failed to fetch user events" >&2
-            return 1
-        }
-    fi
-    echo "$json_data"
+    {
+        # Suppress stderr from primary call
+        if ! _github_api_call "/user/events?per_page=100" 2>/dev/null; then
+            # If primary failed, try fallback
+            _github_api_call "/users/$USERNAME/events?per_page=100" || {
+                 echo "Error: Failed to fetch user events" >&2
+                 return 1
+            }
+        fi
+    } | iconv -c -f utf-8 -t utf-8
 }
 
-# Lists commits for a specific date (YYYY-MM-DD) from recent PushEvents.
+# Lists commits for a specific date (YYYY-MM-DD) by querying the Commits API.
+# Lists commits for a specific date (YYYY-MM-DD) using a hybrid approach:
+# 1. Events API tells us which repos/branches were pushed on the target date
+# 2. Commits API fetches the actual commit details for those branches
 list_commits_for_date() {
     local target_date="$1"
     if [ -z "$target_date" ]; then
@@ -234,17 +289,41 @@ list_commits_for_date() {
         return 1
     fi
 
-    local json_data
-    if ! json_data=$(list_user_events); then
-        return 1
+    # Calculate the next day for the 'until' parameter
+    local next_date
+    if date --version >/dev/null 2>&1; then
+        next_date=$(date -d "$target_date + 1 day" +%Y-%m-%d)
+    else
+        next_date=$(date -j -v+1d -f "%Y-%m-%d" "$target_date" +%Y-%m-%d)
     fi
 
-    echo "$json_data" | jq -r --arg date "$target_date" '
-        .[] | select(.type == "PushEvent") | select(.created_at | startswith($date)) |
-        .repo.name as $repo |
-        .payload.commits[]? |
-        "\($repo)|\(.sha[0:7])|\(.message | gsub(\"[[:space:]]+\"; \" \") | gsub(\"\\\\|\"; \"/\") | sub(\"[[:space:]]+$\"; \"\"))"
-    '
+    # Get PushEvents to find which repos/branches were pushed on target date
+    local events_json
+    events_json=$(list_user_events 2>/dev/null) || return 1
+
+    # Extract unique repo/branch pairs from PushEvents on target date
+    local repo_branches
+    repo_branches=$(echo "$events_json" | jq -r --arg date "$target_date" '
+        [.[] | select(.type == "PushEvent" and (.created_at | startswith($date)))] |
+        .[] | (.repo.name | split("/")[1]) + ":" + (.payload.ref | split("/")[-1])
+    ' 2>/dev/null | sort -u)
+
+    [ -z "$repo_branches" ] && return 0
+
+    # For each repo/branch, query the Commits API
+    while IFS=: read -r repo_name branch; do
+        [ -z "$repo_name" ] && continue
+        [ -z "$branch" ] && branch="HEAD"
+
+        local commits_json
+        commits_json=$(_github_api_call "/repos/$USERNAME/$repo_name/commits?sha=$branch&author=$USERNAME&since=${target_date}T00:00:00Z&until=${next_date}T00:00:00Z&per_page=20" 2>/dev/null) || continue
+
+        echo "$commits_json" | jq -r --arg repo "$repo_name" '
+            if type == "array" then
+                .[] | ($repo) + "|" + (.sha[:7]) + "|" + (.commit.message | split("\n")[0] | gsub("\\|"; "/"))
+            else empty end
+        ' 2>/dev/null
+    done <<< "$repo_branches"
 }
 
 # Gets raw JSON data for a specific repository.

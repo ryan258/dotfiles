@@ -8,6 +8,45 @@ if [[ -n "${_GITHUB_OPS_LOADED:-}" ]]; then
 fi
 readonly _GITHUB_OPS_LOADED=true
 
+_github_ops_debug() {
+    if [ "${GITHUB_DEBUG:-false}" = "true" ]; then
+        echo "$*" >&2
+    fi
+}
+
+_log_github_helper_error() {
+    local err_file="$1"
+    local err_msg=""
+
+    err_msg=$(_extract_github_error "$err_file")
+
+    if [ "${GITHUB_DEBUG:-false}" = "true" ]; then
+        # In debug mode, surface helper diagnostics so connectivity/auth issues
+        # are visible without rerunning helper scripts manually.
+        while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            echo "$line" >&2
+        done < "$err_file"
+        return 0
+    fi
+
+    if [ -n "$err_msg" ]; then
+        _github_ops_debug "$err_msg"
+    fi
+}
+
+_extract_github_error() {
+    local err_file="$1"
+    local line=""
+
+    line=$(grep -E '^(Error|Warning):' "$err_file" | head -n 1 || true)
+    if [ -z "$line" ]; then
+        line=$(grep -Ev '^(Debug|Primary Err|Fallback Err|Scopes:|$)' "$err_file" | head -n 1 || true)
+    fi
+
+    printf "%s" "$line"
+}
+
 # Get recent GitHub activity (pushes in the last 7 days)
 # Usage: get_recent_github_activity [days]
 get_recent_github_activity() {
@@ -19,7 +58,7 @@ get_recent_github_activity() {
     fi
 
     if ! command -v jq >/dev/null 2>&1; then
-        echo "  ⚠️ jq not found; cannot parse GitHub activity." >&2
+        _github_ops_debug "jq not found; cannot parse GitHub activity."
         return 1
     fi
 
@@ -27,16 +66,8 @@ get_recent_github_activity() {
     local err_file
     err_file=$(mktemp -t "github-helper.XXXXXX")
     if ! github_repos=$("$helper_script" list_repos 2> "$err_file"); then
-        local err_msg=""
-        if [ -s "$err_file" ]; then
-            err_msg=$(head -n 1 "$err_file")
-        fi
+        [ -s "$err_file" ] && _log_github_helper_error "$err_file"
         rm -f "$err_file"
-        if [ -n "$err_msg" ]; then
-            echo "  ⚠️ $err_msg" >&2
-        else
-            echo "  ⚠️ Unable to fetch GitHub activity. Check your token or network." >&2
-        fi
         return 1
     fi
     rm -f "$err_file"
@@ -97,12 +128,12 @@ get_commit_activity_for_date() {
     fi
 
     if [ ! -f "$helper_script" ]; then
-        echo "  (GitHub helper not found)"
+        _github_ops_debug "GitHub helper not found at $helper_script"
         return 1
     fi
 
     if ! command -v jq >/dev/null 2>&1; then
-        echo "  ⚠️ jq not found; cannot parse GitHub activity." >&2
+        _github_ops_debug "jq not found; cannot parse GitHub activity."
         return 1
     fi
 
@@ -110,16 +141,8 @@ get_commit_activity_for_date() {
     local err_file
     err_file=$(mktemp -t "github-commits.XXXXXX")
     if ! commits=$("$helper_script" list_commits_for_date "$target_date" 2> "$err_file"); then
-        local err_msg=""
-        if [ -s "$err_file" ]; then
-            err_msg=$(head -n 1 "$err_file")
-        fi
+        [ -s "$err_file" ] && _log_github_helper_error "$err_file"
         rm -f "$err_file"
-        if [ -n "$err_msg" ]; then
-            echo "  ⚠️ $err_msg" >&2
-        else
-            echo "  ⚠️ Unable to fetch commit activity. Check your token or network." >&2
-        fi
         return 1
     fi
     rm -f "$err_file"

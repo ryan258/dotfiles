@@ -187,41 +187,7 @@ esac # Shell Scripts Collection - macOS/zsh Edition
 # Save this as `~/.zsh_aliases`:
 # 
 # ```bash
-# # ~/.zsh_aliases
-# # Shell aliases optimized for macOS/zsh
-# 
-# # =============================================================================
-# # NAVIGATION & DIRECTORY SHORTCUTS  
-# # =============================================================================
-# 
-# # Quick directory navigation
-# alias ..="cd .."
-# alias ...="cd ../.."
-# alias ....="cd ../../.."
-# 
-# # Enhanced directory listing (macOS compatible)
-# alias ll="ls -alF"                 # Detailed list with file types
-# alias la="ls -A"                   # List all except . and ..
-# alias l="ls -CF"                   # List in columns with file types
-# alias lt="ls -altr"                # List by time, newest last
-# alias lh="ls -alh"                 # List with human-readable sizes
-# 
-# # Quick file operations
-# alias here="ls -la"                # What's in this directory
-# alias tree="find . -type d | head -20"  # Show directory structure
-# alias newest="ls -lt | head -10"   # Show 10 newest files
-# alias biggest="ls -lS | head -10"  # Show 10 biggest files
-# alias count="ls -1 | wc -l"        # Count files in directory
-# 
-# # Quick access to common directories
-# alias downloads="cd ~/Downloads"
-# alias documents="cd ~/Documents"
-# alias desktop="cd ~/Desktop"
-# alias scripts="cd ~/scripts"
-# alias home="cd ~"
-# alias docs="cd ~/Documents"
-# alias down="cd ~/Downloads"
-# alias desk="cd ~/Desktop"
+
 # 
 # # =============================================================================
 # # SYSTEM MANAGEMENT (macOS)

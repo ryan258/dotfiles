@@ -267,16 +267,35 @@ validate_safe_path() {
 
     # Resolve to absolute path using python for portability (macOS/Linux)
     local resolved
-    resolved=$(python3 -c "import os, sys; print(os.path.realpath(sys.argv[1]))" "$path" 2>/dev/null) || {
-        echo "Error: Invalid path: $path" >&2
-        return 1
-    }
+    if command -v python3 &>/dev/null; then
+        resolved=$(python3 -c "import os, sys; print(os.path.realpath(sys.argv[1]))" "$path" 2>/dev/null)
+    elif command -v python &>/dev/null; then
+        resolved=$(python -c "import os, sys; print(os.path.realpath(sys.argv[1]))" "$path" 2>/dev/null)
+    fi
+
+    if [[ -z "$resolved" ]]; then
+        # Fallback to simple shell resolution if python failed/missing
+        if [[ -d "$path" ]]; then
+            resolved=$(cd "$path" && pwd -P)
+        else
+            echo "Error: Invalid path: $path" >&2
+            return 1
+        fi
+    fi
 
     # Check it's under allowed base
     # Resolve base too
     local resolved_base
-    resolved_base=$(python3 -c "import os, sys; print(os.path.realpath(sys.argv[1]))" "$allowed_base" 2>/dev/null)
-    
+    if command -v python3 &>/dev/null; then
+        resolved_base=$(python3 -c "import os, sys; print(os.path.realpath(sys.argv[1]))" "$allowed_base" 2>/dev/null)
+    elif command -v python &>/dev/null; then
+        resolved_base=$(python -c "import os, sys; print(os.path.realpath(sys.argv[1]))" "$allowed_base" 2>/dev/null)
+    fi
+
+    # Debug
+    # Debug
+    # echo "DEBUG: path=$path resolved=$resolved base=$allowed_base resolved_base=$resolved_base" >&2
+
     if [[ "$resolved" != "$resolved_base"* ]]; then
         echo "Error: Path outside allowed directory: $path" >&2
         return 1
@@ -315,8 +334,7 @@ require_lib() {
     if [[ -f "$lib_path" ]]; then
         source "$lib_path"
     else
-        echo "Error: Required library not found: $lib_name" >&2
-        exit 1
+        die "Required library not found: $lib_name" "$EXIT_FILE_NOT_FOUND"
     fi
 }
 
@@ -334,50 +352,8 @@ validate_path() {
         return 1
     fi
 
-    local canonical_path=""
-
-    # Try shell-native realpath first (available on macOS 12.3+ and Linux)
-    if command -v realpath &>/dev/null; then
-        canonical_path=$(realpath -m "$input_path" 2>/dev/null) || canonical_path=""
-    fi
-
-    # Fallback to Python if realpath failed or unavailable
-    if [[ -z "$canonical_path" ]]; then
-        if command -v python3 &>/dev/null; then
-            canonical_path=$(python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$input_path" 2>/dev/null) || canonical_path=""
-        elif command -v python &>/dev/null; then
-            canonical_path=$(python -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$input_path" 2>/dev/null) || canonical_path=""
-        fi
-    fi
-
-    # Final fallback: manual resolution for simple cases
-    if [[ -z "$canonical_path" ]]; then
-        # Expand ~ and resolve . and ..
-        case "$input_path" in
-            ~/*) input_path="$HOME/${input_path#\~/}" ;;
-            ~) input_path="$HOME" ;;
-        esac
-        if [[ -d "$input_path" ]]; then
-            canonical_path=$(cd "$input_path" && pwd -P 2>/dev/null) || canonical_path=""
-        elif [[ -f "$input_path" ]]; then
-            local dir_part file_part
-            dir_part=$(dirname "$input_path")
-            file_part=$(basename "$input_path")
-            canonical_path=$(cd "$dir_part" && pwd -P 2>/dev/null)/"$file_part" || canonical_path=""
-        fi
-    fi
-
-    if [[ -z "$canonical_path" ]]; then
-        echo "Error: Cannot canonicalize path: '$input_path'" >&2
+    # Reuse validate_safe_path which handles realpath resolution and base checking
+    if ! validate_safe_path "$input_path" "$HOME"; then
         return 1
     fi
-
-    # Ensure the path is within the user's home directory
-    if [[ "$canonical_path" != "$HOME" ]] && [[ "$canonical_path" != "$HOME"/* ]]; then
-        echo "Error: Path '$canonical_path' is outside the allowed home directory." >&2
-        return 1
-    fi
-
-    echo "$canonical_path"
-    return 0
 }

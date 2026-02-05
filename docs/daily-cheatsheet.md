@@ -17,7 +17,8 @@
 | Command                      | What It Does                            |
 | ---------------------------- | --------------------------------------- |
 | `startday`                   | Morning briefing (auto-runs once daily) |
-| `startday refresh`           | Force new AI briefing (clears cache)    |
+| `startday refresh`           | Force new AI briefing (keeps GitHub cache) |
+| `startday refresh --clear-github-cache` | Full refresh (AI + GitHub caches) |
 | `focus set "my thing today"` | Set daily intention                     |
 | `focus show`                 | View current focus                      |
 | `focus done`                 | Mark focus complete + archive           |

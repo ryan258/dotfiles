@@ -121,6 +121,6 @@ capture_open_files() {
 # Capture VS Code state
 capture_vscode_state() {
     # Placeholder
-    # TODO: Implement VS Code state capture via CLI or API
+    # Placeholder for future VS Code integration
     echo "VS Code state capture not implemented"
 }

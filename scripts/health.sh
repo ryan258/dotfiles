@@ -306,13 +306,59 @@ cmd_remove() {
     echo "Removed line #$line_num"
 }
 
+_dashboard_energy() {
+    local recent_data="$1"
+    local avg_energy
+    avg_energy=$(echo "$recent_data" | grep "^ENERGY" | awk -F'|' '{ sum += $3; count++ } END { if (count > 0) printf "%.1f", sum/count; else echo "N/A"; }')
+    echo "• Average Energy (30d): $avg_energy/10"
+}
+
+_dashboard_symptoms() {
+    local recent_data="$1"
+    echo "• Symptom Frequency (30d):"
+    echo "$recent_data" | grep "^SYMPTOM" | cut -d'|' -f3 | sort | uniq -c | sort -nr | head -5 | while read -r count name; do
+         printf "  - %-15s: %s times\n" "$name" "$count"
+    done
+}
+
+_dashboard_fog() {
+    local recent_data="$1"
+    local fog_days
+    fog_days=$(echo "$recent_data" | grep "^SYMPTOM" | grep -i "fog" | awk -F'|' '{print substr($2, 1, 10)}' | sort -u)
+    
+    if [ -n "$fog_days" ]; then
+        local fog_day_energy_sum=0
+        local fog_day_energy_count=0
+        while read -r day; do
+            [ -z "$day" ] && continue
+            local energy_on_fog_day
+            energy_on_fog_day=$(echo "$recent_data" | grep "^ENERGY" | grep "^ENERGY|$day" | head -n 1 | awk -F'|' '{print $3}')
+            if [ -n "$energy_on_fog_day" ]; then
+                fog_day_energy_sum=$((fog_day_energy_sum + energy_on_fog_day))
+                fog_day_energy_count=$((fog_day_energy_count + 1))
+            fi
+        done <<< "$fog_days"
+
+        if [ "$fog_day_energy_count" -gt 0 ]; then
+            local avg_energy_fog
+            avg_energy_fog=$(awk "BEGIN {printf \"%.1f\", $fog_day_energy_sum / $fog_day_energy_count}")
+            echo "• Avg. Energy on 'Fog' Days: $avg_energy_fog/10"
+        else
+            echo "• Avg. Energy on 'Fog' Days: N/A (no energy logged on fog days)"
+        fi
+    else
+        echo "• Avg. Energy on 'Fog' Days: N/A (no 'fog' symptoms logged)"
+    fi
+}
+
 cmd_dashboard() {
     set +e # Relax error checking for dashboard display
     echo "🏥 HEALTH DASHBOARD (Last 30 Days) 🏥"
     echo ""
 
-    local DAYS_AGO=30
-    local CUTOFF_DATE=$(date_shift_days "-$DAYS_AGO" "%Y-%m-%d")
+    local days_ago=30
+    local cutoff_date
+    cutoff_date=$(date_shift_days "-$days_ago" "%Y-%m-%d")
 
     if [ ! -s "$HEALTH_FILE" ]; then
         echo "Health data file is empty."
@@ -320,47 +366,23 @@ cmd_dashboard() {
     fi
 
     # Filter relevant data once
-    local RECENT_DATA=$(grep -E "^(ENERGY|SYMPTOM)" "$HEALTH_FILE" | awk -F'|' -v cutoff="$CUTOFF_DATE" '$2 >= cutoff' || true)
+    local recent_data
+    recent_data=$(grep -E "^(ENERGY|SYMPTOM)" "$HEALTH_FILE" | awk -F'|' -v cutoff="$cutoff_date" '$2 >= cutoff' || true)
 
     # 1. Average Energy Level
-    local AVG_ENERGY=$(echo "$RECENT_DATA" | grep "^ENERGY" | awk -F'|' '{ sum += $3; count++ } END { if (count > 0) printf "%.1f", sum/count; else echo "N/A"; }')
-    echo "• Average Energy (30d): $AVG_ENERGY/10"
+    _dashboard_energy "$recent_data"
 
     # 2. Symptom Frequency
-    echo "• Symptom Frequency (30d):"
-    echo "$RECENT_DATA" | grep "^SYMPTOM" | cut -d'|' -f3 | sort | uniq -c | sort -nr | head -5 | while read -r count name; do
-         printf "  - %-15s: %s times\n" "$name" "$count"
-    done
+    _dashboard_symptoms "$recent_data"
 
     # 3. Average energy on days with 'fog'
-    local FOG_DAYS=$(echo "$RECENT_DATA" | grep "^SYMPTOM" | grep -i "fog" | awk -F'|' '{print substr($2, 1, 10)}' | sort -u)
-    if [ -n "$FOG_DAYS" ]; then
-        local FOG_DAY_ENERGY_SUM=0
-        local FOG_DAY_ENERGY_COUNT=0
-        while read -r day; do
-            [ -z "$day" ] && continue
-            local ENERGY_ON_FOG_DAY=$(echo "$RECENT_DATA" | grep "^ENERGY" | grep "^ENERGY|$day" | head -n 1 | awk -F'|' '{print $3}')
-            if [ -n "$ENERGY_ON_FOG_DAY" ]; then
-                FOG_DAY_ENERGY_SUM=$((FOG_DAY_ENERGY_SUM + ENERGY_ON_FOG_DAY))
-                FOG_DAY_ENERGY_COUNT=$((FOG_DAY_ENERGY_COUNT + 1))
-            fi
-        done <<< "$FOG_DAYS"
-
-        if [ "$FOG_DAY_ENERGY_COUNT" -gt 0 ]; then
-            local AVG_ENERGY_FOG=$(awk "BEGIN {printf \"%.1f\", $FOG_DAY_ENERGY_SUM / $FOG_DAY_ENERGY_COUNT}")
-            echo "• Avg. Energy on 'Fog' Days: $AVG_ENERGY_FOG/10"
-        else
-            echo "• Avg. Energy on 'Fog' Days: N/A (no energy logged on fog days)"
-        fi
-    else
-        echo "• Avg. Energy on 'Fog' Days: N/A (no 'fog' symptoms logged)"
-    fi
+    _dashboard_fog "$recent_data"
 
     # 4. Energy vs. Productivity Correlation
     echo ""
     echo "• Energy vs. Productivity Correlation (30d):"
-    correlate_tasks "$RECENT_DATA"
-    correlate_commits "$RECENT_DATA"
+    correlate_tasks "$recent_data"
+    correlate_commits "$recent_data"
 }
 
 cmd_export() {

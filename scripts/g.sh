@@ -25,7 +25,14 @@ fi
 
 # Source common utilities for validation/sanitization
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/lib/common.sh"
+# Handle case where we are in scripts/ or root
+if [[ -f "$SCRIPT_DIR/lib/common.sh" ]]; then
+    source "$SCRIPT_DIR/lib/common.sh"
+elif [[ -f "$SCRIPT_DIR/scripts/lib/common.sh" ]]; then
+    source "$SCRIPT_DIR/scripts/lib/common.sh"
+else
+    echo "Warning: common.sh not found in $SCRIPT_DIR/lib or $SCRIPT_DIR/scripts/lib" >&2
+fi
 
 # --- Configuration ---
 DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
@@ -207,27 +214,41 @@ case "${1:-list}" in
       echo "Error: No bookmarks saved." >&2
       g_exit 1
     fi
-    BOOKMARK_DATA=$(grep "^$BOOKMARK_NAME|" "$BOOKMARKS_FILE" | head -n 1 || true)
-    PARSE_MODE="pipe"
-    if [ -z "$BOOKMARK_DATA" ]; then
-      BOOKMARK_DATA=$(grep "^$BOOKMARK_NAME:" "$BOOKMARKS_FILE" | head -n 1 || true)
-      PARSE_MODE="colon"
-    fi
+    # Helper to parse bookmark data
+    _get_bookmark_data() {
+      local name="$1"
+      local file="$2"
+      
+      # Try pipe format first (standard)
+      local data
+      data=$(grep "^$name|" "$file" | head -n 1 || true)
+      if [ -n "$data" ]; then
+        echo "$data"
+        return 0
+      fi
+
+      # Try colon format (legacy)
+      data=$(grep "^$name:" "$file" | head -n 1 || true)
+      if [ -n "$data" ]; then
+        # Convert legacy format to pipe format for uniform handling
+        echo "$data" | tr ':' '|'
+        return 0
+      fi
+      
+      return 1
+    }
+
+    BOOKMARK_DATA=$(_get_bookmark_data "$BOOKMARK_NAME" "$BOOKMARKS_FILE")
     if [ -z "$BOOKMARK_DATA" ]; then
       echo "Error: Bookmark '$BOOKMARK_NAME' not found."
       g_exit 1
     fi
-    if [ "$PARSE_MODE" = "pipe" ]; then
-      DIR=$(echo "$BOOKMARK_DATA" | cut -d'|' -f2)
-      ON_ENTER_CMD=$(echo "$BOOKMARK_DATA" | cut -d'|' -f3)
-      VENV_PATH=$(echo "$BOOKMARK_DATA" | cut -d'|' -f4)
-      APPS=$(echo "$BOOKMARK_DATA" | cut -d'|' -f5)
-    else
-      DIR=$(echo "$BOOKMARK_DATA" | awk -F':' '{print $2}')
-      ON_ENTER_CMD=$(echo "$BOOKMARK_DATA" | awk -F':' '{print $3}')
-      VENV_PATH=$(echo "$BOOKMARK_DATA" | awk -F':' '{print $4}')
-      APPS=$(echo "$BOOKMARK_DATA" | awk -F':' '{print $5}')
-    fi
+
+    # Parse uniform pipe-delimited data
+    DIR=$(echo "$BOOKMARK_DATA" | cut -d'|' -f2)
+    ON_ENTER_CMD=$(echo "$BOOKMARK_DATA" | cut -d'|' -f3)
+    VENV_PATH=$(echo "$BOOKMARK_DATA" | cut -d'|' -f4)
+    APPS=$(echo "$BOOKMARK_DATA" | cut -d'|' -f5)
 
     # Change directory
     DIR=$(validate_path "$DIR") || g_exit 1

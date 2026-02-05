@@ -19,6 +19,9 @@ PROJECTS_DIR="${PROJECTS_DIR:-$HOME/Projects}"
 if [ -f "$SCRIPT_DIR/lib/health_ops.sh" ]; then
     source "$SCRIPT_DIR/lib/health_ops.sh"
 fi
+if [ -f "$SCRIPT_DIR/lib/github_ops.sh" ]; then
+    source "$SCRIPT_DIR/lib/github_ops.sh"
+fi
 
 # --- Focus ---
 echo ""
@@ -81,6 +84,24 @@ if [[ "$CURRENT_DIR" == "$PROJECTS_DIR"* ]]; then
     fi
 else
     echo "  (Not in a project directory under $PROJECTS_DIR)"
+fi
+
+# --- Today's Commits ---
+echo ""
+echo "🧾 TODAY'S COMMITS:"
+if command -v get_commit_activity_for_date >/dev/null 2>&1; then
+    TODAY=$(date +%Y-%m-%d)
+    if TODAY_COMMITS=$(get_commit_activity_for_date "$TODAY" 2>/dev/null); then
+        if [ -n "$TODAY_COMMITS" ]; then
+            echo "$TODAY_COMMITS"
+        else
+            echo "  (No commits yet today)"
+        fi
+    else
+        echo "  (Unable to fetch commit activity)"
+    fi
+else
+    echo "  (GitHub operations library not loaded)"
 fi
 
 # --- Health Check (interactive only) ---

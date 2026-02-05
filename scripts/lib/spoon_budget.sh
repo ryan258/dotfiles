@@ -16,7 +16,7 @@ fi
 
 DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
 SPOON_LOG="${SPOON_LOG:-$DATA_DIR/spoons.txt}"
-DEFAULT_DAILY_SPOONS="${DEFAULT_DAILY_SPOONS:-10}"
+
 
 mkdir -p "$DATA_DIR"
 

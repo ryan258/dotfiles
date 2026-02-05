@@ -41,7 +41,8 @@ You have **3 systems** working together:
 
 ```bash
 startday           # Morning briefing (runs automatically once per day)
-startday refresh   # Force fresh update (clears cache)
+startday refresh   # Force fresh AI briefing (keeps GitHub cache)
+startday refresh --clear-github-cache  # Full refresh (AI + GitHub caches)
 status             # Mid-day: "Where am I? What am I doing?"
 goodevening        # Evening: celebrate wins + auto-backup
 ```

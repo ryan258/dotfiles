@@ -38,10 +38,16 @@ CURRENT_DAY_FILE="${CURRENT_DAY_FILE:-$DATA_DIR/current_day}"
 FOCUS_FILE="${FOCUS_FILE:-$DATA_DIR/daily_focus.txt}"
 BRIEFING_CACHE="${BRIEFING_CACHE_FILE:-$DATA_DIR/.ai_briefing_cache}"
 
-# Support "refresh" to force new AI briefing
+# Support "refresh" to force new AI briefing.
+# By default we keep GitHub cache so transient network failures still degrade gracefully.
 if [[ "${1:-}" == "refresh" ]]; then
     rm -f "$BRIEFING_CACHE"
-    echo "🔄 Cache cleared. Forcing new session data..."
+    if [[ "${2:-}" == "--clear-github-cache" ]]; then
+        rm -rf "${DATA_DIR:-$HOME/.config/dotfiles-data}/cache/github"
+        echo "🔄 Cache cleared (AI briefing + GitHub). Forcing new session data..."
+    else
+        echo "🔄 AI briefing cache cleared. Keeping GitHub cache for resilience."
+    fi
 fi
 
 # Persist the start date of this session
@@ -206,9 +212,16 @@ fi
 # --- YESTERDAY'S COMMITS ---
 echo ""
 echo "🧾 YESTERDAY'S COMMITS:"
+YESTERDAY_COMMITS=""
 if command -v get_commit_activity_for_date >/dev/null 2>&1; then
-    yesterday_commits=$(date_shift_days -1 "%Y-%m-%d")
-    if ! get_commit_activity_for_date "$yesterday_commits"; then
+    yesterday_date=$(date_shift_days -1 "%Y-%m-%d")
+    if YESTERDAY_COMMITS=$(get_commit_activity_for_date "$yesterday_date" 2>/dev/null); then
+        if [ -n "$YESTERDAY_COMMITS" ]; then
+            echo "$YESTERDAY_COMMITS"
+        else
+            echo "  (No commits for $yesterday_date)"
+        fi
+    else
         echo "  (Unable to fetch commit activity. Check your token or network.)"
     fi
 else
@@ -319,11 +332,14 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
             # Generate briefing via AI
             BRIEFING=$({
                 echo "Provide a morning briefing (3-4 sentences)."
-                echo "Primary signals are today's focus and recent GitHub pushes; use them first."
+                echo "Primary signals are today's focus, yesterday's commits, and recent GitHub pushes; use them first."
                 echo "Secondary signals are journal entries and the task list."
                 echo ""
                 echo "Today's focus:"
                 echo "${FOCUS_CONTEXT:-"(no focus set)"}"
+                echo ""
+                echo "Yesterday's commits:"
+                echo "${YESTERDAY_COMMITS:-"(none)"}"
                 echo ""
                 echo "Recent GitHub pushes (last 7 days):"
                 echo "${RECENT_PUSHES:-"(none)"}"
@@ -335,7 +351,7 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
                 echo "${TODAY_TASKS:-"(none)"}"
                 echo ""
                 echo "Provide:"
-                echo "- A short reflection on what the recent pushes suggest about momentum"
+                echo "- A short reflection on what yesterday's commits and recent pushes suggest about momentum"
                 echo "- The smallest next step for today"
                 echo "- One energy-protecting reminder"
             } | dhp-strategy.sh 2>/dev/null || echo "Unable to generate AI briefing at this time.")

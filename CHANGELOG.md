@@ -1,8 +1,23 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** February 4, 2026
+**Last Updated:** February 5, 2026
 
 This document tracks all major implementations, improvements, and fixes to the Daily Context System.
+
+---
+
+## Version 2.2.4 (February 5, 2026) - GitHub Resilience Patch
+
+**Status:** ✅ Production Ready
+
+### Fixes
+- `scripts/github_helper.sh` now uses per-request temp error logs (prevents stale fallback error leakage across runs).
+- Public GitHub API fallback now covers both `/users/<name>/events` and `/users/<name>/repos`, improving reliability when token auth is unavailable.
+- Added request timeout controls for GitHub API calls: `GITHUB_CONNECT_TIMEOUT` and `GITHUB_REQUEST_TIMEOUT`.
+- GitHub debug output is now opt-in via `GITHUB_DEBUG=true` instead of always surfacing low-level warnings.
+- `scripts/lib/github_ops.sh` now keeps user-facing output clean by routing helper diagnostics to debug mode while letting caller scripts print concise fallback messages.
+- Added troubleshooting and daily workflow documentation for GitHub diagnostics (`GITHUB_DEBUG=true startday refresh`).
+- `startday refresh` now clears only AI briefing cache by default (retains GitHub cache for offline/transient network resilience); use `startday refresh --clear-github-cache` for a full cold refresh.
 
 ---
 
