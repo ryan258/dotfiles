@@ -25,7 +25,7 @@ DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
 SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:-${SYSTEM_LOG:-$DATA_DIR/system.log}}"
 
 # Shared Utilities
-DHP_UTILS="${DOTFILES_DIR:-$HOME/dotfiles}/bin/dhp-utils.sh"
+DHP_UTILS="${DOTFILES_DIR:-$(cd "$BLOG_SCRIPT_DIR/.." && pwd)}/bin/dhp-utils.sh"
 if [ -f "$DHP_UTILS" ]; then
     # shellcheck disable=SC1090
     source "$DHP_UTILS"
@@ -35,9 +35,9 @@ else
 fi
 
 # Manual Override Check
-if [ -f "${DOTFILES_DIR:-$HOME/dotfiles}/.env" ]; then
+if [ -f "${DOTFILES_DIR:-$(cd "$BLOG_SCRIPT_DIR/.." && pwd)}/.env" ]; then
     # shellcheck disable=SC1090
-    source "${DOTFILES_DIR:-$HOME/dotfiles}/.env"
+    source "${DOTFILES_DIR:-$(cd "$BLOG_SCRIPT_DIR/.." && pwd)}/.env"
 fi
 
 # --- Validation ---

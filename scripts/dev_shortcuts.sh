@@ -25,7 +25,7 @@ is_sourced() {
     return 1
 }
 
-case "$1" in
+case "${1:-}" in
     server)
         # Quick development server
         PORT_RAW=${2:-8000}
