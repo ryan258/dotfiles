@@ -9,7 +9,7 @@ if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
   source "$SCRIPT_DIR/lib/common.sh"
 fi
 
-if [ -z "$1" ]; then
+if [ -z "${1:-}" ]; then
   echo "Usage: whatis <command_or_alias>"
   exit 1
 fi

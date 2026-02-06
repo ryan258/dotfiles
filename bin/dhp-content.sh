@@ -75,14 +75,26 @@ while [[ "$#" -gt 0 ]]; do
             shift
             ;;
         --persona)
+            if [[ -z "${2:-}" || "${2:-}" == --* ]]; then
+                echo "Error: --persona requires a value." >&2
+                exit 1
+            fi
             PERSONA_NAME="$2"
             shift 2
             ;;
         --temperature)
+            if [[ -z "${2:-}" || "${2:-}" == --* ]]; then
+                echo "Error: --temperature requires a numeric value." >&2
+                exit 1
+            fi
             PARAM_TEMPERATURE="$2"
             shift 2
             ;;
         --max-tokens)
+            if [[ -z "${2:-}" || "${2:-}" == --* ]]; then
+                echo "Error: --max-tokens requires an integer value." >&2
+                exit 1
+            fi
             PARAM_MAX_TOKENS="$2"
             shift 2
             ;;

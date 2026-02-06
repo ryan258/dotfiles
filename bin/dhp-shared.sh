@@ -64,10 +64,18 @@ dhp_parse_flags() {
                 shift
                 ;;
             --temperature)
+                if [[ -z "${2:-}" || "${2:-}" == --* ]]; then
+                    echo "Error: --temperature requires a numeric value." >&2
+                    return 1
+                fi
                 PARAM_TEMPERATURE="$2"
                 shift 2
                 ;;
             --max-tokens)
+                if [[ -z "${2:-}" || "${2:-}" == --* ]]; then
+                    echo "Error: --max-tokens requires an integer value." >&2
+                    return 1
+                fi
                 PARAM_MAX_TOKENS="$2"
                 shift 2
                 ;;

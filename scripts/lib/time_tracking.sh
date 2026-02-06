@@ -257,7 +257,11 @@ generate_time_report() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --days)
-                days="${2:-7}"
+                if [[ -z "${2:-}" ]] || [[ "${2:-}" == --* ]]; then
+                    echo "Error: --days requires a numeric value." >&2
+                    return 1
+                fi
+                days="$2"
                 shift 2
                 ;;
             --summary)

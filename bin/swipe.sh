@@ -16,7 +16,7 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
-CMD="$1"
+CMD="${1:-}"
 shift
 
 # Map dispatcher aliases to full script names

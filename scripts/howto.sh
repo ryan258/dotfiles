@@ -28,7 +28,7 @@ validate_howto_name() {
 
 case "${1:-list}" in
   add)
-    if [ -z "$2" ]; then
+    if [ -z "${2:-}" ]; then
       echo "Usage: howto add <name>"
       exit 1
     fi
@@ -49,7 +49,7 @@ case "${1:-list}" in
     ;;
 
   search)
-    if [ -z "$2" ]; then
+    if [ -z "${2:-}" ]; then
       echo "Usage: howto search <term>"
       exit 1
     fi

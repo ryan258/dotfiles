@@ -242,7 +242,7 @@ $file_content"
 }
 
 function refine() {
-    local file_path="$2"
+    local file_path="${2:-}"
 
     if [ -z "$file_path" ]; then
         echo "Usage: blog refine <file-path>"
@@ -304,6 +304,10 @@ draft_from_archetype() {
     while [ $# -gt 0 ]; do
         case "$1" in
             --title)
+                if [ -z "${2:-}" ] || [[ "${2:-}" == --* ]]; then
+                    echo "Error: --title requires a value." >&2
+                    return 1
+                fi
                 title="$2"
                 shift 2
                 ;;
@@ -426,10 +430,18 @@ run_workflow() {
     while [ $# -gt 0 ]; do
         case "$1" in
             --title)
+                if [ -z "${2:-}" ] || [[ "${2:-}" == --* ]]; then
+                    echo "Error: --title requires a value." >&2
+                    return 1
+                fi
                 title="$2"
                 shift 2
                 ;;
             --topic)
+                if [ -z "${2:-}" ] || [[ "${2:-}" == --* ]]; then
+                    echo "Error: --topic requires a value." >&2
+                    return 1
+                fi
                 topic="$2"
                 shift 2
                 ;;

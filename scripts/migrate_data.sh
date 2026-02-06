@@ -33,6 +33,11 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --backup-dir)
+      if [[ -z "${2:-}" ]]; then
+        echo "Error: --backup-dir requires a path argument" >&2
+        usage
+        exit 2
+      fi
       BACKUP_DIR="$2"
       shift 2
       ;;

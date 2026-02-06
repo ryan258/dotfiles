@@ -198,13 +198,17 @@ function blog_exemplar() {
 
 # --- Subcommand: social ---
 function blog_social() {
-    local slug="$1"
-    shift
+    local slug="${1:-}"
+    shift || true
     local platform=""
     
     while [ $# -gt 0 ]; do
         case "$1" in
             --platform)
+                if [ -z "${2:-}" ] || [[ "${2:-}" == --* ]]; then
+                    echo "Error: --platform requires a value." >&2
+                    return 1
+                fi
                 platform="$2"
                 shift 2
                 ;;

@@ -8,7 +8,7 @@ if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
     source "$SCRIPT_DIR/lib/common.sh"
 fi
 
-if [ -z "$1" ]; then
+if [ -z "${1:-}" ]; then
     echo "Usage: $0 <partial_filename>"
     echo "Example: $0 budget    (might find 'Q3_budget_report.xlsx')"
     exit 1

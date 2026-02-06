@@ -14,7 +14,7 @@ if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
   source "$SCRIPT_DIR/lib/config.sh"
 fi
 
-if [ -z "$1" ]; then
+if [ -z "${1:-}" ]; then
   echo "Usage: new_script.sh <script_name> [--force]"
   echo "Example: new_script.sh my_tool"
   echo ""
@@ -23,7 +23,7 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-SCRIPT_NAME_RAW="$1"
+SCRIPT_NAME_RAW="${1:-}"
 SCRIPT_NAME=$(sanitize_input "$SCRIPT_NAME_RAW")
 SCRIPT_NAME=${SCRIPT_NAME//$'\n'/ }
 

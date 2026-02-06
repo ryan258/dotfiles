@@ -13,6 +13,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 ### Fixes
 - Hardened path boundary validation in `scripts/lib/common.sh` and `scripts/correlate.sh` to prevent false-safe prefix matches.
 - Fixed no-argument `set -u` crashes across utility scripts by normalizing command parsing and usage guards.
+- Extended missing-argument hardening across CLI/dispatcher flag parsers (`dhp-*`, blog workflow parsers, and time/report options) so malformed flags fail with clear errors instead of unbound-variable crashes.
 - Fixed `scripts/blog.sh` library sourcing to use a script-local path variable that cannot be clobbered by sourced dependencies.
 - Fixed `scripts/todo.sh` so `start`, `spend`, `debug`, and `delegate` fail correctly when the referenced task does not exist.
 - Fixed `scripts/dotfiles_check.sh` bookmark prune step to run `g.sh prune --auto` without sourced-script side effects.

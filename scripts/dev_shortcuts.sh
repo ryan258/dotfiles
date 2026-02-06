@@ -39,7 +39,7 @@ case "${1:-}" in
     
     json)
         # Pretty print JSON from clipboard or file
-        if [ -z "$2" ]; then
+        if [ -z "${2:-}" ]; then
             echo "Pretty printing JSON from clipboard:"
             pbpaste | python3 -m json.tool
         else

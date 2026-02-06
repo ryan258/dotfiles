@@ -15,7 +15,7 @@ if [ $# -lt 1 ]; then
     print_usage
 fi
 
-TARGET="$1"
+TARGET="${1:-}"
 shift
 
 if [ -x "$DISPATCHER_BIN/dhp-$TARGET.sh" ]; then

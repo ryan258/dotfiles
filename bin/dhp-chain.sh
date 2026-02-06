@@ -50,6 +50,10 @@ while [ $# -gt 0 ]; do
             ;;
         --save)
             shift
+            if [ -z "${1:-}" ]; then
+                echo "Error: --save requires a file path" >&2
+                exit 1
+            fi
             SAVE_FILE="$1"
             shift
             ;;

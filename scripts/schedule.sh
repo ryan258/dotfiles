@@ -9,7 +9,7 @@ if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
   source "$SCRIPT_DIR/lib/common.sh"
 fi
 
-if [ -z "$1" ]; then
+if [ -z "${1:-}" ]; then
   echo "Usage: schedule.sh \"<time>\" [command] [--todo <task>]"
   echo "Example: schedule.sh \"2:30 PM\" \"remind 'Call Mom'\""
   echo "Example: schedule.sh \"tomorrow 9am\" --todo \"Call the doctor\""
@@ -26,7 +26,7 @@ escape_single_quotes() {
 }
 
 # Check for --todo flag
-if [ "$1" == "--todo" ]; then
+if [ "${1:-}" == "--todo" ]; then
   shift
   TASK=$(sanitize_input "$*")
   TASK=${TASK//$'\n'/ }
