@@ -8,6 +8,9 @@ setup() {
     
     # Stage scripts
     mkdir -p "$TEST_DIR/scripts/lib"
+    cp "$BATS_TEST_DIRNAME/../scripts/lib/common.sh" "$TEST_DIR/scripts/lib/"
+    cp "$BATS_TEST_DIRNAME/../scripts/lib/config.sh" "$TEST_DIR/scripts/lib/"
+    cp "$BATS_TEST_DIRNAME/../scripts/lib/file_ops.sh" "$TEST_DIR/scripts/lib/"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/spoon_budget.sh" "$TEST_DIR/scripts/lib/"
     cp "$BATS_TEST_DIRNAME/../scripts/spoon_manager.sh" "$TEST_DIR/scripts/"
     cp "$BATS_TEST_DIRNAME/../scripts/todo.sh" "$TEST_DIR/scripts/"
@@ -34,7 +37,7 @@ teardown() {
 @test "spoon_manager.sh init fails with string input" {
     run "$TEST_DIR/scripts/spoon_manager.sh" init "twelve"
     [ "$status" -eq 1 ]
-    [[ "$output" =~ "Error: Count must be a positive integer" ]]
+    [[ "$output" =~ "must be a positive integer" ]]
 }
 
 @test "spoon_manager.sh check shows remaining" {

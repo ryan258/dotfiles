@@ -44,8 +44,9 @@ _log_api_call() {
     local rate_input=0.50
     local rate_output=1.50
     
-    # Adjust rates for known free models
-    if [[ "$model" == *":free" ]]; then
+    # Adjust rates for known free models.
+    # Prefer shared config helper when available.
+    if { type is_free_model >/dev/null 2>&1 && is_free_model "$model"; } || [[ "$model" == *":free" ]]; then
         rate_input=0
         rate_output=0
     fi

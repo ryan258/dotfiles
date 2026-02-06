@@ -7,10 +7,11 @@ source "$SCRIPT_DIR/lib/common.sh"
 require_lib "config.sh"
 
 APPS_FILE="$DATA_DIR/favorite_apps"
+COMMAND="${1:-}"
 
-case "$1" in
+case "$COMMAND" in
     add)
-        if [ -z "$2" ] || [ -z "$3" ]; then
+        if [ -z "${2:-}" ] || [ -z "${3:-}" ]; then
             echo "Usage: $0 add <shortname> <app_name>"
             echo "Example: $0 add code 'Visual Studio Code'"
             exit 1
@@ -36,7 +37,7 @@ case "$1" in
         ;;
     
     *)
-        if [ -z "$1" ]; then
+        if [ -z "$COMMAND" ]; then
             echo "Usage:"
             echo "  app add <n> <app_name>  : Add favorite app"
             echo "  app list                  : List favorites"
@@ -52,7 +53,7 @@ case "$1" in
         APP_NAME=""
         while IFS='|' read -r short app_name; do
             [ -z "$short" ] && continue
-            if [ "$short" = "$1" ]; then
+            if [ "$short" = "$COMMAND" ]; then
                 APP_NAME="$app_name"
                 break
             fi
@@ -62,7 +63,7 @@ case "$1" in
             open -a "$APP_NAME"
             echo "Launched: $APP_NAME"
         else
-            echo "App '$1' not found. Use 'app list' to see available apps."
+            echo "App '$COMMAND' not found. Use 'app list' to see available apps."
         fi
         ;;
 esac

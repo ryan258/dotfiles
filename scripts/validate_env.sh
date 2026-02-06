@@ -3,7 +3,8 @@ set -euo pipefail
 
 # validate_env.sh - Validates essential environment variables and configurations
 
-DOTFILES_DIR="$HOME/dotfiles"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 ENV_FILE="$DOTFILES_DIR/.env"
 VALIDATION_STATUS=0 # 0 for success, 1 for failure
 

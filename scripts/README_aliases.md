@@ -50,7 +50,7 @@ These helpers make the rest of the file resilient—aliases are only created if 
 | `ll`, `la`, `l`, `lt`, `lh`                                                    | Variants of `ls`.                    | Tailored listings for macOS.                                  |
 | `here`, `tree`, `newest`, `biggest`, `count`                                   | Directory inspection helpers.        | `tree` uses `find`; `newest` and `biggest` show top 10 items. |
 | `downloads`, `down`, `documents`, `docs`, `desktop`, `desk`, `scripts`, `home` | `cd` shortcuts.                      | `scripts` respects `$SCRIPTS_DIR`.                            |
-| `cd()`                                                                         | Overrides builtin to record history. | Calls `recent_dirs.sh add` when available.                    |
+| `g`                                                                            | Smart navigation command.             | Handles bookmarks, history, and optional app/venv activation. |
 
 ## System & File Management
 
@@ -158,7 +158,6 @@ Every script in `$SCRIPTS_DIR` has a corresponding wrapper function which ensure
 - `media`, `video2audio`, `resizeimg`, `compresspdf`
 - `archive`, `archcreate`, `archextract`, `archlist`
 - `unpack`
-- `mtg`
 
 ### Development Shortcuts
 

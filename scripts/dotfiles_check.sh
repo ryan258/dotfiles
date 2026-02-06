@@ -68,14 +68,7 @@ fi
 # 5. Prune dead bookmarks
 echo "[5/8] Pruning dead directory bookmarks..."
 if [ -f "$SCRIPT_DIR/g.sh" ]; then
-  (
-    source "$SCRIPT_DIR/g.sh"
-    if command -v prune_bookmarks >/dev/null 2>&1; then
-        prune_bookmarks --auto >/dev/null 2>&1 || true
-    elif command -v g >/dev/null 2>&1; then
-        g prune --auto >/dev/null 2>&1 || true
-    fi
-  )
+  bash "$SCRIPT_DIR/g.sh" prune --auto >/dev/null 2>&1 || true
 fi
 
 # 6. Check AI Staff HQ Dispatchers (Dynamic Discovery)

@@ -1,51 +1,41 @@
-#!/usr/bin/env bash
-# Test atomic file operations
+#!/usr/bin/env bats
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-source "$SCRIPT_DIR/scripts/lib/file_ops.sh"
+setup() {
+    export TEST_DIR
+    TEST_DIR="$(mktemp -d)"
+    export TEST_FILE="$TEST_DIR/test_atomic_ops.txt"
 
-TEST_FILE="test_atomic_ops.txt"
-
-# Cleanup
-cleanup() {
-    rm -f "$TEST_FILE"
+    # shellcheck disable=SC1090
+    source "$BATS_TEST_DIRNAME/../scripts/lib/file_ops.sh"
 }
-trap cleanup EXIT
 
-echo "Testing atomic_write..."
-atomic_write "Line 1" "$TEST_FILE"
-if [[ "$(cat "$TEST_FILE")" == "Line 1" ]]; then
-    echo "PASS: atomic_write"
-else
-    echo "FAIL: atomic_write"
-    exit 1
-fi
+teardown() {
+    rm -rf "$TEST_DIR"
+}
 
-echo "Testing atomic_prepend..."
-atomic_prepend "Line 0" "$TEST_FILE"
-if [[ "$(head -n 1 "$TEST_FILE")" == "Line 0" ]]; then
-    echo "PASS: atomic_prepend"
-else
-    echo "FAIL: atomic_prepend"
-    exit 1
-fi
+@test "atomic_write writes content" {
+    run atomic_write "Line 1" "$TEST_FILE"
+    [ "$status" -eq 0 ]
+    [ "$(cat "$TEST_FILE")" = "Line 1" ]
+}
 
-echo "Testing atomic_replace_line..."
-atomic_replace_line 1 "Line Zero" "$TEST_FILE"
-if [[ "$(head -n 1 "$TEST_FILE")" == "Line Zero" ]]; then
-    echo "PASS: atomic_replace_line"
-else
-    echo "FAIL: atomic_replace_line"
-    exit 1
-fi
+@test "atomic_prepend prepends line" {
+    atomic_write "Line 1" "$TEST_FILE"
+    run atomic_prepend "Line 0" "$TEST_FILE"
+    [ "$status" -eq 0 ]
+    [ "$(head -n 1 "$TEST_FILE")" = "Line 0" ]
+}
 
-echo "Testing atomic_delete_line..."
-atomic_delete_line 1 "$TEST_FILE"
-if [[ "$(head -n 1 "$TEST_FILE")" == "Line 1" ]]; then
-    echo "PASS: atomic_delete_line"
-else
-    echo "FAIL: atomic_delete_line"
-    exit 1
-fi
+@test "atomic_replace_line replaces target line" {
+    atomic_write "Line 1"$'\n'"Line 2" "$TEST_FILE"
+    run atomic_replace_line 1 "Line Zero" "$TEST_FILE"
+    [ "$status" -eq 0 ]
+    [ "$(head -n 1 "$TEST_FILE")" = "Line Zero" ]
+}
 
-echo "All tests passed!"
+@test "atomic_delete_line removes target line" {
+    atomic_write "Line 1"$'\n'"Line 2" "$TEST_FILE"
+    run atomic_delete_line 1 "$TEST_FILE"
+    [ "$status" -eq 0 ]
+    [ "$(head -n 1 "$TEST_FILE")" = "Line 2" ]
+}

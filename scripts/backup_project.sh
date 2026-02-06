@@ -5,9 +5,12 @@
 set -euo pipefail
 
 # Source shared utilities
-if [ -f "$HOME/dotfiles/bin/dhp-utils.sh" ]; then
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+DHP_UTILS="$DOTFILES_DIR/bin/dhp-utils.sh"
+if [ -f "$DHP_UTILS" ]; then
     # shellcheck disable=SC1090
-    source "$HOME/dotfiles/bin/dhp-utils.sh"
+    source "$DHP_UTILS"
 else
     echo "Error: Shared utility library dhp-utils.sh not found." >&2
     exit 1

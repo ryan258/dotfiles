@@ -69,9 +69,11 @@ dose_taken_for_slot() {
     ' "$MEDS_FILE"
 }
 
-case "$1" in
+COMMAND="${1:-}"
+
+case "$COMMAND" in
     add)
-        if [ -z "$2" ] || [ -z "$3" ]; then
+        if [ -z "${2:-}" ] || [ -z "${3:-}" ]; then
             echo "Usage: meds add \"medication name\" \"dosage schedule\""
             echo "Example: meds add \"Medication X\" \"morning,evening\""
             echo "Example: meds add \"Medication Y\" \"8:00,20:00\""
@@ -85,7 +87,7 @@ case "$1" in
         ;;
 
     refill)
-        if [ -z "$2" ] || [ -z "$3" ]; then
+        if [ -z "${2:-}" ] || [ -z "${3:-}" ]; then
             echo "Usage: meds refill \"medication name\" \"YYYY-MM-DD\""
             echo "Example: meds refill \"Medication X\" \"2025-12-01\""
             exit 1
@@ -109,7 +111,7 @@ case "$1" in
         ;;
 
     log)
-        if [ -z "$2" ]; then
+        if [ -z "${2:-}" ]; then
             echo "Usage: meds log \"medication name\" [time_slot]"
             echo "Logs that you took the medication right now"
             exit 1
@@ -312,7 +314,7 @@ case "$1" in
         ;;
 
     remove)
-        if [ -z "$2" ]; then
+        if [ -z "${2:-}" ]; then
             echo "Usage: meds remove \"medication name\""
             grep "^MED|" "$MEDS_FILE" 2>/dev/null | cut -d'|' -f2 | sed 's/^/  • /' || echo "No medications to remove"
             exit 1
@@ -364,7 +366,7 @@ case "$1" in
         ;;
 
     *)
-        echo "Error: Unknown command '$1'" >&2
+        echo "Error: Unknown command '$COMMAND'" >&2
         echo "Usage: meds [add|refill|log|list|check|check-refill|history|dashboard|remove|remind]"
         echo ""
         echo "Setup:"

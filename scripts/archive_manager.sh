@@ -15,7 +15,9 @@ sanitize_arg() {
     printf '%s' "$value"
 }
 
-case "$1" in
+MODE="${1:-}"
+
+case "$MODE" in
     create)
         if [ $# -lt 3 ]; then
             echo "Usage: $0 create <archive_name> <files/folders...>"
@@ -69,7 +71,7 @@ case "$1" in
         ;;
     
     extract)
-        if [ -z "$2" ]; then
+        if [ -z "${2:-}" ]; then
             echo "Usage: $0 extract <archive_file>"
             exit 1
         fi
@@ -111,7 +113,7 @@ case "$1" in
         ;;
     
     list)
-        if [ -z "$2" ]; then
+        if [ -z "${2:-}" ]; then
             echo "Usage: $0 list <archive_file>"
             exit 1
         fi
@@ -142,10 +144,11 @@ case "$1" in
         esac
         ;;
     
-    *)
+    ""|*)
         echo "Usage: $0 {create|extract|list}"
         echo "  create <archive> <files>  : Create new archive"
         echo "  extract <archive>         : Extract archive"
         echo "  list <archive>           : List archive contents"
+        exit 1
         ;;
 esac

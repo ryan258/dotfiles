@@ -224,7 +224,13 @@ cmd_start() {
     validate_numeric "$task_num" "task number" || exit 1
     
     local task_text
-    task_text=$(get_todo_text "$task_num") || exit 1
+    if ! task_text=$(get_todo_text "$task_num"); then
+        exit 1
+    fi
+    if [[ -z "$task_text" ]]; then
+        echo "Error: Task $task_num not found" >&2
+        exit 1
+    fi
     
     cmd_time_wrapper "start" "$task_num" "$task_text"
 }
@@ -247,7 +253,13 @@ cmd_spend() {
     validate_numeric "$count" "spoon count" || exit 1
     
     local task_text
-    task_text=$(get_todo_text "$task_num") || exit 1
+    if ! task_text=$(get_todo_text "$task_num"); then
+        exit 1
+    fi
+    if [[ -z "$task_text" ]]; then
+        echo "Error: Task $task_num not found" >&2
+        exit 1
+    fi
     
     if [[ ! -x "$SPOON_MANAGER" ]]; then
         echo "Error: Spoon manager not found at $SPOON_MANAGER" >&2
@@ -274,7 +286,13 @@ cmd_debug() {
     validate_numeric "$task_num" "task number" || exit 1
     
     local task_text
-    task_text=$(get_todo_text "$task_num") || exit 1
+    if ! task_text=$(get_todo_text "$task_num"); then
+        exit 1
+    fi
+    if [[ -z "$task_text" ]]; then
+        echo "Error: Task $task_num not found" >&2
+        exit 1
+    fi
     
     echo "🤖 Debugging task #$task_num with AI Staff..."
     echo "Task: $task_text"
@@ -311,7 +329,13 @@ cmd_delegate() {
     [[ -z "$dispatcher" ]] && { echo "Error: Dispatcher required"; exit 1; }
 
     local task_text
-    task_text=$(get_todo_text "$task_num") || exit 1
+    if ! task_text=$(get_todo_text "$task_num"); then
+        exit 1
+    fi
+    if [[ -z "$task_text" ]]; then
+        echo "Error: Task $task_num not found" >&2
+        exit 1
+    fi
 
     echo "🤖 Delegating task #$task_num to AI Staff ($dispatcher dispatcher)..."
     echo "Task: $task_text"

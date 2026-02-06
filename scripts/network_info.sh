@@ -2,7 +2,9 @@
 # network_info.sh - Network diagnostics for macOS
 set -euo pipefail
 
-case "$1" in
+COMMAND="${1:-}"
+
+case "$COMMAND" in
     status)
         echo "=== Network Status ==="
         echo ""
@@ -65,5 +67,6 @@ case "$1" in
         echo "  scan   : Scan for available Wi-Fi networks"
         echo "  speed  : Test network speed"
         echo "  fix    : Reset network settings"
+        exit 1
         ;;
 esac

@@ -6,6 +6,31 @@ This document tracks all major implementations, improvements, and fixes to the D
 
 ---
 
+## Version 2.2.6 (February 6, 2026) - Runtime Hardening & Cleanup Pass
+
+**Status:** ✅ Production Ready
+
+### Fixes
+- Hardened path boundary validation in `scripts/lib/common.sh` and `scripts/correlate.sh` to prevent false-safe prefix matches.
+- Fixed no-argument `set -u` crashes across utility scripts by normalizing command parsing and usage guards.
+- Fixed `scripts/blog.sh` library sourcing to use a script-local path variable that cannot be clobbered by sourced dependencies.
+- Fixed `scripts/todo.sh` so `start`, `spend`, `debug`, and `delegate` fail correctly when the referenced task does not exist.
+- Fixed `scripts/dotfiles_check.sh` bookmark prune step to run `g.sh prune --auto` without sourced-script side effects.
+
+### Cleanup
+- Removed orphaned helpers: `decode_clipboard()` and `get_file_perms()`.
+- Standardized dynamic dotfiles root resolution (replacing hardcoded `$HOME/dotfiles`) across helper and dispatcher scripts.
+- Added `scripts/memo.sh` compatibility wrapper for the existing `memo` alias target.
+- Removed stray commented blob after executable logic in `scripts/dev_shortcuts.sh`.
+- Updated alias documentation for current `g` behavior and removed stale command references.
+
+### Tests
+- Converted legacy non-Bats test files into real Bats tests (`test_file_ops.sh`, `repro_crash.sh`).
+- Fixed missing-library staging in integration fixtures.
+- Full suite now passes: `75/75` via `bats tests/*.sh`.
+
+---
+
 ## Version 2.2.5 (February 6, 2026) - goodevening Stability Fix
 
 **Status:** ✅ Production Ready

@@ -23,9 +23,11 @@ sanitize_pattern() {
     printf '%s' "$value"
 }
 
-case "$1" in
+COMMAND="${1:-}"
+
+case "$COMMAND" in
     find)
-        if [ -z "$2" ]; then
+        if [ -z "${2:-}" ]; then
             echo "Usage: $0 find <process_name>"
             exit 1
         fi
@@ -45,7 +47,7 @@ case "$1" in
         ;;
     
     kill)
-        if [ -z "$2" ]; then
+        if [ -z "${2:-}" ]; then
             echo "Usage: $0 kill <process_name>"
             exit 1
         fi
@@ -76,6 +78,7 @@ case "$1" in
         echo "  top           : Show top CPU users"
         echo "  memory        : Show top memory users"
         echo "  kill <name>   : Safely kill processes by name"
+        exit 1
         ;;
 esac
 

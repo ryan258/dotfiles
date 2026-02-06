@@ -1,26 +1,21 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/usr/bin/env bats
 
-# Create temp home
-TEST_HOME=$(mktemp -d)
-export HOME="$TEST_HOME"
-mkdir -p "$HOME/.config/dotfiles-data"
+setup() {
+    export TEST_HOME
+    TEST_HOME="$(mktemp -d)"
+    export HOME="$TEST_HOME"
+}
 
-# Create meds file with only DOSE line (no MED lines)
-echo "DOSE|2025-11-21 10:00|TestMed" > "$HOME/.config/dotfiles-data/medications.txt"
-
-# Run ai_suggest.sh
-# We need to find the script. Assuming we run from dotfiles root.
-SCRIPT_DIR="$(pwd)/scripts"
-export PATH="$SCRIPT_DIR:$PATH"
-
-echo "Running ai_suggest.sh..."
-if bash "$SCRIPT_DIR/ai_suggest.sh"; then
-    echo "✅ Success: ai_suggest.sh did not crash"
+teardown() {
     rm -rf "$TEST_HOME"
-    exit 0
-else
-    echo "❌ Failure: ai_suggest.sh crashed"
-    rm -rf "$TEST_HOME"
-    exit 1
-fi
+}
+
+@test "ai_suggest does not crash when meds file has DOSE entries only" {
+    mkdir -p "$HOME/.config/dotfiles-data"
+    echo "DOSE|2025-11-21 10:00|TestMed" > "$HOME/.config/dotfiles-data/medications.txt"
+
+    run bash "$BATS_TEST_DIRNAME/../scripts/ai_suggest.sh"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ "Analyzing your current context" ]]
+}

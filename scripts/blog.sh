@@ -3,16 +3,16 @@
 # Modularized refactor
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BLOG_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # --- Configuration ---
-if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
+if [ -f "$BLOG_SCRIPT_DIR/lib/config.sh" ]; then
     # shellcheck disable=SC1090
-    source "$SCRIPT_DIR/lib/config.sh"
+    source "$BLOG_SCRIPT_DIR/lib/config.sh"
 fi
 
 # Date Utilities
-DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
+DATE_UTILS="$BLOG_SCRIPT_DIR/lib/date_utils.sh"
 if [ -f "$DATE_UTILS" ]; then
     # shellcheck disable=SC1090
     source "$DATE_UTILS"
@@ -79,13 +79,13 @@ fi
 
 # --- Load Libraries ---
 # shellcheck disable=SC1090
-source "$SCRIPT_DIR/lib/blog_common.sh"
+source "$BLOG_SCRIPT_DIR/lib/blog_common.sh"
 # shellcheck disable=SC1090
-source "$SCRIPT_DIR/lib/blog_lifecycle.sh"
+source "$BLOG_SCRIPT_DIR/lib/blog_lifecycle.sh"
 # shellcheck disable=SC1090
-source "$SCRIPT_DIR/lib/blog_gen.sh"
+source "$BLOG_SCRIPT_DIR/lib/blog_gen.sh"
 # shellcheck disable=SC1090
-source "$SCRIPT_DIR/lib/blog_ops.sh"
+source "$BLOG_SCRIPT_DIR/lib/blog_ops.sh"
 
 
 # --- Main Logic ---

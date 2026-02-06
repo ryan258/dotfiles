@@ -3,9 +3,12 @@
 set -euo pipefail
 
 # Source shared utilities
-if [ -f "$HOME/dotfiles/bin/dhp-utils.sh" ]; then
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+DHP_UTILS="$DOTFILES_DIR/bin/dhp-utils.sh"
+if [ -f "$DHP_UTILS" ]; then
     # shellcheck disable=SC1090
-    source "$HOME/dotfiles/bin/dhp-utils.sh"
+    source "$DHP_UTILS"
 else
     echo "Error: Shared utility library dhp-utils.sh not found." >&2
     exit 1
@@ -21,7 +24,9 @@ if [ "${2:-}" == "--dry-run" ] || [ "${2:-}" == "-n" ]; then
   echo "Performing a dry run. No files will be moved."
 fi
 
-case "$1" in
+MODE="${1:-}"
+
+case "$MODE" in
     bytype)
         echo "Organizing files by type..."
         
@@ -101,5 +106,6 @@ case "$1" in
         echo "  bytype  : Organize files by file type"
         echo "  bydate  : Organize files by creation date"
         echo "  bysize  : Organize files by size"
+        exit 1
         ;;
 esac

@@ -4,7 +4,8 @@ set -euo pipefail
 # dhp-chain.sh: Dispatcher Chaining Helper
 # Enables easy sequential processing through multiple AI specialists
 
-DOTFILES_DIR="$HOME/dotfiles"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 if [ $# -lt 2 ]; then
     cat >&2 <<EOF

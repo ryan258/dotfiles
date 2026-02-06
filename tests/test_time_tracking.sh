@@ -8,6 +8,9 @@ setup() {
     
     # Stage scripts in a temp directory to simulate real environment
     mkdir -p "$TEST_DIR/scripts/lib"
+    cp "$BATS_TEST_DIRNAME/../scripts/lib/common.sh" "$TEST_DIR/scripts/lib/"
+    cp "$BATS_TEST_DIRNAME/../scripts/lib/config.sh" "$TEST_DIR/scripts/lib/"
+    cp "$BATS_TEST_DIRNAME/../scripts/lib/file_ops.sh" "$TEST_DIR/scripts/lib/"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/time_tracking.sh" "$TEST_DIR/scripts/lib/"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/date_utils.sh" "$TEST_DIR/scripts/lib/"
     cp "$BATS_TEST_DIRNAME/../scripts/time_tracker.sh" "$TEST_DIR/scripts/"

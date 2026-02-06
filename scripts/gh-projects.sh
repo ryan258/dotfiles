@@ -20,7 +20,8 @@ fi
 function forgotten() {
     echo "🗂️  PROJECTS NOT TOUCHED IN 60+ DAYS (on GitHub):"
     
-    NOW=$(date +%s)
+    local now
+    now=$(date +%s)
     
     # Call helper to get repos, then parse with jq
     "$HELPER_SCRIPT" list_repos | jq -c '.[] | {name: .name, pushed_at: .pushed_at}' | while read -r repo_json; do
@@ -29,9 +30,10 @@ function forgotten() {
         pushed_at_str=$(echo "$repo_json" | jq -r '.pushed_at')
         
         # Convert pushed_at (ISO 8601) to epoch seconds
-        pushed_at_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$pushed_at_str" +%s 2>/dev/null || continue)
+        pushed_at_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$pushed_at_str" +%s 2>/dev/null || date -d "$pushed_at_str" +%s 2>/dev/null || echo "")
+        [ -z "$pushed_at_epoch" ] && continue
         
-        DAYS_AGO=$(( (NOW - pushed_at_epoch) / 86400 ))
+        DAYS_AGO=$(( (now - pushed_at_epoch) / 86400 ))
         
         if [ "$DAYS_AGO" -ge 60 ]; then
             echo "  • $repo_name ($DAYS_AGO days ago)"
@@ -44,7 +46,7 @@ function forgotten() {
 
 # --- Subcommand: recall ---
 function recall() {
-    if [ -z "$1" ]; then
+    if [ -z "${1:-}" ]; then
         echo "Usage: projects recall <project_name>"
         return
     fi
@@ -65,10 +67,11 @@ function recall() {
         return
     fi
 
+    local now
+    now=$(date +%s)
     pushed_at_str=$(echo "$repo_details" | jq -r '.pushed_at')
-    pushed_at_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$pushed_at_str" +%s 2>/dev/null || echo "$NOW")
-    NOW=$(date +%s)
-    DAYS_AGO=$(( (NOW - pushed_at_epoch) / 86400 ))
+    pushed_at_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$pushed_at_str" +%s 2>/dev/null || date -d "$pushed_at_str" +%s 2>/dev/null || echo "$now")
+    DAYS_AGO=$(( (now - pushed_at_epoch) / 86400 ))
     echo "Last push: $DAYS_AGO days ago"
 
     # Get latest commit
@@ -88,7 +91,9 @@ function recall() {
 }
 
 # --- Main Logic ---
-case "$1" in
+COMMAND="${1:-}"
+
+case "$COMMAND" in
     forgotten)
         forgotten
         ;;
@@ -98,5 +103,6 @@ case "$1" in
         ;;
     *)
         echo "Usage: projects {forgotten|recall <name>}"
+        exit 1
         ;;
 esac

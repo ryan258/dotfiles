@@ -22,15 +22,6 @@ sys.stdout.write(encoded)
 PY
 }
 
-decode_clipboard() {
-    python3 - <<'PY'
-import sys, codecs
-data = sys.stdin.read()
-data = data.replace(r"\|", "|")
-sys.stdout.write(codecs.decode(data, "unicode_escape"))
-PY
-}
-
 MODE="${1:-}"
 
 if [ -z "$MODE" ]; then

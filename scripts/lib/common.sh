@@ -283,20 +283,29 @@ validate_safe_path() {
         fi
     fi
 
-    # Check it's under allowed base
-    # Resolve base too
-    local resolved_base
+    # Resolve and validate base path
+    local resolved_base=""
     if command -v python3 &>/dev/null; then
         resolved_base=$(python3 -c "import os, sys; print(os.path.realpath(sys.argv[1]))" "$allowed_base" 2>/dev/null)
     elif command -v python &>/dev/null; then
         resolved_base=$(python -c "import os, sys; print(os.path.realpath(sys.argv[1]))" "$allowed_base" 2>/dev/null)
     fi
 
-    # Debug
-    # Debug
-    # echo "DEBUG: path=$path resolved=$resolved base=$allowed_base resolved_base=$resolved_base" >&2
+    if [[ -z "$resolved_base" ]]; then
+        if [[ -d "$allowed_base" ]]; then
+            resolved_base=$(cd "$allowed_base" && pwd -P)
+        else
+            echo "Error: Invalid allowed base path: $allowed_base" >&2
+            return 1
+        fi
+    fi
 
-    if [[ "$resolved" != "$resolved_base"* ]]; then
+    # Enforce a real directory boundary check, not simple prefix matching.
+    if [[ "$resolved_base" == "/" ]]; then
+        :
+    elif [[ "$resolved" == "$resolved_base" || "$resolved" == "$resolved_base/"* ]]; then
+        :
+    else
         echo "Error: Path outside allowed directory: $path" >&2
         return 1
     fi

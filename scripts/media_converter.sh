@@ -41,9 +41,11 @@ PY
     fi
 }
 
-case "$1" in
+MODE="${1:-}"
+
+case "$MODE" in
     video2audio)
-        if [ -z "$2" ]; then
+        if [ -z "${2:-}" ]; then
             echo "Usage: $0 video2audio <video_file>"
             echo "Requires: ffmpeg (install with: brew install ffmpeg)"
             exit 1
@@ -99,7 +101,7 @@ case "$1" in
         ;;
     
     pdf_compress)
-        if [ -z "$2" ]; then
+        if [ -z "${2:-}" ]; then
             echo "Usage: $0 pdf_compress <pdf_file>"
             echo "Requires: Ghostscript (install with: brew install ghostscript)"
             exit 1
@@ -243,6 +245,7 @@ case "$1" in
         echo "  pdf_compress <file>     : Compress PDF file"
         echo "  audio_stitch [dir]      : Stitch audio files in dir (default: current)"
         echo "  audio_stitch <out> <in...>: Stitch specific files"
+        exit 1
         ;;
 esac
 

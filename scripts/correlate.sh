@@ -35,6 +35,9 @@ PY
 # Wrapper for path validation that allows multiple safe directories
 validate_correlate_path() {
     local file="$1"
+    local real_file
+    local data_real
+    local pwd_real
 
     # Check file exists
     if [[ ! -f "$file" ]]; then
@@ -43,21 +46,25 @@ validate_correlate_path() {
     fi
 
     # Get real path
-    local real_file
     real_file=$(resolve_path "$file")
 
     # Get real DATA_DIR path
-    local data_real
     data_real=$(resolve_path "$DATA_DIR")
 
     # Allow files in DATA_DIR, /tmp, /var/tmp, or current working directory
-    local pwd_real
     pwd_real=$(pwd -P)
 
-    if [[ "$real_file" == "$data_real"* ]] || \
-       [[ "$real_file" == "/tmp"* ]] || \
-       [[ "$real_file" == "/var/tmp"* ]] || \
-       [[ "$real_file" == "$pwd_real"* ]]; then
+    # Boundary-safe base-path check (avoid sibling-prefix bypasses like /foo-bar for base /foo).
+    _is_within_base() {
+        local candidate="$1"
+        local base="$2"
+        [[ "$candidate" == "$base" || "$candidate" == "$base/"* ]]
+    }
+
+    if _is_within_base "$real_file" "$data_real" || \
+       _is_within_base "$real_file" "$pwd_real" || \
+       [[ "$real_file" == "/tmp" || "$real_file" == "/tmp/"* || "$real_file" == "/private/tmp" || "$real_file" == "/private/tmp/"* ]] || \
+       [[ "$real_file" == "/var/tmp" || "$real_file" == "/var/tmp/"* || "$real_file" == "/private/var/tmp" || "$real_file" == "/private/var/tmp/"* ]]; then
         return 0
     fi
 

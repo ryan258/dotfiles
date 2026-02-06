@@ -11,7 +11,9 @@ readonly _DHP_SHARED_LOADED=true
 # Function to set up the environment for DHP scripts
 # Sources .env, dhp-lib.sh, and dhp-utils.sh
 dhp_setup_env() {
-    DOTFILES_DIR="$HOME/dotfiles"
+    local shared_dir
+    shared_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$shared_dir/.." && pwd)}"
     AI_STAFF_DIR="$DOTFILES_DIR/ai-staff-hq"
 
     # Source environment variables

@@ -53,19 +53,6 @@ if [ -z "${GITHUB_USERNAME:-}" ] && [[ "$USERNAME" == *" "* ]]; then
     exit 1
 fi
 
-# Helper to get file permissions in a cross-platform way.
-# Handles differences between BSD stat (macOS) and GNU stat (Linux).
-get_file_perms() {
-    local file="$1"
-    if stat -f %A "$file" >/dev/null 2>&1; then
-        # BSD stat (macOS) output (e.g., 600)
-        stat -f %A "$file"
-    else
-        # GNU stat (Linux) output (e.g., 600)
-        stat -c %a "$file"
-    fi
-}
-
 # Ensure the token file has secure permissions (600 - read/write only by owner).
 # If the primary file is insecure, it attempts to fix it in place or safely copy it to the fallback location.
 # usage: ensure_token_access <source_path> <fallback_path>
@@ -347,20 +334,34 @@ get_readme_content() {
 # --- Main Execution ---
 
 # Parse command line arguments to route to the correct function header.
-case "$1" in
+COMMAND="${1:-}"
+
+case "$COMMAND" in
     list_repos)
         list_repos
         ;;
     get_repo)
         shift
+        if [ -z "${1:-}" ]; then
+            echo "Usage: $0 get_repo <repo>" >&2
+            exit 1
+        fi
         get_repo "$@"
         ;;
     get_latest_commit)
         shift
+        if [ -z "${1:-}" ]; then
+            echo "Usage: $0 get_latest_commit <repo>" >&2
+            exit 1
+        fi
         get_latest_commit "$@"
         ;;
     get_readme_content)
         shift
+        if [ -z "${1:-}" ]; then
+            echo "Usage: $0 get_readme_content <repo>" >&2
+            exit 1
+        fi
         get_readme_content "$@"
         ;;
     list_user_events)
@@ -368,6 +369,10 @@ case "$1" in
         ;;
     list_commits_for_date)
         shift
+        if [ -z "${1:-}" ]; then
+            echo "Usage: $0 list_commits_for_date YYYY-MM-DD" >&2
+            exit 1
+        fi
         list_commits_for_date "$@"
         ;;
     *)

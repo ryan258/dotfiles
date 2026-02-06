@@ -8,6 +8,9 @@ setup() {
     
     # Stage scripts and python file
     mkdir -p "$TEST_DIR/scripts/lib"
+    cp "$BATS_TEST_DIRNAME/../scripts/lib/common.sh" "$TEST_DIR/scripts/lib/"
+    cp "$BATS_TEST_DIRNAME/../scripts/lib/config.sh" "$TEST_DIR/scripts/lib/"
+    cp "$BATS_TEST_DIRNAME/../scripts/lib/file_ops.sh" "$TEST_DIR/scripts/lib/"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/correlation_engine.sh" "$TEST_DIR/scripts/lib/"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/correlate.py" "$TEST_DIR/scripts/lib/"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/time_tracking.sh" "$TEST_DIR/scripts/lib/"

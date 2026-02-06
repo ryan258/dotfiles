@@ -15,9 +15,11 @@ sanitize_arg() {
     printf '%s' "$value"
 }
 
-case "$1" in
+COMMAND="${1:-}"
+
+case "$COMMAND" in
     count)
-        if [ -z "$2" ]; then
+        if [ -z "${2:-}" ]; then
             echo "Usage: $0 count <file>"
             exit 1
         fi
@@ -99,7 +101,7 @@ PY
         ;;
     
     clean)
-        if [ -z "$2" ]; then
+        if [ -z "${2:-}" ]; then
             echo "Usage: $0 clean <file>"
             exit 1
         fi
@@ -128,6 +130,7 @@ PY
         echo "  search <pattern> <file>         : Search for text pattern"
         echo "  replace <old> <new> <file>      : Replace text (creates backup)"
         echo "  clean <file>                    : Remove extra whitespace"
+        exit 1
         ;;
 esac
 

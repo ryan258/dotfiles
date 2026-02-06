@@ -4,7 +4,8 @@ set -euo pipefail
 # dhp-project.sh: Multi-Specialist Project Orchestrator
 # Coordinates multiple AI specialists for complex projects
 
-DOTFILES_DIR="$HOME/dotfiles"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 if [ -f "$DOTFILES_DIR/.env" ]; then
     source "$DOTFILES_DIR/.env"

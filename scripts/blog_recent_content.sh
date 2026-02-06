@@ -4,7 +4,9 @@ set -euo pipefail
 # blog_recent_content.sh - show latest Hugo content activity
 
 # Source .env if present to get BLOG_CONTENT_DIR
-ENV_FILE="$HOME/dotfiles/.env"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+ENV_FILE="${ENV_FILE:-$DOTFILES_DIR/.env}"
 if [ -f "$ENV_FILE" ]; then
   # shellcheck disable=SC1090
   source "$ENV_FILE"
