@@ -7,8 +7,9 @@
 ## Primary Directives
 
 1. **Read `GUARDRAILS.md`**: Understand which scope you are in (`Root` vs `ai-staff-hq`).
-2. **Follow `AGENTS.md` and `CLAUDE.md`**: These are the source of truth for the root `dotfiles` project.
-3. **Follow this guide**: Comprehensive rules below for the dotfiles system.
+2. **For root (`dotfiles`) files, follow `CLAUDE.md` as canonical**.
+3. **Use `AGENTS.md` as a quick checklist** aligned with `CLAUDE.md`.
+4. **Use this guide as a Gemini-specific adapter** for the same rules.
 
 ## Submodule Work
 
@@ -75,17 +76,24 @@ dotfiles/
 
 **These ARE standalone programs.**
 
-Location: `scripts/*.sh`, `bin/dhp-*.sh`
+Location: `scripts/*.sh` and executed dispatchers in `bin/`
 
 Examples: `todo.sh`, `journal.sh`, `startday.sh`, `dhp-tech.sh`
 
-**Required header:**
+For scripts in `scripts/`:
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
+```
+
+For dispatchers in `bin/`:
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(dirname "$0")/dhp-shared.sh"
 ```
 
 **Key points:**
@@ -99,7 +107,7 @@ source "$SCRIPT_DIR/lib/common.sh"
 
 **These are NOT standalone - they're loaded into other scripts.**
 
-Location: `scripts/lib/*.sh`, `zsh/aliases.zsh`, `g.sh`, `dhp-context.sh`
+Location: `scripts/lib/*.sh`, `zsh/aliases.zsh`, `scripts/g.sh`, `bin/dhp-context.sh`, `scripts/spec_helper.sh`
 
 **Required header:**
 ```bash
@@ -289,7 +297,8 @@ fi
 ```
 [ ] #!/usr/bin/env bash
 [ ] set -euo pipefail
-[ ] Source common.sh
+[ ] scripts/*.sh: source common.sh (config.sh only if needed)
+[ ] bin/dhp-*.sh: source dhp-shared.sh
 [ ] Add alias if needed
 [ ] Update docs
 ```
@@ -309,6 +318,15 @@ fi
 [ ] Add to .env.example
 [ ] Document in bin/README.md
 ```
+
+---
+
+## Testing
+
+- Use `bats-core` for shell tests.
+- Place tests in `tests/test_*.sh` with `#!/usr/bin/env bats`.
+- Reuse helpers from `tests/helpers/test_helpers.sh` and `tests/helpers/assertions.sh`.
+- Run all tests with: `bats tests/*.sh`
 
 ---
 

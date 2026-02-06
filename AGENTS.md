@@ -4,6 +4,15 @@
 
 ---
 
+## Scope and Precedence
+
+1. Read `GUARDRAILS.md` first to confirm scope (`dotfiles` root vs `ai-staff-hq/`).
+2. For root (`dotfiles`) work, `CLAUDE.md` is the canonical specification.
+3. `AGENTS.md` is the quick operational checklist aligned to `CLAUDE.md`.
+4. For `ai-staff-hq/`, use the local guides in that submodule.
+
+---
+
 ## Critical Rules Summary
 
 Before diving into details, here are the non-negotiable rules:
@@ -54,6 +63,8 @@ dotfiles/
 
 **Examples:** `todo.sh`, `journal.sh`, `health.sh`, `startday.sh`, `dhp-tech.sh`
 
+For scripts in `scripts/`:
+
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
@@ -64,15 +75,25 @@ source "$SCRIPT_DIR/lib/common.sh"
 # Script implementation...
 ```
 
+For dispatchers in `bin/`:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(dirname "$0")/dhp-shared.sh"
+```
+
 **Requirements:**
 - `#!/usr/bin/env bash` (NOT `#!/bin/bash`)
 - `set -euo pipefail` (strict mode mandatory)
-- Resolve `SCRIPT_DIR` for reliable sourcing
+- Resolve script directory for reliable sourcing
+- `scripts/*.sh` should source `common.sh` (and `config.sh` when needed)
+- `bin/dhp-*.sh` should use `dhp-shared.sh`
 - Use `exit` for termination
 
 ### Type 2: Sourced Files (libraries, must-be-sourced scripts)
 
-**Examples:** All `scripts/lib/*.sh`, `g.sh`, `aliases.zsh`, `dhp-context.sh`
+**Examples:** All `scripts/lib/*.sh`, `scripts/g.sh`, `zsh/aliases.zsh`, `bin/dhp-context.sh`, `scripts/spec_helper.sh`
 
 ```bash
 #!/usr/bin/env bash
@@ -303,12 +324,22 @@ When modifying code:
 
 ---
 
+## Testing Conventions
+
+- Framework: `bats-core`
+- Test files: `tests/test_*.sh` with `#!/usr/bin/env bats`
+- Shared helpers: `tests/helpers/test_helpers.sh`, `tests/helpers/assertions.sh`
+- Run full suite: `bats tests/*.sh`
+
+---
+
 ## Quick Checklist
 
 ### New Executed Script
 - [ ] `#!/usr/bin/env bash`
 - [ ] `set -euo pipefail`
-- [ ] Source `common.sh`
+- [ ] `scripts/*.sh`: source `common.sh` (plus `config.sh` when needed)
+- [ ] `bin/dhp-*.sh`: source `dhp-shared.sh`
 - [ ] Add alias if needed
 - [ ] Document in README
 
@@ -326,4 +357,4 @@ When modifying code:
 
 ---
 
-*Refer to CLAUDE.md for the complete, authoritative guidelines.*
+*Refer to `CLAUDE.md` for canonical root-project guidance and `GUARDRAILS.md` for scope selection.*

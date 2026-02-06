@@ -4,6 +4,15 @@ This document defines coding standards, architecture patterns, and conventions t
 
 ---
 
+## Scope and Precedence
+
+1. Read `GUARDRAILS.md` first to identify scope (`dotfiles` root vs `ai-staff-hq/`).
+2. For root (`dotfiles`) files, this `CLAUDE.md` is canonical.
+3. `AGENTS.md` is a concise operational companion and must stay aligned with this file.
+4. For `ai-staff-hq/` files, use `ai-staff-hq/CLAUDE.md` and sibling guides in that submodule.
+
+---
+
 ## Project Overview
 
 This is a personal productivity system built around shell scripts, AI dispatchers, and automation tools. It provides:
@@ -35,23 +44,37 @@ dotfiles/
 
 ---
 
-## Mandatory Script Header
+## Mandatory Script Headers
 
-Every **executed** bash script MUST begin with:
+All executed bash scripts must use:
+- `#!/usr/bin/env bash`
+- `set -euo pipefail`
+
+Header templates differ by script type.
+
+### Executed Utility Scripts (`scripts/*.sh`)
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/lib/common.sh"  # Adjust path as needed
+source "$SCRIPT_DIR/lib/common.sh"
+```
+
+### Executed Dispatchers (`bin/dhp-*.sh`)
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(dirname "$0")/dhp-shared.sh"
 ```
 
 **Requirements:**
 - Use `#!/usr/bin/env bash` (NOT `#!/bin/bash`) for portability
 - Always enable strict mode with `set -euo pipefail`
-- Resolve `SCRIPT_DIR` for reliable library sourcing
-- Source `common.sh` for shared utilities
+- `scripts/*.sh` should source `common.sh` (and `config.sh` when required)
+- `bin/dhp-*.sh` should use `dhp-shared.sh`
 
 ### EXCEPTION: Sourced Libraries and "Must Be Sourced" Scripts
 
@@ -81,9 +104,9 @@ readonly _LIBRARY_NAME_LOADED=true
 **Files that must NOT have `set -euo pipefail`:**
 - All files in `scripts/lib/*.sh`
 - `zsh/aliases.zsh`
-- `g.sh` (navigation, must be sourced)
-- `dhp-context.sh` (context functions)
-- `spec_helper.sh` (template editing)
+- `scripts/g.sh` (navigation, must be sourced)
+- `bin/dhp-context.sh` (context helpers)
+- `scripts/spec_helper.sh` (template editing)
 - Any script with "must be sourced" in its header
 
 ---
@@ -295,10 +318,10 @@ ta() {
 ### Scripts That Must Be SOURCED (use `return`, not `exit`)
 
 - All files in `scripts/lib/*.sh` - Shared libraries
-- `g.sh` - Changes directory in parent shell
-- `aliases.zsh` - Defines shell functions
-- `dhp-context.sh` - Provides context functions
-- `spec_helper.sh` - Interactive template editing
+- `scripts/g.sh` - Changes directory in parent shell
+- `zsh/aliases.zsh` - Defines shell functions
+- `bin/dhp-context.sh` - Provides context helpers
+- `scripts/spec_helper.sh` - Interactive template editing
 
 **Critical rules for sourced scripts:**
 1. **Do NOT use `set -euo pipefail`** - the caller controls shell options
@@ -473,26 +496,30 @@ Tests live in `tests/` with pattern `test_<module>.sh`
 ### Test Structure
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-# Test suite for <module>
+#!/usr/bin/env bats
 
-TEST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$TEST_DIR/helpers/test_framework.sh"
+load helpers/test_helpers.sh
+load helpers/assertions.sh
 
-test_function_behavior() {
-    # Arrange
-    local input="test_value"
-
-    # Act
-    local result=$(function_under_test "$input")
-
-    # Assert
-    assert_equals "$result" "expected_value" "Should return expected value"
+setup() {
+    setup_test_environment
+    # stage scripts/libs into "$TEST_DIR" as needed
 }
 
-# Run tests
-run_tests
+teardown() {
+    teardown_test_environment
+}
+
+@test "feature works" {
+    run "$TEST_DIR/scripts/example.sh" command
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ "expected text" ]]
+}
+```
+
+Run tests with:
+```bash
+bats tests/*.sh
 ```
 
 ### What to Test
@@ -527,10 +554,11 @@ run_tests
 ### Creating a New Executed Script
 
 1. Use header template with `set -euo pipefail`
-2. Source `common.sh` and `config.sh`
-3. Add to `zsh/aliases.zsh` if needed
-4. Document in appropriate README
-5. Add tests for critical functionality
+2. If in `scripts/`, source `common.sh` (and `config.sh` only when needed)
+3. If in `bin/` dispatcher scripts, source `dhp-shared.sh`
+4. Add to `zsh/aliases.zsh` if needed
+5. Document in appropriate README
+6. Add tests for critical functionality
 
 ### Creating a New Dispatcher
 
@@ -545,9 +573,9 @@ run_tests
 1. Create in `scripts/lib/<name>.sh`
 2. **Do NOT add `set -euo pipefail`** - caller controls this
 3. Add double-source guard
-3. Export functions explicitly
-4. Document all public functions
-5. Add tests in `tests/test_<name>.sh`
+4. Export functions explicitly
+5. Document all public functions
+6. Add tests in `tests/test_<name>.sh`
 
 ### Modifying Configuration
 
