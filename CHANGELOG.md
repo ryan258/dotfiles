@@ -1,8 +1,17 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** February 5, 2026
+**Last Updated:** February 6, 2026
 
 This document tracks all major implementations, improvements, and fixes to the Daily Context System.
+
+---
+
+## Version 2.2.5 (February 6, 2026) - goodevening Stability Fix
+
+**Status:** ✅ Production Ready
+
+### Fixes
+- Fixed `scripts/goodevening.sh` unbound variable crash in the AI reflection block by initializing and reusing `RECENT_PUSHES` consistently.
 
 ---
 

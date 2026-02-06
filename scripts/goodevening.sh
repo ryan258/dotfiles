@@ -151,10 +151,11 @@ fi
 # --- ACTIVE PROJECTS (from GitHub) ---
 echo ""
 echo "🚀 RECENT PUSHES (last 7 days):"
+RECENT_PUSHES=""
 if command -v get_recent_github_activity >/dev/null 2>&1; then
-    if recent_pushes=$(get_recent_github_activity 7); then
-        if [ -n "$recent_pushes" ]; then
-            echo "$recent_pushes"
+    if RECENT_PUSHES=$(get_recent_github_activity 7); then
+        if [ -n "$RECENT_PUSHES" ]; then
+            echo "$RECENT_PUSHES"
         else
             echo "  (No recent pushes)"
         fi
