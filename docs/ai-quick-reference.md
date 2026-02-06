@@ -38,7 +38,8 @@ dispatch tech "Fix my script"
 | `research` | `bin/dhp-research.sh` | Knowledge synthesis | stdin |
 | `narrative` | `bin/dhp-narrative.sh` | Story structure | stdin |
 | `aicopy` | `bin/dhp-copy.sh` | Marketing copy | stdin |
-| `morphling` | `bin/dhp-morphling.sh` | Universal adaptive | argument |
+| `morphling` | `bin/morphling.sh` | Interactive Morphling specialist (global launcher) | interactive/argument/stdin |
+| `dhp-morphling` | `bin/dhp-morphling.sh` | Universal adaptive dispatcher (auto-context) | argument |
 | `finance` | `bin/dhp-finance.sh` | Financial strategy | stdin/argument |
 
 **Unified Entry:** `bin/dispatch.sh` routes `dispatch <squad>` to the correct dispatcher. It also honors AI Staff HQ `squads.json` when present. Use `dispatch finance` or the `finance` alias.
@@ -91,6 +92,8 @@ cat notes.md | strategy
 ```bash
 creative "A developer learning to pace energy"
 content "Guide to brain fog workflows"
+morphling "Review this architecture for hidden risks"
+dhp-morphling "Review this architecture for hidden risks"
 ```
 
 **Streaming output:**

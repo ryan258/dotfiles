@@ -93,6 +93,7 @@ Every script in `$SCRIPTS_DIR` has a corresponding wrapper function which ensure
 - `todo`, `t`, `todoadd`, `todolist`, `tododone` – **AI-Enhanced** task management with `commit`, `bump`, `top`, `debug` (AI debugging), `delegate` (route to AI specialist), `up` (quick edit)
 - `next` – Show only your top priority task (`todo top 1`)
 - `journal`, `j` – **AI-Enhanced** journal with `search`, `onthisday`, `up` (quick edit), `analyze` (7-day AI insights), `mood` (14-day sentiment), `themes` (30-day patterns)
+- `insight` – Falsification-first hypothesis workflow (`new`, `test-plan`, `test-result`, `evidence add`, `verdict`, `weekly`)
 - `health` – Comprehensive health tracking with symptoms, energy ratings, and `dashboard` for trends
 - `meds` – Medication tracking with adherence monitoring and `remind` for automation
 - `remind` – macOS notifications via `remind_me.sh`
@@ -134,7 +135,8 @@ Every script in `$SCRIPTS_DIR` has a corresponding wrapper function which ensure
 - `research` / `dhp-research` – Knowledge synthesis and organization
 - `narrative` / `dhp-narrative` – Story structure and plot analysis
 - `aicopy` / `dhp-copy` – Marketing copy and sales messaging
-- `morphling` / `dhp-morphling` – Universal adaptive specialist that auto-adapts to any task
+- `morphling` – Global interactive Morphling launcher (works from any directory)
+- `dhp-morphling` – Dispatcher-mode Morphling with auto-gathered local context
 - `finance` / `dhp-finance` – Financial strategy and admin planning
 - `dispatch` – Unified dispatcher entry point (`dispatch <squad> "brief"`)
 - `ai-suggest` – Context-aware dispatcher suggestions

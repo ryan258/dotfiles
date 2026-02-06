@@ -6,6 +6,52 @@ This document tracks all major implementations, improvements, and fixes to the D
 
 ---
 
+## Version 2.2.8 (February 6, 2026) - Falsification-First Insight Module
+
+**Status:** ✅ Production Ready
+
+### New Features
+- Added `scripts/insight.sh`, a CLI for hypothesis creation, disconfirming test planning, evidence tracking, verdicting, and weekly KPI summaries.
+- Added `scripts/lib/insight_store.sh` for insight data-file initialization, ID generation, and safe record update helpers.
+- Added `scripts/lib/insight_score.sh` for falsification gate checks and verdict recommendation logic.
+- Added centralized config paths in `scripts/lib/config.sh` for:
+  - `INSIGHT_HYPOTHESES_FILE`
+  - `INSIGHT_TESTS_FILE`
+  - `INSIGHT_EVIDENCE_FILE`
+  - `INSIGHT_VERDICTS_FILE`
+
+### Tests
+- Added `tests/test_insight.sh` covering:
+  - hypothesis creation
+  - gate-compliant `SUPPORTED` lifecycle
+  - gate-enforced downgrade to `INCONCLUSIVE`
+  - weekly KPI summary output
+
+### Documentation Updates
+- Added `docs/insight.md` module guide (commands, file formats, falsification gates).
+- Updated `docs/README.md` and `scripts/README.md` to include the new module.
+- Added `insight` shell alias in `zsh/aliases.zsh`.
+- Updated `scripts/cheatsheet.sh` and `scripts/README_aliases.md` with `insight` alias usage.
+
+---
+
+## Version 2.2.7 (February 6, 2026) - Morphling Global Launcher
+
+**Status:** ✅ Production Ready
+
+### New Features
+- Added `bin/morphling.sh`, a global Morphling launcher that works from any directory by resolving `ai-staff-hq` from script location.
+- `morphling` now opens an interactive Morphling session by default and supports one-shot queries via arguments.
+- `morphling` now accepts piped stdin as a one-shot query when called without arguments.
+
+### Compatibility
+- Kept dispatcher-mode Morphling available as `dhp-morphling` (`bin/dhp-morphling.sh`) for context-gathering swarm behavior.
+
+### Documentation Updates
+- Updated `zsh/aliases.zsh`, `scripts/cheatsheet.sh`, `docs/ai-quick-reference.md`, `docs/daily-cheatsheet.md`, `scripts/README_aliases.md`, and `bin/README.md` to reflect new Morphling command behavior.
+
+---
+
 ## Version 2.2.6 (February 6, 2026) - Runtime Hardening & Cleanup Pass
 
 **Status:** ✅ Production Ready

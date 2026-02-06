@@ -185,6 +185,7 @@ alias s-spend="spoon_manager.sh spend"
 # Correlation & Reports
 alias correlate="correlate.sh"
 alias daily-report="generate_report.sh daily"
+alias insight="insight.sh"
 
 # Health tracking
 alias health="health.sh"
@@ -479,7 +480,7 @@ alias stoic="$HOME/dotfiles/bin/dhp-stoic.sh"
 alias research="$HOME/dotfiles/bin/dhp-research.sh"
 alias narrative="$HOME/dotfiles/bin/dhp-narrative.sh"
 alias aicopy="$HOME/dotfiles/bin/dhp-copy.sh"
-alias morphling="$HOME/dotfiles/bin/dhp-morphling.sh"
+alias morphling="$HOME/dotfiles/bin/morphling.sh"
 alias finance="$HOME/dotfiles/bin/dhp-finance.sh"
 alias dhp-morphling="$HOME/dotfiles/bin/dhp-morphling.sh"
 alias dhp="$HOME/dotfiles/bin/dhp-tech.sh"  # Default to tech dispatcher

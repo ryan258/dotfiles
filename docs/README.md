@@ -90,6 +90,14 @@ Welcome to your dotfiles documentation! Start with one of the guides below based
   - Evening wrap-up
   - Brain-fog-friendly explanations
 
+### Discovery & Research
+
+- **[🔬 Falsification-First Insight Module](insight.md)** - Hypothesis workflow with disconfirming tests
+  - Create testable hypotheses
+  - Log evidence with provenance
+  - Enforce support gates before promoting conclusions
+  - Track weekly insight KPIs
+
 ---
 
 ## 🎯 Specialized Guides
@@ -237,6 +245,7 @@ docs/
 ├── ai-quick-reference.md      ⭐ AI usage + examples
 ├── system-overview.md         ⭐ Architecture diagrams
 ├── happy-path.md              Daily workflow
+├── insight.md                 Falsification-first hypothesis workflow
 ├── best-practices.md          Best practices
 ├── clipboard.md               Clipboard workflows
 ├── personas.md                Blog personas

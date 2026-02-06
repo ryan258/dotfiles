@@ -99,7 +99,8 @@
 | `strategy "question"` | R&D decisions, capability plans |
 | `finance "question"`  | Tax, S-Corp, financial advice   |
 | `stoic "struggle"`    | Mindset, perspective            |
-| `morphling "any task"`| Auto-adapts to any need         |
+| `morphling`           | Interactive universal specialist |
+| `dhp-morphling "task"`| Dispatcher Morphling with context |
 | `ai-suggest`          | Not sure which AI to use?       |
 
 **Pipe code to AI:**

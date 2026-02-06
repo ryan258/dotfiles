@@ -65,6 +65,10 @@ TIDY_IGNORE_FILE="${TIDY_IGNORE_FILE:-$DATA_DIR/tidy_ignore.txt}"
 BREAKS_LOG="${BREAKS_LOG:-$DATA_DIR/health_breaks.log}"
 GCAL_CREDS_FILE="${GCAL_CREDS_FILE:-$DATA_DIR/google_creds.json}"
 GCAL_TOKEN_FILE="${GCAL_TOKEN_FILE:-$DATA_DIR/google_token_cache.json}"
+INSIGHT_HYPOTHESES_FILE="${INSIGHT_HYPOTHESES_FILE:-$DATA_DIR/insight_hypotheses.txt}"
+INSIGHT_TESTS_FILE="${INSIGHT_TESTS_FILE:-$DATA_DIR/insight_tests.txt}"
+INSIGHT_EVIDENCE_FILE="${INSIGHT_EVIDENCE_FILE:-$DATA_DIR/insight_evidence.txt}"
+INSIGHT_VERDICTS_FILE="${INSIGHT_VERDICTS_FILE:-$DATA_DIR/insight_verdicts.txt}"
 
 #=============================================================================
 # Model Configuration - SINGLE SOURCE OF TRUTH

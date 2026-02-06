@@ -87,6 +87,7 @@ Below is a quick snapshot of what each script does and how to call it. Arguments
 - `new_script.sh <name>` – Automate adding new scripts with proper headers, executable permissions, and alias creation.
 - `spec_helper.sh` – Spec template workflow - opens structured templates for comprehensive AI dispatcher input. **Note:** The `spec` alias sources this file to enable template editing workflow.
 - `correlate.sh {run|find-patterns|explain}` – **Correlation Engine** for statistical analysis between datasets. Use `correlate run <file1> <file2>` to calculate Pearson correlation between two time-series files; use `find-patterns` to spot trends and weekly patterns; `explain` converts `r` into plain‑English insight.
+- `insight.sh {new|test-plan|test-result|evidence add|verdict|weekly}` – **Falsification-first insight workflow** for turning claims into testable hypotheses, logging evidence/provenance, and enforcing support gates before concluding `SUPPORTED`.
 
 ### Project & Directory Management
 

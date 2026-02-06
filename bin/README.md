@@ -27,8 +27,10 @@ This directory contains 12 AI dispatcher scripts plus 4 advanced features that p
 | `dhp-research.sh`  | `research`  | Knowledge synthesis | stdin        |
 | `dhp-narrative.sh` | `narrative` | Story structure     | stdin        |
 | `dhp-copy.sh`      | `aicopy`    | Marketing copy      | stdin        |
-| `dhp-morphling.sh` | `morphling` | Universal adaptive  | argument     |
+| `dhp-morphling.sh` | `dhp-morphling` | Universal adaptive dispatcher | argument |
 | `dhp-finance.sh`   | `finance`   | Financial strategy  | stdin/arg    |
+
+**Morphling launcher:** `morphling` now points to `bin/morphling.sh` for interactive specialist mode from any directory.
 
 ## Advanced Features
 
@@ -382,6 +384,28 @@ cat multiple-sources.txt | research
 
 ## Universal Adaptive Specialist
 
+### `morphling.sh` (Interactive Morphling Launcher)
+
+**Purpose:** Launch the AI-Staff-HQ Morphling specialist from any working directory
+
+**Input:** Optional query argument, optional stdin, or interactive mode
+**Specialist:** `ai-staff-hq/staff/meta/morphling.yaml`
+
+**Usage:**
+
+```bash
+# Interactive session
+morphling
+
+# One-shot query
+morphling "Review this code for security issues"
+
+# Piped one-shot query
+cat error.log | morphling
+```
+
+---
+
 ### `dhp-morphling.sh` (Morphling)
 
 **Purpose:** Universal "shapeshifting" specialist that auto-adapts to any task by analyzing context
@@ -395,13 +419,13 @@ cat multiple-sources.txt | research
 
 ```bash
 # Let Morphling analyze context and adapt
-morphling "Review this code for security issues"
+dhp-morphling "Review this code for security issues"
 
 # Use in any directory - it gathers context automatically
-cd ~/Projects/my-app && morphling "What should I focus on next?"
+cd ~/Projects/my-app && dhp-morphling "What should I focus on next?"
 
 # Pipe content for analysis
-cat error.log | morphling "Diagnose this issue"
+cat error.log | dhp-morphling "Diagnose this issue"
 ```
 
 **Context Gathering:**
