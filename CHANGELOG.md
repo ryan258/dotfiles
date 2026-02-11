@@ -4,6 +4,34 @@
 
 This document tracks all major implementations, improvements, and fixes to the Daily Context System.
 
+## Version 2.2.22 (February 11, 2026) - Error Handling Standardization (Touched Core Scripts)
+
+**Status:** ✅ Production Ready
+
+### die()/log_* Migration (Progressive)
+- Standardized fatal error paths to `die()` in touched core workflow scripts:
+  - `scripts/startday.sh`
+  - `scripts/goodevening.sh`
+  - `scripts/todo.sh`
+  - `scripts/journal.sh`
+  - `scripts/health.sh`
+- Preserved existing user-facing usage/help output while making fatal failures consistent and logged.
+- Refined user-argument UX after review:
+  - removed usage+die double-message paths in touched scripts by using `log_error + exit` where usage/help text is already shown.
+  - reordered unknown-command handling to print the error first, then help/usage.
+  - aligned `health export` empty-data failure to `EXIT_ERROR` semantics.
+
+### Notes
+- This is a progressive migration pass for REPORT item #12 (convert-on-touch policy), not a
+  full repository-wide sweep.
+
+### Validation
+- `bash -n` passed on touched scripts.
+- Full suite passes:
+  - `bats tests/*.sh` -> `1..99` passing.
+
+---
+
 ## Version 2.2.21 (February 11, 2026) - Review Follow-up Hardening
 
 **Status:** ✅ Production Ready

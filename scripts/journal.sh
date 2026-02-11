@@ -28,8 +28,9 @@ case "${1:-add}" in
     if [ $# -gt 0 ]; then shift; fi # Removes 'add' if present
     ENTRY="$*"
     if [ -z "$ENTRY" ]; then
-        echo "Usage: $(basename "$0") <text>"
-        exit 1
+        echo "Usage: $(basename "$0") <text>" >&2
+        log_error "Missing journal entry text"
+        exit "$EXIT_INVALID_ARGS"
     fi
     TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
     ENTRY=$(sanitize_for_storage "$ENTRY")
@@ -68,8 +69,9 @@ case "${1:-add}" in
     done
 
     if [ $# -eq 0 ]; then
-        echo "Usage: $(basename "$0") search [--recent|--oldest] <term>"
-        exit 1
+        echo "Usage: $(basename "$0") search [--recent|--oldest] <term>" >&2
+        log_error "Missing search term"
+        exit "$EXIT_INVALID_ARGS"
     fi
 
     if [[ ! -s "$JOURNAL_FILE" ]]; then
@@ -136,9 +138,7 @@ case "${1:-add}" in
             echo "$RECENT_ENTRIES"
         } | dhp-strategy.sh
     else
-        echo "Error: dhp-strategy.sh dispatcher not found"
-        echo "Make sure bin/ is in your PATH"
-        exit 1
+        die "dhp-strategy.sh dispatcher not found. Make sure bin/ is in your PATH" "$EXIT_FILE_NOT_FOUND"
     fi
 
     echo ""
@@ -176,8 +176,7 @@ case "${1:-add}" in
             echo "$RECENT_ENTRIES"
         } | dhp-strategy.sh
     else
-        echo "Error: dhp-strategy.sh dispatcher not found"
-        exit 1
+        die "dhp-strategy.sh dispatcher not found. Make sure bin/ is in your PATH" "$EXIT_FILE_NOT_FOUND"
     fi
 
     echo ""
@@ -215,8 +214,7 @@ case "${1:-add}" in
             echo "$RECENT_ENTRIES"
         } | dhp-strategy.sh
     else
-        echo "Error: dhp-strategy.sh dispatcher not found"
-        exit 1
+        die "dhp-strategy.sh dispatcher not found. Make sure bin/ is in your PATH" "$EXIT_FILE_NOT_FOUND"
     fi
 
     echo ""
@@ -251,6 +249,7 @@ case "${1:-add}" in
     echo "  analyze                     : AI analysis of last 7 days (insights & patterns)"
     echo "  mood                        : AI sentiment analysis of last 14 days"
     echo "  themes                      : AI theme extraction from last 30 days"
-    exit 1
+    log_error "Unknown journal command '$1'"
+    exit "$EXIT_INVALID_ARGS"
     ;;
 esac

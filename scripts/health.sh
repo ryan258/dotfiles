@@ -170,8 +170,9 @@ cmd_add() {
     local time_str="$2"
     
     if [ -z "$desc" ] || [ -z "$time_str" ]; then
-        echo "Usage: $(basename "$0") add \"description\" \"YYYY-MM-DD HH:MM\""
-        exit 1
+        echo "Usage: $(basename "$0") add \"description\" \"YYYY-MM-DD HH:MM\"" >&2
+        log_error "Missing description or time for add command"
+        exit "$EXIT_INVALID_ARGS"
     fi
     desc=$(sanitize_for_storage "$desc")
     time_str=$(sanitize_input "$time_str")
@@ -182,8 +183,9 @@ cmd_add() {
 cmd_symptom() {
     local symptom_note="$*"
     if [ -z "$symptom_note" ]; then
-        echo "Usage: $(basename "$0") symptom \"symptom description\""
-        exit 1
+        echo "Usage: $(basename "$0") symptom \"symptom description\"" >&2
+        log_error "Missing symptom description"
+        exit "$EXIT_INVALID_ARGS"
     fi
     local timestamp=$(date '+%Y-%m-%d %H:%M')
     symptom_note=$(sanitize_for_storage "$symptom_note")
@@ -194,10 +196,11 @@ cmd_symptom() {
 cmd_energy() {
     local rating="$1"
     if [ -z "$rating" ]; then
-        echo "Usage: $(basename "$0") energy <1-10>"
-        exit 1
+        echo "Usage: $(basename "$0") energy <1-10>" >&2
+        log_error "Missing energy rating"
+        exit "$EXIT_INVALID_ARGS"
     fi
-    validate_range "$rating" 1 10 "energy rating" || exit 1
+    validate_range "$rating" 1 10 "energy rating" || die "Invalid energy rating '$rating'" "$EXIT_INVALID_ARGS"
     
     local timestamp=$(date '+%Y-%m-%d %H:%M')
     echo "ENERGY|$timestamp|$rating" >> "$HEALTH_FILE"
@@ -289,17 +292,17 @@ cmd_summary() {
 cmd_remove() {
     local line_num="$1"
     if [ -z "$line_num" ]; then
-        echo "Usage: $(basename "$0") remove <line_number>"
+        echo "Usage: $(basename "$0") remove <line_number>" >&2
         grep -n "^APPT|" "$HEALTH_FILE" 2>/dev/null | sed 's/^/  /' || echo "No appointments to remove"
-        exit 1
+        log_error "Missing line number for remove"
+        exit "$EXIT_INVALID_ARGS"
     fi
     
-    validate_numeric "$line_num" "line number" || exit 1
+    validate_numeric "$line_num" "line number" || die "Invalid line number '$line_num'" "$EXIT_INVALID_ARGS"
     
     # Use atomic delete
     atomic_delete_line "$line_num" "$HEALTH_FILE" || {
-         echo "Error: Failed to remove line $line_num" >&2
-         exit 1
+         die "Failed to remove line $line_num from health data" "$EXIT_ERROR"
     }
     echo "Removed line #$line_num"
 }
@@ -388,8 +391,7 @@ cmd_export() {
     local output_file="${2:-}"
 
     if [[ ! -s "$HEALTH_FILE" ]]; then
-        echo "No health data to export." >&2
-        exit 1
+        die "No health data to export." "$EXIT_ERROR"
     fi
 
     case "$format" in
@@ -427,7 +429,8 @@ cmd_export() {
         *)
             echo "Usage: $(basename "$0") export {csv|json} [output_file]" >&2
             echo "Formats: csv (default), json" >&2
-            exit 1
+            log_error "Invalid export format '$format'"
+            exit "$EXIT_INVALID_ARGS"
             ;;
     esac
 }
@@ -436,10 +439,11 @@ cmd_export() {
 cmd_fog() {
     local rating="$1"
     if [ -z "$rating" ]; then
-        echo "Usage: $(basename "$0") fog <1-10>"
-        exit 1
+        echo "Usage: $(basename "$0") fog <1-10>" >&2
+        log_error "Missing fog rating"
+        exit "$EXIT_INVALID_ARGS"
     fi
-    validate_range "$rating" 1 10 "fog rating" || exit 1
+    validate_range "$rating" 1 10 "fog rating" || die "Invalid fog rating '$rating'" "$EXIT_INVALID_ARGS"
     
     local timestamp=$(date '+%Y-%m-%d %H:%M')
     echo "FOG|$timestamp|$rating" >> "$HEALTH_FILE"
@@ -507,8 +511,10 @@ main() {
             ;;
              
         *)
-            echo "Usage: $(basename "$0") {add|symptom|energy|fog|check|list|summary|dashboard|remove|export}"
-            exit 1
+            echo "Error: Unknown health command '${cmd:-}'" >&2
+            echo "Usage: $(basename "$0") {add|symptom|energy|fog|check|list|summary|dashboard|remove|export}" >&2
+            log_error "Unknown health command '${cmd:-}'"
+            exit "$EXIT_INVALID_ARGS"
             ;;
     esac
 }

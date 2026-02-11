@@ -19,8 +19,7 @@ if [ -f "$DATE_UTILS" ]; then
     # shellcheck disable=SC1090
     source "$DATE_UTILS"
 else
-    echo "Error: date utilities not found at $DATE_UTILS" >&2
-    exit 1
+    die "date utilities not found at $DATE_UTILS" "$EXIT_FILE_NOT_FOUND"
 fi
 
 # --- CONFIGURATION ---
@@ -28,8 +27,7 @@ if [ -f "$CONFIG_LIB" ]; then
     # shellcheck disable=SC1090
     source "$CONFIG_LIB"
 else
-    echo "Error: configuration library not found at $CONFIG_LIB" >&2
-    exit 1
+    die "configuration library not found at $CONFIG_LIB" "$EXIT_FILE_NOT_FOUND"
 fi
 
 # Source new libraries
@@ -42,14 +40,12 @@ fi
 if [ -f "$SCRIPT_DIR/lib/coach_ops.sh" ]; then
     source "$SCRIPT_DIR/lib/coach_ops.sh"
 else
-    echo "Error: coach operations library not found at $SCRIPT_DIR/lib/coach_ops.sh" >&2
-    exit 1
+    die "coach operations library not found at $SCRIPT_DIR/lib/coach_ops.sh" "$EXIT_FILE_NOT_FOUND"
 fi
 if [ -f "$SCRIPT_DIR/lib/coaching.sh" ]; then
     source "$SCRIPT_DIR/lib/coaching.sh"
 else
-    echo "Error: coaching facade not found at $SCRIPT_DIR/lib/coaching.sh" >&2
-    exit 1
+    die "coaching facade not found at $SCRIPT_DIR/lib/coaching.sh" "$EXIT_FILE_NOT_FOUND"
 fi
 
 mkdir -p "$DATA_DIR"

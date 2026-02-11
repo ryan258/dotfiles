@@ -60,11 +60,11 @@ cmd_list() {
 
 cmd_done() {
     local task_num="$1"
-    validate_numeric "$task_num" "task number" || exit 1
+    validate_numeric "$task_num" "task number" || die "Invalid task number '$task_num'" "$EXIT_ERROR"
 
     local task_line
-    task_line=$(get_todo_line "$task_num") || exit 1
-    [[ -n "$task_line" ]] || { echo "Error: Task $task_num not found"; exit 1; }
+    task_line=$(get_todo_line "$task_num") || die "Unable to read task $task_num" "$EXIT_ERROR"
+    [[ -n "$task_line" ]] || die "Task $task_num not found" "$EXIT_ERROR"
     
     # Extract text part
     local task_text
@@ -76,8 +76,7 @@ cmd_done() {
 
     # Remove from todo file atomically
     atomic_delete_line "$task_num" "$TODO_FILE" || {
-        echo "Error: Failed to delete task line" >&2
-        exit 1
+        die "Failed to delete task line $task_num from todo file" "$EXIT_ERROR"
     }
 
     local messages=(
@@ -91,16 +90,15 @@ cmd_done() {
 
 cmd_rm() {
     local task_num="$1"
-    validate_numeric "$task_num" "task number" || exit 1
+    validate_numeric "$task_num" "task number" || die "Invalid task number '$task_num'" "$EXIT_ERROR"
 
     local task_line
-    task_line=$(get_todo_line "$task_num") || exit 1
-    [[ -n "$task_line" ]] || { echo "Error: Task $task_num not found"; exit 1; }
+    task_line=$(get_todo_line "$task_num") || die "Unable to read task $task_num" "$EXIT_ERROR"
+    [[ -n "$task_line" ]] || die "Task $task_num not found" "$EXIT_ERROR"
 
     # Remove from todo file atomically
     atomic_delete_line "$task_num" "$TODO_FILE" || {
-        echo "Error: Failed to delete task line" >&2
-        exit 1
+        die "Failed to delete task line $task_num from todo file" "$EXIT_ERROR"
     }
 
     echo "Task $task_num removed permanently."
@@ -119,21 +117,21 @@ cmd_clear() {
     fi
     
     # Atomic clear (write empty string)
-    atomic_write "" "$TODO_FILE" || exit 1
+    atomic_write "" "$TODO_FILE" || die "Failed to clear todo file" "$EXIT_ERROR"
     echo "All tasks cleared."
 }
 
 cmd_bump() {
     local task_num="$1"
-    validate_numeric "$task_num" "task number" || exit 1
+    validate_numeric "$task_num" "task number" || die "Invalid task number '$task_num'" "$EXIT_ERROR"
 
     local task_line
-    task_line=$(get_todo_line "$task_num") || exit 1
-    [[ -n "$task_line" ]] || { echo "Error: Task $task_num not found"; exit 1; }
+    task_line=$(get_todo_line "$task_num") || die "Unable to read task $task_num" "$EXIT_ERROR"
+    [[ -n "$task_line" ]] || die "Task $task_num not found" "$EXIT_ERROR"
 
     # Delete then prepend
-    atomic_delete_line "$task_num" "$TODO_FILE" || exit 1
-    atomic_prepend "$task_line" "$TODO_FILE" || exit 1
+    atomic_delete_line "$task_num" "$TODO_FILE" || die "Failed to remove task $task_num before bump" "$EXIT_ERROR"
+    atomic_prepend "$task_line" "$TODO_FILE" || die "Failed to bump task $task_num to top" "$EXIT_ERROR"
 
     echo "Bumped task $task_num to top."
 }
@@ -154,11 +152,11 @@ cmd_commit() {
     shift
     local msg="$*"
 
-    validate_numeric "$task_num" "task number" || exit 1
+    validate_numeric "$task_num" "task number" || die "Invalid task number '$task_num'" "$EXIT_ERROR"
 
     local task_line
-    task_line=$(get_todo_line "$task_num") || exit 1
-    [[ -n "$task_line" ]] || { echo "Error: Task $task_num not found"; exit 1; }
+    task_line=$(get_todo_line "$task_num") || die "Unable to read task $task_num" "$EXIT_ERROR"
+    [[ -n "$task_line" ]] || die "Task $task_num not found" "$EXIT_ERROR"
     local task_text
     task_text=$(echo "$task_line" | cut -d'|' -f2-)
 
@@ -178,7 +176,7 @@ cmd_commit() {
 cmd_undo() {
     if [[ ! -s "$DONE_FILE" ]]; then
         echo "No tasks to undo."
-        exit 1
+        exit "$EXIT_ERROR"
     fi
 
     local last_done_task
@@ -193,7 +191,7 @@ cmd_undo() {
     # We need to know line number of last line.
     local last_line_num
     last_line_num=$(wc -l < "$DONE_FILE" | tr -d ' ')
-    atomic_delete_line "$last_line_num" "$DONE_FILE" || exit 1
+    atomic_delete_line "$last_line_num" "$DONE_FILE" || die "Failed to update done-file while undoing last task" "$EXIT_ERROR"
 
     # Extract original text (field after timestamp)
     local task_text_to_restore
@@ -210,23 +208,21 @@ cmd_time_wrapper() {
     shift
     
     if [[ ! -x "$TIME_TRACKER" ]]; then
-        echo "Error: Time tracker script not found at $TIME_TRACKER" >&2
-        exit 1
+        die "Time tracker script not found at $TIME_TRACKER" "$EXIT_FILE_NOT_FOUND"
     fi
     "$TIME_TRACKER" "$cmd" "$@"
 }
 
 cmd_start() {
     local task_num="$1"
-    validate_numeric "$task_num" "task number" || exit 1
+    validate_numeric "$task_num" "task number" || die "Invalid task number '$task_num'" "$EXIT_ERROR"
     
     local task_text
     if ! task_text=$(get_todo_text "$task_num"); then
-        exit 1
+        die "Unable to read task $task_num" "$EXIT_ERROR"
     fi
     if [[ -z "$task_text" ]]; then
-        echo "Error: Task $task_num not found" >&2
-        exit 1
+        die "Task $task_num not found" "$EXIT_ERROR"
     fi
     
     cmd_time_wrapper "start" "$task_num" "$task_text"
@@ -238,7 +234,7 @@ cmd_stop() {
 
 cmd_time() {
     local task_num="$1"
-    validate_numeric "$task_num" "task number" || exit 1
+    validate_numeric "$task_num" "task number" || die "Invalid task number '$task_num'" "$EXIT_ERROR"
     cmd_time_wrapper "check" "$task_num"
 }
 
@@ -246,21 +242,19 @@ cmd_spend() {
     local task_num="$1"
     local count="$2"
     
-    validate_numeric "$task_num" "task id" || exit 1
-    validate_numeric "$count" "spoon count" || exit 1
+    validate_numeric "$task_num" "task id" || die "Invalid task id '$task_num'" "$EXIT_ERROR"
+    validate_numeric "$count" "spoon count" || die "Invalid spoon count '$count'" "$EXIT_ERROR"
     
     local task_text
     if ! task_text=$(get_todo_text "$task_num"); then
-        exit 1
+        die "Unable to read task $task_num" "$EXIT_ERROR"
     fi
     if [[ -z "$task_text" ]]; then
-        echo "Error: Task $task_num not found" >&2
-        exit 1
+        die "Task $task_num not found" "$EXIT_ERROR"
     fi
     
     if [[ ! -x "$SPOON_MANAGER" ]]; then
-        echo "Error: Spoon manager not found at $SPOON_MANAGER" >&2
-        exit 1
+        die "Spoon manager not found at $SPOON_MANAGER" "$EXIT_FILE_NOT_FOUND"
     fi
     
     "$SPOON_MANAGER" spend "$count" "$task_text"
@@ -280,15 +274,14 @@ cmd_up() {
 
 cmd_debug() {
     local task_num="$1"
-    validate_numeric "$task_num" "task number" || exit 1
+    validate_numeric "$task_num" "task number" || die "Invalid task number '$task_num'" "$EXIT_ERROR"
     
     local task_text
     if ! task_text=$(get_todo_text "$task_num"); then
-        exit 1
+        die "Unable to read task $task_num" "$EXIT_ERROR"
     fi
     if [[ -z "$task_text" ]]; then
-        echo "Error: Task $task_num not found" >&2
-        exit 1
+        die "Task $task_num not found" "$EXIT_ERROR"
     fi
     
     echo "🤖 Debugging task #$task_num with AI Staff..."
@@ -322,16 +315,15 @@ cmd_delegate() {
     local task_num="$1"
     local dispatcher="$2"
     
-    validate_numeric "$task_num" "task number" || exit 1
-    [[ -z "$dispatcher" ]] && { echo "Error: Dispatcher required"; exit 1; }
+    validate_numeric "$task_num" "task number" || die "Invalid task number '$task_num'" "$EXIT_ERROR"
+    [[ -z "$dispatcher" ]] && die "Dispatcher required (tech|creative|content)" "$EXIT_ERROR"
 
     local task_text
     if ! task_text=$(get_todo_text "$task_num"); then
-        exit 1
+        die "Unable to read task $task_num" "$EXIT_ERROR"
     fi
     if [[ -z "$task_text" ]]; then
-        echo "Error: Task $task_num not found" >&2
-        exit 1
+        die "Task $task_num not found" "$EXIT_ERROR"
     fi
 
     echo "🤖 Delegating task #$task_num to AI Staff ($dispatcher dispatcher)..."
@@ -353,9 +345,10 @@ cmd_delegate() {
             dhp-content.sh "$task_text"
             ;;
         *)
-            echo "Error: Unknown dispatcher '$dispatcher'"
-            echo "Available: tech, creative, content"
-            exit 1
+            echo "Error: Unknown dispatcher '$dispatcher'" >&2
+            echo "Available: tech, creative, content" >&2
+            log_error "Unknown dispatcher '$dispatcher'"
+            exit "$EXIT_ERROR"
             ;;
     esac
 
@@ -426,9 +419,10 @@ main() {
         delegate)   cmd_delegate "$@" ;;
         -h|--help|help) show_help ;;
         *)
-            echo "Unknown command: $cmd" >&2
+            echo "Error: Unknown command: $cmd" >&2
             show_help
-            exit 1
+            log_error "Unknown todo command: $cmd"
+            exit "$EXIT_ERROR"
             ;;
     esac
 }
