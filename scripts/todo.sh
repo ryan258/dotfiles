@@ -34,8 +34,7 @@ cmd_add() {
         exit 1
     fi
 
-    task_text=$(sanitize_input "$task_text")
-    task_text=${task_text//$'\n'/\\n}
+    task_text=$(sanitize_for_storage "$task_text")
     
     # Append to file (simple append is generally safe, or we could use atomic_append if we implemented it)
     echo "$(date +%Y-%m-%d)|$task_text" >> "$TODO_FILE"
@@ -72,8 +71,7 @@ cmd_done() {
     task_text=$(echo "$task_line" | cut -d'|' -f2-)
 
     # Append to done file (pipe-delimited)
-    task_text=$(sanitize_input "$task_text")
-    task_text=${task_text//$'\n'/\\n}
+    task_text=$(sanitize_for_storage "$task_text")
     echo "$(date '+%Y-%m-%d %H:%M:%S')|$task_text" >> "$DONE_FILE"
 
     # Remove from todo file atomically
@@ -114,8 +112,7 @@ cmd_clear() {
         while IFS= read -r line; do
             if [[ -n "$line" ]]; then
                 task_text=$(echo "$line" | cut -d'|' -f2-)
-                task_text=$(sanitize_input "$task_text")
-                task_text=${task_text//$'\n'/\\n}
+                task_text=$(sanitize_for_storage "$task_text")
                 echo "$(date '+%Y-%m-%d %H:%M:%S')|$task_text" >> "$DONE_FILE"
             fi
         done < "$TODO_FILE"

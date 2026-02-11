@@ -10,13 +10,18 @@ readonly _COACH_OPS_LOADED=true
 
 # Dependencies:
 # - DATA_DIR and coach-related config values from config.sh.
-# - optional helpers from common.sh/date_utils.sh (sanitize_input, validate_path, timestamp_to_epoch).
+# - date helpers from date_utils.sh (date_shift_from, timestamp_to_epoch).
+# - optional helpers from common.sh (sanitize_input, validate_path).
 if [[ -z "${DATA_DIR:-}" ]]; then
     echo "Error: DATA_DIR is not set. Source scripts/lib/config.sh before coach_ops.sh." >&2
     return 1
 fi
 if [[ -z "${TODO_FILE:-}" || -z "${DONE_FILE:-}" || -z "${JOURNAL_FILE:-}" || -z "${HEALTH_FILE:-}" || -z "${SPOON_LOG:-}" || -z "${DIR_USAGE_LOG:-}" || -z "${FOCUS_HISTORY_FILE:-}" || -z "${DISPATCHER_USAGE_LOG:-}" || -z "${COACH_MODE_FILE:-}" || -z "${COACH_LOG_FILE:-}" ]]; then
     echo "Error: Coach paths are not fully configured. Source scripts/lib/config.sh before coach_ops.sh." >&2
+    return 1
+fi
+if ! command -v date_shift_from >/dev/null 2>&1 || ! command -v timestamp_to_epoch >/dev/null 2>&1; then
+    echo "Error: date_shift_from/timestamp_to_epoch are not available. Source scripts/lib/date_utils.sh before coach_ops.sh." >&2
     return 1
 fi
 
@@ -43,59 +48,12 @@ _coach_escape_field() {
 _coach_shift_date() {
     local anchor_date="$1"
     local offset_days="$2"
-
-    if command -v python3 >/dev/null 2>&1; then
-        python3 - "$anchor_date" "$offset_days" <<'PY'
-import sys
-from datetime import datetime, timedelta
-
-anchor = datetime.strptime(sys.argv[1], "%Y-%m-%d")
-offset = int(sys.argv[2])
-print((anchor + timedelta(days=offset)).strftime("%Y-%m-%d"))
-PY
-        return
-    fi
-
-    if date -j -f "%Y-%m-%d" "$anchor_date" -v"${offset_days}"d "+%Y-%m-%d" >/dev/null 2>&1; then
-        date -j -f "%Y-%m-%d" "$anchor_date" -v"${offset_days}"d "+%Y-%m-%d"
-        return
-    fi
-
-    if command -v gdate >/dev/null 2>&1; then
-        gdate -d "$anchor_date $offset_days day" "+%Y-%m-%d"
-    else
-        date -d "$anchor_date $offset_days day" "+%Y-%m-%d"
-    fi
+    date_shift_from "$anchor_date" "$offset_days" "%Y-%m-%d"
 }
 
 _coach_date_to_epoch() {
     local date_value="$1"
-
-    if command -v timestamp_to_epoch >/dev/null 2>&1; then
-        timestamp_to_epoch "$date_value"
-        return
-    fi
-
-    if command -v python3 >/dev/null 2>&1; then
-        python3 - "$date_value" <<'PY'
-import sys
-from datetime import datetime
-
-raw = sys.argv[1]
-formats = ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d")
-for fmt in formats:
-    try:
-        print(int(datetime.strptime(raw, fmt).timestamp()))
-        break
-    except ValueError:
-        continue
-else:
-    print(0)
-PY
-        return
-    fi
-
-    echo "0"
+    timestamp_to_epoch "$date_value"
 }
 
 _coach_average() {

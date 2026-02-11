@@ -48,6 +48,16 @@ fi
 if [ -f "$SCRIPT_DIR/lib/coach_ops.sh" ]; then
     # shellcheck disable=SC1090
     source "$SCRIPT_DIR/lib/coach_ops.sh"
+else
+    echo "Error: coach operations library not found at $SCRIPT_DIR/lib/coach_ops.sh" >&2
+    exit 1
+fi
+if [ -f "$SCRIPT_DIR/lib/coaching.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/coaching.sh"
+else
+    echo "Error: coaching facade not found at $SCRIPT_DIR/lib/coaching.sh" >&2
+    exit 1
 fi
 
 mkdir -p "$DATA_DIR"
@@ -71,6 +81,8 @@ fi
 
 
 # 1. Determine "Today"
+# If startday has not run, goodevening falls back to the system date
+# (or previous day before 04:00 in interactive sessions).
 # Usage: goodevening.sh [--refresh|-r] [YYYY-MM-DD]
 FORCE_CURRENT_DAY=false
 DATE_OVERRIDE=""
@@ -92,22 +104,36 @@ if [ -n "$DATE_OVERRIDE" ]; then
 else
     CURRENT_DAY_FILE="$DATA_DIR/current_day"
 
-    if [ -f "$CURRENT_DAY_FILE" ]; then
+    if [ "$FORCE_CURRENT_DAY" = true ]; then
+        TODAY=$(date +%Y-%m-%d)
+        log_info "goodevening.sh: refresh requested; using system date $TODAY"
+    elif [ -f "$CURRENT_DAY_FILE" ]; then
         TODAY=$(cat "$CURRENT_DAY_FILE")
-        if [ "$FORCE_CURRENT_DAY" = false ]; then
-            # If the file is extremely old (e.g. > 24 hours), fallback to actual today to prevent stale state bugs
-            FILE_AGE=$(( $(date +%s) - $(file_mtime_epoch "$CURRENT_DAY_FILE") ))
-            if [ "$FILE_AGE" -gt 86400 ]; then
-                 TODAY=$(date +%Y-%m-%d)
+        if ! [[ "$TODAY" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            TODAY=$(date +%Y-%m-%d)
+            log_warn "goodevening.sh: invalid current_day marker; using system date $TODAY"
+        else
+            marker_mtime_epoch=$(file_mtime_epoch "$CURRENT_DAY_FILE" 2>/dev/null || echo "0")
+            now_epoch=$(date +%s)
+            marker_age_seconds=0
+            if [[ "$marker_mtime_epoch" =~ ^[0-9]+$ ]] && [ "$marker_mtime_epoch" -gt 0 ] && [ "$now_epoch" -ge "$marker_mtime_epoch" ]; then
+                marker_age_seconds=$((now_epoch - marker_mtime_epoch))
+            fi
+
+            if [ "$marker_age_seconds" -gt 86400 ]; then
+                TODAY=$(date +%Y-%m-%d)
+                log_warn "goodevening.sh: stale current_day marker ($marker_age_seconds seconds old); using system date $TODAY"
             fi
         fi
     else
-        # Fallback logic
-        HOUR=$(date +%H)
-        if [ "$HOUR" -lt 4 ]; then
+        current_hour="$(date +%H)"
+        current_hour_num=$((10#$current_hour))
+        if [ -t 0 ] && [ "$current_hour_num" -lt 4 ]; then
             TODAY=$(date_shift_days -1 "%Y-%m-%d")
+            log_warn "goodevening.sh: startday marker missing before 04:00; using previous day $TODAY"
         else
             TODAY=$(date +%Y-%m-%d)
+            log_warn "goodevening.sh: startday marker missing; using system date $TODAY"
         fi
     fi
 fi
@@ -426,29 +452,29 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     COACH_BEHAVIOR_DIGEST="(behavior digest unavailable)"
     COACH_TEMPERATURE="${AI_BRIEFING_TEMPERATURE:-0.25}"
 
-    if command -v coach_get_mode_for_date >/dev/null 2>&1; then
+    if command -v coaching_get_mode_for_date >/dev/null 2>&1; then
         COACH_INTERACTIVE="false"
         if [ -t 0 ]; then
             COACH_INTERACTIVE="true"
         fi
-        COACH_MODE=$(coach_get_mode_for_date "$TODAY" "$COACH_INTERACTIVE" 2>/dev/null || echo "${AI_COACH_MODE_DEFAULT:-LOCKED}")
+        COACH_MODE=$(coaching_get_mode_for_date "$TODAY" "$COACH_INTERACTIVE" 2>/dev/null || echo "${AI_COACH_MODE_DEFAULT:-LOCKED}")
     fi
 
-    if command -v coach_collect_tactical_metrics >/dev/null 2>&1; then
-        COACH_TACTICAL_METRICS=$(coach_collect_tactical_metrics "$TODAY" "$COACH_TACTICAL_DAYS" "${RECENT_PUSHES:-}" "${TODAY_COMMITS:-}" 2>/dev/null || true)
+    if command -v coaching_collect_tactical_metrics >/dev/null 2>&1; then
+        COACH_TACTICAL_METRICS=$(coaching_collect_tactical_metrics "$TODAY" "$COACH_TACTICAL_DAYS" "${RECENT_PUSHES:-}" "${TODAY_COMMITS:-}" 2>/dev/null || true)
     fi
-    if command -v coach_collect_pattern_metrics >/dev/null 2>&1; then
-        COACH_PATTERN_METRICS=$(coach_collect_pattern_metrics "$TODAY" "$COACH_PATTERN_DAYS" 2>/dev/null || true)
+    if command -v coaching_collect_pattern_metrics >/dev/null 2>&1; then
+        COACH_PATTERN_METRICS=$(coaching_collect_pattern_metrics "$TODAY" "$COACH_PATTERN_DAYS" 2>/dev/null || true)
     fi
-    if command -v coach_collect_data_quality_flags >/dev/null 2>&1; then
-        COACH_DATA_QUALITY_FLAGS=$(coach_collect_data_quality_flags 2>/dev/null || true)
+    if command -v coaching_collect_data_quality_flags >/dev/null 2>&1; then
+        COACH_DATA_QUALITY_FLAGS=$(coaching_collect_data_quality_flags 2>/dev/null || true)
     fi
-    if command -v coach_build_behavior_digest >/dev/null 2>&1; then
-        COACH_BEHAVIOR_DIGEST=$(coach_build_behavior_digest "$TODAY" "$COACH_TACTICAL_DAYS" "$COACH_PATTERN_DAYS" 2>/dev/null || echo "(behavior digest unavailable)")
+    if command -v coaching_build_behavior_digest >/dev/null 2>&1; then
+        COACH_BEHAVIOR_DIGEST=$(coaching_build_behavior_digest "$TODAY" "$COACH_TACTICAL_DAYS" "$COACH_PATTERN_DAYS" 2>/dev/null || echo "(behavior digest unavailable)")
     fi
 
-    if command -v coach_build_goodevening_prompt >/dev/null 2>&1; then
-        REFLECTION_PROMPT="$(coach_build_goodevening_prompt \
+    if command -v coaching_build_goodevening_prompt >/dev/null 2>&1; then
+        REFLECTION_PROMPT="$(coaching_build_goodevening_prompt \
             "${COACH_MODE:-LOCKED}" \
             "${FOCUS_CONTEXT:-}" \
             "${TODAY_COMMITS:-}" \
@@ -463,8 +489,8 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     REFLECTION_REASON="ai-error"
 
     if command -v dhp-strategy.sh >/dev/null 2>&1; then
-        if command -v coach_strategy_with_retry >/dev/null 2>&1; then
-            if REFLECTION=$(coach_strategy_with_retry "$REFLECTION_PROMPT" "$COACH_TEMPERATURE" "${AI_COACH_REQUEST_TIMEOUT_SECONDS:-35}" "${AI_COACH_RETRY_TIMEOUT_SECONDS:-90}" 2>/dev/null); then
+        if command -v coaching_strategy_with_retry >/dev/null 2>&1; then
+            if REFLECTION=$(coaching_strategy_with_retry "$REFLECTION_PROMPT" "$COACH_TEMPERATURE" "${AI_COACH_REQUEST_TIMEOUT_SECONDS:-35}" "${AI_COACH_RETRY_TIMEOUT_SECONDS:-90}" 2>/dev/null); then
                 REFLECTION_REASON=""
             else
                 strategy_status=$?
@@ -486,8 +512,8 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     fi
 
     if [ -z "$REFLECTION" ]; then
-        if command -v coach_goodevening_fallback_output >/dev/null 2>&1; then
-            REFLECTION=$(coach_goodevening_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${REFLECTION_REASON:-unavailable}")
+        if command -v coaching_goodevening_fallback_output >/dev/null 2>&1; then
+            REFLECTION=$(coaching_goodevening_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${REFLECTION_REASON:-unavailable}")
         else
             REFLECTION="Unable to generate AI reflection at this time."
         fi
@@ -495,9 +521,9 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
 
     echo "$REFLECTION" | sed 's/^/  /'
 
-    if command -v coach_append_log >/dev/null 2>&1; then
+    if command -v coaching_append_log >/dev/null 2>&1; then
         COACH_METRICS_PAYLOAD="tactical:$(printf '%s' "$COACH_TACTICAL_METRICS" | tr '\n' ';') pattern:$(printf '%s' "$COACH_PATTERN_METRICS" | tr '\n' ';') quality:$(printf '%s' "$COACH_DATA_QUALITY_FLAGS" | tr '\n' ';')"
-        coach_append_log "GOODEVENING" "$TODAY" "$COACH_MODE" "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_METRICS_PAYLOAD" "$REFLECTION" || true
+        coaching_append_log "GOODEVENING" "$TODAY" "$COACH_MODE" "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_METRICS_PAYLOAD" "$REFLECTION" || true
     fi
 fi
 

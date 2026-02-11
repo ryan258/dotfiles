@@ -10,7 +10,7 @@ readonly _TIME_TRACKING_LOADED=true
 
 # Dependencies:
 # - DATA_DIR/TIME_LOG from config.sh.
-# - sanitize_input from common.sh.
+# - sanitize_input and sanitize_for_storage from common.sh.
 # - timestamp_to_epoch from date_utils.sh.
 if [[ -z "${DATA_DIR:-}" ]]; then
     echo "Error: DATA_DIR is not set. Source scripts/lib/config.sh before time_tracking.sh." >&2
@@ -18,6 +18,10 @@ if [[ -z "${DATA_DIR:-}" ]]; then
 fi
 if ! command -v sanitize_input >/dev/null 2>&1; then
     echo "Error: sanitize_input is not available. Source scripts/lib/common.sh before time_tracking.sh." >&2
+    return 1
+fi
+if ! command -v sanitize_for_storage >/dev/null 2>&1; then
+    echo "Error: sanitize_for_storage is not available. Source scripts/lib/common.sh before time_tracking.sh." >&2
     return 1
 fi
 if ! command -v timestamp_to_epoch >/dev/null 2>&1; then
@@ -49,8 +53,7 @@ start_timer() {
     task_id=${task_id//$'\n'/ }
 
     local task_text="${2:-}"
-    task_text=$(sanitize_input "$task_text")
-    task_text=${task_text//$'\n'/\\n}
+    task_text=$(sanitize_for_storage "$task_text")
     local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
     
     # Check if a timer is already active

@@ -14,6 +14,7 @@ setup() {
 
     cp "$BATS_TEST_DIRNAME/../scripts/goodevening.sh" "$DOTFILES_DIR/scripts/goodevening.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/coach_ops.sh" "$DOTFILES_DIR/scripts/lib/coach_ops.sh"
+    cp "$BATS_TEST_DIRNAME/../scripts/lib/coaching.sh" "$DOTFILES_DIR/scripts/lib/coaching.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/config.sh" "$DOTFILES_DIR/scripts/lib/config.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/date_utils.sh" "$DOTFILES_DIR/scripts/lib/date_utils.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/common.sh" "$DOTFILES_DIR/scripts/lib/common.sh"
@@ -76,6 +77,50 @@ EOF
 
 teardown() {
     rm -rf "$TEST_ROOT"
+}
+
+@test "goodevening falls back to system date when startday marker is missing" {
+    rm -f "$DATA_DIR/current_day"
+    expected_today="$(date +%Y-%m-%d)"
+
+    run env \
+        PATH="$DOTFILES_DIR/bin:$PATH" \
+        HOME="$HOME" \
+        DATA_DIR="$DATA_DIR" \
+        DOTFILES_DIR="$DOTFILES_DIR" \
+        PROJECTS_DIR="$PROJECTS_DIR" \
+        AI_REFLECTION_ENABLED=false \
+        bash "$DOTFILES_DIR/scripts/goodevening.sh"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Evening Close-Out for $expected_today"* ]]
+    grep -q "startday marker missing; using system date $expected_today" "$DATA_DIR/system.log"
+}
+
+@test "goodevening ignores stale startday marker older than 24 hours" {
+    printf '%s\n' "2026-01-01" > "$DATA_DIR/current_day"
+    python3 - "$DATA_DIR/current_day" <<'PY'
+import os
+import sys
+import time
+
+stale_epoch = int(time.time()) - (3 * 24 * 60 * 60)
+os.utime(sys.argv[1], (stale_epoch, stale_epoch))
+PY
+    expected_today="$(date +%Y-%m-%d)"
+
+    run env \
+        PATH="$DOTFILES_DIR/bin:$PATH" \
+        HOME="$HOME" \
+        DATA_DIR="$DATA_DIR" \
+        DOTFILES_DIR="$DOTFILES_DIR" \
+        PROJECTS_DIR="$PROJECTS_DIR" \
+        AI_REFLECTION_ENABLED=false \
+        bash "$DOTFILES_DIR/scripts/goodevening.sh"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Evening Close-Out for $expected_today"* ]]
+    grep -q "stale current_day marker" "$DATA_DIR/system.log"
 }
 
 @test "goodevening reflection prompt uses reflective schema" {

@@ -9,14 +9,14 @@ readonly _INSIGHT_STORE_LOADED=true
 
 # Dependencies:
 # - DATA_DIR/INSIGHT_* paths from config.sh.
-# - sanitize_input from common.sh.
+# - sanitize_for_storage from common.sh.
 # - atomic_replace_line from file_ops.sh (via common.sh in callers).
 if [[ -z "${DATA_DIR:-}" ]]; then
     echo "Error: DATA_DIR is not set. Source scripts/lib/config.sh before insight_store.sh." >&2
     return 1
 fi
-if ! command -v sanitize_input >/dev/null 2>&1; then
-    echo "Error: sanitize_input is not available. Source scripts/lib/common.sh before insight_store.sh." >&2
+if ! command -v sanitize_for_storage >/dev/null 2>&1; then
+    echo "Error: sanitize_for_storage is not available. Source scripts/lib/common.sh before insight_store.sh." >&2
     return 1
 fi
 if ! command -v atomic_replace_line >/dev/null 2>&1; then
@@ -37,10 +37,7 @@ fi
 # Usage: normalize_insight_field "raw text"
 normalize_insight_field() {
     local raw="${1:-}"
-    local sanitized
-    sanitized=$(sanitize_input "$raw")
-    sanitized=${sanitized//$'\n'/\\n}
-    printf '%s' "$sanitized"
+    sanitize_for_storage "$raw"
 }
 
 # Ensure insight storage files exist

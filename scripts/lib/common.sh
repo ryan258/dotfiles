@@ -276,6 +276,19 @@ sanitize_input() {
     printf '%s' "$input"
 }
 
+# Sanitize user input and escape newlines for single-line storage fields.
+# Usage: stored=$(sanitize_for_storage "$user_input")
+sanitize_for_storage() {
+    local input="$1"
+    local sanitized
+
+    sanitized=$(sanitize_input "$input")
+    sanitized=${sanitized//$'\r'/ }
+    sanitized=${sanitized//$'\n'/\\n}
+
+    printf '%s' "$sanitized"
+}
+
 # Validate path is safe (no traversal, within allowed base)
 # Usage: validated_path=$(validate_safe_path "$path" "$allowed_base")
 validate_safe_path() {

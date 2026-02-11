@@ -10,7 +10,7 @@ readonly _SPOON_BUDGET_LOADED=true
 
 # Dependencies:
 # - DATA_DIR/SPOON_LOG/DEFAULT_DAILY_SPOONS from config.sh.
-# - validate_numeric and sanitize_input from common.sh.
+# - validate_numeric and sanitize_for_storage from common.sh.
 if [[ -z "${DATA_DIR:-}" ]]; then
     echo "Error: DATA_DIR is not set. Source scripts/lib/config.sh before spoon_budget.sh." >&2
     return 1
@@ -19,8 +19,8 @@ if ! command -v validate_numeric >/dev/null 2>&1; then
     echo "Error: validate_numeric is not available. Source scripts/lib/common.sh before spoon_budget.sh." >&2
     return 1
 fi
-if ! command -v sanitize_input >/dev/null 2>&1; then
-    echo "Error: sanitize_input is not available. Source scripts/lib/common.sh before spoon_budget.sh." >&2
+if ! command -v sanitize_for_storage >/dev/null 2>&1; then
+    echo "Error: sanitize_for_storage is not available. Source scripts/lib/common.sh before spoon_budget.sh." >&2
     return 1
 fi
 
@@ -75,8 +75,8 @@ spend_spoons() {
     # Sanitize activity
     local raw_activity="${2:-General Activity}"
     local activity
-    activity=$(sanitize_input "$raw_activity" | head -c 100)
-    activity=${activity//$'\n'/\\n}
+    activity=$(sanitize_for_storage "$raw_activity")
+    activity=$(printf '%s' "$activity" | head -c 100)
     local today=$(date +%Y-%m-%d)
     local time=$(date +%H:%M)
     

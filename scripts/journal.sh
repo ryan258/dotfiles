@@ -32,8 +32,7 @@ case "${1:-add}" in
         exit 1
     fi
     TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
-    ENTRY=$(sanitize_input "$ENTRY")
-    ENTRY=${ENTRY//$'\n'/\\n}
+    ENTRY=$(sanitize_for_storage "$ENTRY")
     printf '%s|%s\n' "$TIMESTAMP" "$ENTRY" >> "$JOURNAL_FILE"
     echo "Entry added to journal."
     ;;

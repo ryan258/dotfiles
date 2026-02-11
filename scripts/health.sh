@@ -173,8 +173,7 @@ cmd_add() {
         echo "Usage: $(basename "$0") add \"description\" \"YYYY-MM-DD HH:MM\""
         exit 1
     fi
-    desc=$(sanitize_input "$desc")
-    desc=${desc//$'\n'/\\n}
+    desc=$(sanitize_for_storage "$desc")
     time_str=$(sanitize_input "$time_str")
     echo "APPT|$time_str|$desc" >> "$HEALTH_FILE"
     echo "Added: $desc on $time_str"
@@ -187,8 +186,7 @@ cmd_symptom() {
         exit 1
     fi
     local timestamp=$(date '+%Y-%m-%d %H:%M')
-    symptom_note=$(sanitize_input "$symptom_note")
-    symptom_note=${symptom_note//$'\n'/\\n}
+    symptom_note=$(sanitize_for_storage "$symptom_note")
     echo "SYMPTOM|$timestamp|$symptom_note" >> "$HEALTH_FILE"
     echo "Logged symptom: $symptom_note"
 }

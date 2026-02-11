@@ -4,6 +4,94 @@
 
 This document tracks all major implementations, improvements, and fixes to the Daily Context System.
 
+## Version 2.2.21 (February 11, 2026) - Review Follow-up Hardening
+
+**Status:** ✅ Production Ready
+
+### Coaching Dependency Consistency
+- Made coach library sourcing consistent in workflow entrypoints:
+  - `scripts/startday.sh` now fails fast if `scripts/lib/coach_ops.sh` is missing.
+  - `scripts/goodevening.sh` now fails fast if `scripts/lib/coach_ops.sh` is missing.
+- This aligns with the existing hard requirement for `scripts/lib/coaching.sh`.
+
+### Date Utility Robustness
+- Improved `scripts/lib/date_utils.sh`:
+  - `date_shift_from()` now handles BSD fallback parsing for date-only and datetime anchors.
+  - Python parsing for `date_shift_from()` now enforces integer offsets (`int(...)`) instead of truncating floats.
+  - `timestamp_to_epoch()` now includes BSD/GNU non-python fallbacks and returns `0` on parse failure.
+
+### Goodevening Date-State Safety
+- Restored stale-marker protection in `scripts/goodevening.sh`:
+  - If `current_day` marker is older than 24 hours, it is treated as stale and system date is used.
+- Added controlled pre-dawn behavior:
+  - In interactive runs before 04:00 with no `current_day` marker, goodevening uses previous day.
+  - Non-interactive runs continue to use system date.
+
+### Tests
+- Added regression coverage for stale marker fallback:
+  - `tests/test_goodevening_coach.sh`
+
+---
+
+## Version 2.2.20 (February 11, 2026) - Storage Sanitization Helper + Coach Date Utils Consolidation
+
+**Status:** ✅ Production Ready
+
+### Storage Sanitization Consistency
+- Added `sanitize_for_storage()` to `scripts/lib/common.sh` to centralize:
+  - `sanitize_input`
+  - newline escaping (`\n`) for pipe-delimited single-line storage fields
+- Replaced repeated sanitize+newline-escape patterns in:
+  - `scripts/todo.sh`
+  - `scripts/journal.sh`
+  - `scripts/health.sh`
+  - `scripts/lib/insight_store.sh`
+  - `scripts/lib/time_tracking.sh`
+  - `scripts/lib/spoon_budget.sh`
+
+### Date Utils Centralization in Coaching
+- Added `date_shift_from()` to `scripts/lib/date_utils.sh`.
+- Removed inline date-shift and epoch-conversion helper logic from `scripts/lib/coach_ops.sh`.
+- `coach_ops.sh` now requires and uses `date_shift_from()` + `timestamp_to_epoch()` from `date_utils.sh`.
+
+### Validation
+- `bash -n` passed on touched scripts/libs.
+- Full suite passes:
+  - `bats tests/*.sh` -> `1..98` passing.
+
+---
+
+## Version 2.2.19 (February 11, 2026) - Coaching Facade + Goodevening Date-State Simplification
+
+**Status:** ✅ Production Ready
+
+### Architecture
+- Added `scripts/lib/coaching.sh` as a thin facade over `coach_ops.sh`.
+- Rewired workflow scripts to call facade APIs (`coaching_*`) instead of direct `coach_*` internals:
+  - `scripts/startday.sh`
+  - `scripts/goodevening.sh`
+- This reduces direct coupling between workflow scripts and coach internals while preserving behavior.
+
+### Date-State Reliability
+- Simplified goodevening date resolution in `scripts/goodevening.sh`:
+  - `--refresh` now forces system date.
+  - If `current_day` marker exists and is valid, it is used.
+  - If marker is missing or invalid, script falls back to system date and logs a warning.
+- Added explicit inline documentation for this fallback behavior.
+
+### Tests
+- Updated coach integration tests to include the new facade library:
+  - `tests/test_startday_coach.sh`
+  - `tests/test_goodevening_coach.sh`
+- Added a regression test for goodevening marker-missing fallback behavior.
+
+### Validation
+- `bash -n` passed on touched scripts and libraries.
+- Full suite passes:
+  - `bats tests/*.sh` -> `1..98` passing.
+
+---
+
 ## Version 2.2.18 (February 11, 2026) - Strict Path Ownership (No Split-Brain DATA_DIR Fallbacks)
 
 **Status:** ✅ Production Ready

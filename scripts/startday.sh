@@ -41,6 +41,15 @@ if [ -f "$SCRIPT_DIR/lib/health_ops.sh" ]; then
 fi
 if [ -f "$SCRIPT_DIR/lib/coach_ops.sh" ]; then
     source "$SCRIPT_DIR/lib/coach_ops.sh"
+else
+    echo "Error: coach operations library not found at $SCRIPT_DIR/lib/coach_ops.sh" >&2
+    exit 1
+fi
+if [ -f "$SCRIPT_DIR/lib/coaching.sh" ]; then
+    source "$SCRIPT_DIR/lib/coaching.sh"
+else
+    echo "Error: coaching facade not found at $SCRIPT_DIR/lib/coaching.sh" >&2
+    exit 1
 fi
 
 mkdir -p "$DATA_DIR"
@@ -151,12 +160,12 @@ fi
 
 # Coach mode prompt is resolved before heavy sections so briefing cannot block.
 COACH_MODE_PREFILL="${AI_COACH_MODE_DEFAULT:-LOCKED}"
-if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ] && command -v coach_get_mode_for_date >/dev/null 2>&1; then
+if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ] && command -v coaching_get_mode_for_date >/dev/null 2>&1; then
     TODAY_FOR_MODE=$(date '+%Y-%m-%d')
     if [ -t 0 ]; then
-        COACH_MODE_PREFILL=$(coach_get_mode_for_date "$TODAY_FOR_MODE" "true" 2>/dev/null || echo "${AI_COACH_MODE_DEFAULT:-LOCKED}")
+        COACH_MODE_PREFILL=$(coaching_get_mode_for_date "$TODAY_FOR_MODE" "true" 2>/dev/null || echo "${AI_COACH_MODE_DEFAULT:-LOCKED}")
     else
-        COACH_MODE_PREFILL=$(coach_get_mode_for_date "$TODAY_FOR_MODE" "false" 2>/dev/null || echo "${AI_COACH_MODE_DEFAULT:-LOCKED}")
+        COACH_MODE_PREFILL=$(coaching_get_mode_for_date "$TODAY_FOR_MODE" "false" 2>/dev/null || echo "${AI_COACH_MODE_DEFAULT:-LOCKED}")
     fi
 fi
 
@@ -371,22 +380,22 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
         COACH_DATA_QUALITY_FLAGS=""
         COACH_BEHAVIOR_DIGEST="(behavior digest unavailable)"
 
-        if command -v coach_collect_tactical_metrics >/dev/null 2>&1; then
-            COACH_TACTICAL_METRICS=$(coach_collect_tactical_metrics "$TODAY" "$COACH_TACTICAL_DAYS" "${RECENT_PUSHES:-}" "${YESTERDAY_COMMITS:-}" 2>/dev/null || true)
+        if command -v coaching_collect_tactical_metrics >/dev/null 2>&1; then
+            COACH_TACTICAL_METRICS=$(coaching_collect_tactical_metrics "$TODAY" "$COACH_TACTICAL_DAYS" "${RECENT_PUSHES:-}" "${YESTERDAY_COMMITS:-}" 2>/dev/null || true)
         fi
-        if command -v coach_collect_pattern_metrics >/dev/null 2>&1; then
-            COACH_PATTERN_METRICS=$(coach_collect_pattern_metrics "$TODAY" "$COACH_PATTERN_DAYS" 2>/dev/null || true)
+        if command -v coaching_collect_pattern_metrics >/dev/null 2>&1; then
+            COACH_PATTERN_METRICS=$(coaching_collect_pattern_metrics "$TODAY" "$COACH_PATTERN_DAYS" 2>/dev/null || true)
         fi
-        if command -v coach_collect_data_quality_flags >/dev/null 2>&1; then
-            COACH_DATA_QUALITY_FLAGS=$(coach_collect_data_quality_flags 2>/dev/null || true)
+        if command -v coaching_collect_data_quality_flags >/dev/null 2>&1; then
+            COACH_DATA_QUALITY_FLAGS=$(coaching_collect_data_quality_flags 2>/dev/null || true)
         fi
-        if command -v coach_build_behavior_digest >/dev/null 2>&1; then
-            COACH_BEHAVIOR_DIGEST=$(coach_build_behavior_digest "$TODAY" "$COACH_TACTICAL_DAYS" "$COACH_PATTERN_DAYS" 2>/dev/null || echo "(behavior digest unavailable)")
+        if command -v coaching_build_behavior_digest >/dev/null 2>&1; then
+            COACH_BEHAVIOR_DIGEST=$(coaching_build_behavior_digest "$TODAY" "$COACH_TACTICAL_DAYS" "$COACH_PATTERN_DAYS" 2>/dev/null || echo "(behavior digest unavailable)")
         fi
 
         if command -v dhp-strategy.sh &> /dev/null; then
-            if command -v coach_build_startday_prompt >/dev/null 2>&1; then
-                BRIEFING_PROMPT="$(coach_build_startday_prompt \
+            if command -v coaching_build_startday_prompt >/dev/null 2>&1; then
+                BRIEFING_PROMPT="$(coaching_build_startday_prompt \
                     "${FOCUS_CONTEXT:-}" \
                     "${COACH_MODE:-LOCKED}" \
                     "${YESTERDAY_COMMITS:-}" \
@@ -401,8 +410,8 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
             BRIEFING=""
             BRIEFING_REASON="ai-error"
 
-            if command -v coach_strategy_with_retry >/dev/null 2>&1; then
-                if BRIEFING=$(coach_strategy_with_retry "$BRIEFING_PROMPT" "$BRIEFING_TEMPERATURE" "${AI_COACH_REQUEST_TIMEOUT_SECONDS:-35}" "${AI_COACH_RETRY_TIMEOUT_SECONDS:-90}" 2>/dev/null); then
+            if command -v coaching_strategy_with_retry >/dev/null 2>&1; then
+                if BRIEFING=$(coaching_strategy_with_retry "$BRIEFING_PROMPT" "$BRIEFING_TEMPERATURE" "${AI_COACH_REQUEST_TIMEOUT_SECONDS:-35}" "${AI_COACH_RETRY_TIMEOUT_SECONDS:-90}" 2>/dev/null); then
                     BRIEFING_REASON=""
                 else
                     strategy_status=$?
@@ -421,22 +430,22 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
             fi
 
             if [ -z "$BRIEFING" ]; then
-                if command -v coach_startday_fallback_output >/dev/null 2>&1; then
-                    BRIEFING=$(coach_startday_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${TODAY_TASKS:-}" "${BRIEFING_REASON:-unavailable}")
+                if command -v coaching_startday_fallback_output >/dev/null 2>&1; then
+                    BRIEFING=$(coaching_startday_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${TODAY_TASKS:-}" "${BRIEFING_REASON:-unavailable}")
                 else
                     BRIEFING="Unable to generate AI briefing at this time."
                 fi
-            elif [ -z "$BRIEFING_REASON" ] && command -v coach_startday_response_is_grounded >/dev/null 2>&1; then
-                if ! coach_startday_response_is_grounded "$BRIEFING" "${FOCUS_CONTEXT:-"(no focus set)"}" "${TODAY_TASKS:-}"; then
+            elif [ -z "$BRIEFING_REASON" ] && command -v coaching_startday_response_is_grounded >/dev/null 2>&1; then
+                if ! coaching_startday_response_is_grounded "$BRIEFING" "${FOCUS_CONTEXT:-"(no focus set)"}" "${TODAY_TASKS:-}"; then
                     BRIEFING_REASON="ungrounded-actions"
-                    if command -v coach_startday_fallback_output >/dev/null 2>&1; then
-                        BRIEFING=$(coach_startday_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${TODAY_TASKS:-}" "$BRIEFING_REASON")
+                    if command -v coaching_startday_fallback_output >/dev/null 2>&1; then
+                        BRIEFING=$(coaching_startday_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${TODAY_TASKS:-}" "$BRIEFING_REASON")
                     fi
                 fi
             fi
         else
-            if command -v coach_startday_fallback_output >/dev/null 2>&1; then
-                BRIEFING=$(coach_startday_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${TODAY_TASKS:-}" "dispatcher-missing")
+            if command -v coaching_startday_fallback_output >/dev/null 2>&1; then
+                BRIEFING=$(coaching_startday_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${TODAY_TASKS:-}" "dispatcher-missing")
             else
                 BRIEFING="Unable to generate AI briefing at this time."
             fi
@@ -446,9 +455,9 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
         printf '%s|%s\n' "$TODAY" "$BRIEFING_ESCAPED" > "$BRIEFING_CACHE"
         echo "$BRIEFING" | sed 's/^/  /'
 
-        if command -v coach_append_log >/dev/null 2>&1; then
+        if command -v coaching_append_log >/dev/null 2>&1; then
             COACH_METRICS_PAYLOAD="tactical:$(printf '%s' "$COACH_TACTICAL_METRICS" | tr '\n' ';') pattern:$(printf '%s' "$COACH_PATTERN_METRICS" | tr '\n' ';') quality:$(printf '%s' "$COACH_DATA_QUALITY_FLAGS" | tr '\n' ';')"
-            coach_append_log "STARTDAY" "$TODAY" "$COACH_MODE" "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_METRICS_PAYLOAD" "$BRIEFING" || true
+            coaching_append_log "STARTDAY" "$TODAY" "$COACH_MODE" "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_METRICS_PAYLOAD" "$BRIEFING" || true
         fi
     fi
 fi
