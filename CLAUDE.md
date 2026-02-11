@@ -13,6 +13,29 @@ This document defines coding standards, architecture patterns, and conventions t
 
 ---
 
+## Documentation Governance (Canonical + Derived)
+
+To prevent drift and contradictions:
+
+1. Canonical root contract:
+- `CLAUDE.md` is the only authoritative architecture and behavior contract for root `dotfiles`.
+
+2. Derived-view docs:
+- `README.md`
+- `docs/start-here.md`
+- `docs/system-overview.md`
+- `docs/happy-path.md`
+- `docs/ai-quick-reference.md`
+- `scripts/README.md`
+- `scripts/README_aliases.md`
+
+3. Update workflow when behavior changes:
+- First update `CLAUDE.md` contract language (if behavior/interface changed).
+- Then update only the affected derived docs to reference the canonical contract.
+- Avoid hardcoded counts/version claims in derived docs unless generated automatically.
+
+---
+
 ## Project Overview
 
 This is a personal productivity system built around shell scripts, AI dispatchers, and automation tools. It provides:
@@ -262,7 +285,6 @@ dhp_dispatch \
 - `--stream` - Real-time streaming output
 - `--verbose` - Debug logging
 - `--temperature <float>` - Override default
-- `--max-tokens <int>` - Override token limit
 
 ### Input Handling
 

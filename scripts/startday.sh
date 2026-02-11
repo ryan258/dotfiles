@@ -3,7 +3,17 @@ set -euo pipefail
 # startday.sh - Enhanced morning routine
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMMON_LIB="$SCRIPT_DIR/lib/common.sh"
 DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
+
+if [ -f "$COMMON_LIB" ]; then
+    # shellcheck disable=SC1090
+    source "$COMMON_LIB"
+else
+    echo "Error: common utilities not found at $COMMON_LIB" >&2
+    exit 1
+fi
+
 if [ -f "$DATE_UTILS" ]; then
     # shellcheck disable=SC1090
     source "$DATE_UTILS"
@@ -22,6 +32,12 @@ else
     CURRENT_DAY_FILE="$DATA_DIR/current_day"
     # Ensure exports for compatibility if config missing
     export FOCUS_FILE="$DATA_DIR/daily_focus.txt"
+    if [ -f "$SCRIPT_DIR/../.env" ]; then
+        set -a
+        # shellcheck disable=SC1090
+        source "$SCRIPT_DIR/../.env"
+        set +a
+    fi
 fi
 
 # Source new libraries
@@ -30,6 +46,9 @@ if [ -f "$SCRIPT_DIR/lib/github_ops.sh" ]; then
 fi
 if [ -f "$SCRIPT_DIR/lib/health_ops.sh" ]; then
     source "$SCRIPT_DIR/lib/health_ops.sh"
+fi
+if [ -f "$SCRIPT_DIR/lib/coach_ops.sh" ]; then
+    source "$SCRIPT_DIR/lib/coach_ops.sh"
 fi
 
 DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
@@ -140,14 +159,20 @@ else
     echo "  (Spoon manager not found)"
 fi
 
+# Coach mode prompt is resolved before heavy sections so briefing cannot block.
+COACH_MODE_PREFILL="${AI_COACH_MODE_DEFAULT:-LOCKED}"
+if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ] && command -v coach_get_mode_for_date >/dev/null 2>&1; then
+    TODAY_FOR_MODE=$(date '+%Y-%m-%d')
+    if [ -t 0 ]; then
+        COACH_MODE_PREFILL=$(coach_get_mode_for_date "$TODAY_FOR_MODE" "true" 2>/dev/null || echo "${AI_COACH_MODE_DEFAULT:-LOCKED}")
+    else
+        COACH_MODE_PREFILL=$(coach_get_mode_for_date "$TODAY_FOR_MODE" "false" 2>/dev/null || echo "${AI_COACH_MODE_DEFAULT:-LOCKED}")
+    fi
+fi
+
 # --- LOGGING ---
 SYSTEM_LOG_FILE="${SYSTEM_LOG:-$DATA_DIR/system.log}"
 echo "$(date): startday.sh - Running morning routine." >> "$SYSTEM_LOG_FILE"
-
-# Load environment variables for optional AI features
-if [ -f "$SCRIPT_DIR/../.env" ]; then
-    source "$SCRIPT_DIR/../.env"
-fi
 
 BLOG_SCRIPT="$SCRIPT_DIR/blog.sh"
 BLOG_STATUS_DIR="${BLOG_STATUS_DIR:-${BLOG_DIR:-}}"
@@ -162,6 +187,7 @@ fi
 
 # --- YESTERDAY'S CONTEXT ---
 JOURNAL_FILE="${JOURNAL_FILE:-$DATA_DIR/journal.txt}"
+YESTERDAY_JOURNAL_CONTEXT=""
 echo ""
 echo "📅 YESTERDAY YOU WERE:"
 if [ -f "$JOURNAL_FILE" ]; then
@@ -170,6 +196,7 @@ if [ -f "$JOURNAL_FILE" ]; then
     yesterday_entries=$(awk -F'|' -v day="$yesterday" '$1 ~ "^"day {print "  • " $0}' "$JOURNAL_FILE")
     if [ -n "$yesterday_entries" ]; then
         echo "$yesterday_entries"
+        YESTERDAY_JOURNAL_CONTEXT="$yesterday_entries"
     else
         echo "  (No entries for $yesterday)"
     fi
@@ -232,7 +259,21 @@ fi
 echo ""
 echo "💡 SUGGESTED DIRECTORIES:"
 if [ -f "$SCRIPT_DIR/g.sh" ]; then
-    "$SCRIPT_DIR/g.sh" suggest | head -n 3 | awk '{print "  • " $2}'
+    suggested_dirs=$("$SCRIPT_DIR/g.sh" suggest 2>/dev/null | awk '
+        {
+            for (i = 1; i <= NF; i++) {
+                if ($i ~ /^\//) {
+                    print "  • " $i
+                    break
+                }
+            }
+        }
+    ' | head -n 3 || true)
+    if [ -n "$suggested_dirs" ]; then
+        echo "$suggested_dirs"
+    else
+        echo "  (No suggestions available)"
+    fi
 fi
 
 # --- BLOG STATUS ---
@@ -314,7 +355,9 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
     # Check if we already have today's briefing
     if [ -f "$BRIEFING_CACHE" ] && grep -q "^$TODAY|" "$BRIEFING_CACHE"; then
         echo "  (Cached from this morning)"
-        grep "^$TODAY|" "$BRIEFING_CACHE" | cut -d'|' -f2- | sed 's/^/  /'
+        CACHED_BRIEFING=$(grep "^$TODAY|" "$BRIEFING_CACHE" | tail -n 1 | cut -d'|' -f2- || true)
+        CACHED_BRIEFING="${CACHED_BRIEFING//\\n/$'\n'}"
+        echo "$CACHED_BRIEFING" | sed 's/^/  /'
     else
         # Generate new briefing
         JOURNAL_FILE="${JOURNAL_FILE:-$DATA_DIR/journal.txt}"
@@ -326,41 +369,100 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
             FOCUS_CONTEXT=$(cat "$FOCUS_FILE")
         fi
         RECENT_JOURNAL=$(tail -n 5 "$JOURNAL_FILE" 2>/dev/null || echo "")
-        TODAY_TASKS=$(head -n 5 "$TODO_FILE" 2>/dev/null || echo "")
+        TODAY_TASKS=""
+        if [ -x "$SCRIPT_DIR/todo.sh" ]; then
+            TODAY_TASKS=$("$SCRIPT_DIR/todo.sh" top 3 2>/dev/null || true)
+        fi
+        if [ -z "$TODAY_TASKS" ]; then
+            TODAY_TASKS=$(head -n 5 "$TODO_FILE" 2>/dev/null || echo "")
+        fi
+        BRIEFING_TEMPERATURE="${AI_BRIEFING_TEMPERATURE:-0.25}"
+        COACH_TACTICAL_DAYS="${AI_COACH_TACTICAL_DAYS:-7}"
+        COACH_PATTERN_DAYS="${AI_COACH_PATTERN_DAYS:-30}"
+        COACH_MODE="${COACH_MODE_PREFILL:-${AI_COACH_MODE_DEFAULT:-LOCKED}}"
+        COACH_TACTICAL_METRICS=""
+        COACH_PATTERN_METRICS=""
+        COACH_DATA_QUALITY_FLAGS=""
+        COACH_BEHAVIOR_DIGEST="(behavior digest unavailable)"
+
+        if command -v coach_collect_tactical_metrics >/dev/null 2>&1; then
+            COACH_TACTICAL_METRICS=$(coach_collect_tactical_metrics "$TODAY" "$COACH_TACTICAL_DAYS" "${RECENT_PUSHES:-}" "${YESTERDAY_COMMITS:-}" 2>/dev/null || true)
+        fi
+        if command -v coach_collect_pattern_metrics >/dev/null 2>&1; then
+            COACH_PATTERN_METRICS=$(coach_collect_pattern_metrics "$TODAY" "$COACH_PATTERN_DAYS" 2>/dev/null || true)
+        fi
+        if command -v coach_collect_data_quality_flags >/dev/null 2>&1; then
+            COACH_DATA_QUALITY_FLAGS=$(coach_collect_data_quality_flags 2>/dev/null || true)
+        fi
+        if command -v coach_build_behavior_digest >/dev/null 2>&1; then
+            COACH_BEHAVIOR_DIGEST=$(coach_build_behavior_digest "$TODAY" "$COACH_TACTICAL_DAYS" "$COACH_PATTERN_DAYS" 2>/dev/null || echo "(behavior digest unavailable)")
+        fi
 
         if command -v dhp-strategy.sh &> /dev/null; then
-            # Generate briefing via AI
-            BRIEFING=$({
-                echo "Provide a morning briefing (3-4 sentences)."
-                echo "Primary signals are today's focus, yesterday's commits, and recent GitHub pushes; use them first."
-                echo "Secondary signals are journal entries and the task list."
-                echo ""
-                echo "Today's focus:"
-                echo "${FOCUS_CONTEXT:-"(no focus set)"}"
-                echo ""
-                echo "Yesterday's commits:"
-                echo "${YESTERDAY_COMMITS:-"(none)"}"
-                echo ""
-                echo "Recent GitHub pushes (last 7 days):"
-                echo "${RECENT_PUSHES:-"(none)"}"
-                echo ""
-                echo "Recent journal entries:"
-                echo "${RECENT_JOURNAL:-"(none)"}"
-                echo ""
-                echo "Top tasks:"
-                echo "${TODAY_TASKS:-"(none)"}"
-                echo ""
-                echo "Provide:"
-                echo "- A short reflection on what yesterday's commits and recent pushes suggest about momentum"
-                echo "- The smallest next step for today"
-                echo "- One energy-protecting reminder"
-            } | dhp-strategy.sh 2>/dev/null || echo "Unable to generate AI briefing at this time.")
+            if command -v coach_build_startday_prompt >/dev/null 2>&1; then
+                BRIEFING_PROMPT="$(coach_build_startday_prompt \
+                    "${FOCUS_CONTEXT:-}" \
+                    "${COACH_MODE:-LOCKED}" \
+                    "${YESTERDAY_COMMITS:-}" \
+                    "${RECENT_PUSHES:-}" \
+                    "${RECENT_JOURNAL:-}" \
+                    "${YESTERDAY_JOURNAL_CONTEXT:-}" \
+                    "${TODAY_TASKS:-}" \
+                    "${COACH_BEHAVIOR_DIGEST:-}")"
+            else
+                BRIEFING_PROMPT="Produce a high-signal morning execution guide grounded only in today's focus and top tasks."
+            fi
+            BRIEFING=""
+            BRIEFING_REASON="ai-error"
 
-            # Cache the briefing
-            echo "$TODAY|$BRIEFING" > "$BRIEFING_CACHE"
-            echo "$BRIEFING" | sed 's/^/  /'
+            if command -v coach_strategy_with_retry >/dev/null 2>&1; then
+                if BRIEFING=$(coach_strategy_with_retry "$BRIEFING_PROMPT" "$BRIEFING_TEMPERATURE" "${AI_COACH_REQUEST_TIMEOUT_SECONDS:-35}" "${AI_COACH_RETRY_TIMEOUT_SECONDS:-90}" 2>/dev/null); then
+                    BRIEFING_REASON=""
+                else
+                    strategy_status=$?
+                    if [ "$strategy_status" -eq 124 ]; then
+                        BRIEFING_REASON="timeout"
+                    else
+                        BRIEFING_REASON="error"
+                    fi
+                fi
+            else
+                if BRIEFING=$(printf '%s' "$BRIEFING_PROMPT" | dhp-strategy.sh --temperature "$BRIEFING_TEMPERATURE" 2>/dev/null); then
+                    BRIEFING_REASON=""
+                else
+                    BRIEFING_REASON="error"
+                fi
+            fi
+
+            if [ -z "$BRIEFING" ]; then
+                if command -v coach_startday_fallback_output >/dev/null 2>&1; then
+                    BRIEFING=$(coach_startday_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${TODAY_TASKS:-}" "${BRIEFING_REASON:-unavailable}")
+                else
+                    BRIEFING="Unable to generate AI briefing at this time."
+                fi
+            elif [ -z "$BRIEFING_REASON" ] && command -v coach_startday_response_is_grounded >/dev/null 2>&1; then
+                if ! coach_startday_response_is_grounded "$BRIEFING" "${FOCUS_CONTEXT:-"(no focus set)"}" "${TODAY_TASKS:-}"; then
+                    BRIEFING_REASON="ungrounded-actions"
+                    if command -v coach_startday_fallback_output >/dev/null 2>&1; then
+                        BRIEFING=$(coach_startday_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${TODAY_TASKS:-}" "$BRIEFING_REASON")
+                    fi
+                fi
+            fi
         else
-            echo "  (AI briefing unavailable: dhp-strategy.sh not found in PATH)"
+            if command -v coach_startday_fallback_output >/dev/null 2>&1; then
+                BRIEFING=$(coach_startday_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${TODAY_TASKS:-}" "dispatcher-missing")
+            else
+                BRIEFING="Unable to generate AI briefing at this time."
+            fi
+        fi
+
+        BRIEFING_ESCAPED="${BRIEFING//$'\n'/\\n}"
+        printf '%s|%s\n' "$TODAY" "$BRIEFING_ESCAPED" > "$BRIEFING_CACHE"
+        echo "$BRIEFING" | sed 's/^/  /'
+
+        if command -v coach_append_log >/dev/null 2>&1; then
+            COACH_METRICS_PAYLOAD="tactical:$(printf '%s' "$COACH_TACTICAL_METRICS" | tr '\n' ';') pattern:$(printf '%s' "$COACH_PATTERN_METRICS" | tr '\n' ';') quality:$(printf '%s' "$COACH_DATA_QUALITY_FLAGS" | tr '\n' ';')"
+            coach_append_log "STARTDAY" "$TODAY" "$COACH_MODE" "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_METRICS_PAYLOAD" "$BRIEFING" || true
         fi
     fi
 fi

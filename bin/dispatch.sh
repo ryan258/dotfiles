@@ -6,7 +6,7 @@ DISPATCHER_BIN="$DOTFILES_DIR/bin"
 SQUADS_FILE="${DHP_SQUADS_FILE:-$DOTFILES_DIR/ai-staff-hq/squads.json}"
 
 print_usage() {
-    echo "Usage: dispatch <squad> [--stream] [--temperature X] [--max-tokens N]" >&2
+    echo "Usage: dispatch <squad> [--stream] [--temperature X]" >&2
     echo "       cat file | dispatch <squad> [flags]" >&2
     exit 1
 }

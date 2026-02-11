@@ -64,6 +64,33 @@ date_days_ago() {
     date_shift_days "-$days" "$format"
 }
 
+# Get file mtime as epoch seconds with cross-platform fallbacks.
+# Usage: file_mtime_epoch <path>
+file_mtime_epoch() {
+    local target_file="$1"
+
+    if command -v python3 >/dev/null 2>&1; then
+        python3 - "$target_file" <<'PY'
+import os
+import sys
+
+try:
+    print(int(os.path.getmtime(sys.argv[1])))
+except OSError:
+    print(0)
+PY
+        return
+    fi
+
+    if stat -f '%m' "$target_file" >/dev/null 2>&1; then
+        stat -f '%m' "$target_file"
+    elif stat -c '%Y' "$target_file" >/dev/null 2>&1; then
+        stat -c '%Y' "$target_file"
+    else
+        echo "0"
+    fi
+}
+
 timestamp_to_epoch() {
     local raw="$1"
     python3 - "$raw" <<'PY'

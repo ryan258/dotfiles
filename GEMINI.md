@@ -219,7 +219,6 @@ dhp_dispatch "Name" "model" "$output_dir" \
 ### Flags
 - `--stream` - Real-time output
 - `--temperature <float>`
-- `--max-tokens <int>`
 
 ---
 

@@ -1,8 +1,221 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** February 6, 2026
+**Last Updated:** February 11, 2026
 
 This document tracks all major implementations, improvements, and fixes to the Daily Context System.
+
+## Version 2.2.14 (February 11, 2026) - Coach Review Hardening + Docs Portability
+
+**Status:** ✅ Production Ready
+
+### Reliability + Safety Fixes
+- Removed redundant coach mode lookup in `scripts/startday.sh` so mode is resolved once and reused.
+- Added explicit `common.sh` sourcing in:
+  - `scripts/startday.sh`
+  - `scripts/goodevening.sh`
+- Tightened path validation in `scripts/lib/coach_ops.sh`:
+  - `coach_get_mode_for_date` now fails closed on invalid `COACH_MODE_FILE`.
+  - `coach_append_log` now fails closed on invalid `COACH_LOG_FILE`.
+- Guarded win-metric counters in `scripts/goodevening.sh` when files are missing to avoid strict-mode exits.
+- Fixed coach log field escaping so pipe delimiters are removed correctly in `scripts/lib/coach_ops.sh`.
+- Replaced macOS-specific `date -r <file>` usage in `scripts/goodevening.sh` with a cross-platform `file_mtime_epoch` helper (now in `scripts/lib/date_utils.sh`).
+
+### Coach Prompt Architecture
+- Extracted nested prompt builders into explicit library functions in `scripts/lib/coach_ops.sh`:
+  - `coach_build_startday_prompt`
+  - `coach_build_goodevening_prompt`
+- Updated `startday.sh` and `goodevening.sh` to call these helpers with explicit parameters.
+- Removed implicit global coupling for tactical commit/push context by passing those values explicitly into `coach_collect_tactical_metrics`.
+
+### Config + Naming
+- Added `AI_COACH_DRIFT_STALE_TASK_DAYS` and aligned tactical stale-task logic to prefer it.
+- Kept compatibility fallback to `STALE_TASK_DAYS` for existing environments.
+- Aligned `.env.example` default to `AI_BRIEFING_ENABLED=true` to match `config.sh`.
+
+### Documentation
+- Replaced absolute machine-specific path references in derived docs with repo-relative references:
+  - `docs/start-here.md`
+  - `docs/system-overview.md`
+  - `docs/happy-path.md`
+  - `docs/ai-quick-reference.md`
+  - `scripts/README.md`
+  - `scripts/README_aliases.md`
+- Expanded root `README.md` with install quickstart (`clone` + `bootstrap.sh`) while preserving canonical-doc governance.
+- Expanded `README.md` with capabilities, prerequisites, bootstrap notes, test command, and troubleshooting pointer.
+- Expanded `docs/happy-path.md` with brain-fog-oriented recovery flow and emergency reset guidance.
+- Expanded `docs/ai-quick-reference.md` with actionable command patterns, chaining, spec workflow, and troubleshooting.
+
+### Tests
+- Added standard BATS helper loads to new coach/dispatcher test files.
+- Hardened `tests/test_coach_ops.sh` isolation by setting `DOTFILES_DIR` explicitly.
+- Full suite passes:
+  - `bats tests/*.sh` -> `1..97` passing.
+
+### Follow-up Hardening
+- Removed redundant second `.env` load in `scripts/startday.sh`; fallback `.env` load now only runs when `config.sh` is unavailable.
+- Hardened temp-file creation fallback in `scripts/lib/coach_ops.sh` using secure per-file creation under `${TMPDIR:-/tmp}`.
+- Added explicit format comment for spoon spend parsing (`SPEND|date|time|count|activity|remaining`).
+- Deduplicated `coach_append_log` block in `scripts/startday.sh`.
+- Renamed reflection context variable in `scripts/goodevening.sh` to avoid shadowing and improve readability.
+- Added comment clarifying threshold awk exit semantics in behavior digest classification.
+- Simplified grounding stop-word list to reduce false negatives from domain-specific verbs.
+
+---
+
+## Version 2.2.13 (February 10, 2026) - Coherence Reset + Coach Reliability Hardening
+
+**Status:** ✅ Production Ready
+
+### Coherence and Documentation
+- Declared `CLAUDE.md` as canonical root architecture/behavior contract with explicit derived-doc governance rules.
+- Simplified root and derived docs to remove stale counts/version drift and align to runtime behavior:
+  - `README.md`
+  - `docs/start-here.md`
+  - `docs/system-overview.md`
+  - `docs/happy-path.md`
+  - `docs/ai-quick-reference.md`
+  - `scripts/README.md`
+  - `scripts/README_aliases.md`
+
+### AI Coach Reliability
+- Added timeout-guarded strategy invocation helpers in `scripts/lib/coach_ops.sh`:
+  - `coach_call_with_timeout`
+  - `coach_strategy_with_timeout`
+- Added deterministic fallback renderers in `scripts/lib/coach_ops.sh`:
+  - `coach_startday_fallback_output`
+  - `coach_goodevening_fallback_output`
+- `startday` and `goodevening` now use timeout-guarded AI calls and never stall indefinitely waiting on AI output.
+
+### Coaching Behavior
+- `startday` now caches multiline AI output safely with newline escaping and decoding.
+- `startday` suggested-directory extraction now ignores malformed suggestion lines and only emits real absolute paths.
+- Startday schema ordering tightened to:
+  - `North Star`
+  - `Do Next (ordered 1-3)`
+  - `Operating insight (working + drift risk)`
+  - `Anti-tinker rule`
+  - `Health lens`
+  - `Evidence check`
+
+### Config
+- Added `AI_COACH_REQUEST_TIMEOUT_SECONDS` (default `35`) in:
+  - `scripts/lib/config.sh`
+  - `.env.example`
+- Added timeout retry controls:
+  - `AI_COACH_RETRY_ON_TIMEOUT` (default `true`)
+  - `AI_COACH_RETRY_TIMEOUT_SECONDS` (default `90`)
+
+### Tests
+- Added timeout fallback coverage:
+  - `tests/test_startday_coach.sh`
+  - `tests/test_goodevening_coach.sh`
+- Added timeout retry-path coverage for coach library and both daily flows.
+- Replaced removed-flag-specific dispatcher test assertions with generic unknown-flag behavior:
+  - `tests/test_dispatcher_unknown_flags.sh`
+
+---
+
+## Version 2.2.12 (February 10, 2026) - Execution Coach + Behavioral Insight Upgrade
+
+**Status:** ✅ Production Ready
+
+### New Features
+- Added `scripts/lib/coach_ops.sh` for deterministic coaching context:
+  - tactical metrics (`7d` default)
+  - pattern metrics (`30d` default)
+  - drift/working signal classification
+  - malformed data quality flags
+  - daily coach mode persistence (`coach_mode.txt`)
+  - append-only coaching log (`coach_log.txt`)
+- `startday` now uses structured behavior digest + coach mode with strict execution-coach output:
+  - `North Star`
+  - `Do Next (ordered 1-3)`
+  - `Anti-tinker rule`
+  - `Operating insight (working + drift risk)`
+  - `Health lens`
+  - `Evidence check`
+- `goodevening` now uses reflective coaching output with strict sections:
+  - `What worked`
+  - `Where drift happened`
+  - `Likely trigger`
+  - `Tomorrow lock`
+  - `Health lens`
+  - `Evidence used`
+
+### Behavior Changes
+- Added daily focus-lock mode prompt (`LOCKED`/`OVERRIDE`) in interactive sessions and non-interactive default to `LOCKED`.
+- Both morning and evening AI coaching always include health/energy context.
+
+### Interface Changes
+- Global token-cap semantics removed from dispatcher flows.
+- `--max-tokens` is no longer supported and is rejected as an unknown flag.
+- `bin/dhp-lib.sh` no longer injects `max_tokens` into OpenRouter payloads.
+
+### Config Changes
+- Added:
+  - `AI_COACH_LOG_ENABLED`
+  - `AI_COACH_TACTICAL_DAYS`
+  - `AI_COACH_PATTERN_DAYS`
+  - `AI_COACH_MODE_DEFAULT`
+  - `COACH_LOG_FILE`
+  - `COACH_MODE_FILE`
+- Removed from coaching flow:
+  - `AI_BRIEFING_MAX_TOKENS`
+  - `AI_BRIEFING_MODE`
+
+### Documentation Updates
+- Updated:
+  - `docs/happy-path.md`
+  - `docs/ai-quick-reference.md`
+  - `.env.example`
+
+---
+
+## Version 2.2.11 (February 10, 2026) - Guiding-Light Briefing Mode
+
+**Status:** ✅ Production Ready
+
+### Improvements
+- Added `AI_BRIEFING_MODE` with default `guiding` to make `startday` briefing act as an execution coach for brain-fog days.
+- In `guiding` mode, the AI briefing now outputs strict sections focused on action and anti-tinkering:
+  - `North Star`
+  - `Do Next (ordered)`
+  - `Anti-tinker rule`
+  - `Evidence check`
+  - `Energy guardrail`
+- `startday` now feeds `todo top 3` output (when available) plus yesterday journal context into the briefing prompt to keep guidance anchored to actionable work.
+
+### Documentation Updates
+- Added `AI_BRIEFING_MODE` examples in `.env.example` and `docs/happy-path.md`.
+
+---
+
+## Version 2.2.10 (February 10, 2026) - High-Signal Morning Briefing Tuning
+
+**Status:** ✅ Production Ready
+
+### Improvements
+- Tightened `scripts/startday.sh` AI briefing prompt to a strict high-signal format (`Signal`, `Next step`, `Energy guardrail`) with concise constraints.
+- `startday` now calls `dhp-strategy.sh` with configurable briefing controls:
+  - `AI_BRIEFING_TEMPERATURE` (default `0.25`)
+  - `AI_BRIEFING_MAX_TOKENS` (default `260`, best-effort where swarm backend supports the flag)
+- Added the new briefing tuning variables to `.env.example`.
+
+### Documentation Updates
+- Updated `docs/happy-path.md` with briefing tuning examples.
+
+### Compatibility Fixes
+- `startday` now retries AI briefing generation without `--max-tokens` if the current swarm backend rejects that flag, preventing briefings from failing hard.
+
+---
+
+## Version 2.2.9 (February 10, 2026) - Local-Day Git Activity Fix
+
+**Status:** ✅ Production Ready
+
+### Fixes
+- Fixed `scripts/github_helper.sh list_commits_for_date` to treat input dates as local calendar days (converted to UTC windows), so late-night commits/pushes no longer get shifted into the wrong day in `startday`/`goodevening`.
+- Commit recap extraction now deduplicates repeated commit rows when multiple push events reference the same commit.
 
 ---
 

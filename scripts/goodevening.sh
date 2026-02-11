@@ -2,7 +2,17 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMMON_LIB="$SCRIPT_DIR/lib/common.sh"
 DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
+
+if [ -f "$COMMON_LIB" ]; then
+    # shellcheck disable=SC1090
+    source "$COMMON_LIB"
+else
+    echo "Error: common utilities not found at $COMMON_LIB" >&2
+    exit 1
+fi
+
 if [ -f "$DATE_UTILS" ]; then
     # shellcheck disable=SC1090
     source "$DATE_UTILS"
@@ -17,8 +27,10 @@ if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
     source "$SCRIPT_DIR/lib/config.sh"
 else
     if [ -f "$SCRIPT_DIR/../.env" ]; then
+        set -a
         # shellcheck disable=SC1090
         source "$SCRIPT_DIR/../.env"
+        set +a
     fi
 fi
 
@@ -26,6 +38,10 @@ fi
 if [ -f "$SCRIPT_DIR/lib/github_ops.sh" ]; then
     # shellcheck disable=SC1090
     source "$SCRIPT_DIR/lib/github_ops.sh"
+fi
+if [ -f "$SCRIPT_DIR/lib/coach_ops.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/coach_ops.sh"
 fi
 
 DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
@@ -75,7 +91,7 @@ else
         TODAY=$(cat "$CURRENT_DAY_FILE")
         if [ "$FORCE_CURRENT_DAY" = false ]; then
             # If the file is extremely old (e.g. > 24 hours), fallback to actual today to prevent stale state bugs
-            FILE_AGE=$(( $(date +%s) - $(date -r "$CURRENT_DAY_FILE" +%s) ))
+            FILE_AGE=$(( $(date +%s) - $(file_mtime_epoch "$CURRENT_DAY_FILE") ))
             if [ "$FILE_AGE" -gt 86400 ]; then
                  TODAY=$(date +%Y-%m-%d)
             fi
@@ -105,6 +121,7 @@ fi
 # 1. Show completed tasks from today
 echo ""
 echo "✅ COMPLETED TODAY:"
+COMPLETED_TASKS=""
 if [ -f "$TODO_DONE_FILE" ]; then
     COMPLETED_TASKS=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {print}' "$TODO_DONE_FILE")
     if [ -n "$COMPLETED_TASKS" ]; then
@@ -119,9 +136,9 @@ echo ""
 echo "📝 TODAY'S JOURNAL:"
 if [ -f "$JOURNAL_FILE" ]; then
     # TODAY is valid
-    JOURNAL_ENTRIES=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {print}' "$JOURNAL_FILE")
-    if [ -n "$JOURNAL_ENTRIES" ]; then
-        echo "$JOURNAL_ENTRIES" | sed 's/^/  • /'
+    TODAY_JOURNAL_ENTRIES_TEXT=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {print}' "$JOURNAL_FILE")
+    if [ -n "$TODAY_JOURNAL_ENTRIES_TEXT" ]; then
+        echo "$TODAY_JOURNAL_ENTRIES_TEXT" | sed 's/^/  • /'
     else
         echo "  (No journal entries for today)"
     fi
@@ -210,18 +227,24 @@ fi
 # --- Gamify Progress ---
 echo ""
 echo "🌟 TODAY'S WINS:"
-TASKS_COMPLETED=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {count++} END {print count+0}' "$TODO_DONE_FILE")
-JOURNAL_ENTRIES=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {count++} END {print count+0}' "$JOURNAL_FILE")
+TASKS_COMPLETED=0
+JOURNAL_ENTRY_COUNT=0
+if [ -f "$TODO_DONE_FILE" ]; then
+    TASKS_COMPLETED=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {count++} END {print count+0}' "$TODO_DONE_FILE")
+fi
+if [ -f "$JOURNAL_FILE" ]; then
+    JOURNAL_ENTRY_COUNT=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {count++} END {print count+0}' "$JOURNAL_FILE")
+fi
 
 if [ "$TASKS_COMPLETED" -gt 0 ]; then
     echo "  🎉 Win: You completed $TASKS_COMPLETED task(s) today. Progress is progress."
 fi
 
-if [ "$JOURNAL_ENTRIES" -gt 0 ]; then
-    echo "  🧠 Win: You logged $JOURNAL_ENTRIES entries. Context captured."
+if [ "$JOURNAL_ENTRY_COUNT" -gt 0 ]; then
+    echo "  🧠 Win: You logged $JOURNAL_ENTRY_COUNT entries. Context captured."
 fi
 
-if [ "$TASKS_COMPLETED" -eq 0 ] && [ "$JOURNAL_ENTRIES" -eq 0 ]; then
+if [ "$TASKS_COMPLETED" -eq 0 ] && [ "$JOURNAL_ENTRY_COUNT" -eq 0 ]; then
     echo "  🧘 Today was a rest day. Logging off is a valid and productive choice."
 fi
 
@@ -379,52 +402,96 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
 
     # Gather today's data
     # TODAY is already set globally (handling overrides)
-    TODAY_TASKS=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {print}' "$TODO_DONE_FILE" 2>/dev/null || echo "")
+    COMPLETED_TASKS_CONTEXT="${COMPLETED_TASKS:-}"
+    if [ -z "$COMPLETED_TASKS_CONTEXT" ] && [ -f "$TODO_DONE_FILE" ]; then
+        COMPLETED_TASKS_CONTEXT=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {print}' "$TODO_DONE_FILE" 2>/dev/null || echo "")
+    fi
     TODAY_JOURNAL=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {print}' "$JOURNAL_FILE" 2>/dev/null || echo "")
     FOCUS_CONTEXT=""
     if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
         FOCUS_CONTEXT=$(cat "$FOCUS_FILE")
     fi
+    COACH_TACTICAL_DAYS="${AI_COACH_TACTICAL_DAYS:-7}"
+    COACH_PATTERN_DAYS="${AI_COACH_PATTERN_DAYS:-30}"
+    COACH_MODE="${AI_COACH_MODE_DEFAULT:-LOCKED}"
+    COACH_TACTICAL_METRICS=""
+    COACH_PATTERN_METRICS=""
+    COACH_DATA_QUALITY_FLAGS=""
+    COACH_BEHAVIOR_DIGEST="(behavior digest unavailable)"
+    COACH_TEMPERATURE="${AI_BRIEFING_TEMPERATURE:-0.25}"
 
-    if [ -z "$TODAY_TASKS$TODAY_JOURNAL$FOCUS_CONTEXT$RECENT_PUSHES$TODAY_COMMITS" ]; then
-        echo "  (No focus, pushes, commits, tasks, or journal entries to reflect on for $TODAY)"
-    elif ! command -v dhp-strategy.sh &> /dev/null; then
-         echo "  (AI Staff tools not found in PATH)"
+    if command -v coach_get_mode_for_date >/dev/null 2>&1; then
+        COACH_INTERACTIVE="false"
+        if [ -t 0 ]; then
+            COACH_INTERACTIVE="true"
+        fi
+        COACH_MODE=$(coach_get_mode_for_date "$TODAY" "$COACH_INTERACTIVE" 2>/dev/null || echo "${AI_COACH_MODE_DEFAULT:-LOCKED}")
+    fi
+
+    if command -v coach_collect_tactical_metrics >/dev/null 2>&1; then
+        COACH_TACTICAL_METRICS=$(coach_collect_tactical_metrics "$TODAY" "$COACH_TACTICAL_DAYS" "${RECENT_PUSHES:-}" "${TODAY_COMMITS:-}" 2>/dev/null || true)
+    fi
+    if command -v coach_collect_pattern_metrics >/dev/null 2>&1; then
+        COACH_PATTERN_METRICS=$(coach_collect_pattern_metrics "$TODAY" "$COACH_PATTERN_DAYS" 2>/dev/null || true)
+    fi
+    if command -v coach_collect_data_quality_flags >/dev/null 2>&1; then
+        COACH_DATA_QUALITY_FLAGS=$(coach_collect_data_quality_flags 2>/dev/null || true)
+    fi
+    if command -v coach_build_behavior_digest >/dev/null 2>&1; then
+        COACH_BEHAVIOR_DIGEST=$(coach_build_behavior_digest "$TODAY" "$COACH_TACTICAL_DAYS" "$COACH_PATTERN_DAYS" 2>/dev/null || echo "(behavior digest unavailable)")
+    fi
+
+    if command -v coach_build_goodevening_prompt >/dev/null 2>&1; then
+        REFLECTION_PROMPT="$(coach_build_goodevening_prompt \
+            "${COACH_MODE:-LOCKED}" \
+            "${FOCUS_CONTEXT:-}" \
+            "${TODAY_COMMITS:-}" \
+            "${RECENT_PUSHES:-}" \
+            "${COMPLETED_TASKS_CONTEXT:-}" \
+            "${TODAY_JOURNAL:-}" \
+            "${COACH_BEHAVIOR_DIGEST:-}")"
     else
-        # Generate reflection via AI
-        REFLECTION=$({
-            echo "Provide a brief daily reflection (3-5 sentences)."
-            echo "Primary signals are today's focus, today's commits, and recent GitHub pushes; use them first."
-            echo "Secondary signals are tasks and journal entries."
-            echo ""
-            echo "Today's focus:"
-            echo "${FOCUS_CONTEXT:-"(no focus set)"}"
-            echo ""
-            echo "Today's commits:"
-            echo "${TODAY_COMMITS:-"(none)"}"
-            echo ""
-            echo "Recent GitHub pushes (last 7 days):"
-            echo "${RECENT_PUSHES:-"(none)"}"
-            echo ""
-            if [ -n "$TODAY_TASKS" ]; then
-                echo "Completed tasks:"
-                echo "$TODAY_TASKS"
-                echo ""
-            fi
-            if [ -n "$TODAY_JOURNAL" ]; then
-                echo "Journal entries:"
-                echo "$TODAY_JOURNAL"
-                echo ""
-            fi
-            echo "Provide:"
-            echo "- One insight or capability gained today based on the commits"
-            echo "- One outcome suggested by the commits and pushes"
-            echo "- One smallest next step for tomorrow"
-            echo ""
-            echo "Keep it thoughtful, reflective, and energy-aware."
-        } | dhp-strategy.sh 2>/dev/null || echo "Unable to generate AI reflection at this time.")
+        REFLECTION_PROMPT="Produce a reflective coaching summary grounded in today's completed tasks, journal entries, and focus."
+    fi
+    REFLECTION=""
+    REFLECTION_REASON="ai-error"
 
-        echo "$REFLECTION" | sed 's/^/  /'
+    if command -v dhp-strategy.sh >/dev/null 2>&1; then
+        if command -v coach_strategy_with_retry >/dev/null 2>&1; then
+            if REFLECTION=$(coach_strategy_with_retry "$REFLECTION_PROMPT" "$COACH_TEMPERATURE" "${AI_COACH_REQUEST_TIMEOUT_SECONDS:-35}" "${AI_COACH_RETRY_TIMEOUT_SECONDS:-90}" 2>/dev/null); then
+                REFLECTION_REASON=""
+            else
+                strategy_status=$?
+                if [ "$strategy_status" -eq 124 ]; then
+                    REFLECTION_REASON="timeout"
+                else
+                    REFLECTION_REASON="error"
+                fi
+            fi
+        else
+            if REFLECTION=$(printf '%s' "$REFLECTION_PROMPT" | dhp-strategy.sh --temperature "$COACH_TEMPERATURE" 2>/dev/null); then
+                REFLECTION_REASON=""
+            else
+                REFLECTION_REASON="error"
+            fi
+        fi
+    else
+        REFLECTION_REASON="dispatcher-missing"
+    fi
+
+    if [ -z "$REFLECTION" ]; then
+        if command -v coach_goodevening_fallback_output >/dev/null 2>&1; then
+            REFLECTION=$(coach_goodevening_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${REFLECTION_REASON:-unavailable}")
+        else
+            REFLECTION="Unable to generate AI reflection at this time."
+        fi
+    fi
+
+    echo "$REFLECTION" | sed 's/^/  /'
+
+    if command -v coach_append_log >/dev/null 2>&1; then
+        COACH_METRICS_PAYLOAD="tactical:$(printf '%s' "$COACH_TACTICAL_METRICS" | tr '\n' ';') pattern:$(printf '%s' "$COACH_PATTERN_METRICS" | tr '\n' ';') quality:$(printf '%s' "$COACH_DATA_QUALITY_FLAGS" | tr '\n' ';')"
+        coach_append_log "GOODEVENING" "$TODAY" "$COACH_MODE" "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_METRICS_PAYLOAD" "$REFLECTION" || true
     fi
 fi
 

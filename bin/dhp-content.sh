@@ -54,6 +54,7 @@ USE_VERBOSE=false
 PERSONA_NAME=""
 REMAINING_ARGS_LOCAL=()
 CONTEXT_MODE=""
+PARAM_TEMPERATURE="${PARAM_TEMPERATURE:-}"
 
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -90,17 +91,20 @@ while [[ "$#" -gt 0 ]]; do
             PARAM_TEMPERATURE="$2"
             shift 2
             ;;
-        --max-tokens)
-            if [[ -z "${2:-}" || "${2:-}" == --* ]]; then
-                echo "Error: --max-tokens requires an integer value." >&2
-                exit 1
-            fi
-            PARAM_MAX_TOKENS="$2"
-            shift 2
-            ;;
         --brain)
             USE_BRAIN=true
             shift
+            ;;
+        --)
+            shift
+            while [[ "$#" -gt 0 ]]; do
+                REMAINING_ARGS_LOCAL+=("$1")
+                shift
+            done
+            ;;
+        --*)
+            echo "Error: Unknown flag: $1" >&2
+            exit 1
             ;;
         *)
             REMAINING_ARGS_LOCAL+=("$1")
@@ -209,7 +213,6 @@ DELIVERABLE: Return a single, well-formatted Hugo markdown document."
 export USE_VERBOSE
 export USE_STREAMING
 export PARAM_TEMPERATURE
-export PARAM_MAX_TOKENS
 export USE_BRAIN
 
 dhp_dispatch \

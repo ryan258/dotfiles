@@ -228,7 +228,6 @@ dhp_dispatch \
 - `--stream` - Real-time output
 - `--verbose` - Debug logging
 - `--temperature <float>` - Override default
-- `--max-tokens <int>` - Token limit
 
 ---
 

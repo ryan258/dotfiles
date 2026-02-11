@@ -131,6 +131,68 @@ _github_debug_log() {
     fi
 }
 
+# Convert a local calendar day (YYYY-MM-DD) into an inclusive/exclusive UTC window.
+# Output (4 lines): utc_start_iso, utc_end_iso, utc_start_epoch, utc_end_epoch
+_utc_window_for_local_date() {
+    local target_date="$1"
+
+    if command -v python3 >/dev/null 2>&1; then
+        if ! python3 - "$target_date" <<'PY'
+import sys
+from datetime import datetime, timedelta, timezone
+
+target = sys.argv[1]
+
+try:
+    start_local = datetime.strptime(target, "%Y-%m-%d")
+except ValueError:
+    sys.exit(1)
+end_local = start_local + timedelta(days=1)
+
+start_epoch = int(start_local.timestamp())
+end_epoch = int(end_local.timestamp())
+start_utc = datetime.fromtimestamp(start_epoch, timezone.utc)
+end_utc = datetime.fromtimestamp(end_epoch, timezone.utc)
+
+print(start_utc.strftime("%Y-%m-%dT%H:%M:%SZ"))
+print(end_utc.strftime("%Y-%m-%dT%H:%M:%SZ"))
+print(start_epoch)
+print(end_epoch)
+PY
+        then
+            return 1
+        fi
+        return
+    fi
+
+    local start_epoch
+    local end_epoch
+
+    if date -j -f "%Y-%m-%d %H:%M:%S" "$target_date 00:00:00" "+%s" >/dev/null 2>&1; then
+        start_epoch=$(date -j -f "%Y-%m-%d %H:%M:%S" "$target_date 00:00:00" "+%s") || return 1
+    elif command -v gdate >/dev/null 2>&1; then
+        start_epoch=$(gdate -d "$target_date 00:00:00" +%s) || return 1
+    else
+        start_epoch=$(date -d "$target_date 00:00:00" +%s) || return 1
+    fi
+    end_epoch=$((start_epoch + 86400))
+
+    local start_utc
+    local end_utc
+    if date -u -r "$start_epoch" "+%Y-%m-%dT%H:%M:%SZ" >/dev/null 2>&1; then
+        start_utc=$(date -u -r "$start_epoch" "+%Y-%m-%dT%H:%M:%SZ") || return 1
+        end_utc=$(date -u -r "$end_epoch" "+%Y-%m-%dT%H:%M:%SZ") || return 1
+    elif command -v gdate >/dev/null 2>&1; then
+        start_utc=$(gdate -u -d "@$start_epoch" "+%Y-%m-%dT%H:%M:%SZ") || return 1
+        end_utc=$(gdate -u -d "@$end_epoch" "+%Y-%m-%dT%H:%M:%SZ") || return 1
+    else
+        start_utc=$(date -u -d "@$start_epoch" "+%Y-%m-%dT%H:%M:%SZ") || return 1
+        end_utc=$(date -u -d "@$end_epoch" "+%Y-%m-%dT%H:%M:%SZ") || return 1
+    fi
+
+    printf "%s\n%s\n%s\n%s\n" "$start_utc" "$end_utc" "$start_epoch" "$end_epoch"
+}
+
 # Core API caller.
 # 1. Constructs full URL.
 # 2. Authenticates using Bearer token.
@@ -276,26 +338,39 @@ list_commits_for_date() {
         return 1
     fi
 
-    # Calculate the next day for the 'until' parameter
-    local next_date
-    if date --version >/dev/null 2>&1; then
-        next_date=$(date -d "$target_date + 1 day" +%Y-%m-%d)
-    else
-        next_date=$(date -j -v+1d -f "%Y-%m-%d" "$target_date" +%Y-%m-%d)
+    if [[ ! "$target_date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+        echo "Usage: list_commits_for_date YYYY-MM-DD" >&2
+        return 1
     fi
+
+    local window_data
+    if ! window_data=$(_utc_window_for_local_date "$target_date"); then
+        echo "Error: Failed to compute date window for $target_date" >&2
+        return 1
+    fi
+    local utc_start
+    local utc_end
+    local utc_start_epoch
+    local utc_end_epoch
+    utc_start=$(echo "$window_data" | sed -n '1p')
+    utc_end=$(echo "$window_data" | sed -n '2p')
+    utc_start_epoch=$(echo "$window_data" | sed -n '3p')
+    utc_end_epoch=$(echo "$window_data" | sed -n '4p')
 
     # Get PushEvents to find which repos/branches were pushed on target date
     local events_json
     events_json=$(list_user_events 2>/dev/null) || return 1
 
-    # Extract unique repo/branch pairs from PushEvents on target date
+    # Extract unique repo/branch pairs from PushEvents on the local day window.
     local repo_branches
-    repo_branches=$(echo "$events_json" | jq -r --arg date "$target_date" '
-        [.[] | select(.type == "PushEvent" and (.created_at | startswith($date)))] |
-        .[] | (.repo.name | split("/")[1]) + ":" + (.payload.ref | split("/")[-1])
+    repo_branches=$(echo "$events_json" | jq -r --argjson start "$utc_start_epoch" --argjson end "$utc_end_epoch" '
+        [.[] | select(.type == "PushEvent" and ((try (.created_at | fromdateiso8601) catch 0) >= $start) and ((try (.created_at | fromdateiso8601) catch 0) < $end))] |
+        .[] | (.repo.name | split("/")[1]) + ":" + ((.payload.ref // "refs/heads/HEAD") | split("/")[-1])
     ' 2>/dev/null | sort -u)
 
     [ -z "$repo_branches" ] && return 0
+
+    local all_commits=""
 
     # For each repo/branch, query the Commits API
     while IFS=: read -r repo_name branch; do
@@ -303,14 +378,23 @@ list_commits_for_date() {
         [ -z "$branch" ] && branch="HEAD"
 
         local commits_json
-        commits_json=$(_github_api_call "/repos/$USERNAME/$repo_name/commits?sha=$branch&author=$USERNAME&since=${target_date}T00:00:00Z&until=${next_date}T00:00:00Z&per_page=20" 2>/dev/null) || continue
+        commits_json=$(_github_api_call "/repos/$USERNAME/$repo_name/commits?sha=$branch&author=$USERNAME&since=${utc_start}&until=${utc_end}&per_page=20" 2>/dev/null) || continue
 
-        echo "$commits_json" | jq -r --arg repo "$repo_name" '
+        local parsed_commits
+        parsed_commits=$(echo "$commits_json" | jq -r --arg repo "$repo_name" '
             if type == "array" then
                 .[] | ($repo) + "|" + (.sha[:7]) + "|" + (.commit.message | split("\n")[0] | gsub("\\|"; "/"))
             else empty end
-        ' 2>/dev/null
+        ' 2>/dev/null || true)
+
+        if [ -n "$parsed_commits" ]; then
+            all_commits+="${parsed_commits}"$'\n'
+        fi
     done <<< "$repo_branches"
+
+    if [ -n "$all_commits" ]; then
+        printf "%s" "$all_commits" | awk 'NF' | sort -u
+    fi
 }
 
 # Gets raw JSON data for a specific repository.

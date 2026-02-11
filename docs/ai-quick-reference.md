@@ -1,149 +1,79 @@
 # AI Quick Reference
 
-**Purpose:** Fast, accurate usage for the AI Staff HQ dispatchers in this dotfiles repo.
+Derived usage guide. Canonical dispatcher contract is in `../CLAUDE.md` and `../bin/README.md`.
 
-**Defaults:** Models are configured via `.env` (`TECH_MODEL`, `CONTENT_MODEL`, `CREATIVE_MODEL`, etc.). Current defaults are documented in `bin/README.md` and `scripts/cheatsheet.sh`.
-
----
-
-## TL;DR
+## Primary Entry Points
 
 ```bash
-# Unified entry point
-dispatch tech "Fix my script"
-
-# Direct dispatcher
- cat scripts/todo.sh | tech --stream
-
-# Content generation
- content "Guide to energy-first planning"
-
-# Context-aware suggestion
- ai-suggest
+dispatch <squad> "brief"
 ```
 
----
+Direct aliases:
+- `tech`
+- `content`
+- `strategy`
+- `creative`
+- `brand`
+- `market`
+- `research`
+- `stoic`
+- `narrative`
+- `aicopy`
+- `finance`
+- `morphling`
 
-## Dispatcher Map
+## Supported Common Flags
 
-| Alias | Script | Purpose | Input |
-| --- | --- | --- | --- |
-| `tech` | `bin/dhp-tech.sh` | Debugging + technical analysis | stdin |
-| `creative` | `bin/dhp-creative.sh` | Story packages | argument |
-| `content` | `bin/dhp-content.sh` | Blog + SEO content | argument |
-| `strategy` | `bin/dhp-strategy.sh` | Strategic analysis | stdin |
-| `brand` | `bin/dhp-brand.sh` | Brand positioning | stdin |
-| `market` | `bin/dhp-market.sh` | Market research | stdin |
-| `stoic` | `bin/dhp-stoic.sh` | Stoic coaching | stdin |
-| `research` | `bin/dhp-research.sh` | Knowledge synthesis | stdin |
-| `narrative` | `bin/dhp-narrative.sh` | Story structure | stdin |
-| `aicopy` | `bin/dhp-copy.sh` | Marketing copy | stdin |
-| `morphling` | `bin/morphling.sh` | Interactive Morphling specialist (global launcher) | interactive/argument/stdin |
-| `dhp-morphling` | `bin/dhp-morphling.sh` | Universal adaptive dispatcher (auto-context) | argument |
-| `finance` | `bin/dhp-finance.sh` | Financial strategy | stdin/argument |
+- `--stream`
+- `--temperature <float>`
+- `--` (stop flag parsing and treat remaining args as prompt text)
 
-**Unified Entry:** `bin/dispatch.sh` routes `dispatch <squad>` to the correct dispatcher. It also honors AI Staff HQ `squads.json` when present. Use `dispatch finance` or the `finance` alias.
+Unknown flags fail fast with an error.
 
----
-
-## Common Flags
-
-- `--stream` real-time output
-- `--temperature <float>` override creativity
-- `--max-tokens <int>` override length
-- `--context` inject minimal local context (supported by `content` and blog workflows)
-- `--full-context` inject full local context (supported by `content` and blog workflows)
-
----
-
-## Spec Workflow (Structured Prompts)
-
-Use `spec <dispatcher>` to open a structured template, then auto-pipe it to the dispatcher.
+## Common Patterns (Copy/Paste)
 
 ```bash
-spec tech
-spec creative
-spec content
-spec strategy
+# Pipe code or notes into a dispatcher
+cat scripts/startday.sh | tech --stream
+
+# Direct prompt to a specialist alias
+content "Guide to energy-first planning"
+strategy "Prioritize this week with constraints"
+research "Compare these two model behaviors with risks"
+
+# Use the generic entrypoint when you want explicit routing
+dispatch finance "S-corp bookkeeping checklist"
+dispatch creative "Three hooks for a brain-fog-safe post"
 ```
 
-Specs are archived under `~/.config/dotfiles-data/specs/`.
+## Chaining Pattern
 
----
+Use one dispatcher to draft, another to critique:
 
-## Advanced Features
-
-- `ai-suggest` context-aware dispatcher recommendations
-- `dhp-project "idea"` multi-specialist orchestration
-- `dhp-chain creative narrative copy -- "idea"` sequential dispatcher chaining
-- `dispatch <squad>` unified entry with aliases or squads
-
----
-
-## Usage Patterns
-
-**Piped input (stdin dispatchers):**
 ```bash
-cat scripts/todo.sh | tech
-cat notes.md | strategy
+draft="$(content "Draft a short checklist for evening shutdown")"
+printf '%s\n' "$draft" | strategy "Tighten this into 3 concrete steps"
 ```
 
-**Argument input (argument dispatchers):**
+## Spec Workflow Pattern
+
 ```bash
-creative "A developer learning to pace energy"
-content "Guide to brain fog workflows"
-morphling "Review this architecture for hidden risks"
-dhp-morphling "Review this architecture for hidden risks"
+spec "startday coaching schema for anti-tinker enforcement"
+tech "Implement the accepted spec in scripts/startday.sh with tests"
 ```
 
-**Streaming output:**
-```bash
-cat large-script.sh | tech --stream
-creative --stream "Astronaut finds sentient fog"
-```
+## Coach-Related Notes (startday/goodevening)
 
-**Temperature control:**
-```bash
-content --temperature 0.35 "Deterministic guide output"
-creative --temperature 0.85 "High-creativity story generation"
-```
-
----
-
-## Workflow Integrations
-
-**Todo delegation:**
-```bash
-todo debug 1
-todo delegate 3 creative
-```
-
-**Journal analysis:**
-```bash
-journal analyze
-journal mood
-journal themes
-```
-
-**Blog workflows:**
-```bash
-blog generate -p "Calm Coach" -a guide -s guides/brain-fog "Energy-first planning"
-blog refine path/to/post.md
-```
-
----
+- `startday` and `goodevening` call `dhp-strategy.sh` through a timeout wrapper.
+- Timeout/error paths return deterministic structured coaching output.
 
 ## Troubleshooting
 
-- Ensure `OPENROUTER_API_KEY` is set in `.env`.
-- Verify dispatchers with `dotfiles-check`.
-- Read full dispatcher docs: `bin/README.md`.
-
----
-
-## Related Docs
-
-- [Start Here](start-here.md)
-- [Best Practices](best-practices.md)
-- [Dispatcher Docs](../bin/README.md)
-- [Troubleshooting](../TROUBLESHOOTING.md)
+- Unknown flag errors:
+  - remove unsupported flags and keep only documented ones (`--stream`, `--temperature`)
+- Empty or weak AI output:
+  - lower temperature (`--temperature 0.2`)
+  - tighten prompt to one concrete objective
+- Dispatcher not found:
+  - run `dotfiles-check`
+  - confirm `~/dotfiles/bin` is on `PATH`

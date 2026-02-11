@@ -442,7 +442,6 @@ for doc in results['documents'][0]:
 | `--full-context`      | Include full repo context     | content                 |
 | `--persona "Name"`    | Inject persona playbook       | content                 |
 | `--temperature <0-1>` | Control creativity            | content, copy, creative |
-| `--max-tokens <n>`    | Limit output length           | content, copy, creative |
 | `--save <file>`       | Save output to file           | chain                   |
 | `--debug`             | Verbose debugging             | swarm runner            |
 | `--model <id>`        | Override model                | swarm runner            |
@@ -496,7 +495,6 @@ Options:
   --full-context    Include full repository context
   --persona "Name"  Inject persona playbook from docs/personas.md
   --temperature N   Override temperature (default: auto)
-  --max-tokens N    Limit output length
 
 Environment:
   CONTENT_MODEL           Override model
@@ -519,7 +517,6 @@ Options:
   --verbose         Show detailed progress
   --stream          Stream JSON events to stderr
   --temperature N   Override temperature (default: 0.85)
-  --max-tokens N    Limit output length
 
 Environment:
   CREATIVE_MODEL           Override model
@@ -680,7 +677,6 @@ Options:
   --verbose         Show detailed progress
   --stream          Stream JSON events to stderr
   --temperature N   Override temperature (default: 0.7)
-  --max-tokens N    Limit output length
 
 Environment:
   CREATIVE_MODEL        Override model
@@ -822,7 +818,7 @@ Core shared library sourced by all dispatchers.
 ```
 Provides:
   dhp_setup_env        Initialize environment
-  dhp_parse_flags      Parse --verbose, --stream, --temperature, --max-tokens
+  dhp_parse_flags      Parse --verbose, --stream, --temperature
   dhp_get_input        Handle piped input or positional arguments
   dhp_dispatch         Main dispatcher function
   validate_dependencies Check for required tools

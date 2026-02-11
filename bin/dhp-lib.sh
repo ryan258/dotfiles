@@ -69,13 +69,9 @@ _build_json_payload() {
     local prompt="$2"
     local stream_flag="$3"
     local temperature="${DHP_TEMPERATURE:-${DEFAULT_TEMPERATURE:-${DHP_TEMPERATURE_DEFAULT:-}}}"
-    local max_tokens="${DHP_MAX_TOKENS:-${DEFAULT_MAX_TOKENS:-${DHP_MAX_TOKENS_DEFAULT:-}}}"
 
     if [[ -z "$temperature" ]]; then
         temperature="null"
-    fi
-    if [[ -z "$max_tokens" ]]; then
-        max_tokens="null"
     fi
 
     jq -n \
@@ -83,14 +79,12 @@ _build_json_payload() {
         --arg prompt "$prompt" \
         --argjson stream "$stream_flag" \
         --argjson temperature "$temperature" \
-        --argjson max_tokens "$max_tokens" \
         '{
             model: $model,
             messages: [{role: "user", content: $prompt}],
             stream: $stream
         } |
-        (if $temperature != null then . + {temperature: $temperature} else . end) |
-        (if $max_tokens != null then . + {max_tokens: $max_tokens} else . end)'
+        (if $temperature != null then . + {temperature: $temperature} else . end)'
 }
 
 # _handle_api_error: Parses and prints a standardized error message.

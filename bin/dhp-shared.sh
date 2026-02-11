@@ -41,7 +41,7 @@ dhp_setup_env() {
 }
 
 # Function to parse common flags like --stream, --verbose
-# Sets global variables: USE_STREAMING, USE_VERBOSE, PARAM_TEMPERATURE, PARAM_MAX_TOKENS
+# Sets global variables: USE_STREAMING, USE_VERBOSE, PARAM_TEMPERATURE
 # Stores remaining non-flag arguments in REMAINING_ARGS array for caller to use
 # Usage:
 #   dhp_parse_flags "$@"
@@ -50,7 +50,6 @@ dhp_parse_flags() {
     USE_STREAMING="${USE_STREAMING:-false}"
     USE_VERBOSE="${USE_VERBOSE:-false}"
     PARAM_TEMPERATURE="${PARAM_TEMPERATURE:-}"
-    PARAM_MAX_TOKENS="${PARAM_MAX_TOKENS:-}"
     USE_BRAIN="${USE_BRAIN:-false}"
     REMAINING_ARGS=()
     while [[ "$#" -gt 0 ]]; do
@@ -71,17 +70,20 @@ dhp_parse_flags() {
                 PARAM_TEMPERATURE="$2"
                 shift 2
                 ;;
-            --max-tokens)
-                if [[ -z "${2:-}" || "${2:-}" == --* ]]; then
-                    echo "Error: --max-tokens requires an integer value." >&2
-                    return 1
-                fi
-                PARAM_MAX_TOKENS="$2"
-                shift 2
-                ;;
             --brain)
                 USE_BRAIN=true
                 shift
+                ;;
+            --)
+                shift
+                while [[ "$#" -gt 0 ]]; do
+                    REMAINING_ARGS+=("$1")
+                    shift
+                done
+                ;;
+            --*)
+                echo "Error: Unknown flag: $1" >&2
+                return 1
                 ;;
             *)
                 REMAINING_ARGS+=("$1")
@@ -290,10 +292,6 @@ $PIPED_CONTENT"
         cmd_args+=(--temperature "$PARAM_TEMPERATURE")
     elif [ -n "$default_temp" ]; then
         cmd_args+=(--temperature "$default_temp")
-    fi
-    
-    if [ -n "$PARAM_MAX_TOKENS" ]; then
-        cmd_args+=(--max-tokens "$PARAM_MAX_TOKENS")
     fi
     
     cmd_args+=(--parallel --max-parallel 5 --auto-approve)
