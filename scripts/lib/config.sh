@@ -63,6 +63,7 @@ HOWTO_DIR="${HOWTO_DIR:-$DATA_DIR/how-to}"
 SPEC_ARCHIVE_DIR="${SPEC_ARCHIVE_DIR:-$DATA_DIR/specs}"
 TIDY_IGNORE_FILE="${TIDY_IGNORE_FILE:-$DATA_DIR/tidy_ignore.txt}"
 BREAKS_LOG="${BREAKS_LOG:-$DATA_DIR/health_breaks.log}"
+HEALTH_CACHE_DIR="${HEALTH_CACHE_DIR:-$DATA_DIR/cache}"
 GCAL_CREDS_FILE="${GCAL_CREDS_FILE:-$DATA_DIR/google_creds.json}"
 GCAL_TOKEN_FILE="${GCAL_TOKEN_FILE:-$DATA_DIR/google_token_cache.json}"
 INSIGHT_HYPOTHESES_FILE="${INSIGHT_HYPOTHESES_FILE:-$DATA_DIR/insight_hypotheses.txt}"
@@ -71,6 +72,10 @@ INSIGHT_EVIDENCE_FILE="${INSIGHT_EVIDENCE_FILE:-$DATA_DIR/insight_evidence.txt}"
 INSIGHT_VERDICTS_FILE="${INSIGHT_VERDICTS_FILE:-$DATA_DIR/insight_verdicts.txt}"
 COACH_LOG_FILE="${COACH_LOG_FILE:-$DATA_DIR/coach_log.txt}"
 COACH_MODE_FILE="${COACH_MODE_FILE:-$DATA_DIR/coach_mode.txt}"
+CONTEXT_ROOT="${CONTEXT_ROOT:-$DATA_DIR/contexts}"
+GITHUB_TOKEN_FILE="${GITHUB_TOKEN_FILE:-$HOME/.github_token}"
+GITHUB_TOKEN_FALLBACK="${GITHUB_TOKEN_FALLBACK:-$DATA_DIR/github_token}"
+GITHUB_CACHE_DIR="${GITHUB_CACHE_DIR:-$DATA_DIR/cache/github}"
 
 #=============================================================================
 # Model Configuration - SINGLE SOURCE OF TRUTH

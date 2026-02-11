@@ -17,13 +17,15 @@ fi
 if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
     # shellcheck disable=SC1090
     source "$SCRIPT_DIR/lib/config.sh"
+else
+    echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh" >&2
+    exit 1
 fi
 
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-TODO_FILE="${TODO_FILE:-$DATA_DIR/todo.txt}"
-JOURNAL_FILE="${JOURNAL_FILE:-$DATA_DIR/journal.txt}"
-HEALTH_FILE="${HEALTH_FILE:-$DATA_DIR/health.txt}"
-MEDS_FILE="${MEDS_FILE:-$DATA_DIR/medications.txt}"
+TODO_FILE="${TODO_FILE:?TODO_FILE is not set by config.sh}"
+JOURNAL_FILE="${JOURNAL_FILE:?JOURNAL_FILE is not set by config.sh}"
+HEALTH_FILE="${HEALTH_FILE:?HEALTH_FILE is not set by config.sh}"
+MEDS_FILE="${MEDS_FILE:?MEDS_FILE is not set by config.sh}"
 
 echo "🔍 Analyzing your current context..."
 echo ""

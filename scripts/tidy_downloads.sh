@@ -8,10 +8,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
   # shellcheck disable=SC1090
   source "$SCRIPT_DIR/lib/config.sh"
+else
+  echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh" >&2
+  exit 1
 fi
 
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-IGNORE_FILE="${IGNORE_FILE:-${TIDY_IGNORE_FILE:-$DATA_DIR/tidy_ignore.txt}}"
+IGNORE_FILE="${IGNORE_FILE:-$TIDY_IGNORE_FILE}"
 
 # Parse arguments
 for arg in "$@"; do

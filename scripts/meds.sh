@@ -16,10 +16,16 @@ if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
     # shellcheck disable=SC1090
     source "$SCRIPT_DIR/lib/common.sh"
 fi
+if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/config.sh"
+else
+    echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh" >&2
+    exit 1
+fi
 
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-MEDS_FILE="${MEDS_FILE:-$DATA_DIR/medications.txt}"
-SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:-${SYSTEM_LOG:-$DATA_DIR/system.log}}"
+MEDS_FILE="${MEDS_FILE:?MEDS_FILE is not set by config.sh}"
+SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:-$SYSTEM_LOG}"
 
 sanitize_line() {
     local value

@@ -21,6 +21,10 @@ setup() {
     mkdir -p "$DATA_DIR"
     mkdir -p "$DOTFILES_DIR"
     export COACH_LIB="$BATS_TEST_DIRNAME/../scripts/lib/coach_ops.sh"
+    export COACH_CONFIG_LIB="$BATS_TEST_DIRNAME/../scripts/lib/config.sh"
+    export COACH_COMMON_LIB="$BATS_TEST_DIRNAME/../scripts/lib/common.sh"
+    export COACH_DATE_LIB="$BATS_TEST_DIRNAME/../scripts/lib/date_utils.sh"
+    export COACH_SOURCE_PREFIX="source '$COACH_CONFIG_LIB'; source '$COACH_COMMON_LIB'; source '$COACH_DATE_LIB'; source '$COACH_LIB'"
 }
 
 teardown() {
@@ -56,7 +60,7 @@ $ts1|/tmp/proj-a
 $ts2|/tmp/proj-b
 EOF
 
-    run bash -c "source '$COACH_LIB'; coach_collect_tactical_metrics '2026-02-10' '7' \$'  • dotfiles\n  • AI-Staff-HQ' \$'  • commit-a'"
+    run bash -c "$COACH_SOURCE_PREFIX; coach_collect_tactical_metrics '2026-02-10' '7' \$'  • dotfiles\n  • AI-Staff-HQ' \$'  • commit-a'"
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"open_tasks=2"* ]]
@@ -79,7 +83,7 @@ EOF
 malformed usage line
 EOF
 
-    run bash -c "source '$COACH_LIB'; coach_collect_data_quality_flags"
+    run bash -c "$COACH_SOURCE_PREFIX; coach_collect_data_quality_flags"
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"todo_done_malformed=1"* ]]
@@ -118,7 +122,7 @@ EOF
 [2026-02-10 10:00:00] DISPATCHER: strategy, MODEL: x, PROMPT_TOKENS: 1, COMPLETION_TOKENS: 1, EST_COST: $0
 EOF
 
-    run bash -c "source '$COACH_LIB'; coach_build_behavior_digest '2026-02-10' '7' '30'"
+    run bash -c "$COACH_SOURCE_PREFIX; coach_build_behavior_digest '2026-02-10' '7' '30'"
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"Working signals:"* ]]
@@ -130,7 +134,7 @@ EOF
 }
 
 @test "coach_get_mode_for_date persists and reuses daily mode" {
-    run bash -c "source '$COACH_LIB'; AI_COACH_MODE_DEFAULT=LOCKED; first=\$(coach_get_mode_for_date '2026-02-10' false); second=\$(coach_get_mode_for_date '2026-02-10' false); echo \"\$first|\$second\""
+    run bash -c "$COACH_SOURCE_PREFIX; AI_COACH_MODE_DEFAULT=LOCKED; first=\$(coach_get_mode_for_date '2026-02-10' false); second=\$(coach_get_mode_for_date '2026-02-10' false); echo \"\$first|\$second\""
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"LOCKED|LOCKED"* ]]
@@ -139,7 +143,7 @@ EOF
 }
 
 @test "coach_append_log escapes multiline and pipe content" {
-    run bash -c "source '$COACH_LIB'; coach_append_log 'STARTDAY' '2026-02-10' 'LOCKED' 'focus|one' \$'m1\nm2|pipe' \$'line1\nline2|pipe'; tail -n 1 '$DATA_DIR/coach_log.txt'"
+    run bash -c "$COACH_SOURCE_PREFIX; coach_append_log 'STARTDAY' '2026-02-10' 'LOCKED' 'focus|one' \$'m1\nm2|pipe' \$'line1\nline2|pipe'; tail -n 1 '$DATA_DIR/coach_log.txt'"
 
     [ "$status" -eq 0 ]
     line="$(printf '%s' "$output" | tail -n 1)"
@@ -150,14 +154,14 @@ EOF
 }
 
 @test "_coach_extract_first_task skips headers and returns first real task" {
-    run bash -c "source '$COACH_LIB'; _coach_extract_first_task \$'--- Top 3 Tasks ---\n1    2026-02-08   Vectorize the logo images for Aaron\n2    2026-02-08   Prepare posting times'"
+    run bash -c "$COACH_SOURCE_PREFIX; _coach_extract_first_task \$'--- Top 3 Tasks ---\n1    2026-02-08   Vectorize the logo images for Aaron\n2    2026-02-08   Prepare posting times'"
 
     [ "$status" -eq 0 ]
     [ "$output" = "Vectorize the logo images for Aaron" ]
 }
 
 @test "_coach_extract_first_task handles pipe-delimited todo lines" {
-    run bash -c "source '$COACH_LIB'; _coach_extract_first_task \$'2026-02-08|Vectorize logo\n2026-02-09|Set LinkedIn schedule'"
+    run bash -c "$COACH_SOURCE_PREFIX; _coach_extract_first_task \$'2026-02-08|Vectorize logo\n2026-02-09|Set LinkedIn schedule'"
 
     [ "$status" -eq 0 ]
     [ "$output" = "Vectorize logo" ]
@@ -184,14 +188,14 @@ EOF
     chmod +x "$mock_bin/dhp-strategy.sh"
     echo "0" > "$TEST_ROOT/counter.txt"
 
-    run env COUNTER_FILE="$TEST_ROOT/counter.txt" PATH="$mock_bin:$PATH" bash -c "source '$COACH_LIB'; AI_COACH_RETRY_ON_TIMEOUT=true; coach_strategy_with_retry 'prompt' '0.25' '1' '4'"
+    run env COUNTER_FILE="$TEST_ROOT/counter.txt" PATH="$mock_bin:$PATH" bash -c "$COACH_SOURCE_PREFIX; AI_COACH_RETRY_ON_TIMEOUT=true; coach_strategy_with_retry 'prompt' '0.25' '1' '4'"
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"retry success"* ]]
 }
 
 @test "coach_startday_response_is_grounded rejects ungrounded scope expansion" {
-    run bash -c "source '$COACH_LIB'; coach_startday_response_is_grounded \$'North Star:\n- Test\nDo Next (ordered 1-3):\n1. Start Vectorize logo task.\n2. Create a folder named Coach and scaffold an endpoint.\n3. Verify endpoint output.\nOperating insight (working + drift risk):\n- note' 'Set up AI coach for the AI Briefings' \$'--- Top 3 Tasks ---\n1    2026-02-08   Vectorize the logo images for Aaron\n2    2026-02-08   Prepare and set posting times the Linkedin Article Series on content systems.'"
+    run bash -c "$COACH_SOURCE_PREFIX; coach_startday_response_is_grounded \$'North Star:\n- Test\nDo Next (ordered 1-3):\n1. Start Vectorize logo task.\n2. Create a folder named Coach and scaffold an endpoint.\n3. Verify endpoint output.\nOperating insight (working + drift risk):\n- note' 'Set up AI coach for the AI Briefings' \$'--- Top 3 Tasks ---\n1    2026-02-08   Vectorize the logo images for Aaron\n2    2026-02-08   Prepare and set posting times the Linkedin Article Series on content systems.'"
 
     [ "$status" -ne 0 ]
 }

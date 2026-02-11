@@ -6,9 +6,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 require_lib "date_utils.sh"
+require_lib "config.sh"
 
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-JOURNAL_FILE="${JOURNAL_FILE:-$DATA_DIR/journal.txt}"
+JOURNAL_FILE="${JOURNAL_FILE:?JOURNAL_FILE is not set by config.sh}"
 
 # Ensure journal file exists
 touch "$JOURNAL_FILE"

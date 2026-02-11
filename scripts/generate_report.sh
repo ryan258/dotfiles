@@ -6,23 +6,28 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+COMMON_LIB="$SCRIPT_DIR/lib/common.sh"
+CONFIG_LIB="$SCRIPT_DIR/lib/config.sh"
+
+if [ -f "$COMMON_LIB" ]; then
     # shellcheck disable=SC1090
-    source "$SCRIPT_DIR/lib/common.sh"
+    source "$COMMON_LIB"
+else
+    echo "Error: common utilities not found at $COMMON_LIB" >&2
+    exit 1
 fi
 
-if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
+if [ -f "$CONFIG_LIB" ]; then
     # shellcheck disable=SC1090
-    source "$SCRIPT_DIR/lib/config.sh"
+    source "$CONFIG_LIB"
+else
+    echo "Error: configuration library not found at $CONFIG_LIB" >&2
+    exit 1
 fi
 
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-REPORTS_DIR="${REPORTS_DIR:-$DATA_DIR/reports}"
 REPORTS_DIR=$(validate_path "$REPORTS_DIR") || exit 1
 mkdir -p "$REPORTS_DIR"
 
-TIME_LOG="${TIME_LOG:-$DATA_DIR/time_tracking.txt}"
-SPOON_LOG="${SPOON_LOG:-$DATA_DIR/spoons.txt}"
 CORRELATE_CMD="$SCRIPT_DIR/correlate.sh"
 
 REPORT_TYPE_RAW="${1:-daily}"
@@ -42,8 +47,8 @@ REPORT_FILE=$(validate_path "$REPORT_FILE") || exit 1
 TIME_LIB="$SCRIPT_DIR/lib/time_tracking.sh"
 DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
 
-if [ -f "$TIME_LIB" ]; then source "$TIME_LIB"; fi
 if [ -f "$DATE_UTILS" ]; then source "$DATE_UTILS"; fi
+if [ -f "$TIME_LIB" ]; then source "$TIME_LIB"; fi
 
 # Helper to aggregate time duration for a specific date
 aggregate_daily_time() {

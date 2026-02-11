@@ -23,6 +23,9 @@ Before diving into details, here are the non-negotiable rules:
 4. **User input:** ALWAYS sanitize with `sanitize_input()` before use
 5. **Paths:** ALWAYS validate with `validate_path()` - never trust user paths
 6. **Aliases:** `copy` = clipboard (pbcopy), `aicopy` = AI copywriter dispatcher
+7. **Config loading:** Only `scripts/lib/config.sh` may source `.env` (except `scripts/validate_env.sh`)
+8. **DATA_DIR ownership:** Never redefine `DATA_DIR` with per-script home-path fallbacks after sourcing `config.sh`
+9. **Library dependencies:** `scripts/lib/*.sh` must not self-source sibling libs (compat exception: `common.sh` bootstrap only); callers source dependencies explicitly
 
 ---
 
@@ -118,6 +121,7 @@ my_function() {
 - Double-source guard at top
 - Use `return`, never `exit` (exit kills parent shell)
 - Document that file must be sourced
+- Do not source sibling libraries from inside a library; declare dependency expectations in comments
 
 ---
 

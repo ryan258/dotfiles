@@ -15,11 +15,13 @@ fi
 if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
     # shellcheck disable=SC1090
     source "$SCRIPT_DIR/lib/config.sh"
+else
+    echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh" >&2
+    exit 1
 fi
 
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-CREDS_FILE="${GCAL_CREDS_FILE:-$DATA_DIR/google_creds.json}"
-TOKEN_FILE="${GCAL_TOKEN_FILE:-$DATA_DIR/google_token_cache.json}"
+CREDS_FILE="${GCAL_CREDS_FILE:?GCAL_CREDS_FILE is not set by config.sh}"
+TOKEN_FILE="${GCAL_TOKEN_FILE:?GCAL_TOKEN_FILE is not set by config.sh}"
 mkdir -p "$DATA_DIR"
 
 sanitize_line() {

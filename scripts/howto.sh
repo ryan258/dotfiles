@@ -8,9 +8,15 @@ if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
   # shellcheck disable=SC1090
   source "$SCRIPT_DIR/lib/common.sh"
 fi
+if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$SCRIPT_DIR/lib/config.sh"
+else
+  echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh" >&2
+  exit 1
+fi
 
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-HOWTO_DIR="${HOWTO_DIR:-$DATA_DIR/how-to}"
+HOWTO_DIR="${HOWTO_DIR:?HOWTO_DIR is not set by config.sh}"
 HOWTO_DIR=$(validate_path "$HOWTO_DIR") || exit 1
 mkdir -p "$HOWTO_DIR"
 

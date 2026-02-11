@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMMON_LIB="$SCRIPT_DIR/lib/common.sh"
 DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
+CONFIG_LIB="$SCRIPT_DIR/lib/config.sh"
 
 if [ -f "$COMMON_LIB" ]; then
     # shellcheck disable=SC1090
@@ -21,17 +22,22 @@ else
     exit 1
 fi
 
-# --- Configuration ---
-if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
-    # shellcheck disable=SC1090
-    source "$SCRIPT_DIR/lib/config.sh"
-else
-    if [ -f "$SCRIPT_DIR/../.env" ]; then
-        set -a
-        # shellcheck disable=SC1090
-        source "$SCRIPT_DIR/../.env"
-        set +a
+# Initialize early so EXIT trap remains safe even if later setup fails.
+GOODEVENING_ISSUES_LOG=""
+cleanup_goodevening_temp_files() {
+    if [ -n "${GOODEVENING_ISSUES_LOG:-}" ] && [ -f "$GOODEVENING_ISSUES_LOG" ]; then
+        rm -f "$GOODEVENING_ISSUES_LOG"
     fi
+}
+trap cleanup_goodevening_temp_files EXIT
+
+# --- Configuration ---
+if [ -f "$CONFIG_LIB" ]; then
+    # shellcheck disable=SC1090
+    source "$CONFIG_LIB"
+else
+    echo "Error: configuration library not found at $CONFIG_LIB" >&2
+    exit 1
 fi
 
 # Source GitHub operations (for recent pushes + commit recap)
@@ -44,13 +50,12 @@ if [ -f "$SCRIPT_DIR/lib/coach_ops.sh" ]; then
     source "$SCRIPT_DIR/lib/coach_ops.sh"
 fi
 
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
 mkdir -p "$DATA_DIR"
 
-SYSTEM_LOG_FILE="${SYSTEM_LOG:-$DATA_DIR/system.log}"
-TODO_DONE_FILE="${DONE_FILE:-${TODO_DONE_FILE:-$DATA_DIR/todo_done.txt}}"
-JOURNAL_FILE="${JOURNAL_FILE:-$DATA_DIR/journal.txt}"
-FOCUS_FILE="${FOCUS_FILE:-$DATA_DIR/daily_focus.txt}"
+SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:?SYSTEM_LOG_FILE is not set by config.sh}"
+TODO_DONE_FILE="${DONE_FILE:?DONE_FILE is not set by config.sh}"
+JOURNAL_FILE="${JOURNAL_FILE:?JOURNAL_FILE is not set by config.sh}"
+FOCUS_FILE="${FOCUS_FILE:?FOCUS_FILE is not set by config.sh}"
 PROJECTS_DIR="${PROJECTS_DIR:-$HOME/Projects}"
 
 BLOG_SCRIPT="$SCRIPT_DIR/blog.sh"
@@ -255,7 +260,7 @@ if [ -d "$PROJECTS_DIR" ]; then
     found_issues=false
 
     # Create a temp file to track issues found in subshells
-    ISSUES_LOG=$(mktemp)
+    GOODEVENING_ISSUES_LOG=$(create_temp_file "goodevening-issues")
     
     while IFS= read -r gitdir; do
         proj_dir=$(dirname "$gitdir")
@@ -325,15 +330,16 @@ if [ -d "$PROJECTS_DIR" ]; then
             fi
             
             if [ "$issue_found" = true ]; then
-                echo "issue" >> "$ISSUES_LOG"
+                echo "issue" >> "$GOODEVENING_ISSUES_LOG"
             fi
         )
     done < <(find "$PROJECTS_DIR" -maxdepth 2 -type d -name ".git")
 
-    if [ -s "$ISSUES_LOG" ]; then
+    if [ -s "$GOODEVENING_ISSUES_LOG" ]; then
         found_issues=true
     fi
-    rm "$ISSUES_LOG"
+    rm -f "$GOODEVENING_ISSUES_LOG"
+    GOODEVENING_ISSUES_LOG=""
 
     if [ "$found_issues" = false ]; then
         echo "  ✅ All projects clean (no uncommitted changes, stale branches, or unpushed commits)"

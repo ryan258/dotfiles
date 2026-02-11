@@ -8,10 +8,16 @@ if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
   # shellcheck disable=SC1090
   source "$SCRIPT_DIR/lib/common.sh"
 fi
+if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$SCRIPT_DIR/lib/config.sh"
+else
+  echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh" >&2
+  exit 1
+fi
 
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-FOCUS_FILE="${FOCUS_FILE:-$DATA_DIR/daily_focus.txt}"
-HISTORY_FILE="${FOCUS_HISTORY_FILE:-$DATA_DIR/focus_history.log}"
+FOCUS_FILE="${FOCUS_FILE:?FOCUS_FILE is not set by config.sh}"
+HISTORY_FILE="${FOCUS_HISTORY_FILE:?FOCUS_HISTORY_FILE is not set by config.sh}"
 
 sanitize_focus_text() {
   local value

@@ -8,6 +8,11 @@ if [[ -n "${_HEALTH_OPS_LOADED:-}" ]]; then
 fi
 readonly _HEALTH_OPS_LOADED=true
 
+if [[ -z "${DATA_DIR:-}" ]]; then
+    echo "Error: DATA_DIR is not set. Source scripts/lib/config.sh before health_ops.sh." >&2
+    return 1
+fi
+
 # Parse timestamp helper
 _health_parse_timestamp() {
     local raw="$1"
@@ -29,8 +34,12 @@ _health_parse_timestamp() {
 # Display health summary (Appointments, Energy, Symptoms)
 # Usage: show_health_summary
 show_health_summary() {
-    local data_dir="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-    local health_file="${HEALTH_FILE:-$data_dir/health.txt}"
+    local health_file="${HEALTH_FILE:-}"
+
+    if [[ -z "$health_file" ]]; then
+        echo "  (health file path is not configured; source config.sh)"
+        return 0
+    fi
 
     if [ ! -f "$health_file" ] || [ ! -s "$health_file" ]; then
         echo "  (no data tracked - try: health add, health energy, health symptom)"

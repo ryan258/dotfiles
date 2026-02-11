@@ -8,20 +8,28 @@ if [[ -n "${_TIME_TRACKING_LOADED:-}" ]]; then
 fi
 readonly _TIME_TRACKING_LOADED=true
 
-# Default data directory if not set
-LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$LIB_DIR/date_utils.sh"
-
-if [[ -f "$LIB_DIR/common.sh" ]]; then
-    source "$LIB_DIR/common.sh"
+# Dependencies:
+# - DATA_DIR/TIME_LOG from config.sh.
+# - sanitize_input from common.sh.
+# - timestamp_to_epoch from date_utils.sh.
+if [[ -z "${DATA_DIR:-}" ]]; then
+    echo "Error: DATA_DIR is not set. Source scripts/lib/config.sh before time_tracking.sh." >&2
+    return 1
+fi
+if ! command -v sanitize_input >/dev/null 2>&1; then
+    echo "Error: sanitize_input is not available. Source scripts/lib/common.sh before time_tracking.sh." >&2
+    return 1
+fi
+if ! command -v timestamp_to_epoch >/dev/null 2>&1; then
+    echo "Error: timestamp_to_epoch is not available. Source scripts/lib/date_utils.sh before time_tracking.sh." >&2
+    return 1
 fi
 
-if [[ -f "$LIB_DIR/config.sh" ]]; then
-    source "$LIB_DIR/config.sh"
+TIME_LOG="${TIME_LOG:-}"
+if [[ -z "$TIME_LOG" ]]; then
+    echo "Error: TIME_LOG is not set. Source scripts/lib/config.sh before time_tracking.sh." >&2
+    return 1
 fi
-
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-TIME_LOG="${TIME_LOG:-$DATA_DIR/time_tracking.txt}"
 
 # Ensure data directory exists
 mkdir -p "$DATA_DIR"

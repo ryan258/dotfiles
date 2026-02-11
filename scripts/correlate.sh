@@ -9,11 +9,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Source common utilities
 source "$SCRIPT_DIR/lib/common.sh"
+require_lib "config.sh"
 
 # Source the correlation engine library
 source "$SCRIPT_DIR/lib/correlation_engine.sh"
-
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
 
 # Resolve to an absolute path with best-effort portability (macOS/Linux)
 resolve_path() {

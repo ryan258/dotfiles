@@ -17,18 +17,20 @@ if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
 elif [ -f "$DOTFILES_DIR/scripts/lib/config.sh" ]; then
     # shellcheck disable=SC1090
     source "$DOTFILES_DIR/scripts/lib/config.sh"
+else
+    echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh or $DOTFILES_DIR/scripts/lib/config.sh" >&2
+    exit 1
 fi
 
 # Define locations for the GitHub Personal Access Token (PAT).
 # TOKEN_FILE: The primary expected location for the token.
 # TOKEN_FALLBACK: A secondary/backup location (often in synced dotfiles data).
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-TOKEN_FILE="${GITHUB_TOKEN_FILE:-$HOME/.github_token}"
-TOKEN_FALLBACK="${GITHUB_TOKEN_FALLBACK:-$DATA_DIR/github_token}"
+TOKEN_FILE="$GITHUB_TOKEN_FILE"
+TOKEN_FALLBACK="$GITHUB_TOKEN_FALLBACK"
 
 # Setup local caching directory.
 # Caching prevents API rate limits and speeds up execution when offline or on slow networks.
-CACHE_DIR="${GITHUB_CACHE_DIR:-$DATA_DIR/cache/github}"
+CACHE_DIR="$GITHUB_CACHE_DIR"
 CACHE_AVAILABLE=true
 if ! mkdir -p "$CACHE_DIR" 2>/dev/null; then
     CACHE_AVAILABLE=false

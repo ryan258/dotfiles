@@ -5,7 +5,8 @@ load "$BATS_TEST_DIRNAME/helpers/assertions.sh"
 
 setup() {
     setup_test_environment
-    # Source the library
+    source "$BATS_TEST_DIRNAME/../scripts/lib/config.sh"
+    source "$BATS_TEST_DIRNAME/../scripts/lib/common.sh"
     source "$BATS_TEST_DIRNAME/../scripts/lib/context_capture.sh"
 }
 
@@ -35,7 +36,7 @@ teardown() {
     [[ "$output" =~ "list-me" ]]
 }
 
-@test "restore_context prints cd command" {
+@test "restore_context prints plain directory path" {
     cd "$TEST_DIR"
     capture_current_context "restore-me"
     
@@ -43,7 +44,7 @@ teardown() {
     cd /tmp
     
     run restore_context "restore-me"
-    [[ "$output" =~ "cd \"$TEST_DIR\"" ]]
+    [ "$output" = "$TEST_DIR" ]
 }
 
 @test "restore_context fails on invalid name" {

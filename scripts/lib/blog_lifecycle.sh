@@ -8,17 +8,23 @@ fi
 readonly _BLOG_LIFECYCLE_LOADED=true
 # Lifecycle management tools (Idea Sync, Versioning, Metrics, Social) for blog.sh
 
-BLOG_LIFECYCLE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ -f "$BLOG_LIFECYCLE_DIR/common.sh" ]]; then
-    source "$BLOG_LIFECYCLE_DIR/common.sh"
+# Dependencies:
+# - BLOG_DIR/POSTS_DIR/JOURNAL_FILE/DATA_DIR from blog.sh + config.sh.
+# - sanitize_input from common.sh.
+if [[ -z "${DATA_DIR:-}" || -z "${BLOG_DIR:-}" ]]; then
+    echo "Error: DATA_DIR/BLOG_DIR not set. Source config.sh and initialize blog paths before blog_lifecycle.sh." >&2
+    return 1
+fi
+if ! command -v sanitize_input >/dev/null 2>&1; then
+    echo "Error: sanitize_input is not available. Source scripts/lib/common.sh before blog_lifecycle.sh." >&2
+    return 1
 fi
 
-if [[ -f "$BLOG_LIFECYCLE_DIR/config.sh" ]]; then
-    source "$BLOG_LIFECYCLE_DIR/config.sh"
+JOURNAL_FILE="${JOURNAL_FILE:-}"
+if [[ -z "$JOURNAL_FILE" ]]; then
+    echo "Error: JOURNAL_FILE is not set. Source scripts/lib/config.sh before blog_lifecycle.sh." >&2
+    return 1
 fi
-
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-JOURNAL_FILE="${JOURNAL_FILE:-$DATA_DIR/journal.txt}"
 
 # --- Subcommand: ideas ---
 function blog_ideas() {

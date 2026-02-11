@@ -34,11 +34,24 @@ else
     echo "Warning: common.sh not found in $SCRIPT_DIR/lib or $SCRIPT_DIR/scripts/lib" >&2
 fi
 
+if [[ -f "$SCRIPT_DIR/lib/config.sh" ]]; then
+    source "$SCRIPT_DIR/lib/config.sh"
+elif [[ -f "$SCRIPT_DIR/scripts/lib/config.sh" ]]; then
+    source "$SCRIPT_DIR/scripts/lib/config.sh"
+else
+    echo "Error: config.sh not found in $SCRIPT_DIR/lib or $SCRIPT_DIR/scripts/lib" >&2
+    g_exit 1
+fi
+
+if [[ -z "${DATA_DIR:-}" ]]; then
+    echo "Error: DATA_DIR is not set. Source config.sh before g.sh." >&2
+    g_exit 1
+fi
+
 # --- Configuration ---
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-BOOKMARKS_FILE="${BOOKMARKS_FILE:-${DIR_BOOKMARKS_FILE:-$DATA_DIR/dir_bookmarks}}"
-HISTORY_FILE="${HISTORY_FILE:-${DIR_HISTORY_FILE:-$DATA_DIR/dir_history}}"
-USAGE_LOG="${USAGE_LOG:-${DIR_USAGE_LOG:-$DATA_DIR/dir_usage.log}}"
+BOOKMARKS_FILE="${BOOKMARKS_FILE:-$DIR_BOOKMARKS_FILE}"
+HISTORY_FILE="${HISTORY_FILE:-$DIR_HISTORY_FILE}"
+USAGE_LOG="${USAGE_LOG:-$DIR_USAGE_LOG}"
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
 APP_LAUNCHER="${APP_LAUNCHER:-$DOTFILES_DIR/scripts/app_launcher.sh}"
 

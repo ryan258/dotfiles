@@ -8,8 +8,12 @@
 
 set -euo pipefail
 
-# Source the shared library
-source "$(dirname "${BASH_SOURCE[0]}")/lib/time_tracking.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+source "$SCRIPT_DIR/lib/common.sh"
+source "$SCRIPT_DIR/lib/config.sh"
+source "$SCRIPT_DIR/lib/date_utils.sh"
+source "$SCRIPT_DIR/lib/time_tracking.sh"
 
 show_help() {
     echo "Usage: $(basename "$0") {start|stop|status|report}"

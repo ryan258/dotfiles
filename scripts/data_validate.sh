@@ -5,7 +5,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 require_lib "config.sh"
 
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
 AUTO_FIX=false
 FORMAT_CHECK=false
 

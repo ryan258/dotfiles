@@ -28,6 +28,7 @@ To prevent drift and contradictions:
 - `docs/ai-quick-reference.md`
 - `scripts/README.md`
 - `scripts/README_aliases.md`
+- `phases.md`
 
 3. Update workflow when behavior changes:
 - First update `CLAUDE.md` contract language (if behavior/interface changed).
@@ -160,6 +161,21 @@ else
     exit 1
 fi
 ```
+
+### Config and Environment Centralization
+
+- Only `scripts/lib/config.sh` may source `.env`.
+- Exception: `scripts/validate_env.sh` may read `.env` directly for validation checks.
+- After sourcing `config.sh`, do not redefine `DATA_DIR` (or other config vars) with script-local `${VAR:-...}` fallbacks to hardcoded home paths.
+- Scripts should fail fast if `config.sh` cannot be sourced; do not silently bypass configuration loading.
+
+### Library Dependency Contract
+
+- Libraries in `scripts/lib/` must not self-source sibling libraries.
+- Compatibility exception: `common.sh` may bootstrap `file_ops.sh`/`config.sh` while migration is in progress; do not add new self-sourcing patterns elsewhere.
+- Each library should declare required dependencies in a short header comment (e.g., `config.sh`, `common.sh`, `date_utils.sh`).
+- Callers (executed scripts/tests) are responsible for sourcing dependencies in the correct order before sourcing dependent libraries.
+- Dependency failures should be explicit and immediate (clear error + non-zero return), not silently auto-healed by re-sourcing.
 
 ### Double-Source Prevention
 

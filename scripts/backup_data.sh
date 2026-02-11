@@ -16,6 +16,9 @@ fi
 if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
     # shellcheck disable=SC1090
     source "$SCRIPT_DIR/lib/config.sh"
+else
+    echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh" >&2
+    exit 1
 fi
 
 # Validate dependencies
@@ -26,7 +29,7 @@ fi
 # Configuration
 BACKUP_DIR_DEFAULT="$HOME/Backups/dotfiles_data"
 BACKUP_DIR="${DOTFILES_BACKUP_DIR:-$BACKUP_DIR_DEFAULT}"
-SOURCE_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
+SOURCE_DIR="$DATA_DIR"
 GDRIVE_REMOTE="gdrive"
 GDRIVE_FOLDER="Backups/dotfiles_data"
 

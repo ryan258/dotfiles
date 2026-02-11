@@ -7,13 +7,16 @@ if [[ -n "${_INSIGHT_SCORE_LOADED:-}" ]]; then
 fi
 readonly _INSIGHT_SCORE_LOADED=true
 
-INSIGHT_SCORE_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-if [[ -f "$INSIGHT_SCORE_LIB_DIR/common.sh" ]]; then
-    source "$INSIGHT_SCORE_LIB_DIR/common.sh"
+# Dependencies:
+# - insight_store.sh sourced first by caller.
+# - common.sh sourced by caller for shared helpers.
+if ! command -v insight_get_hypothesis >/dev/null 2>&1; then
+    echo "Error: insight_get_hypothesis is not available. Source scripts/lib/insight_store.sh before insight_score.sh." >&2
+    return 1
 fi
-if [[ -f "$INSIGHT_SCORE_LIB_DIR/insight_store.sh" ]]; then
-    source "$INSIGHT_SCORE_LIB_DIR/insight_store.sh"
+if [[ -z "${INSIGHT_TESTS_FILE:-}" || -z "${INSIGHT_EVIDENCE_FILE:-}" ]]; then
+    echo "Error: Insight data file variables are not set. Source scripts/lib/config.sh before insight_score.sh." >&2
+    return 1
 fi
 
 # Validate confidence value (0.0 to 1.0)

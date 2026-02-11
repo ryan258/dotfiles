@@ -6,9 +6,14 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CONFIG_LIB="$DOTFILES_DIR/scripts/lib/config.sh"
 
-if [ -f "$DOTFILES_DIR/.env" ]; then
-    source "$DOTFILES_DIR/.env"
+if [ -f "$CONFIG_LIB" ]; then
+    # shellcheck disable=SC1090
+    source "$CONFIG_LIB"
+else
+    echo "Error: configuration library not found at $CONFIG_LIB" >&2
+    exit 1
 fi
 
 # Dependency check
@@ -18,7 +23,7 @@ if ! command -v curl &> /dev/null || ! command -v jq &> /dev/null; then
 fi
 
 # API key validation
-if [ -z "$OPENROUTER_API_KEY" ]; then
+if [ -z "${OPENROUTER_API_KEY:-}" ]; then
     echo "Error: OPENROUTER_API_KEY not set in .env" >&2
     exit 1
 fi

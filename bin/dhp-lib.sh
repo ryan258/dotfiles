@@ -19,7 +19,10 @@ if [[ -f "$DOTFILES_DIR/scripts/lib/config.sh" ]]; then
 fi
 
 # --- Configuration ---
-DISPATCHER_USAGE_LOG="${DISPATCHER_USAGE_LOG:-${DATA_DIR:-$HOME/.config/dotfiles-data}/dispatcher_usage.log}"
+if [[ -z "${DATA_DIR:-}" ]]; then
+    echo "Error: DATA_DIR is not set. Source scripts/lib/config.sh before dhp-lib.sh." >&2
+    return 1
+fi
 
 # --- Private Helper Functions ---
 

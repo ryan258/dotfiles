@@ -11,10 +11,12 @@ fi
 if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
     # shellcheck disable=SC1090
     source "$SCRIPT_DIR/lib/config.sh"
+else
+    echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh" >&2
+    exit 1
 fi
 
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-BREAKS_LOG="${BREAKS_LOG:-$DATA_DIR/health_breaks.log}"
+BREAKS_LOG="${BREAKS_LOG:?BREAKS_LOG is not set by config.sh}"
 mkdir -p "$DATA_DIR"
 
 MINUTES_RAW=${1:-15}

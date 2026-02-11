@@ -20,6 +20,7 @@ set -euo pipefail
 INSIGHT_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "$INSIGHT_SCRIPT_DIR/lib/common.sh"
+source "$INSIGHT_SCRIPT_DIR/lib/config.sh"
 source "$INSIGHT_SCRIPT_DIR/lib/insight_store.sh"
 source "$INSIGHT_SCRIPT_DIR/lib/insight_score.sh"
 

@@ -9,16 +9,21 @@ fi
 readonly _DHP_SHARED_LOADED=true
 
 # Function to set up the environment for DHP scripts
-# Sources .env, dhp-lib.sh, and dhp-utils.sh
+# Sources config.sh, dhp-lib.sh, and dhp-utils.sh
 dhp_setup_env() {
     local shared_dir
+    local config_lib
     shared_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$shared_dir/.." && pwd)}"
     AI_STAFF_DIR="$DOTFILES_DIR/ai-staff-hq"
 
-    # Source environment variables
-    if [ -f "$DOTFILES_DIR/.env" ]; then
-        source "$DOTFILES_DIR/.env"
+    config_lib="$DOTFILES_DIR/scripts/lib/config.sh"
+    if [ -f "$config_lib" ]; then
+        # shellcheck disable=SC1090
+        source "$config_lib"
+    else
+        echo "Error: configuration library not found at $config_lib" >&2
+        return 1
     fi
 
     # Check for API key

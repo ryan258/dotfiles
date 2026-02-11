@@ -4,6 +4,15 @@ set -euo pipefail
 # context.sh - Capture and restore working context snapshots
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG_LIB="$SCRIPT_DIR/lib/config.sh"
+
+if [ -f "$CONFIG_LIB" ]; then
+    # shellcheck disable=SC1090
+    source "$CONFIG_LIB"
+else
+    echo "Error: configuration library not found at $CONFIG_LIB" >&2
+    exit 1
+fi
 
 if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
     # shellcheck disable=SC1090
@@ -27,7 +36,7 @@ Commands:
   list             List saved contexts
   show <name>      Show summary (timestamp + directory) for a context
   path <name>      Print the directory for a context
-  restore <name>   Print restore instructions (cd + git state)
+  restore <name>   Show restore details (directory + git preview)
 EOF
 }
 
@@ -95,7 +104,13 @@ case "${1:-}" in
             exit 1
         fi
         name=$(sanitize_name "$2")
-        restore_context "$name"
+        restore_dir=$(restore_context "$name")
+        echo "Directory: $restore_dir"
+        ctx_dir="$CONTEXT_ROOT/$name"
+        if [ -f "$ctx_dir/git_state.txt" ]; then
+            echo "# Git state at capture:"
+            head -n 3 "$ctx_dir/git_state.txt"
+        fi
         echo ""
         echo "Tip: run 'cd \"\$(context.sh path $name)\"' to jump into that directory."
         ;;

@@ -5,10 +5,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 require_lib "date_utils.sh"
+require_lib "config.sh"
 
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-HEALTH_FILE="${HEALTH_FILE:-$DATA_DIR/health.txt}"
-CACHE_DIR="${CACHE_DIR:-$DATA_DIR/cache}"
+HEALTH_FILE="${HEALTH_FILE:?HEALTH_FILE is not set by config.sh}"
+CACHE_DIR="${HEALTH_CACHE_DIR:?HEALTH_CACHE_DIR is not set by config.sh}"
 mkdir -p "$CACHE_DIR"
 
 COMMITS_CACHE_FILE="$CACHE_DIR/health_commits.cache"
@@ -44,7 +44,7 @@ PY
 
 correlate_tasks() {
     local recent_data="$1"
-    local todo_done_file="${DONE_FILE:-$DATA_DIR/todo_done.txt}"
+    local todo_done_file="$DONE_FILE"
 
     if [ ! -f "$todo_done_file" ]; then
         echo "  - Avg tasks on low energy days: N/A (no todo data)"

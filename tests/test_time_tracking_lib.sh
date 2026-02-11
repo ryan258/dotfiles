@@ -5,7 +5,9 @@ load "$BATS_TEST_DIRNAME/helpers/assertions.sh"
 
 setup() {
     setup_test_environment
-    # Source the library
+    source "$BATS_TEST_DIRNAME/../scripts/lib/config.sh"
+    source "$BATS_TEST_DIRNAME/../scripts/lib/common.sh"
+    source "$BATS_TEST_DIRNAME/../scripts/lib/date_utils.sh"
     source "$BATS_TEST_DIRNAME/../scripts/lib/time_tracking.sh"
 }
 

@@ -4,6 +4,145 @@
 
 This document tracks all major implementations, improvements, and fixes to the Daily Context System.
 
+## Version 2.2.18 (February 11, 2026) - Strict Path Ownership (No Split-Brain DATA_DIR Fallbacks)
+
+**Status:** ✅ Production Ready
+
+### Config Path Ownership Hardening
+- Completed strict removal of script-level `:-$DATA_DIR/...` path fallbacks outside `scripts/lib/config.sh`.
+- Updated workflow scripts and libraries to consume config-owned path variables directly (or fail fast when missing), including:
+  - `scripts/startday.sh`
+  - `scripts/status.sh`
+  - `scripts/health.sh`
+  - `scripts/todo.sh`
+  - `scripts/journal.sh`
+  - `scripts/week_in_review.sh`
+  - `scripts/ai_suggest.sh`
+  - `scripts/g.sh`
+  - `scripts/gcal.sh`
+  - `scripts/generate_report.sh`
+  - `scripts/take_a_break.sh`
+  - `scripts/tidy_downloads.sh`
+  - `scripts/howto.sh`
+  - `scripts/blog.sh`
+  - `scripts/meds.sh`
+  - `scripts/lib/coach_ops.sh`
+  - `scripts/lib/common.sh`
+  - `scripts/lib/context_capture.sh`
+  - `scripts/lib/health_ops.sh`
+  - `scripts/lib/insight_store.sh`
+  - `scripts/lib/spoon_budget.sh`
+  - `scripts/lib/time_tracking.sh`
+  - `bin/dhp-lib.sh`
+
+### Central Config Surface Updates
+- Added canonical path settings to `scripts/lib/config.sh`:
+  - `HEALTH_CACHE_DIR`
+  - `CONTEXT_ROOT`
+  - `GITHUB_TOKEN_FILE`
+  - `GITHUB_TOKEN_FALLBACK`
+  - `GITHUB_CACHE_DIR`
+- Added matching optional GitHub path override examples to `.env.example`.
+
+### Validation
+- `bash -n` passed on all touched shell files.
+- Full suite passes:
+  - `bats tests/*.sh` -> `1..97` passing.
+
+---
+
+## Version 2.2.17 (February 11, 2026) - P1 Config Centralization + Library Dependency Cleanup
+
+**Status:** ✅ Production Ready
+
+### DATA_DIR / .env Centralization
+- Removed direct `.env` sourcing from active workflow/dispatcher entrypoints and routed config loading through `scripts/lib/config.sh`:
+  - `scripts/startday.sh`
+  - `scripts/goodevening.sh`
+  - `scripts/blog_recent_content.sh`
+  - `bin/dhp-shared.sh`
+  - `bin/dhp-project.sh`
+  - `bin/swipe.sh`
+- Kept direct `.env` access only in:
+  - `scripts/lib/config.sh` (canonical env loader)
+  - `scripts/validate_env.sh` (explicit validator exception)
+- Removed hardcoded home-path `DATA_DIR` fallbacks in core coaching/workflow paths touched this pass.
+- Completed remaining sweep and removed hardcoded `DATA_DIR` home-path fallbacks from the rest of `scripts/` and `bin/`.
+
+### Library Dependency Cleanup
+- Removed sibling-library self-sourcing from:
+  - `scripts/lib/coach_ops.sh`
+  - `scripts/lib/context_capture.sh`
+  - `scripts/lib/time_tracking.sh`
+  - `scripts/lib/spoon_budget.sh`
+  - `scripts/lib/insight_store.sh`
+  - `scripts/lib/insight_score.sh`
+  - `scripts/lib/blog_lifecycle.sh`
+- Added explicit dependency contracts and fail-fast checks in those libraries.
+- Updated callers/tests to source dependencies explicitly before dependent libraries:
+  - `scripts/time_tracker.sh`
+  - `scripts/spoon_manager.sh`
+  - `scripts/context.sh`
+  - `scripts/insight.sh`
+  - `tests/test_time_tracking_lib.sh`
+  - `tests/test_spoon_budget_lib.sh`
+  - `tests/test_context_capture_lib.sh`
+  - `tests/test_coach_ops.sh`
+
+### Reliability Follow-up
+- Fixed integration break introduced by stricter library dependency checks by loading `date_utils.sh` before `time_tracking.sh` in `scripts/generate_report.sh`.
+- Hardened `bin/dhp-lib.sh` to fail fast if `DATA_DIR` is unavailable instead of silently falling back to a hardcoded path.
+
+### Documentation and Governance
+- Updated canonical/operational guidance for central config ownership and dependency contracts:
+  - `CLAUDE.md`
+  - `AGENTS.md`
+  - `phases.md`
+
+### Validation
+- `bash -n` passed on touched scripts/libs/tests.
+- Full suite passes:
+  - `bats tests/*.sh` -> `1..97` passing.
+
+---
+
+## Version 2.2.16 (February 11, 2026) - Report P0 Security and Correctness
+
+**Status:** ✅ Production Ready
+
+### Security and Correctness Fixes
+- Removed eval-oriented restore output in `scripts/lib/context_capture.sh`:
+  - `restore_context` now returns only the restored directory path.
+  - added strict context-name validation with allowlist regex (`^[a-zA-Z0-9._-]+$`).
+  - added `restore_context_dir` helper for direct shell usage in sourced contexts.
+- Updated `scripts/context.sh restore` to consume safe path output and print structured restore details.
+- Hardened temp-file handling in `scripts/goodevening.sh`:
+  - replaced direct `mktemp` with `create_temp_file`.
+  - added `trap`-based cleanup to guarantee temp-file removal on early exits.
+- Hardened blog path and dependency handling in `scripts/blog.sh`:
+  - path validation now runs unconditionally for `BLOG_DIR`, `BLOG_DRAFTS_DIR`, and `BLOG_POSTS_DIR`.
+  - required blog libraries now fail fast with explicit missing-file errors.
+  - removed duplicate direct `.env` sourcing path in favor of central config loading.
+
+### Tests
+- Updated context tests to assert plain-path restore behavior:
+  - `tests/test_context_capture_lib.sh`
+  - `tests/test_context_cli.sh`
+- Full suite passes:
+  - `bats tests/*.sh` -> `1..97` passing.
+
+---
+
+## Version 2.2.15 (February 11, 2026) - Reserved Version Number
+
+**Status:** ℹ️ Reserved / intentionally skipped in root changelog sequence.
+
+### Notes
+- Version `2.2.15` was not published as a standalone root release entry.
+- Number is retained here to keep the `2.2.14 -> 2.2.16+` sequence explicit for reviewers.
+
+---
+
 ## Version 2.2.14 (February 11, 2026) - Coach Review Hardening + Docs Portability
 
 **Status:** ✅ Production Ready

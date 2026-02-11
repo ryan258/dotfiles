@@ -5,10 +5,22 @@ set -euo pipefail
 
 BLOG_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Core Utilities
+COMMON_LIB="$BLOG_SCRIPT_DIR/lib/common.sh"
+if [ -f "$COMMON_LIB" ]; then
+    # shellcheck disable=SC1090
+    source "$COMMON_LIB"
+else
+    echo "Error: common utilities not found at $COMMON_LIB" >&2
+    exit 1
+fi
+
 # --- Configuration ---
 if [ -f "$BLOG_SCRIPT_DIR/lib/config.sh" ]; then
     # shellcheck disable=SC1090
     source "$BLOG_SCRIPT_DIR/lib/config.sh"
+else
+    die "Configuration library not found at $BLOG_SCRIPT_DIR/lib/config.sh" "$EXIT_FILE_NOT_FOUND"
 fi
 
 # Date Utilities
@@ -21,8 +33,7 @@ else
     exit 1
 fi
 
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:-${SYSTEM_LOG:-$DATA_DIR/system.log}}"
+SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:-$SYSTEM_LOG}"
 
 # Shared Utilities
 DHP_UTILS="${DOTFILES_DIR:-$(cd "$BLOG_SCRIPT_DIR/.." && pwd)}/bin/dhp-utils.sh"
@@ -32,12 +43,6 @@ if [ -f "$DHP_UTILS" ]; then
 else
     echo "Error: Shared utility library dhp-utils.sh not found." >&2
     exit 1
-fi
-
-# Manual Override Check
-if [ -f "${DOTFILES_DIR:-$(cd "$BLOG_SCRIPT_DIR/.." && pwd)}/.env" ]; then
-    # shellcheck disable=SC1090
-    source "${DOTFILES_DIR:-$(cd "$BLOG_SCRIPT_DIR/.." && pwd)}/.env"
 fi
 
 # --- Validation ---
@@ -57,20 +62,22 @@ mkdir -p "$DRAFTS_DIR"
 mkdir -p "$POSTS_DIR"
 
 # Validate paths (Security check)
-if [[ "$BLOG_DIR" == "$HOME"* ]]; then
-    VALIDATED_BLOG_DIR=$(validate_path "$BLOG_DIR") || exit 1
-    BLOG_DIR="$VALIDATED_BLOG_DIR"
+if [[ "$BLOG_DIR" != /* ]]; then
+    die "BLOG_DIR must be an absolute path: $BLOG_DIR" "$EXIT_INVALID_ARGS"
+fi
+if [[ "$DRAFTS_DIR" != /* ]]; then
+    die "BLOG_DRAFTS_DIR must be an absolute path: $DRAFTS_DIR" "$EXIT_INVALID_ARGS"
+fi
+if [[ "$POSTS_DIR" != /* ]]; then
+    die "BLOG_POSTS_DIR must be an absolute path: $POSTS_DIR" "$EXIT_INVALID_ARGS"
 fi
 
-if [[ "$DRAFTS_DIR" == "$HOME"* ]]; then
-    VALIDATED_DRAFTS_DIR=$(validate_path "$DRAFTS_DIR") || exit 1
-    DRAFTS_DIR="$VALIDATED_DRAFTS_DIR"
-fi
-
-if [[ "$POSTS_DIR" == "$HOME"* ]]; then
-    VALIDATED_POSTS_DIR=$(validate_path "$POSTS_DIR") || exit 1
-    POSTS_DIR="$VALIDATED_POSTS_DIR"
-fi
+VALIDATED_BLOG_DIR=$(validate_safe_path "$BLOG_DIR" "/") || die "Invalid BLOG_DIR path: $BLOG_DIR" "$EXIT_INVALID_ARGS"
+VALIDATED_DRAFTS_DIR=$(validate_safe_path "$DRAFTS_DIR" "/") || die "Invalid BLOG_DRAFTS_DIR path: $DRAFTS_DIR" "$EXIT_INVALID_ARGS"
+VALIDATED_POSTS_DIR=$(validate_safe_path "$POSTS_DIR" "/") || die "Invalid BLOG_POSTS_DIR path: $POSTS_DIR" "$EXIT_INVALID_ARGS"
+BLOG_DIR="$VALIDATED_BLOG_DIR"
+DRAFTS_DIR="$VALIDATED_DRAFTS_DIR"
+POSTS_DIR="$VALIDATED_POSTS_DIR"
 
 if [ ! -d "$POSTS_DIR" ]; then
     echo "Error: Failed to create or access blog directory at $POSTS_DIR"
@@ -78,14 +85,12 @@ if [ ! -d "$POSTS_DIR" ]; then
 fi
 
 # --- Load Libraries ---
-# shellcheck disable=SC1090
-source "$BLOG_SCRIPT_DIR/lib/blog_common.sh"
-# shellcheck disable=SC1090
-source "$BLOG_SCRIPT_DIR/lib/blog_lifecycle.sh"
-# shellcheck disable=SC1090
-source "$BLOG_SCRIPT_DIR/lib/blog_gen.sh"
-# shellcheck disable=SC1090
-source "$BLOG_SCRIPT_DIR/lib/blog_ops.sh"
+for blog_lib in blog_common.sh blog_lifecycle.sh blog_gen.sh blog_ops.sh; do
+    blog_lib_path="$BLOG_SCRIPT_DIR/lib/$blog_lib"
+    require_file "$blog_lib_path" "blog library"
+    # shellcheck disable=SC1090
+    source "$blog_lib_path"
+done
 
 
 # --- Main Logic ---

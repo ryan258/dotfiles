@@ -38,6 +38,6 @@ teardown() {
     [ "$output" = "$TEST_DIR" ]
 
     run bash "$CONTEXT_SCRIPT" restore show-test
-    [[ "$output" == *"cd \"$TEST_DIR\""* ]]
+    [[ "$output" =~ "Directory: $TEST_DIR" ]]
     [[ "$output" =~ "Tip:" ]]
 }

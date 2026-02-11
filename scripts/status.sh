@@ -7,12 +7,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
     # shellcheck disable=SC1090
     source "$SCRIPT_DIR/lib/config.sh"
+else
+    echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh" >&2
+    exit 1
 fi
 
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-FOCUS_FILE="${FOCUS_FILE:-$DATA_DIR/daily_focus.txt}"
-JOURNAL_FILE="${JOURNAL_FILE:-$DATA_DIR/journal.txt}"
-TODO_FILE="${TODO_FILE:-$DATA_DIR/todo.txt}"
+FOCUS_FILE="${FOCUS_FILE:?FOCUS_FILE is not set by config.sh}"
+JOURNAL_FILE="${JOURNAL_FILE:?JOURNAL_FILE is not set by config.sh}"
+TODO_FILE="${TODO_FILE:?TODO_FILE is not set by config.sh}"
 PROJECTS_DIR="${PROJECTS_DIR:-$HOME/Projects}"
 
 # Source new libraries
@@ -39,7 +41,6 @@ CURRENT_DIR=$(pwd)
 echo "  • Current directory: $CURRENT_DIR"
 
 # --- Context Snapshots ---
-CONTEXT_ROOT="${CONTEXT_ROOT:-$DATA_DIR/contexts}"
 if [ -d "$CONTEXT_ROOT" ]; then
     CONTEXT_COUNT=$(find "$CONTEXT_ROOT" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')
     if [ "$CONTEXT_COUNT" -gt 0 ]; then

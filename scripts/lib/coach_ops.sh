@@ -8,18 +8,16 @@ if [[ -n "${_COACH_OPS_LOADED:-}" ]]; then
 fi
 readonly _COACH_OPS_LOADED=true
 
-COACH_OPS_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ -f "$COACH_OPS_LIB_DIR/common.sh" ]]; then
-    # shellcheck disable=SC1090
-    source "$COACH_OPS_LIB_DIR/common.sh"
+# Dependencies:
+# - DATA_DIR and coach-related config values from config.sh.
+# - optional helpers from common.sh/date_utils.sh (sanitize_input, validate_path, timestamp_to_epoch).
+if [[ -z "${DATA_DIR:-}" ]]; then
+    echo "Error: DATA_DIR is not set. Source scripts/lib/config.sh before coach_ops.sh." >&2
+    return 1
 fi
-if [[ -f "$COACH_OPS_LIB_DIR/config.sh" ]]; then
-    # shellcheck disable=SC1090
-    source "$COACH_OPS_LIB_DIR/config.sh"
-fi
-if [[ -f "$COACH_OPS_LIB_DIR/date_utils.sh" ]]; then
-    # shellcheck disable=SC1090
-    source "$COACH_OPS_LIB_DIR/date_utils.sh"
+if [[ -z "${TODO_FILE:-}" || -z "${DONE_FILE:-}" || -z "${JOURNAL_FILE:-}" || -z "${HEALTH_FILE:-}" || -z "${SPOON_LOG:-}" || -z "${DIR_USAGE_LOG:-}" || -z "${FOCUS_HISTORY_FILE:-}" || -z "${DISPATCHER_USAGE_LOG:-}" || -z "${COACH_MODE_FILE:-}" || -z "${COACH_LOG_FILE:-}" ]]; then
+    echo "Error: Coach paths are not fully configured. Source scripts/lib/config.sh before coach_ops.sh." >&2
+    return 1
 fi
 
 # Drift thresholds (fixed deterministic defaults)
@@ -178,13 +176,12 @@ coach_collect_tactical_metrics() {
     local days="${2:-7}"
     local pushes_context="${3:-}"
     local commits_context="${4:-}"
-    local data_dir="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-    local todo_file="${TODO_FILE:-$data_dir/todo.txt}"
-    local done_file="${DONE_FILE:-$data_dir/todo_done.txt}"
-    local journal_file="${JOURNAL_FILE:-$data_dir/journal.txt}"
-    local health_file="${HEALTH_FILE:-$data_dir/health.txt}"
-    local spoon_file="${SPOON_LOG:-$data_dir/spoons.txt}"
-    local dir_usage_file="${DIR_USAGE_LOG:-$data_dir/dir_usage.log}"
+    local todo_file="$TODO_FILE"
+    local done_file="$DONE_FILE"
+    local journal_file="$JOURNAL_FILE"
+    local health_file="$HEALTH_FILE"
+    local spoon_file="$SPOON_LOG"
+    local dir_usage_file="$DIR_USAGE_LOG"
 
     if [[ -z "$anchor_date" ]]; then
         anchor_date=$(date '+%Y-%m-%d')
@@ -314,12 +311,11 @@ coach_collect_tactical_metrics() {
 coach_collect_pattern_metrics() {
     local anchor_date="$1"
     local days="${2:-30}"
-    local data_dir="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-    local done_file="${DONE_FILE:-$data_dir/todo_done.txt}"
-    local journal_file="${JOURNAL_FILE:-$data_dir/journal.txt}"
-    local focus_history_file="${FOCUS_HISTORY_FILE:-$data_dir/focus_history.log}"
-    local dir_usage_file="${DIR_USAGE_LOG:-$data_dir/dir_usage.log}"
-    local dispatcher_log_file="${DISPATCHER_USAGE_LOG:-$data_dir/dispatcher_usage.log}"
+    local done_file="$DONE_FILE"
+    local journal_file="$JOURNAL_FILE"
+    local focus_history_file="$FOCUS_HISTORY_FILE"
+    local dir_usage_file="$DIR_USAGE_LOG"
+    local dispatcher_log_file="$DISPATCHER_USAGE_LOG"
 
     if [[ -z "$anchor_date" ]]; then
         anchor_date=$(date '+%Y-%m-%d')
@@ -430,9 +426,8 @@ coach_collect_pattern_metrics() {
 }
 
 coach_collect_data_quality_flags() {
-    local data_dir="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-    local done_file="${DONE_FILE:-$data_dir/todo_done.txt}"
-    local dir_usage_file="${DIR_USAGE_LOG:-$data_dir/dir_usage.log}"
+    local done_file="$DONE_FILE"
+    local dir_usage_file="$DIR_USAGE_LOG"
     local flags=()
 
     local done_malformed=0
@@ -1035,8 +1030,7 @@ EOF
 coach_get_mode_for_date() {
     local target_date="$1"
     local interactive="${2:-false}"
-    local data_dir="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-    local mode_file="${COACH_MODE_FILE:-$data_dir/coach_mode.txt}"
+    local mode_file="$COACH_MODE_FILE"
     local mode=""
     local source_tag=""
     local mode_dir=""
@@ -1101,8 +1095,7 @@ coach_append_log() {
         return 0
     fi
 
-    local data_dir="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-    local log_file="${COACH_LOG_FILE:-$data_dir/coach_log.txt}"
+    local log_file="$COACH_LOG_FILE"
     local ts
     local log_dir
     ts=$(date '+%Y-%m-%d %H:%M:%S')

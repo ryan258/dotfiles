@@ -21,11 +21,15 @@ DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$DHP_CONTEXT_DIR/.." && pwd)}"
 if [[ -f "$DOTFILES_DIR/scripts/lib/config.sh" ]]; then
     # shellcheck disable=SC1090
     source "$DOTFILES_DIR/scripts/lib/config.sh"
+else
+    echo "Error: configuration library not found at $DOTFILES_DIR/scripts/lib/config.sh" >&2
+    return 1
 fi
 
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-TODO_FILE="${TODO_FILE:-$DATA_DIR/todo.txt}"
-JOURNAL_FILE="${JOURNAL_FILE:-$DATA_DIR/journal.txt}"
+if [[ -z "${TODO_FILE:-}" || -z "${JOURNAL_FILE:-}" ]]; then
+    echo "Error: TODO_FILE and JOURNAL_FILE must be set by config.sh." >&2
+    return 1
+fi
 
 # redact_sensitive_info: Redacts common sensitive patterns from a string.
 # Usage: redact_sensitive_info <input_string>

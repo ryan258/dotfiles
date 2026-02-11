@@ -7,16 +7,31 @@ if [[ -n "${_INSIGHT_STORE_LOADED:-}" ]]; then
 fi
 readonly _INSIGHT_STORE_LOADED=true
 
-INSIGHT_STORE_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ -f "$INSIGHT_STORE_LIB_DIR/common.sh" ]]; then
-    source "$INSIGHT_STORE_LIB_DIR/common.sh"
+# Dependencies:
+# - DATA_DIR/INSIGHT_* paths from config.sh.
+# - sanitize_input from common.sh.
+# - atomic_replace_line from file_ops.sh (via common.sh in callers).
+if [[ -z "${DATA_DIR:-}" ]]; then
+    echo "Error: DATA_DIR is not set. Source scripts/lib/config.sh before insight_store.sh." >&2
+    return 1
+fi
+if ! command -v sanitize_input >/dev/null 2>&1; then
+    echo "Error: sanitize_input is not available. Source scripts/lib/common.sh before insight_store.sh." >&2
+    return 1
+fi
+if ! command -v atomic_replace_line >/dev/null 2>&1; then
+    echo "Error: atomic_replace_line is not available. Source scripts/lib/file_ops.sh/common.sh before insight_store.sh." >&2
+    return 1
 fi
 
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-INSIGHT_HYPOTHESES_FILE="${INSIGHT_HYPOTHESES_FILE:-$DATA_DIR/insight_hypotheses.txt}"
-INSIGHT_TESTS_FILE="${INSIGHT_TESTS_FILE:-$DATA_DIR/insight_tests.txt}"
-INSIGHT_EVIDENCE_FILE="${INSIGHT_EVIDENCE_FILE:-$DATA_DIR/insight_evidence.txt}"
-INSIGHT_VERDICTS_FILE="${INSIGHT_VERDICTS_FILE:-$DATA_DIR/insight_verdicts.txt}"
+INSIGHT_HYPOTHESES_FILE="${INSIGHT_HYPOTHESES_FILE:-}"
+INSIGHT_TESTS_FILE="${INSIGHT_TESTS_FILE:-}"
+INSIGHT_EVIDENCE_FILE="${INSIGHT_EVIDENCE_FILE:-}"
+INSIGHT_VERDICTS_FILE="${INSIGHT_VERDICTS_FILE:-}"
+if [[ -z "$INSIGHT_HYPOTHESES_FILE" || -z "$INSIGHT_TESTS_FILE" || -z "$INSIGHT_EVIDENCE_FILE" || -z "$INSIGHT_VERDICTS_FILE" ]]; then
+    echo "Error: Insight data file paths are not set. Source scripts/lib/config.sh before insight_store.sh." >&2
+    return 1
+fi
 
 # Normalize user text for pipe-delimited storage
 # Usage: normalize_insight_field "raw text"

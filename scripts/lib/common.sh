@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Common utilities shared across all scripts
 # Provides: validation, logging, data access, error handling, security
+# NOTE: This library still bootstraps config.sh as a compatibility bridge.
+# Callers should explicitly source config.sh before common.sh during migration
+# so removing this bootstrap later does not change behavior.
 
 if [ -n "${COMMON_SH_LOADED:-}" ]; then
     return 0
@@ -96,10 +99,13 @@ validate_file_exists() {
 # Usage: get_todo_line 5
 get_todo_line() {
     local task_num="$1"
-    local data_dir="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-    local todo_file="${TODO_FILE:-$data_dir/todo.txt}"
+    local todo_file="${TODO_FILE:-}"
 
     validate_numeric "$task_num" "task number" || return 1
+    if [[ -z "$todo_file" ]]; then
+        echo "Error: TODO_FILE is not set. Source scripts/lib/config.sh before calling get_todo_line." >&2
+        return 1
+    fi
     validate_file_exists "$todo_file" "todo file" || return 1
 
     sed -n "${task_num}p" "$todo_file"
@@ -128,8 +134,12 @@ get_todo_priority() {
 # Count total tasks
 # Usage: count_todos
 count_todos() {
-    local data_dir="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-    local todo_file="${TODO_FILE:-$data_dir/todo.txt}"
+    local todo_file="${TODO_FILE:-}"
+
+    if [[ -z "$todo_file" ]]; then
+        echo "0"
+        return
+    fi
 
     if [[ -f "$todo_file" ]]; then
         wc -l < "$todo_file" | tr -d ' '
@@ -142,7 +152,14 @@ count_todos() {
 # Logging
 #=============================================================================
 
-SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:-${SYSTEM_LOG:-$HOME/.config/dotfiles-data/system.log}}"
+if [[ -z "${SYSTEM_LOG_FILE:-}" ]]; then
+    if [[ -n "${SYSTEM_LOG:-}" ]]; then
+        SYSTEM_LOG_FILE="$SYSTEM_LOG"
+    else
+        echo "Error: SYSTEM_LOG_FILE is not set. Source scripts/lib/config.sh before common.sh." >&2
+        return 1
+    fi
+fi
 
 # Log a message with timestamp
 # Usage: log_message "info" "Script started"

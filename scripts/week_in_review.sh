@@ -16,6 +16,13 @@ if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
   # shellcheck disable=SC1090
   source "$SCRIPT_DIR/lib/common.sh"
 fi
+if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$SCRIPT_DIR/lib/config.sh"
+else
+  echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh" >&2
+  exit 1
+fi
 
 # gawk check removed 
 # if ! command -v gawk >/dev/null 2>&1; then
@@ -33,9 +40,8 @@ if [ "${1:-}" == "--file" ]; then
   OUTPUT_FILE="$REVIEWS_DIR/$YEAR-W$WEEK_NUM.md"
 fi
 
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-TODO_DONE_FILE="${DONE_FILE:-$DATA_DIR/todo_done.txt}"
-JOURNAL_FILE="${JOURNAL_FILE:-$DATA_DIR/journal.txt}"
+TODO_DONE_FILE="${DONE_FILE:?DONE_FILE is not set by config.sh}"
+JOURNAL_FILE="${JOURNAL_FILE:?JOURNAL_FILE is not set by config.sh}"
 LOOKBACK_DAYS="${REVIEW_LOOKBACK_DAYS:-7}"
 
 for required in "$TODO_DONE_FILE" "$JOURNAL_FILE"; do

@@ -8,14 +8,27 @@ if [[ -n "${_SPOON_BUDGET_LOADED:-}" ]]; then
 fi
 readonly _SPOON_BUDGET_LOADED=true
 
-# Source common utilities
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ -f "$SCRIPT_DIR/common.sh" ]]; then
-    source "$SCRIPT_DIR/common.sh"
+# Dependencies:
+# - DATA_DIR/SPOON_LOG/DEFAULT_DAILY_SPOONS from config.sh.
+# - validate_numeric and sanitize_input from common.sh.
+if [[ -z "${DATA_DIR:-}" ]]; then
+    echo "Error: DATA_DIR is not set. Source scripts/lib/config.sh before spoon_budget.sh." >&2
+    return 1
+fi
+if ! command -v validate_numeric >/dev/null 2>&1; then
+    echo "Error: validate_numeric is not available. Source scripts/lib/common.sh before spoon_budget.sh." >&2
+    return 1
+fi
+if ! command -v sanitize_input >/dev/null 2>&1; then
+    echo "Error: sanitize_input is not available. Source scripts/lib/common.sh before spoon_budget.sh." >&2
+    return 1
 fi
 
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-SPOON_LOG="${SPOON_LOG:-$DATA_DIR/spoons.txt}"
+SPOON_LOG="${SPOON_LOG:-}"
+if [[ -z "$SPOON_LOG" ]]; then
+    echo "Error: SPOON_LOG is not set. Source scripts/lib/config.sh before spoon_budget.sh." >&2
+    return 1
+fi
 
 
 mkdir -p "$DATA_DIR"

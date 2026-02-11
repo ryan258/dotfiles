@@ -5,11 +5,11 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
+require_lib "config.sh"
 
 # Define Paths
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-TODO_FILE="${TODO_FILE:-$DATA_DIR/todo.txt}"
-DONE_FILE="${DONE_FILE:-$DATA_DIR/todo_done.txt}"
+TODO_FILE="${TODO_FILE:?TODO_FILE is not set by config.sh}"
+DONE_FILE="${DONE_FILE:?DONE_FILE is not set by config.sh}"
 
 # Tools
 TIME_TRACKER="$SCRIPT_DIR/time_tracker.sh"

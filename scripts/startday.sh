@@ -5,6 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMMON_LIB="$SCRIPT_DIR/lib/common.sh"
 DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
+CONFIG_LIB="$SCRIPT_DIR/lib/config.sh"
 
 if [ -f "$COMMON_LIB" ]; then
     # shellcheck disable=SC1090
@@ -23,21 +24,12 @@ else
 fi
 
 # --- CONFIGURATION ---
-if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
+if [ -f "$CONFIG_LIB" ]; then
     # shellcheck disable=SC1090
-    source "$SCRIPT_DIR/lib/config.sh"
+    source "$CONFIG_LIB"
 else
-    # Fallback
-    DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-    CURRENT_DAY_FILE="$DATA_DIR/current_day"
-    # Ensure exports for compatibility if config missing
-    export FOCUS_FILE="$DATA_DIR/daily_focus.txt"
-    if [ -f "$SCRIPT_DIR/../.env" ]; then
-        set -a
-        # shellcheck disable=SC1090
-        source "$SCRIPT_DIR/../.env"
-        set +a
-    fi
+    echo "Error: configuration library not found at $CONFIG_LIB" >&2
+    exit 1
 fi
 
 # Source new libraries
@@ -51,18 +43,16 @@ if [ -f "$SCRIPT_DIR/lib/coach_ops.sh" ]; then
     source "$SCRIPT_DIR/lib/coach_ops.sh"
 fi
 
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
 mkdir -p "$DATA_DIR"
-CURRENT_DAY_FILE="${CURRENT_DAY_FILE:-$DATA_DIR/current_day}"
-FOCUS_FILE="${FOCUS_FILE:-$DATA_DIR/daily_focus.txt}"
-BRIEFING_CACHE="${BRIEFING_CACHE_FILE:-$DATA_DIR/.ai_briefing_cache}"
+CURRENT_DAY_FILE="$DATA_DIR/current_day"
+BRIEFING_CACHE="$BRIEFING_CACHE_FILE"
 
 # Support "refresh" to force new AI briefing.
 # By default we keep GitHub cache so transient network failures still degrade gracefully.
 if [[ "${1:-}" == "refresh" ]]; then
     rm -f "$BRIEFING_CACHE"
     if [[ "${2:-}" == "--clear-github-cache" ]]; then
-        rm -rf "${DATA_DIR:-$HOME/.config/dotfiles-data}/cache/github"
+        rm -rf "$GITHUB_CACHE_DIR"
         echo "🔄 Cache cleared (AI briefing + GitHub). Forcing new session data..."
     else
         echo "🔄 AI briefing cache cleared. Keeping GitHub cache for resilience."
@@ -171,7 +161,7 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ] && command -v coach_get_mode_for_
 fi
 
 # --- LOGGING ---
-SYSTEM_LOG_FILE="${SYSTEM_LOG:-$DATA_DIR/system.log}"
+SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:?SYSTEM_LOG_FILE is not set by config.sh}"
 echo "$(date): startday.sh - Running morning routine." >> "$SYSTEM_LOG_FILE"
 
 BLOG_SCRIPT="$SCRIPT_DIR/blog.sh"
@@ -186,7 +176,7 @@ if [ -f "$BLOG_SCRIPT" ] && [ -n "$BLOG_STATUS_DIR" ] && [ -d "$BLOG_STATUS_DIR"
 fi
 
 # --- YESTERDAY'S CONTEXT ---
-JOURNAL_FILE="${JOURNAL_FILE:-$DATA_DIR/journal.txt}"
+JOURNAL_FILE="${JOURNAL_FILE:?JOURNAL_FILE is not set by config.sh}"
 YESTERDAY_JOURNAL_CONTEXT=""
 echo ""
 echo "📅 YESTERDAY YOU WERE:"
@@ -325,7 +315,7 @@ else
 fi
 
 # --- STALE TASKS (older than 7 days) ---
-STALE_TODO_FILE="${TODO_FILE:-$DATA_DIR/todo.txt}"
+STALE_TODO_FILE="$TODO_FILE"
 echo ""
 echo "⏰ STALE TASKS:"
 if [ -f "$STALE_TODO_FILE" ] && [ -s "$STALE_TODO_FILE" ]; then
@@ -334,7 +324,6 @@ if [ -f "$STALE_TODO_FILE" ] && [ -s "$STALE_TODO_FILE" ]; then
 fi
 
 # --- TODAY'S TASKS ---
-TODO_FILE="${TODO_FILE:-$DATA_DIR/todo.txt}"
 echo ""
 echo "✅ TODAY'S TASKS:"
 if [ -f "$SCRIPT_DIR/todo.sh" ]; then
@@ -349,7 +338,7 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
     echo "🤖 AI BRIEFING:"
 
     # Cache file for today's briefing
-    BRIEFING_CACHE="${BRIEFING_CACHE_FILE:-$DATA_DIR/.ai_briefing_cache}"
+    BRIEFING_CACHE="$BRIEFING_CACHE_FILE"
     TODAY=$(date '+%Y-%m-%d')
 
     # Check if we already have today's briefing
@@ -360,9 +349,6 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
         echo "$CACHED_BRIEFING" | sed 's/^/  /'
     else
         # Generate new briefing
-        JOURNAL_FILE="${JOURNAL_FILE:-$DATA_DIR/journal.txt}"
-        TODO_FILE="${TODO_FILE:-$DATA_DIR/todo.txt}"
-
         # Gather context
         FOCUS_CONTEXT=""
         if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then

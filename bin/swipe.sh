@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
-ENV_FILE="$DOTFILES_DIR/.env"
-if [ -f "$ENV_FILE" ]; then
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CONFIG_LIB="$DOTFILES_DIR/scripts/lib/config.sh"
+if [ -f "$CONFIG_LIB" ]; then
   # shellcheck disable=SC1090
-  source "$ENV_FILE"
+  source "$CONFIG_LIB"
+else
+  echo "Error: configuration library not found at $CONFIG_LIB" >&2
+  exit 1
 fi
 
 LOG_ENABLED="${SWIPE_LOG_ENABLED:-false}"

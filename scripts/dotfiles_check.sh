@@ -11,6 +11,9 @@ STAFF_DIR="$PROJECT_ROOT/ai-staff-hq/staff"
 if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
     # shellcheck disable=SC1090
     source "$SCRIPT_DIR/lib/config.sh"
+else
+    echo "❌ ERROR: configuration library not found at $SCRIPT_DIR/lib/config.sh"
+    exit 1
 fi
 
 echo "🩺 Running Dotfiles System Check..."
@@ -40,7 +43,6 @@ fi
 
 # 2. Check for data directory
 echo "[2/8] Checking for data directory..."
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
 if [ ! -d "$DATA_DIR" ]; then
   echo "  ❌ ERROR: Data directory not found at $DATA_DIR"
   ERROR_COUNT=$((ERROR_COUNT + 1))
@@ -58,10 +60,10 @@ done
 
 # 4. Check for GitHub token
 echo "[4/8] Checking for GitHub token..."
-GITHUB_TOKEN_FILE="${GITHUB_TOKEN_FILE:-$DATA_DIR/github_token}"
-LEGACY_GITHUB_TOKEN_FILE="$HOME/.github_token"
-if [ ! -f "$GITHUB_TOKEN_FILE" ] && [ ! -f "$LEGACY_GITHUB_TOKEN_FILE" ]; then
-  echo "  ⚠️  WARNING: GitHub token not found at $GITHUB_TOKEN_FILE (or legacy $LEGACY_GITHUB_TOKEN_FILE). Some features like project listing will fail."
+PRIMARY_GITHUB_TOKEN_FILE="$GITHUB_TOKEN_FILE"
+FALLBACK_GITHUB_TOKEN_FILE="$GITHUB_TOKEN_FALLBACK"
+if [ ! -f "$PRIMARY_GITHUB_TOKEN_FILE" ] && [ ! -f "$FALLBACK_GITHUB_TOKEN_FILE" ]; then
+  echo "  ⚠️  WARNING: GitHub token not found at $PRIMARY_GITHUB_TOKEN_FILE (or fallback $FALLBACK_GITHUB_TOKEN_FILE). Some features like project listing will fail."
   WARNING_COUNT=$((WARNING_COUNT + 1))
 fi
 

@@ -3,18 +3,20 @@ set -euo pipefail
 
 # blog_recent_content.sh - show latest Hugo content activity
 
-# Source .env if present to get BLOG_CONTENT_DIR
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
-ENV_FILE="${ENV_FILE:-$DOTFILES_DIR/.env}"
-if [ -f "$ENV_FILE" ]; then
+CONFIG_LIB="$DOTFILES_DIR/scripts/lib/config.sh"
+if [ -f "$CONFIG_LIB" ]; then
   # shellcheck disable=SC1090
-  source "$ENV_FILE"
+  source "$CONFIG_LIB"
+else
+  echo "Configuration library not found: $CONFIG_LIB" >&2
+  exit 1
 fi
 
 CONTENT_DIR="${BLOG_CONTENT_DIR:-}"
 if [ -z "$CONTENT_DIR" ]; then
-  echo "BLOG_CONTENT_DIR is not set. Add it to ~/.env." >&2
+  echo "BLOG_CONTENT_DIR is not set. Set it in dotfiles/.env (loaded by config.sh)." >&2
   exit 1
 fi
 

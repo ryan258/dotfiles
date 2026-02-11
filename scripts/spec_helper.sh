@@ -12,9 +12,20 @@ if [ -f "$SPEC_HELPER_DIR/lib/common.sh" ]; then
   # shellcheck disable=SC1090
   source "$SPEC_HELPER_DIR/lib/common.sh"
 fi
+if [ -f "$SPEC_HELPER_DIR/lib/config.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$SPEC_HELPER_DIR/lib/config.sh"
+else
+  echo "Error: configuration library not found at $SPEC_HELPER_DIR/lib/config.sh" >&2
+  return 1
+fi
+
+if [[ -z "${DATA_DIR:-}" ]]; then
+  echo "Error: DATA_DIR is not set. Source config.sh before spec_helper.sh." >&2
+  return 1
+fi
 
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SPEC_HELPER_DIR/.." && pwd)}"
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
 
 spec_dispatch() {
   local dispatcher="${1}"
@@ -73,7 +84,7 @@ spec_dispatch() {
   cat "$tmpfile" | "$dispatcher"
 
   # Optional: Save completed spec for reference
-  local spec_archive="${SPEC_ARCHIVE_DIR:-$DATA_DIR/specs}/"
+  local spec_archive="${SPEC_ARCHIVE_DIR}/"
   mkdir -p "$spec_archive"
   cp "$tmpfile" "$spec_archive/$(date +%Y%m%d-%H%M%S)-${dispatcher}.txt"
   echo "💾 Spec saved to $spec_archive"

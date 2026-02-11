@@ -8,26 +8,51 @@ if [[ -n "${_CONTEXT_CAPTURE_LOADED:-}" ]]; then
 fi
 readonly _CONTEXT_CAPTURE_LOADED=true
 
-CONTEXT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ -f "$CONTEXT_DIR/config.sh" ]]; then
-    source "$CONTEXT_DIR/config.sh"
+# Dependencies:
+# - DATA_DIR must be set by sourcing config.sh in the caller.
+# - sanitize_input (optional) comes from common.sh if caller sourced it.
+if [[ -z "${DATA_DIR:-}" ]]; then
+    echo "Error: DATA_DIR is not set. Source scripts/lib/config.sh before context_capture.sh." >&2
+    return 1
 fi
 
-DATA_DIR="${DATA_DIR:-$HOME/.config/dotfiles-data}"
-CONTEXT_ROOT="$DATA_DIR/contexts"
+CONTEXT_ROOT="${CONTEXT_ROOT:-}"
+if [[ -z "$CONTEXT_ROOT" ]]; then
+    echo "Error: CONTEXT_ROOT is not set. Source scripts/lib/config.sh before context_capture.sh." >&2
+    return 1
+fi
 
 mkdir -p "$CONTEXT_ROOT"
+
+_context_validate_name() {
+    local raw_name="$1"
+    local sanitized_name="$raw_name"
+
+    if command -v sanitize_input >/dev/null 2>&1; then
+        sanitized_name=$(sanitize_input "$raw_name")
+    fi
+
+    # Reject names that would be modified by sanitization.
+    if [[ "$sanitized_name" != "$raw_name" ]]; then
+        echo "Error: Context name contains unsupported characters." >&2
+        return 1
+    fi
+
+    # Strict allowlist for safe filesystem names.
+    if [[ ! "$raw_name" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+        echo "Error: Invalid context name. Use only letters, numbers, dot, underscore, and dash." >&2
+        return 1
+    fi
+
+    return 0
+}
 
 # Capture the current working context
 # Usage: capture_current_context [name]
 capture_current_context() {
     local name="${1:-auto-$(date +%Y%m%d-%H%M)}"
-    
-    # Validate name contains no path separators
-    if [[ "$name" == *"/"* ]] || [[ "$name" == *".."* ]]; then
-        echo "Error: Invalid context name" >&2
-        return 1
-    fi
+
+    _context_validate_name "$name" || return 1
 
     local ctx_dir="$CONTEXT_ROOT/$name"
     
@@ -58,20 +83,39 @@ capture_current_context() {
 # Usage: restore_context <name>
 restore_context() {
     local name="$1"
+    _context_validate_name "$name" || return 1
+
     local ctx_dir="$CONTEXT_ROOT/$name"
-    
+
     if [ ! -d "$ctx_dir" ]; then
         echo "Error: Context '$name' not found." >&2
         return 1
     fi
-    
-    local dir=$(cat "$ctx_dir/directory.txt")
-    echo "cd \"${dir}\"" # Intended for eval or user info
-    
-    if [ -f "$ctx_dir/git_state.txt" ]; then
-        echo "# Git state at capture:"
-        head -n 3 "$ctx_dir/git_state.txt"
+
+    if [ ! -f "$ctx_dir/directory.txt" ]; then
+        echo "Error: Context '$name' is missing directory metadata." >&2
+        return 1
     fi
+
+    local dir
+    dir=$(head -n 1 "$ctx_dir/directory.txt")
+    if [[ -z "$dir" || "$dir" != /* ]]; then
+        echo "Error: Context '$name' has an invalid directory path." >&2
+        return 1
+    fi
+
+    printf '%s\n' "$dir"
+}
+
+# Restore and change directory in the current shell.
+# Usage: restore_context_dir <name>
+restore_context_dir() {
+    local name="$1"
+    local dir
+
+    dir=$(restore_context "$name") || return 1
+    cd "$dir" || return 1
+    return 0
 }
 
 # List all saved contexts
