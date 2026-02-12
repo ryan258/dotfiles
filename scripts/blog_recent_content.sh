@@ -1,18 +1,22 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # blog_recent_content.sh - show latest Hugo content activity
 
-# Source .env if present to get BLOG_CONTENT_DIR
-ENV_FILE="$HOME/dotfiles/.env"
-if [ -f "$ENV_FILE" ]; then
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CONFIG_LIB="$DOTFILES_DIR/scripts/lib/config.sh"
+if [ -f "$CONFIG_LIB" ]; then
   # shellcheck disable=SC1090
-  source "$ENV_FILE"
+  source "$CONFIG_LIB"
+else
+  echo "Configuration library not found: $CONFIG_LIB" >&2
+  exit 1
 fi
 
 CONTENT_DIR="${BLOG_CONTENT_DIR:-}"
 if [ -z "$CONTENT_DIR" ]; then
-  echo "BLOG_CONTENT_DIR is not set. Add it to ~/.env." >&2
+  echo "BLOG_CONTENT_DIR is not set. Set it in dotfiles/.env (loaded by config.sh)." >&2
   exit 1
 fi
 
@@ -63,11 +67,15 @@ def parse_date(raw):
         raw = raw[:-1] + '+00:00'
     for fmt in ("%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d"):
         try:
-            return datetime.strptime(raw, fmt)
+            dt = datetime.strptime(raw, fmt)
+            # Remove timezone info for consistency
+            return dt.replace(tzinfo=None) if dt.tzinfo else dt
         except ValueError:
             continue
     try:
-        return datetime.fromisoformat(raw)
+        dt = datetime.fromisoformat(raw)
+        # Remove timezone info for consistency
+        return dt.replace(tzinfo=None) if dt.tzinfo else dt
     except Exception:
         return None
 

@@ -1,307 +1,187 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # blog.sh - Tools for managing the blog content workflow.
+# Modularized refactor
 set -euo pipefail
 
-SYSTEM_LOG_FILE="$HOME/.config/dotfiles-data/system.log"
+BLOG_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Allow per-user overrides via .env without leaking secrets broadly.
-if [ -f "$HOME/dotfiles/.env" ]; then
+# Core Utilities
+COMMON_LIB="$BLOG_SCRIPT_DIR/lib/common.sh"
+if [ -f "$COMMON_LIB" ]; then
     # shellcheck disable=SC1090
-    source "$HOME/dotfiles/.env"
+    source "$COMMON_LIB"
+else
+    echo "Error: common utilities not found at $COMMON_LIB" >&2
+    exit 1
 fi
 
+# --- Configuration ---
+if [ -f "$BLOG_SCRIPT_DIR/lib/config.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$BLOG_SCRIPT_DIR/lib/config.sh"
+else
+    die "Configuration library not found at $BLOG_SCRIPT_DIR/lib/config.sh" "$EXIT_FILE_NOT_FOUND"
+fi
+
+# Date Utilities
+DATE_UTILS="$BLOG_SCRIPT_DIR/lib/date_utils.sh"
+if [ -f "$DATE_UTILS" ]; then
+    # shellcheck disable=SC1090
+    source "$DATE_UTILS"
+else
+    echo "Error: date utilities not found at $DATE_UTILS" >&2
+    exit 1
+fi
+
+SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:-$SYSTEM_LOG}"
+
+# Shared Utilities
+DHP_UTILS="${DOTFILES_DIR:-$(cd "$BLOG_SCRIPT_DIR/.." && pwd)}/bin/dhp-utils.sh"
+if [ -f "$DHP_UTILS" ]; then
+    # shellcheck disable=SC1090
+    source "$DHP_UTILS"
+else
+    echo "Error: Shared utility library dhp-utils.sh not found." >&2
+    exit 1
+fi
+
+# --- Validation ---
 BLOG_DIR="${BLOG_DIR:-}"
 if [ -z "$BLOG_DIR" ]; then
     echo "Blog workflows are disabled. Set BLOG_DIR in dotfiles/.env to use blog.sh."
     exit 1
 fi
 
-DRAFTS_DIR="${BLOG_DRAFTS_DIR_OVERRIDE:-${CONTENT_OUTPUT_DIR:-$BLOG_DIR/drafts}}"
-POSTS_DIR="${BLOG_POSTS_DIR_OVERRIDE:-$BLOG_DIR/content/posts}"
+# Config aliases from config.sh or local defaults
+DRAFTS_DIR="${BLOG_DRAFTS_DIR_OVERRIDE:-${BLOG_DRAFTS_DIR:-$BLOG_DIR/drafts}}"
+POSTS_DIR="${BLOG_POSTS_DIR_OVERRIDE:-${BLOG_POSTS_DIR:-$BLOG_DIR/content/posts}}"
+
+# Create directories
+mkdir -p "$BLOG_DIR"
+mkdir -p "$DRAFTS_DIR"
+mkdir -p "$POSTS_DIR"
+
+# Validate paths (Security check)
+if [[ "$BLOG_DIR" != /* ]]; then
+    die "BLOG_DIR must be an absolute path: $BLOG_DIR" "$EXIT_INVALID_ARGS"
+fi
+if [[ "$DRAFTS_DIR" != /* ]]; then
+    die "BLOG_DRAFTS_DIR must be an absolute path: $DRAFTS_DIR" "$EXIT_INVALID_ARGS"
+fi
+if [[ "$POSTS_DIR" != /* ]]; then
+    die "BLOG_POSTS_DIR must be an absolute path: $POSTS_DIR" "$EXIT_INVALID_ARGS"
+fi
+
+VALIDATED_BLOG_DIR=$(validate_safe_path "$BLOG_DIR" "/") || die "Invalid BLOG_DIR path: $BLOG_DIR" "$EXIT_INVALID_ARGS"
+VALIDATED_DRAFTS_DIR=$(validate_safe_path "$DRAFTS_DIR" "/") || die "Invalid BLOG_DRAFTS_DIR path: $DRAFTS_DIR" "$EXIT_INVALID_ARGS"
+VALIDATED_POSTS_DIR=$(validate_safe_path "$POSTS_DIR" "/") || die "Invalid BLOG_POSTS_DIR path: $POSTS_DIR" "$EXIT_INVALID_ARGS"
+BLOG_DIR="$VALIDATED_BLOG_DIR"
+DRAFTS_DIR="$VALIDATED_DRAFTS_DIR"
+POSTS_DIR="$VALIDATED_POSTS_DIR"
 
 if [ ! -d "$POSTS_DIR" ]; then
-    echo "Blog directory not found at $POSTS_DIR"
+    echo "Error: Failed to create or access blog directory at $POSTS_DIR" >&2
     exit 1
 fi
 
-# --- Subcommand: status ---
-function status() {
-    echo "📝 BLOG STATUS (ryanleej.com):"
+# --- Load Libraries ---
+for blog_lib in blog_common.sh blog_lifecycle.sh blog_gen.sh blog_ops.sh; do
+    blog_lib_path="$BLOG_SCRIPT_DIR/lib/$blog_lib"
+    require_file "$blog_lib_path" "blog library"
+    # shellcheck disable=SC1090
+    source "$blog_lib_path"
+done
 
-    TOTAL_POSTS=$(find "$POSTS_DIR" -name "*.md" | wc -l | tr -d ' ')
-    STUB_FILES=$(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null || true)
-    if [ -n "$STUB_FILES" ]; then
-        STUB_COUNT=$(printf "%s\n" "$STUB_FILES" | grep -c . || true)
-    else
-        STUB_COUNT=0
-    fi
-
-    echo "  • Total posts: $TOTAL_POSTS"
-    echo "  • Posts needing content: $STUB_COUNT"
-
-    if [ -d "$DRAFTS_DIR" ]; then
-        draft_count=0
-        drafts_list=""
-        while IFS= read -r draft; do
-            drafts_list="${drafts_list}${draft}"$'\n'
-            draft_count=$((draft_count + 1))
-        done < <(find "$DRAFTS_DIR" -type f -name "*.md" 2>/dev/null | sort)
-
-        if [ "$draft_count" -gt 0 ]; then
-            echo "  • Drafts awaiting review ($draft_count):"
-            while IFS= read -r draft; do
-                [ -z "$draft" ] && continue
-                rel=${draft#"$DRAFTS_DIR"/}
-                echo "    - $rel"
-            done <<< "$drafts_list"
-        else
-            echo "  • Drafts awaiting review: 0"
-        fi
-    fi
-
-    if [ -d "$BLOG_DIR/.git" ]; then
-        LAST_UPDATE=$(cd "$BLOG_DIR" && git log -1 --format="%ad" --date=short)
-        echo "  • Last update: $LAST_UPDATE"
-
-        # Calculate days since last update
-        LAST_UPDATE_EPOCH=$(cd "$BLOG_DIR" && git log -1 --format="%ct")
-        DAYS_SINCE=$(( ( $(date +%s) - LAST_UPDATE_EPOCH ) / 86400 ))
-
-        if [ "$DAYS_SINCE" -gt 14 ]; then
-            echo "  ⏰ It's been $DAYS_SINCE days since your last update"
-        fi
-    fi
-
-    echo "  • Site: https://ryanleej.com"
-}
-
-# --- Subcommand: stubs ---
-function stubs() {
-    echo "📄 CONTENT STUBS:"
-
-    STUB_FILES=$(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null)
-
-    if [ -n "$STUB_FILES" ]; then
-        SEVEN_DAYS_AGO=$(date -v-7d +%s)
-        THIRTY_DAYS_AGO=$(date -v-30d +%s)
-
-        echo "$STUB_FILES" | while read -r file; do
-            filename=$(basename "$file")
-
-            # Get last modified timestamp
-            if [ -d "$BLOG_DIR/.git" ]; then
-                # Try to get last git commit date for this file
-                last_commit=$(cd "$BLOG_DIR" && git log -1 --format="%ct" -- "$file" 2>/dev/null)
-                if [ -n "$last_commit" ]; then
-                    mod_time=$last_commit
-                else
-                    # Fall back to file system modification time
-                    mod_time=$(stat -f %m "$file" 2>/dev/null || stat -c %Y "$file" 2>/dev/null)
-                fi
-            else
-                mod_time=$(stat -f %m "$file" 2>/dev/null || stat -c %Y "$file" 2>/dev/null)
-            fi
-
-            # Calculate age and add warning if old
-            if [ "$mod_time" -lt "$THIRTY_DAYS_AGO" ]; then
-                days_old=$(( ( $(date +%s) - mod_time ) / 86400 ))
-                echo "  ⚠️  $filename (stale: ${days_old} days old)"
-            elif [ "$mod_time" -lt "$SEVEN_DAYS_AGO" ]; then
-                days_old=$(( ( $(date +%s) - mod_time ) / 86400 ))
-                echo "  ⏰ $filename (${days_old} days old)"
-            else
-                echo "  • $filename"
-            fi
-        done
-    else
-        echo "  (No content stubs found)"
-    fi
-}
-
-# --- Subcommand: random ---
-function random_stub() {
-    echo "🎲 Opening a random stub..."
-    
-    STUB_FILES=($(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null))
-    
-    if [ ${#STUB_FILES[@]} -eq 0 ]; then
-        echo "  (No content stubs to choose from)"
-        return
-    fi
-    
-    RANDOM_INDEX=$(( RANDOM % ${#STUB_FILES[@]} ))
-    RANDOM_FILE=${STUB_FILES[$RANDOM_INDEX]}
-    
-    echo "  Opening: $(basename "$RANDOM_FILE")"
-    
-    if command -v code &> /dev/null; then
-        code "$RANDOM_FILE"
-    else
-        open "$RANDOM_FILE"
-    fi
-}
-
-# --- Subcommand: recent ---
-function recent() {
-    echo "⏳ RECENTLY MODIFIED POSTS:"
-
-    recent_files=()
-    while IFS= read -r -d '' file; do
-        recent_files+=("$file")
-    done < <(find "$POSTS_DIR" -name "*.md" -mtime -14 -print0 2>/dev/null)
-
-    if [ ${#recent_files[@]} -eq 0 ]; then
-        echo "  (No posts updated in the last 14 days)"
-        return
-    fi
-
-    printf '%s\0' "${recent_files[@]}" | xargs -0 ls -t | head -n 5 | while read -r file; do
-        if [ -f "$file" ]; then
-            echo "  • $(basename "$file")"
-        fi
-    done
-}
-
-function ideas() {
-    echo "💡 Searching for blog ideas in journal..."
-    /Users/ryanjohnson/dotfiles/scripts/journal.sh search "blog idea"
-}
-
-function generate() {
-    local stub_name="$2"
-
-    if [ -z "$stub_name" ]; then
-        echo "Usage: blog generate <stub-name>"
-        echo "Example: blog generate ai-productivity-guide"
-        return 1
-    fi
-
-    # Find the stub file
-    local stub_file="$POSTS_DIR/${stub_name}.md"
-
-    if [ ! -f "$stub_file" ]; then
-        echo "Error: Stub file not found: $stub_file"
-        echo "Available stubs:"
-        grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null | while read -r f; do
-            echo "  • $(basename "$f" .md)"
-        done
-        return 1
-    fi
-
-    echo "🤖 Generating full content for: $stub_name"
-    echo "Reading stub: $stub_file"
-    echo ""
-
-    # Extract title from the stub for context
-    local title=$(grep -m 1 "^title:" "$stub_file" | cut -d':' -f2- | tr -d '"' | xargs)
-
-    if [ -z "$title" ]; then
-        title="$stub_name"
-    fi
-
-    echo "AI Staff: Content Specialist is creating SEO-optimized guide..."
-    echo "Topic: $title"
-    echo "---"
-
-    # Call the content dispatcher with the title
-    if command -v dhp-content.sh &> /dev/null; then
-        dhp-content.sh "$title"
-    else
-        echo "Error: dhp-content.sh dispatcher not found"
-        echo "Make sure bin/ is in your PATH"
-        return 1
-    fi
-
-    echo ""
-    echo "✅ Content generation complete"
-    echo "Output saved by dispatcher to: ~/projects/ryanleej.com/content/guides/"
-    echo "Next steps:"
-    echo "  1. Review and edit the generated content"
-    echo "  2. Move it to $POSTS_DIR/ if satisfied"
-    echo "  3. Remove 'content stub' marker from original"
-}
-
-function refine() {
-    local file_path="$2"
-
-    if [ -z "$file_path" ]; then
-        echo "Usage: blog refine <file-path>"
-        echo "Example: blog refine $POSTS_DIR/my-post.md"
-        return 1
-    fi
-
-    # Handle relative paths
-    if [ ! -f "$file_path" ]; then
-        # Try adding POSTS_DIR prefix
-        file_path="$POSTS_DIR/$file_path"
-        if [ ! -f "$file_path" ]; then
-            file_path="$POSTS_DIR/${file_path}.md"
-        fi
-    fi
-
-    if [ ! -f "$file_path" ]; then
-        echo "Error: File not found: $file_path"
-        return 1
-    fi
-
-    echo "✨ Refining content: $(basename "$file_path")"
-    echo "Reading from: $file_path"
-    echo ""
-    echo "AI Staff: Content Specialist is polishing your draft..."
-    echo "---"
-
-    # Read the file content and pipe to content dispatcher with refine instruction
-    if command -v dhp-content.sh &> /dev/null; then
-        {
-            echo "Please refine and improve the following blog post content. Focus on:"
-            echo "- Clarity and readability"
-            echo "- SEO optimization"
-            echo "- Engaging headlines and structure"
-            echo "- Adding relevant examples if needed"
-            echo ""
-            echo "Original content:"
-            echo "---"
-            cat "$file_path"
-        } | dhp-content.sh "refine blog post"
-    else
-        echo "Error: dhp-content.sh dispatcher not found"
-        echo "Make sure bin/ is in your PATH"
-        return 1
-    fi
-
-    echo ""
-    echo "✅ Content refinement complete"
-    echo "Review the suggestions above and update: $file_path"
-}
 
 # --- Main Logic ---
-case "$1" in
-    status)
+case "${1:-}" in
+    status|stat|s)
         status
         ;;
-    stubs)
+    stubs|stub|ls-stubs)
         stubs
         ;;
-    random)
+    random|rand|R)
         random_stub
         ;;
-    recent)
+    recent|rec)
         recent
         ;;
-    ideas)
-        ideas
+    ideas|idea|i)
+        shift
+        blog_ideas "$@"
         ;;
-    generate)
+    generate|gen|g)
         generate "$@"
         ;;
-    refine)
+    refine|polish|r)
         refine "$@"
         ;;
+    draft|d)
+        draft_command "$@"
+        ;;
+    workflow|w)
+        workflow_command "$@"
+        ;;
+    publish|p)
+        publish_site
+        ;;
+    validate|check|v)
+        validate_site
+        ;;
+    hooks|hook)
+        if [ "${2:-}" = "install" ]; then
+            install_hooks
+        else
+            echo "Usage: blog hooks install"
+            exit 1
+        fi
+        ;;
+    version|ver)
+        shift
+        blog_version "$@"
+        ;;
+    metrics|stats)
+        shift
+        blog_metrics "$@"
+        ;;
+    exemplar|ex)
+        shift
+        blog_exemplar "$@"
+        ;;
+    social|promote)
+        shift
+        blog_social "$@"
+        ;;
     *)
-        echo "Usage: blog {status|stubs|random|recent|sync|ideas|generate|refine}"
+        echo "Usage: blog <command> [args]"
         echo ""
+        echo "Management:"
+        echo "  status       Show system status"
+        echo "  stubs        List content stubs"
+        echo "  random       Open a random content stub"
+        echo "  recent       List recently modified posts"
+        echo "  ideas        Manage ideas (list|add|sync)"
+        echo "  version      Manage version (show|bump|history)"
+        echo "  metrics      Show blog statistics"
+        echo ""
+        echo "Content:"
+        echo "  draft        Create a new draft (alias for scaffolder)"
+        echo "  generate     Generate content with AI"
+        echo "  refine       Refine content with AI"
+        echo "  workflow     Run full draft->outline->content workflow"
+        echo "  social       Generate social media content"
+        echo "  exemplar     View section exemplar"
+        echo ""
+        echo "Ops:"
+        echo "  publish      Validate and prepare for deploy"
+        echo "  validate     Run local validation"
+        echo "  hooks        Install git hooks"
         echo "AI-powered commands:"
-        echo "  blog generate <stub-name>  - Generate full content from stub using AI"
-        echo "  blog refine <file-path>    - Polish and improve existing content"
+        echo "  blog g / blog generate [options] \"topic\"  - Generate content (supports -p persona, -a archetype, -s section, -f file)"
+        echo "  blog r / blog refine <file-path>          - Polish and improve existing content"
+        echo "  blog d / blog draft <type> <slug>         - Scaffold a new draft from archetypes"
+        echo "  blog w / blog workflow <type> <slug> [--title --topic]"
+        echo "  blog p / blog publish                    - Validate, build, and summarize site status"
         ;;
 esac

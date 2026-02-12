@@ -2,9 +2,17 @@
 
 This guide covers proven strategies for maximizing productivity, maintaining data hygiene, and building sustainable workflows with your AI-augmented dotfiles system.
 
-> **Quick note on dispatchers:** Use the single-word aliases (they invoke the `dhp-*` scripts directly) for minimal typing. When you need a unified entry point or want to reference squads from `squads.json`, use `dispatch <squad> "brief"`. All scripts have been refactored for improved robustness and maintainability.
+## TL;DR
 
-**Last Updated:** November 10, 2025
+- Use `startday` and `goodevening` to bookend your day.
+- Keep data clean with `data_validate --format` and backups.
+- Use `ai-suggest` to pick the right dispatcher when stuck.
+
+> **Quick note on dispatchers:** Use the single-word aliases (they invoke the `dhp-*` scripts directly) for minimal typing. When you need a unified entry point or want to reference squads from `squads.json`, use `dispatch <squad> "brief"`. All scripts have been refactored for improved robustness and maintainability.
+>
+> **Security Note:** For detailed information on security practices, how to report vulnerabilities, and credential management, please refer to our [Security Policy](../../SECURITY.md).
+
+**Last Updated:** January 1, 2026
 
 ---
 
@@ -22,6 +30,7 @@ This guide covers proven strategies for maximizing productivity, maintaining dat
 10. [Advanced Techniques](#advanced-techniques)
 11. [Customization Guidelines](#customization-guidelines)
 12. [Backup & Recovery Strategy](#backup--recovery-strategy)
+13. [Secure Coding Practices](#secure-coding-practices)
 
 ---
 
@@ -32,19 +41,23 @@ This guide covers proven strategies for maximizing productivity, maintaining dat
 **Focus on the essential cycle:**
 
 ✅ **DO:**
+
 ```bash
 # Morning
-startday          # Just read it, don't optimize yet
+startday             # Just read it, don't optimize yet
+focus set "One thing for today"  # Set daily intention
 
 # During day
-todo add "..."    # Add tasks as they come up
-journal "..."     # Capture moments
+todo add "..."       # Add tasks as they come up
+journal "..."        # Capture moments
 
 # Evening
-goodevening       # Celebrate even small wins
+focus done           # Archive completion
+goodevening          # Celebrate even small wins
 ```
 
 ❌ **DON'T:**
+
 - Try to use every feature at once
 - Customize scripts yet
 - Set up complex workflows
@@ -57,6 +70,7 @@ goodevening       # Celebrate even small wins
 ### Day 3-4: Add Navigation
 
 ✅ **DO:**
+
 ```bash
 # Save your 3-5 most frequent locations
 cd ~/projects/my-blog
@@ -71,6 +85,7 @@ g dotfiles
 ```
 
 ❌ **DON'T:**
+
 - Bookmark every directory you visit
 - Try to optimize bookmarks yet
 - Set up complex on-enter hooks
@@ -82,6 +97,7 @@ g dotfiles
 ### Day 5-7: Explore AI Features
 
 ✅ **DO:**
+
 ```bash
 # Start with suggestions
 ai-suggest
@@ -93,7 +109,8 @@ echo "challenge" | stoic       # For mindset
 ```
 
 ❌ **DON'T:**
-- Try to learn all 10 dispatchers at once
+
+- Try to learn all 12 dispatchers at once
 - Set up complex chaining workflows
 - Integrate AI into every workflow immediately
 
@@ -104,12 +121,14 @@ echo "challenge" | stoic       # For mindset
 ### Week 2+: Gradual Expansion
 
 ✅ **DO:**
+
 - Add one new feature per week
 - Notice friction points and address them
 - Build on what's working
 - Ask `ai-suggest` when uncertain
 
 ❌ **DON'T:**
+
 - Abandon the core loop (startday, journal, todo, goodevening)
 - Optimize prematurely
 - Create complexity without clear benefit
@@ -123,6 +142,7 @@ echo "challenge" | stoic       # For mindset
 **Best Practice: Let `startday` set the tone**
 
 ✅ **DO:**
+
 ```bash
 # 1. Read startday output (runs automatically)
 # 2. Set a focus if you can articulate one
@@ -140,6 +160,7 @@ todo top 3
 🎯 **Payoff:** Clear direction for the day
 
 ❌ **DON'T:**
+
 - Skip reading the startday output
 - Set vague focuses like "be productive"
 - Try to plan every minute of your day
@@ -152,6 +173,7 @@ todo top 3
 **Best Practice: Course-correct when you lose focus**
 
 ✅ **DO:**
+
 ```bash
 # When you feel lost:
 status              # What am I working on?
@@ -166,6 +188,7 @@ g suggest           # Where should I be?
 🎯 **Payoff:** Get back on track quickly
 
 ❌ **DON'T:**
+
 - Only check status when things go wrong
 - Ignore the warning signs (confusion, paralysis)
 - Power through without reassessing
@@ -177,6 +200,7 @@ g suggest           # Where should I be?
 **Best Practice: Celebrate wins and create tomorrow's breadcrumbs**
 
 ✅ **DO:**
+
 ```bash
 # 1. Close the loop
 goodevening         # Automated: wins, safety checks, backups
@@ -193,6 +217,7 @@ journal "Shipped the feature. Felt good. Tomorrow: reviews."
 🎯 **Payoff:** Closure + tomorrow's starting point
 
 ❌ **DON'T:**
+
 - Skip goodevening (breaks the backup chain)
 - Beat yourself up for incomplete tasks
 - Set overly ambitious focuses for tomorrow
@@ -204,6 +229,7 @@ journal "Shipped the feature. Felt good. Tomorrow: reviews."
 **Best Practice: Look back to plan forward**
 
 ✅ **DO:**
+
 ```bash
 # 1. Generate the review
 weekreview --file   # Saved to ~/Documents/Reviews/Weekly/
@@ -230,6 +256,7 @@ journal analyze     # Last 7 days insights
 ### Keep Your Todo List Healthy
 
 ✅ **DO:**
+
 ```bash
 # Complete tasks promptly
 todo done 1
@@ -244,11 +271,13 @@ todo done <num>              # Or delete manually from file
 ```
 
 **Signs of a healthy todo list:**
+
 - Most tasks < 7 days old
 - Top 3 priorities are actually your priorities
 - You complete 3-5 tasks per day on average
 
 ❌ **DON'T:**
+
 - Let tasks age indefinitely (causes guilt)
 - Keep aspirational tasks that demotivate you
 - Use todo as a "someday/maybe" list
@@ -260,6 +289,7 @@ todo done <num>              # Or delete manually from file
 ### Journal for Searchability
 
 ✅ **DO:**
+
 ```bash
 # Use consistent keywords
 journal "Working on authentication feature. Using JWT tokens."
@@ -271,6 +301,7 @@ journal search "Sarah"
 ```
 
 **Journal hygiene checklist:**
+
 - [ ] Include project names
 - [ ] Include people's names
 - [ ] Include technical terms (searchable later)
@@ -278,6 +309,7 @@ journal search "Sarah"
 - [ ] Use `dump` for long-form thoughts
 
 ❌ **DON'T:**
+
 - Use only pronouns ("worked on it", "met with them")
 - Rely on memory instead of search
 - Let journal entries stay vague
@@ -287,6 +319,7 @@ journal search "Sarah"
 ### Bookmark Pruning
 
 ✅ **DO:**
+
 ```bash
 # Let the system prune dead bookmarks
 g prune --auto      # Runs during dotfiles_check
@@ -299,6 +332,7 @@ g list
 ```
 
 **Signs of healthy bookmarks:**
+
 - All bookmarks point to existing directories
 - You use 80% of them regularly
 - No duplicates or near-duplicates
@@ -308,6 +342,7 @@ g list
 ### Data Validation
 
 ✅ **DO:**
+
 ```bash
 # Run system validation weekly
 dotfiles_check
@@ -321,6 +356,7 @@ head ~/.config/dotfiles-data/journal.txt
 ```
 
 **Automated safety:**
+
 - `goodevening` validates data before backup
 - System refuses to backup corrupted files
 - Central logging tracks all automated actions
@@ -334,6 +370,7 @@ head ~/.config/dotfiles-data/journal.txt
 **Best Practice: Let context guide you**
 
 ✅ **DO:**
+
 ```bash
 # When unsure which dispatcher to use
 ai-suggest
@@ -343,6 +380,7 @@ ai-suggest
 ```
 
 **Why this works:**
+
 - Analyzes git status, todos, journal, time of day
 - Suggests relevant dispatchers
 - Reduces decision fatigue
@@ -354,6 +392,7 @@ ai-suggest
 **Quick Decision Tree:**
 
 **Need to...**
+
 - 🐛 Debug or fix something → `tech`
 - 🎯 Make a decision or get insights → `strategy`
 - 📝 Create content → `content` (with `--context` for related work)
@@ -361,7 +400,7 @@ ai-suggest
 - 🏛️ Process a challenge → `stoic`
 - 📊 Research market/SEO → `market`
 - 📖 Develop story structure → `narrative`
-- ✍️ Write marketing copy → `copy`
+- ✍️ Write marketing copy → `aicopy`
 - 🎨 Position brand → `brand`
 - 📚 Synthesize research → `research`
 
@@ -373,6 +412,7 @@ ai-suggest
 ### Context Injection Best Practices
 
 ✅ **DO:**
+
 ```bash
 # Use --context when creating related content
 content --context "Guide to bash scripting"
@@ -384,12 +424,14 @@ content --full-context "Advanced productivity guide"
 ```
 
 **When to use context:**
+
 - Creating content for an existing blog/project
 - Working on related tasks
 - Building on previous work
 - Need to avoid duplication
 
 **When to skip context:**
+
 - One-off creative projects
 - Completely new topics
 - Speed is priority over awareness
@@ -403,6 +445,7 @@ content --full-context "Advanced productivity guide"
 All dispatchers support the `--stream` flag for real-time output as the AI generates responses.
 
 ✅ **Use streaming for:**
+
 ```bash
 # Long creative tasks
 creative --stream "Complex story with multiple plot threads"
@@ -421,6 +464,7 @@ cat large-codebase.py | tech --stream
 ```
 
 **When to use streaming:**
+
 - Tasks expected to take >10 seconds
 - Long-form content generation (guides, stories, reports)
 - Complex analysis (strategic insights, market research)
@@ -428,6 +472,7 @@ cat large-codebase.py | tech --stream
 - When you want to see progress in real-time
 
 ❌ **Skip streaming for:**
+
 ```bash
 # Quick queries (overhead not worth it)
 echo "Quick question" | tech
@@ -443,6 +488,7 @@ echo "query" | dispatcher --stream | grep pattern  # ⚠️ Buffering issues
 ```
 
 **Streaming vs. Non-Streaming:**
+
 ```bash
 # Without streaming (default)
 content "Guide topic"
@@ -457,6 +503,7 @@ content --stream "Guide topic"
 ```
 
 **Saving streamed output:**
+
 ```bash
 # Stream to terminal AND save to file simultaneously
 content --stream "Comprehensive guide" > guide.md
@@ -471,21 +518,24 @@ content --stream "Analysis for review only"
 ### Chaining Strategies
 
 ✅ **DO:**
+
 ```bash
 # Chain when output of one enhances input to next
-dhp-chain creative narrative copy -- "story idea"
+dhp-chain creative narrative aicopy -- "story idea"
 
 # Market research → positioning → content
 dhp-chain market brand content -- "AI tools for developers"
 ```
 
 **Good chaining combinations:**
+
 - `creative → narrative` (concept → structure)
 - `market → brand` (research → positioning)
 - `brand → content` (positioning → execution)
 - `tech → strategy` (debugging → process improvement)
 
 ❌ **DON'T:**
+
 - Chain unrelated dispatchers
 - Chain more than 3-4 (diminishing returns)
 - Chain when single dispatcher would suffice
@@ -495,6 +545,7 @@ dhp-chain market brand content -- "AI tools for developers"
 ### Save Important AI Outputs
 
 ✅ **DO:**
+
 ```bash
 # Project briefs
 dhp-project "New product launch" > ~/Documents/Briefs/product-launch-$(date +%Y%m%d).md
@@ -507,6 +558,7 @@ content "Guide topic" > ~/Documents/Outlines/guide-outline.md
 ```
 
 **Why save:**
+
 - Reference later without re-running (saves API costs)
 - Build a knowledge base
 - Track thinking over time
@@ -518,6 +570,7 @@ content "Guide topic" > ~/Documents/Outlines/guide-outline.md
 ### The Priority System
 
 ✅ **DO:**
+
 ```bash
 # Add tasks with natural priority
 todo add "Critical: Fix production bug"
@@ -533,6 +586,7 @@ next                # Just see #1
 ```
 
 **Priority signals:**
+
 - `Critical:` → Must do today
 - `Review:` → Depends on someone else
 - `Research:` → Can move if needed
@@ -543,6 +597,7 @@ next                # Just see #1
 ### The Daily Commit Pattern
 
 ✅ **DO:**
+
 ```bash
 # When you finish coding and task together
 todo commit 3
@@ -555,11 +610,13 @@ todo commit 3
 ```
 
 **When to use `todo commit`:**
+
 - Feature work tied to a task
 - Bug fixes from todo list
 - Clear 1:1 task-to-code mapping
 
 **When NOT to use:**
+
 - Multiple commits per task needed
 - Task not code-related
 - Experimental work
@@ -569,6 +626,7 @@ todo commit 3
 ### Delegation to AI
 
 ✅ **DO:**
+
 ```bash
 # Stuck on technical task?
 todo debug 1
@@ -581,6 +639,7 @@ todo delegate 5 content
 ```
 
 **Delegation guidelines:**
+
 - Delegate when stuck, not as first resort
 - Review AI output, don't blindly accept
 - Use as thought partner, not replacement
@@ -592,6 +651,7 @@ todo delegate 5 content
 ### The Journal Pyramid
 
 **Level 1: Quick Captures** (80% of entries)
+
 ```bash
 journal "Fixed authentication bug"
 journal "Good conversation with Alex about API design"
@@ -599,11 +659,13 @@ j "Feeling focused today"
 ```
 
 **Level 2: Contextual Notes** (15% of entries)
+
 ```bash
 journal "Debugging the auth flow. Issue is in token refresh logic. Need to check Redis expiration."
 ```
 
 **Level 3: Deep Thinking** (5% of entries)
+
 ```bash
 dump
 # Opens editor for long-form reflection
@@ -612,6 +674,7 @@ dump
 ```
 
 **Why this works:**
+
 - Low barrier to entry (quick captures)
 - Rich searchable context when needed
 - Deep thinking reserved for important moments
@@ -621,6 +684,7 @@ dump
 ### Search-Driven Knowledge
 
 ✅ **DO:**
+
 ```bash
 # Always search before asking others
 journal search "authentication"
@@ -635,6 +699,7 @@ journal search "Sarah" | grep "planning"
 ```
 
 **Make it searchable:**
+
 - Use full names (not "them")
 - Include project names
 - Use consistent terminology
@@ -645,6 +710,7 @@ journal search "Sarah" | grep "planning"
 ### The How-To Wiki
 
 ✅ **DO:**
+
 ```bash
 # After solving a complex problem
 howto add git-rebase-workflow
@@ -656,12 +722,14 @@ howto git-rebase-workflow
 ```
 
 **What belongs in how-to:**
+
 - Multi-step procedures
 - Things you google repeatedly
 - Gotchas and edge cases
 - Configuration steps
 
 **What doesn't:**
+
 - One-line commands (use aliases)
 - Common knowledge
 - Project-specific docs (those go in project READMEs)
@@ -675,6 +743,7 @@ howto git-rebase-workflow
 **Best Practice: Bookmark only frequently used locations**
 
 ✅ **DO:**
+
 ```bash
 # Bookmark your 5-7 most frequent locations
 g save dotfiles    # ~/dotfiles
@@ -684,6 +753,7 @@ g save work        # ~/work/main-project
 ```
 
 **Signs you have too many bookmarks:**
+
 - You can't remember what they all are
 - `g list` output is overwhelming
 - You rarely use most of them
@@ -695,6 +765,7 @@ g save work        # ~/work/main-project
 ### Let Usage Drive Suggestions
 
 ✅ **DO:**
+
 ```bash
 # Just navigate normally
 cd ~/projects/something
@@ -706,6 +777,7 @@ g suggest
 ```
 
 **Why this works:**
+
 - No manual maintenance
 - Adapts to changing patterns
 - Surfaces forgotten projects
@@ -715,6 +787,7 @@ g suggest
 ### On-Enter Hooks (Advanced)
 
 ✅ **DO:**
+
 ```bash
 # For frequently visited projects with consistent setup
 cd ~/projects/my-python-app
@@ -726,11 +799,13 @@ g myapp
 ```
 
 **Good uses for on-enter hooks:**
+
 - Activate virtual environments
 - Source project-specific aliases
 - Display project-specific reminders
 
 ❌ **DON'T:**
+
 - Use for long-running commands
 - Create complex multi-line hooks
 - Duplicate what's in your shell config
@@ -744,6 +819,7 @@ g myapp
 **Best Practice: Track consistently to find patterns**
 
 ✅ **DO:**
+
 ```bash
 # Morning and evening
 health energy 7
@@ -760,15 +836,19 @@ journal search "brain fog"
 ```
 
 **Patterns to watch for:**
+
 - Energy levels vs. tasks completed
 - Symptoms vs. time of day
 - Sleep quality vs. next-day productivity
+
+💡 **New in v2.1.0:** Run `correlate run health.txt todo_done.txt` options to statistically verify these patterns, or check the automated `daily-report` for insights.
 
 ---
 
 ### Medication Adherence
 
 ✅ **DO:**
+
 ```bash
 # Check schedule daily
 meds check
@@ -781,6 +861,7 @@ meds dashboard
 ```
 
 **Why this matters:**
+
 - Spot patterns in missed doses
 - Share accurate info with doctors
 - Accountability without judgment
@@ -790,6 +871,7 @@ meds dashboard
 ### Pre-Appointment Exports
 
 ✅ **DO:**
+
 ```bash
 # Before doctor visit
 health export > ~/Documents/health-export-$(date +%Y%m%d).txt
@@ -799,6 +881,7 @@ cat ~/Documents/health-export-*.txt | tail -100
 ```
 
 **What to include:**
+
 - Energy trends (30 days)
 - Symptom patterns
 - Medication adherence
@@ -813,6 +896,7 @@ cat ~/Documents/health-export-*.txt | tail -100
 **Symptom:** Not starting because "the system isn't perfect yet"
 
 ✅ **Fix:**
+
 ```bash
 # Just use the core loop for a week
 startday → todo → journal → goodevening
@@ -828,6 +912,7 @@ startday → todo → journal → goodevening
 **Symptom:** 50+ tasks, none getting done
 
 ✅ **Fix:**
+
 ```bash
 # Archive old tasks
 cp ~/.config/dotfiles-data/todo.txt ~/Documents/todo-archive-$(date +%Y%m%d).txt
@@ -846,6 +931,7 @@ next
 **Symptom:** Writing but never reading
 
 ✅ **Fix:**
+
 ```bash
 # Make searching habitual
 journal search "keyword"
@@ -866,6 +952,7 @@ Write → Search → Discover patterns → Write better
 **Symptom:** Calling AI for every little thing, or waiting for complete responses when streaming would give faster feedback
 
 ✅ **Fix:**
+
 ```bash
 # Use ai-suggest to guide usage
 ai-suggest
@@ -896,6 +983,7 @@ ai-suggest
 **Symptom:** Skipping validation errors or not noticing API errors
 
 ✅ **Fix:**
+
 ```bash
 # Run system check weekly
 dotfiles_check
@@ -926,6 +1014,7 @@ dotfiles_check
 **Combine features for compound benefits**
 
 ✅ **Example: Content Creation Stack**
+
 ```bash
 # 1. Research with AI (use streaming for long analysis)
 echo "SEO keywords for AI productivity" | market --stream > research.txt
@@ -940,7 +1029,7 @@ todo add "Write AI productivity guide"
 todo commit 1
 
 # 5. Promote (streaming for longer copy)
-cat outline.md | copy --stream > promotional-copy.txt
+cat outline.md | aicopy --stream > promotional-copy.txt
 ```
 
 ---
@@ -950,8 +1039,10 @@ cat outline.md | copy --stream > promotional-copy.txt
 **Create your own workflows**
 
 ✅ **Example: Weekly Review Automation**
+
 ```bash
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 # ~/dotfiles/scripts/weekly_ai_review.sh
 
 # Generate standard review
@@ -974,6 +1065,7 @@ echo "✅ Weekly AI review complete. Check ~/Documents/Reviews/"
 **When jumping between projects**
 
 ✅ **DO:**
+
 ```bash
 # Before switching
 journal "Stopping work on API feature. Next: Redis caching layer."
@@ -990,6 +1082,7 @@ focus "Complete Redis integration"
 ```
 
 **Why this works:**
+
 - Leaves breadcrumbs
 - Restores context quickly
 - Maintains momentum
@@ -1001,12 +1094,14 @@ focus "Complete Redis integration"
 ### When to Customize
 
 ✅ **Customize when:**
+
 - You've used the default for 2+ weeks
 - You have a clear, repeated friction point
 - You know exactly what you want different
 - The change will save time/reduce cognitive load
 
 ❌ **Don't customize when:**
+
 - You're still learning the system
 - "Just to see if I can"
 - Without understanding the default behavior
@@ -1017,6 +1112,7 @@ focus "Complete Redis integration"
 ### How to Customize Safely
 
 ✅ **DO:**
+
 ```bash
 # 1. Create a branch
 cd ~/dotfiles
@@ -1040,12 +1136,14 @@ git merge custom/my-feature
 ### Customization Ideas
 
 **Safe customizations:**
+
 - New aliases for your frequent commands
 - Custom on-enter hooks for projects
 - Additional how-to templates
 - Project-specific g bookmarks
 
 **Advanced customizations:**
+
 - New dispatcher scripts (follow template in bin/README.md)
 - Enhanced validation in dotfiles_check
 - Custom weekly review sections
@@ -1060,6 +1158,7 @@ git merge custom/my-feature
 **3 copies, 2 different media, 1 offsite**
 
 ✅ **DO:**
+
 ```bash
 # Copy 1: Live data
 ~/.config/dotfiles-data/
@@ -1077,6 +1176,7 @@ git merge custom/my-feature
 ### What to Backup
 
 **Critical (automatic via goodevening):**
+
 - `journal.txt`
 - `todo.txt` & `todo_done.txt`
 - `health.txt`
@@ -1084,6 +1184,7 @@ git merge custom/my-feature
 - `daily_focus.txt`
 
 **Nice to have (manual):**
+
 - Your customizations in `~/dotfiles/`
 - Weekly review markdowns
 - How-to wiki entries
@@ -1094,6 +1195,7 @@ git merge custom/my-feature
 ### Recovery Testing
 
 ✅ **DO:**
+
 ```bash
 # Test recovery once a quarter
 # 1. Note current state
@@ -1111,6 +1213,7 @@ journal search "test"
 ```
 
 **Why test:**
+
 - Backups are worthless if they don't restore
 - Identifies missing backup items
 - Builds confidence in the system
@@ -1122,6 +1225,7 @@ journal search "test"
 **After reading this guide, implement these first:**
 
 ### Week 1
+
 - [ ] Run `startday` every morning (automatic)
 - [ ] Set daily focus with `focus "..."`
 - [ ] Add tasks with `todo add`
@@ -1129,24 +1233,28 @@ journal search "test"
 - [ ] Run `goodevening` before closing laptop
 
 ### Week 2
+
 - [ ] Create 3-5 `g save` bookmarks for frequent locations
 - [ ] Try `ai-suggest` when unsure what to do
 - [ ] Use `next` instead of `todo list` when overwhelmed
 - [ ] Run `journal search` to find something from last week
 
 ### Week 3
+
 - [ ] Use one AI dispatcher (tech, strategy, or stoic)
 - [ ] Track energy levels 3x this week with `health energy`
 - [ ] Try `dump` for long-form reflection
 - [ ] Run `weekreview --file`
 
 ### Week 4
+
 - [ ] Set up automated weekly review with `setup_weekly_review`
 - [ ] Create one how-to guide with `howto add`
 - [ ] Try `todo commit` for git workflow
 - [ ] Experiment with context injection: `content --context`
 
 ### Ongoing
+
 - [ ] Run `dotfiles_check` weekly
 - [ ] Review `health dashboard` monthly
 - [ ] Prune bookmarks quarterly (automatic via `g prune --auto`)
@@ -1229,10 +1337,20 @@ systemlog | grep "feature-name"
 ## Additional Resources
 
 - **Daily Workflow:** `~/dotfiles/docs/happy-path.md`
-- **AI Examples:** `~/dotfiles/docs/ai-examples.md`
+- **AI Quick Reference:** `~/dotfiles/docs/ai-quick-reference.md`
 - **System Overview:** `~/dotfiles/README.md`
 - **Technical Docs:** `~/dotfiles/bin/README.md`
 - **Clipboard Workflows:** `~/dotfiles/docs/clipboard.md`
+
+---
+
+## Related Docs
+
+- [Start Here](start-here.md)
+- [Happy Path](happy-path.md)
+- [System Overview](system-overview.md)
+- [AI Quick Reference](ai-quick-reference.md)
+- [Troubleshooting](../TROUBLESHOOTING.md)
 
 ---
 

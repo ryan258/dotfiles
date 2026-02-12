@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
@@ -6,7 +6,7 @@ DISPATCHER_BIN="$DOTFILES_DIR/bin"
 SQUADS_FILE="${DHP_SQUADS_FILE:-$DOTFILES_DIR/ai-staff-hq/squads.json}"
 
 print_usage() {
-    echo "Usage: dispatch <squad> [--stream] [--temperature X] [--max-tokens N]" >&2
+    echo "Usage: dispatch <squad> [--stream] [--temperature X]" >&2
     echo "       cat file | dispatch <squad> [flags]" >&2
     exit 1
 }
@@ -15,7 +15,7 @@ if [ $# -lt 1 ]; then
     print_usage
 fi
 
-TARGET="$1"
+TARGET="${1:-}"
 shift
 
 if [ -x "$DISPATCHER_BIN/dhp-$TARGET.sh" ]; then

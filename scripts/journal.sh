@@ -1,28 +1,46 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # --- A quick command-line journal ---
 
-JOURNAL_FILE="$HOME/.config/dotfiles-data/journal.txt"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+require_lib "date_utils.sh"
+require_lib "config.sh"
+
+JOURNAL_FILE="${JOURNAL_FILE:?JOURNAL_FILE is not set by config.sh}"
+
+# Ensure journal file exists
+touch "$JOURNAL_FILE"
+
+# Cleanup
+cleanup() {
+    # Placeholder for future temp file cleanup
+    :
+}
+trap cleanup EXIT
 
 # --- Main Logic ---
+
 case "${1:-add}" in
   add)
     # Add a new journal entry.
-    shift # Removes 'add' from the arguments
+    if [ $# -gt 0 ]; then shift; fi # Removes 'add' if present
     ENTRY="$*"
     if [ -z "$ENTRY" ]; then
-        echo "Usage: journal <text>"
-        exit 1
+        echo "Usage: $(basename "$0") <text>" >&2
+        log_error "Missing journal entry text"
+        exit "$EXIT_INVALID_ARGS"
     fi
     TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
-    printf '[%s] %s\n' "$TIMESTAMP" "$ENTRY" >> "$JOURNAL_FILE"
+    ENTRY=$(sanitize_for_storage "$ENTRY")
+    printf '%s|%s\n' "$TIMESTAMP" "$ENTRY" >> "$JOURNAL_FILE"
     echo "Entry added to journal."
     ;;
 
   list)
     # List the last 5 entries.
-    if [ -f "$JOURNAL_FILE" ]; then
+    if [[ -s "$JOURNAL_FILE" ]]; then
         echo "--- Last 5 Journal Entries ---"
         tail -n 5 "$JOURNAL_FILE"
     else
@@ -51,12 +69,13 @@ case "${1:-add}" in
     done
 
     if [ $# -eq 0 ]; then
-        echo "Usage: journal search [--recent|--oldest] <term>"
-        exit 1
+        echo "Usage: $(basename "$0") search [--recent|--oldest] <term>" >&2
+        log_error "Missing search term"
+        exit "$EXIT_INVALID_ARGS"
     fi
 
-    if [ ! -f "$JOURNAL_FILE" ]; then
-        echo "Journal is empty. Add entries with: journal \"text\""
+    if [[ ! -s "$JOURNAL_FILE" ]]; then
+        echo "Journal is empty. Add entries with: $(basename "$0") \"text\""
         exit 0
     fi
 
@@ -95,12 +114,12 @@ case "${1:-add}" in
     echo ""
 
     # Get entries from last 7 days
-    SEVEN_DAYS_AGO=$(date -v-7d "+%Y-%m-%d")
-    RECENT_ENTRIES=$(awk -v cutoff="$SEVEN_DAYS_AGO" '$0 ~ /^\[/ { if ($1 >= "["cutoff) print }' "$JOURNAL_FILE")
+    SEVEN_DAYS_AGO=$(date_shift_days -7 "%Y-%m-%d")
+    RECENT_ENTRIES=$(awk -F'|' -v cutoff="$SEVEN_DAYS_AGO" 'NF>=2 { if (substr($1,1,10) >= cutoff) print }' "$JOURNAL_FILE")
 
     if [ -z "$RECENT_ENTRIES" ]; then
         echo "No journal entries found in the last 7 days."
-        echo "Add entries with: journal 'your thoughts here'"
+        echo "Add entries with: $(basename "$0") 'your thoughts here'"
         exit 0
     fi
 
@@ -119,9 +138,7 @@ case "${1:-add}" in
             echo "$RECENT_ENTRIES"
         } | dhp-strategy.sh
     else
-        echo "Error: dhp-strategy.sh dispatcher not found"
-        echo "Make sure bin/ is in your PATH"
-        exit 1
+        die "dhp-strategy.sh dispatcher not found. Make sure bin/ is in your PATH" "$EXIT_FILE_NOT_FOUND"
     fi
 
     echo ""
@@ -136,8 +153,8 @@ case "${1:-add}" in
     echo ""
 
     # Get entries from last 14 days
-    FOURTEEN_DAYS_AGO=$(date -v-14d "+%Y-%m-%d")
-    RECENT_ENTRIES=$(awk -v cutoff="$FOURTEEN_DAYS_AGO" '$0 ~ /^\[/ { if ($1 >= "["cutoff) print }' "$JOURNAL_FILE")
+    FOURTEEN_DAYS_AGO=$(date_shift_days -14 "%Y-%m-%d")
+    RECENT_ENTRIES=$(awk -F'|' -v cutoff="$FOURTEEN_DAYS_AGO" 'NF>=2 { if (substr($1,1,10) >= cutoff) print }' "$JOURNAL_FILE")
 
     if [ -z "$RECENT_ENTRIES" ]; then
         echo "No journal entries found in the last 14 days."
@@ -159,8 +176,7 @@ case "${1:-add}" in
             echo "$RECENT_ENTRIES"
         } | dhp-strategy.sh
     else
-        echo "Error: dhp-strategy.sh dispatcher not found"
-        exit 1
+        die "dhp-strategy.sh dispatcher not found. Make sure bin/ is in your PATH" "$EXIT_FILE_NOT_FOUND"
     fi
 
     echo ""
@@ -175,8 +191,8 @@ case "${1:-add}" in
     echo ""
 
     # Get entries from last 30 days
-    THIRTY_DAYS_AGO=$(date -v-30d "+%Y-%m-%d")
-    RECENT_ENTRIES=$(awk -v cutoff="$THIRTY_DAYS_AGO" '$0 ~ /^\[/ { if ($1 >= "["cutoff) print }' "$JOURNAL_FILE")
+    THIRTY_DAYS_AGO=$(date_shift_days -30 "%Y-%m-%d")
+    RECENT_ENTRIES=$(awk -F'|' -v cutoff="$THIRTY_DAYS_AGO" 'NF>=2 { if (substr($1,1,10) >= cutoff) print }' "$JOURNAL_FILE")
 
     if [ -z "$RECENT_ENTRIES" ]; then
         echo "No journal entries found in the last 30 days."
@@ -198,21 +214,33 @@ case "${1:-add}" in
             echo "$RECENT_ENTRIES"
         } | dhp-strategy.sh
     else
-        echo "Error: dhp-strategy.sh dispatcher not found"
-        exit 1
+        die "dhp-strategy.sh dispatcher not found. Make sure bin/ is in your PATH" "$EXIT_FILE_NOT_FOUND"
     fi
 
     echo ""
     echo "✅ Theme analysis complete"
     ;;
 
+  up|update)
+    # Open the journal file in the editor
+    if command -v code >/dev/null 2>&1; then
+        code "$JOURNAL_FILE"
+    elif [ -n "${EDITOR:-}" ]; then
+        "$EDITOR" "$JOURNAL_FILE"
+    else
+        open "$JOURNAL_FILE"
+    fi
+    echo "Opening journal file..."
+    ;;
+
   *)
     echo "Error: Unknown command '$1'" >&2
-    echo "Usage: journal <text>"
-    echo "   or: journal {list|search|onthisday|analyze|mood|themes}"
+    echo "Usage: $(basename "$0") <text>"
+    echo "   or: $(basename "$0") {up|list|search|onthisday|analyze|mood|themes}"
     echo ""
     echo "Standard commands:"
     echo "  journal <text>              : Add a quick journal entry"
+    echo "  up                          : Open journal file in editor"
     echo "  list                        : Show last 5 entries"
     echo "  search [--recent] <term>    : Search for a term in journal"
     echo "  onthisday                   : Show entries from this day in past years"
@@ -221,6 +249,7 @@ case "${1:-add}" in
     echo "  analyze                     : AI analysis of last 7 days (insights & patterns)"
     echo "  mood                        : AI sentiment analysis of last 14 days"
     echo "  themes                      : AI theme extraction from last 30 days"
-    exit 1
+    log_error "Unknown journal command '$1'"
+    exit "$EXIT_INVALID_ARGS"
     ;;
 esac

@@ -1,0 +1,46 @@
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "title": "Test Conversation",
+    "create_time": 1672531200.0,
+    "current_node": "node3",
+    "mapping": {
+      "node1": {
+        "id": "node1",
+        "parent": null,
+        "message": {
+          "id": "msg1",
+          "author": { "role": "user" },
+          "create_time": 1672531200.0,
+          "content": {
+            "content_type": "text",
+            "parts": ["How do I run a python script?"]
+          }
+        }
+      },
+      "node2": {
+        "id": "node2",
+        "parent": "node1",
+        "message": {
+          "id": "msg2",
+          "author": { "role": "assistant" },
+          "create_time": 1672531210.0,
+          "content": {
+            "content_type": "text",
+            "parts": ["You run it with `python script.py`."]
+          }
+        }
+      },
+      "node3": {
+        "id": "node3",
+        "parent": "node2",
+        "message": {
+          "id": "msg3",
+          "author": { "role": "user" },
+          "create_time": 1672531220.0,
+          "content": { "content_type": "text", "parts": ["Thanks!"] }
+        }
+      }
+    }
+  }
+]

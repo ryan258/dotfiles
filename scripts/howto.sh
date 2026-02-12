@@ -1,42 +1,94 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # --- howto.sh: A personal, searchable how-to wiki ---
 
-HOWTO_DIR="$HOME/.config/dotfiles-data/how-to"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$SCRIPT_DIR/lib/common.sh"
+fi
+if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$SCRIPT_DIR/lib/config.sh"
+else
+  echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh" >&2
+  exit 1
+fi
+
+HOWTO_DIR="${HOWTO_DIR:?HOWTO_DIR is not set by config.sh}"
+HOWTO_DIR=$(validate_path "$HOWTO_DIR") || exit 1
 mkdir -p "$HOWTO_DIR"
+
+validate_howto_name() {
+  local name="$1"
+  if [[ -z "$name" ]]; then
+    echo "Error: Name is required." >&2
+    exit 1
+  fi
+  if ! [[ "$name" =~ ^[A-Za-z0-9._-]+$ ]]; then
+    echo "Error: Name can only contain letters, numbers, '.', '_' and '-'." >&2
+    exit 1
+  fi
+}
 
 case "${1:-list}" in
   add)
-    if [ -z "$2" ]; then
+    if [ -z "${2:-}" ]; then
       echo "Usage: howto add <name>"
       exit 1
     fi
     if [ -z "${EDITOR:-}" ]; then
-        echo "Error: EDITOR environment variable is not set."
+        echo "Error: EDITOR environment variable is not set." >&2
         exit 1
     fi
-    "$EDITOR" "$HOWTO_DIR/$2.txt"
+    name=$(sanitize_input "$2")
+    name=${name//$'\n'/ }
+    validate_howto_name "$name"
+    file_path="$HOWTO_DIR/$name.txt"
+    file_path=$(validate_path "$file_path") || exit 1
+    if [[ "$file_path" != "$HOWTO_DIR/"* ]]; then
+      echo "Error: Invalid file path." >&2
+      exit 1
+    fi
+    "$EDITOR" "$file_path"
     ;;
 
   search)
-    if [ -z "$2" ]; then
+    if [ -z "${2:-}" ]; then
       echo "Usage: howto search <term>"
       exit 1
     fi
-    grep -i -r "$2" "$HOWTO_DIR"
+    term=$(sanitize_input "$2")
+    term=${term//$'\n'/ }
+    grep -i -r -- "$term" "$HOWTO_DIR"
     ;;
 
   list)
     echo "--- How-To Articles (most recent first) ---"
-    ls -t "$HOWTO_DIR" | sed 's/\.txt$//'
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        find "$HOWTO_DIR" -maxdepth 1 -type f -name "*.txt" -exec stat -f '%m %N' {} \; | sort -rn | cut -d' ' -f2- | sed 's/\.txt$//' | sed 's#.*/##'
+    else
+        # Linux
+        find "$HOWTO_DIR" -maxdepth 1 -type f -name "*.txt" -printf '%T@ %f\n' | sort -rn | cut -d' ' -f2- | sed 's/\.txt$//'
+    fi
     ;;
 
   *)
-    if [ -f "$HOWTO_DIR/$1.txt" ]; then
-      cat "$HOWTO_DIR/$1.txt"
+    name=$(sanitize_input "$1")
+    name=${name//$'\n'/ }
+    validate_howto_name "$name"
+    file_path="$HOWTO_DIR/$name.txt"
+    file_path=$(validate_path "$file_path") || exit 1
+    if [[ "$file_path" != "$HOWTO_DIR/"* ]]; then
+      echo "Error: Invalid file path." >&2
+      exit 1
+    fi
+    if [ -f "$file_path" ]; then
+      cat "$file_path"
     else
-      echo "Error: How-to '$1' not found."
+      echo "Error: How-to '$1' not found." >&2
       exit 1
     fi
     ;;

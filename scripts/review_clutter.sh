@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # --- review_clutter.sh: Interactive clutter review for Desktop and Downloads ---

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # battery_check.sh - macOS battery monitoring with suggestions
 set -euo pipefail
 

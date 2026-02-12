@@ -1,8 +1,24 @@
-#!/bin/bash
-# projects.sh - Find and recall forgotten projects from GitHub.
+#!/usr/bin/env bash
+# gh-projects.sh - Find and recall forgotten projects from GitHub.
 set -euo pipefail
 
-HELPER_SCRIPT="$HOME/dotfiles/scripts/github_helper.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/common.sh"
+else
+    echo "Error: common utilities not found at $SCRIPT_DIR/lib/common.sh" >&2
+    exit 1
+fi
+if [ -f "$SCRIPT_DIR/lib/date_utils.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/date_utils.sh"
+else
+    die "date utilities not found at $SCRIPT_DIR/lib/date_utils.sh" "$EXIT_FILE_NOT_FOUND"
+fi
+
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+HELPER_SCRIPT="$DOTFILES_DIR/scripts/github_helper.sh"
 
 if [ ! -x "$HELPER_SCRIPT" ]; then
     echo "Error: GitHub helper script not found or not executable." >&2
@@ -13,7 +29,8 @@ fi
 function forgotten() {
     echo "🗂️  PROJECTS NOT TOUCHED IN 60+ DAYS (on GitHub):"
     
-    NOW=$(date +%s)
+    local now
+    now=$(date_epoch_now)
     
     # Call helper to get repos, then parse with jq
     "$HELPER_SCRIPT" list_repos | jq -c '.[] | {name: .name, pushed_at: .pushed_at}' | while read -r repo_json; do
@@ -22,9 +39,13 @@ function forgotten() {
         pushed_at_str=$(echo "$repo_json" | jq -r '.pushed_at')
         
         # Convert pushed_at (ISO 8601) to epoch seconds
-        pushed_at_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$pushed_at_str" +%s 2>/dev/null || continue)
+        pushed_at_epoch=$(timestamp_to_epoch "$pushed_at_str")
+        [ -z "$pushed_at_epoch" ] && continue
+        if [ "$pushed_at_epoch" -le 0 ]; then
+            continue
+        fi
         
-        DAYS_AGO=$(( (NOW - pushed_at_epoch) / 86400 ))
+        DAYS_AGO=$(( (now - pushed_at_epoch) / 86400 ))
         
         if [ "$DAYS_AGO" -ge 60 ]; then
             echo "  • $repo_name ($DAYS_AGO days ago)"
@@ -37,12 +58,17 @@ function forgotten() {
 
 # --- Subcommand: recall ---
 function recall() {
-    if [ -z "$1" ]; then
+    if [ -z "${1:-}" ]; then
         echo "Usage: projects recall <project_name>"
         return
     fi
     
-    PROJECT_NAME="$1"
+    PROJECT_NAME=$(sanitize_input "$1")
+    PROJECT_NAME=${PROJECT_NAME//$'\n'/ }
+    if ! [[ "$PROJECT_NAME" =~ ^[A-Za-z0-9._-]+$ ]]; then
+        echo "Error: Project name contains invalid characters." >&2
+        return 1
+    fi
     
     echo "📦 Project: $PROJECT_NAME"
     
@@ -53,10 +79,14 @@ function recall() {
         return
     fi
 
+    local now
+    now=$(date_epoch_now)
     pushed_at_str=$(echo "$repo_details" | jq -r '.pushed_at')
-    pushed_at_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$pushed_at_str" +%s 2>/dev/null || echo "$NOW")
-    NOW=$(date +%s)
-    DAYS_AGO=$(( (NOW - pushed_at_epoch) / 86400 ))
+    pushed_at_epoch=$(timestamp_to_epoch "$pushed_at_str")
+    if [ "$pushed_at_epoch" -le 0 ]; then
+        pushed_at_epoch="$now"
+    fi
+    DAYS_AGO=$(( (now - pushed_at_epoch) / 86400 ))
     echo "Last push: $DAYS_AGO days ago"
 
     # Get latest commit
@@ -76,7 +106,9 @@ function recall() {
 }
 
 # --- Main Logic ---
-case "$1" in
+COMMAND="${1:-}"
+
+case "$COMMAND" in
     forgotten)
         forgotten
         ;;
@@ -86,5 +118,6 @@ case "$1" in
         ;;
     *)
         echo "Usage: projects {forgotten|recall <name>}"
+        exit 1
         ;;
 esac

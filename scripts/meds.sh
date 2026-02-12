@@ -1,33 +1,139 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 # meds.sh - Medication tracking and reminder system
 
-SYSTEM_LOG_FILE="$HOME/.config/dotfiles-data/system.log"
-MEDS_FILE="$HOME/.config/dotfiles-data/medications.txt"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
+if [ -f "$DATE_UTILS" ]; then
+    # shellcheck disable=SC1090
+    source "$DATE_UTILS"
+else
+    echo "Error: date utilities not found at $DATE_UTILS" >&2
+    exit 1
+fi
 
-case "$1" in
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/common.sh"
+else
+    echo "Error: common utilities not found at $SCRIPT_DIR/lib/common.sh" >&2
+    exit 1
+fi
+if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/config.sh"
+else
+    echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh" >&2
+    exit 1
+fi
+
+MEDS_FILE="${MEDS_FILE:?MEDS_FILE is not set by config.sh}"
+SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:-$SYSTEM_LOG}"
+
+sanitize_line() {
+    local value
+    value=$(sanitize_input "$1")
+    value=${value//$'\n'/ }
+    printf '%s' "$value"
+}
+
+ensure_meds_dir() {
+    mkdir -p "$(dirname "$MEDS_FILE")"
+}
+
+get_meds_today() {
+    echo "${MEDS_TODAY_OVERRIDE:-$(date_today)}"
+}
+
+get_meds_current_hour() {
+    echo "${MEDS_CURRENT_HOUR_OVERRIDE:-$(date_hour_24)}"
+}
+
+dose_taken_for_slot() {
+    local med_name="$1"
+    local time_slot="$2"
+    local today="$3"
+
+    if [ ! -f "$MEDS_FILE" ]; then
+        return 1
+    fi
+
+    awk -F'|' -v today="$today" -v med="$med_name" -v slot="$time_slot" '
+        function hour_from_ts(ts) { return substr(ts, 12, 2) + 0 }
+        $1 == "DOSE" && $2 ~ "^" today {
+            if ($3 != med) next
+            if (NF >= 4 && $4 == slot) { found=1; exit }
+            h = hour_from_ts($2)
+            if (slot == "morning" && h >= 6 && h < 12) { found=1; exit }
+            if (slot == "afternoon" && h >= 12 && h < 18) { found=1; exit }
+            if (slot == "evening" && h >= 18 && h < 21) { found=1; exit }
+            if (slot == "night" && (h >= 21 || h < 6)) { found=1; exit }
+            if (slot ~ /^[0-9]{1,2}:[0-9]{2}$/) {
+                split(slot, parts, ":")
+                target_h = parts[1] + 0
+                if (h == target_h) { found=1; exit }
+            }
+        }
+        END { exit(found ? 0 : 1) }
+    ' "$MEDS_FILE"
+}
+
+COMMAND="${1:-}"
+
+case "$COMMAND" in
     add)
-        if [ -z "$2" ] || [ -z "$3" ]; then
+        if [ -z "${2:-}" ] || [ -z "${3:-}" ]; then
             echo "Usage: meds add \"medication name\" \"dosage schedule\""
             echo "Example: meds add \"Medication X\" \"morning,evening\""
             echo "Example: meds add \"Medication Y\" \"8:00,20:00\""
             exit 1
         fi
-        med_name="$2"
-        schedule="$3"
+        med_name=$(sanitize_line "$2")
+        schedule=$(sanitize_line "$3")
+        ensure_meds_dir
         echo "MED|$med_name|$schedule" >> "$MEDS_FILE"
         echo "Added medication: $med_name ($schedule)"
         ;;
 
+    refill)
+        if [ -z "${2:-}" ] || [ -z "${3:-}" ]; then
+            echo "Usage: meds refill \"medication name\" \"YYYY-MM-DD\""
+            echo "Example: meds refill \"Medication X\" \"2025-12-01\""
+            exit 1
+        fi
+        med_name=$(sanitize_line "$2")
+        refill_date=$(sanitize_line "$3")
+        # Validate date format
+        if ! validate_date_ymd "$refill_date" "refill date" >/dev/null 2>&1; then
+            echo "Error: Date must be YYYY-MM-DD" >&2
+            exit 1
+        fi
+        # Remove existing refill entry for this med if exists (to update it)
+        # We use a temp file approach
+        if [ -f "$MEDS_FILE" ]; then
+            awk -F'|' -v med="$med_name" '!($1=="REFILL" && $2==med)' "$MEDS_FILE" > "${MEDS_FILE}.tmp" || true
+            mv "${MEDS_FILE}.tmp" "$MEDS_FILE"
+        fi
+        ensure_meds_dir
+        echo "REFILL|$med_name|$refill_date" >> "$MEDS_FILE"
+        echo "✅ Set refill date for $med_name: $refill_date"
+        ;;
+
     log)
-        if [ -z "$2" ]; then
-            echo "Usage: meds log \"medication name\""
+        if [ -z "${2:-}" ]; then
+            echo "Usage: meds log \"medication name\" [time_slot]"
             echo "Logs that you took the medication right now"
             exit 1
         fi
-        med_name="$2"
-        timestamp=$(date '+%Y-%m-%d %H:%M')
-        echo "DOSE|$timestamp|$med_name" >> "$MEDS_FILE"
+        med_name=$(sanitize_line "$2")
+        time_slot=$(sanitize_line "${3:-}")
+        timestamp=$(date_now '%Y-%m-%d %H:%M')
+        ensure_meds_dir
+        if [ -n "$time_slot" ]; then
+            echo "DOSE|$timestamp|$med_name|$time_slot" >> "$MEDS_FILE"
+        else
+            echo "DOSE|$timestamp|$med_name" >> "$MEDS_FILE"
+        fi
         echo "✅ Logged: $med_name at $timestamp"
         ;;
 
@@ -40,11 +146,11 @@ case "$1" in
         echo "💊 CURRENT MEDICATIONS:"
         grep "^MED|" "$MEDS_FILE" 2>/dev/null | while IFS='|' read -r type med_name schedule; do
             echo "  • $med_name - Schedule: $schedule"
-        done
+        done || true
 
         echo ""
         echo "📅 RECENT DOSES (last 7 days):"
-        cutoff=$(date -v-7d '+%Y-%m-%d')
+        cutoff=$(date_shift_days -7 "%Y-%m-%d")
         grep "^DOSE|" "$MEDS_FILE" 2>/dev/null | awk -F'|' -v cutoff="$cutoff" '
             $2 >= cutoff {
                 printf "  • %s: %s\n", $2, $3
@@ -59,13 +165,13 @@ case "$1" in
         fi
 
         echo "💊 MEDICATION CHECK:"
-        today=$(date '+%Y-%m-%d')
-        current_hour=$(date '+%H')
+        today=$(get_meds_today)
+        current_hour=$(get_meds_current_hour)
 
         all_taken=true
 
         # Check each medication
-        grep "^MED|" "$MEDS_FILE" 2>/dev/null | while IFS='|' read -r type med_name schedule; do
+        while IFS='|' read -r type med_name schedule; do
             # Parse schedule (could be "morning,evening" or "8:00,20:00")
             IFS=',' read -ra times <<< "$schedule"
 
@@ -95,9 +201,7 @@ case "$1" in
 
                 if [ "$should_take" = true ]; then
                     # Check if taken today
-                    taken=$(grep "^DOSE|$today.*|$med_name" "$MEDS_FILE" 2>/dev/null | grep -c "$time_slot" || echo "0")
-
-                    if [ "$taken" -eq 0 ]; then
+                    if ! dose_taken_for_slot "$med_name" "$time_slot" "$today"; then
                         echo "  ⚠️  $med_name ($time_slot) - NOT TAKEN YET"
                         all_taken=false
                     else
@@ -105,11 +209,34 @@ case "$1" in
                     fi
                 fi
             done
-        done
+        done < <(grep "^MED|" "$MEDS_FILE" 2>/dev/null || true)
 
         if [ "$all_taken" = true ]; then
             echo "  ✅ All scheduled medications taken for now"
         fi
+        ;;
+
+    check-refill)
+        if [ ! -f "$MEDS_FILE" ] || [ ! -s "$MEDS_FILE" ]; then
+            exit 0
+        fi
+
+        # Check for refills due within 7 days
+        current_epoch=$(date_epoch_now)
+        warning_epoch=$(date_shift_days 7 "%s")
+        
+        grep "^REFILL|" "$MEDS_FILE" 2>/dev/null | while IFS='|' read -r type med_name refill_date; do
+            refill_epoch=$(timestamp_to_epoch "$refill_date")
+            if [ "$refill_epoch" -le "$warning_epoch" ]; then
+                 # Calculate days remaining
+                 days_left=$(( ( refill_epoch - current_epoch ) / 86400 ))
+                 if [ "$days_left" -lt 0 ]; then
+                     echo "  ⚠️  REFILL OVERDUE: $med_name (was due $refill_date)"
+                 else
+                     echo "  ⚠️  Refill due soon: $med_name (in $days_left days, on $refill_date)"
+                 fi
+            fi
+        done || true
         ;;
 
     history)
@@ -118,7 +245,7 @@ case "$1" in
             exit 0
         fi
 
-        med_name="${2:-}"
+        med_name=$(sanitize_line "${2:-}")
         days="${3:-7}"
 
         echo "📊 MEDICATION HISTORY:"
@@ -129,17 +256,17 @@ case "$1" in
         fi
         echo ""
 
-        cutoff=$(date -v-${days}d '+%Y-%m-%d')
+        cutoff=$(date_shift_days "-${days}" "%Y-%m-%d")
 
         if [ -n "$med_name" ]; then
-            grep "^DOSE|" "$MEDS_FILE" 2>/dev/null | grep "$med_name" | awk -F'|' -v cutoff="$cutoff" '
-                $2 >= cutoff {
+            awk -F'|' -v cutoff="$cutoff" -v med="$med_name" '
+                $1=="DOSE" && $2 >= cutoff && $3 == med {
                     printf "%s: %s\n", $2, $3
                 }
             ' | sort || echo "No doses logged for $med_name"
         else
-            grep "^DOSE|" "$MEDS_FILE" 2>/dev/null | awk -F'|' -v cutoff="$cutoff" '
-                $2 >= cutoff {
+            awk -F'|' -v cutoff="$cutoff" '
+                $1=="DOSE" && $2 >= cutoff {
                     printf "%s: %s\n", $2, $3
                 }
             ' | sort || echo "No doses logged"
@@ -152,8 +279,7 @@ case "$1" in
 
         # --- Configuration ---
         DAYS_AGO=30
-        CUTOFF_DATE=$(date -v-${DAYS_AGO}d '+%Y-%m-%d')
-        MEDS_FILE="$HOME/.config/dotfiles-data/medications.txt"
+        CUTOFF_DATE=$(date_shift_days "-$DAYS_AGO" "%Y-%m-%d")
 
         if [ ! -f "$MEDS_FILE" ]; then
             echo "Medications file not found."
@@ -167,16 +293,17 @@ case "$1" in
 
         # --- Calculations ---
         # Get all medications
-        MEDS=$(grep "^MED|" "$MEDS_FILE" | cut -d'|' -f2)
+        MEDS=$(awk -F'|' '$1=="MED" {print $2}' "$MEDS_FILE")
 
         if [ -z "$MEDS" ]; then
             echo "No medications configured."
             exit 0
         fi
 
-        for med in $MEDS; do
+        while IFS= read -r med; do
+            [ -z "$med" ] && continue
             # Get schedule for the med
-            SCHEDULE=$(grep "^MED|$med|" "$MEDS_FILE" | cut -d'|' -f3)
+            SCHEDULE=$(awk -F'|' -v med="$med" '$1=="MED" && $2==med {print $3; exit}' "$MEDS_FILE")
             DOSES_PER_DAY=$(echo "$SCHEDULE" | tr ',' '\n' | wc -l | tr -d ' ')
 
             # Calculate expected doses
@@ -192,17 +319,17 @@ case "$1" in
             else
                 echo "• $med: N/A (no schedule found)"
             fi
-        done
+        done <<< "$MEDS"
         ;;
 
     remove)
-        if [ -z "$2" ]; then
+        if [ -z "${2:-}" ]; then
             echo "Usage: meds remove \"medication name\""
             grep "^MED|" "$MEDS_FILE" 2>/dev/null | cut -d'|' -f2 | sed 's/^/  • /' || echo "No medications to remove"
             exit 1
         fi
-        med_name="$2"
-        grep -v "^MED|$med_name|" "$MEDS_FILE" > "${MEDS_FILE}.tmp" && mv "${MEDS_FILE}.tmp" "$MEDS_FILE"
+        med_name=$(sanitize_line "$2")
+        awk -F'|' -v med="$med_name" '!($1=="MED" && $2==med)' "$MEDS_FILE" > "${MEDS_FILE}.tmp" && mv "${MEDS_FILE}.tmp" "$MEDS_FILE"
         echo "Removed medication: $med_name"
         ;;
 
@@ -212,13 +339,13 @@ case "$1" in
             exit 0
         fi
 
-        today=$(date '+%Y-%m-%d')
-        current_hour=$(date '+%H')
+        today=$(get_meds_today)
+        current_hour=$(get_meds_current_hour)
 
         # Check for any overdue medications
         overdue_found=false
 
-        grep "^MED|" "$MEDS_FILE" 2>/dev/null | while IFS='|' read -r type med_name schedule; do
+        while IFS='|' read -r type med_name schedule; do
             IFS=',' read -ra times <<< "$schedule"
 
             for time_slot in "${times[@]}"; do
@@ -236,9 +363,7 @@ case "$1" in
                 esac
 
                 if [ "$should_take" = true ]; then
-                    taken=$(grep -c "^DOSE|$today.*|$med_name" "$MEDS_FILE" 2>/dev/null || echo "0")
-
-                    if [ "$taken" -eq 0 ]; then
+                    if ! dose_taken_for_slot "$med_name" "$time_slot" "$today"; then
                         # Send notification
                         echo "$(date): meds.sh - Sending reminder for $med_name ($time_slot)." >> "$SYSTEM_LOG_FILE"
                         osascript -e "display notification \"Time to take: $med_name ($time_slot)\" with title \"💊 Medication Reminder\""
@@ -246,12 +371,12 @@ case "$1" in
                     fi
                 fi
             done
-        done
+        done < <(grep "^MED|" "$MEDS_FILE" 2>/dev/null || true)
         ;;
 
     *)
-        echo "Error: Unknown command '$1'" >&2
-        echo "Usage: meds [add|log|list|check|history|dashboard|remove|remind]"
+        echo "Error: Unknown command '$COMMAND'" >&2
+        echo "Usage: meds [add|refill|log|list|check|check-refill|history|dashboard|remove|remind]"
         echo ""
         echo "Setup:"
         echo "  meds add \"medication name\" \"schedule\""
@@ -259,7 +384,7 @@ case "$1" in
         echo ""
         echo "Daily Use:"
         echo "  meds check              # Check what needs to be taken"
-        echo "  meds log \"med name\"     # Log that you took it"
+        echo "  meds log \"med name\" [time_slot]  # Log that you took it"
         echo "  meds list               # Show all medications & recent doses"
         echo ""
         echo "History & Maintenance:"

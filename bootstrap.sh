@@ -1,7 +1,33 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # --- bootstrap.sh: New Machine Setup Script ---
+
+# version_compare: Compares two version strings.
+# Returns 0 if $1 >= $2, 1 otherwise.
+version_compare() {
+    if [ "$1" = "$2" ]; then
+        return 0
+    fi
+    local IFS=.
+    local i ver1=($1) ver2=($2)
+    # Fill empty positions with zeros
+    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)); do
+        ver1[i]=0
+    done
+    for ((i=0; i<${#ver1[@]}; i++)); do
+        if [[ -z ${ver2[i]} ]]; then
+            ver2[i]=0
+        fi
+        if ((10#${ver1[i]} > 10#${ver2[i]})); then
+            return 0
+        fi
+        if ((10#${ver1[i]} < 10#${ver2[i]})); then
+            return 1
+        fi
+    done
+    return 0
+}
 
 FORCE=false
 if [ "${1:-}" == "--force" ]; then
@@ -74,6 +100,61 @@ fi
 # 5. Symlink other necessary configurations (if any)
 # echo "Symlinking other dotfiles..."
 # Example: symlink "$(pwd)/git/.gitconfig" "$HOME/.gitconfig"
+
+# 6. Secure GitHub token file permissions
+GITHUB_TOKEN_FILE="$HOME/.github_token"
+if [ -f "$GITHUB_TOKEN_FILE" ]; then
+    echo "Securing GitHub token file permissions..."
+    chmod 600 "$GITHUB_TOKEN_FILE"
+    echo "  ✓ Set permissions for $GITHUB_TOKEN_FILE to 600."
+else
+    echo "  GitHub token file ($GITHUB_TOKEN_FILE) not found. Skipping permission setup."
+fi
+
+# 7. Verify dependency versions
+echo "Verifying dependency versions..."
+
+# jq version check
+JQ_MIN_VERSION="1.6"
+if command -v jq >/dev/null 2>&1; then
+    JQ_VERSION=$(jq --version | cut -d ' ' -f 2)
+    if version_compare "$JQ_VERSION" "$JQ_MIN_VERSION"; then
+        echo "  ✓ jq (version $JQ_VERSION) meets minimum requirement ($JQ_MIN_VERSION)."
+    else
+        echo "  ⚠️  Warning: jq version ($JQ_VERSION) is below recommended minimum ($JQ_MIN_VERSION). Please update jq." >&2
+    fi
+else
+    echo "  ⚠️  Warning: jq not found. Please install jq." >&2
+fi
+
+# curl version check (basic check, more complex version parsing might be needed for specific features)
+CURL_MIN_VERSION="7.64.0" # Version that supports --json flag, for example
+if command -v curl >/dev/null 2>&1; then
+    CURL_VERSION=$(curl --version | head -n 1 | cut -d ' ' -f 2)
+    if version_compare "$CURL_VERSION" "$CURL_MIN_VERSION"; then
+        echo "  ✓ curl (version $CURL_VERSION) meets minimum requirement ($CURL_MIN_VERSION)."
+    else
+        echo "  ⚠️  Warning: curl version ($CURL_VERSION) is below recommended minimum ($CURL_MIN_VERSION). Please update curl." >&2
+    fi
+else
+    echo "  ⚠️  Warning: curl not found. Please install curl." >&2
+fi
+
+# gawk version check
+GAWK_MIN_VERSION="5.0.0"
+if command -v gawk >/dev/null 2>&1; then
+    GAWK_VERSION=$(gawk --version | head -n 1 | cut -d ' ' -f 3)
+    if version_compare "$GAWK_VERSION" "$GAWK_MIN_VERSION"; then
+        echo "  ✓ gawk (version $GAWK_VERSION) meets minimum requirement ($GAWK_MIN_VERSION)."
+    else
+        echo "  ⚠️  Warning: gawk version ($GAWK_VERSION) is below recommended minimum ($GAWK_MIN_VERSION). Please update gawk." >&2
+    fi
+elif command -v awk >/dev/null 2>&1; then
+    # Fallback to awk, but warn if gawk is preferred
+    echo "  ⚠️  Warning: gawk not found, using awk instead. Some features may be limited." >&2
+else
+    echo "  ⚠️  Warning: awk/gawk not found. Please install gawk." >&2
+fi
 
 
 echo "✅ Bootstrap complete!"

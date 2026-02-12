@@ -1,10 +1,19 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # tidy_downloads.sh - macOS version with proper directory handling
 set -euo pipefail
 
 DRY_RUN=false
 FORCE_MODE=false
-IGNORE_FILE="$HOME/.config/dotfiles-data/tidy_ignore.txt"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$SCRIPT_DIR/lib/config.sh"
+else
+  echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh" >&2
+  exit 1
+fi
+
+IGNORE_FILE="${IGNORE_FILE:-$TIDY_IGNORE_FILE}"
 
 # Parse arguments
 for arg in "$@"; do
@@ -41,8 +50,10 @@ should_ignore() {
 
   # Check if file was modified in the last 60 seconds (actively being downloaded)
   if [ "$FORCE_MODE" = false ]; then
-    local mod_time=$(stat -f %m "$file" 2>/dev/null || echo 0)
-    local now=$(date +%s)
+    local mod_time
+    mod_time=$(stat -f %m "$file" 2>/dev/null || echo 0)
+    local now
+    now=$(date +%s)
     local age=$((now - mod_time))
     if [ "$age" -lt 60 ]; then
       return 0  # Ignore (true)
@@ -51,7 +62,7 @@ should_ignore() {
 
   # Check against ignore patterns
   for pattern in "${IGNORE_PATTERNS[@]}"; do
-    if [[ "$file" == $pattern ]]; then
+    if [[ $file == $pattern ]]; then
       return 0  # Ignore (true)
     fi
   done

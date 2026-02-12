@@ -1,6 +1,34 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 # week_in_review.sh - Generates a report of your activity over the last week
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
+if [ -f "$DATE_UTILS" ]; then
+  # shellcheck disable=SC1090
+  source "$DATE_UTILS"
+else
+  echo "Error: date utilities not found at $DATE_UTILS" >&2
+  exit 1
+fi
+
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$SCRIPT_DIR/lib/common.sh"
+fi
+if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$SCRIPT_DIR/lib/config.sh"
+else
+  echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh" >&2
+  exit 1
+fi
+
+# gawk check removed 
+# if ! command -v gawk >/dev/null 2>&1; then
+#   echo "Error: gawk is required to run week_in_review." >&2
+#   exit 1
+# fi
 
 # --- Configuration ---
 OUTPUT_FILE=""
@@ -11,6 +39,17 @@ if [ "${1:-}" == "--file" ]; then
   mkdir -p "$REVIEWS_DIR"
   OUTPUT_FILE="$REVIEWS_DIR/$YEAR-W$WEEK_NUM.md"
 fi
+
+TODO_DONE_FILE="${DONE_FILE:?DONE_FILE is not set by config.sh}"
+JOURNAL_FILE="${JOURNAL_FILE:?JOURNAL_FILE is not set by config.sh}"
+LOOKBACK_DAYS="${REVIEW_LOOKBACK_DAYS:-7}"
+
+for required in "$TODO_DONE_FILE" "$JOURNAL_FILE"; do
+  if [ ! -f "$required" ]; then
+    echo "Error: Required data file missing: $required" >&2
+    exit 1
+  fi
+done
 
 # --- Functions ---
 
@@ -27,7 +66,7 @@ output() {
 
 # Clear the output file if it exists
 if [ -n "$OUTPUT_FILE" ]; then
-  > "$OUTPUT_FILE"
+  true > "$OUTPUT_FILE"
 fi
 
 output "========================================"
@@ -35,31 +74,27 @@ output "    Your Week in Review: $(date +%F)"
 output "========================================"
 
 # --- Completed Tasks ---
-TODO_DONE_FILE="$HOME/.config/dotfiles-data/todo_done.txt"
-if [ -f "$TODO_DONE_FILE" ]; then
-    output "\n## Recently Completed Tasks ##"
-    # This looks for tasks completed in the last 7 days
-    gawk -v cutoff="$(date -v-7d +%F)" '
-        match($0, /\[([0-9]{4}-[0-9]{2}-[0-9]{2})/, m) {
-            if (m[1] >= cutoff) {
-                print
-            }
+output "\n## Recently Completed Tasks ##"
+TASK_CUTOFF="$(date_shift_days "-$LOOKBACK_DAYS" "%Y-%m-%d")"
+awk -F'|' -v cutoff="$TASK_CUTOFF" '
+    NF >= 2 {
+        date_str = substr($1, 1, 10)
+        if (date_str >= cutoff) {
+            print
         }
-    ' "$TODO_DONE_FILE" | while read -r line; do output "$line"; done
-fi
+    }
+' "$TODO_DONE_FILE" | while read -r line; do output "$line"; done
 
 # --- Journal Entries ---
-JOURNAL_FILE="$HOME/.config/dotfiles-data/journal.txt"
-if [ -f "$JOURNAL_FILE" ]; then
-    output "\n## Recent Journal Entries ##"
-    gawk -v cutoff="$(date -v-7d +%F)" '
-        match($0, /\[([0-9]{4}-[0-9]{2}-[0-9]{2})/, m) {
-            if (m[1] >= cutoff) {
-                print
-            }
+output "\n## Recent Journal Entries ##"
+awk -F'|' -v cutoff="$TASK_CUTOFF" '
+    NF >= 2 {
+        date_str = substr($1, 1, 10)
+        if (date_str >= cutoff) {
+            print
         }
-    ' "$JOURNAL_FILE" | while read -r line; do output "$line"; done
-fi
+    }
+' "$JOURNAL_FILE" | while read -r line; do output "$line"; done
 
 # --- Git Contributions (in current project) ---
 if [ -d .git ]; then

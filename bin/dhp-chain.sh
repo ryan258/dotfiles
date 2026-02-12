@@ -1,10 +1,13 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 # dhp-chain.sh: Dispatcher Chaining Helper
 # Enables easy sequential processing through multiple AI specialists
 
-DOTFILES_DIR="$HOME/dotfiles"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+source "$SCRIPT_DIR/dhp-shared.sh"
+AVAILABLE_DISPATCHERS="$(dhp_available_dispatchers)"
 
 if [ $# -lt 2 ]; then
     cat >&2 <<EOF
@@ -23,7 +26,7 @@ Examples:
   $0 tech strategy -- "optimize database queries"
 
 Available dispatchers:
-  tech, creative, content, strategy, brand, market, stoic, research, narrative, copy
+  $AVAILABLE_DISPATCHERS
 
 Notes:
   - Each dispatcher processes the output of the previous one
@@ -36,6 +39,7 @@ fi
 
 # Parse arguments
 DISPATCHERS=()
+COMMON_FLAGS=()
 INITIAL_INPUT=""
 SAVE_FILE=""
 
@@ -48,8 +52,16 @@ while [ $# -gt 0 ]; do
             ;;
         --save)
             shift
+            if [ -z "${1:-}" ]; then
+                echo "Error: --save requires a file path" >&2
+                exit 1
+            fi
             SAVE_FILE="$1"
             shift
+            ;;
+        --brain)
+            shift
+            COMMON_FLAGS+=("--brain")
             ;;
         *)
             DISPATCHERS+=("$1")
@@ -84,59 +96,28 @@ for dispatcher in "${DISPATCHERS[@]}"; do
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
     echo "" >&2
 
-    # Determine the dispatcher script
-    case "$dispatcher" in
-        tech|dhp-tech)
-            DISPATCHER_SCRIPT="$DOTFILES_DIR/bin/dhp-tech.sh"
-            ;;
-        creative|dhp-creative)
-            # Creative uses arguments, not stdin, so we need special handling
-            DISPATCHER_SCRIPT="$DOTFILES_DIR/bin/dhp-creative.sh"
-            CURRENT_OUTPUT=$("$DISPATCHER_SCRIPT" "$CURRENT_OUTPUT" 2>&1)
+    # Resolve dispatcher script via shared mapping.
+    if ! DISPATCHER_SCRIPT_NAME="$(dhp_dispatcher_script_name "$dispatcher")"; then
+        echo "Error: Unknown dispatcher '$dispatcher'" >&2
+        echo "Available: $AVAILABLE_DISPATCHERS" >&2
+        exit 1
+    fi
+    DISPATCHER_SCRIPT="$DOTFILES_DIR/bin/$DISPATCHER_SCRIPT_NAME"
+
+    # Creative and content are called with argument input for compatibility.
+    case "$DISPATCHER_SCRIPT_NAME" in
+        dhp-creative.sh|dhp-content.sh)
+            CURRENT_OUTPUT=$("$DISPATCHER_SCRIPT" "$CURRENT_OUTPUT" "${COMMON_FLAGS[@]}")
             echo "$CURRENT_OUTPUT" >&2
             echo "" >&2
             ((STEP++))
             continue
-            ;;
-        content|dhp-content)
-            # Content also uses arguments
-            DISPATCHER_SCRIPT="$DOTFILES_DIR/bin/dhp-content.sh"
-            CURRENT_OUTPUT=$("$DISPATCHER_SCRIPT" "$CURRENT_OUTPUT" 2>&1)
-            echo "$CURRENT_OUTPUT" >&2
-            echo "" >&2
-            ((STEP++))
-            continue
-            ;;
-        strategy|dhp-strategy)
-            DISPATCHER_SCRIPT="$DOTFILES_DIR/bin/dhp-strategy.sh"
-            ;;
-        brand|dhp-brand)
-            DISPATCHER_SCRIPT="$DOTFILES_DIR/bin/dhp-brand.sh"
-            ;;
-        market|dhp-market)
-            DISPATCHER_SCRIPT="$DOTFILES_DIR/bin/dhp-market.sh"
-            ;;
-        stoic|dhp-stoic)
-            DISPATCHER_SCRIPT="$DOTFILES_DIR/bin/dhp-stoic.sh"
-            ;;
-        research|dhp-research)
-            DISPATCHER_SCRIPT="$DOTFILES_DIR/bin/dhp-research.sh"
-            ;;
-        narrative|dhp-narrative)
-            DISPATCHER_SCRIPT="$DOTFILES_DIR/bin/dhp-narrative.sh"
-            ;;
-        copy|dhp-copy)
-            DISPATCHER_SCRIPT="$DOTFILES_DIR/bin/dhp-copy.sh"
-            ;;
-        *)
-            echo "Error: Unknown dispatcher '$dispatcher'" >&2
-            echo "Available: tech, creative, content, strategy, brand, market, stoic, research, narrative, copy" >&2
-            exit 1
             ;;
     esac
 
     # Process through dispatcher (stdin-based)
-    CURRENT_OUTPUT=$(echo "$CURRENT_OUTPUT" | "$DISPATCHER_SCRIPT" 2>&1)
+    # We append common flags like --brain
+    CURRENT_OUTPUT=$(echo "$CURRENT_OUTPUT" | "$DISPATCHER_SCRIPT" "${COMMON_FLAGS[@]}")
 
     # Show intermediate output
     echo "$CURRENT_OUTPUT" >&2

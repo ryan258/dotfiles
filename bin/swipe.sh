@@ -1,11 +1,23 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
-DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
-ENV_FILE="$DOTFILES_DIR/.env"
-if [ -f "$ENV_FILE" ]; then
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+SHARED_LIB="$DOTFILES_DIR/bin/dhp-shared.sh"
+CONFIG_LIB="$DOTFILES_DIR/scripts/lib/config.sh"
+if [ -f "$CONFIG_LIB" ]; then
   # shellcheck disable=SC1090
-  source "$ENV_FILE"
+  source "$CONFIG_LIB"
+else
+  echo "Error: configuration library not found at $CONFIG_LIB" >&2
+  exit 1
+fi
+if [ -f "$SHARED_LIB" ]; then
+  # shellcheck disable=SC1090
+  source "$SHARED_LIB"
+else
+  echo "Error: shared dispatcher library not found at $SHARED_LIB" >&2
+  exit 1
 fi
 
 LOG_ENABLED="${SWIPE_LOG_ENABLED:-false}"
@@ -16,23 +28,13 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
-CMD="$1"
+CMD="${1:-}"
 shift
 
-# Map dispatcher aliases to full script names
-# This allows: swipe tech "..." instead of swipe dhp-tech.sh "..."
-case "$CMD" in
-  tech)      CMD="dhp-tech.sh" ;;
-  creative)  CMD="dhp-creative.sh" ;;
-  content)   CMD="dhp-content.sh" ;;
-  strategy)  CMD="dhp-strategy.sh" ;;
-  brand)     CMD="dhp-brand.sh" ;;
-  market)    CMD="dhp-market.sh" ;;
-  stoic)     CMD="dhp-stoic.sh" ;;
-  research)  CMD="dhp-research.sh" ;;
-  narrative) CMD="dhp-narrative.sh" ;;
-  copy)      CMD="dhp-copy.sh" ;;
-esac
+# Resolve dispatcher aliases via shared mapping.
+if mapped_cmd=$(dhp_dispatcher_script_name "$CMD" 2>/dev/null); then
+  CMD="$mapped_cmd"
+fi
 
 RESOLVED_CMD=$(command -v "$CMD" 2>/dev/null || true)
 
@@ -69,12 +71,12 @@ fi
   echo '```'
 } >> "$LOG_FILE"
 
-# Capture output while preserving exit code
-if "$RESOLVED_CMD" "$@" 2>&1 | tee -a "$LOG_FILE"; then
-  CMD_STATUS=0
-else
-  CMD_STATUS=${PIPESTATUS[0]}
-fi
+# Capture output while preserving exit code.
+# Disable pipefail locally so set -e does not abort before we read PIPESTATUS.
+set +o pipefail
+"$RESOLVED_CMD" "$@" 2>&1 | tee -a "$LOG_FILE"
+CMD_STATUS=${PIPESTATUS[0]}
+set -o pipefail
 echo '```' >> "$LOG_FILE"
 
-exit $CMD_STATUS
+exit "$CMD_STATUS"

@@ -1,8 +1,26 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# dhp-utils.sh: Utility functions for AI dispatchers
+# NOTE: SOURCED file. Do NOT use set -euo pipefail.
 
+if [[ -n "${_DHP_UTILS_LOADED:-}" ]]; then
+    return 0
+fi
+readonly _DHP_UTILS_LOADED=true
+
+# Try to source common library for shared functions
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
+if [[ -f "$DOTFILES_DIR/scripts/lib/common.sh" ]]; then
+    source "$DOTFILES_DIR/scripts/lib/common.sh"
+fi
+
+# Validate required commands are available
+# Usage: validate_dependencies curl jq python3
 validate_dependencies() {
     for cmd in "$@"; do
-        if ! command -v "$cmd" >/dev/null 2>&1; then
+        # Use common library if available
+        if type require_cmd &>/dev/null; then
+            require_cmd "$cmd" || return 1
+        elif ! command -v "$cmd" >/dev/null 2>&1; then
             echo "Error: '$cmd' is not installed. Please install it." >&2
             return 1
         fi
@@ -36,3 +54,16 @@ read_dispatcher_input() {
         cat
     fi
 }
+
+if ! type validate_path &>/dev/null; then
+    validate_path() {
+        echo "Error: validate_path unavailable (common.sh not loaded)." >&2
+        return 1
+    }
+fi
+
+export -f validate_dependencies
+export -f ensure_api_key
+export -f default_output_dir
+export -f read_dispatcher_input
+export -f validate_path

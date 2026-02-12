@@ -1,8 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # findbig.sh - Find the 10 largest files/folders in the current directory
 set -euo pipefail
 
-echo "Searching for the top 10 largest files and folders here..."
+# Usage: ./findbig.sh
+# output: Lists top 10 largest items in current directory
+
 du -ah . | sort -rh | head -n 10
 
 # ---

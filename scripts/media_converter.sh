@@ -1,6 +1,27 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # media_converter.sh - Media file conversion utilities for macOS
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/common.sh"
+fi
+
+sanitize_arg() {
+    local value
+    value=$(sanitize_input "$1")
+    value=${value//$'\n'/ }
+    printf '%s' "$value"
+}
+
+validate_output_path() {
+    local output_path="$1"
+    local output_dir
+    output_dir=$(dirname "$output_path")
+    output_dir=$(validate_path "$output_dir") || return 1
+    echo "$output_dir/$(basename "$output_path")"
+}
 
 format_bytes() {
     local bytes="$1"
@@ -20,15 +41,18 @@ PY
     fi
 }
 
-case "$1" in
+MODE="${1:-}"
+
+case "$MODE" in
     video2audio)
-        if [ -z "$2" ]; then
+        if [ -z "${2:-}" ]; then
             echo "Usage: $0 video2audio <video_file>"
             echo "Requires: ffmpeg (install with: brew install ffmpeg)"
             exit 1
         fi
         
-        VIDEO_FILE="$2"
+        VIDEO_FILE=$(sanitize_arg "$2")
+        VIDEO_FILE=$(validate_path "$VIDEO_FILE") || exit 1
         AUDIO_FILE="${VIDEO_FILE%.*}.mp3"
         
         if [ ! -f "$VIDEO_FILE" ]; then
@@ -54,8 +78,10 @@ case "$1" in
             exit 1
         fi
         
-        IMAGE_FILE="$2"
-        WIDTH="$3"
+        IMAGE_FILE=$(sanitize_arg "$2")
+        IMAGE_FILE=$(validate_path "$IMAGE_FILE") || exit 1
+        WIDTH=$(sanitize_arg "$3")
+        validate_range "$WIDTH" 1 20000 "width" || exit 1
         OUTPUT_FILE="${IMAGE_FILE%.*}_${WIDTH}px.${IMAGE_FILE##*.}"
         
         if [ ! -f "$IMAGE_FILE" ]; then
@@ -69,18 +95,20 @@ case "$1" in
         fi
         
         echo "Resizing $IMAGE_FILE to ${WIDTH}px width..."
+        OUTPUT_FILE=$(validate_output_path "$OUTPUT_FILE") || exit 1
         convert "$IMAGE_FILE" -resize "${WIDTH}x" "$OUTPUT_FILE"
         echo "Resized image saved as: $OUTPUT_FILE"
         ;;
     
     pdf_compress)
-        if [ -z "$2" ]; then
+        if [ -z "${2:-}" ]; then
             echo "Usage: $0 pdf_compress <pdf_file>"
             echo "Requires: Ghostscript (install with: brew install ghostscript)"
             exit 1
         fi
         
-        PDF_FILE="$2"
+        PDF_FILE=$(sanitize_arg "$2")
+        PDF_FILE=$(validate_path "$PDF_FILE") || exit 1
         COMPRESSED_FILE="${PDF_FILE%.*}_compressed.pdf"
         
         if [ ! -f "$PDF_FILE" ]; then
@@ -94,6 +122,7 @@ case "$1" in
         fi
         
         echo "Compressing $PDF_FILE..."
+        COMPRESSED_FILE=$(validate_output_path "$COMPRESSED_FILE") || exit 1
         gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/screen \
            -dNOPAUSE -dQUIET -dBATCH -sOutputFile="$COMPRESSED_FILE" "$PDF_FILE"
         echo "Compressed PDF saved as: $COMPRESSED_FILE"
@@ -104,12 +133,119 @@ case "$1" in
         echo "Original size: $(format_bytes "$ORIGINAL_SIZE")"
         echo "Compressed size: $(format_bytes "$COMPRESSED_SIZE")"
         ;;
+
+    audio_stitch)
+        # Default values
+        TARGET_DIR="."
+        OUTPUT_FILE=""
+        INPUT_FILES=()
+        
+        # Check if we are in "auto mode" (directory or no args) or "manual mode" (output file + input files)
+        # If $2 is empty or a directory, we are in auto mode.
+        if [ -z "${2:-}" ] || [ -d "${2:-}" ]; then
+            if [ -n "${2:-}" ]; then
+                TARGET_DIR=$(sanitize_arg "$2")
+            fi
+            TARGET_DIR=$(validate_path "$TARGET_DIR") || exit 1
+            if [ ! -d "$TARGET_DIR" ]; then
+                echo "Directory not found: $TARGET_DIR"
+                exit 1
+            fi
+            
+            # Get directory name for filename
+            DIR_NAME=$(basename "$(cd "$TARGET_DIR" && pwd)")
+            
+            # Find audio files in the target directory
+            # We use find to handle spaces correctly and sort by name
+            while IFS= read -r -d '' file; do
+                INPUT_FILES+=("$file")
+            done < <(find "$TARGET_DIR" -maxdepth 1 -type f \( -iname "*.mp3" -o -iname "*.wav" -o -iname "*.m4a" -o -iname "*.aac" -o -iname "*.flac" -o -iname "*.ogg" \) -not -name "stitched_output.*" -print0 | sort -z)
+            
+            if [ ${#INPUT_FILES[@]} -eq 0 ]; then
+                echo "No audio files found in $TARGET_DIR"
+                exit 1
+            fi
+            
+            # Determine output format
+            FIRST_EXT="${INPUT_FILES[0]##*.}"
+            FIRST_EXT=$(echo "$FIRST_EXT" | tr '[:upper:]' '[:lower:]')
+            MIXED_FORMATS=false
+            
+            for file in "${INPUT_FILES[@]}"; do
+                EXT="${file##*.}"
+                EXT=$(echo "$EXT" | tr '[:upper:]' '[:lower:]')
+                if [ "$EXT" != "$FIRST_EXT" ]; then
+                    MIXED_FORMATS=true
+                    break
+                fi
+            done
+            
+            if [ "$MIXED_FORMATS" = true ]; then
+                OUTPUT_FORMAT="mp3"
+            else
+                OUTPUT_FORMAT="$FIRST_EXT"
+            fi
+            
+            OUTPUT_FILE="$TARGET_DIR/${DIR_NAME}.${OUTPUT_FORMAT}"
+            
+        else
+            # Manual mode: <output_file> <input_file1> ...
+            if [ $# -lt 3 ]; then
+                echo "Usage: $0 audio_stitch [directory]"
+                echo "       $0 audio_stitch <output_file> <input_file1> <input_file2> ..."
+                echo "Requires: ffmpeg (install with: brew install ffmpeg)"
+                exit 1
+            fi
+            
+            OUTPUT_FILE=$(sanitize_arg "$2")
+            shift 2
+            INPUT_FILES=()
+            for f in "$@"; do
+                f=$(sanitize_arg "$f")
+                f=$(validate_path "$f") || exit 1
+                INPUT_FILES+=("$f")
+            done
+        fi
+
+        if ! command -v ffmpeg &> /dev/null; then
+            echo "ffmpeg not found. Install with: brew install ffmpeg"
+            exit 1
+        fi
+
+        # Check if all input files exist (already checked in auto mode, but good for manual)
+        for file in "${INPUT_FILES[@]}"; do
+            if [ ! -f "$file" ]; then
+                echo "Input file not found: $file"
+                exit 1
+            fi
+        done
+
+        echo "Stitching ${#INPUT_FILES[@]} files into $OUTPUT_FILE..."
+        
+        # Construct ffmpeg input args and filter complex
+        INPUT_ARGS=()
+        FILTER_COMPLEX=""
+        for i in "${!INPUT_FILES[@]}"; do
+            INPUT_ARGS+=("-i" "${INPUT_FILES[$i]}")
+            FILTER_COMPLEX+="[$i:a]"
+        done
+        
+        FILTER_COMPLEX+="concat=n=${#INPUT_FILES[@]}:v=0:a=1[out]"
+
+        OUTPUT_FILE=$(validate_output_path "$OUTPUT_FILE") || exit 1
+        ffmpeg -y "${INPUT_ARGS[@]}" -filter_complex "$FILTER_COMPLEX" -map "[out]" "$OUTPUT_FILE"
+        
+        echo "Stitching complete: $OUTPUT_FILE"
+        ;;
     
     *)
-        echo "Usage: $0 {video2audio|resize_image|pdf_compress}"
+        echo "Usage: $0 {video2audio|resize_image|pdf_compress|audio_stitch}"
         echo "  video2audio <file>      : Extract audio from video"
         echo "  resize_image <file> <w> : Resize image to specified width"
         echo "  pdf_compress <file>     : Compress PDF file"
+        echo "  audio_stitch [dir]      : Stitch audio files in dir (default: current)"
+        echo "  audio_stitch <out> <in...>: Stitch specific files"
+        exit 1
         ;;
 esac
 

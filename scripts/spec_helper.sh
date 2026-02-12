@@ -1,6 +1,31 @@
 #!/usr/bin/env bash
 # Spec helper for structured dispatcher inputs
-set -euo pipefail
+# NOTE: SOURCED file. Do NOT use set -euo pipefail.
+
+if [[ -n "${_SPEC_HELPER_LOADED:-}" ]]; then
+  return 0
+fi
+readonly _SPEC_HELPER_LOADED=true
+
+SPEC_HELPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SPEC_HELPER_DIR/lib/common.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$SPEC_HELPER_DIR/lib/common.sh"
+fi
+if [ -f "$SPEC_HELPER_DIR/lib/config.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$SPEC_HELPER_DIR/lib/config.sh"
+else
+  echo "Error: configuration library not found at $SPEC_HELPER_DIR/lib/config.sh" >&2
+  return 1
+fi
+
+if [[ -z "${DATA_DIR:-}" ]]; then
+  echo "Error: DATA_DIR is not set. Source config.sh before spec_helper.sh." >&2
+  return 1
+fi
+
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SPEC_HELPER_DIR/.." && pwd)}"
 
 spec_dispatch() {
   local dispatcher="${1}"
@@ -19,15 +44,21 @@ spec_dispatch() {
   fi
 
   # Path to dispatcher-specific template
-  local template_file="$HOME/dotfiles/templates/${dispatcher}-spec.txt"
+  local template_file="$DOTFILES_DIR/templates/${dispatcher}-spec.txt"
 
   # Fallback to generic template if specific one doesn't exist
   if [[ ! -f "$template_file" ]]; then
-    template_file="$HOME/dotfiles/templates/dispatcher-spec-template.txt"
+    template_file="$DOTFILES_DIR/templates/dispatcher-spec-template.txt"
   fi
 
   # Create temp file from template (macOS compatible)
-  local tmpfile=$(mktemp /tmp/spec-XXXXXX)
+  local tmpfile
+  if type create_temp_file &>/dev/null; then
+    tmpfile=$(create_temp_file "spec")
+  else
+    tmpfile=$(mktemp -t "spec.XXXXXX")
+    chmod 600 "$tmpfile"
+  fi
   mv "$tmpfile" "${tmpfile}.${dispatcher}-spec.txt"
   tmpfile="${tmpfile}.${dispatcher}-spec.txt"
   cat "$template_file" > "$tmpfile"
@@ -53,7 +84,7 @@ spec_dispatch() {
   cat "$tmpfile" | "$dispatcher"
 
   # Optional: Save completed spec for reference
-  local spec_archive="$HOME/.config/dotfiles-data/specs/"
+  local spec_archive="${SPEC_ARCHIVE_DIR}/"
   mkdir -p "$spec_archive"
   cp "$tmpfile" "$spec_archive/$(date +%Y%m%d-%H%M%S)-${dispatcher}.txt"
   echo "💾 Spec saved to $spec_archive"

@@ -68,7 +68,7 @@ alias targz="tar -czvf"                   # Create tar.gz archive
 
 # File search (macOS compatible)
 alias ff="find . -name"                   # Find files by name
-alias grep="grep --color=auto"            # Colorized grep
+# grep alias with color is defined later with portable ggrep detection
 
 # macOS specific file operations
 alias showfiles="defaults write com.apple.finder AppleShowAllFiles YES && killall Finder"
@@ -159,6 +159,7 @@ alias battery="pmset -g batt"             # Battery status
 alias howto="howto.sh"
 alias whatis="whatis.sh"
 alias dotfiles_check="dotfiles_check.sh"
+alias dotfiles-check="dotfiles_check.sh"  # Alternative with hyphen
 # =============================================================================
 
 # Task & Time Management
@@ -171,46 +172,63 @@ alias journal="journal.sh"
 alias break="take_a_break.sh"
 alias focus="focus.sh"
 
+# Time Tracking
+alias t-start="todo.sh start"
+alias t-stop="todo.sh stop"
+alias t-status="time_tracker.sh status"
+
+# Spoon Budget
+alias spoons="spoon_manager.sh"
+alias s-check="spoon_manager.sh check"
+alias s-spend="spoon_manager.sh spend"
+
+# Correlation & Reports
+alias correlate="correlate.sh"
+alias daily-report="generate_report.sh daily"
+alias insight="insight.sh"
+
 # Health tracking
 alias health="health.sh"
 alias meds="meds.sh"
 
 # Ultra-short aliases for frequent tasks
 alias next="todo.sh top 1"
-alias t="todo.sh list"          # Show todo list
-alias j="journal.sh"            # Add journal entry
-alias ta="todo.sh add"          # Add todo task
+alias t="$HOME/dotfiles/scripts/todo.sh list"          # Show todo list
+alias j="$HOME/dotfiles/scripts/journal.sh"            # Add journal entry
+alias ta="$HOME/dotfiles/scripts/todo.sh add"          # Add todo task
+alias ja="journal.sh add"       # Add journal entry
 
 # Information & Utilities
-alias weather="weather.sh"
-alias findtext="findtext.sh"
+alias memo="$HOME/dotfiles/scripts/memo.sh"
+alias weather="$HOME/dotfiles/scripts/weather.sh"
+alias findtext="$HOME/dotfiles/scripts/findtext.sh"
 alias graballtext="grab_all_text.sh"
 
 # Project & Development Tools
-alias newproject="start_project.sh"
-alias newpython="mkproject_py.sh"
-alias newpy="mkproject_py.sh"
-alias progress="my_progress.sh"
-alias projects="projects.sh"
+alias newproject="$HOME/dotfiles/scripts/start_project.sh"
+alias newpython="$HOME/dotfiles/scripts/mkproject_py.sh"
+alias newpy="$HOME/dotfiles/scripts/mkproject_py.sh"
+alias progress="$HOME/dotfiles/scripts/my_progress.sh"
+alias projects="gh-projects.sh"
 
 # File & System Management
-alias backup="backup_project.sh"
-alias findbig="findbig.sh"
-alias unpack="unpacker.sh"
+alias backup="$HOME/dotfiles/scripts/backup_project.sh"
+alias findbig="$HOME/dotfiles/scripts/findbig.sh"
+alias unpack="$HOME/dotfiles/scripts/unpacker.sh"
 alias tidydown="tidy_downloads.sh"
 
 # Daily Routine Scripts
-alias startday="startday.sh"
-alias goodevening="goodevening.sh"
-alias greeting="greeting.sh"
-alias weekreview="week_in_review.sh"
+alias startday="$HOME/dotfiles/scripts/startday.sh"
+alias goodevening="$HOME/dotfiles/scripts/goodevening.sh"
+alias greeting="$HOME/dotfiles/scripts/greeting.sh"
+alias weekreview="$HOME/dotfiles/scripts/week_in_review.sh"
 
 # =============================================================================
 # NAVIGATION & FILE MANAGEMENT SCRIPTS
 # =============================================================================
 
 # Smart navigation
-alias g="source g.sh"
+alias g="source $HOME/dotfiles/scripts/g.sh"
 
 # File operations
 alias openf="open_file.sh"
@@ -221,6 +239,9 @@ alias organize="file_organizer.sh"
 # =============================================================================
 # SYSTEM MONITORING SCRIPTS (macOS)
 alias systemlog="tail -n 20 ~/.config/dotfiles-data/system.log"
+alias logs="logs.sh"
+alias logtail="logs.sh tail"
+alias logerrors="logs.sh errors"
 # =============================================================================
 
 # System information
@@ -234,6 +255,11 @@ alias topcpu="process_manager.sh top"
 alias topmem="process_manager.sh memory"
 alias netstatus="network_info.sh status"
 alias netspeed="network_info.sh speed"
+
+# Calendar management
+alias gcal="gcal.sh"
+# Note: 'calendar' also aliased to gcal.sh, overrides system command
+alias calendar="gcal.sh"
 
 # =============================================================================
 # PRODUCTIVITY & AUTOMATION SCRIPTS
@@ -252,8 +278,8 @@ alias launch="app_launcher.sh"
 
 
 # Reminders and notifications
-alias remind="remind_me.sh"
-alias done="done.sh"
+alias remind="$HOME/dotfiles/scripts/remind_me.sh"
+alias did="done.sh"       # Renamed from 'done' (reserved keyword)
 
 # Development shortcuts
 alias dev="dev_shortcuts.sh"
@@ -278,6 +304,7 @@ alias media="media_converter.sh"
 alias video2audio="media_converter.sh video2audio"
 alias resizeimg="media_converter.sh resize_image"
 alias compresspdf="media_converter.sh pdf_compress"
+alias stitch="media_converter.sh audio_stitch"
 
 # Archive management
 alias archive="archive_manager.sh"
@@ -328,11 +355,6 @@ pman() {
 # Quick search in current directory
 search() {
     find . -name "*$1*" -type f
-}
-
-# Enhanced cd that tracks history for the suggestion engine
-cd() {
-    builtin cd "$@" && echo "$(date +%s):$(pwd)" >> "$HOME/.config/dotfiles-data/dir_usage.log"
 }
 
 # Quick git status and todo check
@@ -417,17 +439,11 @@ alias wr='with-req --'
 # Quick information:
 # info                      # Weather + todos
 # overview                  # System info + battery devenv='dev_shortcuts.sh env'
-# Portable grep coloring
+# Portable grep coloring (prefer GNU grep if available)
 if command -v ggrep >/dev/null 2>&1; then
     alias grep='ggrep --color=auto'
 else
-    alias grep='grep'
-fi
-# Portable grep coloring
-if command -v ggrep >/dev/null 2>&1; then
-  alias grep='ggrep --color=auto'
-else
-  alias grep='grep'
+    alias grep='grep --color=auto'
 fi
 
 # =============================================================================
@@ -451,6 +467,7 @@ alias dhp-stoic="$HOME/dotfiles/bin/dhp-stoic.sh"
 alias dhp-research="$HOME/dotfiles/bin/dhp-research.sh"
 alias dhp-narrative="$HOME/dotfiles/bin/dhp-narrative.sh"
 alias dhp-copy="$HOME/dotfiles/bin/dhp-copy.sh"
+alias dhp-finance="$HOME/dotfiles/bin/dhp-finance.sh"
 
 # Shorthand versions for quick access
 alias tech="$HOME/dotfiles/bin/dhp-tech.sh"
@@ -462,8 +479,12 @@ alias market="$HOME/dotfiles/bin/dhp-market.sh"
 alias stoic="$HOME/dotfiles/bin/dhp-stoic.sh"
 alias research="$HOME/dotfiles/bin/dhp-research.sh"
 alias narrative="$HOME/dotfiles/bin/dhp-narrative.sh"
-alias copy="$HOME/dotfiles/bin/dhp-copy.sh"
+alias aicopy="$HOME/dotfiles/bin/dhp-copy.sh"
+alias morphling="$HOME/dotfiles/bin/morphling.sh"
+alias finance="$HOME/dotfiles/bin/dhp-finance.sh"
+alias dhp-morphling="$HOME/dotfiles/bin/dhp-morphling.sh"
 alias dhp="$HOME/dotfiles/bin/dhp-tech.sh"  # Default to tech dispatcher
+alias dispatch="$HOME/dotfiles/bin/dispatch.sh"
 
 # Advanced AI Features (Phase 5)
 alias dhp-project="dhp-project.sh"           # Multi-specialist orchestration

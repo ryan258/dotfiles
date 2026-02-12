@@ -1,8 +1,27 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # take_a_break.sh - Health-focused break timer with macOS notifications
 set -euo pipefail
 
-MINUTES=${1:-15}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/common.sh"
+fi
+
+if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/config.sh"
+else
+    echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh" >&2
+    exit 1
+fi
+
+BREAKS_LOG="${BREAKS_LOG:?BREAKS_LOG is not set by config.sh}"
+mkdir -p "$DATA_DIR"
+
+MINUTES_RAW=${1:-15}
+MINUTES=$(sanitize_input "$MINUTES_RAW")
+MINUTES=${MINUTES//$'\n'/ }
 
 if ! [[ "$MINUTES" =~ ^[0-9]+$ ]]; then
     echo "Please enter a whole number of minutes."
@@ -35,6 +54,6 @@ echo "========================================="
 osascript -e "display notification \"Break time is over! Welcome back.\" with title \"Health Break Complete\""
 
 # Optional: Log break completion
-echo "[$(date)] Completed $MINUTES minute break" >> ~/health_breaks.log
+echo "[$(date)] Completed $MINUTES minute break" >> "$BREAKS_LOG"
 
 # ---
