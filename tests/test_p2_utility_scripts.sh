@@ -42,7 +42,7 @@ teardown() {
 }
 
 @test "status.sh runs non-interactively without crashing" {
-    run "$DOTFILES_DIR/scripts/status.sh"
+    run bash -c "$DOTFILES_DIR/scripts/status.sh < /dev/null"
     [ "$status" -eq 0 ]
     [[ "$output" == *"TODAY'S FOCUS"* ]]
     [[ "$output" == *"TASKS"* ]]

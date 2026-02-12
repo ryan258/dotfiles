@@ -77,7 +77,7 @@ teardown() {
         AI_BRIEFING_ENABLED=true \
         AI_COACH_LOG_ENABLED=true \
         AI_COACH_MODE_DEFAULT=LOCKED \
-        bash "$DOTFILES_DIR/scripts/startday.sh" refresh
+        bash -c "$DOTFILES_DIR/scripts/startday.sh refresh < /dev/null"
 
     [ "$status" -eq 0 ]
     [ -f "$DATA_DIR/strategy_prompt_startday.txt" ]
@@ -119,7 +119,7 @@ EOF
         AI_COACH_MODE_DEFAULT=LOCKED \
         AI_COACH_REQUEST_TIMEOUT_SECONDS=1 \
         AI_COACH_RETRY_ON_TIMEOUT=false \
-        bash "$DOTFILES_DIR/scripts/startday.sh" refresh
+        bash -c "$DOTFILES_DIR/scripts/startday.sh refresh < /dev/null"
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"North Star:"* ]]
@@ -166,7 +166,7 @@ EOF
         AI_COACH_REQUEST_TIMEOUT_SECONDS=1 \
         AI_COACH_RETRY_ON_TIMEOUT=true \
         AI_COACH_RETRY_TIMEOUT_SECONDS=4 \
-        bash "$DOTFILES_DIR/scripts/startday.sh" refresh
+        bash -c "$DOTFILES_DIR/scripts/startday.sh refresh < /dev/null"
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"Return AI response after retry."* ]]
@@ -206,7 +206,7 @@ EOF
         AI_COACH_MODE_DEFAULT=LOCKED \
         AI_COACH_REQUEST_TIMEOUT_SECONDS=5 \
         AI_COACH_RETRY_ON_TIMEOUT=false \
-        bash "$DOTFILES_DIR/scripts/startday.sh" refresh
+        bash -c "$DOTFILES_DIR/scripts/startday.sh refresh < /dev/null"
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"Deterministic fallback (ungrounded-actions)"* ]]

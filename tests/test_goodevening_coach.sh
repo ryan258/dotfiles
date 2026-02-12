@@ -133,7 +133,7 @@ PY
         AI_REFLECTION_ENABLED=true \
         AI_COACH_LOG_ENABLED=true \
         AI_COACH_MODE_DEFAULT=LOCKED \
-        bash "$DOTFILES_DIR/scripts/goodevening.sh" --refresh 2026-02-10
+        bash -c "$DOTFILES_DIR/scripts/goodevening.sh --refresh 2026-02-10 < /dev/null"
 
     [ "$status" -eq 0 ]
     [ -f "$DATA_DIR/strategy_prompt_goodevening.txt" ]
@@ -176,7 +176,7 @@ EOF
         AI_COACH_MODE_DEFAULT=LOCKED \
         AI_COACH_REQUEST_TIMEOUT_SECONDS=1 \
         AI_COACH_RETRY_ON_TIMEOUT=false \
-        bash "$DOTFILES_DIR/scripts/goodevening.sh" --refresh 2026-02-10
+        bash -c "$DOTFILES_DIR/scripts/goodevening.sh --refresh 2026-02-10 < /dev/null"
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"What worked:"* ]]
@@ -221,7 +221,7 @@ EOF
         AI_COACH_REQUEST_TIMEOUT_SECONDS=1 \
         AI_COACH_RETRY_ON_TIMEOUT=true \
         AI_COACH_RETRY_TIMEOUT_SECONDS=4 \
-        bash "$DOTFILES_DIR/scripts/goodevening.sh" --refresh 2026-02-10
+        bash -c "$DOTFILES_DIR/scripts/goodevening.sh --refresh 2026-02-10 < /dev/null"
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"Retry delivered output."* ]]
