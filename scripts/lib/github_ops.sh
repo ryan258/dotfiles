@@ -61,6 +61,10 @@ get_recent_github_activity() {
         _github_ops_debug "jq not found; cannot parse GitHub activity."
         return 1
     fi
+    if ! command -v timestamp_to_epoch >/dev/null 2>&1 || ! command -v date_epoch_now >/dev/null 2>&1; then
+        _github_ops_debug "date_utils helpers are not loaded; source scripts/lib/date_utils.sh before github_ops.sh."
+        return 1
+    fi
 
     local github_repos
     local err_file
@@ -87,15 +91,13 @@ get_recent_github_activity() {
         repo_name=$(echo "$line" | awk '{$1=""; print $0}' | xargs)
         
         local pushed_at_epoch
-        # Try BSD date (macOS) then GNU date
-        if date --version >/dev/null 2>&1; then
-             pushed_at_epoch=$(date -d "$pushed_at_str" +%s 2>/dev/null || continue)
-        else
-             pushed_at_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$pushed_at_str" +%s 2>/dev/null || continue)
+        pushed_at_epoch=$(timestamp_to_epoch "$pushed_at_str")
+        if [ "$pushed_at_epoch" -le 0 ]; then
+            continue
         fi
         
         local now
-        now=$(date +%s)
+        now=$(date_epoch_now)
         local diff_days=$(( (now - pushed_at_epoch) / 86400 ))
         
         if [ "$diff_days" -le "$days" ]; then

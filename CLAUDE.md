@@ -399,17 +399,18 @@ These scripts MUST have `set -euo pipefail` at the top.
 
 ### Date Handling
 
-Use `date_utils.sh` or this pattern:
-```bash
-# Try GNU date first, fall back to BSD (macOS)
-if date --version >/dev/null 2>&1; then
-    # GNU date
-    date -d "yesterday" +%Y-%m-%d
-else
-    # BSD date (macOS)
-    date -v-1d +%Y-%m-%d
-fi
-```
+Use `scripts/lib/date_utils.sh` for all date/time operations in root scripts.
+
+- Do not add new inline `date -v`, `date -d`, `gdate -d`, or ad-hoc cross-platform date parsing.
+- Prefer helpers such as:
+  - `date_shift_days`
+  - `date_shift_from`
+  - `date_days_ago`
+  - `date_now` / `date_today` / `date_epoch_now`
+  - `date_now_utc` / `date_shift_days_utc`
+  - `timestamp_to_epoch`
+  - `file_mtime_epoch`
+  - `epoch_to_utc_iso`
 
 ### Command Availability
 

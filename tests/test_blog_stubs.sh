@@ -1,8 +1,14 @@
 #!/usr/bin/env bats
 
+load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
+load "$BATS_TEST_DIRNAME/helpers/assertions.sh"
+
 setup() {
-    export TEST_DATA_DIR="$(mktemp -d)"
-    export HOME="$TEST_DATA_DIR"
+    setup_test_environment
+    # Alias for backward compatibility with test assertions
+    export TEST_DATA_DIR="$TEST_DIR"
+
+    # Custom setup: stage dotfiles structure and blog directory
     export DOTFILES_DIR="$HOME/dotfiles"
     mkdir -p "$DOTFILES_DIR/bin" "$DOTFILES_DIR/scripts/lib"
     cp "$BATS_TEST_DIRNAME/../bin/dhp-utils.sh" "$DOTFILES_DIR/bin/dhp-utils.sh"
@@ -16,7 +22,7 @@ setup() {
 }
 
 teardown() {
-    rm -rf "$TEST_DATA_DIR"
+    teardown_test_environment
 }
 
 @test "blog stubs handles no stub files gracefully" {

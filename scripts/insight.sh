@@ -21,6 +21,7 @@ INSIGHT_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "$INSIGHT_SCRIPT_DIR/lib/common.sh"
 source "$INSIGHT_SCRIPT_DIR/lib/config.sh"
+source "$INSIGHT_SCRIPT_DIR/lib/date_utils.sh"
 source "$INSIGHT_SCRIPT_DIR/lib/insight_store.sh"
 source "$INSIGHT_SCRIPT_DIR/lib/insight_score.sh"
 
@@ -94,15 +95,6 @@ normalize_test_status() {
             return 1
             ;;
     esac
-}
-
-date_days_ago() {
-    local days="$1"
-    if date -v-"$days"d +%Y-%m-%d >/dev/null 2>&1; then
-        date -v-"$days"d +%Y-%m-%d
-    else
-        date -d "$days days ago" +%Y-%m-%d
-    fi
 }
 
 load_hypothesis() {
@@ -191,7 +183,7 @@ cmd_new() {
     fi
 
     hypothesis_id=$(insight_next_hypothesis_id)
-    created_at="$(date '+%Y-%m-%d %H:%M:%S')"
+    created_at="$(date_now)"
 
     domain=$(normalize_insight_field "$domain")
     claim=$(normalize_insight_field "$claim")
@@ -243,7 +235,7 @@ cmd_test_plan() {
     load_hypothesis "$hypothesis_id" || return 1
 
     test_id=$(insight_next_test_id)
-    created_at="$(date '+%Y-%m-%d %H:%M:%S')"
+    created_at="$(date_now)"
 
     prediction=$(normalize_insight_field "$prediction")
     fail_criterion=$(normalize_insight_field "$fail_criterion")
@@ -384,7 +376,7 @@ cmd_evidence_add() {
     load_hypothesis "$hypothesis_id" || return 1
 
     evidence_id=$(insight_next_evidence_id)
-    timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
+    timestamp="$(date_now)"
 
     source_text=$(normalize_insight_field "$source_text")
     provenance=$(normalize_insight_field "$provenance")
@@ -532,7 +524,7 @@ cmd_verdict() {
 
     why=$(normalize_insight_field "$why")
     counterevidence_summary=$(normalize_insight_field "$counterevidence_summary")
-    verdict_timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
+    verdict_timestamp="$(date_now)"
 
     verdict_record="${hypothesis_id}|${verdict_timestamp}|${final_verdict}|${final_confidence}|${why}|${counterevidence_summary}"
     insight_append_verdict "$verdict_record"
@@ -571,7 +563,7 @@ cmd_weekly() {
     done
 
     cutoff_date="$(date_days_ago 6)"
-    today="$(date +%Y-%m-%d)"
+    today="$(date_today)"
 
     generated=$(awk -F'|' -v cutoff="$cutoff_date" 'substr($2, 1, 10) >= cutoff { count++ } END { print count + 0 }' "$INSIGHT_HYPOTHESES_FILE")
     killed=$(awk -F'|' -v cutoff="$cutoff_date" 'substr($2, 1, 10) >= cutoff && toupper($3) == "FALSIFIED" { count++ } END { print count + 0 }' "$INSIGHT_VERDICTS_FILE")

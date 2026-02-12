@@ -39,7 +39,7 @@ case "${1:-list}" in
       exit 1
     fi
     if [ -z "${EDITOR:-}" ]; then
-        echo "Error: EDITOR environment variable is not set."
+        echo "Error: EDITOR environment variable is not set." >&2
         exit 1
     fi
     name=$(sanitize_input "$2")
@@ -88,7 +88,7 @@ case "${1:-list}" in
     if [ -f "$file_path" ]; then
       cat "$file_path"
     else
-      echo "Error: How-to '$1' not found."
+      echo "Error: How-to '$1' not found." >&2
       exit 1
     fi
     ;;

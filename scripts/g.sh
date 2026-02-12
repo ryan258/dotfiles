@@ -52,7 +52,6 @@ fi
 BOOKMARKS_FILE="${BOOKMARKS_FILE:-$DIR_BOOKMARKS_FILE}"
 HISTORY_FILE="${HISTORY_FILE:-$DIR_HISTORY_FILE}"
 USAGE_LOG="${USAGE_LOG:-$DIR_USAGE_LOG}"
-DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
 APP_LAUNCHER="${APP_LAUNCHER:-$DOTFILES_DIR/scripts/app_launcher.sh}"
 
 # --- Subcommands ---
@@ -253,7 +252,7 @@ case "${1:-list}" in
 
     BOOKMARK_DATA=$(_get_bookmark_data "$BOOKMARK_NAME" "$BOOKMARKS_FILE")
     if [ -z "$BOOKMARK_DATA" ]; then
-      echo "Error: Bookmark '$BOOKMARK_NAME' not found."
+      echo "Error: Bookmark '$BOOKMARK_NAME' not found." >&2
       g_exit 1
     fi
 

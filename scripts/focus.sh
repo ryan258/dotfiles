@@ -7,13 +7,21 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
   # shellcheck disable=SC1090
   source "$SCRIPT_DIR/lib/common.sh"
+else
+  echo "Error: common library not found at $SCRIPT_DIR/lib/common.sh" >&2
+  exit 1
 fi
 if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
   # shellcheck disable=SC1090
   source "$SCRIPT_DIR/lib/config.sh"
 else
-  echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh" >&2
-  exit 1
+  die "configuration library not found at $SCRIPT_DIR/lib/config.sh" "$EXIT_FILE_NOT_FOUND"
+fi
+if [ -f "$SCRIPT_DIR/lib/date_utils.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$SCRIPT_DIR/lib/date_utils.sh"
+else
+  die "date utilities not found at $SCRIPT_DIR/lib/date_utils.sh" "$EXIT_FILE_NOT_FOUND"
 fi
 
 FOCUS_FILE="${FOCUS_FILE:?FOCUS_FILE is not set by config.sh}"
@@ -48,15 +56,15 @@ case "${1:-show}" in
   set)
     shift
     if [ -z "${1:-}" ]; then
-      echo "Error: Please provide a focus task."
       echo "Usage: focus set \"Your task here\""
-      exit 1
+      log_error "focus set requires a non-empty focus task"
+      exit "$EXIT_INVALID_ARGS"
     fi
     
     # 1. Archive existing focus if present (so we don't lose it)
     if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
         old_focus=$(cat "$FOCUS_FILE")
-        today=$(date +%Y-%m-%d)
+        today=$(date_today)
         mkdir -p "$(dirname "$HISTORY_FILE")"
         touch "$HISTORY_FILE"
 
@@ -74,7 +82,7 @@ case "${1:-show}" in
   done)
     if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
       focus_text=$(cat "$FOCUS_FILE")
-      today=$(date +%Y-%m-%d)
+      today=$(date_today)
       # Ensure history directory and file exist
       mkdir -p "$(dirname "$HISTORY_FILE")"
       touch "$HISTORY_FILE"

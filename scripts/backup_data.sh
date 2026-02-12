@@ -3,28 +3,39 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+COMMON_LIB="$SCRIPT_DIR/lib/common.sh"
+
+if [ -f "$COMMON_LIB" ]; then
+    # shellcheck disable=SC1090
+    source "$COMMON_LIB"
+else
+    echo "Error: common utilities not found at $COMMON_LIB" >&2
+    exit 1
+fi
 
 # Source shared utilities
 if [ -f "$DOTFILES_DIR/bin/dhp-utils.sh" ]; then
     # shellcheck disable=SC1090
     source "$DOTFILES_DIR/bin/dhp-utils.sh"
 else
-    echo "Error: Shared utility library dhp-utils.sh not found." >&2
-    exit 1
+    die "Shared utility library dhp-utils.sh not found." "$EXIT_FILE_NOT_FOUND"
 fi
 
 if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
     # shellcheck disable=SC1090
     source "$SCRIPT_DIR/lib/config.sh"
 else
-    echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh" >&2
-    exit 1
+    die "configuration library not found at $SCRIPT_DIR/lib/config.sh" "$EXIT_FILE_NOT_FOUND"
+fi
+if [ -f "$SCRIPT_DIR/lib/date_utils.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/date_utils.sh"
+else
+    die "date utilities not found at $SCRIPT_DIR/lib/date_utils.sh" "$EXIT_FILE_NOT_FOUND"
 fi
 
 # Validate dependencies
-if ! validate_dependencies tar; then
-    exit 1
-fi
+validate_dependencies tar || die "Required dependency validation failed (tar)." "$EXIT_FILE_NOT_FOUND"
 
 # Configuration
 BACKUP_DIR_DEFAULT="$HOME/Backups/dotfiles_data"
@@ -34,24 +45,22 @@ GDRIVE_REMOTE="gdrive"
 GDRIVE_FOLDER="Backups/dotfiles_data"
 
 # Validate paths
-SOURCE_DIR=$(validate_path "$SOURCE_DIR") || exit 1
-BACKUP_DIR=$(validate_path "$BACKUP_DIR") || exit 1
+SOURCE_DIR=$(validate_path "$SOURCE_DIR") || die "Invalid source directory path: $SOURCE_DIR" "$EXIT_INVALID_ARGS"
+BACKUP_DIR=$(validate_path "$BACKUP_DIR") || die "Invalid backup directory path: $BACKUP_DIR" "$EXIT_INVALID_ARGS"
 
 # Pre-flight checks
 if [ ! -d "$SOURCE_DIR" ] || [ ! -r "$SOURCE_DIR" ]; then
-  echo "Error: Source data directory not found or not readable: $SOURCE_DIR" >&2
-  exit 1
+  die "Source data directory not found or not readable: $SOURCE_DIR" "$EXIT_FILE_NOT_FOUND"
 fi
 
 # Create local backup directory
 mkdir -p "$BACKUP_DIR"
 if [ ! -w "$BACKUP_DIR" ]; then
-  echo "Error: Backup directory is not writable: $BACKUP_DIR" >&2
-  exit 1
+  die "Backup directory is not writable: $BACKUP_DIR" "$EXIT_PERMISSION"
 fi
 
 # Create the timestamped backup file
-TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+TIMESTAMP=$(date_now "%Y-%m-%d_%H-%M-%S")
 BACKUP_FILENAME="dotfiles-data-backup-$TIMESTAMP.tar.gz"
 BACKUP_FILE="$BACKUP_DIR/$BACKUP_FILENAME"
 

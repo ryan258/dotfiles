@@ -14,7 +14,7 @@ project_name=$(sanitize_input "$project_name")
 project_name=${project_name//$'\n'/ }
 
 if [[ -z "$project_name" ]]; then
-    echo "Error: Project name is required."
+    echo "Error: Project name is required." >&2
     exit 1
 fi
 
@@ -28,7 +28,7 @@ project_path="$(pwd)/$project_name"
 project_path=$(validate_path "$project_path") || exit 1
 
 if [ -d "$project_path" ]; then
-    echo "Error: Directory '$project_name' already exists."
+    echo "Error: Directory '$project_name' already exists." >&2
     exit 1
 fi
 

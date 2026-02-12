@@ -65,13 +65,13 @@ if [[ "${1:-}" == "refresh" ]]; then
 fi
 
 # Persist the start date of this session
-date +%Y-%m-%d > "$CURRENT_DAY_FILE"
+date_today > "$CURRENT_DAY_FILE"
 
 CONTEXT_CAPTURE_ON_START="${CONTEXT_CAPTURE_ON_START:-false}"
 if [ "$CONTEXT_CAPTURE_ON_START" = "true" ]; then
     CONTEXT_SCRIPT="$SCRIPT_DIR/context.sh"
     if [ -x "$CONTEXT_SCRIPT" ]; then
-        "$CONTEXT_SCRIPT" capture "startday-$(date +%Y%m%d-%H%M)" >/dev/null 2>&1 || true
+        "$CONTEXT_SCRIPT" capture "startday-$(date_now '%Y%m%d-%H%M')" >/dev/null 2>&1 || true
     fi
 fi
 
@@ -125,7 +125,7 @@ if [ -x "$SPOON_MANAGER" ]; then
                 echo -n "  How many spoons do you have today? [10]: "
                 read -r spoons_input
                 spoons_count="${spoons_input:-10}"
-                if ! [[ "$spoons_count" =~ ^[0-9]+$ ]]; then
+                if ! validate_numeric "$spoons_count" "spoon count" >/dev/null 2>&1; then
                     echo "  Invalid input, defaulting to 10."
                     spoons_count=10
                 fi
@@ -143,7 +143,7 @@ if [ -x "$SPOON_MANAGER" ]; then
             spoons_count=10
         fi
 
-        if ! [[ "$spoons_count" =~ ^[0-9]+$ ]]; then
+        if ! validate_numeric "$spoons_count" "spoon count" >/dev/null 2>&1; then
             echo "  Invalid input, defaulting to 10."
             spoons_count=10
         fi
@@ -157,7 +157,7 @@ fi
 # Coach mode prompt is resolved before heavy sections so briefing cannot block.
 COACH_MODE_PREFILL="${AI_COACH_MODE_DEFAULT:-LOCKED}"
 if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ] && command -v coaching_get_mode_for_date >/dev/null 2>&1; then
-    TODAY_FOR_MODE=$(date '+%Y-%m-%d')
+    TODAY_FOR_MODE=$(date_today)
     if [ -t 0 ]; then
         COACH_MODE_PREFILL=$(coaching_get_mode_for_date "$TODAY_FOR_MODE" "true" 2>/dev/null || echo "${AI_COACH_MODE_DEFAULT:-LOCKED}")
     else
@@ -167,7 +167,7 @@ fi
 
 # --- LOGGING ---
 SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:?SYSTEM_LOG_FILE is not set by config.sh}"
-echo "$(date): startday.sh - Running morning routine." >> "$SYSTEM_LOG_FILE"
+echo "$(date_now): startday.sh - Running morning routine." >> "$SYSTEM_LOG_FILE"
 
 BLOG_SCRIPT="$SCRIPT_DIR/blog.sh"
 BLOG_STATUS_DIR="${BLOG_STATUS_DIR:-${BLOG_DIR:-}}"
@@ -200,7 +200,7 @@ else
 fi
 
 # --- WEEKLY REVIEW ---
-if [ "$(date +%u)" -eq 1 ]; then
+if [ "$(date_weekday_iso)" -eq 1 ]; then
     WEEK_NUM=$(date_shift_days -1 "%V")
     YEAR=$(date_shift_days -1 "%Y")
     REVIEW_FILE="$HOME/Documents/Reviews/Weekly/$YEAR-W$WEEK_NUM.md"
@@ -344,7 +344,7 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
 
     # Cache file for today's briefing
     BRIEFING_CACHE="$BRIEFING_CACHE_FILE"
-    TODAY=$(date '+%Y-%m-%d')
+    TODAY=$(date_today)
 
     # Check if we already have today's briefing
     if [ -f "$BRIEFING_CACHE" ] && grep -q "^$TODAY|" "$BRIEFING_CACHE"; then

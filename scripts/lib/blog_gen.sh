@@ -7,7 +7,7 @@ if [[ -n "${_BLOG_GEN_LOADED:-}" ]]; then
 fi
 readonly _BLOG_GEN_LOADED=true
 
-function generate() {
+generate() {
     shift # remove subcommand label
     local persona=""
     local input_file=""
@@ -241,7 +241,7 @@ $file_content"
     echo "Review and edit the generated output in: $target_dir"
 }
 
-function refine() {
+refine() {
     local file_path="${2:-}"
 
     if [ -z "$file_path" ]; then

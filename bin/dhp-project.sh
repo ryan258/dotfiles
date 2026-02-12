@@ -55,7 +55,10 @@ Provide:
 - Market trends
 - Success metrics"
 
-MARKET_ANALYSIS=$(echo "$MARKET_PROMPT" | "$DOTFILES_DIR/bin/dhp-market.sh")
+MARKET_ANALYSIS=$(echo "$MARKET_PROMPT" | "$DOTFILES_DIR/bin/dhp-market.sh") || {
+    echo "Error: Phase 1 (Market Research) failed." >&2
+    exit 1
+}
 
 # Phase 2: Brand Positioning
 echo "🎨 Phase 2: Brand Positioning (Brand Builder)..." >&2
@@ -70,7 +73,10 @@ Provide:
 - Differentiation strategy
 - Messaging pillars"
 
-BRAND_STRATEGY=$(echo "$BRAND_PROMPT" | "$DOTFILES_DIR/bin/dhp-brand.sh")
+BRAND_STRATEGY=$(echo "$BRAND_PROMPT" | "$DOTFILES_DIR/bin/dhp-brand.sh") || {
+    echo "Error: Phase 2 (Brand Positioning) failed." >&2
+    exit 1
+}
 
 # Phase 3: Strategic Plan
 echo "🎯 Phase 3: Strategic Planning (Chief of Staff)..." >&2
@@ -89,7 +95,10 @@ Provide:
 - Success metrics
 - Action items prioritized"
 
-STRATEGIC_PLAN=$(echo "$STRATEGY_PROMPT" | "$DOTFILES_DIR/bin/dhp-strategy.sh")
+STRATEGIC_PLAN=$(echo "$STRATEGY_PROMPT" | "$DOTFILES_DIR/bin/dhp-strategy.sh") || {
+    echo "Error: Phase 3 (Strategic Planning) failed." >&2
+    exit 1
+}
 
 # Phase 4: Content Strategy
 echo "📝 Phase 4: Content Strategy (Content Specialist)..." >&2
@@ -107,7 +116,10 @@ Provide:
 - SEO optimization plan
 - Content formats"
 
-CONTENT_STRATEGY=$(echo "$CONTENT_PROMPT" | "$DOTFILES_DIR/bin/dhp-content.sh")
+CONTENT_STRATEGY=$(echo "$CONTENT_PROMPT" | "$DOTFILES_DIR/bin/dhp-content.sh") || {
+    echo "Error: Phase 4 (Content Strategy) failed." >&2
+    exit 1
+}
 
 # Phase 5: Marketing Copy
 echo "✍️  Phase 5: Marketing Copy (Copywriter)..." >&2
@@ -125,7 +137,10 @@ Provide:
 - Social media hooks
 - Call-to-action variations"
 
-MARKETING_COPY=$(echo "$COPY_PROMPT" | "$DOTFILES_DIR/bin/dhp-copy.sh")
+MARKETING_COPY=$(echo "$COPY_PROMPT" | "$DOTFILES_DIR/bin/dhp-copy.sh") || {
+    echo "Error: Phase 5 (Marketing Copy) failed." >&2
+    exit 1
+}
 
 # Generate comprehensive project brief
 echo "" >&2

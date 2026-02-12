@@ -1,8 +1,10 @@
 #!/usr/bin/env bats
 
+load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
+load "$BATS_TEST_DIRNAME/helpers/assertions.sh"
+
 setup() {
-    export TEST_DIR
-    TEST_DIR="$(mktemp -d)"
+    setup_test_environment
     export TEST_FILE="$TEST_DIR/test_atomic_ops.txt"
 
     # shellcheck disable=SC1090
@@ -10,7 +12,7 @@ setup() {
 }
 
 teardown() {
-    rm -rf "$TEST_DIR"
+    teardown_test_environment
 }
 
 @test "atomic_write writes content" {

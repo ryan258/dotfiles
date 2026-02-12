@@ -11,7 +11,7 @@ readonly _TIME_TRACKING_LOADED=true
 # Dependencies:
 # - DATA_DIR/TIME_LOG from config.sh.
 # - sanitize_input and sanitize_for_storage from common.sh.
-# - timestamp_to_epoch from date_utils.sh.
+# - timestamp_to_epoch and date_shift_days from date_utils.sh.
 if [[ -z "${DATA_DIR:-}" ]]; then
     echo "Error: DATA_DIR is not set. Source scripts/lib/config.sh before time_tracking.sh." >&2
     return 1
@@ -26,6 +26,10 @@ if ! command -v sanitize_for_storage >/dev/null 2>&1; then
 fi
 if ! command -v timestamp_to_epoch >/dev/null 2>&1; then
     echo "Error: timestamp_to_epoch is not available. Source scripts/lib/date_utils.sh before time_tracking.sh." >&2
+    return 1
+fi
+if ! command -v date_shift_days >/dev/null 2>&1; then
+    echo "Error: date_shift_days is not available. Source scripts/lib/date_utils.sh before time_tracking.sh." >&2
     return 1
 fi
 

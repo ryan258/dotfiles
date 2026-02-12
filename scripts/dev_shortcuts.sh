@@ -6,6 +6,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
     # shellcheck disable=SC1090
     source "$SCRIPT_DIR/lib/common.sh"
+else
+    echo "Error: common utilities not found at $SCRIPT_DIR/lib/common.sh" >&2
+    if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+        exit 1
+    fi
+    return 1
 fi
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
@@ -13,16 +19,27 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 fi
 
 is_sourced() {
-    if [ -n "$ZSH_VERSION" ]; then
+    if [ -n "${ZSH_VERSION:-}" ]; then
         case $ZSH_EVAL_CONTEXT in
             *:file) return 0 ;;
         esac
         return 1
-    elif [ -n "$BASH_VERSION" ]; then
+    elif [ -n "${BASH_VERSION:-}" ]; then
         [[ ${BASH_SOURCE[0]} != "$0" ]]
         return
     fi
     return 1
+}
+
+dev_fail() {
+    local message="$1"
+    local code="${2:-$EXIT_ERROR}"
+    log_error "$message" "dev_shortcuts.sh"
+    echo "Error: $message" >&2
+    if is_sourced; then
+        return "$code"
+    fi
+    exit "$code"
 }
 
 case "${1:-}" in
@@ -31,7 +48,7 @@ case "${1:-}" in
         PORT_RAW=${2:-8000}
         PORT=$(sanitize_input "$PORT_RAW")
         PORT=${PORT//$'\n'/ }
-        validate_range "$PORT" 1 65535 "port" || exit 1
+        validate_range "$PORT" 1 65535 "port" || dev_fail "Invalid port: $PORT" "$EXIT_INVALID_ARGS"
         echo "Starting development server on port $PORT..."
         echo "Access at: http://localhost:$PORT"
         python3 -m http.server "$PORT"
@@ -45,10 +62,9 @@ case "${1:-}" in
         else
             FILE=$(sanitize_input "$2")
             FILE=${FILE//$'\n'/ }
-            FILE=$(validate_path "$FILE") || exit 1
+            FILE=$(validate_path "$FILE") || dev_fail "Invalid JSON file path: $FILE" "$EXIT_INVALID_ARGS"
             if [ ! -f "$FILE" ]; then
-                echo "File not found: $FILE" >&2
-                exit 1
+                dev_fail "JSON file not found: $FILE" "$EXIT_FILE_NOT_FOUND"
             fi
             echo "Pretty printing JSON from file: $FILE"
             python3 -m json.tool "$FILE"
@@ -76,7 +92,7 @@ case "${1:-}" in
         shift
         if [ $# -eq 0 ]; then
             echo "Usage: dev gitquick <commit_message>"
-            exit 1
+            dev_fail "Missing commit message for gitquick." "$EXIT_INVALID_ARGS"
         fi
         COMMIT_MESSAGE=$(sanitize_input "$*")
         COMMIT_MESSAGE=${COMMIT_MESSAGE//$'\n'/ }

@@ -26,6 +26,24 @@ else:
 PY
 }
 
+_dotfiles_date_python_shift_utc() {
+    local offset="$1"
+    local format="$2"
+
+    python3 - "$offset" "$format" <<'PY'
+import sys
+from datetime import datetime, timedelta, timezone
+
+offset = float(sys.argv[1])
+fmt = sys.argv[2]
+dt = datetime.now(timezone.utc) + timedelta(days=offset)
+if fmt == "%s":
+    print(int(dt.timestamp()))
+else:
+    print(dt.strftime(fmt))
+PY
+}
+
 # Shift the current date by <offset> days and format with <format>.
 # Usage: date_shift_days <offset> [format]
 date_shift_days() {
@@ -62,6 +80,69 @@ date_days_ago() {
     local days="${1:-0}"
     local format="${2:-%Y-%m-%d}"
     date_shift_days "-$days" "$format"
+}
+
+# Current local date/time with consistent fallback behavior.
+# Usage: date_now [format]
+date_now() {
+    local format="${1:-%Y-%m-%d %H:%M:%S}"
+    date_shift_days 0 "$format"
+}
+
+# Shift UTC date/time by <offset> days and format with <format>.
+# Usage: date_shift_days_utc <offset> [format]
+date_shift_days_utc() {
+    local offset="${1:-0}"
+    local format="${2:-%Y-%m-%d}"
+
+    if command -v python3 >/dev/null 2>&1; then
+        _dotfiles_date_python_shift_utc "$offset" "$format"
+        return
+    fi
+
+    if date -u -v0d +"$format" >/dev/null 2>&1; then
+        local suffix
+        if [[ "$offset" == -* ]]; then
+            suffix="${offset#-}"
+            date -u -v-"${suffix}"d +"$format"
+        else
+            date -u -v+"${offset}"d +"$format"
+        fi
+        return
+    fi
+
+    if command -v gdate >/dev/null 2>&1; then
+        gdate -u --date="${offset} day" +"$format"
+    else
+        date -u --date="${offset} day" +"$format"
+    fi
+}
+
+# Current UTC date/time.
+# Usage: date_now_utc [format]
+date_now_utc() {
+    local format="${1:-%Y-%m-%dT%H:%M:%SZ}"
+    date_shift_days_utc 0 "$format"
+}
+
+# Current local date (YYYY-MM-DD).
+date_today() {
+    date_now "%Y-%m-%d"
+}
+
+# Current local Unix epoch seconds.
+date_epoch_now() {
+    date_now "%s"
+}
+
+# Current local hour (00-23).
+date_hour_24() {
+    date_now "%H"
+}
+
+# Current ISO weekday number (1-7, Mon-Sun).
+date_weekday_iso() {
+    date_now "%u"
 }
 
 # Shift an anchor date by <offset> days and format with <format>.
@@ -169,18 +250,30 @@ timestamp_to_epoch() {
     if command -v python3 >/dev/null 2>&1; then
         python3 - "$raw" <<'PY'
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 
 value = sys.argv[1]
-formats = ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H", "%Y-%m-%d")
-for fmt in formats:
+# Local-time formats
+local_formats = ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H", "%Y-%m-%d")
+# UTC format (trailing Z means UTC)
+utc_formats = ("%Y-%m-%dT%H:%M:%SZ",)
+
+for fmt in local_formats:
     try:
         print(int(datetime.strptime(value, fmt).timestamp()))
         break
     except ValueError:
         continue
 else:
-    print(0)
+    for fmt in utc_formats:
+        try:
+            dt = datetime.strptime(value, fmt).replace(tzinfo=timezone.utc)
+            print(int(dt.timestamp()))
+            break
+        except ValueError:
+            continue
+    else:
+        print(0)
 PY
         return
     fi
@@ -188,6 +281,7 @@ PY
     if date -j -f "%Y-%m-%d" "1970-01-01" "+%s" >/dev/null 2>&1; then
         local fmt
         local epoch=""
+        # Local-time formats
         for fmt in "%Y-%m-%d %H:%M:%S" "%Y-%m-%d %H:%M" "%Y-%m-%d %H" "%Y-%m-%d"; do
             epoch=$(date -j -f "$fmt" "$raw" "+%s" 2>/dev/null || true)
             if [[ -n "$epoch" && "$epoch" =~ ^-?[0-9]+$ ]]; then
@@ -195,6 +289,12 @@ PY
                 return
             fi
         done
+        # UTC format — use -u so the Z-suffixed timestamp is interpreted as UTC
+        epoch=$(date -u -j -f "%Y-%m-%dT%H:%M:%SZ" "$raw" "+%s" 2>/dev/null || true)
+        if [[ -n "$epoch" && "$epoch" =~ ^-?[0-9]+$ ]]; then
+            printf '%s\n' "$epoch"
+            return
+        fi
         echo "0"
         return
     fi
@@ -210,5 +310,41 @@ PY
         printf '%s\n' "$epoch"
     else
         echo "0"
+    fi
+}
+
+# Convert epoch seconds to UTC ISO timestamp (YYYY-MM-DDTHH:MM:SSZ).
+# Usage: epoch_to_utc_iso <epoch>
+epoch_to_utc_iso() {
+    local epoch="${1:-0}"
+
+    if ! [[ "$epoch" =~ ^-?[0-9]+$ ]]; then
+        echo ""
+        return 1
+    fi
+
+    if command -v python3 >/dev/null 2>&1; then
+        python3 - "$epoch" <<'PY'
+import sys
+from datetime import datetime, timezone
+
+try:
+    ts = int(sys.argv[1])
+except ValueError:
+    sys.exit(1)
+print(datetime.fromtimestamp(ts, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
+PY
+        return
+    fi
+
+    if date -u -r "$epoch" "+%Y-%m-%dT%H:%M:%SZ" >/dev/null 2>&1; then
+        date -u -r "$epoch" "+%Y-%m-%dT%H:%M:%SZ"
+        return
+    fi
+
+    if command -v gdate >/dev/null 2>&1; then
+        gdate -u -d "@$epoch" "+%Y-%m-%dT%H:%M:%SZ"
+    else
+        date -u -d "@$epoch" "+%Y-%m-%dT%H:%M:%SZ"
     fi
 }

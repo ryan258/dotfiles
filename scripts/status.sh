@@ -4,12 +4,24 @@ set -euo pipefail
 
 # --- Configuration ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/common.sh"
+else
+    echo "Error: common utilities not found at $SCRIPT_DIR/lib/common.sh" >&2
+    exit 1
+fi
 if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
     # shellcheck disable=SC1090
     source "$SCRIPT_DIR/lib/config.sh"
 else
-    echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh" >&2
-    exit 1
+    die "configuration library not found at $SCRIPT_DIR/lib/config.sh" "$EXIT_FILE_NOT_FOUND"
+fi
+if [ -f "$SCRIPT_DIR/lib/date_utils.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/date_utils.sh"
+else
+    die "date utilities not found at $SCRIPT_DIR/lib/date_utils.sh" "$EXIT_FILE_NOT_FOUND"
 fi
 
 FOCUS_FILE="${FOCUS_FILE:?FOCUS_FILE is not set by config.sh}"
@@ -64,7 +76,7 @@ fi
 echo ""
 echo "📝 TODAY'S JOURNAL (since midnight):"
 if [ -f "$JOURNAL_FILE" ]; then
-    TODAY=$(date +%Y-%m-%d)
+    TODAY=$(date_today)
     TODAY_ENTRIES=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {print "  "$0}' "$JOURNAL_FILE")
     if [ -n "$TODAY_ENTRIES" ]; then
         echo "$TODAY_ENTRIES"
@@ -91,7 +103,7 @@ fi
 echo ""
 echo "🧾 TODAY'S COMMITS:"
 if command -v get_commit_activity_for_date >/dev/null 2>&1; then
-    TODAY=$(date +%Y-%m-%d)
+    TODAY=$(date_today)
     if TODAY_COMMITS=$(get_commit_activity_for_date "$TODAY" 2>/dev/null); then
         if [ -n "$TODAY_COMMITS" ]; then
             echo "$TODAY_COMMITS"
@@ -106,7 +118,6 @@ else
 fi
 
 # --- Health Check (interactive only) ---
-DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
 HEALTH_SCRIPT="${HEALTH_SCRIPT:-$DOTFILES_DIR/scripts/health.sh}"
 
 # Show Health Summary
@@ -123,7 +134,7 @@ if [ -t 0 ] && [ -x "$HEALTH_SCRIPT" ]; then
     if [[ "$log_health" =~ ^[yY] ]]; then
         echo -n "   Energy Level (1-10): "
         read -r energy
-        if [[ "$energy" =~ ^[0-9]+$ ]] && [ "$energy" -ge 1 ] && [ "$energy" -le 10 ]; then
+        if validate_range "$energy" 1 10 "energy level" >/dev/null 2>&1; then
             "$HEALTH_SCRIPT" energy "$energy" | sed 's/^/   /'
         elif [ -n "$energy" ]; then
             echo "   (Skipped: must be 1-10)"
@@ -131,7 +142,7 @@ if [ -t 0 ] && [ -x "$HEALTH_SCRIPT" ]; then
 
         echo -n "   Brain Fog Level (1-10): "
         read -r fog
-        if [[ "$fog" =~ ^[0-9]+$ ]] && [ "$fog" -ge 1 ] && [ "$fog" -le 10 ]; then
+        if validate_range "$fog" 1 10 "brain fog level" >/dev/null 2>&1; then
             "$HEALTH_SCRIPT" fog "$fog" | sed 's/^/   /'
         elif [ -n "$fog" ]; then
             echo "   (Skipped: must be 1-10)"

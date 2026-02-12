@@ -27,7 +27,7 @@ if [[ -z "$JOURNAL_FILE" ]]; then
 fi
 
 # --- Subcommand: ideas ---
-function blog_ideas() {
+blog_ideas() {
     local subcommand="${1:-list}"
     shift || true
 
@@ -83,7 +83,7 @@ function blog_ideas() {
 }
 
 # --- Subcommand: version ---
-function blog_version() {
+blog_version() {
     local subcommand="${1:-show}"
     shift || true
 
@@ -160,7 +160,7 @@ function blog_version() {
 }
 
 # --- Subcommand: metrics ---
-function blog_metrics() {
+blog_metrics() {
     echo "📊 Blog Metrics:"
     local total_posts
     total_posts=$(find "$POSTS_DIR" -name "*.md" | wc -l | tr -d ' ')
@@ -177,7 +177,7 @@ function blog_metrics() {
 }
 
 # --- Subcommand: exemplar ---
-function blog_exemplar() {
+blog_exemplar() {
     local section="${1:-}"
     if [ -z "$section" ]; then
         echo "Usage: blog exemplar <section>"
@@ -203,7 +203,7 @@ function blog_exemplar() {
 }
 
 # --- Subcommand: social ---
-function blog_social() {
+blog_social() {
     local slug="${1:-}"
     shift || true
     local platform=""

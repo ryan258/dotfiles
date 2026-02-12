@@ -1,13 +1,16 @@
 #!/usr/bin/env bats
 
+load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
+load "$BATS_TEST_DIRNAME/helpers/assertions.sh"
+
 setup() {
-    export TEST_DATA_DIR="$(mktemp -d)"
-    export HOME="$TEST_DATA_DIR"
-    mkdir -p "$TEST_DATA_DIR/.config/dotfiles-data"
+    setup_test_environment
+    # Alias for backward compatibility with test assertions
+    export TEST_DATA_DIR="$TEST_DIR"
 }
 
 teardown() {
-    rm -rf "$TEST_DATA_DIR"
+    teardown_test_environment
 }
 
 @test "suggests Stoic Coach on low energy days" {

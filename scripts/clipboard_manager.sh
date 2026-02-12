@@ -5,6 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 require_lib "config.sh"
+require_lib "date_utils.sh"
 require_cmd "python3" "Install with: brew install python"
 
 CLIP_FILE="$CLIPBOARD_FILE"
@@ -30,18 +31,20 @@ if [ -z "$MODE" ]; then
     echo "  clip load <name>  : Load clip to clipboard"
     echo "  clip list         : Show all saved clips"
     echo "  clip peek         : Show current clipboard content"
-    exit 1
+    log_error "clipboard_manager.sh called without a mode." "clipboard_manager.sh"
+    exit "$EXIT_INVALID_ARGS"
 fi
 
 case "$MODE" in
     save)
-        NAME="${2:-clip_$(date +%H%M%S)}"
+        NAME="${2:-clip_$(date_now %H%M%S)}"
         if [[ "$NAME" == *"|"* ]]; then
+            log_error "clipboard save rejected invalid clip name containing pipe." "clipboard_manager.sh"
             echo "Error: Clip name cannot contain '|'" >&2
-            exit 1
+            exit "$EXIT_INVALID_ARGS"
         fi
         NAME=$(sanitize_input "$NAME")
-        TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
+        TIMESTAMP=$(date_now)
         CONTENT_ENCODED=$(pbpaste | encode_clipboard)
         echo "$TIMESTAMP|$NAME|$CONTENT_ENCODED" >> "$CLIP_FILE"
         echo "Saved clipboard as '$NAME'"
@@ -51,14 +54,16 @@ case "$MODE" in
         if [ -z "${2:-}" ]; then
             echo "Available clips:"
             awk -F'|' 'NF>=2 {print $2}' "$CLIP_FILE" | sort -u || echo "No clips saved yet"
-            exit 1
+            log_error "clipboard load requires a clip name." "clipboard_manager.sh"
+            exit "$EXIT_INVALID_ARGS"
         fi
         NAME="$2"
         if [[ "$NAME" == *"|"* ]]; then
+            log_error "clipboard load rejected invalid clip name containing pipe." "clipboard_manager.sh"
             echo "Error: Clip name cannot contain '|'" >&2
-            exit 1
+            exit "$EXIT_INVALID_ARGS"
         fi
-        python3 - "$NAME" "$CLIP_FILE" <<'PY' | pbcopy
+        if python3 - "$NAME" "$CLIP_FILE" <<'PY' | pbcopy; then
 import sys, codecs
 name = sys.argv[1]
 path = sys.argv[2]
@@ -90,14 +95,19 @@ with open(path, "r", encoding="utf-8") as f:
         if parts[1] == name:
             chosen = parts[2]
 if chosen is None:
-    sys.exit(1)
+    sys.exit(44)
 chosen = chosen.replace(r"\|", "|")
 sys.stdout.write(codecs.decode(chosen, "unicode_escape"))
 PY
-        if [ "${PIPESTATUS[0]}" -eq 0 ]; then
             echo "Loaded '$NAME' to clipboard"
         else
-            echo "Clip '$NAME' not found"
+            python_status="${PIPESTATUS[0]:-1}"
+            if [ "$python_status" -eq 44 ]; then
+                echo "Clip '$NAME' not found" >&2
+                exit "$EXIT_FILE_NOT_FOUND"
+            fi
+            echo "Error: Failed to load clip '$NAME' into clipboard" >&2
+            exit "$EXIT_SERVICE_ERROR"
         fi
         ;;
     
@@ -153,6 +163,8 @@ PY
         echo "  clip load <n>  : Load clip to clipboard"
         echo "  clip list         : Show all saved clips"
         echo "  clip peek         : Show current clipboard content"
+        log_error "clipboard_manager.sh unknown mode: ${MODE:-<empty>}" "clipboard_manager.sh"
+        exit "$EXIT_INVALID_ARGS"
         ;;
 esac
 

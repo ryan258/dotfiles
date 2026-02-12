@@ -96,45 +96,48 @@ done
 
 if [ -n "$DATE_OVERRIDE" ]; then
     TODAY="$DATE_OVERRIDE"
+    if ! validate_date_ymd "$TODAY" "override date" >/dev/null 2>&1; then
+        die "Invalid date override '$TODAY' (expected YYYY-MM-DD)." "$EXIT_INVALID_ARGS"
+    fi
     echo "📅 Overriding date to: $TODAY"
 else
     CURRENT_DAY_FILE="$DATA_DIR/current_day"
 
     if [ "$FORCE_CURRENT_DAY" = true ]; then
-        TODAY=$(date +%Y-%m-%d)
+        TODAY=$(date_today)
         log_info "goodevening.sh: refresh requested; using system date $TODAY"
     elif [ -f "$CURRENT_DAY_FILE" ]; then
         TODAY=$(cat "$CURRENT_DAY_FILE")
-        if ! [[ "$TODAY" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-            TODAY=$(date +%Y-%m-%d)
+        if ! validate_date_ymd "$TODAY" "current_day marker" >/dev/null 2>&1; then
+            TODAY=$(date_today)
             log_warn "goodevening.sh: invalid current_day marker; using system date $TODAY"
         else
             marker_mtime_epoch=$(file_mtime_epoch "$CURRENT_DAY_FILE" 2>/dev/null || echo "0")
-            now_epoch=$(date +%s)
+            now_epoch=$(date_epoch_now)
             marker_age_seconds=0
-            if [[ "$marker_mtime_epoch" =~ ^[0-9]+$ ]] && [ "$marker_mtime_epoch" -gt 0 ] && [ "$now_epoch" -ge "$marker_mtime_epoch" ]; then
+            if validate_numeric "$marker_mtime_epoch" "marker mtime epoch" >/dev/null 2>&1 && [ "$marker_mtime_epoch" -gt 0 ] && [ "$now_epoch" -ge "$marker_mtime_epoch" ]; then
                 marker_age_seconds=$((now_epoch - marker_mtime_epoch))
             fi
 
             if [ "$marker_age_seconds" -gt 86400 ]; then
-                TODAY=$(date +%Y-%m-%d)
+                TODAY=$(date_today)
                 log_warn "goodevening.sh: stale current_day marker ($marker_age_seconds seconds old); using system date $TODAY"
             fi
         fi
     else
-        current_hour="$(date +%H)"
+        current_hour="$(date_hour_24)"
         current_hour_num=$((10#$current_hour))
         if [ -t 0 ] && [ "$current_hour_num" -lt 4 ]; then
             TODAY=$(date_shift_days -1 "%Y-%m-%d")
             log_warn "goodevening.sh: startday marker missing before 04:00; using previous day $TODAY"
         else
-            TODAY=$(date +%Y-%m-%d)
+            TODAY=$(date_today)
             log_warn "goodevening.sh: startday marker missing; using system date $TODAY"
         fi
     fi
 fi
 
-echo "=== Evening Close-Out for $TODAY — $(date '+%Y-%m-%d %H:%M') ==="
+echo "=== Evening Close-Out for $TODAY — $(date_now '%Y-%m-%d %H:%M') ==="
 
 # --- Focus ---
 echo ""
@@ -215,24 +218,7 @@ echo ""
 echo "🧾 COMMIT RECAP:"
 TODAY_COMMITS=""
 if command -v get_commit_activity_for_date >/dev/null 2>&1; then
-    if command -v python3 >/dev/null 2>&1; then
-        YESTERDAY=$(python3 - "$TODAY" <<'PY'
-import sys
-from datetime import datetime, timedelta
-
-dt = datetime.strptime(sys.argv[1], "%Y-%m-%d") - timedelta(days=1)
-print(dt.strftime("%Y-%m-%d"))
-PY
-)
-    else
-        if date -j -f "%Y-%m-%d" "$TODAY" -v-1d "+%Y-%m-%d" >/dev/null 2>&1; then
-            YESTERDAY=$(date -j -f "%Y-%m-%d" "$TODAY" -v-1d "+%Y-%m-%d")
-        elif command -v gdate >/dev/null 2>&1; then
-            YESTERDAY=$(gdate -d "$TODAY -1 day" "+%Y-%m-%d")
-        else
-            YESTERDAY=$(date -d "$TODAY -1 day" "+%Y-%m-%d")
-        fi
-    fi
+    YESTERDAY=$(date_shift_from "$TODAY" -1 "%Y-%m-%d")
     echo "  Yesterday ($YESTERDAY):"
     if ! get_commit_activity_for_date "$YESTERDAY"; then
         echo "  (Unable to fetch commit activity. Check your token or network.)"
@@ -318,7 +304,7 @@ if [ -d "$PROJECTS_DIR" ]; then
 
                 if [ "$current_branch" != "$default_branch" ] && [ "$current_branch" != "main" ] && [ "$current_branch" != "master" ]; then
                     # Check how old this branch is
-                    branch_age_days=$(( ( $(date +%s) - $(git log -1 --format=%ct "$current_branch" || echo 0) ) / 86400 ))
+                    branch_age_days=$(( ( $(date_epoch_now) - $(git log -1 --format=%ct "$current_branch" || echo 0) ) / 86400 ))
 
                     if [ "$branch_age_days" -gt 7 ]; then
                         echo "  ⚠️  $proj_name: On branch '$current_branch' (${branch_age_days} days old)"
@@ -393,7 +379,7 @@ echo "🧹 Tidying up old completed tasks..."
 if [ -f "$TODO_DONE_FILE" ]; then
     CUTOFF_DATE_STR=$(date_shift_days -7 "%Y-%m-%d")
     tasks_to_remove=$(awk -F'|' -v cutoff="$CUTOFF_DATE_STR" 'NF>=2 { date_str = substr($1, 1, 10); if (date_str < cutoff) { count++ } } END { print count+0 }' "$TODO_DONE_FILE")
-    echo "$(date): goodevening.sh - Cleaned $tasks_to_remove old tasks." >> "$SYSTEM_LOG_FILE"
+    echo "$(date_now): goodevening.sh - Cleaned $tasks_to_remove old tasks." >> "$SYSTEM_LOG_FILE"
     awk -F'|' -v cutoff="$CUTOFF_DATE_STR" '
         NF >= 2 {
             date_str = substr($1, 1, 10)
@@ -414,10 +400,10 @@ echo "🛡️  Validating data integrity..."
 if bash "$(dirname "$0")/data_validate.sh"; then
     echo "  ✅ Data validation passed."
     # 9. Backup of dotfiles data
-    echo "$(date): goodevening.sh - Backing up dotfiles data." >> "$SYSTEM_LOG_FILE"
+    echo "$(date_now): goodevening.sh - Backing up dotfiles data." >> "$SYSTEM_LOG_FILE"
     if ! backup_output=$(/bin/bash "$(dirname "$0")/backup_data.sh" 2>&1); then
         echo "  ⚠️  WARNING: Backup failed: $backup_output"
-        echo "$(date): goodevening.sh - Backup failed: $backup_output" >> "$SYSTEM_LOG_FILE"
+        echo "$(date_now): goodevening.sh - Backup failed: $backup_output" >> "$SYSTEM_LOG_FILE"
     fi
 else
     echo "  ❌ ERROR: Data validation failed. Skipping backup."

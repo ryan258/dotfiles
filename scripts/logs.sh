@@ -4,9 +4,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
+require_lib "date_utils.sh"
 
-SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:-${SYSTEM_LOG:-$HOME/.config/dotfiles-data/system.log}}"
-DISPATCHER_LOG="${DISPATCHER_LOG:-${DISPATCHER_USAGE_LOG:-$HOME/.config/dotfiles-data/dispatcher_usage.log}}"
+SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:?SYSTEM_LOG_FILE is not set by config.sh}"
+DISPATCHER_LOG="${DISPATCHER_LOG:-${DISPATCHER_USAGE_LOG:?DISPATCHER_USAGE_LOG is not set by config.sh}}"
 
 show_help() {
     cat << 'EOF'
@@ -36,14 +37,13 @@ cmd_tail() {
         echo "Following $SYSTEM_LOG_FILE (Ctrl+C to exit)..."
         tail -f "$SYSTEM_LOG_FILE"
     else
-        echo "No log file found at $SYSTEM_LOG_FILE"
-        exit 1
+        die "No log file found at $SYSTEM_LOG_FILE" "$EXIT_FILE_NOT_FOUND"
     fi
 }
 
 cmd_today() {
     local today
-    today=$(date '+%Y-%m-%d')
+    today=$(date_today)
 
     if [[ -f "$SYSTEM_LOG_FILE" ]]; then
         grep "^$today" "$SYSTEM_LOG_FILE" || echo "No entries for today."
@@ -72,7 +72,8 @@ cmd_search() {
     local term="$1"
     if [[ -z "$term" ]]; then
         echo "Usage: logs.sh search <term>" >&2
-        exit 1
+        log_error "logs.sh search requires a term." "logs.sh"
+        exit "$EXIT_INVALID_ARGS"
     fi
 
     if [[ -f "$SYSTEM_LOG_FILE" ]]; then
@@ -148,15 +149,11 @@ cmd_clean() {
         if [[ -f "$log" ]]; then
             # Check if older than 30 days
             local age_days
-            if stat -f %m "$log" >/dev/null 2>&1; then
-                local mtime
-                mtime=$(stat -f %m "$log")
-                local now
-                now=$(date +%s)
-                age_days=$(( (now - mtime) / 86400 ))
-            else
-                age_days=$(( ($(date +%s) - $(stat -c %Y "$log" 2>/dev/null || echo 0)) / 86400 ))
-            fi
+            local mtime
+            local now
+            mtime=$(file_mtime_epoch "$log")
+            now=$(date_epoch_now)
+            age_days=$(( (now - mtime) / 86400 ))
 
             if (( age_days > 30 )); then
                 rm -f "$log"
@@ -181,8 +178,9 @@ case "${1:-tail}" in
     clean)      cmd_clean ;;
     -h|--help|help) show_help ;;
     *)
-        echo "Unknown command: $1" >&2
+        echo "Error: Unknown command: $1" >&2
+        log_error "logs.sh unknown command: $1" "logs.sh"
         show_help
-        exit 1
+        exit "$EXIT_INVALID_ARGS"
         ;;
 esac

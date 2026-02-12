@@ -136,14 +136,6 @@ list_contexts() {
     done
 }
 
-# Diff two contexts
-# Usage: diff_contexts <name1> <name2>
-diff_contexts() {
-    local name1="$1"
-    local name2="$2"
-    diff -r "$CONTEXT_ROOT/$name1" "$CONTEXT_ROOT/$name2"
-}
-
 # Setup to capture git state
 capture_git_state() {
     if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then

@@ -12,22 +12,16 @@ if [[ -z "${DATA_DIR:-}" ]]; then
     echo "Error: DATA_DIR is not set. Source scripts/lib/config.sh before health_ops.sh." >&2
     return 1
 fi
+if ! command -v timestamp_to_epoch >/dev/null 2>&1 || ! command -v date_today >/dev/null 2>&1; then
+    echo "Error: date utilities are not loaded. Source scripts/lib/date_utils.sh before health_ops.sh." >&2
+    return 1
+fi
 
 # Parse timestamp helper
 _health_parse_timestamp() {
     local raw="$1"
     local epoch
-    # Relies on timestamp_to_epoch from date_utils.sh if available, or basic date
-    if command -v timestamp_to_epoch >/dev/null 2>&1; then
-        epoch=$(timestamp_to_epoch "$raw")
-    else
-        # Fallback
-        if date --version >/dev/null 2>&1; then
-            epoch=$(date -d "$raw" +%s 2>/dev/null)
-        else
-            epoch=$(date -j -f "%Y-%m-%d" "$raw" +%s 2>/dev/null)
-        fi
-    fi
+    epoch=$(timestamp_to_epoch "$raw")
     echo "${epoch:-0}"
 }
 
@@ -48,7 +42,7 @@ show_health_summary() {
 
     # 1. Appointments
     local today_str
-    today_str=$(date +%Y-%m-%d)
+    today_str=$(date_today)
     local today_epoch
     today_epoch=$(_health_parse_timestamp "$today_str")
     

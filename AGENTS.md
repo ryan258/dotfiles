@@ -285,12 +285,12 @@ echo "$user_input" >> "$data_file"  # DANGEROUS
 
 ### Date Handling
 ```bash
-# Use date_utils.sh or:
-if date --version >/dev/null 2>&1; then
-    date -d "yesterday" +%Y-%m-%d  # GNU
-else
-    date -v-1d +%Y-%m-%d  # BSD/macOS
-fi
+# Use scripts/lib/date_utils.sh helpers (required)
+date_shift_days -1 "%Y-%m-%d"
+date_now
+date_today
+date_epoch_now
+timestamp_to_epoch "$raw_timestamp"
 ```
 
 ### macOS-Specific
@@ -314,6 +314,7 @@ fi
 | `exit` in sourced script | Use `return` |
 | Silent failures | Log errors properly |
 | Assuming commands exist | Use `require_cmd()` |
+| Inline `date -v` / `date -d` in scripts | Use `date_utils.sh` helpers |
 
 ---
 

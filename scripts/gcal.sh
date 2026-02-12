@@ -19,6 +19,13 @@ else
     echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh" >&2
     exit 1
 fi
+if [ -f "$SCRIPT_DIR/lib/date_utils.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/date_utils.sh"
+else
+    echo "Error: date utilities not found at $SCRIPT_DIR/lib/date_utils.sh" >&2
+    exit 1
+fi
 
 CREDS_FILE="${GCAL_CREDS_FILE:?GCAL_CREDS_FILE is not set by config.sh}"
 TOKEN_FILE="${GCAL_TOKEN_FILE:?GCAL_TOKEN_FILE is not set by config.sh}"
@@ -134,7 +141,7 @@ cmd_auth() {
             
             # Save Initial Token
             # Buffer: 60s to avoid boundary conditions where token expires during use
-            EXPIRY=$(($(date +%s) + EXPIRES_IN - 60))
+            EXPIRY=$(( $(date_epoch_now) + EXPIRES_IN - 60 ))
             jq -n \
                --arg at "$ACCESS_TOKEN" \
                --arg exp "$EXPIRY" \
@@ -159,7 +166,7 @@ get_access_token() {
     # Check cache
     if [ -f "$TOKEN_FILE" ]; then
         EXPIRY=$(jq -r '.expiry' "$TOKEN_FILE")
-        NOW=$(date +%s)
+        NOW=$(date_epoch_now)
         if [ "$NOW" -lt "$EXPIRY" ]; then
             jq -r '.access_token' "$TOKEN_FILE"
             return
@@ -190,7 +197,7 @@ get_access_token() {
     
     # Update Cache
     # Buffer: 60s to ensure valid upon return
-    EXP=$(($(date +%s) + EXPIRES_IN - 60))
+    EXP=$(( $(date_epoch_now) + EXPIRES_IN - 60 ))
     jq -n \
        --arg at "$ACCESS_TOKEN" \
        --arg exp "$EXP" \
@@ -257,16 +264,8 @@ case "${1:-agenda}" in
         
         # Calculate timeMin (Now) and timeMax (Now + N days)
         # RFC3339 format: YYYY-MM-DDThh:mm:ssZ
-        TIME_MIN=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-        
-        # Cross-platform date math is hell. Using basic seconds math if possible, or `date -v` on BSD/Mac
-        if date -v+1d >/dev/null 2>&1; then
-             # BSD/Mac
-             TIME_MAX=$(date -u -v+"${DAYS}d" +"%Y-%m-%dT%H:%M:%SZ")
-        else
-             # GNU/Linux
-             TIME_MAX=$(date -u -d "+$DAYS days" +"%Y-%m-%dT%H:%M:%SZ")
-        fi
+        TIME_MIN=$(date_now_utc "%Y-%m-%dT%H:%M:%SZ")
+        TIME_MAX=$(date_shift_days_utc "$DAYS" "%Y-%m-%dT%H:%M:%SZ")
         
         # Fetch Events (singleEvents=true expands recurring)
         RESPONSE=$(call_api GET "calendars/primary/events?singleEvents=true&orderBy=startTime&timeMin=$TIME_MIN&timeMax=$TIME_MAX")

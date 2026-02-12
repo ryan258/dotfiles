@@ -91,6 +91,19 @@ validate_file_exists() {
     return 0
 }
 
+# Validate date format (YYYY-MM-DD)
+# Usage: validate_date_ymd "$value" "date"
+validate_date_ymd() {
+    local value="$1"
+    local name="${2:-date}"
+
+    if ! [[ "$value" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+        echo "Error: $name must be in YYYY-MM-DD format, got '$value'" >&2
+        return 1
+    fi
+    return 0
+}
+
 #=============================================================================
 # Todo Data Access
 #=============================================================================

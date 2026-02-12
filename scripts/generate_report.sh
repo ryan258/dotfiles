@@ -8,6 +8,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMMON_LIB="$SCRIPT_DIR/lib/common.sh"
 CONFIG_LIB="$SCRIPT_DIR/lib/config.sh"
+DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
 
 if [ -f "$COMMON_LIB" ]; then
     # shellcheck disable=SC1090
@@ -24,8 +25,14 @@ else
     echo "Error: configuration library not found at $CONFIG_LIB" >&2
     exit 1
 fi
+if [ -f "$DATE_UTILS" ]; then
+    # shellcheck disable=SC1090
+    source "$DATE_UTILS"
+else
+    die "date utilities not found at $DATE_UTILS" "$EXIT_FILE_NOT_FOUND"
+fi
 
-REPORTS_DIR=$(validate_path "$REPORTS_DIR") || exit 1
+REPORTS_DIR=$(validate_path "$REPORTS_DIR") || die "Invalid reports directory path: $REPORTS_DIR" "$EXIT_INVALID_ARGS"
 mkdir -p "$REPORTS_DIR"
 
 CORRELATE_CMD="$SCRIPT_DIR/correlate.sh"
@@ -39,15 +46,13 @@ if ! [[ "$REPORT_TYPE" =~ ^[A-Za-z0-9._-]+$ ]]; then
     exit 1
 fi
 
-TODAY=$(date +%Y-%m-%d)
+TODAY=$(date_today)
 REPORT_FILE="$REPORTS_DIR/report-$REPORT_TYPE-$TODAY.md"
-REPORT_FILE=$(validate_path "$REPORT_FILE") || exit 1
+REPORT_FILE=$(validate_path "$REPORT_FILE") || die "Invalid report output path: $REPORT_FILE" "$EXIT_INVALID_ARGS"
 
 # Use existing libraries for consistent logic and date handling
 TIME_LIB="$SCRIPT_DIR/lib/time_tracking.sh"
-DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
 
-if [ -f "$DATE_UTILS" ]; then source "$DATE_UTILS"; fi
 if [ -f "$TIME_LIB" ]; then source "$TIME_LIB"; fi
 
 # Helper to aggregate time duration for a specific date
@@ -65,10 +70,11 @@ aggregate_daily_time() {
         if [ "$type" == "START" ]; then
             # rest is "description|timestamp", extract last field
             local timestamp="${rest##*|}"
-            start_times[$id]=$(date -j -f "%Y-%m-%d %H:%M:%S" "$timestamp" +%s 2>/dev/null || date -d "$timestamp" +%s 2>/dev/null || echo 0)
+            start_times[$id]=$(timestamp_to_epoch "$timestamp")
         elif [ "$type" == "STOP" ]; then
             # rest is just "timestamp"
-            local stop_time=$(date -j -f "%Y-%m-%d %H:%M:%S" "$rest" +%s 2>/dev/null || date -d "$rest" +%s 2>/dev/null || echo 0)
+            local stop_time
+            stop_time=$(timestamp_to_epoch "$rest")
             if [ -n "${start_times[$id]:-}" ] && [ "$stop_time" -gt "${start_times[$id]}" ] && [ "${start_times[$id]}" -gt 0 ]; then
                 total=$((total + (stop_time - start_times[$id])))
             fi
@@ -124,7 +130,7 @@ if [ -x "$CORRELATE_CMD" ]; then
     
     # Loop last 7 days
     for i in {0..6}; do
-        d=$(date -v-${i}d +%Y-%m-%d 2>/dev/null || date -d "-$i days ago" +%Y-%m-%d)
+        d=$(date_days_ago "$i")
         
         t=$(aggregate_daily_time "$d")
         t_mins=$((t / 60))
@@ -150,7 +156,7 @@ else
 fi
 
 echo "" >> "$REPORT_FILE"
-echo "Report generated at $(date)" >> "$REPORT_FILE"
+echo "Report generated at $(date_now)" >> "$REPORT_FILE"
 
 echo "Report generated: $REPORT_FILE"
 cat "$REPORT_FILE"

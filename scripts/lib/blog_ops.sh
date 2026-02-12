@@ -8,7 +8,7 @@ fi
 readonly _BLOG_OPS_LOADED=true
 
 # --- Subcommand: status ---
-function status() {
+status() {
     echo "📝 BLOG STATUS (ryanleej.com):"
 
     TOTAL_POSTS=$(find "$POSTS_DIR" -name "*.md" | wc -l | tr -d ' ')

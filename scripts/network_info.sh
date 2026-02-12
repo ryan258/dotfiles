@@ -2,6 +2,10 @@
 # network_info.sh - Network diagnostics for macOS
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+require_lib "date_utils.sh"
+
 COMMAND="${1:-}"
 
 case "$COMMAND" in
@@ -35,9 +39,9 @@ case "$COMMAND" in
         echo "Testing connection to fast.com..."
         
         # Simple speed test using curl
-        START_TIME=$(date +%s)
+        START_TIME=$(date_epoch_now)
         curl -o /dev/null -s "http://speedtest.tele2.net/10MB.zip"
-        END_TIME=$(date +%s)
+        END_TIME=$(date_epoch_now)
         
         DURATION=$((END_TIME - START_TIME))
         if [ $DURATION -gt 0 ]; then
@@ -67,6 +71,7 @@ case "$COMMAND" in
         echo "  scan   : Scan for available Wi-Fi networks"
         echo "  speed  : Test network speed"
         echo "  fix    : Reset network settings"
-        exit 1
+        log_error "network_info.sh unknown command: ${COMMAND:-<empty>}" "network_info.sh"
+        exit "$EXIT_INVALID_ARGS"
         ;;
 esac

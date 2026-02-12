@@ -61,6 +61,7 @@ clip load standup    # Restore the snippet to your clipboard
 - Entries are stored as pipe-delimited lines: `YYYY-MM-DD HH:MM:SS|name|content`.
 - Multi-line content is stored with `\n` escapes.
 - `clip peek` gives you a quick look at whatever is currently sitting in the clipboard.
+- `clip load <name>` returns exit code `3` when the clip name does not exist.
 
 ## Real-World Workflows
 
@@ -128,6 +129,7 @@ clipfmt prettier --parser markdown
 
 - `pbcopy` reads until EOF—remember to press `Ctrl+D` when typing interactively.
 - Large blobs (> few MB) can bloat the clipboard; clear with `pbcopy < /dev/null`.
+- If `clip load <name>` says `not found`, run `clip list` to verify the saved name.
 - Remote shells (e.g., SSH) do not have access to your local clipboard; use tools like `pbcopy` via `ssh -t` or rely on `tmux` copy modes instead.
 
 ---

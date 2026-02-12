@@ -1,8 +1,142 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** February 11, 2026
+**Last Updated:** February 12, 2026
 
 This document tracks all major implementations, improvements, and fixes to the Daily Context System.
+
+## Version 2.2.27 (February 12, 2026) - Review Findings Fixes (Clipboard + GitHub Date Window)
+
+**Status:** ✅ Production Ready
+
+### Fixes
+- Fixed `scripts/clipboard_manager.sh` `load` flow under strict mode:
+  - missing clip names now reliably return `EXIT_FILE_NOT_FOUND` (`3`) with `Clip '<name>' not found`.
+  - clipboard write failures now return `EXIT_SERVICE_ERROR` (`5`) with an explicit error message.
+- Fixed DST-sensitive day window calculation in `scripts/github_helper.sh`:
+  - `_utc_window_for_local_date` now computes `end_epoch` from the next local midnight using `date_shift_from`, instead of `start + 86400`.
+  - This prevents off-by-one-hour commit filtering on spring/fall DST transition days.
+
+### Tests
+- Extended `tests/test_p2_utility_scripts.sh`:
+  - added `clipboard_manager.sh load` missing-name regression coverage.
+- Added `tests/test_github_helper_date_window.sh`:
+  - validates `_utc_window_for_local_date` uses next local midnight on DST spring-forward day (`America/Los_Angeles`, `2026-03-08`).
+
+### Validation
+- `bats tests/test_p2_utility_scripts.sh tests/test_github_helper_date_window.sh` passes.
+
+---
+
+## Version 2.2.26 (February 11, 2026) - P2 Completion Pass (`#10`, `#12`, `#13`, `#15`)
+
+**Status:** ✅ Production Ready
+
+### Test Coverage Expansion (`#10`)
+- Added utility script smoke coverage in `tests/test_p2_utility_scripts.sh` for:
+  - `focus.sh`, `status.sh`, `backup_data.sh`, `dev_shortcuts.sh`, `schedule.sh`,
+    `logs.sh`, `network_info.sh`, `clipboard_manager.sh`, `dump.sh`, `data_validate.sh`.
+- Added broad syntax coverage in `tests/test_scripts_syntax.sh` for:
+  - all `scripts/*.sh`
+  - all `scripts/lib/*.sh`
+
+### Error/Validation Standardization (`#12`, `#13`)
+- Standardized remaining P2-scope utility error paths to canonical logging/exit flows in:
+  - `scripts/focus.sh`
+  - `scripts/status.sh`
+  - `scripts/backup_data.sh`
+  - `scripts/dev_shortcuts.sh`
+  - `scripts/schedule.sh`
+  - `scripts/logs.sh`
+  - `scripts/network_info.sh`
+  - `scripts/clipboard_manager.sh`
+  - `scripts/dump.sh`
+  - `scripts/data_validate.sh`
+- Added `validate_date_ymd()` to `scripts/lib/common.sh`.
+- Replaced ad-hoc validation in:
+  - `scripts/startday.sh`
+  - `scripts/goodevening.sh`
+  - `scripts/status.sh`
+
+### Date Utils Mandate Completion (`#15`)
+- Expanded `scripts/lib/date_utils.sh` with:
+  - `date_now`, `date_today`, `date_epoch_now`, `date_hour_24`, `date_weekday_iso`
+  - `date_shift_days_utc`, `date_now_utc`, `epoch_to_utc_iso`
+- Extended `timestamp_to_epoch()` to cover ISO UTC timestamps.
+- Removed inline cross-platform date math fallbacks from active scripts/libs and routed through `date_utils.sh` in:
+  - `scripts/goodevening.sh`
+  - `scripts/gh-projects.sh`
+  - `scripts/meds.sh`
+  - `scripts/github_helper.sh`
+  - `scripts/gcal.sh`
+  - `scripts/generate_report.sh`
+  - `scripts/insight.sh`
+  - `scripts/lib/github_ops.sh`
+  - `scripts/lib/health_ops.sh`
+
+### Validation
+- `bash -n` passed on all touched scripts/libs/tests.
+- Full suite passes:
+  - `bats tests/*.sh` -> `1..114` passing.
+
+---
+
+## Version 2.2.25 (February 11, 2026) - POSIX Function Syntax Cleanup (Blog Libraries)
+
+**Status:** ✅ Production Ready
+
+### Portability Cleanup
+- Replaced remaining non-POSIX `function name()` declarations with POSIX-style `name()` in:
+  - `scripts/lib/blog_ops.sh`
+  - `scripts/lib/blog_gen.sh`
+  - `scripts/lib/blog_lifecycle.sh`
+
+### Validation
+- `bash -n scripts/lib/blog_ops.sh scripts/lib/blog_gen.sh scripts/lib/blog_lifecycle.sh` passed.
+- `bats tests/test_blog_stubs.sh` passed.
+- Full suite passes:
+  - `bats tests/*.sh` -> `1..102` passing.
+
+---
+
+## Version 2.2.24 (February 11, 2026) - Dispatcher Dedup Pass B (`dhp-chain.sh` + `swipe.sh`)
+
+**Status:** ✅ Production Ready
+
+### Dispatcher Deduplication (Pass B)
+- Added shared dispatcher mapping helpers to `bin/dhp-shared.sh`:
+  - `dhp_available_dispatchers`
+  - `dhp_dispatcher_script_name`
+- Rewired `bin/dhp-chain.sh` to resolve dispatchers through shared mapping instead of maintaining its own map table.
+- Rewired `bin/swipe.sh` to resolve aliases through shared mapping instead of maintaining its own map table.
+
+### Tests
+- Added `tests/test_dispatcher_mapping.sh` for shared mapping helper behavior.
+- Existing unknown-flag dispatcher tests remain green.
+
+### Validation
+- `bash -n` passed on touched files.
+- Full suite passes:
+  - `bats tests/*.sh` -> `1..102` passing.
+
+---
+
+## Version 2.2.23 (February 11, 2026) - Dispatcher Dedup Pass A (`dhp-copy.sh`)
+
+**Status:** ✅ Production Ready
+
+### Dispatcher Deduplication (Pass A)
+- Refactored `bin/dhp-copy.sh` to use the canonical shared `dhp_dispatch` path in `bin/dhp-shared.sh`.
+- Removed custom orchestration/parsing boilerplate from `dhp-copy.sh` and aligned behavior with other standard dispatchers.
+
+### Tests
+- Extended `tests/test_dispatcher_unknown_flags.sh` with `dhp-copy` coverage to verify shared unknown-flag handling.
+
+### Validation
+- `bash -n` passed on touched files.
+- Full suite passes:
+  - `bats tests/*.sh` -> `1..100` passing.
+
+---
 
 ## Version 2.2.22 (February 11, 2026) - Error Handling Standardization (Touched Core Scripts)
 

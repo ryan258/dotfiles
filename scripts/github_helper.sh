@@ -22,6 +22,17 @@ else
     exit 1
 fi
 
+if [ -f "$SCRIPT_DIR/lib/date_utils.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/date_utils.sh"
+elif [ -f "$DOTFILES_DIR/scripts/lib/date_utils.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$DOTFILES_DIR/scripts/lib/date_utils.sh"
+else
+    echo "Error: date utilities not found at $SCRIPT_DIR/lib/date_utils.sh or $DOTFILES_DIR/scripts/lib/date_utils.sh" >&2
+    exit 1
+fi
+
 # Define locations for the GitHub Personal Access Token (PAT).
 # TOKEN_FILE: The primary expected location for the token.
 # TOKEN_FALLBACK: A secondary/backup location (often in synced dotfiles data).
@@ -134,63 +145,34 @@ _github_debug_log() {
 }
 
 # Convert a local calendar day (YYYY-MM-DD) into an inclusive/exclusive UTC window.
+# End boundary is computed from next local midnight to correctly handle DST days.
 # Output (4 lines): utc_start_iso, utc_end_iso, utc_start_epoch, utc_end_epoch
 _utc_window_for_local_date() {
     local target_date="$1"
 
-    if command -v python3 >/dev/null 2>&1; then
-        if ! python3 - "$target_date" <<'PY'
-import sys
-from datetime import datetime, timedelta, timezone
-
-target = sys.argv[1]
-
-try:
-    start_local = datetime.strptime(target, "%Y-%m-%d")
-except ValueError:
-    sys.exit(1)
-end_local = start_local + timedelta(days=1)
-
-start_epoch = int(start_local.timestamp())
-end_epoch = int(end_local.timestamp())
-start_utc = datetime.fromtimestamp(start_epoch, timezone.utc)
-end_utc = datetime.fromtimestamp(end_epoch, timezone.utc)
-
-print(start_utc.strftime("%Y-%m-%dT%H:%M:%SZ"))
-print(end_utc.strftime("%Y-%m-%dT%H:%M:%SZ"))
-print(start_epoch)
-print(end_epoch)
-PY
-        then
-            return 1
-        fi
-        return
+    if ! [[ "$target_date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+        return 1
     fi
 
     local start_epoch
-    local end_epoch
-
-    if date -j -f "%Y-%m-%d %H:%M:%S" "$target_date 00:00:00" "+%s" >/dev/null 2>&1; then
-        start_epoch=$(date -j -f "%Y-%m-%d %H:%M:%S" "$target_date 00:00:00" "+%s") || return 1
-    elif command -v gdate >/dev/null 2>&1; then
-        start_epoch=$(gdate -d "$target_date 00:00:00" +%s) || return 1
-    else
-        start_epoch=$(date -d "$target_date 00:00:00" +%s) || return 1
+    start_epoch=$(date_shift_from "$target_date" 0 "%s") || return 1
+    if ! [[ "$start_epoch" =~ ^-?[0-9]+$ ]]; then
+        return 1
     fi
-    end_epoch=$((start_epoch + 86400))
+
+    local end_epoch
+    end_epoch=$(date_shift_from "$target_date" 1 "%s") || return 1
+    if ! [[ "$end_epoch" =~ ^-?[0-9]+$ ]]; then
+        return 1
+    fi
+    if [ "$end_epoch" -le "$start_epoch" ]; then
+        return 1
+    fi
 
     local start_utc
     local end_utc
-    if date -u -r "$start_epoch" "+%Y-%m-%dT%H:%M:%SZ" >/dev/null 2>&1; then
-        start_utc=$(date -u -r "$start_epoch" "+%Y-%m-%dT%H:%M:%SZ") || return 1
-        end_utc=$(date -u -r "$end_epoch" "+%Y-%m-%dT%H:%M:%SZ") || return 1
-    elif command -v gdate >/dev/null 2>&1; then
-        start_utc=$(gdate -u -d "@$start_epoch" "+%Y-%m-%dT%H:%M:%SZ") || return 1
-        end_utc=$(gdate -u -d "@$end_epoch" "+%Y-%m-%dT%H:%M:%SZ") || return 1
-    else
-        start_utc=$(date -u -d "@$start_epoch" "+%Y-%m-%dT%H:%M:%SZ") || return 1
-        end_utc=$(date -u -d "@$end_epoch" "+%Y-%m-%dT%H:%M:%SZ") || return 1
-    fi
+    start_utc=$(epoch_to_utc_iso "$start_epoch") || return 1
+    end_utc=$(epoch_to_utc_iso "$end_epoch") || return 1
 
     printf "%s\n%s\n%s\n%s\n" "$start_utc" "$end_utc" "$start_epoch" "$end_epoch"
 }
@@ -214,6 +196,8 @@ _github_api_call() {
     primary_err=$(mktemp -t "gh_api_primary_err.XXXXXX")
     fallback_err=$(mktemp -t "gh_api_fallback_err.XXXXXX")
     header_file="${tmp_response}.headers"
+    # shellcheck disable=SC2064
+    trap "rm -f '$tmp_response' '$primary_err' '$fallback_err' '$header_file'" RETURN
 
     # Optional scope diagnostics when debugging auth issues.
     if [ "$GITHUB_DEBUG" = "true" ] && \
@@ -238,7 +222,6 @@ _github_api_call() {
                 cp "$tmp_response" "$cache_file"
             fi
             cat "$tmp_response"
-            rm -f "$tmp_response" "$primary_err" "$fallback_err" "$header_file"
             return 0
         fi
     fi
@@ -257,7 +240,6 @@ _github_api_call() {
                     cp "$tmp_response" "$cache_file"
                 fi
                 cat "$tmp_response"
-                rm -f "$tmp_response" "$primary_err" "$fallback_err" "$header_file"
                 return 0
             fi
             _github_debug_log "Invalid JSON from unauthenticated fallback for $endpoint"
@@ -278,11 +260,9 @@ _github_api_call() {
     if [ -n "$cache_file" ] && [ -f "$cache_file" ]; then
         echo "Warning: Unable to reach GitHub. Serving cached data for $endpoint." >&2
         cat "$cache_file"
-        rm -f "$tmp_response" "$primary_err" "$fallback_err" "$header_file"
         return 0
     fi
 
-    rm -f "$tmp_response" "$primary_err" "$fallback_err" "$header_file"
     echo "Error: Failed to reach GitHub for $endpoint." >&2
     return 1
 }

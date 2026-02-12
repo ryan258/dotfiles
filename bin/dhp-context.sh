@@ -26,6 +26,11 @@ else
     return 1
 fi
 
+if [[ -f "$DOTFILES_DIR/scripts/lib/date_utils.sh" ]]; then
+    # shellcheck disable=SC1090
+    source "$DOTFILES_DIR/scripts/lib/date_utils.sh"
+fi
+
 if [[ -z "${TODO_FILE:-}" || -z "${JOURNAL_FILE:-}" ]]; then
     echo "Error: TODO_FILE and JOURNAL_FILE must be set by config.sh." >&2
     return 1
@@ -61,7 +66,11 @@ get_recent_journal() {
     fi
 
     # Calculate cutoff date
-    cutoff_date=$(date -v-"${days}"d "+%Y-%m-%d" 2>/dev/null || date -d "${days} days ago" "+%Y-%m-%d" 2>/dev/null)
+    if command -v date_days_ago >/dev/null 2>&1; then
+        cutoff_date=$(date_days_ago "$days" "%Y-%m-%d")
+    else
+        cutoff_date=$(date -v-"${days}"d "+%Y-%m-%d" 2>/dev/null || date -d "${days} days ago" "+%Y-%m-%d" 2>/dev/null)
+    fi
 
     # Extract recent entries
     awk -F'|' -v cutoff="$cutoff_date" 'NF>=2 { if (substr($1,1,10) >= cutoff) print }' "$JOURNAL_FILE" 2>/dev/null | tail -20

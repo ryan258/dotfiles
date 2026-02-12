@@ -1,15 +1,16 @@
 #!/usr/bin/env bats
 
-# Set up test fixture directory
+load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
+load "$BATS_TEST_DIRNAME/helpers/assertions.sh"
+
 setup() {
-    export TEST_DATA_DIR="$(mktemp -d)"
-    export HOME="$TEST_DATA_DIR"  # Override HOME for tests
-    mkdir -p "$TEST_DATA_DIR/.config/dotfiles-data"
+    setup_test_environment
+    # Alias for backward compatibility with test assertions
+    export TEST_DATA_DIR="$TEST_DIR"
 }
 
-# Clean up after tests
 teardown() {
-    rm -rf "$TEST_DATA_DIR"
+    teardown_test_environment
 }
 
 @test "todo add validates input" {

@@ -30,9 +30,10 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     *)
+      log_error "data_validate.sh unknown option '$1'" "data_validate.sh"
       echo "Error: Unknown option '$1'" >&2
       usage
-      exit 2
+      exit "$EXIT_INVALID_ARGS"
       ;;
   esac
 done
@@ -62,11 +63,19 @@ SENSITIVE_FILES=(
 )
 
 if [ ! -d "$DATA_DIR" ]; then
-  echo "❌ Data directory missing: $DATA_DIR" >&2
-  exit 1
+  die "Data directory missing: $DATA_DIR" "$EXIT_FILE_NOT_FOUND"
 fi
 
 STATUS=0
+
+get_permissions() {
+  local path="$1"
+  if stat -f "%Lp" "$path" >/dev/null 2>&1; then
+    stat -f "%Lp" "$path"
+  else
+    stat -c "%a" "$path" 2>/dev/null || echo ""
+  fi
+}
 
 for item in "${REQUIRED_ITEMS[@]}"; do
   path="$DATA_DIR/$item"
@@ -87,7 +96,12 @@ echo "Checking permissions for sensitive data files..."
 for item in "${SENSITIVE_FILES[@]}"; do
   path="$DATA_DIR/$item"
   if [ -f "$path" ]; then
-    CURRENT_PERMS=$(stat -f %A "$path")
+    CURRENT_PERMS=$(get_permissions "$path")
+    if [ -z "$CURRENT_PERMS" ]; then
+      echo "  ⚠️  WARNING: Unable to determine permissions for $path" >&2
+      STATUS=1
+      continue
+    fi
     if [ "$CURRENT_PERMS" != "600" ]; then
       if [ "$AUTO_FIX" = true ]; then
         echo "  ⚠️  WARNING: Sensitive file ($item) has insecure permissions ($CURRENT_PERMS). Auto-fixing..." >&2

@@ -15,6 +15,9 @@ fi
 if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
     # shellcheck disable=SC1090
     source "$SCRIPT_DIR/lib/common.sh"
+else
+    echo "Error: common utilities not found at $SCRIPT_DIR/lib/common.sh" >&2
+    exit 1
 fi
 if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
     # shellcheck disable=SC1090
@@ -39,11 +42,11 @@ ensure_meds_dir() {
 }
 
 get_meds_today() {
-    echo "${MEDS_TODAY_OVERRIDE:-$(date '+%Y-%m-%d')}"
+    echo "${MEDS_TODAY_OVERRIDE:-$(date_today)}"
 }
 
 get_meds_current_hour() {
-    echo "${MEDS_CURRENT_HOUR_OVERRIDE:-$(date '+%H')}"
+    echo "${MEDS_CURRENT_HOUR_OVERRIDE:-$(date_hour_24)}"
 }
 
 dose_taken_for_slot() {
@@ -101,8 +104,8 @@ case "$COMMAND" in
         med_name=$(sanitize_line "$2")
         refill_date=$(sanitize_line "$3")
         # Validate date format
-        if ! [[ "$refill_date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-            echo "Error: Date must be YYYY-MM-DD"
+        if ! validate_date_ymd "$refill_date" "refill date" >/dev/null 2>&1; then
+            echo "Error: Date must be YYYY-MM-DD" >&2
             exit 1
         fi
         # Remove existing refill entry for this med if exists (to update it)
@@ -124,7 +127,7 @@ case "$COMMAND" in
         fi
         med_name=$(sanitize_line "$2")
         time_slot=$(sanitize_line "${3:-}")
-        timestamp=$(date '+%Y-%m-%d %H:%M')
+        timestamp=$(date_now '%Y-%m-%d %H:%M')
         ensure_meds_dir
         if [ -n "$time_slot" ]; then
             echo "DOSE|$timestamp|$med_name|$time_slot" >> "$MEDS_FILE"
@@ -219,8 +222,8 @@ case "$COMMAND" in
         fi
 
         # Check for refills due within 7 days
-        current_epoch=$(date +%s)
-        warning_epoch=$(date -v+7d +%s 2>/dev/null || date -d "+7 days" +%s) # BSD vs GNU date
+        current_epoch=$(date_epoch_now)
+        warning_epoch=$(date_shift_days 7 "%s")
         
         grep "^REFILL|" "$MEDS_FILE" 2>/dev/null | while IFS='|' read -r type med_name refill_date; do
             refill_epoch=$(timestamp_to_epoch "$refill_date")

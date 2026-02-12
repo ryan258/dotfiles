@@ -87,7 +87,7 @@ fi
 # Exit if collisions found and not in force mode
 if [ "$COLLISIONS_FOUND" = true ] && [ "$FORCE_MODE" = false ]; then
   echo ""
-  echo "Error: Name collision detected. Use a different name or run with --force to override."
+  echo "Error: Name collision detected. Use a different name or run with --force to override." >&2
   exit 1
 elif [ "$COLLISIONS_FOUND" = true ] && [ "$FORCE_MODE" = true ]; then
   echo ""

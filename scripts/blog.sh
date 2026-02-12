@@ -80,7 +80,7 @@ DRAFTS_DIR="$VALIDATED_DRAFTS_DIR"
 POSTS_DIR="$VALIDATED_POSTS_DIR"
 
 if [ ! -d "$POSTS_DIR" ]; then
-    echo "Error: Failed to create or access blog directory at $POSTS_DIR"
+    echo "Error: Failed to create or access blog directory at $POSTS_DIR" >&2
     exit 1
 fi
 

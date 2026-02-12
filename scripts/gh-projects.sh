@@ -6,6 +6,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
     # shellcheck disable=SC1090
     source "$SCRIPT_DIR/lib/common.sh"
+else
+    echo "Error: common utilities not found at $SCRIPT_DIR/lib/common.sh" >&2
+    exit 1
+fi
+if [ -f "$SCRIPT_DIR/lib/date_utils.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/date_utils.sh"
+else
+    die "date utilities not found at $SCRIPT_DIR/lib/date_utils.sh" "$EXIT_FILE_NOT_FOUND"
 fi
 
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
@@ -21,7 +30,7 @@ function forgotten() {
     echo "🗂️  PROJECTS NOT TOUCHED IN 60+ DAYS (on GitHub):"
     
     local now
-    now=$(date +%s)
+    now=$(date_epoch_now)
     
     # Call helper to get repos, then parse with jq
     "$HELPER_SCRIPT" list_repos | jq -c '.[] | {name: .name, pushed_at: .pushed_at}' | while read -r repo_json; do
@@ -30,8 +39,11 @@ function forgotten() {
         pushed_at_str=$(echo "$repo_json" | jq -r '.pushed_at')
         
         # Convert pushed_at (ISO 8601) to epoch seconds
-        pushed_at_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$pushed_at_str" +%s 2>/dev/null || date -d "$pushed_at_str" +%s 2>/dev/null || echo "")
+        pushed_at_epoch=$(timestamp_to_epoch "$pushed_at_str")
         [ -z "$pushed_at_epoch" ] && continue
+        if [ "$pushed_at_epoch" -le 0 ]; then
+            continue
+        fi
         
         DAYS_AGO=$(( (now - pushed_at_epoch) / 86400 ))
         
@@ -68,9 +80,12 @@ function recall() {
     fi
 
     local now
-    now=$(date +%s)
+    now=$(date_epoch_now)
     pushed_at_str=$(echo "$repo_details" | jq -r '.pushed_at')
-    pushed_at_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$pushed_at_str" +%s 2>/dev/null || date -d "$pushed_at_str" +%s 2>/dev/null || echo "$now")
+    pushed_at_epoch=$(timestamp_to_epoch "$pushed_at_str")
+    if [ "$pushed_at_epoch" -le 0 ]; then
+        pushed_at_epoch="$now"
+    fi
     DAYS_AGO=$(( (now - pushed_at_epoch) / 86400 ))
     echo "Last push: $DAYS_AGO days ago"
 

@@ -98,6 +98,30 @@ dhp_parse_flags() {
     done
 }
 
+# Human-readable list used by UX/help paths.
+dhp_available_dispatchers() {
+    printf '%s\n' "tech, creative, content, strategy, brand, market, stoic, research, narrative, copy"
+}
+
+# Resolve dispatcher aliases to canonical script names.
+# Usage: script_name=$(dhp_dispatcher_script_name "tech")
+dhp_dispatcher_script_name() {
+    local dispatcher="${1:-}"
+    case "$dispatcher" in
+        tech|dhp-tech|dhp-tech.sh) echo "dhp-tech.sh" ;;
+        creative|dhp-creative|dhp-creative.sh) echo "dhp-creative.sh" ;;
+        content|dhp-content|dhp-content.sh) echo "dhp-content.sh" ;;
+        strategy|dhp-strategy|dhp-strategy.sh) echo "dhp-strategy.sh" ;;
+        brand|dhp-brand|dhp-brand.sh) echo "dhp-brand.sh" ;;
+        market|dhp-market|dhp-market.sh) echo "dhp-market.sh" ;;
+        stoic|dhp-stoic|dhp-stoic.sh) echo "dhp-stoic.sh" ;;
+        research|dhp-research|dhp-research.sh) echo "dhp-research.sh" ;;
+        narrative|dhp-narrative|dhp-narrative.sh) echo "dhp-narrative.sh" ;;
+        copy|dhp-copy|dhp-copy.sh) echo "dhp-copy.sh" ;;
+        *) return 1 ;;
+    esac
+}
+
 
 # Function to get input from arguments or stdin
 # Returns the input content in the PIPED_CONTENT variable
@@ -328,6 +352,8 @@ $PIPED_CONTENT"
 
 export -f dhp_setup_env
 export -f dhp_parse_flags
+export -f dhp_available_dispatchers
+export -f dhp_dispatcher_script_name
 export -f dhp_get_input
 export -f slugify
 export -f dhp_save_artifact
