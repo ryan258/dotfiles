@@ -7,6 +7,14 @@ COMMON_LIB="$SCRIPT_DIR/lib/common.sh"
 DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
 CONFIG_LIB="$SCRIPT_DIR/lib/config.sh"
 
+if [ -f "$CONFIG_LIB" ]; then
+    # shellcheck disable=SC1090
+    source "$CONFIG_LIB"
+else
+    echo "Error: configuration library not found at $CONFIG_LIB" >&2
+    exit 1
+fi
+
 if [ -f "$COMMON_LIB" ]; then
     # shellcheck disable=SC1090
     source "$COMMON_LIB"
@@ -20,14 +28,6 @@ if [ -f "$DATE_UTILS" ]; then
     source "$DATE_UTILS"
 else
     die "date utilities not found at $DATE_UTILS" "$EXIT_FILE_NOT_FOUND"
-fi
-
-# --- CONFIGURATION ---
-if [ -f "$CONFIG_LIB" ]; then
-    # shellcheck disable=SC1090
-    source "$CONFIG_LIB"
-else
-    die "configuration library not found at $CONFIG_LIB" "$EXIT_FILE_NOT_FOUND"
 fi
 
 # Source new libraries
@@ -324,7 +324,7 @@ STALE_TODO_FILE="$TODO_FILE"
 echo ""
 echo "⏰ STALE TASKS:"
 if [ -f "$STALE_TODO_FILE" ] && [ -s "$STALE_TODO_FILE" ]; then
-    CUTOFF_DATE=$(date_shift_days "-${STALE_TASK_DAYS:-7}" "%Y-%m-%d")
+    CUTOFF_DATE=$(date_shift_days "-${STALE_TASK_DAYS}" "%Y-%m-%d")
     awk -F'|' -v cutoff="$CUTOFF_DATE" '$1 < cutoff { printf "  • %s (from %s)\n", $2, $1 }' "$STALE_TODO_FILE"
 fi
 

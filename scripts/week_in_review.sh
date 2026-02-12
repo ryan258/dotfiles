@@ -42,7 +42,11 @@ fi
 
 TODO_DONE_FILE="${DONE_FILE:?DONE_FILE is not set by config.sh}"
 JOURNAL_FILE="${JOURNAL_FILE:?JOURNAL_FILE is not set by config.sh}"
-LOOKBACK_DAYS="${REVIEW_LOOKBACK_DAYS:-7}"
+LOOKBACK_DAYS="${REVIEW_LOOKBACK_DAYS:?REVIEW_LOOKBACK_DAYS is not set by config.sh}"
+if ! [[ "$LOOKBACK_DAYS" =~ ^[0-9]+$ ]] || [ "$LOOKBACK_DAYS" -lt 1 ]; then
+  echo "Error: REVIEW_LOOKBACK_DAYS must be a positive integer, got '$LOOKBACK_DAYS'" >&2
+  exit 2
+fi
 
 for required in "$TODO_DONE_FILE" "$JOURNAL_FILE"; do
   if [ ! -f "$required" ]; then
@@ -76,31 +80,41 @@ output "========================================"
 # --- Completed Tasks ---
 output "\n## Recently Completed Tasks ##"
 TASK_CUTOFF="$(date_shift_days "-$LOOKBACK_DAYS" "%Y-%m-%d")"
-awk -F'|' -v cutoff="$TASK_CUTOFF" '
-    NF >= 2 {
-        date_str = substr($1, 1, 10)
-        if (date_str >= cutoff) {
-            print
-        }
-    }
-' "$TODO_DONE_FILE" | while read -r line; do output "$line"; done
+while IFS= read -r line; do
+  output "$line"
+done < <(
+  awk -F'|' -v cutoff="$TASK_CUTOFF" '
+      NF >= 2 {
+          date_str = substr($1, 1, 10)
+          if (date_str >= cutoff) {
+              print
+          }
+      }
+  ' "$TODO_DONE_FILE"
+)
 
 # --- Journal Entries ---
 output "\n## Recent Journal Entries ##"
-awk -F'|' -v cutoff="$TASK_CUTOFF" '
-    NF >= 2 {
-        date_str = substr($1, 1, 10)
-        if (date_str >= cutoff) {
-            print
-        }
-    }
-' "$JOURNAL_FILE" | while read -r line; do output "$line"; done
+while IFS= read -r line; do
+  output "$line"
+done < <(
+  awk -F'|' -v cutoff="$TASK_CUTOFF" '
+      NF >= 2 {
+          date_str = substr($1, 1, 10)
+          if (date_str >= cutoff) {
+              print
+          }
+      }
+  ' "$JOURNAL_FILE"
+)
 
 # --- Git Contributions (in current project) ---
 if [ -d .git ]; then
-    MY_NAME=$(git config user.name)
+    MY_NAME=$(git config user.name || true)
     output "\n## Git Contributions This Week ##"
-    git log --oneline --author="$MY_NAME" --since="1 week ago" | while read -r line; do output "$line"; done
+    while IFS= read -r line; do
+      output "$line"
+    done < <(git log --oneline --author="$MY_NAME" --since="1 week ago" || true)
 fi
 
 output "\n========================================"

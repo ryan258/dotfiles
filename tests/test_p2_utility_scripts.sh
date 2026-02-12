@@ -48,6 +48,12 @@ teardown() {
     [[ "$output" == *"TASKS"* ]]
 }
 
+@test "week_in_review.sh handles empty data without strict-mode exit" {
+    run "$DOTFILES_DIR/scripts/week_in_review.sh"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Your Week in Review"* ]]
+}
+
 @test "backup_data.sh creates a local archive in configured backup dir" {
     echo "test task" > "$DOTFILES_DATA_DIR/todo.txt"
     export DOTFILES_BACKUP_DIR="$TEST_DIR/backups"
@@ -95,6 +101,25 @@ teardown() {
     run "$DOTFILES_DIR/scripts/clipboard_manager.sh" load "missing-clip-name"
     [ "$status" -eq 3 ]
     [[ "$output" == *"not found"* ]]
+}
+
+@test "clipboard_manager.sh load returns service-error when pbcopy fails" {
+    cat > "$DOTFILES_DATA_DIR/clipboard_history.txt" <<'EOF'
+2026-02-12 10:00:00|known-clip|hello world
+EOF
+    chmod 600 "$DOTFILES_DATA_DIR/clipboard_history.txt"
+
+    local fake_bin="$TEST_DIR/fake-bin"
+    mkdir -p "$fake_bin"
+    cat > "$fake_bin/pbcopy" <<'EOF'
+#!/usr/bin/env bash
+exit 1
+EOF
+    chmod +x "$fake_bin/pbcopy"
+
+    run env PATH="$fake_bin:$PATH" "$DOTFILES_DIR/scripts/clipboard_manager.sh" load "known-clip"
+    [ "$status" -eq 5 ]
+    [[ "$output" == *"Failed to load clip"* ]]
 }
 
 @test "dump.sh completes safely when editor writes no content" {

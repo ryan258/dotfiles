@@ -1,8 +1,8 @@
 # AI Staff HQ Dispatcher System
 
-This directory contains 12 AI dispatcher scripts plus 4 advanced features that provide instant access to specialized AI professionals from the [AI-Staff-HQ](https://github.com/ryan258/AI-Staff-HQ) workforce. Each dispatcher is a high-speed orchestration layer that connects your workflow to the right specialist via OpenRouter API.
+This directory contains 12 core AI dispatcher scripts (including `dhp-morphling.sh` and `dhp-finance.sh`) plus 4 advanced orchestration features that provide instant access to specialized AI professionals from the [AI-Staff-HQ](https://github.com/ryan258/AI-Staff-HQ) workforce. Each dispatcher is a high-speed orchestration layer that connects your workflow to the right specialist via OpenRouter API.
 
-**Status:** ✅ 12/12 Dispatchers Active + 4 Advanced Features (Phases 1-3, 5-6 Complete)
+**Status:** ✅ 12/12 Core Dispatchers Active + 4 Advanced Features (Phases 1-3, 5-6 Complete)
 
 **Latest Update (February 3, 2026):**
 

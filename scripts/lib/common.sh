@@ -43,6 +43,7 @@ readonly EXIT_INVALID_ARGS=2
 readonly EXIT_FILE_NOT_FOUND=3
 readonly EXIT_PERMISSION=4
 readonly EXIT_SERVICE_ERROR=5
+readonly DEFAULT_LOG_ROTATE_MAX_BYTES=10485760
 
 #=============================================================================
 # Input Validation
@@ -254,7 +255,7 @@ require_dir() {
 # Usage: rotate_log [log_file] [max_size_bytes]
 rotate_log() {
     local log_file="${1:-$SYSTEM_LOG_FILE}"
-    local max_size="${2:-10485760}"  # 10MB default
+    local max_size="${2:-$DEFAULT_LOG_ROTATE_MAX_BYTES}"  # 10MB default
 
     if [[ -f "$log_file" ]]; then
         local size

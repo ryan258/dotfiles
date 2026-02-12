@@ -6,6 +6,7 @@ if [[ -n "${_INSIGHT_SCORE_LOADED:-}" ]]; then
     return 0
 fi
 readonly _INSIGHT_SCORE_LOADED=true
+readonly INSIGHT_MIN_INDEPENDENT_SOURCES=2
 
 # Dependencies:
 # - insight_store.sh sourced first by caller.
@@ -187,7 +188,7 @@ insight_recommend_verdict() {
         esac
     done < <(insight_gate_report "$hypothesis_id" "$updated_confidence")
 
-    if [[ "$has_disconfirming" != "1" || "$independent_sources" -lt 2 || "$has_counterargument" != "1" || "$confidence_updated" != "1" ]]; then
+    if [[ "$has_disconfirming" != "1" || "$independent_sources" -lt "$INSIGHT_MIN_INDEPENDENT_SOURCES" || "$has_counterargument" != "1" || "$confidence_updated" != "1" ]]; then
         echo "INCONCLUSIVE"
         return 0
     fi

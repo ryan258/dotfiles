@@ -204,7 +204,7 @@ dhp_save_artifact() {
 
     if [ "$should_save" = "true" ]; then
         if [ -f "$output_file" ]; then
-            if ! "$DOTFILES_DIR/bin/dhp-memory" \
+            if ! "$DOTFILES_DIR/bin/dhp-memory.sh" \
                 --title "$(tr '[:lower:]' '[:upper:]' <<< "${service_name:0:1}")${service_name:1}: $slug" \
                 --tags "$tags" \
                 --project "$project" \

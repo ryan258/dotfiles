@@ -146,7 +146,7 @@ echo "challenge" | stoic       # For mindset
 ```bash
 # 1. Read startday output (runs automatically)
 # 2. Set a focus if you can articulate one
-focus "Ship the weekly review feature"
+focus set "Ship the weekly review feature"
 
 # 3. Add any urgent tasks that come to mind
 todo add "Fix critical bug in production"
@@ -207,7 +207,7 @@ goodevening         # Automated: wins, safety checks, backups
 
 # 2. If AI reflection enabled, review insights
 # 3. Set tomorrow's focus if it's clear
-focus "Review and merge the PR"
+focus set "Review and merge the PR"
 
 # 4. Clear your head with a journal entry
 journal "Shipped the feature. Felt good. Tomorrow: reviews."
@@ -1078,7 +1078,7 @@ status
 journal search "project-name"
 
 # Set mini-focus
-focus "Complete Redis integration"
+focus set "Complete Redis integration"
 ```
 
 **Why this works:**
@@ -1227,7 +1227,7 @@ journal search "test"
 ### Week 1
 
 - [ ] Run `startday` every morning (automatic)
-- [ ] Set daily focus with `focus "..."`
+- [ ] Set daily focus with `focus set "..."`
 - [ ] Add tasks with `todo add`
 - [ ] Journal at least once per day
 - [ ] Run `goodevening` before closing laptop

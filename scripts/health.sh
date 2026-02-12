@@ -12,8 +12,8 @@ CACHE_DIR="${HEALTH_CACHE_DIR:?HEALTH_CACHE_DIR is not set by config.sh}"
 mkdir -p "$CACHE_DIR"
 
 COMMITS_CACHE_FILE="$CACHE_DIR/health_commits.cache"
-COMMITS_CACHE_TTL="${HEALTH_COMMITS_CACHE_TTL:-3600}"
-COMMITS_LOOKBACK_DAYS="${HEALTH_COMMITS_LOOKBACK_DAYS:-90}"
+COMMITS_CACHE_TTL="${HEALTH_COMMITS_CACHE_TTL:?HEALTH_COMMITS_CACHE_TTL is not set by config.sh}"
+COMMITS_LOOKBACK_DAYS="${HEALTH_COMMITS_LOOKBACK_DAYS:?HEALTH_COMMITS_LOOKBACK_DAYS is not set by config.sh}"
 
 # Ensure health file exists
 touch "$HEALTH_FILE"
@@ -91,7 +91,8 @@ generate_commit_cache() {
     
     # Check TTL
     if [ -f "$cache_file" ]; then
-        local now=$(date +%s)
+        local now
+        now=$(date_epoch_now)
         local mtime=$(get_file_mtime "$cache_file")
         local age=$((now - mtime))
         if [ "$age" -lt "$COMMITS_CACHE_TTL" ]; then
@@ -176,6 +177,12 @@ cmd_add() {
     fi
     desc=$(sanitize_for_storage "$desc")
     time_str=$(sanitize_input "$time_str")
+    if ! [[ "$time_str" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]][0-9]{2}:[0-9]{2}$ ]]; then
+        die "Appointment time must be in 'YYYY-MM-DD HH:MM' format." "$EXIT_INVALID_ARGS"
+    fi
+    if [ "$(timestamp_to_epoch "$time_str")" -le 0 ]; then
+        die "Invalid appointment date/time: $time_str" "$EXIT_INVALID_ARGS"
+    fi
     echo "APPT|$time_str|$desc" >> "$HEALTH_FILE"
     echo "Added: $desc on $time_str"
 }
@@ -187,7 +194,8 @@ cmd_symptom() {
         log_error "Missing symptom description"
         exit "$EXIT_INVALID_ARGS"
     fi
-    local timestamp=$(date '+%Y-%m-%d %H:%M')
+    local timestamp
+    timestamp=$(date_now '%Y-%m-%d %H:%M')
     symptom_note=$(sanitize_for_storage "$symptom_note")
     echo "SYMPTOM|$timestamp|$symptom_note" >> "$HEALTH_FILE"
     echo "Logged symptom: $symptom_note"
@@ -202,7 +210,8 @@ cmd_energy() {
     fi
     validate_range "$rating" 1 10 "energy rating" || die "Invalid energy rating '$rating'" "$EXIT_INVALID_ARGS"
     
-    local timestamp=$(date '+%Y-%m-%d %H:%M')
+    local timestamp
+    timestamp=$(date_now '%Y-%m-%d %H:%M')
     echo "ENERGY|$timestamp|$rating" >> "$HEALTH_FILE"
     echo "Logged energy level: $rating/10"
 }
@@ -216,7 +225,8 @@ cmd_list() {
     echo "🏥 UPCOMING HEALTH APPOINTMENTS:"
     local appt_found=false
     
-    local TODAY_STR=$(date +%Y-%m-%d)
+    local TODAY_STR
+    TODAY_STR=$(date_today)
     local TODAY_EPOCH=$(timestamp_to_epoch "$TODAY_STR")
 
     if grep -q "^APPT|" "$HEALTH_FILE" 2>/dev/null; then

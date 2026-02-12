@@ -29,4 +29,7 @@ Canonical policy lives in `../CLAUDE.md`.
 
 - `copy` remains clipboard utility behavior.
 - `aicopy` remains AI copywriter dispatcher alias.
+- `grep` is intentionally shadowed to force colorized output (`ggrep --color=auto` when available).
+- `memo` is now a direct alias to `cheatsheet.sh` (legacy `memo.sh` wrapper removed).
+- Dispatcher aliases now resolve through `DOTFILES_ALIAS_ROOT` (fallback: `$HOME/dotfiles`) instead of hardcoded `~/dotfiles` paths.
 - For canonical behavior and guardrails, use `../CLAUDE.md`.

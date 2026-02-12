@@ -1,14 +1,6 @@
 #!/usr/bin/env bash
-# dhp-memory: Save content to the Hive Mind
+# dhp-memory (compat wrapper): prefer bin/dhp-memory.sh
 set -euo pipefail
 
-BRAIN_DIR="$(cd "$(dirname "$0")/../brain" && pwd)"
-PYTHON_EXEC="$BRAIN_DIR/.venv/bin/python3"
-SCRIPT="$BRAIN_DIR/ingestion/ingest_text.py"
-
-if [ ! -x "$PYTHON_EXEC" ]; then
-    echo "Error: Brain virtualenv not found. Run start_brain.sh first." >&2
-    exit 1
-fi
-
-"$PYTHON_EXEC" "$SCRIPT" "$@"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$SCRIPT_DIR/dhp-memory.sh" "$@"

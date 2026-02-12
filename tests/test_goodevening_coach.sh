@@ -3,6 +3,16 @@
 load helpers/test_helpers.sh
 load helpers/assertions.sh
 
+shift_date() {
+    python3 - "$1" <<'PY'
+import sys
+from datetime import date, timedelta
+
+offset = int(sys.argv[1])
+print((date.today() + timedelta(days=offset)).strftime("%Y-%m-%d"))
+PY
+}
+
 setup() {
     export TEST_ROOT
     TEST_ROOT="$(mktemp -d)"
@@ -56,22 +66,25 @@ OUT
 EOF
     chmod +x "$DOTFILES_DIR/bin/dhp-strategy.sh"
 
-    cat > "$DATA_DIR/todo_done.txt" <<'EOF'
-2026-02-10 09:00:00|Completed primary task
+    export TEST_DAY
+    TEST_DAY="$(shift_date -1)"
+
+    cat > "$DATA_DIR/todo_done.txt" <<EOF
+$TEST_DAY 09:00:00|Completed primary task
 EOF
-    cat > "$DATA_DIR/journal.txt" <<'EOF'
-2026-02-10 10:00:00|Kept focus for first block
+    cat > "$DATA_DIR/journal.txt" <<EOF
+$TEST_DAY 10:00:00|Kept focus for first block
 EOF
     cat > "$DATA_DIR/daily_focus.txt" <<'EOF'
 Ship one high-signal automation
 EOF
-    cat > "$DATA_DIR/health.txt" <<'EOF'
-ENERGY|2026-02-10 09:00|5
-FOG|2026-02-10 09:00|5
+    cat > "$DATA_DIR/health.txt" <<EOF
+ENERGY|$TEST_DAY 09:00|5
+FOG|$TEST_DAY 09:00|5
 EOF
-    cat > "$DATA_DIR/spoons.txt" <<'EOF'
-BUDGET|2026-02-10|7
-SPEND|2026-02-10|12:00|3|work|4
+    cat > "$DATA_DIR/spoons.txt" <<EOF
+BUDGET|$TEST_DAY|7
+SPEND|$TEST_DAY|12:00|3|work|4
 EOF
 }
 
@@ -98,7 +111,7 @@ teardown() {
 }
 
 @test "goodevening ignores stale startday marker older than 24 hours" {
-    printf '%s\n' "2026-01-01" > "$DATA_DIR/current_day"
+    printf '%s\n' "$(shift_date -30)" > "$DATA_DIR/current_day"
     python3 - "$DATA_DIR/current_day" <<'PY'
 import os
 import sys
@@ -133,7 +146,7 @@ PY
         AI_REFLECTION_ENABLED=true \
         AI_COACH_LOG_ENABLED=true \
         AI_COACH_MODE_DEFAULT=LOCKED \
-        bash -c "$DOTFILES_DIR/scripts/goodevening.sh --refresh 2026-02-10 < /dev/null"
+        bash -c "$DOTFILES_DIR/scripts/goodevening.sh --refresh $TEST_DAY < /dev/null"
 
     [ "$status" -eq 0 ]
     [ -f "$DATA_DIR/strategy_prompt_goodevening.txt" ]
@@ -176,7 +189,7 @@ EOF
         AI_COACH_MODE_DEFAULT=LOCKED \
         AI_COACH_REQUEST_TIMEOUT_SECONDS=1 \
         AI_COACH_RETRY_ON_TIMEOUT=false \
-        bash -c "$DOTFILES_DIR/scripts/goodevening.sh --refresh 2026-02-10 < /dev/null"
+        bash -c "$DOTFILES_DIR/scripts/goodevening.sh --refresh $TEST_DAY < /dev/null"
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"What worked:"* ]]
@@ -221,7 +234,7 @@ EOF
         AI_COACH_REQUEST_TIMEOUT_SECONDS=1 \
         AI_COACH_RETRY_ON_TIMEOUT=true \
         AI_COACH_RETRY_TIMEOUT_SECONDS=4 \
-        bash -c "$DOTFILES_DIR/scripts/goodevening.sh --refresh 2026-02-10 < /dev/null"
+        bash -c "$DOTFILES_DIR/scripts/goodevening.sh --refresh $TEST_DAY < /dev/null"
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"Retry delivered output."* ]]

@@ -7,6 +7,7 @@ if [[ -n "${_HEALTH_OPS_LOADED:-}" ]]; then
     return 0
 fi
 readonly _HEALTH_OPS_LOADED=true
+readonly HEALTH_SECONDS_PER_DAY=86400
 
 if [[ -z "${DATA_DIR:-}" ]]; then
     echo "Error: DATA_DIR is not set. Source scripts/lib/config.sh before health_ops.sh." >&2
@@ -58,7 +59,7 @@ show_health_summary() {
             fi
             
             local diff_seconds=$(( appt_epoch - today_epoch ))
-            local days_until=$(( diff_seconds / 86400 ))
+            local days_until=$(( diff_seconds / HEALTH_SECONDS_PER_DAY ))
             
             if [ "$days_until" -ge 0 ]; then
                 has_data=true

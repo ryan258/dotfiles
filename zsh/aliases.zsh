@@ -6,6 +6,9 @@
 # NAVIGATION & DIRECTORY SHORTCUTS  
 # =============================================================================
 
+# Central dotfiles root for aliases that must source files directly.
+DOTFILES_ALIAS_ROOT="${DOTFILES_DIR:-$HOME/dotfiles}"
+
 # Quick directory navigation
 alias ..="cd .."
 alias ...="cd ../.."
@@ -193,42 +196,42 @@ alias meds="meds.sh"
 
 # Ultra-short aliases for frequent tasks
 alias next="todo.sh top 1"
-alias t="$HOME/dotfiles/scripts/todo.sh list"          # Show todo list
-alias j="$HOME/dotfiles/scripts/journal.sh"            # Add journal entry
-alias ta="$HOME/dotfiles/scripts/todo.sh add"          # Add todo task
+alias t="todo.sh list"          # Show todo list
+alias j="journal.sh"            # Add journal entry
+alias ta="todo.sh add"          # Add todo task
 alias ja="journal.sh add"       # Add journal entry
 
 # Information & Utilities
-alias memo="$HOME/dotfiles/scripts/memo.sh"
-alias weather="$HOME/dotfiles/scripts/weather.sh"
-alias findtext="$HOME/dotfiles/scripts/findtext.sh"
+alias memo="cheatsheet.sh"
+alias weather="weather.sh"
+alias findtext="findtext.sh"
 alias graballtext="grab_all_text.sh"
 
 # Project & Development Tools
-alias newproject="$HOME/dotfiles/scripts/start_project.sh"
-alias newpython="$HOME/dotfiles/scripts/mkproject_py.sh"
-alias newpy="$HOME/dotfiles/scripts/mkproject_py.sh"
-alias progress="$HOME/dotfiles/scripts/my_progress.sh"
+alias newproject="start_project.sh"
+alias newpython="mkproject_py.sh"
+alias newpy="mkproject_py.sh"
+alias progress="my_progress.sh"
 alias projects="gh-projects.sh"
 
 # File & System Management
-alias backup="$HOME/dotfiles/scripts/backup_project.sh"
-alias findbig="$HOME/dotfiles/scripts/findbig.sh"
-alias unpack="$HOME/dotfiles/scripts/unpacker.sh"
+alias backup="backup_project.sh"
+alias findbig="findbig.sh"
+alias unpack="unpacker.sh"
 alias tidydown="tidy_downloads.sh"
 
 # Daily Routine Scripts
-alias startday="$HOME/dotfiles/scripts/startday.sh"
-alias goodevening="$HOME/dotfiles/scripts/goodevening.sh"
-alias greeting="$HOME/dotfiles/scripts/greeting.sh"
-alias weekreview="$HOME/dotfiles/scripts/week_in_review.sh"
+alias startday="startday.sh"
+alias goodevening="goodevening.sh"
+alias greeting="greeting.sh"
+alias weekreview="week_in_review.sh"
 
 # =============================================================================
 # NAVIGATION & FILE MANAGEMENT SCRIPTS
 # =============================================================================
 
 # Smart navigation
-alias g="source $HOME/dotfiles/scripts/g.sh"
+alias g="source $DOTFILES_ALIAS_ROOT/scripts/g.sh"
 
 # File operations
 alias openf="open_file.sh"
@@ -278,7 +281,7 @@ alias launch="app_launcher.sh"
 
 
 # Reminders and notifications
-alias remind="$HOME/dotfiles/scripts/remind_me.sh"
+alias remind="remind_me.sh"
 alias did="done.sh"       # Renamed from 'done' (reserved keyword)
 
 # Development shortcuts
@@ -439,6 +442,7 @@ alias wr='with-req --'
 # Quick information:
 # info                      # Weather + todos
 # overview                  # System info + battery devenv='dev_shortcuts.sh env'
+# Intentional grep shadow: force colorized output for interactive use.
 # Portable grep coloring (prefer GNU grep if available)
 if command -v ggrep >/dev/null 2>&1; then
     alias grep='ggrep --color=auto'
@@ -450,41 +454,41 @@ fi
 # BLOG WORKFLOW
 # =============================================================================
 alias blog="blog.sh"
-alias dump='bash ~/dotfiles/scripts/dump.sh'
-alias data_validate='bash ~/dotfiles/scripts/data_validate.sh'
+alias dump="dump.sh"
+alias data_validate="data_validate.sh"
 
 # =============================================================================
 # AI STAFF HQ DISPATCHERS
 # =============================================================================
 # Full dispatcher names
-alias dhp-tech="$HOME/dotfiles/bin/dhp-tech.sh"
-alias dhp-creative="$HOME/dotfiles/bin/dhp-creative.sh"
-alias dhp-content="$HOME/dotfiles/bin/dhp-content.sh"
-alias dhp-strategy="$HOME/dotfiles/bin/dhp-strategy.sh"
-alias dhp-brand="$HOME/dotfiles/bin/dhp-brand.sh"
-alias dhp-market="$HOME/dotfiles/bin/dhp-market.sh"
-alias dhp-stoic="$HOME/dotfiles/bin/dhp-stoic.sh"
-alias dhp-research="$HOME/dotfiles/bin/dhp-research.sh"
-alias dhp-narrative="$HOME/dotfiles/bin/dhp-narrative.sh"
-alias dhp-copy="$HOME/dotfiles/bin/dhp-copy.sh"
-alias dhp-finance="$HOME/dotfiles/bin/dhp-finance.sh"
+alias dhp-tech="$DOTFILES_ALIAS_ROOT/bin/dhp-tech.sh"
+alias dhp-creative="$DOTFILES_ALIAS_ROOT/bin/dhp-creative.sh"
+alias dhp-content="$DOTFILES_ALIAS_ROOT/bin/dhp-content.sh"
+alias dhp-strategy="$DOTFILES_ALIAS_ROOT/bin/dhp-strategy.sh"
+alias dhp-brand="$DOTFILES_ALIAS_ROOT/bin/dhp-brand.sh"
+alias dhp-market="$DOTFILES_ALIAS_ROOT/bin/dhp-market.sh"
+alias dhp-stoic="$DOTFILES_ALIAS_ROOT/bin/dhp-stoic.sh"
+alias dhp-research="$DOTFILES_ALIAS_ROOT/bin/dhp-research.sh"
+alias dhp-narrative="$DOTFILES_ALIAS_ROOT/bin/dhp-narrative.sh"
+alias dhp-copy="$DOTFILES_ALIAS_ROOT/bin/dhp-copy.sh"
+alias dhp-finance="$DOTFILES_ALIAS_ROOT/bin/dhp-finance.sh"
 
 # Shorthand versions for quick access
-alias tech="$HOME/dotfiles/bin/dhp-tech.sh"
-alias creative="$HOME/dotfiles/bin/dhp-creative.sh"
-alias content="$HOME/dotfiles/bin/dhp-content.sh"
-alias strategy="$HOME/dotfiles/bin/dhp-strategy.sh"
-alias brand="$HOME/dotfiles/bin/dhp-brand.sh"
-alias market="$HOME/dotfiles/bin/dhp-market.sh"
-alias stoic="$HOME/dotfiles/bin/dhp-stoic.sh"
-alias research="$HOME/dotfiles/bin/dhp-research.sh"
-alias narrative="$HOME/dotfiles/bin/dhp-narrative.sh"
-alias aicopy="$HOME/dotfiles/bin/dhp-copy.sh"
-alias morphling="$HOME/dotfiles/bin/morphling.sh"
-alias finance="$HOME/dotfiles/bin/dhp-finance.sh"
-alias dhp-morphling="$HOME/dotfiles/bin/dhp-morphling.sh"
-alias dhp="$HOME/dotfiles/bin/dhp-tech.sh"  # Default to tech dispatcher
-alias dispatch="$HOME/dotfiles/bin/dispatch.sh"
+alias tech="$DOTFILES_ALIAS_ROOT/bin/dhp-tech.sh"
+alias creative="$DOTFILES_ALIAS_ROOT/bin/dhp-creative.sh"
+alias content="$DOTFILES_ALIAS_ROOT/bin/dhp-content.sh"
+alias strategy="$DOTFILES_ALIAS_ROOT/bin/dhp-strategy.sh"
+alias brand="$DOTFILES_ALIAS_ROOT/bin/dhp-brand.sh"
+alias market="$DOTFILES_ALIAS_ROOT/bin/dhp-market.sh"
+alias stoic="$DOTFILES_ALIAS_ROOT/bin/dhp-stoic.sh"
+alias research="$DOTFILES_ALIAS_ROOT/bin/dhp-research.sh"
+alias narrative="$DOTFILES_ALIAS_ROOT/bin/dhp-narrative.sh"
+alias aicopy="$DOTFILES_ALIAS_ROOT/bin/dhp-copy.sh"
+alias morphling="$DOTFILES_ALIAS_ROOT/bin/morphling.sh"
+alias finance="$DOTFILES_ALIAS_ROOT/bin/dhp-finance.sh"
+alias dhp-morphling="$DOTFILES_ALIAS_ROOT/bin/dhp-morphling.sh"
+alias dhp="$DOTFILES_ALIAS_ROOT/bin/dhp-tech.sh"  # Default to tech dispatcher
+alias dispatch="$DOTFILES_ALIAS_ROOT/bin/dispatch.sh"
 
 # Advanced AI Features (Phase 5)
 alias dhp-project="dhp-project.sh"           # Multi-specialist orchestration
@@ -496,9 +500,9 @@ alias ai-context="source dhp-context.sh"     # Context gathering library
 
 # =============================================================================
 # Swipe logging
-alias swipe="$HOME/dotfiles/bin/swipe.sh"
+alias swipe="$DOTFILES_ALIAS_ROOT/bin/swipe.sh"
 
 # SPEC-DRIVEN DISPATCHER WORKFLOW
 # =============================================================================
 # Structured template workflow for dispatchers
-source ~/dotfiles/scripts/spec_helper.sh
+source "$DOTFILES_ALIAS_ROOT/scripts/spec_helper.sh"

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# dhp-memory-search.sh: Query the Hive Mind
+set -euo pipefail
+
+BRAIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../brain" && pwd)"
+PYTHON_EXEC="$BRAIN_DIR/.venv/bin/python3"
+SCRIPT="$BRAIN_DIR/ingestion/recall_text.py"
+
+if [ ! -x "$PYTHON_EXEC" ]; then
+    echo "Error: Brain virtualenv not found. Run start_brain.sh first." >&2
+    exit 1
+fi
+
+"$PYTHON_EXEC" "$SCRIPT" "$@"

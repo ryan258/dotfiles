@@ -4,6 +4,62 @@
 
 This document tracks all major implementations, improvements, and fixes to the Daily Context System.
 
+## Version 2.2.28 (February 12, 2026) - Remaining Report Items (`#17-#33`) Completion
+
+**Status:** ✅ Production Ready
+
+### Dispatcher + Naming + Docs
+- Added canonical memory dispatcher scripts with `.sh` naming:
+  - `bin/dhp-memory.sh`
+  - `bin/dhp-memory-search.sh`
+- Kept compatibility wrappers:
+  - `bin/dhp-memory`
+  - `bin/dhp-memory-search`
+- Removed placeholder `bin/dhp-config.sh`.
+- Updated `bin/dhp-shared.sh` memory-save path to call `dhp-memory.sh`.
+- Clarified dispatcher counts in `bin/README.md` ("12 core dispatchers", explicitly including morphling + finance).
+
+### Robustness + Consistency Fixes
+- Replaced unresolved magic numbers with named constants in:
+  - `scripts/lib/common.sh`
+  - `scripts/lib/health_ops.sh`
+  - `scripts/lib/insight_score.sh`
+  - `scripts/lib/coach_ops.sh`
+- Reworked `scripts/goodevening.sh` project safety scan to avoid fragile subshell temp-file signaling.
+- Quoted upstream git ref expressions in `scripts/goodevening.sh` (`@{u}`, `@{u}..HEAD`) to avoid shell parsing ambiguity.
+- Hardened `scripts/lib/correlation_engine.sh`:
+  - added inline fallbacks when `correlate.py` is unavailable.
+  - implemented `predict_value()` (no longer stub).
+- Standardized `scripts/dev_shortcuts.sh` as executed-only (no dual sourced mode).
+- Removed implicit focus-set behavior from `scripts/focus.sh`; unknown commands now return invalid args.
+- Added strict appointment time validation in `scripts/health.sh` (`YYYY-MM-DD HH:MM` + parse check).
+- `scripts/week_in_review.sh` now explicitly requires/validates `REVIEW_LOOKBACK_DAYS`.
+- `scripts/week_in_review.sh` no longer exits early on empty result sets under `set -euo pipefail`.
+- `scripts/startday.sh` no longer redundantly re-sources `config.sh`.
+- `scripts/done.sh` now has non-macOS fallback notification behavior.
+
+### Alias + Docs Cleanup
+- Removed `scripts/memo.sh`; `memo` now maps directly to `cheatsheet.sh`.
+- Replaced remaining hardcoded `~/dotfiles` dispatcher/swipe aliases with `DOTFILES_ALIAS_ROOT`.
+- Documented intentional `grep` shadow and alias path behavior in `scripts/README_aliases.md`.
+- Updated docs for explicit `focus set ...` usage and `did` fallback behavior.
+
+### Tests
+- Converted coach integration tests to dynamic dates to avoid calendar drift:
+  - `tests/test_startday_coach.sh`
+  - `tests/test_goodevening_coach.sh`
+  - `tests/test_coach_ops.sh`
+- Added/kept correlation fallback + prediction coverage in `tests/test_correlation_engine_lib.sh`.
+- Verified `MEDS_SCRIPT_OVERRIDE` behavior remains covered in `tests/test_ai_suggest.sh`.
+- Added `week_in_review.sh` regression coverage to ensure empty-data runs do not fail under strict mode (`tests/test_p2_utility_scripts.sh`).
+
+### Validation
+- `bash -n` passed on touched scripts/tests.
+- Full suite passes:
+  - `bats tests/*.sh` -> `1..120` passing.
+
+---
+
 ## Version 2.2.27 (February 12, 2026) - Review Findings Fixes (Clipboard + GitHub Date Window)
 
 **Status:** ✅ Production Ready
@@ -19,8 +75,10 @@ This document tracks all major implementations, improvements, and fixes to the D
 ### Tests
 - Extended `tests/test_p2_utility_scripts.sh`:
   - added `clipboard_manager.sh load` missing-name regression coverage.
+  - added `clipboard_manager.sh load` `pbcopy`-failure regression coverage (`EXIT_SERVICE_ERROR`).
 - Added `tests/test_github_helper_date_window.sh`:
   - validates `_utc_window_for_local_date` uses next local midnight on DST spring-forward day (`America/Los_Angeles`, `2026-03-08`).
+  - validates `_utc_window_for_local_date` on DST fall-back day (`America/Los_Angeles`, `2026-11-01`).
 
 ### Validation
 - `bats tests/test_p2_utility_scripts.sh tests/test_github_helper_date_window.sh` passes.

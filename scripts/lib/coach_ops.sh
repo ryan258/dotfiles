@@ -32,6 +32,7 @@ readonly COACH_DRIFT_UNIQUE_DIRS_THRESHOLD=10
 readonly COACH_DRIFT_SWITCHES_THRESHOLD=80
 readonly COACH_LOW_ENERGY_THRESHOLD=4
 readonly COACH_HIGH_FOG_THRESHOLD=6
+readonly COACH_TREND_DELTA_THRESHOLD=0.2
 
 _coach_escape_field() {
     local raw="$1"
@@ -96,9 +97,9 @@ _coach_calc_trend() {
 
     local delta
     delta=$(awk -v a="$first" -v b="$second" 'BEGIN { printf "%.3f", (b-a)/a }')
-    awk -v d="$delta" 'BEGIN {
-        if (d > 0.2) print "up";
-        else if (d < -0.2) print "down";
+    awk -v d="$delta" -v t="$COACH_TREND_DELTA_THRESHOLD" 'BEGIN {
+        if (d > t) print "up";
+        else if (d < -t) print "down";
         else print "flat";
     }'
 }

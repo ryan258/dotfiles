@@ -75,3 +75,41 @@ EOF
     run generate_insight_text "notanumber"
     [[ "$output" =~ "Invalid" ]]
 }
+
+@test "correlate_two_datasets falls back when correlate.py is unavailable" {
+    cat <<EOF > "$TEST_DIR/data1.csv"
+2025-01-01|10
+2025-01-02|20
+2025-01-03|30
+2025-01-04|40
+2025-01-05|50
+EOF
+    cat <<EOF > "$TEST_DIR/data2.csv"
+2025-01-01|1
+2025-01-02|2
+2025-01-03|3
+2025-01-04|4
+2025-01-05|5
+EOF
+
+    original_correlate_py="$CORRELATE_PY"
+    CORRELATE_PY="$TEST_DIR/missing-correlate.py"
+    run correlate_two_datasets "$TEST_DIR/data1.csv" "$TEST_DIR/data2.csv" 0 1 0 1
+    CORRELATE_PY="$original_correlate_py"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ "1.0000" ]]
+}
+
+@test "predict_value returns numeric output from historical data" {
+    cat <<EOF > "$TEST_DIR/predict.csv"
+2025-01-01|10
+2025-01-02|20
+2025-01-03|30
+2025-01-04|40
+EOF
+
+    run predict_value "$TEST_DIR/predict.csv"
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ ^-?[0-9]+(\.[0-9]+)?$ ]]
+}

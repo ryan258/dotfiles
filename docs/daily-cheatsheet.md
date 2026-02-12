@@ -157,6 +157,8 @@ cat script.sh | tech --stream
 | `clip save name "text"` | Save clipboard snippet |
 | `whatis commandname`    | What does this do?     |
 
+`did` uses macOS notifications when available and falls back to a terminal bell/message elsewhere.
+
 ---
 
 ## 🆘 Overwhelmed?
@@ -164,7 +166,7 @@ cat script.sh | tech --stream
 **When you can't focus:**
 
 ```bash
-focus "Just one thing"
+focus set "Just one thing"
 todo top
 ```
 

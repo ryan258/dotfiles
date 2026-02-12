@@ -3,6 +3,16 @@
 load helpers/test_helpers.sh
 load helpers/assertions.sh
 
+shift_date() {
+    python3 - "$1" <<'PY'
+import sys
+from datetime import date, timedelta
+
+offset = int(sys.argv[1])
+print((date.today() + timedelta(days=offset)).strftime("%Y-%m-%d"))
+PY
+}
+
 setup() {
     export TEST_ROOT
     TEST_ROOT="$(mktemp -d)"
@@ -44,23 +54,28 @@ OUT
 EOF
     chmod +x "$DOTFILES_DIR/bin/dhp-strategy.sh"
 
-    cat > "$DATA_DIR/todo.txt" <<'EOF'
-2026-02-08|Vectorize logo
-2026-02-09|Set LinkedIn schedule
+    local day_minus_2
+    local day_minus_1
+    day_minus_2="$(shift_date -2)"
+    day_minus_1="$(shift_date -1)"
+
+    cat > "$DATA_DIR/todo.txt" <<EOF
+$day_minus_2|Vectorize logo
+$day_minus_1|Set LinkedIn schedule
 EOF
-    cat > "$DATA_DIR/todo_done.txt" <<'EOF'
-2026-02-09 10:00:00|Finished setup
+    cat > "$DATA_DIR/todo_done.txt" <<EOF
+$day_minus_1 10:00:00|Finished setup
 EOF
-    cat > "$DATA_DIR/journal.txt" <<'EOF'
-2026-02-09 08:00:00|Progress note
+    cat > "$DATA_DIR/journal.txt" <<EOF
+$day_minus_1 08:00:00|Progress note
 EOF
-    cat > "$DATA_DIR/health.txt" <<'EOF'
-ENERGY|2026-02-09 09:00|5
-FOG|2026-02-09 09:00|4
+    cat > "$DATA_DIR/health.txt" <<EOF
+ENERGY|$day_minus_1 09:00|5
+FOG|$day_minus_1 09:00|4
 EOF
-    cat > "$DATA_DIR/spoons.txt" <<'EOF'
-BUDGET|2026-02-09|7
-SPEND|2026-02-09|12:00|3|deep-work|4
+    cat > "$DATA_DIR/spoons.txt" <<EOF
+BUDGET|$day_minus_1|7
+SPEND|$day_minus_1|12:00|3|deep-work|4
 EOF
 }
 

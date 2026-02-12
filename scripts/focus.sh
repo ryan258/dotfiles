@@ -113,12 +113,8 @@ case "${1:-show}" in
     show_usage
     ;;
   *)
-    # Fallback to 'set' implementation for backward compatibility if user types `focus "Something"`
-    # But strictly speaking, the case statement handles $1. 
-    # If $1 is not one of the above keywords, treat it as the focus text (implicit set)
-    mkdir -p "$(dirname "$FOCUS_FILE")"
-    focus_text=$(sanitize_focus_text "$*")
-    echo "$focus_text" > "$FOCUS_FILE"
-    echo "🎯 Focus set: $focus_text"
+    show_usage
+    log_error "focus.sh unknown command: ${1:-<empty>}"
+    exit "$EXIT_INVALID_ARGS"
     ;;
 esac
