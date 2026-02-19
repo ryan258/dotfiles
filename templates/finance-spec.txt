@@ -1,0 +1,25 @@
+Financial Analysis Spec
+
+ANALYSIS TYPE:
+[Budget review, investment analysis, cost-benefit, forecasting, etc.]
+
+SUBJECT:
+[What financial topic or decision to analyze?]
+
+DATA AVAILABLE:
+[Revenue, expenses, projections, market data, etc.]
+
+TIME HORIZON:
+[Short-term, quarterly, annual, multi-year]
+
+KEY QUESTIONS:
+[What specific financial questions need answers?]
+
+CONSTRAINTS:
+[Risk tolerance, regulatory requirements, budget limits]
+
+CONTEXT:
+[Industry, business stage, relevant market conditions]
+
+OUTPUT FORMAT:
+[Summary with recommendations, spreadsheet format, narrative brief, etc.]

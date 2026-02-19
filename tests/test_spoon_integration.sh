@@ -72,10 +72,9 @@ teardown() {
     [[ "$output" =~ "No spoon budget initialized" ]]
 }
 
-@test "spoon_manager.sh cost returns standard values" {
+@test "spoon_manager.sh cost subcommand was removed (dead code cleanup)" {
     run "$TEST_DIR/scripts/spoon_manager.sh" cost "meeting"
-    [ "$status" -eq 0 ]
-    [[ "$output" =~ "Standard cost for 'meeting': 2" ]]
+    [ "$status" -ne 0 ]
 }
 
 @test "spoon_manager.sh init twice fails" {

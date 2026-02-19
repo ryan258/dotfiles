@@ -100,7 +100,6 @@ stop_timer() {
     echo "STOP|$active_id|$timestamp" >> "$TIME_LOG"
     
     # Calculate duration
-    # Calculate duration
     local start_ts=$(timestamp_to_epoch "$active_start_time")
     local end_ts=$(timestamp_to_epoch "$timestamp")
     local duration=$((end_ts - start_ts))

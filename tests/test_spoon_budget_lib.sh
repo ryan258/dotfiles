@@ -54,10 +54,9 @@ teardown() {
     [ "$output" = "5" ]
 }
 
-@test "calculate_activity_cost returns defaults" {
-    run calculate_activity_cost "meeting"
-    [ "$output" = "2" ]
-    
-    run calculate_activity_cost "unknown"
-    [ "$output" = "1" ]
+@test "calculate_activity_cost was removed (dead code cleanup)" {
+    # calculate_activity_cost was an unused stub and has been removed.
+    # Verify the sourced library does not define the function.
+    run type calculate_activity_cost
+    [ "$status" -ne 0 ]
 }

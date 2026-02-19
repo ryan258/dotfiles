@@ -73,9 +73,6 @@ capture_current_context() {
     # 3. Open Files (VS Code / Editors)
     capture_open_files > "$ctx_dir/open_files.txt"
     
-    # 4. VS Code State (mocked/simple)
-    capture_vscode_state > "$ctx_dir/vscode_state.txt"
-    
     echo "Context '$name' captured successfully."
 }
 
@@ -152,11 +149,4 @@ capture_open_files() {
     # This is tricky without being intrusive. 
     # Just checking for common editors
     pgrep -l "Code|vim|nano" || echo "No common editors found running"
-}
-
-# Capture VS Code state
-capture_vscode_state() {
-    # Placeholder
-    # Placeholder for future VS Code integration
-    echo "VS Code state capture not implemented"
 }

@@ -29,6 +29,11 @@ This document tracks all major implementations, improvements, and fixes to the D
 
 ### Architecture Cleanup
 - Removed dead helper `insight_get_hypothesis_with_line_number()` from `scripts/lib/insight_store.sh`.
+- Refactored coaching module loading to align with `scripts/lib` dependency contract:
+  - `coach_ops.sh` now validates runtime prerequisites only.
+  - callers (`startday.sh`, `goodevening.sh`, and coach tests) now source `coach_metrics.sh`, `coach_prompts.sh`, and `coach_scoring.sh` explicitly.
+- Restored `correlate.py` as the primary engine in `scripts/lib/correlation_engine.sh`, with inline Python retained as fallback.
+- Fixed non-diagnostic removed-function regression test in `tests/test_spoon_budget_lib.sh`.
 
 ### AI-Staff-HQ Routing
 - Fixed model routing precedence in `ai-staff-hq/tools/engine/llm.py` to match contract/tests:

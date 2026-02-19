@@ -21,7 +21,8 @@ Canonical architecture and policy live in `../CLAUDE.md`.
 
 ## Coaching Runtime
 
-- `scripts/lib/coach_ops.sh` provides deterministic metrics, mode persistence, timeout-guarded AI calls, and append-only coaching logs.
+- `scripts/lib/coach_ops.sh` validates coaching runtime dependencies.
+- `scripts/lib/coach_metrics.sh`, `scripts/lib/coach_prompts.sh`, and `scripts/lib/coach_scoring.sh` provide metrics, prompt construction, timeout-guarded AI calls, mode persistence, and append-only coaching logs.
 - `startday.sh` and `goodevening.sh` consume structured digest data and persist coaching outcomes.
 
 ## Data Location

@@ -41,7 +41,7 @@ spec_dispatch() {
   # Validate dispatcher
   if [[ -z "$dispatcher" ]]; then
     echo "Usage: spec <dispatcher>"
-    echo "Available: tech, creative, content, strategy, market, research, stoic"
+    echo "Available: tech, creative, content, strategy, brand, market, research, stoic, narrative, copy, finance, morphling"
     return 1
   fi
 

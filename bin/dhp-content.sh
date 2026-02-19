@@ -10,14 +10,6 @@ source "$(dirname "$0")/dhp-shared.sh"
 # --- 1. SETUP ---
 dhp_setup_env
 
-# Helpers for this script specifically
-slugify_local() {
-    local value="$1"
-    value=$(echo "$value" | tr '[:upper:]' '[:lower:]')
-    value=$(echo "$value" | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')
-    echo "$value"
-}
-
 load_persona_block() {
     local persona_slug="$1"
     local file="$2"
@@ -158,7 +150,7 @@ if [ -n "$PERSONA_NAME" ]; then
         echo "Error: Persona file not found at $PERSONA_PLAYBOOK_FILE" >&2
         exit 1
     fi
-    PERSONA_SLUG=$(slugify_local "$PERSONA_NAME")
+    PERSONA_SLUG=$(slugify "$PERSONA_NAME")
     PERSONA_DATA=$(load_persona_block "$PERSONA_SLUG" "$PERSONA_PLAYBOOK_FILE")
     if [ -z "$PERSONA_DATA" ]; then
         echo "Error: Persona '$PERSONA_NAME' not found in $PERSONA_PLAYBOOK_FILE" >&2

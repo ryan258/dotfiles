@@ -491,12 +491,12 @@ alias dhp="$DOTFILES_ALIAS_ROOT/bin/dhp-tech.sh"  # Default to tech dispatcher
 alias dispatch="$DOTFILES_ALIAS_ROOT/bin/dispatch.sh"
 
 # Advanced AI Features (Phase 5)
-alias dhp-project="dhp-project.sh"           # Multi-specialist orchestration
-alias ai-project="dhp-project.sh"            # Shorthand
-alias dhp-chain="dhp-chain.sh"               # Dispatcher chaining
-alias ai-chain="dhp-chain.sh"                # Shorthand
+alias dhp-project="$DOTFILES_ALIAS_ROOT/bin/dhp-project.sh"   # Multi-specialist orchestration
+alias ai-project="$DOTFILES_ALIAS_ROOT/bin/dhp-project.sh"   # Shorthand
+alias dhp-chain="$DOTFILES_ALIAS_ROOT/bin/dhp-chain.sh"      # Dispatcher chaining
+alias ai-chain="$DOTFILES_ALIAS_ROOT/bin/dhp-chain.sh"       # Shorthand
 alias ai-suggest="ai_suggest.sh"             # Context-aware suggestions
-alias ai-context="source dhp-context.sh"     # Context gathering library
+alias ai-context="source $DOTFILES_ALIAS_ROOT/bin/dhp-context.sh"  # Context gathering library
 
 # =============================================================================
 # Swipe logging

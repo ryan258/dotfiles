@@ -40,6 +40,14 @@ if [ -f "$SCRIPT_DIR/lib/coach_ops.sh" ]; then
 else
     die "coach operations library not found at $SCRIPT_DIR/lib/coach_ops.sh" "$EXIT_FILE_NOT_FOUND"
 fi
+for coach_module in coach_metrics.sh coach_prompts.sh coach_scoring.sh; do
+    if [ -f "$SCRIPT_DIR/lib/$coach_module" ]; then
+        # shellcheck disable=SC1090
+        source "$SCRIPT_DIR/lib/$coach_module"
+    else
+        die "coach module not found at $SCRIPT_DIR/lib/$coach_module" "$EXIT_FILE_NOT_FOUND"
+    fi
+done
 if [ -f "$SCRIPT_DIR/lib/coaching.sh" ]; then
     # shellcheck disable=SC1090
     source "$SCRIPT_DIR/lib/coaching.sh"

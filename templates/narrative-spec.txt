@@ -1,0 +1,28 @@
+Narrative Design Spec
+
+NARRATIVE TYPE:
+[World-building, character arc, plot structure, dialogue, etc.]
+
+GENRE:
+[Fantasy, sci-fi, horror, literary fiction, etc.]
+
+SCOPE:
+[Single scene, chapter outline, full story arc, series bible]
+
+CHARACTERS:
+[Key characters and their roles/motivations]
+
+WORLD/SETTING:
+[Physical environment, rules, history, culture]
+
+THEMES:
+[Central ideas and philosophical underpinnings]
+
+NARRATIVE VOICE:
+[First person, third limited, omniscient, unreliable, etc.]
+
+CONSTRAINTS:
+[Continuity requirements, existing lore, tone boundaries]
+
+OUTPUT FORMAT:
+[Narrative document, outline, character sheet, world bible, etc.]

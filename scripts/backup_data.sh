@@ -67,6 +67,7 @@ BACKUP_FILE="$BACKUP_DIR/$BACKUP_FILENAME"
 # Compress the source directory
 echo "Creating local backup..."
 tar -czf "$BACKUP_FILE" -C "$SOURCE_DIR" .
+chmod 600 "$BACKUP_FILE"
 echo "✅ Local backup created at $BACKUP_FILE"
 
 # Upload to Google Drive if rclone is available and configured

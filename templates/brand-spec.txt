@@ -1,0 +1,25 @@
+Brand Strategy Spec
+
+BRAND/PROJECT:
+[Brand name or project to analyze]
+
+OBJECTIVE:
+[What brand outcome are you seeking?]
+
+TARGET AUDIENCE:
+[Demographics, psychographics, pain points]
+
+CURRENT POSITIONING:
+[How the brand is currently perceived]
+
+DESIRED POSITIONING:
+[How you want the brand to be perceived]
+
+COMPETITIVE LANDSCAPE:
+[Key competitors and differentiators]
+
+CONSTRAINTS:
+[Budget, timeline, existing assets, tone guidelines]
+
+OUTPUT FORMAT:
+[Brand brief, positioning statement, messaging framework, etc.]

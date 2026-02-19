@@ -31,12 +31,8 @@ CREDS_FILE="${GCAL_CREDS_FILE:?GCAL_CREDS_FILE is not set by config.sh}"
 TOKEN_FILE="${GCAL_TOKEN_FILE:?GCAL_TOKEN_FILE is not set by config.sh}"
 mkdir -p "$DATA_DIR"
 
-sanitize_line() {
-    local value
-    value=$(sanitize_input "$1")
-    value=${value//$'\n'/ }
-    printf '%s' "$value"
-}
+# Delegate to consolidated sanitize_single_line in common.sh
+sanitize_line() { sanitize_single_line "$1"; }
 
 # Prevent sourcing
 if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then

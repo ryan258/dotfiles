@@ -1,0 +1,28 @@
+Copywriting Spec
+
+COPY TYPE:
+[Landing page, email, ad, social post, product description, etc.]
+
+PRODUCT/SERVICE:
+[What you're writing about]
+
+TARGET AUDIENCE:
+[Who will read this copy?]
+
+KEY MESSAGE:
+[The single most important takeaway]
+
+CALL TO ACTION:
+[What should the reader do next?]
+
+TONE:
+[Professional, casual, urgent, inspirational, etc.]
+
+LENGTH:
+[Word count or format constraints]
+
+SUPPORTING POINTS:
+[Features, benefits, proof points to include]
+
+OUTPUT FORMAT:
+[Ready-to-use copy with headline, body, and CTA]

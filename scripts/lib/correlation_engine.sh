@@ -8,8 +8,8 @@ if [[ -n "${_CORRELATION_ENGINE_LOADED:-}" ]]; then
 fi
 readonly _CORRELATION_ENGINE_LOADED=true
 
-LIB_DIR="$(dirname "${BASH_SOURCE[0]}")"
-CORRELATE_PY="$LIB_DIR/correlate.py"
+_CORRELATION_ENGINE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CORRELATE_PY="${CORRELATE_PY:-$_CORRELATION_ENGINE_DIR/correlate.py}"
 readonly CORRELATION_MIN_OVERLAP_WARN=5
 readonly CORRELATION_PREDICT_WINDOW=3
 
@@ -322,17 +322,17 @@ generate_insight_text() {
        return
     fi
 
-    # Use python for float comparison
-    local strength=$(python3 -c "
-r = float($r)
+    local strength direction
+    read -r strength direction < <(python3 -c "
+r = float('$r')
 abs_r = abs(r)
-if abs_r > 0.7: print('strong')
-elif abs_r > 0.4: print('moderate')
-elif abs_r > 0.2: print('weak')
-else: print('negligible')
+if abs_r > 0.7: s = 'strong'
+elif abs_r > 0.4: s = 'moderate'
+elif abs_r > 0.2: s = 'weak'
+else: s = 'negligible'
+d = 'positive' if r > 0 else 'negative'
+print(s, d)
 ")
-
-    local direction=$(python3 -c "print('positive' if float($r) > 0 else 'negative')")
     
     echo "Found a $strength $direction correlation (r=$r)"
 }

@@ -273,7 +273,7 @@ bats tests/*.sh
 
 Current known result:
 
-- Full suite passing (`1..114`).
+- Full suite passing (`1..124`).
 
 ## Conversation Bootstrap Template
 

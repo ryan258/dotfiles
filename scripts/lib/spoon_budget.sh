@@ -30,6 +30,14 @@ if [[ -z "$SPOON_LOG" ]]; then
     return 1
 fi
 
+# Cross-platform date helper: prefer date_today from date_utils.sh if loaded
+_spoon_today() {
+    if command -v date_today >/dev/null 2>&1; then
+        date_today
+    else
+        date +%Y-%m-%d
+    fi
+}
 
 mkdir -p "$DATA_DIR"
 
@@ -40,7 +48,7 @@ init_daily_spoons() {
 
     validate_numeric "$count" "spoon count" || return 1
 
-    local date="${2:-$(date +%Y-%m-%d)}"
+    local date="${2:-$(_spoon_today)}"
     
     # Check if already initialized
     if grep -q "^BUDGET|$date" "$SPOON_LOG" 2>/dev/null; then
@@ -59,7 +67,7 @@ set_daily_spoons() {
 
     validate_numeric "$count" "spoon count" || return 1
 
-    local date="${2:-$(date +%Y-%m-%d)}"
+    local date="${2:-$(_spoon_today)}"
 
     echo "BUDGET|$date|$count" >> "$SPOON_LOG"
     echo "Updated budget to $count spoons for $date"
@@ -77,8 +85,13 @@ spend_spoons() {
     local activity
     activity=$(sanitize_for_storage "$raw_activity")
     activity=$(printf '%s' "$activity" | head -c 100)
-    local today=$(date +%Y-%m-%d)
-    local time=$(date +%H:%M)
+    local today=$(_spoon_today)
+    local time
+    if command -v date_now >/dev/null 2>&1; then
+        time=$(date_now "%H:%M")
+    else
+        time=$(date +%H:%M)
+    fi
     
     # Get current remaining
     local remaining=$(get_remaining_spoons)
@@ -103,7 +116,7 @@ spend_spoons() {
 # Get remaining spoons for today
 # Usage: get_remaining_spoons
 get_remaining_spoons() {
-    local today=$(date +%Y-%m-%d)
+    local today=$(_spoon_today)
     
     if [ ! -f "$SPOON_LOG" ]; then
         echo ""
@@ -176,19 +189,4 @@ get_spoon_history() {
         printf "%-10s %6s %8s %9s\n" "$date" "$budget" "$used" "$remaining"
         
     done <<< "$relevant_dates"
-}
-
-# Predict spoons for a date (Mock/placeholder for AI)
-# Calculate cost for activity type
-# Usage: calculate_activity_cost <activity_type>
-calculate_activity_cost() {
-    local type="$1"
-    case "$type" in
-        "meeting") echo 2 ;;
-        "coding") echo 1 ;;
-        "admin") echo 1 ;;
-        "social") echo 3 ;;
-        "travel") echo 4 ;;
-        *) echo 1 ;;
-    esac
 }

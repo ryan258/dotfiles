@@ -51,7 +51,9 @@ _extract_github_error() {
 # Usage: get_recent_github_activity [days]
 get_recent_github_activity() {
     local days="${1:-7}"
-    local helper_script="${SCRIPT_DIR}/github_helper.sh"
+    local _github_ops_lib_dir
+    _github_ops_lib_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local helper_script="${_github_ops_lib_dir}/../github_helper.sh"
     
     if [ ! -f "$helper_script" ]; then
         return 0
@@ -68,7 +70,7 @@ get_recent_github_activity() {
 
     local github_repos
     local err_file
-    err_file=$(mktemp -t "github-helper.XXXXXX")
+    err_file=$(mktemp -t "github-helper.XXXXXX") && chmod 600 "$err_file"
     if ! github_repos=$("$helper_script" list_repos 2> "$err_file"); then
         [ -s "$err_file" ] && _log_github_helper_error "$err_file"
         rm -f "$err_file"
@@ -122,7 +124,9 @@ get_recent_github_activity() {
 # Usage: get_commit_activity_for_date "2026-02-03"
 get_commit_activity_for_date() {
     local target_date="$1"
-    local helper_script="${SCRIPT_DIR}/github_helper.sh"
+    local _github_ops_lib_dir
+    _github_ops_lib_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local helper_script="${_github_ops_lib_dir}/../github_helper.sh"
 
     if [ -z "$target_date" ]; then
         echo "  (No date provided)"
@@ -141,7 +145,7 @@ get_commit_activity_for_date() {
 
     local commits
     local err_file
-    err_file=$(mktemp -t "github-commits.XXXXXX")
+    err_file=$(mktemp -t "github-commits.XXXXXX") && chmod 600 "$err_file"
     if ! commits=$("$helper_script" list_commits_for_date "$target_date" 2> "$err_file"); then
         [ -s "$err_file" ] && _log_github_helper_error "$err_file"
         rm -f "$err_file"

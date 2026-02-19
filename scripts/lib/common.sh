@@ -303,6 +303,15 @@ sanitize_for_storage() {
     printf '%s' "$sanitized"
 }
 
+# Sanitize input and collapse to a single line (strip newlines)
+# Usage: clean=$(sanitize_single_line "$raw_input")
+sanitize_single_line() {
+    local value
+    value=$(sanitize_input "$1")
+    value=${value//$'\n'/ }
+    printf '%s' "$value"
+}
+
 # Validate path is safe (no traversal, within allowed base)
 # Usage: validated_path=$(validate_safe_path "$path" "$allowed_base")
 validate_safe_path() {

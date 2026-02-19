@@ -9,12 +9,13 @@ fi
 readonly _COACHING_FACADE_LOADED=true
 
 # Dependencies:
-# - coach_ops.sh must already be sourced by the caller.
+# - coach_ops.sh, coach_metrics.sh, coach_prompts.sh, and coach_scoring.sh
+#   must already be sourced by the caller.
 
 _coaching_require_fn() {
     local fn_name="$1"
     if ! command -v "$fn_name" >/dev/null 2>&1; then
-        echo "Error: $fn_name is unavailable. Source scripts/lib/coach_ops.sh before coaching.sh." >&2
+        echo "Error: $fn_name is unavailable. Source coach_ops.sh, coach_metrics.sh, coach_prompts.sh, and coach_scoring.sh before coaching.sh." >&2
         return 1
     fi
     return 0

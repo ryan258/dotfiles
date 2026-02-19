@@ -42,6 +42,9 @@ case "${1:-}" in
     json)
         if [ -z "${2:-}" ]; then
             require_cmd "python3" "Install with: brew install python"
+            if [[ "$OSTYPE" != darwin* ]]; then
+                dev_fail "Clipboard JSON requires macOS (pbpaste)" "$EXIT_ERROR"
+            fi
             echo "Pretty printing JSON from clipboard:"
             pbpaste | python3 -m json.tool
         else

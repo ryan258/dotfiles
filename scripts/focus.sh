@@ -27,12 +27,8 @@ fi
 FOCUS_FILE="${FOCUS_FILE:?FOCUS_FILE is not set by config.sh}"
 HISTORY_FILE="${FOCUS_HISTORY_FILE:?FOCUS_HISTORY_FILE is not set by config.sh}"
 
-sanitize_focus_text() {
-  local value
-  value=$(sanitize_input "$1")
-  value=${value//$'\n'/ }
-  printf '%s' "$value"
-}
+# Delegate to consolidated sanitize_single_line in common.sh
+sanitize_focus_text() { sanitize_single_line "$1"; }
 
 show_usage() {
   echo "Usage: focus <command> [args]"

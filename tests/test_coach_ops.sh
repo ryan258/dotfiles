@@ -50,10 +50,13 @@ setup() {
     OLD_DAY_5="$(shift_date -44)"
 
     export COACH_LIB="$BATS_TEST_DIRNAME/../scripts/lib/coach_ops.sh"
+    export COACH_METRICS_LIB="$BATS_TEST_DIRNAME/../scripts/lib/coach_metrics.sh"
+    export COACH_PROMPTS_LIB="$BATS_TEST_DIRNAME/../scripts/lib/coach_prompts.sh"
+    export COACH_SCORING_LIB="$BATS_TEST_DIRNAME/../scripts/lib/coach_scoring.sh"
     export COACH_CONFIG_LIB="$BATS_TEST_DIRNAME/../scripts/lib/config.sh"
     export COACH_COMMON_LIB="$BATS_TEST_DIRNAME/../scripts/lib/common.sh"
     export COACH_DATE_LIB="$BATS_TEST_DIRNAME/../scripts/lib/date_utils.sh"
-    export COACH_SOURCE_PREFIX="source '$COACH_CONFIG_LIB'; source '$COACH_COMMON_LIB'; source '$COACH_DATE_LIB'; source '$COACH_LIB'"
+    export COACH_SOURCE_PREFIX="source '$COACH_CONFIG_LIB'; source '$COACH_COMMON_LIB'; source '$COACH_DATE_LIB'; source '$COACH_LIB'; source '$COACH_METRICS_LIB'; source '$COACH_PROMPTS_LIB'; source '$COACH_SCORING_LIB'"
 }
 
 teardown() {
