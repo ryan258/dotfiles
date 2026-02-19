@@ -230,13 +230,14 @@ cmd_list() {
     local TODAY_EPOCH=$(timestamp_to_epoch "$TODAY_STR")
 
     if grep -q "^APPT|" "$HEALTH_FILE" 2>/dev/null; then
-        grep "^APPT|" "$HEALTH_FILE" | sort -t'|' -k2 | while IFS='|' read -r type appt_date desc; do
-            local appt_epoch=$(timestamp_to_epoch "$appt_date")
+        while IFS='|' read -r type appt_date desc; do
+            local appt_epoch
+            appt_epoch=$(timestamp_to_epoch "$appt_date")
             [ "$appt_epoch" -le 0 ] && continue
-            
+
             local diff_seconds=$(( appt_epoch - TODAY_EPOCH ))
             local days_until=$(( diff_seconds / 86400 ))
-            
+
             if [ "$days_until" -ge 0 ]; then
                 appt_found=true
                 if [ "$days_until" -eq 0 ]; then
@@ -247,7 +248,7 @@ cmd_list() {
                     echo "  • $desc - $appt_date (in $days_until days)"
                 fi
             fi
-        done
+        done < <(grep "^APPT|" "$HEALTH_FILE" 2>/dev/null | sort -t'|' -k2 || true)
     fi
     if [ "$appt_found" = "false" ]; then
         echo "  (No appointments tracked)"

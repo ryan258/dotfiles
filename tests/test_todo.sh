@@ -27,6 +27,19 @@ teardown() {
   [[ "$(cat "$TEST_DATA_DIR/.config/dotfiles-data/todo.txt")" =~ "Test task 1" ]]
 }
 
+@test "todo add strips pipe delimiters to keep records parseable" {
+  run bash "$BATS_TEST_DIRNAME/../scripts/todo.sh" add "alpha|beta"
+  [ "$status" -eq 0 ]
+
+  raw_record="$(cat "$TEST_DATA_DIR/.config/dotfiles-data/todo.txt")"
+  [[ "$raw_record" == *"alpha beta"* ]]
+  [[ "$raw_record" != *"\\|"* ]]
+
+  run bash "$BATS_TEST_DIRNAME/../scripts/todo.sh" list
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"alpha beta"* ]]
+}
+
 @test "todo list shows tasks" {
   echo "$(date +%Y-%m-%d)|Task A" >> "$TEST_DATA_DIR/.config/dotfiles-data/todo.txt"
   echo "$(date +%Y-%m-%d)|Task B" >> "$TEST_DATA_DIR/.config/dotfiles-data/todo.txt"

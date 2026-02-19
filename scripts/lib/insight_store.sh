@@ -149,11 +149,6 @@ insight_get_hypothesis() {
     insight_find_record_line "$INSIGHT_HYPOTHESES_FILE" "$hypothesis_id"
 }
 
-insight_get_hypothesis_with_line_number() {
-    local hypothesis_id="$1"
-    insight_find_record_with_line_number "$INSIGHT_HYPOTHESES_FILE" "$hypothesis_id"
-}
-
 insight_append_hypothesis() {
     local line="$1"
     insight_append_record "$INSIGHT_HYPOTHESES_FILE" "$line"

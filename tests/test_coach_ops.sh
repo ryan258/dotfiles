@@ -27,6 +27,8 @@ setup() {
     TEST_ROOT="$(mktemp -d)"
     export HOME="$TEST_ROOT/home"
     export DATA_DIR="$HOME/.config/dotfiles-data"
+    export COACH_MODE_FILE="$DATA_DIR/coach_mode.txt"
+    export COACH_LOG_FILE="$DATA_DIR/coach_log.txt"
     export DOTFILES_DIR="$TEST_ROOT/dotfiles"
     mkdir -p "$DATA_DIR" "$DOTFILES_DIR"
 

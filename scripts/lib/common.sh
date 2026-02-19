@@ -283,8 +283,8 @@ rotate_log() {
 # Usage: sanitized=$(sanitize_input "$user_input")
 sanitize_input() {
     local input="$1"
-    # Escape pipe characters (our field delimiter)
-    input="${input//|/\\|}"
+    # Strip delimiter characters so pipe-delimited records remain parseable.
+    input="${input//|/ }"
     # Remove control characters except newline and tab
     input=$(printf '%s' "$input" | tr -d '\000-\010\013\014\016-\037')
     printf '%s' "$input"

@@ -7,17 +7,25 @@ if [[ -n "${_SPEC_HELPER_LOADED:-}" ]]; then
 fi
 readonly _SPEC_HELPER_LOADED=true
 
-SPEC_HELPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [ -f "$SPEC_HELPER_DIR/lib/common.sh" ]; then
-  # shellcheck disable=SC1090
-  source "$SPEC_HELPER_DIR/lib/common.sh"
+if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+  _spec_helper_source="${BASH_SOURCE[0]}"
+elif [[ -n "${ZSH_VERSION:-}" ]]; then
+  _spec_helper_source="${(%):-%N}"
+else
+  _spec_helper_source="$0"
 fi
+SPEC_HELPER_DIR="$(cd "$(dirname "$_spec_helper_source")" && pwd)"
+unset _spec_helper_source
 if [ -f "$SPEC_HELPER_DIR/lib/config.sh" ]; then
   # shellcheck disable=SC1090
   source "$SPEC_HELPER_DIR/lib/config.sh"
 else
   echo "Error: configuration library not found at $SPEC_HELPER_DIR/lib/config.sh" >&2
   return 1
+fi
+if [ -f "$SPEC_HELPER_DIR/lib/common.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$SPEC_HELPER_DIR/lib/common.sh"
 fi
 
 if [[ -z "${DATA_DIR:-}" ]]; then

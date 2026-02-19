@@ -134,3 +134,26 @@ EOF
     [ "$status" -eq 0 ]
     [[ "$output" == *"Usage:"* ]]
 }
+
+@test "health.sh list does not report no-appointments when appointments exist" {
+    local today
+    local appt_time
+    today="$(date '+%Y-%m-%d')"
+    appt_time="$today 10:30"
+    printf 'APPT|%s|Doctor visit\n' "$appt_time" > "$DOTFILES_DATA_DIR/health.txt"
+
+    run "$DOTFILES_DIR/scripts/health.sh" list
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Doctor visit"* ]]
+    [[ "$output" != *"(No appointments tracked)"* ]]
+}
+
+@test "review_clutter.sh defaults to skip in non-interactive sessions" {
+    mkdir -p "$HOME/Desktop" "$HOME/Downloads" "$HOME/Documents/Archives"
+    touch "$HOME/Desktop/old.txt"
+    touch -t 202001010101 "$HOME/Desktop/old.txt"
+
+    run "$DOTFILES_DIR/scripts/review_clutter.sh" --dry-run
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Non-interactive session detected. Skipping by default."* ]]
+}

@@ -1,8 +1,38 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** February 12, 2026
+**Last Updated:** February 19, 2026
 
 This document tracks all major implementations, improvements, and fixes to the Daily Context System.
+
+## Version 2.2.29 (February 19, 2026) - Audit Remediation (Data, Coaching, Routing)
+
+**Status:** ✅ Production Ready
+
+### Data Integrity + Parsing
+- Fixed pipe-delimiter handling in `scripts/lib/common.sh`:
+  - `sanitize_input()` now strips raw `|` delimiters instead of writing escaped `\|` sequences that break field parsing.
+- Added todo regression coverage in `tests/test_todo.sh` to ensure pipe-containing input remains parseable in `todo.txt` and list output.
+
+### Coaching + Test Hermeticity
+- Hardened coaching tests against host-shell env leakage by pinning coach log/mode files to test-local data dir in:
+  - `tests/test_coach_ops.sh`
+  - `tests/test_goodevening_coach.sh`
+  - `tests/test_startday_coach.sh`
+
+### Behavioral Bug Fixes
+- Fixed appointment listing state in `scripts/health.sh`:
+  - replaced a subshell `while` pipeline with process substitution so `appt_found` updates correctly and no longer emits false `(No appointments tracked)`.
+- Fixed interactive prompt handling in `scripts/review_clutter.sh`:
+  - prompt now reads from `/dev/tty` only for interactive sessions and defaults to safe skip in non-interactive contexts.
+  - added `--` safeguards to `mv`/`rm` operations.
+- Added regression coverage in `tests/test_p2_utility_scripts.sh` for both fixes.
+
+### Architecture Cleanup
+- Removed dead helper `insight_get_hypothesis_with_line_number()` from `scripts/lib/insight_store.sh`.
+
+### AI-Staff-HQ Routing
+- Fixed model routing precedence in `ai-staff-hq/tools/engine/llm.py` to match contract/tests:
+  - `override > budget mode > role routing > department routing > default model`.
 
 ## Version 2.2.28 (February 12, 2026) - Remaining Report Items (`#17-#33`) Completion
 
