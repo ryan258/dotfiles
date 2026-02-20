@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # my_progress.sh - Shows your recent Git commits
 set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
 
 # First, check if this is a git repository
 if [ ! -d .git ]; then

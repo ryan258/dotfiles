@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # file_organizer.sh - Organize files by type, date, or size
 set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
 
 # Source shared utilities
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 DHP_UTILS="$DOTFILES_DIR/bin/dhp-utils.sh"
 if [ -f "$DHP_UTILS" ]; then

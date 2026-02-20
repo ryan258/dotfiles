@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # battery_check.sh - macOS battery monitoring with suggestions
 set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
 
 # Check if this is a laptop with a battery
 if ! system_profiler SPPowerDataType >/dev/null 2>&1; then

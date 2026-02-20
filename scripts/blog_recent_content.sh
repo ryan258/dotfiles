@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-set -euo pipefail
-
 # blog_recent_content.sh - show latest Hugo content activity
-
+set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+
+
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 CONFIG_LIB="$DOTFILES_DIR/scripts/lib/config.sh"
 if [ -f "$CONFIG_LIB" ]; then

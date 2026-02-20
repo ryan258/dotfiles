@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
 
 # ai_suggest.sh: Context-Aware Dispatcher Suggestion System
 # Analyzes current context and suggests relevant AI dispatchers
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
 if [ -f "$DATE_UTILS" ]; then
     # shellcheck disable=SC1090

@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 # github_helper.sh - Functions for interacting with the GitHub API
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
 #
 # This script serves as a wrapper for GitHub API calls, handling authentication,
 # caching, and basic error recovery. It is primarily used by startday.sh
 # to display recent activity from the user's repositories.
 
-set -euo pipefail
 
 # --- Configuration ---
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then

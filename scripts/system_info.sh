@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # system_info.sh - Quick system overview for macOS
 set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
 
 echo "=== macOS System Information ==="
 echo ""

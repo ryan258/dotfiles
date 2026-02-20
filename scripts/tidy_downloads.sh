@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # tidy_downloads.sh - macOS version with proper directory handling
 set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
 
 DRY_RUN=false
 FORCE_MODE=false
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
   # shellcheck disable=SC1090
   source "$SCRIPT_DIR/lib/config.sh"

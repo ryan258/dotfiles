@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # backup_project.sh - Creates incremental backups using rsync
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
 
 # Stop the script if any command fails
-set -euo pipefail
 
 # Source shared utilities
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 DHP_UTILS="$DOTFILES_DIR/bin/dhp-utils.sh"
 if [ -f "$DHP_UTILS" ]; then
