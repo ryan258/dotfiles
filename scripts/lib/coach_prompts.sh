@@ -20,6 +20,10 @@ coach_build_startday_prompt() {
     local yesterday_journal_context="$6"
     local today_tasks="$7"
     local behavior_digest="$8"
+    local custom_traps=""
+    if [[ -n "${DATA_DIR:-}" ]] && [[ -f "$DATA_DIR/traps.txt" ]]; then
+        custom_traps=$(cat "$DATA_DIR/traps.txt" 2>/dev/null || echo "(none defined)")
+    fi
 
     cat <<EOF
 Produce a high-signal morning execution guide for a user with brain fog.
@@ -50,9 +54,13 @@ ${today_tasks:-"(none)"}
 Behavior digest:
 ${behavior_digest:-"(none)"}
 
+Personalized traps to avoid:
+${custom_traps:-"(none defined)"}
+
 Coach mode semantics:
 - LOCKED: no side quests until done condition is met.
 - OVERRIDE: allow one bounded exploration block, then return to locked plan.
+- RECOVERY: aggressive simplicity. Enforce resting constraints, strip down tasks to 1-2 bare minimums, no high-cognitive-load planning.
 
 Action-source rules:
 - Use Today's focus and Top tasks as the ONLY source for Do Next actions.
@@ -96,6 +104,10 @@ coach_build_goodevening_prompt() {
     local today_tasks="$5"
     local today_journal="$6"
     local behavior_digest="$7"
+    local custom_traps=""
+    if [[ -n "${DATA_DIR:-}" ]] && [[ -f "$DATA_DIR/traps.txt" ]]; then
+        custom_traps=$(cat "$DATA_DIR/traps.txt" 2>/dev/null || echo "(none defined)")
+    fi
 
     cat <<EOF
 Produce a reflective daily coaching summary for a user managing brain fog and fatigue.
@@ -122,6 +134,14 @@ ${today_journal:-"(none)"}
 
 Behavior digest:
 ${behavior_digest:-"(none)"}
+
+Personalized traps to avoid:
+${custom_traps:-"(none defined)"}
+
+Coach mode semantics:
+- LOCKED: no side quests until done condition is met.
+- OVERRIDE: allow one bounded exploration block, then return to locked plan.
+- RECOVERY: aggressive simplicity. Enforce resting constraints, strip down tasks to 1-2 bare minimums, no high-cognitive-load planning.
 
 Output format (strict, no extra sections):
 What worked:
@@ -204,6 +224,8 @@ coach_startday_fallback_output() {
     mode_upper=$(printf '%s' "$mode" | tr '[:lower:]' '[:upper:]')
     if [[ "$mode_upper" == "OVERRIDE" ]]; then
         anti_tinker_rule="Allow one 15-minute exploration slot only after Step 1, then return to the locked plan."
+    elif [[ "$mode_upper" == "RECOVERY" ]]; then
+        anti_tinker_rule="Strictly limit to 1-2 bare minimum tasks. Do not start high-cognitive-load planning."
     else
         anti_tinker_rule="No side-quest work until Step 3 is complete and logged."
     fi
@@ -236,6 +258,8 @@ coach_goodevening_fallback_output() {
     mode_upper=$(printf '%s' "$mode" | tr '[:lower:]' '[:upper:]')
     if [[ "$mode_upper" == "OVERRIDE" ]]; then
         tomorrow_boundary="One bounded exploration block is allowed only after the first locked task block completes."
+    elif [[ "$mode_upper" == "RECOVERY" ]]; then
+        tomorrow_boundary="Aggressive simplicity. Restrict to bare minimum tasks, delay anything complex."
     else
         tomorrow_boundary="No side quests before the first locked task block is completed and logged."
     fi

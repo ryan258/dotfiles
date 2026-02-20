@@ -263,7 +263,7 @@ coach_get_mode_for_date() {
 
     local default_mode="${AI_COACH_MODE_DEFAULT:-LOCKED}"
     default_mode=$(printf '%s' "$default_mode" | tr '[:lower:]' '[:upper:]')
-    if [[ "$default_mode" != "LOCKED" && "$default_mode" != "OVERRIDE" ]]; then
+    if [[ "$default_mode" != "LOCKED" && "$default_mode" != "OVERRIDE" && "$default_mode" != "RECOVERY" ]]; then
         default_mode="LOCKED"
     fi
 
@@ -271,17 +271,19 @@ coach_get_mode_for_date() {
     source_tag="default"
 
     if [[ "$interactive" == "true" && -r /dev/tty ]]; then
-        local allow_override=""
-        printf "🧭 Focus lock: allow one exploration slot today? [y/N]: " > /dev/tty
-        if read -r -t 20 allow_override < /dev/tty; then
-            if [[ "$allow_override" =~ ^[yY]$ ]]; then
+        local user_input=""
+        printf "🧭 Coaching mode: [L]ocked (default), [O]verride (1 exploration), [R]ecovery? [L/o/r]: " > /dev/tty
+        if read -r -t 20 user_input < /dev/tty; then
+            if [[ "$user_input" =~ ^[oO]$ ]]; then
                 mode="OVERRIDE"
+            elif [[ "$user_input" =~ ^[rR]$ ]]; then
+                mode="RECOVERY"
             else
                 mode="LOCKED"
             fi
             source_tag="prompt"
         else
-            mode="LOCKED"
+            mode="$default_mode"
             source_tag="prompt-timeout"
         fi
         printf "\n" > /dev/tty

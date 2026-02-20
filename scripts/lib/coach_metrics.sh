@@ -419,13 +419,15 @@ coach_build_behavior_digest() {
     pattern=$(coach_collect_pattern_metrics "$anchor_date" "$pattern_days") || return 1
     quality=$(coach_collect_data_quality_flags)
 
-    local stale_tasks completed_tasks unique_dirs dir_switches avg_energy avg_fog
+    local stale_tasks completed_tasks unique_dirs dir_switches avg_energy avg_fog avg_spoon_budget avg_spoon_spend
     stale_tasks=$(_coach_extract_value "$tactical" "stale_tasks")
     completed_tasks=$(_coach_extract_value "$tactical" "completed_tasks")
     unique_dirs=$(_coach_extract_value "$tactical" "unique_dirs")
     dir_switches=$(_coach_extract_value "$tactical" "dir_switches")
     avg_energy=$(_coach_extract_value "$tactical" "avg_energy")
     avg_fog=$(_coach_extract_value "$tactical" "avg_fog")
+    avg_spoon_budget=$(_coach_extract_value "$tactical" "avg_spoon_budget")
+    avg_spoon_spend=$(_coach_extract_value "$tactical" "avg_spoon_spend")
 
     local working_signals=()
     local drift_risks=()
@@ -462,6 +464,11 @@ coach_build_behavior_digest() {
     fi
     if [[ "$avg_fog" != "N/A" ]] && awk -v f="$avg_fog" -v threshold="$COACH_HIGH_FOG_THRESHOLD" 'BEGIN { exit !(f >= threshold) }'; then
         drift_risks+=("average brain fog is high (${avg_fog}/10)")
+    fi
+    if [[ "$avg_spoon_budget" != "N/A" && "$avg_spoon_spend" != "N/A" ]]; then
+        if awk -v s="$avg_spoon_spend" -v b="$avg_spoon_budget" 'BEGIN { exit !(s > b) }'; then
+            drift_risks+=("consistent spoon overspend (${avg_spoon_spend} vs budget ${avg_spoon_budget}) - burnout risk")
+        fi
     fi
 
     if [[ "$quality" != "none" ]]; then

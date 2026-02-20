@@ -207,6 +207,15 @@ else
     echo "  (Journal file not found)"
 fi
 
+# --- TOMORROW'S LAUNCHPAD (Yesterday's prep) ---
+LAUNCHPAD_FILE="$DATA_DIR/tomorrow_launchpad"
+if [ -f "$LAUNCHPAD_FILE" ]; then
+    echo ""
+    echo "🚀 YESTERDAY'S PREP FOR TODAY:"
+    # Extract the Tomorrow lock section or show everything if small.
+    awk '/Tomorrow lock:/,EOF' "$LAUNCHPAD_FILE" | sed 's/^/  /' || true
+fi
+
 # --- WEEKLY REVIEW ---
 if [ "$(date_weekday_iso)" -eq 1 ]; then
     WEEK_NUM=$(date_shift_days -1 "%V")

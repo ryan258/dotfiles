@@ -336,13 +336,28 @@ if [ -d "$PROJECTS_DIR" ]; then
         return 1
     }
 
+    tmp_results=$(mktemp -d)
     while IFS= read -r gitdir; do
-        proj_dir=$(dirname "$gitdir")
-        proj_name=$(basename "$proj_dir")
-        if project_has_safety_issue "$proj_dir" "$proj_name"; then
-            found_issues=true
-        fi
+        (
+            proj_dir=$(dirname "$gitdir")
+            proj_name=$(basename "$proj_dir")
+            if project_has_safety_issue "$proj_dir" "$proj_name" > "$tmp_results/$proj_name"; then
+                mv "$tmp_results/$proj_name" "$tmp_results/${proj_name}.issue"
+            else
+                rm -f "$tmp_results/$proj_name"
+            fi
+        ) &
     done < <(find "$PROJECTS_DIR" -maxdepth 2 -type d -name ".git")
+
+    wait
+
+    for issue_file in "$tmp_results"/*.issue; do
+        if [ -f "$issue_file" ]; then
+            found_issues=true
+            cat "$issue_file"
+        fi
+    done
+    rm -rf "$tmp_results"
 
     if [ "$found_issues" = false ]; then
         echo "  ✅ All projects clean (no uncommitted changes, stale branches, or unpushed commits)"
@@ -497,6 +512,7 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     fi
 
     echo "$REFLECTION" | sed 's/^/  /'
+    echo "$REFLECTION" > "$DATA_DIR/tomorrow_launchpad"
 
     if command -v coaching_append_log >/dev/null 2>&1; then
         COACH_METRICS_PAYLOAD="tactical:$(printf '%s' "$COACH_TACTICAL_METRICS" | tr '\n' ';') pattern:$(printf '%s' "$COACH_PATTERN_METRICS" | tr '\n' ';') quality:$(printf '%s' "$COACH_DATA_QUALITY_FLAGS" | tr '\n' ';')"
