@@ -1,8 +1,26 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** February 19, 2026
+**Last Updated:** February 28, 2026
 
 This document tracks all major implementations, improvements, and fixes to the Daily Context System.
+
+## Version 2.2.30 (February 28, 2026) - Break Timer Runaway Guard
+
+**Status:** ✅ Production Ready
+
+### Fixes
+- Hardened `scripts/take_a_break.sh` against overlapping/retriggered timers:
+  - added single-instance lock enforcement (`$DATA_DIR/.take_a_break.lock`).
+  - added stale-lock recovery when prior timer state is invalid.
+  - added `--status` and `--stop`/`--cancel` controls for active timer management.
+  - improved completion log entries with PID context for easier debugging.
+
+### Tests
+- Added `take_a_break.sh` overlap-prevention regression coverage in `tests/test_p2_utility_scripts.sh`.
+
+### Validation
+- `bash -n scripts/take_a_break.sh tests/test_p2_utility_scripts.sh` passed.
+- `bats tests/test_p2_utility_scripts.sh` passed.
 
 ## Version 2.2.29 (February 19, 2026) - Audit Remediation (Data, Coaching, Routing)
 

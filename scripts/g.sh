@@ -3,49 +3,43 @@
 # IMPORTANT: This script is SOURCED, not executed. Must use 'return' not 'exit'
 # to avoid killing the parent shell
 
-_g_is_sourced() {
-  [[ "${BASH_SOURCE[0]}" != "${0}" ]]
-}
 
-g_exit() {
-  local code="${1:-0}"
-  if _g_is_sourced; then
-    return "$code"
-  fi
-  exit "$code"
-}
+if [[ -z "${_G_SH_LOADED:-}" ]]; then
+    readonly _G_SH_LOADED=true
 
-# Double-source guard (required for sourced files)
-if _g_is_sourced; then
-  if [[ -n "${_G_SH_LOADED:-}" ]]; then
-    return 0
-  fi
-  readonly _G_SH_LOADED=true
-fi
+    # Get the directory of this script, handling both bash and zsh when sourced
+    if [[ -n "${ZSH_VERSION:-}" ]]; then
+        _g_script_path="${(%):-%x}"
+    elif [[ -n "${BASH_VERSION:-}" ]]; then
+        _g_script_path="${BASH_SOURCE[0]}"
+    else
+        _g_script_path="$0"
+    fi
+    SCRIPT_DIR="$(cd "$(dirname "$_g_script_path")" && pwd)"
+    unset _g_script_path
 
-# Source common utilities for validation/sanitization
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Handle case where we are in scripts/ or root
-if [[ -f "$SCRIPT_DIR/lib/common.sh" ]]; then
-    source "$SCRIPT_DIR/lib/common.sh"
-elif [[ -f "$SCRIPT_DIR/scripts/lib/common.sh" ]]; then
-    source "$SCRIPT_DIR/scripts/lib/common.sh"
-else
-    echo "Warning: common.sh not found in $SCRIPT_DIR/lib or $SCRIPT_DIR/scripts/lib" >&2
-fi
+    # Load config.sh first because common.sh depends on it (e.g., SYSTEM_LOG_FILE)
+    if [[ -f "$SCRIPT_DIR/lib/config.sh" ]]; then
+        source "$SCRIPT_DIR/lib/config.sh"
+    elif [[ -f "$SCRIPT_DIR/scripts/lib/config.sh" ]]; then
+        source "$SCRIPT_DIR/scripts/lib/config.sh"
+    else
+        echo "Error: config.sh not found in $SCRIPT_DIR/lib or $SCRIPT_DIR/scripts/lib" >&2
+        return 1 2>/dev/null || exit 1
+    fi
 
-if [[ -f "$SCRIPT_DIR/lib/config.sh" ]]; then
-    source "$SCRIPT_DIR/lib/config.sh"
-elif [[ -f "$SCRIPT_DIR/scripts/lib/config.sh" ]]; then
-    source "$SCRIPT_DIR/scripts/lib/config.sh"
-else
-    echo "Error: config.sh not found in $SCRIPT_DIR/lib or $SCRIPT_DIR/scripts/lib" >&2
-    g_exit 1
+    if [[ -f "$SCRIPT_DIR/lib/common.sh" ]]; then
+        source "$SCRIPT_DIR/lib/common.sh"
+    elif [[ -f "$SCRIPT_DIR/scripts/lib/common.sh" ]]; then
+        source "$SCRIPT_DIR/scripts/lib/common.sh"
+    else
+        echo "Warning: common.sh not found in $SCRIPT_DIR/lib or $SCRIPT_DIR/scripts/lib" >&2
+    fi
 fi
 
 if [[ -z "${DATA_DIR:-}" ]]; then
     echo "Error: DATA_DIR is not set. Source config.sh before g.sh." >&2
-    g_exit 1
+    return 1 2>/dev/null || exit 1
 fi
 
 # --- Configuration ---
@@ -70,18 +64,18 @@ case "${1:-list}" in
     shift
     if [ -z "${1:-}" ]; then
       echo "Usage: g save <bookmark_name> [-a app1,app2] [on-enter-command]"
-      g_exit 1
+      return 1 2>/dev/null || exit 1
     fi
     BOOKMARK_NAME="$1"
     if [[ "$BOOKMARK_NAME" == *"|"* ]]; then
       echo "Error: Bookmark name cannot contain '|'" >&2
-      g_exit 1
+      return 1 2>/dev/null || exit 1
     fi
     # Validate bookmark name
     if ! [[ "$BOOKMARK_NAME" =~ ^[a-zA-Z0-9_-]+$ ]]; then
       echo "Error: Invalid bookmark name '$BOOKMARK_NAME'." >&2
       echo "Bookmark names can only contain alphanumeric characters, hyphens, and underscores." >&2
-      g_exit 1
+      return 1 2>/dev/null || exit 1
     fi
     shift
     APPS=""
@@ -91,15 +85,15 @@ case "${1:-list}" in
     fi
     if [[ "$APPS" == *"|"* ]]; then
       echo "Error: App list cannot contain '|'" >&2
-      g_exit 1
+      return 1 2>/dev/null || exit 1
     fi
     ON_ENTER_CMD="$*"
     if [[ "$ON_ENTER_CMD" == *"|"* ]]; then
       echo "Error: On-enter command cannot contain '|'" >&2
-      g_exit 1
+      return 1 2>/dev/null || exit 1
     fi
     DIR_TO_SAVE="$(pwd)"
-    DIR_TO_SAVE=$(validate_path "$DIR_TO_SAVE") || g_exit 1
+    DIR_TO_SAVE=$(validate_path "$DIR_TO_SAVE") || return 1 2>/dev/null || exit 1
 
     # Detect venv
     VENV_PATH=""
@@ -137,7 +131,7 @@ case "${1:-list}" in
     # Suggest directories based on frequency and recency
     if [ ! -f "$USAGE_LOG" ]; then
         echo "No usage data to suggest from."
-        g_exit 1
+        return 1 2>/dev/null || exit 1
     fi
 
     NOW=$(date +%s)
@@ -168,7 +162,7 @@ case "${1:-list}" in
     # Remove dead bookmarks (directories that no longer exist)
     if [ ! -f "$BOOKMARKS_FILE" ]; then
       echo "No bookmarks file found."
-      g_exit 0
+      return 0 2>/dev/null || exit 0
     fi
 
     AUTO_MODE=false
@@ -224,7 +218,7 @@ case "${1:-list}" in
     BOOKMARK_NAME="$1"
     if [ ! -f "$BOOKMARKS_FILE" ]; then
       echo "Error: No bookmarks saved." >&2
-      g_exit 1
+      return 1 2>/dev/null || exit 1
     fi
     # Helper to parse bookmark data
     _get_bookmark_data() {
@@ -253,7 +247,7 @@ case "${1:-list}" in
     BOOKMARK_DATA=$(_get_bookmark_data "$BOOKMARK_NAME" "$BOOKMARKS_FILE")
     if [ -z "$BOOKMARK_DATA" ]; then
       echo "Error: Bookmark '$BOOKMARK_NAME' not found." >&2
-      g_exit 1
+      return 1 2>/dev/null || exit 1
     fi
 
     # Parse uniform pipe-delimited data
@@ -263,7 +257,7 @@ case "${1:-list}" in
     APPS=$(echo "$BOOKMARK_DATA" | cut -d'|' -f5)
 
     # Change directory
-    DIR=$(validate_path "$DIR") || g_exit 1
+    DIR=$(validate_path "$DIR") || return 1 2>/dev/null || exit 1
     cd "$DIR"
 
     # Activate venv if it exists

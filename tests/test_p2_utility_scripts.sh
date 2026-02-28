@@ -157,3 +157,50 @@ EOF
     [ "$status" -eq 0 ]
     [[ "$output" == *"Non-interactive session detected. Skipping by default."* ]]
 }
+
+@test "take_a_break.sh prevents overlapping timers" {
+    local fake_bin="$TEST_DIR/fake-bin"
+    mkdir -p "$fake_bin"
+
+    cat > "$fake_bin/osascript" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+    chmod +x "$fake_bin/osascript"
+
+    cat > "$fake_bin/sleep" <<'EOF'
+#!/usr/bin/env bash
+if [[ -n "${BREAK_TIMER_TEST_BLOCK_FILE:-}" ]]; then
+    while [[ ! -f "$BREAK_TIMER_TEST_BLOCK_FILE" ]]; do
+        /bin/sleep 0.1
+    done
+fi
+exit 0
+EOF
+    chmod +x "$fake_bin/sleep"
+
+    local release_file="$TEST_DIR/release_break_timer"
+    local first_out="$TEST_DIR/first_break.out"
+
+    env PATH="$fake_bin:$PATH" BREAK_TIMER_TEST_BLOCK_FILE="$release_file" \
+        "$DOTFILES_DIR/scripts/take_a_break.sh" 1 >"$first_out" 2>&1 &
+    local first_pid=$!
+
+    local lock_file="$DOTFILES_DATA_DIR/.take_a_break.lock/pid"
+    local attempts=0
+    while [[ ! -f "$lock_file" && "$attempts" -lt 50 ]]; do
+        /bin/sleep 0.1
+        attempts=$((attempts + 1))
+    done
+    [ -f "$lock_file" ]
+
+    run env PATH="$fake_bin:$PATH" "$DOTFILES_DIR/scripts/take_a_break.sh" 1
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"already running"* ]]
+
+    touch "$release_file"
+    local wait_status=0
+    wait "$first_pid" || wait_status=$?
+    [ "$wait_status" -eq 0 ]
+    [ ! -d "$DOTFILES_DATA_DIR/.take_a_break.lock" ]
+}

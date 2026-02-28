@@ -25,15 +25,15 @@ If you are asked to work on **AI-Staff-HQ**:
 
 These rules are NON-NEGOTIABLE for the root dotfiles project:
 
-| Rule | Details |
-|------|---------|
-| Executed scripts | Use `#!/usr/bin/env bash` + `set -euo pipefail` |
-| Sourced libraries | NEVER use `set -euo pipefail` |
-| Data location | `~/.config/dotfiles-data/` only |
-| User input | ALWAYS sanitize with `sanitize_input()` |
-| User paths | ALWAYS validate with `validate_path()` |
-| `copy` alias | Maps to `pbcopy` (clipboard) |
-| `aicopy` alias | Maps to AI copywriter dispatcher |
+| Rule              | Details                                         |
+| ----------------- | ----------------------------------------------- |
+| Executed scripts  | Use `#!/usr/bin/env bash` + `set -euo pipefail` |
+| Sourced libraries | NEVER use `set -euo pipefail`                   |
+| Data location     | `~/.config/dotfiles-data/` only                 |
+| User input        | ALWAYS sanitize with `sanitize_input()`         |
+| User paths        | ALWAYS validate with `validate_path()`          |
+| `copy` alias      | Maps to `pbcopy` (clipboard)                    |
+| `aicopy` alias    | Maps to AI copywriter dispatcher                |
 
 ---
 
@@ -42,6 +42,7 @@ These rules are NON-NEGOTIABLE for the root dotfiles project:
 **What this is:** Personal productivity system for a developer with MS (multiple sclerosis)
 
 **Key features:**
+
 - Daily workflow automation (startday, goodevening, status)
 - Task and journal management
 - Health/energy tracking (spoon theory)
@@ -81,6 +82,7 @@ Location: `scripts/*.sh` and executed dispatchers in `bin/`
 Examples: `todo.sh`, `journal.sh`, `startday.sh`, `dhp-tech.sh`
 
 For scripts in `scripts/`:
+
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
@@ -90,6 +92,7 @@ source "$SCRIPT_DIR/lib/common.sh"
 ```
 
 For dispatchers in `bin/`:
+
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
@@ -97,6 +100,7 @@ source "$(dirname "$0")/dhp-shared.sh"
 ```
 
 **Key points:**
+
 - MUST have `set -euo pipefail`
 - Use `exit` for termination
 - Can be run directly: `./script.sh`
@@ -110,6 +114,7 @@ source "$(dirname "$0")/dhp-shared.sh"
 Location: `scripts/lib/*.sh`, `zsh/aliases.zsh`, `scripts/g.sh`, `bin/dhp-context.sh`, `scripts/spec_helper.sh`
 
 **Required header:**
+
 ```bash
 #!/usr/bin/env bash
 # filename.sh - Description
@@ -124,6 +129,7 @@ readonly _FILENAME_LOADED=true
 ```
 
 **Key points:**
+
 - NEVER use `set -euo pipefail` (breaks parent shell)
 - MUST have double-source guard
 - Use `return`, NEVER `exit`
@@ -134,6 +140,7 @@ readonly _FILENAME_LOADED=true
 ## Why Sourced Files Can't Use Strict Mode
 
 If a sourced file sets `set -e`:
+
 - Any error in the library kills the parent shell
 - Interactive shells become unusable
 - Hard-to-debug cascading failures
@@ -145,9 +152,11 @@ If a sourced file sets `set -e`:
 ## Data Files
 
 ### Location
+
 Everything in: `~/.config/dotfiles-data/`
 
 Access via config.sh:
+
 ```bash
 source "$SCRIPT_DIR/lib/config.sh"
 # Now use: $DATA_DIR, $TODO_FILE, $JOURNAL_FILE
@@ -155,15 +164,16 @@ source "$SCRIPT_DIR/lib/config.sh"
 
 ### Formats
 
-| File | Format | Example |
-|------|--------|---------|
-| todo.txt | `YYYY-MM-DD\|task text` | `2025-01-15\|Fix bug` |
-| todo_done.txt | `YYYY-MM-DD HH:MM:SS\|task text` | `2025-01-15 14:30:00\|Fix bug` |
-| journal.txt | `YYYY-MM-DD HH:MM:SS\|entry` | `2025-01-15 09:00:00\|Entry` |
-| health.txt | `TYPE\|DATE\|field1\|field2...` | `SYMPTOM\|2025-01-15\|fatigue\|3` |
-| spoons.txt | `BUDGET\|DATE\|count` or `SPEND\|DATE\|TIME\|count\|activity\|remaining` | `BUDGET\|2025-01-15\|12` |
+| File          | Format                                                                   | Example                           |
+| ------------- | ------------------------------------------------------------------------ | --------------------------------- |
+| todo.txt      | `YYYY-MM-DD\|task text`                                                  | `2025-01-15\|Fix bug`             |
+| todo_done.txt | `YYYY-MM-DD HH:MM:SS\|task text`                                         | `2025-01-15 14:30:00\|Fix bug`    |
+| journal.txt   | `YYYY-MM-DD HH:MM:SS\|entry`                                             | `2025-01-15 09:00:00\|Entry`      |
+| health.txt    | `TYPE\|DATE\|field1\|field2...`                                          | `SYMPTOM\|2025-01-15\|fatigue\|3` |
+| spoons.txt    | `BUDGET\|DATE\|count` or `SPEND\|DATE\|TIME\|count\|activity\|remaining` | `BUDGET\|2025-01-15\|12`          |
 
 ### Sanitization (REQUIRED)
+
 ```bash
 clean=$(sanitize_input "$user_input")
 echo "$clean" >> "$TODO_FILE"
@@ -174,6 +184,7 @@ echo "$clean" >> "$TODO_FILE"
 ## Error Handling
 
 ### Exit Codes
+
 ```bash
 readonly EXIT_SUCCESS=0
 readonly EXIT_ERROR=1
@@ -184,6 +195,7 @@ readonly EXIT_SERVICE_ERROR=5
 ```
 
 ### Validation
+
 ```bash
 validate_numeric "$val" "count"
 validate_path "$path"  # Security check
@@ -191,6 +203,7 @@ require_cmd "jq"
 ```
 
 ### Reporting
+
 ```bash
 die "Fatal error" "$EXIT_ERROR"
 log_error "Problem occurred"
@@ -199,9 +212,10 @@ log_warn "Warning"
 
 ---
 
-## AI Dispatchers (bin/dhp-*.sh)
+## AI Dispatchers (bin/dhp-\*.sh)
 
 ### Pattern
+
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
@@ -212,11 +226,13 @@ dhp_dispatch "Name" "model" "$output_dir" \
 ```
 
 ### Naming
+
 - Script: `dhp-<type>.sh`
 - Alias: `tech`, `creative`, `aicopy`, etc.
 - Config: `<TYPE>_MODEL` in .env
 
 ### Flags
+
 - `--stream` - Real-time output
 - `--temperature <float>`
 
@@ -225,14 +241,16 @@ dhp_dispatch "Name" "model" "$output_dir" \
 ## Aliases
 
 ### Important
-| Alias | Maps To | Purpose |
-|-------|---------|---------|
-| `copy` | `pbcopy` | System clipboard |
-| `aicopy` | `dhp-copy.sh` | AI copywriting |
+
+| Alias    | Maps To       | Purpose          |
+| -------- | ------------- | ---------------- |
+| `copy`   | `pbcopy`      | System clipboard |
+| `aicopy` | `dhp-copy.sh` | AI copywriting   |
 
 **Never confuse these!**
 
 ### Categories
+
 - Git: `gs`, `ga`, `gc`, `gp`
 - AI: `tech`, `creative`, `strategy`
 - Scripts: `todo`, `journal`, `j`
@@ -243,6 +261,7 @@ dhp_dispatch "Name" "model" "$output_dir" \
 ## Security
 
 ### ALWAYS Do
+
 ```bash
 sanitize_input "$user_input"
 validate_path "$user_path"
@@ -250,6 +269,7 @@ require_cmd "dependency"
 ```
 
 ### NEVER Do
+
 ```bash
 eval "$user_input"      # Command injection
 cat "$untrusted_path"   # Path traversal
@@ -260,6 +280,7 @@ cat "$untrusted_path"   # Path traversal
 ## Cross-Platform
 
 ### Dates
+
 ```bash
 if date --version >/dev/null 2>&1; then
     date -d "yesterday" +%Y-%m-%d  # GNU/Linux
@@ -269,6 +290,7 @@ fi
 ```
 
 ### macOS Only
+
 ```bash
 if [[ "$OSTYPE" == "darwin"* ]]; then
     pbcopy < file
@@ -279,20 +301,33 @@ fi
 
 ## Anti-Patterns
 
-| BAD | GOOD |
-|-----|------|
-| `#!/bin/bash` | `#!/usr/bin/env bash` |
-| No strict mode (executed) | `set -euo pipefail` |
-| Strict mode (sourced) | Caller controls options |
-| `exit` in library | `return` |
-| Hard-coded paths | `$DATA_DIR` variables |
-| `eval "$input"` | Validate first |
+| BAD                       | GOOD                    |
+| ------------------------- | ----------------------- |
+| `#!/bin/bash`             | `#!/usr/bin/env bash`   |
+| No strict mode (executed) | `set -euo pipefail`     |
+| Strict mode (sourced)     | Caller controls options |
+| `exit` in library         | `return`                |
+| Hard-coded paths          | `$DATA_DIR` variables   |
+| `eval "$input"`           | Validate first          |
+
+---
+
+## Markdown Formatting Standards
+
+To ensure clean, standard markdown output and minimal git diffs, you MUST adhere to the following when generating or modifying markdown (.md) documents:
+
+1. **No Trailing Spaces**: Never leave trailing whitespace at the ends of lines.
+2. **Code Blocks**: Always enforce exactly one empty line before and after fenced code blocks (```).
+3. **Headings**: Always enforce exactly one empty line before headings unless they are the very first line of the document.
+4. **Lists**: Use 2 spaces for nested list indentation.
+5. **EOF**: Always end the file with a single newline.
 
 ---
 
 ## Checklists
 
 ### New Executed Script
+
 ```
 [ ] #!/usr/bin/env bash
 [ ] set -euo pipefail
@@ -303,6 +338,7 @@ fi
 ```
 
 ### New Library
+
 ```
 [ ] NO set -euo pipefail
 [ ] Double-source guard
@@ -311,6 +347,7 @@ fi
 ```
 
 ### New Dispatcher
+
 ```
 [ ] Use dhp-shared.sh
 [ ] Add alias
@@ -332,6 +369,7 @@ fi
 ## Documentation Updates
 
 When changing code:
+
 1. `docs/*.md` - Feature docs
 2. `CHANGELOG.md` - Version history
 3. `scripts/cheatsheet.sh` - Alias changes
@@ -345,4 +383,4 @@ For complete guidelines, see: `CLAUDE.md`
 
 ---
 
-*Follow these rules consistently. When in doubt, check existing code patterns or refer to CLAUDE.md.*
+_Follow these rules consistently. When in doubt, check existing code patterns or refer to CLAUDE.md._

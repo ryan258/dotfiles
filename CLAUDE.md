@@ -18,9 +18,11 @@ This document defines coding standards, architecture patterns, and conventions t
 To prevent drift and contradictions:
 
 1. Canonical root contract:
+
 - `CLAUDE.md` is the only authoritative architecture and behavior contract for root `dotfiles`.
 
 2. Derived-view docs:
+
 - `README.md`
 - `docs/start-here.md`
 - `docs/system-overview.md`
@@ -31,6 +33,7 @@ To prevent drift and contradictions:
 - `phases.md`
 
 3. Update workflow when behavior changes:
+
 - First update `CLAUDE.md` contract language (if behavior/interface changed).
 - Then update only the affected derived docs to reference the canonical contract.
 - Avoid hardcoded counts/version claims in derived docs unless generated automatically.
@@ -40,6 +43,7 @@ To prevent drift and contradictions:
 ## Project Overview
 
 This is a personal productivity system built around shell scripts, AI dispatchers, and automation tools. It provides:
+
 - Daily workflow automation (startday, goodevening, status)
 - Task and journal management
 - Health and energy tracking (spoon theory)
@@ -71,6 +75,7 @@ dotfiles/
 ## Mandatory Script Headers
 
 All executed bash scripts must use:
+
 - `#!/usr/bin/env bash`
 - `set -euo pipefail`
 
@@ -95,6 +100,7 @@ source "$(dirname "$0")/dhp-shared.sh"
 ```
 
 **Requirements:**
+
 - Use `#!/usr/bin/env bash` (NOT `#!/bin/bash`) for portability
 - Always enable strict mode with `set -euo pipefail`
 - `scripts/*.sh` should source `common.sh` (and `config.sh` when required)
@@ -105,6 +111,7 @@ source "$(dirname "$0")/dhp-shared.sh"
 **Libraries in `scripts/lib/` and scripts designed to be sourced (not executed) must NOT set `set -euo pipefail`.**
 
 These files should rely on the caller to set shell options. Setting strict mode in a sourced file can:
+
 - Cause the parent shell to exit unexpectedly on minor errors
 - Break interactive shell sessions when sourced from `.zshrc`
 - Create hard-to-debug failures in the calling script
@@ -126,6 +133,7 @@ readonly _LIBRARY_NAME_LOADED=true
 ```
 
 **Files that must NOT have `set -euo pipefail`:**
+
 - All files in `scripts/lib/*.sh`
 - `zsh/aliases.zsh`
 - `scripts/g.sh` (navigation, must be sourced)
@@ -139,14 +147,14 @@ readonly _LIBRARY_NAME_LOADED=true
 
 ### Core Libraries (`scripts/lib/`)
 
-| Library | Purpose | When to Use |
-|---------|---------|-------------|
-| `common.sh` | Validation, logging, error handling, data access | Always source this |
-| `config.sh` | Paths, models, feature flags, environment loading | When needing configuration |
-| `file_ops.sh` | Atomic writes, file validation | File manipulation |
-| `date_utils.sh` | Cross-platform date handling | Date calculations |
-| `spoon_budget.sh` | Energy tracking | Spoon-related features |
-| `blog_common.sh` | Blog utilities | Blog operations |
+| Library           | Purpose                                           | When to Use                |
+| ----------------- | ------------------------------------------------- | -------------------------- |
+| `common.sh`       | Validation, logging, error handling, data access  | Always source this         |
+| `config.sh`       | Paths, models, feature flags, environment loading | When needing configuration |
+| `file_ops.sh`     | Atomic writes, file validation                    | File manipulation          |
+| `date_utils.sh`   | Cross-platform date handling                      | Date calculations          |
+| `spoon_budget.sh` | Energy tracking                                   | Spoon-related features     |
+| `blog_common.sh`  | Blog utilities                                    | Blog operations            |
 
 ### Library Sourcing Pattern
 
@@ -194,9 +202,11 @@ readonly _COMMON_SH_LOADED=true
 ## Data File Conventions
 
 ### Location
+
 All user data lives in `~/.config/dotfiles-data/` (XDG-compliant).
 
 Access via `config.sh`:
+
 ```bash
 source "$SCRIPT_DIR/lib/config.sh"
 # Now use: $DATA_DIR, $TODO_FILE, $JOURNAL_FILE, etc.
@@ -204,15 +214,16 @@ source "$SCRIPT_DIR/lib/config.sh"
 
 ### File Formats
 
-| File | Format | Example |
-|------|--------|---------|
-| `todo.txt` | `DATE\|task text` | `2025-01-15\|Fix login bug` |
-| `todo_done.txt` | `YYYY-MM-DD HH:MM:SS\|task text` | `2025-01-15 14:30:00\|Fix login bug` |
-| `journal.txt` | `YYYY-MM-DD HH:MM:SS\|entry` | `2025-01-15 09:00:00\|Morning reflection...` |
-| `health.txt` | `TYPE\|DATE\|fields...` | `SYMPTOM\|2025-01-15\|fatigue\|3` |
-| `spoons.txt` | `TYPE\|DATE\|fields...` | `BUDGET\|2025-01-15\|12` |
+| File            | Format                           | Example                                      |
+| --------------- | -------------------------------- | -------------------------------------------- |
+| `todo.txt`      | `DATE\|task text`                | `2025-01-15\|Fix login bug`                  |
+| `todo_done.txt` | `YYYY-MM-DD HH:MM:SS\|task text` | `2025-01-15 14:30:00\|Fix login bug`         |
+| `journal.txt`   | `YYYY-MM-DD HH:MM:SS\|entry`     | `2025-01-15 09:00:00\|Morning reflection...` |
+| `health.txt`    | `TYPE\|DATE\|fields...`          | `SYMPTOM\|2025-01-15\|fatigue\|3`            |
+| `spoons.txt`    | `TYPE\|DATE\|fields...`          | `BUDGET\|2025-01-15\|12`                     |
 
 **Critical:** Always sanitize user input before writing:
+
 ```bash
 sanitized=$(sanitize_input "$user_input")
 ```
@@ -305,6 +316,7 @@ dhp_dispatch \
 ### Input Handling
 
 Dispatchers accept input via:
+
 1. Stdin: `cat file.txt | tech`
 2. Argument: `creative "story idea"`
 3. Both: `echo "context" | tech "question"`
@@ -315,13 +327,13 @@ Dispatchers accept input via:
 
 ### Naming Patterns
 
-| Category | Pattern | Examples |
-|----------|---------|----------|
-| Navigation | Short/memorable | `..`, `downloads`, `projects` |
-| Git | `g` prefix | `gs`, `ga`, `gc`, `gp`, `gd` |
-| Scripts | Full name or abbrev | `todo`, `journal`, `j`, `ta` |
-| AI Dispatchers | Type name | `tech`, `creative`, `strategy` |
-| Spoons | `s-` prefix | `s-check`, `s-spend` |
+| Category       | Pattern             | Examples                       |
+| -------------- | ------------------- | ------------------------------ |
+| Navigation     | Short/memorable     | `..`, `downloads`, `projects`  |
+| Git            | `g` prefix          | `gs`, `ga`, `gc`, `gp`, `gd`   |
+| Scripts        | Full name or abbrev | `todo`, `journal`, `j`, `ta`   |
+| AI Dispatchers | Type name           | `tech`, `creative`, `strategy` |
+| Spoons         | `s-` prefix         | `s-check`, `s-spend`           |
 
 ### Alias vs Function
 
@@ -362,11 +374,13 @@ ta() {
 - `scripts/spec_helper.sh` - Interactive template editing
 
 **Critical rules for sourced scripts:**
+
 1. **Do NOT use `set -euo pipefail`** - the caller controls shell options
 2. **Use `return`, not `exit`** - exit kills the parent shell
 3. **Use double-source guards** - prevent re-initialization
 
 Pattern for sourced scripts:
+
 ```bash
 #!/usr/bin/env bash
 # IMPORTANT: This script must be SOURCED, not executed
@@ -426,6 +440,7 @@ fi
 ### macOS-Specific
 
 When using macOS-only features, guard them:
+
 ```bash
 if [[ "$OSTYPE" == "darwin"* ]]; then
     pbcopy < "$file"  # macOS clipboard
@@ -439,6 +454,7 @@ fi
 ### Input Sanitization
 
 **ALWAYS** sanitize user input:
+
 ```bash
 sanitized=$(sanitize_input "$user_input")
 ```
@@ -446,6 +462,7 @@ sanitized=$(sanitize_input "$user_input")
 ### Path Validation
 
 **NEVER** trust user-provided paths:
+
 ```bash
 validated_path=$(validate_path "$user_path")
 ```
@@ -453,6 +470,7 @@ validated_path=$(validate_path "$user_path")
 ### Command Execution
 
 **NEVER** use `eval` with user input:
+
 ```bash
 # BAD - command injection risk
 eval "$user_command"
@@ -519,6 +537,7 @@ function_name() {
 ### Updating Documentation
 
 When modifying functionality:
+
 1. Update relevant `docs/*.md` files
 2. Update `CHANGELOG.md` with changes
 3. Update `scripts/cheatsheet.sh` if aliases change
@@ -557,6 +576,7 @@ teardown() {
 ```
 
 Run tests with:
+
 ```bash
 bats tests/*.sh
 ```
@@ -570,21 +590,33 @@ bats tests/*.sh
 
 ---
 
+## Markdown Formatting Standards
+
+To ensure clean, standard markdown output and minimal git diffs, you MUST adhere to the following when generating or modifying markdown (.md) documents:
+
+1. **No Trailing Spaces**: Never leave trailing whitespace at the ends of lines.
+2. **Code Blocks**: Always enforce exactly one empty line before and after fenced code blocks (```).
+3. **Headings**: Always enforce exactly one empty line before headings unless they are the very first line of the document.
+4. **Lists**: Use 2 spaces for nested list indentation.
+5. **EOF**: Always end the file with a single newline.
+
+---
+
 ## Common Anti-Patterns to AVOID
 
-| Anti-Pattern | Correct Approach |
-|--------------|------------------|
-| `#!/bin/bash` | `#!/usr/bin/env bash` |
-| No error handling (executed scripts) | `set -euo pipefail` |
-| `set -euo pipefail` in sourced libs | Caller controls shell options |
-| Hard-coded paths | Use `$DATA_DIR`, `$DOTFILES_DIR` |
-| Silent failures | Log errors, use proper exit codes |
-| `eval "$user_input"` | Validate and use arrays |
-| Duplicate code | Extract to `scripts/lib/` |
-| Magic numbers | Use named constants |
-| No input validation | Use `validate_*()` functions |
-| `exit` in sourced script | Use `return` |
-| Assuming commands exist | Use `require_cmd()` |
+| Anti-Pattern                         | Correct Approach                  |
+| ------------------------------------ | --------------------------------- |
+| `#!/bin/bash`                        | `#!/usr/bin/env bash`             |
+| No error handling (executed scripts) | `set -euo pipefail`               |
+| `set -euo pipefail` in sourced libs  | Caller controls shell options     |
+| Hard-coded paths                     | Use `$DATA_DIR`, `$DOTFILES_DIR`  |
+| Silent failures                      | Log errors, use proper exit codes |
+| `eval "$user_input"`                 | Validate and use arrays           |
+| Duplicate code                       | Extract to `scripts/lib/`         |
+| Magic numbers                        | Use named constants               |
+| No input validation                  | Use `validate_*()` functions      |
+| `exit` in sourced script             | Use `return`                      |
+| Assuming commands exist              | Use `require_cmd()`               |
 
 ---
 
@@ -630,6 +662,7 @@ bats tests/*.sh
 ### Commit Messages
 
 Follow conventional commits:
+
 ```
 feat: add spoon tracking to startday
 fix: correct date parsing on macOS
@@ -673,15 +706,17 @@ When making changes, update `CHANGELOG.md`:
 **Status:** Production Ready / In Development
 
 ### Category (e.g., New Features, Bug Fixes)
+
 - **Feature name**: Description of change
 - Bullet points for details
 ```
 
 ---
 
-*This document should be updated whenever new patterns are established or existing conventions change.*
+_This document should be updated whenever new patterns are established or existing conventions change._
 
 <!-- gitnexus:start -->
+
 # GitNexus MCP
 
 This project is indexed by GitNexus as **dotfiles** (702 symbols, 1227 relationships, 31 execution flows).
@@ -696,13 +731,13 @@ This project is indexed by GitNexus as **dotfiles** (702 symbols, 1227 relations
 
 ## Skills
 
-| Task | Read this skill file |
-|------|---------------------|
-| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md` |
-| Blast radius / "What breaks if I change X?" | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
-| Trace bugs / "Why is X failing?" | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md` |
-| Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
-| Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
-| Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
+| Task                                         | Read this skill file                                        |
+| -------------------------------------------- | ----------------------------------------------------------- |
+| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md`       |
+| Blast radius / "What breaks if I change X?"  | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
+| Trace bugs / "Why is X failing?"             | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md`       |
+| Rename / extract / split / refactor          | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md`     |
+| Tools, resources, schema reference           | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md`           |
+| Index, status, clean, wiki CLI commands      | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md`             |
 
 <!-- gitnexus:end -->

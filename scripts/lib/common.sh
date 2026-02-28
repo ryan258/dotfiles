@@ -232,19 +232,19 @@ require_cmd() {
 # Check file exists or die
 # Usage: require_file "$config_path" "config file"
 require_file() {
-    local path="$1"
+    local file_path="$1"
     local name="${2:-file}"
 
-    [[ -f "$path" ]] || die "$name not found: $path" "$EXIT_FILE_NOT_FOUND"
+    [[ -f "$file_path" ]] || die "$name not found: $file_path" "$EXIT_FILE_NOT_FOUND"
 }
 
 # Check directory exists or die
 # Usage: require_dir "$data_dir" "data directory"
 require_dir() {
-    local path="$1"
+    local target_path="$1"
     local name="${2:-directory}"
 
-    [[ -d "$path" ]] || die "$name not found: $path" "$EXIT_FILE_NOT_FOUND"
+    [[ -d "$target_path" ]] || die "$name not found: $target_path" "$EXIT_FILE_NOT_FOUND"
 }
 
 #=============================================================================
@@ -315,23 +315,23 @@ sanitize_single_line() {
 # Validate path is safe (no traversal, within allowed base)
 # Usage: validated_path=$(validate_safe_path "$path" "$allowed_base")
 validate_safe_path() {
-    local path="$1"
+    local file_path="$1"
     local allowed_base="$2"
 
     # Resolve to absolute path using python for portability (macOS/Linux)
     local resolved
     if command -v python3 &>/dev/null; then
-        resolved=$(python3 -c "import os, sys; print(os.path.realpath(sys.argv[1]))" "$path" 2>/dev/null)
+        resolved=$(python3 -c "import os, sys; print(os.path.realpath(sys.argv[1]))" "$file_path" 2>/dev/null)
     elif command -v python &>/dev/null; then
-        resolved=$(python -c "import os, sys; print(os.path.realpath(sys.argv[1]))" "$path" 2>/dev/null)
+        resolved=$(python -c "import os, sys; print(os.path.realpath(sys.argv[1]))" "$file_path" 2>/dev/null)
     fi
 
     if [[ -z "$resolved" ]]; then
         # Fallback to simple shell resolution if python failed/missing
-        if [[ -d "$path" ]]; then
-            resolved=$(cd "$path" && pwd -P)
+        if [[ -d "$file_path" ]]; then
+            resolved=$(cd "$file_path" && pwd -P)
         else
-            echo "Error: Invalid path: $path" >&2
+            echo "Error: Invalid path: $file_path" >&2
             return 1
         fi
     fi
@@ -359,12 +359,13 @@ validate_safe_path() {
     elif [[ "$resolved" == "$resolved_base" || "$resolved" == "$resolved_base/"* ]]; then
         :
     else
-        echo "Error: Path outside allowed directory: $path" >&2
+        echo "Error: Path outside allowed directory: $file_path" >&2
         return 1
     fi
 
     printf '%s' "$resolved"
 }
+
 
 # Create temp file with restrictive permissions
 # Usage: temp_file=$(create_temp_file "prefix")

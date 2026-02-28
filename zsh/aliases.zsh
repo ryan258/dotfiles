@@ -111,6 +111,7 @@ alias gd="git diff"                       # Unstaged changes vs last commit
 alias gb="git branch"                     # List or create branches
 alias gco="git checkout"                  # Switch branches or restore files
 alias glog="git log --oneline"            # Compact one-line-per-commit log
+alias gn="npx gitnexus analyze"           # Analyze repo with GitNexus
 
 # =============================================================================
 # TEXT EDITING & VIEWING

@@ -49,7 +49,6 @@ goodevening
 - User input is sanitized before persistence.
 - Paths are validated before file writes.
 
-
 ## 🧠 MS-Friendly Features & Accessibility
 
 This system was built with MS challenges in mind: brain fog, fatigue, energy fluctuations, and the need for maximum efficiency on low-energy days.
@@ -65,10 +64,12 @@ This system was built with MS challenges in mind: brain fog, fatigue, energy flu
 #### 🧠 Brain Fog Protection
 
 #### Minimal Keystrokes
+
 **Problem:** Remembering complex commands is hard on foggy days.
 **Solution:** Everything is aliased to 2-5 characters.
 
 Examples:
+
 - `todo` instead of `~/dotfiles/scripts/todo.sh`
 - `gs` instead of `git status`
 - `ll` instead of `ls -lah`
@@ -79,6 +80,7 @@ Examples:
 ---
 
 #### Auto-Completion & Suggestions
+
 **Problem:** Can't remember where you were working or what's next.
 **Solution:** The system remembers for you.
 
@@ -94,6 +96,7 @@ status                 # "Where am I and what am I doing?"
 ---
 
 #### Visual Clarity
+
 **Problem:** Walls of text are overwhelming.
 **Solution:** Clean, scannable output.
 
@@ -106,6 +109,7 @@ status                 # "Where am I and what am I doing?"
 ---
 
 #### Forgiving Design
+
 **Problem:** Mistakes happen more on foggy days.
 **Solution:** Easy undo and recovery.
 
@@ -123,13 +127,16 @@ Your data is backed up to `~/Backups/dotfiles_data/` with timestamps.
 #### ⚡ Energy Management
 
 #### Track Your Energy
+
 **Track patterns you can't see in the moment:**
+
 ```bash
 health energy 7        # Quick 1-10 rating
 health dashboard       # 30-day trends with emoji indicators
 ```
 
 **The system correlates:**
+
 - Energy levels
 - Task completion
 - Git commits
@@ -140,6 +147,7 @@ health dashboard       # 30-day trends with emoji indicators
 ---
 
 #### Symptom Tracking
+
 ```bash
 health symptom "brain fog, fatigue"
 health symptom "headache" --severity 8
@@ -152,6 +160,7 @@ health summary         # 30-day overview
 ---
 
 #### Brain Fog Tracking & Circuit Breaker
+
 **Problem:** Pushing through fog makes everything worse.
 **Solution:** Track fog separately and let the system tell you when to stop.
 
@@ -164,6 +173,7 @@ health check
 ```
 
 **Circuit breaker rules:**
+
 - **Energy ≤ 3** → 🛑 "STOP high-cognitive tasks. Rest or Low Energy Menu."
 - **Fog ≥ 6** → 🛑 "EXTEND deadlines by 24h. Admin/rote work only."
 - **Otherwise** → ✅ "SYSTEM OPERATIONAL"
@@ -173,6 +183,7 @@ health check
 ---
 
 #### Medication Adherence
+
 **Problem:** "Did I take my meds this morning?"
 **Solution:** Track every dose.
 
@@ -184,6 +195,7 @@ meds dashboard                 # 30-day adherence
 ```
 
 **Automation:** Set up cron reminders:
+
 ```bash
 meds remind "Medication" "08:00"
 ```
@@ -191,6 +203,7 @@ meds remind "Medication" "08:00"
 ---
 
 #### Break Reminders
+
 **Problem:** Hyper-focus until you crash.
 **Solution:** Automated breaks.
 
@@ -205,16 +218,19 @@ You'll get macOS notifications when time's up.
 ---
 
 #### Daily Routines That Run Themselves
+
 **Problem:** Remembering to do self-care is hard.
 **Solution:** Automation.
 
 **Morning (`startday`):**
+
 - Runs **once per day automatically** when you open terminal
 - Shows health reminders
 - Suggests where to focus
 - No decision fatigue
 
 **Evening (`goodevening`):**
+
 - Run manually when you're done for the day
 - Celebrates wins (dopamine hit!)
 - Validates and backs up data
@@ -225,6 +241,7 @@ You'll get macOS notifications when time's up.
 #### 📊 Pattern Recognition
 
 #### AI Analysis of Your Data
+
 **Problem:** You can't see patterns when you're in them.
 **Solution:** AI analyzes your journal, tasks, and health.
 
@@ -236,6 +253,7 @@ health summary         # Energy trends and correlations
 ```
 
 **Example insights:**
+
 - "You write most on Tuesday mornings"
 - "Fatigue mentions increased after starting new medication"
 - "Your energy is highest 2 days after completing tasks"
@@ -243,12 +261,14 @@ health summary         # Energy trends and correlations
 ---
 
 #### Week in Review
+
 ```bash
 weekreview             # Last 7 days summary
 weekreview --file      # Export to Markdown
 ```
 
 **Auto-scheduled:** Set up weekly reviews for Sundays:
+
 ```bash
 scripts/setup_weekly_review.sh
 ```
@@ -260,6 +280,7 @@ scripts/setup_weekly_review.sh
 #### 🎯 Focus & Prioritization
 
 #### Daily Focus Intention
+
 ```bash
 focus set "Write one blog post"
 focus show             # See current focus
@@ -275,6 +296,7 @@ focus clear            # Clear without archiving
 ---
 
 #### Top N Filtering
+
 ```bash
 todo top               # Top 3 tasks only
 todo top 5             # Top 5
@@ -285,6 +307,7 @@ todo top 5             # Top 5
 ---
 
 #### Stale Task Detection
+
 ```bash
 startday               # Shows tasks >7 days old
 ```
@@ -296,6 +319,7 @@ startday               # Shows tasks >7 days old
 #### 🤖 AI Offloading
 
 #### Delegate to AI
+
 **Problem:** Some tasks require more energy than you have.
 **Solution:** AI specialists do the heavy lifting.
 
@@ -309,6 +333,7 @@ todo delegate 5 tech   # Send task 5 to tech AI
 ---
 
 #### Context-Aware AI
+
 **Problem:** Providing context is exhausting.
 **Solution:** AI pulls context automatically.
 
@@ -318,6 +343,7 @@ content "blog topic" --full-context   # Includes git status + README
 ```
 
 **What it includes:**
+
 - Recent journal entries
 - Active todos
 - Current project README
@@ -326,11 +352,13 @@ content "blog topic" --full-context   # Includes git status + README
 ---
 
 #### AI Suggests What to Do
+
 ```bash
 ai-suggest
 ```
 
 **Analyzes:**
+
 - Current directory
 - Git status
 - Active todos
@@ -347,12 +375,15 @@ ai-suggest
 #### 💾 Data Safety
 
 #### Auto-Backup
+
 **Every night:**
+
 ```bash
 goodevening → backup_data.sh
 ```
 
 **Manual:**
+
 ```bash
 backup-data
 ```
@@ -360,6 +391,7 @@ backup-data
 **Location:** `~/Backups/dotfiles_data/` (timestamped)
 
 **What's backed up:**
+
 - `todo.txt`, `todo_done.txt`
 - `journal.txt`
 - `health.txt`, `medications.txt`
@@ -370,6 +402,7 @@ backup-data
 ---
 
 #### Git-Backed Todo List
+
 ```bash
 todo commit
 ```
@@ -381,6 +414,7 @@ todo commit
 ---
 
 #### Validation Before Backup
+
 ```bash
 data-validate
 ```
@@ -392,6 +426,7 @@ data-validate
 #### 🧘 Mental Health Support
 
 #### Stoic Coaching
+
 ```bash
 stoic "I'm frustrated with my limitations today"
 stoic "How do I handle unpredictability?"
@@ -400,6 +435,7 @@ stoic "How do I handle unpredictability?"
 **What it does:** Stoic-philosophy-based coaching for perspective and resilience.
 
 **When to use:**
+
 - Frustrated with symptoms
 - Overwhelmed by uncertainty
 - Need reframing
@@ -407,7 +443,9 @@ stoic "How do I handle unpredictability?"
 ---
 
 #### Encouraging Feedback
+
 **Every task completion:**
+
 ```
 ✅ Task completed! Keep up the great work!
 ✅ Nice! One more thing done!
@@ -419,11 +457,13 @@ stoic "How do I handle unpredictability?"
 ---
 
 #### Win Celebration
+
 ```bash
 goodevening
 ```
 
 **Shows:**
+
 - Completed tasks today
 - Journal entries today
 - "You're doing great!" messages
@@ -435,17 +475,21 @@ goodevening
 #### 🔄 Low-Friction Workflows
 
 #### No Setup Required
+
 **Morning:**
+
 ```bash
 # Literally nothing. startday runs automatically.
 ```
 
 **Mid-day:**
+
 ```bash
 status                 # One command
 ```
 
 **Evening:**
+
 ```bash
 goodevening            # One command
 ```
@@ -453,6 +497,7 @@ goodevening            # One command
 ---
 
 #### Chain Common Workflows
+
 ```bash
 # Morning routine
 startday && todo top && g suggest
@@ -467,7 +512,9 @@ blog ideas && blog generate "Title" -p guide && blog status
 ---
 
 #### Keyboard-Driven (No Mouse)
+
 Everything is command-line. No:
+
 - Clicking through menus
 - Visual focus/hand-eye coordination
 - Mouse precision
@@ -479,11 +526,13 @@ Everything is command-line. No:
 #### 📈 Progress Visibility
 
 #### System Health Check
+
 ```bash
 dotfiles-check
 ```
 
 **Validates:**
+
 - All scripts present
 - Dependencies installed
 - Data directories created
@@ -495,6 +544,7 @@ dotfiles-check
 ---
 
 #### Git Progress
+
 ```bash
 my-progress            # Recent commits in current repo
 projects               # GitHub repos worked on recently
@@ -507,7 +557,9 @@ projects               # GitHub repos worked on recently
 #### 🎨 Customization for Your Needs
 
 #### Enable/Disable AI Features
+
 In `.env`:
+
 ```bash
 AI_BRIEFING_ENABLED=true       # Morning AI briefing
 AI_REFLECTION_ENABLED=true     # Evening AI reflection
@@ -518,6 +570,7 @@ AI_REFLECTION_ENABLED=true     # Evening AI reflection
 ---
 
 #### Adjust Defaults
+
 ```bash
 export TODO_TOP_DEFAULT=5      # Show 5 tasks instead of 3
 export BREAK_DURATION=20       # 20-minute breaks
@@ -527,6 +580,7 @@ export API_COOLDOWN_SECONDS=2  # Slower API rate limiting
 ---
 
 #### Blog Integration
+
 ```bash
 export BLOG_DIR="/path/to/hugo/blog"
 export BLOG_SECTION_EXEMPLARS="/path/to/examples"
@@ -537,6 +591,7 @@ export BLOG_SECTION_EXEMPLARS="/path/to/examples"
 #### 🧩 Real-World Scenarios
 
 #### Scenario 1: Brain Fog Morning
+
 **You wake up foggy and can't remember what you were working on.**
 
 ```bash
@@ -561,6 +616,7 @@ todo top               # Just 3 things
 ---
 
 #### Scenario 2: Low Energy Day
+
 **You have energy for maybe 1-2 hours of work.**
 
 ```bash
@@ -583,6 +639,7 @@ focus done             # Archive completion
 ```
 
 #### Scenario 2b: Circuit Breaker Day
+
 **You wake up and log your state:**
 
 ```bash
@@ -599,6 +656,7 @@ health check
 ---
 
 #### Scenario 3: Medication Brain
+
 **Just took meds that make you fuzzy. Need to capture thoughts before they're gone.**
 
 ```bash
@@ -615,6 +673,7 @@ journal search "idea"  # Find that thought
 ---
 
 #### Scenario 4: Doctor Appointment Prep
+
 **Neurology appointment tomorrow. Need to summarize symptoms.**
 
 ```bash
@@ -630,6 +689,7 @@ health export appointments.txt
 ---
 
 #### Scenario 5: Good Energy Day
+
 **Rare high-energy day. Maximize output.**
 
 ```bash
@@ -658,6 +718,7 @@ weekreview             # Optional: see the bigger picture
 #### 🎯 Key Takeaways
 
 #### The System Assumes:
+
 ✅ You will have brain fog
 ✅ You will have low-energy days
 ✅ You will forget things
@@ -665,6 +726,7 @@ weekreview             # Optional: see the bigger picture
 ✅ Your energy is unpredictable
 
 #### The System Provides:
+
 ✅ Minimal cognitive load
 ✅ Maximum automation
 ✅ Forgiving recovery
@@ -674,6 +736,7 @@ weekreview             # Optional: see the bigger picture
 ✅ Progress visibility
 
 #### You Don't Need to Remember:
+
 ❌ Where you were working
 ❌ What you were doing
 ❌ Complex commands
@@ -688,6 +751,7 @@ weekreview             # Optional: see the bigger picture
 #### 🚀 Getting Started
 
 #### Day 1: Just Observe
+
 ```bash
 startday               # See what it shows
 focus set "Learn the system"  # Set intention
@@ -699,17 +763,20 @@ focus done             # Complete the focus
 ```
 
 #### Week 1: Add Health Tracking
+
 ```bash
 health energy 7        # Daily
 meds log "Medication"  # As taken
 ```
 
 #### Week 2: Try One AI Dispatcher
+
 ```bash
 tech "question"        # Or stoic, or content
 ```
 
 #### Month 1: Full Integration
+
 ```bash
 # Morning: automatic
 # During: status, todo, journal
@@ -728,6 +795,7 @@ ai-suggest             # What should I do next?
 ```
 
 **Documentation:**
+
 - `docs/start-here.md` - Feature Discovery section
 - `docs/daily-cheatsheet.md` - One-page reference
 - `docs/happy-path.md` - Daily walkthrough
@@ -746,7 +814,6 @@ ai-suggest             # What should I do next?
 ---
 
 **You built this for yourself. Trust it. Use it. You deserve tools that work _with_ your energy, not against it.** 🎯
-
 
 ## ✅ Best Practices & Workflows
 
@@ -2108,7 +2175,6 @@ systemlog | grep "feature-name"
 
 Start simple. Build habits. Let the system grow with you.
 
-
 ## 📋 Clipboard Power Moves
 
 macOS ships with `pbcopy` and `pbpaste`, two tiny commands that turn the system clipboard into a first-class shell tool. Combined with pipes and redirects, they let you capture command output, pre-process snippets, and paste them back anywhere without touching the mouse.
@@ -2127,19 +2193,19 @@ macOS ships with `pbcopy` and `pbpaste`, two tiny commands that turn the system 
 
 #### Capture Output Fast
 
-| Goal | Command |
-| ---- | ------- |
-| Copy command output | `ls -al | pbcopy`
-| Copy the last command’s output | `!! | pbcopy` (requires the output to still be in history, use with care)
-| Copy a JSON response | `curl https://api.example.com | pbcopy`
-| Copy git diff for review | `git diff | pbcopy`
-| Copy formatted date | `date '+%Y-%m-%d' | pbcopy`
+| Goal                           | Command                                                                    |
+| ------------------------------ | -------------------------------------------------------------------------- |
+| Copy command output            | `ls -al \| pbcopy`                                                         |
+| Copy the last command’s output | `!! \| pbcopy` (requires the output to still be in history, use with care) |
+| Copy a JSON response           | `curl https://api.example.com \| pbcopy`                                   |
+| Copy git diff for review       | `git diff \| pbcopy`                                                       |
+| Copy formatted date            | `date '+%Y-%m-%d' \| pbcopy`                                               |
 
 Tip: pair with aliases like `copy` or `copyfile` that already wrap `pbcopy`.
 
 #### Transform Before Copying
 
-Pipes let you massage output *before* it hits the clipboard:
+Pipes let you massage output _before_ it hits the clipboard:
 
 ```bash
 rg "TODO" -n src | sort | pbcopy
@@ -2256,7 +2322,6 @@ clipfmt prettier --parser markdown
 
 Stay in flow by letting the clipboard handle the shuffling—your hands stay on the keyboard, and your brain stays focused.
 
-
 ## 🔬 Falsification-First Insight Module
 
 This module adds a hypothesis workflow focused on disproof-before-belief:
@@ -2318,51 +2383,58 @@ A hypothesis cannot end as `SUPPORTED` unless all gates pass:
 
 If any gate fails, a requested `SUPPORTED` verdict is downgraded to `INCONCLUSIVE`.
 
-
-
-
 ---
 
 ---
-
 
 ## 📦 Installation & Bootstrap Guide
 
 To install this dotfiles system on a new macOS machine, follow these exact steps. The repo includes a `bootstrap.sh` script that handles dependency installation, directory creation, and path mapping automatically.
 
 ### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/ryan258/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 ```
 
 ### 2. Initialize the AI Submodule
+
 If you plan to use the `dhp-*` AI dispatchers, you must initialize the `ai-staff-hq` submodule:
+
 ```bash
 git submodule update --init --recursive
 ```
 
 ### 3. Run Bootstrap
+
 The bootstrap script will safely install Homebrew, `jq`, `gawk`, and `curl`, create the `~/.config/dotfiles-data` directory, initialize all empty data files, and inject the proper `PATH` into `~/.zshenv`.
+
 ```bash
 ./bootstrap.sh
 # To bypass prompts for existing installations: ./bootstrap.sh --force
 ```
 
 ### 4. Configure Environment Variables
+
 You must configure your API keys and directory paths before using the system.
+
 ```bash
 cp .env.example .env
 nano .env
 ```
+
 Ensure you set your `OPENROUTER_API_KEY`!
 
 ### 5. Finalize Installation
+
 Restart your terminal, or reload your shell:
+
 ```bash
 source ~/.zshrc
 dotfiles-check
 ```
+
 If `dotfiles-check` returns all green checkmarks, you are fully installed.
 
 ---
@@ -2371,14 +2443,14 @@ If `dotfiles-check` returns all green checkmarks, you are fully installed.
 
 All personal data in this system is strictly stored in local, plaintext files under `~/.config/dotfiles-data/`. If you ever need to manually read, grep, or script against your data, use the following schema definitions. **Always use the pipe (`|`) character as the delimiter.**
 
-| File | Schema Format | Example |
-|---|---|---|
-| `todo.txt` | `YYYY-MM-DD\|task text` | `2026-02-27\|Fix markdown bug` |
-| `todo_done.txt` | `YYYY-MM-DD HH:MM:SS\|task text` | `2026-02-27 15:30:00\|Fix markdown bug` |
-| `journal.txt` | `YYYY-MM-DD HH:MM:SS\|entry` | `2026-02-27 09:00:00\|Feeling foggy today.` |
-| `health.txt` | `TYPE\|DATE\|field1\|field2...` | `SYMPTOM\|2026-02-27\|headache\|3` |
-| `spoons.txt` (Budget)| `BUDGET\|DATE\|count` | `BUDGET\|2026-02-27\|12` |
-| `spoons.txt` (Spend)| `SPEND\|DATE\|TIME\|count\|activity\|remaining`| `SPEND\|2026-02-27\|10:00\|2\|Coding\|10` |
+| File                  | Schema Format                                   | Example                                     |
+| --------------------- | ----------------------------------------------- | ------------------------------------------- |
+| `todo.txt`            | `YYYY-MM-DD\|task text`                         | `2026-02-27\|Fix markdown bug`              |
+| `todo_done.txt`       | `YYYY-MM-DD HH:MM:SS\|task text`                | `2026-02-27 15:30:00\|Fix markdown bug`     |
+| `journal.txt`         | `YYYY-MM-DD HH:MM:SS\|entry`                    | `2026-02-27 09:00:00\|Feeling foggy today.` |
+| `health.txt`          | `TYPE\|DATE\|field1\|field2...`                 | `SYMPTOM\|2026-02-27\|headache\|3`          |
+| `spoons.txt` (Budget) | `BUDGET\|DATE\|count`                           | `BUDGET\|2026-02-27\|12`                    |
+| `spoons.txt` (Spend)  | `SPEND\|DATE\|TIME\|count\|activity\|remaining` | `SPEND\|2026-02-27\|10:00\|2\|Coding\|10`   |
 
 ---
 
@@ -2390,21 +2462,25 @@ If you intend to modify the core scripts or write your own, you **must** adhere 
 
 There are two strict classes of bash files in this codebase:
 
-1. **Executed Scripts (`scripts/*.sh`, `bin/dhp-*.sh`)**: 
+1. **Executed Scripts (`scripts/*.sh`, `bin/dhp-*.sh`)**:
    These are standalone programs. They **must** start with `#!/usr/bin/env bash` and **must** include `set -euo pipefail` to catch errors immediately. Use `exit` to terminate.
 
-2. **Sourced Libraries (`scripts/lib/*.sh`, `zsh/aliases.zsh`)**: 
+2. **Sourced Libraries (`scripts/lib/*.sh`, `zsh/aliases.zsh`)**:
    These files load into other shells. They **must never** use `set -euo pipefail` because an error here will kill the parent shell or interactive terminal. They must use double-source guards (e.g. `if [[ -n "${_FILENAME_LOADED:-}" ]]; then return 0; fi`) and use `return` instead of `exit`.
 
 ### Input Sanitization
+
 Never run `eval` on user input. All input must be sanitized before writing to `~/.config/dotfiles-data/`:
+
 ```bash
 clean_input=$(sanitize_input "$user_input")
 echo "$clean_input" >> "$TODO_FILE"
 ```
 
 ### Testing (Bats)
+
 All shell extensions must be tested using `bats-core`. Tests live in `tests/test_*.sh`. To run the test suite:
+
 ```bash
 bats tests/*.sh
 ```
@@ -2416,346 +2492,345 @@ bats tests/*.sh
 The following aliases are parsed directly from `zsh/aliases.zsh` to give you an exhaustive list of all commands available in your terminal.
 
 | Alias | Target Command | Description |
-|---|---|---|
+| ----- | -------------- | ----------- |
 
 ### NAVIGATION & DIRECTORY SHORTCUTS
 
-| Alias | Target Command | Description |
-|---|---|---|
-| `..` | `cd ..` |  |
-| `...` | `cd ../..` |  |
-| `....` | `cd ../../..` |  |
-| `ll` | `ls -alF` | Full detail + type indicators |
-| `la` | `ls -A` | All except . and .. |
-| `l` | `ls -CF` | Compact columns with type indicators |
-| `lt` | `ls -altr` | Chronological, newest at bottom |
-| `lh` | `ls -alh` | Sizes in K/M/G instead of bytes |
-| `here` | `ls -la` | Everything in this directory, long format |
-| `dtree` | `find . -type d | head -20` | Directory tree sketch (avoids shadowing /usr/bin/tree) |
-| `newest` | `ls -lt | head -10` | 10 most recently modified files |
-| `biggest` | `ls -lS | head -10` | 10 largest files by size |
-| `count` | `ls -1 | wc -l` | Count of items in current directory |
-| `downloads` | `cd ~/Downloads` |  |
-| `documents` | `cd ~/Documents` |  |
-| `desktop` | `cd ~/Desktop` |  |
-| `scripts` | `cd ~/scripts` |  |
-| `home` | `cd ~` |  |
-| `docs` | `cd ~/Documents` | Short form of 'documents' |
-| `down` | `cd ~/Downloads` | Short form of 'downloads' |
-| `desk` | `cd ~/Desktop` | Short form of 'desktop' |
-| `update` | `brew update && brew upgrade` |  |
-| `brewclean` | `brew cleanup` | Remove old versions and stale downloads |
-| `brewinfo` | `brew list --versions` | Show every installed formula + version |
-| `myip` | `curl ifconfig.me` | Public/external IP via ifconfig.me API |
-| `localip` | `ifconfig | grep inet` | All local interface IPs (IPv4 + IPv6) |
-| `mem` | `vm_stat` | macOS virtual memory stats (page-based) |
-| `cpu` | `top -l 1 | head -n 10` | One-shot top snapshot, header only |
-| `psg` | `ps aux | grep` |  |
+| Alias       | Target Command                | Description                                            |
+| ----------- | ----------------------------- | ------------------------------------------------------ |
+| `..`        | `cd ..`                       |                                                        |
+| `...`       | `cd ../..`                    |                                                        |
+| `....`      | `cd ../../..`                 |                                                        |
+| `ll`        | `ls -alF`                     | Full detail + type indicators                          |
+| `la`        | `ls -A`                       | All except . and ..                                    |
+| `l`         | `ls -CF`                      | Compact columns with type indicators                   |
+| `lt`        | `ls -altr`                    | Chronological, newest at bottom                        |
+| `lh`        | `ls -alh`                     | Sizes in K/M/G instead of bytes                        |
+| `here`      | `ls -la`                      | Everything in this directory, long format              |
+| `dtree`     | `find . -type d \| head -20`  | Directory tree sketch (avoids shadowing /usr/bin/tree) |
+| `newest`    | `ls -lt \| head -10`          | 10 most recently modified files                        |
+| `biggest`   | `ls -lS \| head -10`          | 10 largest files by size                               |
+| `count`     | `ls -1 \| wc -l`              | Count of items in current directory                    |
+| `downloads` | `cd ~/Downloads`              |                                                        |
+| `documents` | `cd ~/Documents`              |                                                        |
+| `desktop`   | `cd ~/Desktop`                |                                                        |
+| `scripts`   | `cd ~/scripts`                |                                                        |
+| `home`      | `cd ~`                        |                                                        |
+| `docs`      | `cd ~/Documents`              | Short form of 'documents'                              |
+| `down`      | `cd ~/Downloads`              | Short form of 'downloads'                              |
+| `desk`      | `cd ~/Desktop`                | Short form of 'desktop'                                |
+| `update`    | `brew update && brew upgrade` |                                                        |
+| `brewclean` | `brew cleanup`                | Remove old versions and stale downloads                |
+| `brewinfo`  | `brew list --versions`        | Show every installed formula + version                 |
+| `myip`      | `curl ifconfig.me`            | Public/external IP via ifconfig.me API                 |
+| `localip`   | `ifconfig \| grep inet`       | All local interface IPs (IPv4 + IPv6)                  |
+| `mem`       | `vm_stat`                     | macOS virtual memory stats (page-based)                |
+| `cpu`       | `top -l 1 \| head -n 10`      | One-shot top snapshot, header only                     |
+| `psg`       | `ps aux \| grep`              |                                                        |
 
 ### FILE OPERATIONS
 
-| Alias | Target Command | Description |
-|---|---|---|
-| `rm` | `rm -i` | Confirm before every removal |
-| `cp` | `cp -i` | Confirm before overwriting target |
-| `mv` | `mv -i` | Confirm before overwriting target |
-| `untar` | `tar -xvf` | eXtract Verbosely from File |
-| `targz` | `tar -czvf` | Create gZipped tar archive Verbosely |
-| `ff` | `find . -name` |  |
-| `showfiles` | `defaults write com.apple.finder AppleShowAllFiles YES && killall Finder` |  |
-| `hidefiles` | `defaults write com.apple.finder AppleShowAllFiles NO && killall Finder` |  |
-| `spotlight` | `mdfind` |  |
+| Alias       | Target Command                                                            | Description                          |
+| ----------- | ------------------------------------------------------------------------- | ------------------------------------ |
+| `rm`        | `rm -i`                                                                   | Confirm before every removal         |
+| `cp`        | `cp -i`                                                                   | Confirm before overwriting target    |
+| `mv`        | `mv -i`                                                                   | Confirm before overwriting target    |
+| `untar`     | `tar -xvf`                                                                | eXtract Verbosely from File          |
+| `targz`     | `tar -czvf`                                                               | Create gZipped tar archive Verbosely |
+| `ff`        | `find . -name`                                                            |                                      |
+| `showfiles` | `defaults write com.apple.finder AppleShowAllFiles YES && killall Finder` |                                      |
+| `hidefiles` | `defaults write com.apple.finder AppleShowAllFiles NO && killall Finder`  |                                      |
+| `spotlight` | `mdfind`                                                                  |                                      |
 
 ### GIT SHORTCUTS
 
-| Alias | Target Command | Description |
-|---|---|---|
-| `gs` | `git status` | Working tree status |
-| `ga` | `git add` | Stage specific files — e.g. `ga file.txt` |
-| `gaa` | `git add .` | Stage everything in cwd (use with care) |
-| `gc` | `git commit -m` | Commit with inline message — e.g. `gc "fix bug"` |
-| `gp` | `git push` | Push current branch to remote |
-| `gl` | `git pull` | Pull (fetch + merge) from remote |
-| `gd` | `git diff` | Unstaged changes vs last commit |
-| `gb` | `git branch` | List or create branches |
-| `gco` | `git checkout` | Switch branches or restore files |
-| `glog` | `git log --oneline` | Compact one-line-per-commit log |
+| Alias  | Target Command      | Description                                      |
+| ------ | ------------------- | ------------------------------------------------ |
+| `gs`   | `git status`        | Working tree status                              |
+| `ga`   | `git add`           | Stage specific files — e.g. `ga file.txt`        |
+| `gaa`  | `git add .`         | Stage everything in cwd (use with care)          |
+| `gc`   | `git commit -m`     | Commit with inline message — e.g. `gc "fix bug"` |
+| `gp`   | `git push`          | Push current branch to remote                    |
+| `gl`   | `git pull`          | Pull (fetch + merge) from remote                 |
+| `gd`   | `git diff`          | Unstaged changes vs last commit                  |
+| `gb`   | `git branch`        | List or create branches                          |
+| `gco`  | `git checkout`      | Switch branches or restore files                 |
+| `glog` | `git log --oneline` | Compact one-line-per-commit log                  |
 
 ### TEXT EDITING & VIEWING
 
-| Alias | Target Command | Description |
-|---|---|---|
-| `v` | `vim` | e.g. `v config.yaml` |
-| `n` | `nano` | e.g. `n notes.txt` (simpler editor) |
-| `e` | `echo` | Quick echo for piping/testing |
-| `codehere` | `code .` | Launch VS Code rooted here |
-| `finder` | `open .` | Launch Finder window here |
+| Alias      | Target Command | Description                         |
+| ---------- | -------------- | ----------------------------------- |
+| `v`        | `vim`          | e.g. `v config.yaml`                |
+| `n`        | `nano`         | e.g. `n notes.txt` (simpler editor) |
+| `e`        | `echo`         | Quick echo for piping/testing       |
+| `codehere` | `code .`       | Launch VS Code rooted here          |
+| `finder`   | `open .`       | Launch Finder window here           |
 
 ### UTILITY SHORTCUTS
 
-| Alias | Target Command | Description |
-|---|---|---|
-| `c` | `clear` | Minimal keystroke clear |
-| `cls` | `clear` | For muscle memory from Windows/DOS |
-| `now` | `date` | Current date/time in default locale |
-| `timestamp` | `date +%Y%m%d_%H%M%S` | Filename-safe timestamp (no colons/spaces) |
-| `du` | `du -h` | Directory size summary |
-| `df` | `df -h` | Filesystem free space |
-| `diskspace` | `df -h` | Readable alias for df |
-| `ping` | `ping -c 5` | Limit to 5 pings (macOS ping runs forever by default) |
-| `flushdns` | `sudo dscacheutil -flushcache` | Clear macOS DNS resolver cache |
+| Alias       | Target Command                 | Description                                           |
+| ----------- | ------------------------------ | ----------------------------------------------------- |
+| `c`         | `clear`                        | Minimal keystroke clear                               |
+| `cls`       | `clear`                        | For muscle memory from Windows/DOS                    |
+| `now`       | `date`                         | Current date/time in default locale                   |
+| `timestamp` | `date +%Y%m%d_%H%M%S`          | Filename-safe timestamp (no colons/spaces)            |
+| `du`        | `du -h`                        | Directory size summary                                |
+| `df`        | `df -h`                        | Filesystem free space                                 |
+| `diskspace` | `df -h`                        | Readable alias for df                                 |
+| `ping`      | `ping -c 5`                    | Limit to 5 pings (macOS ping runs forever by default) |
+| `flushdns`  | `sudo dscacheutil -flushcache` | Clear macOS DNS resolver cache                        |
 
 ### DEVELOPMENT SHORTCUTS
 
-| Alias | Target Command | Description |
-|---|---|---|
-| `python` | `python3` |  |
-| `pip` | `pip3` |  |
-| `venv` | `python3 -m venv` | Create venv — e.g. `venv .venv` |
-| `activate` | `source venv/bin/activate` | Activate a venv in ./venv/ |
-| `serve` | `python3 -m http.server` | HTTP server on :8000 for current dir |
-| `jsonpp` | `python3 -m json.tool` | Pretty-print JSON from stdin or file |
+| Alias      | Target Command             | Description                          |
+| ---------- | -------------------------- | ------------------------------------ |
+| `python`   | `python3`                  |                                      |
+| `pip`      | `pip3`                     |                                      |
+| `venv`     | `python3 -m venv`          | Create venv — e.g. `venv .venv`      |
+| `activate` | `source venv/bin/activate` | Activate a venv in ./venv/           |
+| `serve`    | `python3 -m http.server`   | HTTP server on :8000 for current dir |
+| `jsonpp`   | `python3 -m json.tool`     | Pretty-print JSON from stdin or file |
 
 ### MACOS CLIPBOARD & UTILITIES
 
-| Alias | Target Command | Description |
-|---|---|---|
-| `copy` | `pbcopy` | Pipe text to clipboard — e.g. `echo hi | copy` |
-| `paste` | `pbpaste` | Emit clipboard contents to stdout |
-| `copyfile` | `pbcopy <` | Copy a file's contents — e.g. `copyfile notes.txt` |
-| `copyfolder` | `tail -n +1 * | pbcopy` | Copy ALL files' contents in cwd to clipboard |
-| `screensleep` | `pmset displaysleepnow` | Immediately sleep the display |
-| `lock` | `pmset displaysleepnow` | Lock screen (display sleep triggers lock) |
-| `eject` | `diskutil eject` | Eject external disk — e.g. `eject /dev/disk2` |
-| `battery` | `pmset -g batt` | Show battery % and charging status |
+| Alias         | Target Command            | Description                                        |
+| ------------- | ------------------------- | -------------------------------------------------- |
+| `copy`        | `pbcopy`                  | Pipe text to clipboard — e.g. `echo hi \| copy`    |
+| `paste`       | `pbpaste`                 | Emit clipboard contents to stdout                  |
+| `copyfile`    | `pbcopy <`                | Copy a file's contents — e.g. `copyfile notes.txt` |
+| `copyfolder`  | `tail -n +1 \* \| pbcopy` | Copy ALL files' contents in cwd to clipboard       |
+| `screensleep` | `pmset displaysleepnow`   | Immediately sleep the display                      |
+| `lock`        | `pmset displaysleepnow`   | Lock screen (display sleep triggers lock)          |
+| `eject`       | `diskutil eject`          | Eject external disk — e.g. `eject /dev/disk2`      |
+| `battery`     | `pmset -g batt`           | Show battery % and charging status                 |
 
 ### CORE PRODUCTIVITY SCRIPTS
 
-| Alias | Target Command | Description |
-|---|---|---|
-| `howto` | `howto.sh` | Interactive help / how-to lookup |
-| `wi` | `whatis.sh` | Explain a command (named 'wi' to avoid shadowing /usr/bin/whatis) |
-| `dotfiles_check` | `dotfiles_check.sh` | Verify dotfiles installation integrity |
-| `dotfiles-check` | `dotfiles_check.sh` | Hyphenated alternative for the same check |
-| `pomo` | `take_a_break.sh 25` | Pomodoro timer — 25-minute focus session |
-| `todo` | `todo.sh` | Task manager entry point |
-| `todolist` | `todo.sh list` | List all open tasks |
-| `tododone` | `todo.sh done` | Mark a task as completed |
-| `todoadd` | `todo.sh add` | Add a new task |
-| `journal` | `journal.sh` | Journal entry point |
-| `break` | `take_a_break.sh` | Flexible break timer (default duration) |
-| `focus` | `focus.sh` | Focus mode — block distractions |
-| `t-start` | `todo.sh start` | Start timing a task |
-| `t-stop` | `todo.sh stop` | Stop timing the current task |
-| `t-status` | `time_tracker.sh status` | Show what's being tracked and elapsed time |
-| `spoons` | `spoon_manager.sh` | Full spoon manager interface |
-| `s-check` | `spoon_manager.sh check` | How many spoons remain today? |
-| `s-spend` | `spoon_manager.sh spend` | Log spending spoons on an activity |
-| `correlate` | `correlate.sh` | Find patterns between health/productivity data |
-| `daily-report` | `generate_report.sh daily` | Generate today's summary report |
-| `insight` | `insight.sh` | AI-powered insight from recent data |
-| `health` | `health.sh` | Log symptoms, energy, and health events |
-| `meds` | `meds.sh` | Medication tracking and reminders |
-| `next` | `todo.sh top 1` | Show the single highest-priority task |
-| `t` | `todo.sh list` | 1-key todo list |
-| `j` | `journal.sh` | 1-key journal |
-| `ta` | `todo.sh add` | 2-key task add — e.g. `ta "Buy groceries"` |
-| `ja` | `journal.sh add` | 2-key journal add — e.g. `ja "Good energy today"` |
-| `memo` | `cheatsheet.sh` | Show personal cheatsheet / quick reference |
-| `schedule` | `schedule.sh` | View today's schedule |
-| `clutter` | `review_clutter.sh` | Review and clean up stale files |
-| `checkenv` | `validate_env.sh` | Validate .env config is complete and correct |
-| `newscript` | `new_script.sh` | Scaffold a new bash script with proper headers |
-| `weather` | `weather.sh` | Current weather forecast |
-| `findtext` | `findtext.sh` | Search file contents recursively |
-| `graballtext` | `grab_all_text.sh` | Concatenate all text files in a directory |
-| `newproject` | `start_project.sh` | Scaffold a new project directory |
-| `newpython` | `mkproject_py.sh` | Scaffold a Python project with venv |
-| `newpy` | `mkproject_py.sh` | Short form of newpython |
-| `progress` | `my_progress.sh` | Show git contribution stats / progress |
-| `projects` | `gh-projects.sh` | List GitHub projects |
-| `backup` | `backup_project.sh` | Back up current project directory |
-| `backup-data` | `backup_data.sh` | Back up ~/.config/dotfiles-data/ |
-| `findbig` | `findbig.sh` | Find large files eating disk space |
-| `unpack` | `unpacker.sh` | Smart archive extractor (tar/zip/gz/etc.) |
-| `tidydown` | `tidy_downloads.sh` | Auto-organize ~/Downloads by file type |
-| `startday` | `startday.sh` | Morning routine: weather, briefing, todos, spoons |
-| `goodevening` | `goodevening.sh` | Evening wind-down: journal prompt, summary |
-| `greeting` | `greeting.sh` | Quick motivational greeting |
-| `weekreview` | `week_in_review.sh` | Weekly retrospective summary |
+| Alias            | Target Command             | Description                                                       |
+| ---------------- | -------------------------- | ----------------------------------------------------------------- |
+| `howto`          | `howto.sh`                 | Interactive help / how-to lookup                                  |
+| `wi`             | `whatis.sh`                | Explain a command (named 'wi' to avoid shadowing /usr/bin/whatis) |
+| `dotfiles_check` | `dotfiles_check.sh`        | Verify dotfiles installation integrity                            |
+| `dotfiles-check` | `dotfiles_check.sh`        | Hyphenated alternative for the same check                         |
+| `pomo`           | `take_a_break.sh 25`       | Pomodoro timer — 25-minute focus session                          |
+| `todo`           | `todo.sh`                  | Task manager entry point                                          |
+| `todolist`       | `todo.sh list`             | List all open tasks                                               |
+| `tododone`       | `todo.sh done`             | Mark a task as completed                                          |
+| `todoadd`        | `todo.sh add`              | Add a new task                                                    |
+| `journal`        | `journal.sh`               | Journal entry point                                               |
+| `break`          | `take_a_break.sh`          | Flexible break timer (default duration)                           |
+| `focus`          | `focus.sh`                 | Focus mode — block distractions                                   |
+| `t-start`        | `todo.sh start`            | Start timing a task                                               |
+| `t-stop`         | `todo.sh stop`             | Stop timing the current task                                      |
+| `t-status`       | `time_tracker.sh status`   | Show what's being tracked and elapsed time                        |
+| `spoons`         | `spoon_manager.sh`         | Full spoon manager interface                                      |
+| `s-check`        | `spoon_manager.sh check`   | How many spoons remain today?                                     |
+| `s-spend`        | `spoon_manager.sh spend`   | Log spending spoons on an activity                                |
+| `correlate`      | `correlate.sh`             | Find patterns between health/productivity data                    |
+| `daily-report`   | `generate_report.sh daily` | Generate today's summary report                                   |
+| `insight`        | `insight.sh`               | AI-powered insight from recent data                               |
+| `health`         | `health.sh`                | Log symptoms, energy, and health events                           |
+| `meds`           | `meds.sh`                  | Medication tracking and reminders                                 |
+| `next`           | `todo.sh top 1`            | Show the single highest-priority task                             |
+| `t`              | `todo.sh list`             | 1-key todo list                                                   |
+| `j`              | `journal.sh`               | 1-key journal                                                     |
+| `ta`             | `todo.sh add`              | 2-key task add — e.g. `ta "Buy groceries"`                        |
+| `ja`             | `journal.sh add`           | 2-key journal add — e.g. `ja "Good energy today"`                 |
+| `memo`           | `cheatsheet.sh`            | Show personal cheatsheet / quick reference                        |
+| `schedule`       | `schedule.sh`              | View today's schedule                                             |
+| `clutter`        | `review_clutter.sh`        | Review and clean up stale files                                   |
+| `checkenv`       | `validate_env.sh`          | Validate .env config is complete and correct                      |
+| `newscript`      | `new_script.sh`            | Scaffold a new bash script with proper headers                    |
+| `weather`        | `weather.sh`               | Current weather forecast                                          |
+| `findtext`       | `findtext.sh`              | Search file contents recursively                                  |
+| `graballtext`    | `grab_all_text.sh`         | Concatenate all text files in a directory                         |
+| `newproject`     | `start_project.sh`         | Scaffold a new project directory                                  |
+| `newpython`      | `mkproject_py.sh`          | Scaffold a Python project with venv                               |
+| `newpy`          | `mkproject_py.sh`          | Short form of newpython                                           |
+| `progress`       | `my_progress.sh`           | Show git contribution stats / progress                            |
+| `projects`       | `gh-projects.sh`           | List GitHub projects                                              |
+| `backup`         | `backup_project.sh`        | Back up current project directory                                 |
+| `backup-data`    | `backup_data.sh`           | Back up ~/.config/dotfiles-data/                                  |
+| `findbig`        | `findbig.sh`               | Find large files eating disk space                                |
+| `unpack`         | `unpacker.sh`              | Smart archive extractor (tar/zip/gz/etc.)                         |
+| `tidydown`       | `tidy_downloads.sh`        | Auto-organize ~/Downloads by file type                            |
+| `startday`       | `startday.sh`              | Morning routine: weather, briefing, todos, spoons                 |
+| `goodevening`    | `goodevening.sh`           | Evening wind-down: journal prompt, summary                        |
+| `greeting`       | `greeting.sh`              | Quick motivational greeting                                       |
+| `weekreview`     | `week_in_review.sh`        | Weekly retrospective summary                                      |
 
 ### NAVIGATION & FILE MANAGEMENT SCRIPTS
 
-| Alias | Target Command | Description |
-|---|---|---|
-| `g` | `source $DOTFILES_ALIAS_ROOT/scripts/g.sh` |  |
-| `openf` | `open_file.sh` | Open a file with its default macOS app |
-| `finddupes` | `duplicate_finder.sh` | Find duplicate files by content hash |
-| `organize` | `file_organizer.sh` | Auto-organize files by type/date |
-| `systemlog` | `tail -n 20 ~/.config/dotfiles-data/system.log` | Last 20 log lines |
-| `logs` | `logs.sh` | Full log viewer |
-| `logtail` | `logs.sh tail` | Follow log in real time |
-| `logerrors` | `logs.sh errors` | Show only error-level entries |
-| `sysinfo` | `system_info.sh` | CPU, memory, disk, OS summary |
-| `batterycheck` | `battery_check.sh` | Detailed battery health report |
-| `processes` | `process_manager.sh` | Interactive process manager |
-| `netinfo` | `network_info.sh` | Network interfaces and connectivity |
-| `topcpu` | `process_manager.sh top` | Processes sorted by CPU usage |
-| `topmem` | `process_manager.sh memory` | Processes sorted by memory usage |
-| `netstatus` | `network_info.sh status` | Am I connected? What IP? |
-| `netspeed` | `network_info.sh speed` | Quick bandwidth test |
-| `gcal` | `gcal.sh` |  |
-| `calendar` | `gcal.sh` | Note: intentionally shadows /usr/bin/calendar |
+| Alias          | Target Command                                  | Description                                   |
+| -------------- | ----------------------------------------------- | --------------------------------------------- |
+| `g`            | `source $DOTFILES_ALIAS_ROOT/scripts/g.sh`      |                                               |
+| `openf`        | `open_file.sh`                                  | Open a file with its default macOS app        |
+| `finddupes`    | `duplicate_finder.sh`                           | Find duplicate files by content hash          |
+| `organize`     | `file_organizer.sh`                             | Auto-organize files by type/date              |
+| `systemlog`    | `tail -n 20 ~/.config/dotfiles-data/system.log` | Last 20 log lines                             |
+| `logs`         | `logs.sh`                                       | Full log viewer                               |
+| `logtail`      | `logs.sh tail`                                  | Follow log in real time                       |
+| `logerrors`    | `logs.sh errors`                                | Show only error-level entries                 |
+| `sysinfo`      | `system_info.sh`                                | CPU, memory, disk, OS summary                 |
+| `batterycheck` | `battery_check.sh`                              | Detailed battery health report                |
+| `processes`    | `process_manager.sh`                            | Interactive process manager                   |
+| `netinfo`      | `network_info.sh`                               | Network interfaces and connectivity           |
+| `topcpu`       | `process_manager.sh top`                        | Processes sorted by CPU usage                 |
+| `topmem`       | `process_manager.sh memory`                     | Processes sorted by memory usage              |
+| `netstatus`    | `network_info.sh status`                        | Am I connected? What IP?                      |
+| `netspeed`     | `network_info.sh speed`                         | Quick bandwidth test                          |
+| `gcal`         | `gcal.sh`                                       |                                               |
+| `calendar`     | `gcal.sh`                                       | Note: intentionally shadows /usr/bin/calendar |
 
 ### PRODUCTIVITY & AUTOMATION SCRIPTS
 
-| Alias | Target Command | Description |
-|---|---|---|
-| `clip` | `clipboard_manager.sh` | Full clipboard manager interface |
-| `clipsave` | `clipboard_manager.sh save` | Save current clipboard to a named slot |
-| `clipload` | `clipboard_manager.sh load` | Load a named slot back to clipboard |
-| `cliplist` | `clipboard_manager.sh list` | List all saved clipboard slots |
-| `app` | `app_launcher.sh` |  |
-| `launch` | `app_launcher.sh` | Synonym for discoverability |
-| `remind` | `remind_me.sh` | Set a timed reminder notification |
-| `did` | `done.sh` | Log a completed activity ('done' is a shell reserved word) |
-| `dev` | `dev_shortcuts.sh` | Dev shortcuts menu |
-| `server` | `dev_shortcuts.sh server` | Start a local dev server |
-| `json` | `dev_shortcuts.sh json` | JSON formatting/inspection |
-| `gitquick` | `dev_shortcuts.sh gitquick` | Quick git add+commit+push |
+| Alias      | Target Command              | Description                                                |
+| ---------- | --------------------------- | ---------------------------------------------------------- |
+| `clip`     | `clipboard_manager.sh`      | Full clipboard manager interface                           |
+| `clipsave` | `clipboard_manager.sh save` | Save current clipboard to a named slot                     |
+| `clipload` | `clipboard_manager.sh load` | Load a named slot back to clipboard                        |
+| `cliplist` | `clipboard_manager.sh list` | List all saved clipboard slots                             |
+| `app`      | `app_launcher.sh`           |                                                            |
+| `launch`   | `app_launcher.sh`           | Synonym for discoverability                                |
+| `remind`   | `remind_me.sh`              | Set a timed reminder notification                          |
+| `did`      | `done.sh`                   | Log a completed activity ('done' is a shell reserved word) |
+| `dev`      | `dev_shortcuts.sh`          | Dev shortcuts menu                                         |
+| `server`   | `dev_shortcuts.sh server`   | Start a local dev server                                   |
+| `json`     | `dev_shortcuts.sh json`     | JSON formatting/inspection                                 |
+| `gitquick` | `dev_shortcuts.sh gitquick` | Quick git add+commit+push                                  |
 
 ### FILE PROCESSING & ANALYSIS SCRIPTS
 
-| Alias | Target Command | Description |
-|---|---|---|
-| `textproc` | `text_processor.sh` | Full text processor menu |
-| `wordcount` | `text_processor.sh count` | Word/line/char count |
-| `textsearch` | `text_processor.sh search` | Search within files |
-| `textreplace` | `text_processor.sh replace` | Find-and-replace across files |
-| `textclean` | `text_processor.sh clean` | Strip whitespace, fix encoding, etc. |
-| `media` | `media_converter.sh` | Full media converter menu |
-| `video2audio` | `media_converter.sh video2audio` | Extract audio track from video |
-| `resizeimg` | `media_converter.sh resize_image` | Resize images (preserves aspect) |
-| `compresspdf` | `media_converter.sh pdf_compress` | Reduce PDF file size |
-| `stitch` | `media_converter.sh audio_stitch` | Concatenate audio files |
-| `archive` | `archive_manager.sh` | Full archive manager menu |
-| `archcreate` | `archive_manager.sh create` | Create a new archive |
-| `archextract` | `archive_manager.sh extract` | Extract an archive |
-| `archlist` | `archive_manager.sh list` | List archive contents without extracting |
-| `info` | `weather.sh && echo && todo.sh list` | Weather + open tasks |
-| `status` | `status.sh` | Unified status dashboard |
-| `overview` | `system_info.sh && echo && battery_check.sh` | Hardware + battery |
-| `cleanup` | `cd ~/Downloads && file_organizer.sh bytype && findbig.sh` | Tidy Downloads, flag large files |
-| `quickbackup` | `backup_project.sh && echo 'Backup complete!'` | One-command project backup |
-| `devstart` | `dev_shortcuts.sh env && codehere` | Load env vars, open VS Code |
-| `gitcheck` | `my_progress.sh && git status` | Contribution stats + working tree |
-| `wk` | `with-keys` | Run a command with SSH keys loaded |
-| `wr` | `with-req --` | Run a command with required credentials |
+| Alias         | Target Command                                             | Description                              |
+| ------------- | ---------------------------------------------------------- | ---------------------------------------- |
+| `textproc`    | `text_processor.sh`                                        | Full text processor menu                 |
+| `wordcount`   | `text_processor.sh count`                                  | Word/line/char count                     |
+| `textsearch`  | `text_processor.sh search`                                 | Search within files                      |
+| `textreplace` | `text_processor.sh replace`                                | Find-and-replace across files            |
+| `textclean`   | `text_processor.sh clean`                                  | Strip whitespace, fix encoding, etc.     |
+| `media`       | `media_converter.sh`                                       | Full media converter menu                |
+| `video2audio` | `media_converter.sh video2audio`                           | Extract audio track from video           |
+| `resizeimg`   | `media_converter.sh resize_image`                          | Resize images (preserves aspect)         |
+| `compresspdf` | `media_converter.sh pdf_compress`                          | Reduce PDF file size                     |
+| `stitch`      | `media_converter.sh audio_stitch`                          | Concatenate audio files                  |
+| `archive`     | `archive_manager.sh`                                       | Full archive manager menu                |
+| `archcreate`  | `archive_manager.sh create`                                | Create a new archive                     |
+| `archextract` | `archive_manager.sh extract`                               | Extract an archive                       |
+| `archlist`    | `archive_manager.sh list`                                  | List archive contents without extracting |
+| `info`        | `weather.sh && echo && todo.sh list`                       | Weather + open tasks                     |
+| `status`      | `status.sh`                                                | Unified status dashboard                 |
+| `overview`    | `system_info.sh && echo && battery_check.sh`               | Hardware + battery                       |
+| `cleanup`     | `cd ~/Downloads && file_organizer.sh bytype && findbig.sh` | Tidy Downloads, flag large files         |
+| `quickbackup` | `backup_project.sh && echo 'Backup complete!'`             | One-command project backup               |
+| `devstart`    | `dev_shortcuts.sh env && codehere`                         | Load env vars, open VS Code              |
+| `gitcheck`    | `my_progress.sh && git status`                             | Contribution stats + working tree        |
+| `wk`          | `with-keys`                                                | Run a command with SSH keys loaded       |
+| `wr`          | `with-req --`                                              | Run a command with required credentials  |
 
 ### SETUP INSTRUCTIONS
 
 | Alias | Target Command | Description |
-|---|---|---|
+| ----- | -------------- | ----------- |
 
 ### CUSTOMIZATION NOTES
 
 | Alias | Target Command | Description |
-|---|---|---|
+| ----- | -------------- | ----------- |
 
 ### EXAMPLE WORKFLOWS
 
-| Alias | Target Command | Description |
-|---|---|---|
-| `grep` | `ggrep --color=auto` |  |
-| `grep` | `grep --color=auto` |  |
+| Alias  | Target Command       | Description |
+| ------ | -------------------- | ----------- |
+| `grep` | `ggrep --color=auto` |             |
+| `grep` | `grep --color=auto`  |             |
 
 ### BLOG WORKFLOW
 
-| Alias | Target Command | Description |
-|---|---|---|
-| `blog` | `blog.sh` | Blog management CLI (create, publish, list) |
-| `blog-recent` | `blog_recent_content.sh` | Show recently published/drafted blog posts |
-| `dump` | `dump.sh` | Dump structured data for debugging/export |
-| `data_validate` | `data_validate.sh` | Validate data files in ~/.config/dotfiles-data/ |
+| Alias           | Target Command           | Description                                     |
+| --------------- | ------------------------ | ----------------------------------------------- |
+| `blog`          | `blog.sh`                | Blog management CLI (create, publish, list)     |
+| `blog-recent`   | `blog_recent_content.sh` | Show recently published/drafted blog posts      |
+| `dump`          | `dump.sh`                | Dump structured data for debugging/export       |
+| `data_validate` | `data_validate.sh`       | Validate data files in ~/.config/dotfiles-data/ |
 
 ### AI STAFF HQ DISPATCHERS
 
-| Alias | Target Command | Description |
-|---|---|---|
-| `dhp-tech` | `$DOTFILES_ALIAS_ROOT/bin/dhp-tech.sh` | Technical/coding assistant |
-| `dhp-creative` | `$DOTFILES_ALIAS_ROOT/bin/dhp-creative.sh` | Creative writing & ideation |
-| `dhp-content` | `$DOTFILES_ALIAS_ROOT/bin/dhp-content.sh` | Content strategy & drafting |
-| `dhp-strategy` | `$DOTFILES_ALIAS_ROOT/bin/dhp-strategy.sh` | Business/life strategy advisor |
-| `dhp-brand` | `$DOTFILES_ALIAS_ROOT/bin/dhp-brand.sh` | Brand voice & identity |
-| `dhp-market` | `$DOTFILES_ALIAS_ROOT/bin/dhp-market.sh` | Market analysis & trends |
-| `dhp-stoic` | `$DOTFILES_ALIAS_ROOT/bin/dhp-stoic.sh` | Stoic philosophy / mindset coach |
-| `dhp-research` | `$DOTFILES_ALIAS_ROOT/bin/dhp-research.sh` | Deep research & fact-finding |
-| `dhp-narrative` | `$DOTFILES_ALIAS_ROOT/bin/dhp-narrative.sh` | Storytelling & narrative design |
-| `dhp-copy` | `$DOTFILES_ALIAS_ROOT/bin/dhp-copy.sh` | Copywriting (ads, emails, etc.) |
-| `dhp-finance` | `$DOTFILES_ALIAS_ROOT/bin/dhp-finance.sh` | Financial analysis & advice |
-| `dhp-memory` | `$DOTFILES_ALIAS_ROOT/bin/dhp-memory.sh` | Store memories to knowledge base |
-| `dhp-memory-search` | `$DOTFILES_ALIAS_ROOT/bin/dhp-memory-search.sh` | Search stored memories |
-| `tech` | `$DOTFILES_ALIAS_ROOT/bin/dhp-tech.sh` |  |
-| `creative` | `$DOTFILES_ALIAS_ROOT/bin/dhp-creative.sh` |  |
-| `content` | `$DOTFILES_ALIAS_ROOT/bin/dhp-content.sh` |  |
-| `strategy` | `$DOTFILES_ALIAS_ROOT/bin/dhp-strategy.sh` |  |
-| `brand` | `$DOTFILES_ALIAS_ROOT/bin/dhp-brand.sh` |  |
-| `market` | `$DOTFILES_ALIAS_ROOT/bin/dhp-market.sh` |  |
-| `stoic` | `$DOTFILES_ALIAS_ROOT/bin/dhp-stoic.sh` |  |
-| `research` | `$DOTFILES_ALIAS_ROOT/bin/dhp-research.sh` |  |
-| `narrative` | `$DOTFILES_ALIAS_ROOT/bin/dhp-narrative.sh` |  |
-| `aicopy` | `$DOTFILES_ALIAS_ROOT/bin/dhp-copy.sh` | 'aicopy' not 'copy' (copy = pbcopy) |
-| `morphling` | `$DOTFILES_ALIAS_ROOT/bin/morphling.sh` | Shape-shifting multi-persona dispatcher |
-| `finance` | `$DOTFILES_ALIAS_ROOT/bin/dhp-finance.sh` |  |
-| `memory` | `$DOTFILES_ALIAS_ROOT/bin/dhp-memory.sh` |  |
-| `memory-search` | `$DOTFILES_ALIAS_ROOT/bin/dhp-memory-search.sh` |  |
-| `dhp-morphling` | `$DOTFILES_ALIAS_ROOT/bin/dhp-morphling.sh` |  |
-| `dhp` | `$DOTFILES_ALIAS_ROOT/bin/dhp-tech.sh` | Default dispatcher → tech |
-| `dispatch` | `$DOTFILES_ALIAS_ROOT/bin/dispatch.sh` | Generic dispatch router |
-| `dhp-project` | `$DOTFILES_ALIAS_ROOT/bin/dhp-project.sh` | Multi-specialist project orchestration |
-| `ai-project` | `$DOTFILES_ALIAS_ROOT/bin/dhp-project.sh` | Shorthand for dhp-project |
-| `dhp-chain` | `$DOTFILES_ALIAS_ROOT/bin/dhp-chain.sh` | Chain dispatchers sequentially (pipe output) |
-| `ai-chain` | `$DOTFILES_ALIAS_ROOT/bin/dhp-chain.sh` | Shorthand for dhp-chain |
-| `ai-suggest` | `ai_suggest.sh` | Context-aware AI suggestions for current task |
-| `ai-context` | `source $DOTFILES_ALIAS_ROOT/bin/dhp-context.sh` | Load context-gathering helpers (sourced, not executed) |
-| `swipe` | `$DOTFILES_ALIAS_ROOT/bin/swipe.sh` |  |
+| Alias               | Target Command                                   | Description                                            |
+| ------------------- | ------------------------------------------------ | ------------------------------------------------------ |
+| `dhp-tech`          | `$DOTFILES_ALIAS_ROOT/bin/dhp-tech.sh`           | Technical/coding assistant                             |
+| `dhp-creative`      | `$DOTFILES_ALIAS_ROOT/bin/dhp-creative.sh`       | Creative writing & ideation                            |
+| `dhp-content`       | `$DOTFILES_ALIAS_ROOT/bin/dhp-content.sh`        | Content strategy & drafting                            |
+| `dhp-strategy`      | `$DOTFILES_ALIAS_ROOT/bin/dhp-strategy.sh`       | Business/life strategy advisor                         |
+| `dhp-brand`         | `$DOTFILES_ALIAS_ROOT/bin/dhp-brand.sh`          | Brand voice & identity                                 |
+| `dhp-market`        | `$DOTFILES_ALIAS_ROOT/bin/dhp-market.sh`         | Market analysis & trends                               |
+| `dhp-stoic`         | `$DOTFILES_ALIAS_ROOT/bin/dhp-stoic.sh`          | Stoic philosophy / mindset coach                       |
+| `dhp-research`      | `$DOTFILES_ALIAS_ROOT/bin/dhp-research.sh`       | Deep research & fact-finding                           |
+| `dhp-narrative`     | `$DOTFILES_ALIAS_ROOT/bin/dhp-narrative.sh`      | Storytelling & narrative design                        |
+| `dhp-copy`          | `$DOTFILES_ALIAS_ROOT/bin/dhp-copy.sh`           | Copywriting (ads, emails, etc.)                        |
+| `dhp-finance`       | `$DOTFILES_ALIAS_ROOT/bin/dhp-finance.sh`        | Financial analysis & advice                            |
+| `dhp-memory`        | `$DOTFILES_ALIAS_ROOT/bin/dhp-memory.sh`         | Store memories to knowledge base                       |
+| `dhp-memory-search` | `$DOTFILES_ALIAS_ROOT/bin/dhp-memory-search.sh`  | Search stored memories                                 |
+| `tech`              | `$DOTFILES_ALIAS_ROOT/bin/dhp-tech.sh`           |                                                        |
+| `creative`          | `$DOTFILES_ALIAS_ROOT/bin/dhp-creative.sh`       |                                                        |
+| `content`           | `$DOTFILES_ALIAS_ROOT/bin/dhp-content.sh`        |                                                        |
+| `strategy`          | `$DOTFILES_ALIAS_ROOT/bin/dhp-strategy.sh`       |                                                        |
+| `brand`             | `$DOTFILES_ALIAS_ROOT/bin/dhp-brand.sh`          |                                                        |
+| `market`            | `$DOTFILES_ALIAS_ROOT/bin/dhp-market.sh`         |                                                        |
+| `stoic`             | `$DOTFILES_ALIAS_ROOT/bin/dhp-stoic.sh`          |                                                        |
+| `research`          | `$DOTFILES_ALIAS_ROOT/bin/dhp-research.sh`       |                                                        |
+| `narrative`         | `$DOTFILES_ALIAS_ROOT/bin/dhp-narrative.sh`      |                                                        |
+| `aicopy`            | `$DOTFILES_ALIAS_ROOT/bin/dhp-copy.sh`           | 'aicopy' not 'copy' (copy = pbcopy)                    |
+| `morphling`         | `$DOTFILES_ALIAS_ROOT/bin/morphling.sh`          | Shape-shifting multi-persona dispatcher                |
+| `finance`           | `$DOTFILES_ALIAS_ROOT/bin/dhp-finance.sh`        |                                                        |
+| `memory`            | `$DOTFILES_ALIAS_ROOT/bin/dhp-memory.sh`         |                                                        |
+| `memory-search`     | `$DOTFILES_ALIAS_ROOT/bin/dhp-memory-search.sh`  |                                                        |
+| `dhp-morphling`     | `$DOTFILES_ALIAS_ROOT/bin/dhp-morphling.sh`      |                                                        |
+| `dhp`               | `$DOTFILES_ALIAS_ROOT/bin/dhp-tech.sh`           | Default dispatcher → tech                              |
+| `dispatch`          | `$DOTFILES_ALIAS_ROOT/bin/dispatch.sh`           | Generic dispatch router                                |
+| `dhp-project`       | `$DOTFILES_ALIAS_ROOT/bin/dhp-project.sh`        | Multi-specialist project orchestration                 |
+| `ai-project`        | `$DOTFILES_ALIAS_ROOT/bin/dhp-project.sh`        | Shorthand for dhp-project                              |
+| `dhp-chain`         | `$DOTFILES_ALIAS_ROOT/bin/dhp-chain.sh`          | Chain dispatchers sequentially (pipe output)           |
+| `ai-chain`          | `$DOTFILES_ALIAS_ROOT/bin/dhp-chain.sh`          | Shorthand for dhp-chain                                |
+| `ai-suggest`        | `ai_suggest.sh`                                  | Context-aware AI suggestions for current task          |
+| `ai-context`        | `source $DOTFILES_ALIAS_ROOT/bin/dhp-context.sh` | Load context-gathering helpers (sourced, not executed) |
+| `swipe`             | `$DOTFILES_ALIAS_ROOT/bin/swipe.sh`              |                                                        |
 
 ### ACCESSIBILITY & ERGONOMICS
 
-| Alias | Target Command | Description |
-|---|---|---|
-| `G` (Global) | `| grep -i` | Case-insensitive grep filter |
-| `C` (Global) | `| pbcopy` | Pipe output to clipboard |
-| `L` (Global) | `| less` | Pipe output to pager |
-| `H` (Global) | `| head -n 10` | Show first 10 lines only |
-| `N` (Global) | `> /dev/null 2>&1` | Silence all output (stdout + stderr) |
-| `cd..` | `cd ..` | Missing space |
-| `ls-l` | `ls -l` | Hyphen instead of space |
-| `sl` | `ls` | Transposed letters |
-| `dc` | `cd` | Transposed letters |
-| `gut` | `git` | Transposed letters |
-| `gti` | `git` | Transposed letters |
-| `pwd` | `pwd` | Already correct (harmless) |
-| `pdw` | `pwd` | Transposed letters |
-| `vmi` | `vim` | Transposed letters |
-| `hh` | `history` | Shell history |
-| `xx` | `exit` | Exit terminal |
-| `qq` | `exit` | Exit terminal (vim-inspired) |
-| `b` | `cd -` | Bounce back to previous directory |
-| `doneit` | `git add . && git commit -m 'update' && git push` | Quick ship it |
-| `gwip` | `git add . && git commit -m 'wip'` | Save work-in-progress |
-| `gup` | `git pull --rebase` | Pull with rebase (cleaner history) |
-| `md` | `mkdir -p` | Make directory (with parents) |
-| `cx` | `chmod +x` | Make file executable |
-| `ez` | `code \$DOTFILES_ALIAS_ROOT/zsh/aliases.zsh` | Edit this aliases file in VS Code |
-| `ezrc` | `code ~/.zshrc` | Edit .zshrc in VS Code |
-| `reload` | `source ~/.zshrc && echo 'Zsh reloaded!'` | Apply config changes instantly |
+| Alias        | Target Command                                    | Description                          |
+| ------------ | ------------------------------------------------- | ------------------------------------ |
+| `G` (Global) | `\| grep -i`                                      | Case-insensitive grep filter         |
+| `C` (Global) | `\| pbcopy`                                       | Pipe output to clipboard             |
+| `L` (Global) | `\| less`                                         | Pipe output to pager                 |
+| `H` (Global) | `\| head -n 10`                                   | Show first 10 lines only             |
+| `N` (Global) | `> /dev/null 2>&1`                                | Silence all output (stdout + stderr) |
+| `cd..`       | `cd ..`                                           | Missing space                        |
+| `ls-l`       | `ls -l`                                           | Hyphen instead of space              |
+| `sl`         | `ls`                                              | Transposed letters                   |
+| `dc`         | `cd`                                              | Transposed letters                   |
+| `gut`        | `git`                                             | Transposed letters                   |
+| `gti`        | `git`                                             | Transposed letters                   |
+| `pwd`        | `pwd`                                             | Already correct (harmless)           |
+| `pdw`        | `pwd`                                             | Transposed letters                   |
+| `vmi`        | `vim`                                             | Transposed letters                   |
+| `hh`         | `history`                                         | Shell history                        |
+| `xx`         | `exit`                                            | Exit terminal                        |
+| `qq`         | `exit`                                            | Exit terminal (vim-inspired)         |
+| `b`          | `cd -`                                            | Bounce back to previous directory    |
+| `doneit`     | `git add . && git commit -m 'update' && git push` | Quick ship it                        |
+| `gwip`       | `git add . && git commit -m 'wip'`                | Save work-in-progress                |
+| `gup`        | `git pull --rebase`                               | Pull with rebase (cleaner history)   |
+| `md`         | `mkdir -p`                                        | Make directory (with parents)        |
+| `cx`         | `chmod +x`                                        | Make file executable                 |
+| `ez`         | `code \$DOTFILES_ALIAS_ROOT/zsh/aliases.zsh`      | Edit this aliases file in VS Code    |
+| `ezrc`       | `code ~/.zshrc`                                   | Edit .zshrc in VS Code               |
+| `reload`     | `source ~/.zshrc && echo 'Zsh reloaded!'`         | Apply config changes instantly       |
 
 ### SPEC-DRIVEN DISPATCHER WORKFLOW
 
 | Alias | Target Command | Description |
-|---|---|---|
-
+| ----- | -------------- | ----------- |
 
 ---
 
@@ -2766,6 +2841,7 @@ The following are detailed usage instructions, descriptions, and examples extrac
 ### `ai_suggest.sh`
 
 **Usage & Examples:**
+
 ```text
   • Debug code: cat script.sh | tech
   • Generate ideas: echo \
@@ -2783,13 +2859,14 @@ The following are detailed usage instructions, descriptions, and examples extrac
 **Description:** app_launcher.sh - macOS application launcher with favorites
 
 **Usage & Examples:**
+
 ```text
 Usage: app_launcher.sh add <shortname> <app_name>
 Usage:
   app add <n> <app_name>  : Add favorite app
   app list                  : List favorites
   app <n>                : Launch favorite app
-Example: app_launcher.sh add code 
+Example: app_launcher.sh add code
 ```
 
 ### `archive_manager.sh`
@@ -2797,6 +2874,7 @@ Example: app_launcher.sh add code
 **Description:** archive_manager.sh - Archive management utilities
 
 **Usage & Examples:**
+
 ```text
 Usage: archive_manager.sh create <archive_name> <files/folders...>
 Usage: archive_manager.sh extract <archive_file>
@@ -2820,6 +2898,7 @@ Usage: archive_manager.sh {create|extract|list}
 **Description:** blog.sh - Tools for managing the blog content workflow. Modularized refactor
 
 **Usage & Examples:**
+
 ```text
 Usage: blog hooks install
 Usage: blog <command> [args]
@@ -2855,10 +2934,11 @@ Usage: blog <command> [args]
 **Description:** Add any commands or notes you tend to forget.
 
 **Usage & Examples:**
+
 ```text
   git pull                # Get latest changes
   git add .               # Stage all changes
-  git commit -m 
+  git commit -m
   git push                # Send changes to remote
   zip -r archive_name.zip /path/to/folder
   df -h
@@ -2873,20 +2953,20 @@ Usage: blog <command> [args]
   open .                  # Open current directory in Finder
   pbcopy < file.txt       # Copy file contents to clipboard
   pbpaste > file.txt      # Paste clipboard to file
-  mdfind 
+  mdfind
   startday                # Morning routine (auto-runs once/day)
   status                  # Show current context dashboard
   goodevening             # Run end-of-day summary
-  journal 
-  todo add 
+  journal
+  todo add
   todo list               # Show current tasks
   todo done <num>         # Mark task as complete
-  insight new 
+  insight new
   insight weekly          # Show weekly insight KPIs
   context.sh capture [name] # Snapshot current context
   context.sh list           # List saved contexts
   context.sh restore <name> # Restore instructions
-  health add 
+  health add
   health list             # Show upcoming appointments
   weekreview              # Show last 7 days activity
   graballtext             # Dump all readable text into all_text_contents.txt
@@ -2907,10 +2987,10 @@ Usage: blog <command> [args]
   Quick Direct Access (Traditional):
     cat script.sh | tech         # Debug code
     cat script.sh | tech --stream  # Debug with real-time streaming
-    creative 
-    creative --stream 
-    narrative 
-    aicopy 
+    creative
+    creative --stream
+    narrative
+    aicopy
     <input> | strategy           # Strategic analysis
     <input> | brand              # Brand positioning
     <input> | market             # Market research
@@ -2930,8 +3010,8 @@ Usage: blog <command> [args]
     journal themes               # AI theme extraction (30 days)
   Advanced Features:
     ai-suggest                   # Context-aware dispatcher suggestions
-    dhp-project 
-    dhp-chain creative narrative copy -- 
+    dhp-project
+    dhp-chain creative narrative copy --
   Setup: cp .env.example .env && add your OPENROUTER_API_KEY
   Models: Defaults are set in .env; fallback is moonshotai/kimi-k2:free
   Docs: ~/dotfiles/bin/README.md for full dispatcher documentation
@@ -2948,6 +3028,7 @@ Usage: blog <command> [args]
 **Description:** clipboard_manager.sh - Enhanced clipboard management for macOS
 
 **Usage & Examples:**
+
 ```text
 Usage:
   clip save [name]  : Save current clipboard
@@ -2966,9 +3047,10 @@ Usage:
 **Description:** context.sh - Capture and restore working context snapshots
 
 **Usage & Examples:**
+
 ```text
-  Captured: $(cat 
-  Directory: $(cat 
+  Captured: $(cat
+  Directory: $(cat
 ```
 
 ### `correlate.sh`
@@ -2976,8 +3058,9 @@ Usage:
 **Description:** scripts/correlate.sh CLI Wrapper for Correlation Engine
 
 **Usage & Examples:**
+
 ```text
-Usage: $(basename 
+Usage: $(basename
   run <file1> <file2> [d1] [v1] [d2] [v2]
        Calculate correlation between two datasets.
        d1/v1: Date/Value column index for file 1 (0-based)
@@ -2986,14 +3069,15 @@ Usage: $(basename
        Find recurring patterns in a single dataset.
   explain <r|file>
        Explain a correlation coefficient (r) or read it from a file.
-Usage: $(basename 
+Usage: $(basename
 ```
 
 ### `data_validate.sh`
 
 **Usage & Examples:**
+
 ```text
-Usage: $(basename 
+Usage: $(basename
   --fix     Automatically fix insecure file permissions (chmod 600)
   --format  Validate file formats against canonical pipe-delimited rules
   ⚠️  WARNING: Unable to determine permissions for $path
@@ -3007,6 +3091,7 @@ Usage: $(basename
 **Description:** dev_shortcuts.sh - Development workflow shortcuts for macOS
 
 **Usage & Examples:**
+
 ```text
 Usage: dev_shortcuts.sh {server|json|env|gitquick}
   server [port]     : Start development server (default port 8000)
@@ -3021,6 +3106,7 @@ Usage: dev_shortcuts.sh gitquick <commit_message>
 **Description:** done.sh - Run commands with completion notifications
 
 **Usage & Examples:**
+
 ```text
 Usage: done.sh <your_command_here>
   done.sh sleep 10
@@ -3032,6 +3118,7 @@ Usage: done.sh <your_command_here>
 ### `dotfiles_check.sh`
 
 **Usage & Examples:**
+
 ```text
   ❌ ERROR: Script is not executable: $script_name
   ❌ ERROR: Scripts directory not found at $SCRIPT_DIR
@@ -3039,7 +3126,7 @@ Usage: done.sh <your_command_here>
   ❌ ERROR: Command not found in PATH: $cmd
   ⚠️  WARNING: GitHub token not found at $PRIMARY_GITHUB_TOKEN_FILE (or fallback $FALLBACK_GITHUB_TOKEN_FILE). Some features like project listing will fail.
   ⚠️  WARNING: Staff directory not found at $STAFF_DIR. Skipping dispatcher check.
-  ⚠️  WARNING: Missing dispatcher for 
+  ⚠️  WARNING: Missing dispatcher for
   ❌ ERROR: Dispatcher not executable: dhp-${slug}.sh
   ❌ ERROR: Docs index missing at $DOCS_INDEX
   ⚠️  WARNING: Missing doc: $doc_path
@@ -3059,6 +3146,7 @@ Usage: done.sh <your_command_here>
 **Description:** file_organizer.sh - Organize files by type, date, or size
 
 **Usage & Examples:**
+
 ```text
   Would move $file to Documents/
   Moved $file to Documents/
@@ -3099,6 +3187,7 @@ Usage: file_organizer.sh {bytype|bydate|bysize} [--dry-run|-n]
 ### `focus.sh`
 
 **Usage & Examples:**
+
 ```text
 Usage: focus <command> [args]
   (no args)        Show current focus
@@ -3114,13 +3203,14 @@ Usage: focus set \
 **Description:** g.sh - Consolidated navigation and state management script IMPORTANT: This script is SOURCED, not executed. Must use 'return' not 'exit' to avoid killing the parent shell
 
 **Usage & Examples:**
+
 ```text
 Usage: g save <bookmark_name> [-a app1,app2] [on-enter-command]
   ✗ Removed: $name -> $dir (directory not found)
   Dead bookmark found: $name -> $dir
   ✗ Removed: $name
   Kept: $name
-  (Note: Configure favorite apps with 
+  (Note: Configure favorite apps with
 ```
 
 ### `gcal.sh`
@@ -3128,8 +3218,9 @@ Usage: g save <bookmark_name> [-a app1,app2] [on-enter-command]
 **Description:** gcal.sh - Pure Bash Google Calendar Client Uses OAuth 2.0 Device Flow to authenticate without a browser callback or Python. Dependencies: curl, jq
 
 **Usage & Examples:**
+
 ```text
-Usage: $(basename 
+Usage: $(basename
   auth                       Authenticate with Google (Interactive)
   agenda [days]              Show agenda for next N days (default: 1)
   add \
@@ -3148,6 +3239,7 @@ Usage: calendar add \
 **Description:** gh-projects.sh - Find and recall forgotten projects from GitHub.
 
 **Usage & Examples:**
+
 ```text
   • $repo_name ($DAYS_AGO days ago)
 Usage: projects recall <project_name>
@@ -3159,6 +3251,7 @@ Usage: projects {forgotten|recall <name>}
 **Description:** github_helper.sh - Functions for interacting with the GitHub API
 
 **Usage & Examples:**
+
 ```text
 Usage: list_commits_for_date YYYY-MM-DD
 Usage: list_commits_for_date YYYY-MM-DD
@@ -3172,12 +3265,13 @@ Usage: github_helper.sh {list_repos|get_repo <repo>|get_latest_commit <repo>|get
 ### `goodevening.sh`
 
 **Usage & Examples:**
+
 ```text
-  $(cat 
+  $(cat
   (No focus set)
   (No tasks completed today)
   (No journal entries for today)
-  Total: $(format_duration 
+  Total: $(format_duration
   (No time tracked today)
   (No time log found)
   (Time tracking library not found)
@@ -3196,7 +3290,7 @@ Usage: github_helper.sh {list_repos|get_repo <repo>|get_latest_commit <repo>|get
   ⚠️  $proj_name: $change_count uncommitted changes
       └─ Large diff: +$additions/-$deletions lines
       └─ Could not determine current branch. Is this a valid git repository?
-  ⚠️  $proj_name: On branch 
+  ⚠️  $proj_name: On branch
       └─ Branch not pushed to remote
       └─ Failed to check remote status: $remote_check
   ⚠️  $proj_name: Failed to check unpushed commits: $unpushed
@@ -3216,6 +3310,7 @@ Usage: github_helper.sh {list_repos|get_repo <repo>|get_latest_commit <repo>|get
 **Description:** health.sh - Track health appointments, symptoms, and energy levels
 
 **Usage & Examples:**
+
 ```text
   - Avg tasks on low energy days: N/A (no todo data)
   - Avg tasks on high energy days: N/A (no todo data)
@@ -3224,29 +3319,30 @@ Usage: github_helper.sh {list_repos|get_repo <repo>|get_latest_commit <repo>|get
   - Avg commits on high energy days: N/A (no Projects dir)
   - Avg commits on low energy days: N/A (cache failed)
   - Avg commits on high energy days: N/A (cache failed)
-Usage: $(basename 
-Usage: $(basename 
-Usage: $(basename 
+Usage: $(basename
+Usage: $(basename
+Usage: $(basename
   • $desc - $appt_date (Today)
   • $desc - $appt_date (Tomorrow)
   • $desc - $appt_date (in $days_until days)
   (No appointments tracked)
   (No energy data logged)
   (No symptoms logged)
-Usage: $(basename 
-Usage: $(basename 
-Usage: $(basename 
+Usage: $(basename
+Usage: $(basename
+Usage: $(basename
    Action: STOP high-cognitive tasks.
    Recommendation: Rest, active recovery, or Low Energy Menu items.
    Action: EXTEND deadlines by 24h.
    Recommendation: No strategic decisions. Admin/Rote work only.
    Energy: ${last_energy:-N/A}/10 | Fog: ${last_fog:-N/A}/10
-Usage: $(basename 
+Usage: $(basename
 ```
 
 ### `howto.sh`
 
 **Usage & Examples:**
+
 ```text
 Usage: howto add <name>
 Usage: howto search <term>
@@ -3254,37 +3350,39 @@ Usage: howto search <term>
 
 ### `insight.sh`
 
-**Description:** insight.sh - Falsification-first hypothesis workflow  Create hypotheses, plan disconfirming tests, collect evidence, and produce verdicts with gate checks that prioritize disproof over belief.  Usage: insight.sh <command> [options]  Commands: new <claim>                 Create a new hypothesis test-plan <hyp_id>          Add a disconfirming test plan test-result <test_id>       Mark a test as attempted/completed evidence add <hyp_id>       Add evidence for a hypothesis verdict <hyp_id>            Generate/store a verdict with gate checks weekly [--low-spoons]       Weekly KPI summary
+**Description:** insight.sh - Falsification-first hypothesis workflow Create hypotheses, plan disconfirming tests, collect evidence, and produce verdicts with gate checks that prioritize disproof over belief. Usage: insight.sh <command> [options] Commands: new <claim> Create a new hypothesis test-plan <hyp_id> Add a disconfirming test plan test-result <test_id> Mark a test as attempted/completed evidence add <hyp_id> Add evidence for a hypothesis verdict <hyp_id> Generate/store a verdict with gate checks weekly [--low-spoons] Weekly KPI summary
 
 **Usage & Examples:**
+
 ```text
-Usage: $(basename 
+Usage: $(basename
   new <claim> [--domain <name>] [--novelty <1-5>] [--prior <0-1>] [--next-test <text>]
   test-plan <hyp_id> [--prediction <text>] [--fail-criterion <text>]
   test-result <test_id> --status <attempted|passed|failed|inconclusive> --result <text>
   evidence add <hyp_id> --direction <for|against|neutral> --strength <1-5> --source <text> [--provenance <text>] [--note <text>]
   verdict <hyp_id> [--verdict <supported|falsified|inconclusive>] [--confidence <0-1>] [--why <text>] [--counterargument <text>] [--response <text>]
   weekly [--low-spoons]
-  $(basename 
-  $(basename 
-  $(basename 
-  $(basename 
-Usage: $(basename 
-Usage: $(basename 
-Usage: $(basename 
-Usage: $(basename 
-Usage: $(basename 
-Usage: $(basename 
+  $(basename
+  $(basename
+  $(basename
+  $(basename
+Usage: $(basename
+Usage: $(basename
+Usage: $(basename
+Usage: $(basename
+Usage: $(basename
+Usage: $(basename
 ```
 
 ### `journal.sh`
 
 **Usage & Examples:**
+
 ```text
-Usage: $(basename 
-Usage: $(basename 
-Usage: $(basename 
-   or: $(basename 
+Usage: $(basename
+Usage: $(basename
+Usage: $(basename
+   or: $(basename
   journal <text>              : Add a quick journal entry
   up                          : Open journal file in editor
   list                        : Show last 5 entries
@@ -3300,14 +3398,15 @@ Usage: $(basename
 **Description:** logs.sh - View and search dotfiles system logs
 
 **Usage & Examples:**
+
 ```text
 Usage: logs.sh search <term>
   Size: ${size_human}KB
-  Total entries: $(wc -l < 
-  Errors: $(grep -c 
-  Warnings: $(grep -c 
-  Info: $(grep -c 
-  Total API calls: $(wc -l < 
+  Total entries: $(wc -l <
+  Errors: $(grep -c
+  Warnings: $(grep -c
+  Info: $(grep -c
+  Total API calls: $(wc -l <
 ```
 
 ### `media_converter.sh`
@@ -3315,6 +3414,7 @@ Usage: logs.sh search <term>
 **Description:** media_converter.sh - Media file conversion utilities for macOS
 
 **Usage & Examples:**
+
 ```text
 Usage: media_converter.sh video2audio <video_file>
 Usage: media_converter.sh resize_image <image_file> <width>
@@ -3339,6 +3439,7 @@ Requires: Ghostscript (install with: brew install ghostscript)
 **Description:** meds.sh - Medication tracking and reminder system
 
 **Usage & Examples:**
+
 ```text
 Usage: meds add \
 Usage: meds refill \
@@ -3382,6 +3483,7 @@ Example: meds refill \
 **Description:** network_info.sh - Network diagnostics for macOS
 
 **Usage & Examples:**
+
 ```text
 Usage: network_info.sh {status|scan|speed|fix}
   status : Show current network information
@@ -3393,6 +3495,7 @@ Usage: network_info.sh {status|scan|speed|fix}
 ### `new_script.sh`
 
 **Usage & Examples:**
+
 ```text
 Usage: new_script.sh <script_name> [--force]
   --force    Override name collision warnings
@@ -3404,9 +3507,10 @@ Example: new_script.sh my_tool
 **Description:** open_file.sh - Find and open files with fuzzy matching (macOS optimized)
 
 **Usage & Examples:**
+
 ```text
 Usage: open_file.sh <partial_filename>
-Example: open_file.sh budget    (might find 
+Example: open_file.sh budget    (might find
 ```
 
 ### `process_manager.sh`
@@ -3414,6 +3518,7 @@ Example: open_file.sh budget    (might find
 **Description:** process_manager.sh - Find and manage processes on macOS
 
 **Usage & Examples:**
+
 ```text
 Usage: process_manager.sh find <process_name>
 Usage: process_manager.sh kill <process_name>
@@ -3429,19 +3534,21 @@ Usage: process_manager.sh {find|top|memory|kill} [process_name]
 **Description:** remind_me.sh - Simple reminder system using macOS notifications
 
 **Usage & Examples:**
+
 ```text
 Usage: remind_me.sh <time> <reminder_message>
-  remind_me.sh 
-  remind_me.sh 
-  remind_me.sh 
-  remind_me.sh 
-  remind_me.sh 
-  remind_me.sh 
+  remind_me.sh
+  remind_me.sh
+  remind_me.sh
+  remind_me.sh
+  remind_me.sh
+  remind_me.sh
 ```
 
 ### `review_clutter.sh`
 
 **Usage & Examples:**
+
 ```text
   Would archive $file to $ARCHIVE_DIR
   Would delete $file
@@ -3450,6 +3557,7 @@ Usage: remind_me.sh <time> <reminder_message>
 ### `schedule.sh`
 
 **Usage & Examples:**
+
 ```text
 Usage: schedule.sh \
 Example: schedule.sh \
@@ -3460,6 +3568,7 @@ Example: schedule.sh \
 **Description:** Spec helper for structured dispatcher inputs NOTE: SOURCED file. Do NOT use set -euo pipefail.
 
 **Usage & Examples:**
+
 ```text
 Usage: spec <dispatcher>
 ```
@@ -3469,14 +3578,15 @@ Usage: spec <dispatcher>
 **Description:** scripts/spoon_manager.sh CLI Wrapper for Spoon Theory budget tracking Log Format (spoons.txt): BUDGET|YYYY-MM-DD|count SPEND|YYYY-MM-DD|HH:MM|count|activity|remaining
 
 **Usage & Examples:**
+
 ```text
-Usage: $(basename 
+Usage: $(basename
   init <count>                   Initialize daily spoons (default: 10)
   set <count>                    Update today
   spend <count> [activity]       Spend spoons on an activity
   check                          Show remaining spoons
   history [days]                 Show spoon history (default: 7 days)
-Usage: $(basename 
+Usage: $(basename
 ```
 
 ### `start_project.sh`
@@ -3488,6 +3598,7 @@ Usage: $(basename
 **Description:** startday.sh - Enhanced morning routine
 
 **Usage & Examples:**
+
 ```text
    Focus set to: $new_focus
   You have $remaining spoons remaining today.
@@ -3508,7 +3619,7 @@ Usage: $(basename
   ⚠️ Blog status unavailable (check BLOG_STATUS_DIR or BLOG_DIR configuration).
   ⚠️ Unable to list recent content (check BLOG_CONTENT_DIR).
   (Health operations library not loaded)
-  (Authentication required. Run 
+  (Authentication required. Run
   (calendar script not found)
   (No background jobs)
   (at command not available)
@@ -3521,8 +3632,9 @@ Usage: $(basename
 **Description:** status.sh - Provides a mid-day context recovery dashboard.
 
 **Usage & Examples:**
+
 ```text
-  $(cat 
+  $(cat
   (No focus set)
   • Current directory: $CURRENT_DIR
   • Context snapshots: $CONTEXT_COUNT (context.sh list)
@@ -3548,9 +3660,18 @@ Usage: $(basename
 
 **Description:** take_a_break.sh - Health-focused break timer with macOS notifications
 
+**Notes:**
+- Runs as a single active timer (prevents overlapping break notifications).
+- Use `take_a_break.sh --status` to check if a timer is active.
+- Use `take_a_break.sh --stop` to cancel the active timer.
+
 **Usage & Examples:**
+
 ```text
-  Break time is over! Welcome back.
+take_a_break.sh
+take_a_break.sh 25
+take_a_break.sh --status
+take_a_break.sh --stop
 ```
 
 ### `text_processor.sh`
@@ -3558,6 +3679,7 @@ Usage: $(basename
 **Description:** text_processor.sh - Text file processing utilities
 
 **Usage & Examples:**
+
 ```text
 Usage: text_processor.sh count <file>
 Usage: text_processor.sh search <pattern> <file>
@@ -3575,6 +3697,7 @@ Usage: text_processor.sh {count|search|replace|clean}
 **Description:** tidy_downloads.sh - macOS version with proper directory handling
 
 **Usage & Examples:**
+
 ```text
   Skipped: $img (recently modified or in ignore list)
   Would move $img to ~/Pictures/
@@ -3595,8 +3718,9 @@ Usage: text_processor.sh {count|search|replace|clean}
 **Description:** scripts/time_tracker.sh CLI Wrapper for time tracking functionality Log Format (time_tracking.txt): START|task_id|description|timestamp (YYYY-MM-DD HH:MM:SS) STOP|task_id|timestamp (YYYY-MM-DD HH:MM:SS)
 
 **Usage & Examples:**
+
 ```text
-Usage: $(basename 
+Usage: $(basename
   start <task_id> [description]  Start timer for a task
   stop [task_id]                 Stop the active timer
   status                         Show currently active timer
@@ -3604,15 +3728,16 @@ Usage: $(basename
   report --days <n>              Show last N days (default 7)
   report --summary               Show total time only
   check <task_id>                Get total time for a task
-Usage: $(basename 
+Usage: $(basename
 ```
 
 ### `todo.sh`
 
 **Usage & Examples:**
+
 ```text
-Usage: $(basename 
-  $(basename 
+Usage: $(basename
+  $(basename
 ```
 
 ### `unpacker.sh`
@@ -3620,6 +3745,7 @@ Usage: $(basename
 **Description:** unpacker.sh - Extracts any common archive type
 
 **Usage & Examples:**
+
 ```text
 Usage: unpacker.sh <filename>
 ```
@@ -3629,12 +3755,13 @@ Usage: unpacker.sh <filename>
 **Description:** validate_env.sh - Validates essential environment variables and configurations
 
 **Usage & Examples:**
+
 ```text
   ❌ .env file not found at $ENV_FILE. Please create one from .env.example.
   ❌ OPENROUTER_API_KEY is not set in .env. AI dispatchers will not function.
   ✅ OPENROUTER_API_KEY is set.
-  ⚠️  Warning: OPENROUTER_API_KEY does not start with 
-  ⚠️  Warning: GITHUB_USERNAME is not set in .env. GitHub scripts may use 
+  ⚠️  Warning: OPENROUTER_API_KEY does not start with
+  ⚠️  Warning: GITHUB_USERNAME is not set in .env. GitHub scripts may use
   ✅ GITHUB_USERNAME is set.
   ✅ BLOG_DIR is set: $BLOG_DIR
   ❌ BLOG_DIR ($BLOG_DIR) does not exist or is not a directory.
@@ -3668,7 +3795,7 @@ Usage: unpacker.sh <filename>
 ### `whatis.sh`
 
 **Usage & Examples:**
+
 ```text
 Usage: whatis <command_or_alias>
 ```
-
