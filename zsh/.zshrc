@@ -61,3 +61,7 @@ export PATH="/Users/ryanjohnson/.antigravity/antigravity/bin:$PATH"
 
 # KVOID Alias (Accessible Mode)
 alias k='cd /Users/ryanjohnson/Projects/production-house_audio-plays--ambient-horror && uv run ./kvoid'
+alias sm="/Users/ryanjohnson/Projects/shadow_mirror/bin/shadow-mirror"
+
+# Glowforge Image Processor
+alias gf='/Users/ryanjohnson/Projects/glowforge-it/gf'
