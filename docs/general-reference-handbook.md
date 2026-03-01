@@ -38,6 +38,7 @@ goodevening
 - Core daily files:
   - `todo.txt`
   - `todo_done.txt`
+  - `ideas.txt`
   - `journal.txt`
   - `health.txt`
   - `spoons.txt`
@@ -1099,7 +1100,7 @@ todo done <num>              # Or delete manually from file
 - Keep aspirational tasks that demotivate you
 - Use todo as a "someday/maybe" list
 
-**Fix:** Create a separate "ideas.txt" for aspirational items.
+**Fix:** Create a separate `ideas.txt` for aspirational items using `idea add "your idea"`. You can promote it later using `idea to-todo <num>`, or demote an aging task using `todo to-idea <num>`.
 
 ---
 
@@ -3661,6 +3662,7 @@ Usage: $(basename
 **Description:** take_a_break.sh - Health-focused break timer with macOS notifications
 
 **Notes:**
+
 - Runs as a single active timer (prevents overlapping break notifications).
 - Use `take_a_break.sh --status` to check if a timer is active.
 - Use `take_a_break.sh --stop` to cancel the active timer.

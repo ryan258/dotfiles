@@ -192,6 +192,7 @@ alias dotfiles-check="dotfiles_check.sh"  # Hyphenated alternative for the same 
 # --- Task & Time Management ---
 alias pomo="take_a_break.sh 25"           # Pomodoro timer — 25-minute focus session
 alias todo="todo.sh"                      # Task manager entry point
+alias idea="idea.sh"                      # Idea manager entry point
 alias todolist="todo.sh list"             # List all open tasks
 alias tododone="todo.sh done"             # Mark a task as completed
 alias todoadd="todo.sh add"              # Add a new task

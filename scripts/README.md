@@ -9,6 +9,7 @@ Canonical architecture and policy live in `../CLAUDE.md`.
 - `status.sh`
 - `goodevening.sh`
 - `todo.sh`
+- `idea.sh`
 - `journal.sh`
 - `health.sh`
 - `focus.sh`
@@ -28,10 +29,13 @@ Canonical architecture and policy live in `../CLAUDE.md`.
 ## Data Location
 
 All runtime data is under:
+
 - `~/.config/dotfiles-data/`
 
 Key files include:
+
 - `todo.txt`, `todo_done.txt`
+- `ideas.txt`
 - `journal.txt`
 - `health.txt`, `spoons.txt`
 - `coach_mode.txt`, `coach_log.txt`

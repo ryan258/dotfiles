@@ -10,6 +10,7 @@ require_lib "config.sh"
 # Define Paths
 TODO_FILE="${TODO_FILE:?TODO_FILE is not set by config.sh}"
 DONE_FILE="${DONE_FILE:?DONE_FILE is not set by config.sh}"
+IDEA_FILE="${IDEA_FILE:?IDEA_FILE is not set by config.sh}"
 
 # Tools
 TIME_TRACKER="$SCRIPT_DIR/time_tracker.sh"
@@ -134,6 +135,31 @@ cmd_bump() {
     atomic_prepend "$task_line" "$TODO_FILE" || die "Failed to bump task $task_num to top" "$EXIT_ERROR"
 
     echo "Bumped task $task_num to top."
+}
+
+cmd_to_idea() {
+    local task_num="${1:-}"
+    [[ -n "$task_num" ]] || die "Usage: $(basename "$0") to-idea <number>" "$EXIT_INVALID_ARGS"
+    validate_numeric "$task_num" "task number" || die "Invalid task number '$task_num'" "$EXIT_ERROR"
+
+    local task_line
+    task_line=$(get_todo_line "$task_num") || die "Unable to read task $task_num" "$EXIT_ERROR"
+    [[ -n "$task_line" ]] || die "Task $task_num not found" "$EXIT_ERROR"
+
+    # Extract text part
+    local task_text
+    task_text=$(echo "$task_line" | cut -d'|' -f2-)
+
+    # Append to idea file
+    task_text=$(sanitize_for_storage "$task_text")
+    echo "$(date +%Y-%m-%d)|$task_text" >> "$IDEA_FILE"
+
+    # Remove from todo file atomically
+    atomic_delete_line "$task_num" "$TODO_FILE" || {
+        die "Failed to delete task line $task_num from todo file" "$EXIT_ERROR"
+    }
+
+    echo "Moved task $task_num to ideas list: $task_text"
 }
 
 cmd_top() {
@@ -374,6 +400,7 @@ Task Management:
   clear                       Clear all tasks
   undo                        Restore the most recently completed task
   up                          Open todo file in editor
+  to-idea <#task>             Move a task back to the ideas list
 
 Prioritization:
   bump <#task>                Move a task to the top of the list
@@ -409,6 +436,7 @@ main() {
         undo)       cmd_undo "$@" ;;
         bump)       cmd_bump "$@" ;;
         top)        cmd_top "$@" ;;
+        to-idea)    cmd_to_idea "$@" ;;
         commit)     cmd_commit "$@" ;;
         start)      cmd_start "$@" ;;
         stop)       cmd_stop "$@" ;;

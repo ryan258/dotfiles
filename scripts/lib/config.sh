@@ -42,6 +42,7 @@ ensure_data_dirs() {
 # Data file paths - centralized definitions
 TODO_FILE="${TODO_FILE:-$DATA_DIR/todo.txt}"
 DONE_FILE="${DONE_FILE:-$DATA_DIR/todo_done.txt}"
+IDEA_FILE="${IDEA_FILE:-$DATA_DIR/ideas.txt}"
 JOURNAL_FILE="${JOURNAL_FILE:-$DATA_DIR/journal.txt}"
 HEALTH_FILE="${HEALTH_FILE:-$DATA_DIR/health.txt}"
 SPOON_LOG="${SPOON_LOG:-$DATA_DIR/spoons.txt}"

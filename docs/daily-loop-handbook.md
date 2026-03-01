@@ -78,6 +78,9 @@ health fog 4
 | `todo rm 1`                   | Delete task 1 (without saving it to history) |
 | `todo done 1`                 | Mark task 1 complete                         |
 | `todo bump 5`                 | Move task 5 to the top of your list          |
+| `idea add "idea description"` | Capture a new aspirational idea              |
+| `idea to-todo 1`              | Promote idea 1 to the todo list              |
+| `todo to-idea 1`              | Demote task 1 back to the idea list          |
 | `t-start 1` / `t-stop`        | Start/stop a timer for task 1                |
 | `todo debug 2`                | Get AI help with task 2                      |
 

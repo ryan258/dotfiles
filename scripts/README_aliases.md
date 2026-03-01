@@ -9,6 +9,7 @@ Canonical policy lives in `../CLAUDE.md`.
 - `status`
 - `goodevening`
 - `todo` / `t`
+- `idea`
 - `journal` / `j`
 - `focus`
 - `health`

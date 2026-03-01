@@ -1,6 +1,22 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** February 28, 2026
+**Last Updated:** March 1, 2026
+
+## Version 2.2.31 (March 1, 2026) - Idea Management System
+
+**Status:** ✅ Production Ready
+
+### New Features
+
+- Added `scripts/idea.sh` allowing users to capture and manage aspirational ideas.
+- Integrated `idea.sh` with `todo.sh` to allow seamless promotion of ideas to actionable tasks (`idea to-todo <id>`) and demotion of tasks to ideas (`todo to-idea <id>`).
+- Added `idea` alias to `zsh/aliases.zsh`.
+- Defined `IDEA_FILE` configuration in `scripts/lib/config.sh` (`~/.config/dotfiles-data/ideas.txt`).
+
+### Tests
+
+- Added `tests/test_idea.sh` for full coverage of the idea manager.
+- Added regression tests for new `todo.sh to-idea` subcommand.
 
 This document tracks all major implementations, improvements, and fixes to the Daily Context System.
 
@@ -9,6 +25,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Fixes
+
 - Hardened `scripts/take_a_break.sh` against overlapping/retriggered timers:
   - added single-instance lock enforcement (`$DATA_DIR/.take_a_break.lock`).
   - added stale-lock recovery when prior timer state is invalid.
@@ -16,9 +33,11 @@ This document tracks all major implementations, improvements, and fixes to the D
   - improved completion log entries with PID context for easier debugging.
 
 ### Tests
+
 - Added `take_a_break.sh` overlap-prevention regression coverage in `tests/test_p2_utility_scripts.sh`.
 
 ### Validation
+
 - `bash -n scripts/take_a_break.sh tests/test_p2_utility_scripts.sh` passed.
 - `bats tests/test_p2_utility_scripts.sh` passed.
 
@@ -27,17 +46,20 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Data Integrity + Parsing
+
 - Fixed pipe-delimiter handling in `scripts/lib/common.sh`:
   - `sanitize_input()` now strips raw `|` delimiters instead of writing escaped `\|` sequences that break field parsing.
 - Added todo regression coverage in `tests/test_todo.sh` to ensure pipe-containing input remains parseable in `todo.txt` and list output.
 
 ### Coaching + Test Hermeticity
+
 - Hardened coaching tests against host-shell env leakage by pinning coach log/mode files to test-local data dir in:
   - `tests/test_coach_ops.sh`
   - `tests/test_goodevening_coach.sh`
   - `tests/test_startday_coach.sh`
 
 ### Behavioral Bug Fixes
+
 - Fixed appointment listing state in `scripts/health.sh`:
   - replaced a subshell `while` pipeline with process substitution so `appt_found` updates correctly and no longer emits false `(No appointments tracked)`.
 - Fixed interactive prompt handling in `scripts/review_clutter.sh`:
@@ -46,6 +68,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 - Added regression coverage in `tests/test_p2_utility_scripts.sh` for both fixes.
 
 ### Architecture Cleanup
+
 - Removed dead helper `insight_get_hypothesis_with_line_number()` from `scripts/lib/insight_store.sh`.
 - Refactored coaching module loading to align with `scripts/lib` dependency contract:
   - `coach_ops.sh` now validates runtime prerequisites only.
@@ -54,6 +77,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 - Fixed non-diagnostic removed-function regression test in `tests/test_spoon_budget_lib.sh`.
 
 ### AI-Staff-HQ Routing
+
 - Fixed model routing precedence in `ai-staff-hq/tools/engine/llm.py` to match contract/tests:
   - `override > budget mode > role routing > department routing > default model`.
 
@@ -62,6 +86,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Dispatcher + Naming + Docs
+
 - Added canonical memory dispatcher scripts with `.sh` naming:
   - `bin/dhp-memory.sh`
   - `bin/dhp-memory-search.sh`
@@ -73,6 +98,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 - Clarified dispatcher counts in `bin/README.md` ("12 core dispatchers", explicitly including morphling + finance).
 
 ### Robustness + Consistency Fixes
+
 - Replaced unresolved magic numbers with named constants in:
   - `scripts/lib/common.sh`
   - `scripts/lib/health_ops.sh`
@@ -92,12 +118,14 @@ This document tracks all major implementations, improvements, and fixes to the D
 - `scripts/done.sh` now has non-macOS fallback notification behavior.
 
 ### Alias + Docs Cleanup
+
 - Removed `scripts/memo.sh`; `memo` now maps directly to `cheatsheet.sh`.
 - Replaced remaining hardcoded `~/dotfiles` dispatcher/swipe aliases with `DOTFILES_ALIAS_ROOT`.
 - Documented intentional `grep` shadow and alias path behavior in `scripts/README_aliases.md`.
 - Updated docs for explicit `focus set ...` usage and `did` fallback behavior.
 
 ### Tests
+
 - Converted coach integration tests to dynamic dates to avoid calendar drift:
   - `tests/test_startday_coach.sh`
   - `tests/test_goodevening_coach.sh`
@@ -107,6 +135,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 - Added `week_in_review.sh` regression coverage to ensure empty-data runs do not fail under strict mode (`tests/test_p2_utility_scripts.sh`).
 
 ### Validation
+
 - `bash -n` passed on touched scripts/tests.
 - Full suite passes:
   - `bats tests/*.sh` -> `1..120` passing.
@@ -118,6 +147,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Fixes
+
 - Fixed `scripts/clipboard_manager.sh` `load` flow under strict mode:
   - missing clip names now reliably return `EXIT_FILE_NOT_FOUND` (`3`) with `Clip '<name>' not found`.
   - clipboard write failures now return `EXIT_SERVICE_ERROR` (`5`) with an explicit error message.
@@ -126,6 +156,7 @@ This document tracks all major implementations, improvements, and fixes to the D
   - This prevents off-by-one-hour commit filtering on spring/fall DST transition days.
 
 ### Tests
+
 - Extended `tests/test_p2_utility_scripts.sh`:
   - added `clipboard_manager.sh load` missing-name regression coverage.
   - added `clipboard_manager.sh load` `pbcopy`-failure regression coverage (`EXIT_SERVICE_ERROR`).
@@ -134,6 +165,7 @@ This document tracks all major implementations, improvements, and fixes to the D
   - validates `_utc_window_for_local_date` on DST fall-back day (`America/Los_Angeles`, `2026-11-01`).
 
 ### Validation
+
 - `bats tests/test_p2_utility_scripts.sh tests/test_github_helper_date_window.sh` passes.
 
 ---
@@ -143,6 +175,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Test Coverage Expansion (`#10`)
+
 - Added utility script smoke coverage in `tests/test_p2_utility_scripts.sh` for:
   - `focus.sh`, `status.sh`, `backup_data.sh`, `dev_shortcuts.sh`, `schedule.sh`,
     `logs.sh`, `network_info.sh`, `clipboard_manager.sh`, `dump.sh`, `data_validate.sh`.
@@ -151,6 +184,7 @@ This document tracks all major implementations, improvements, and fixes to the D
   - all `scripts/lib/*.sh`
 
 ### Error/Validation Standardization (`#12`, `#13`)
+
 - Standardized remaining P2-scope utility error paths to canonical logging/exit flows in:
   - `scripts/focus.sh`
   - `scripts/status.sh`
@@ -169,6 +203,7 @@ This document tracks all major implementations, improvements, and fixes to the D
   - `scripts/status.sh`
 
 ### Date Utils Mandate Completion (`#15`)
+
 - Expanded `scripts/lib/date_utils.sh` with:
   - `date_now`, `date_today`, `date_epoch_now`, `date_hour_24`, `date_weekday_iso`
   - `date_shift_days_utc`, `date_now_utc`, `epoch_to_utc_iso`
@@ -185,6 +220,7 @@ This document tracks all major implementations, improvements, and fixes to the D
   - `scripts/lib/health_ops.sh`
 
 ### Validation
+
 - `bash -n` passed on all touched scripts/libs/tests.
 - Full suite passes:
   - `bats tests/*.sh` -> `1..114` passing.
@@ -196,12 +232,14 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Portability Cleanup
+
 - Replaced remaining non-POSIX `function name()` declarations with POSIX-style `name()` in:
   - `scripts/lib/blog_ops.sh`
   - `scripts/lib/blog_gen.sh`
   - `scripts/lib/blog_lifecycle.sh`
 
 ### Validation
+
 - `bash -n scripts/lib/blog_ops.sh scripts/lib/blog_gen.sh scripts/lib/blog_lifecycle.sh` passed.
 - `bats tests/test_blog_stubs.sh` passed.
 - Full suite passes:
@@ -214,6 +252,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Dispatcher Deduplication (Pass B)
+
 - Added shared dispatcher mapping helpers to `bin/dhp-shared.sh`:
   - `dhp_available_dispatchers`
   - `dhp_dispatcher_script_name`
@@ -221,10 +260,12 @@ This document tracks all major implementations, improvements, and fixes to the D
 - Rewired `bin/swipe.sh` to resolve aliases through shared mapping instead of maintaining its own map table.
 
 ### Tests
+
 - Added `tests/test_dispatcher_mapping.sh` for shared mapping helper behavior.
 - Existing unknown-flag dispatcher tests remain green.
 
 ### Validation
+
 - `bash -n` passed on touched files.
 - Full suite passes:
   - `bats tests/*.sh` -> `1..102` passing.
@@ -236,13 +277,16 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Dispatcher Deduplication (Pass A)
+
 - Refactored `bin/dhp-copy.sh` to use the canonical shared `dhp_dispatch` path in `bin/dhp-shared.sh`.
 - Removed custom orchestration/parsing boilerplate from `dhp-copy.sh` and aligned behavior with other standard dispatchers.
 
 ### Tests
+
 - Extended `tests/test_dispatcher_unknown_flags.sh` with `dhp-copy` coverage to verify shared unknown-flag handling.
 
 ### Validation
+
 - `bash -n` passed on touched files.
 - Full suite passes:
   - `bats tests/*.sh` -> `1..100` passing.
@@ -253,7 +297,8 @@ This document tracks all major implementations, improvements, and fixes to the D
 
 **Status:** ✅ Production Ready
 
-### die()/log_* Migration (Progressive)
+### die()/log\_\* Migration (Progressive)
+
 - Standardized fatal error paths to `die()` in touched core workflow scripts:
   - `scripts/startday.sh`
   - `scripts/goodevening.sh`
@@ -267,10 +312,12 @@ This document tracks all major implementations, improvements, and fixes to the D
   - aligned `health export` empty-data failure to `EXIT_ERROR` semantics.
 
 ### Notes
+
 - This is a progressive migration pass for REPORT item #12 (convert-on-touch policy), not a
   full repository-wide sweep.
 
 ### Validation
+
 - `bash -n` passed on touched scripts.
 - Full suite passes:
   - `bats tests/*.sh` -> `1..99` passing.
@@ -282,18 +329,21 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Coaching Dependency Consistency
+
 - Made coach library sourcing consistent in workflow entrypoints:
   - `scripts/startday.sh` now fails fast if `scripts/lib/coach_ops.sh` is missing.
   - `scripts/goodevening.sh` now fails fast if `scripts/lib/coach_ops.sh` is missing.
 - This aligns with the existing hard requirement for `scripts/lib/coaching.sh`.
 
 ### Date Utility Robustness
+
 - Improved `scripts/lib/date_utils.sh`:
   - `date_shift_from()` now handles BSD fallback parsing for date-only and datetime anchors.
   - Python parsing for `date_shift_from()` now enforces integer offsets (`int(...)`) instead of truncating floats.
   - `timestamp_to_epoch()` now includes BSD/GNU non-python fallbacks and returns `0` on parse failure.
 
 ### Goodevening Date-State Safety
+
 - Restored stale-marker protection in `scripts/goodevening.sh`:
   - If `current_day` marker is older than 24 hours, it is treated as stale and system date is used.
 - Added controlled pre-dawn behavior:
@@ -301,6 +351,7 @@ This document tracks all major implementations, improvements, and fixes to the D
   - Non-interactive runs continue to use system date.
 
 ### Tests
+
 - Added regression coverage for stale marker fallback:
   - `tests/test_goodevening_coach.sh`
 
@@ -311,6 +362,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Storage Sanitization Consistency
+
 - Added `sanitize_for_storage()` to `scripts/lib/common.sh` to centralize:
   - `sanitize_input`
   - newline escaping (`\n`) for pipe-delimited single-line storage fields
@@ -323,11 +375,13 @@ This document tracks all major implementations, improvements, and fixes to the D
   - `scripts/lib/spoon_budget.sh`
 
 ### Date Utils Centralization in Coaching
+
 - Added `date_shift_from()` to `scripts/lib/date_utils.sh`.
 - Removed inline date-shift and epoch-conversion helper logic from `scripts/lib/coach_ops.sh`.
 - `coach_ops.sh` now requires and uses `date_shift_from()` + `timestamp_to_epoch()` from `date_utils.sh`.
 
 ### Validation
+
 - `bash -n` passed on touched scripts/libs.
 - Full suite passes:
   - `bats tests/*.sh` -> `1..98` passing.
@@ -339,6 +393,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Architecture
+
 - Added `scripts/lib/coaching.sh` as a thin facade over `coach_ops.sh`.
 - Rewired workflow scripts to call facade APIs (`coaching_*`) instead of direct `coach_*` internals:
   - `scripts/startday.sh`
@@ -346,6 +401,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 - This reduces direct coupling between workflow scripts and coach internals while preserving behavior.
 
 ### Date-State Reliability
+
 - Simplified goodevening date resolution in `scripts/goodevening.sh`:
   - `--refresh` now forces system date.
   - If `current_day` marker exists and is valid, it is used.
@@ -353,12 +409,14 @@ This document tracks all major implementations, improvements, and fixes to the D
 - Added explicit inline documentation for this fallback behavior.
 
 ### Tests
+
 - Updated coach integration tests to include the new facade library:
   - `tests/test_startday_coach.sh`
   - `tests/test_goodevening_coach.sh`
 - Added a regression test for goodevening marker-missing fallback behavior.
 
 ### Validation
+
 - `bash -n` passed on touched scripts and libraries.
 - Full suite passes:
   - `bats tests/*.sh` -> `1..98` passing.
@@ -370,6 +428,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Config Path Ownership Hardening
+
 - Completed strict removal of script-level `:-$DATA_DIR/...` path fallbacks outside `scripts/lib/config.sh`.
 - Updated workflow scripts and libraries to consume config-owned path variables directly (or fail fast when missing), including:
   - `scripts/startday.sh`
@@ -397,6 +456,7 @@ This document tracks all major implementations, improvements, and fixes to the D
   - `bin/dhp-lib.sh`
 
 ### Central Config Surface Updates
+
 - Added canonical path settings to `scripts/lib/config.sh`:
   - `HEALTH_CACHE_DIR`
   - `CONTEXT_ROOT`
@@ -406,6 +466,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 - Added matching optional GitHub path override examples to `.env.example`.
 
 ### Validation
+
 - `bash -n` passed on all touched shell files.
 - Full suite passes:
   - `bats tests/*.sh` -> `1..97` passing.
@@ -417,6 +478,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### DATA_DIR / .env Centralization
+
 - Removed direct `.env` sourcing from active workflow/dispatcher entrypoints and routed config loading through `scripts/lib/config.sh`:
   - `scripts/startday.sh`
   - `scripts/goodevening.sh`
@@ -431,6 +493,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 - Completed remaining sweep and removed hardcoded `DATA_DIR` home-path fallbacks from the rest of `scripts/` and `bin/`.
 
 ### Library Dependency Cleanup
+
 - Removed sibling-library self-sourcing from:
   - `scripts/lib/coach_ops.sh`
   - `scripts/lib/context_capture.sh`
@@ -451,16 +514,19 @@ This document tracks all major implementations, improvements, and fixes to the D
   - `tests/test_coach_ops.sh`
 
 ### Reliability Follow-up
+
 - Fixed integration break introduced by stricter library dependency checks by loading `date_utils.sh` before `time_tracking.sh` in `scripts/generate_report.sh`.
 - Hardened `bin/dhp-lib.sh` to fail fast if `DATA_DIR` is unavailable instead of silently falling back to a hardcoded path.
 
 ### Documentation and Governance
+
 - Updated canonical/operational guidance for central config ownership and dependency contracts:
   - `CLAUDE.md`
   - `AGENTS.md`
   - `phases.md`
 
 ### Validation
+
 - `bash -n` passed on touched scripts/libs/tests.
 - Full suite passes:
   - `bats tests/*.sh` -> `1..97` passing.
@@ -472,6 +538,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Security and Correctness Fixes
+
 - Removed eval-oriented restore output in `scripts/lib/context_capture.sh`:
   - `restore_context` now returns only the restored directory path.
   - added strict context-name validation with allowlist regex (`^[a-zA-Z0-9._-]+$`).
@@ -486,6 +553,7 @@ This document tracks all major implementations, improvements, and fixes to the D
   - removed duplicate direct `.env` sourcing path in favor of central config loading.
 
 ### Tests
+
 - Updated context tests to assert plain-path restore behavior:
   - `tests/test_context_capture_lib.sh`
   - `tests/test_context_cli.sh`
@@ -499,6 +567,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ℹ️ Reserved / intentionally skipped in root changelog sequence.
 
 ### Notes
+
 - Version `2.2.15` was not published as a standalone root release entry.
 - Number is retained here to keep the `2.2.14 -> 2.2.16+` sequence explicit for reviewers.
 
@@ -509,6 +578,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Reliability + Safety Fixes
+
 - Removed redundant coach mode lookup in `scripts/startday.sh` so mode is resolved once and reused.
 - Added explicit `common.sh` sourcing in:
   - `scripts/startday.sh`
@@ -521,6 +591,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 - Replaced macOS-specific `date -r <file>` usage in `scripts/goodevening.sh` with a cross-platform `file_mtime_epoch` helper (now in `scripts/lib/date_utils.sh`).
 
 ### Coach Prompt Architecture
+
 - Extracted nested prompt builders into explicit library functions in `scripts/lib/coach_ops.sh`:
   - `coach_build_startday_prompt`
   - `coach_build_goodevening_prompt`
@@ -528,11 +599,13 @@ This document tracks all major implementations, improvements, and fixes to the D
 - Removed implicit global coupling for tactical commit/push context by passing those values explicitly into `coach_collect_tactical_metrics`.
 
 ### Config + Naming
+
 - Added `AI_COACH_DRIFT_STALE_TASK_DAYS` and aligned tactical stale-task logic to prefer it.
 - Kept compatibility fallback to `STALE_TASK_DAYS` for existing environments.
 - Aligned `.env.example` default to `AI_BRIEFING_ENABLED=true` to match `config.sh`.
 
 ### Documentation
+
 - Replaced absolute machine-specific path references in derived docs with repo-relative references:
   - `docs/start-here.md`
   - `docs/system-overview.md`
@@ -546,12 +619,14 @@ This document tracks all major implementations, improvements, and fixes to the D
 - Expanded `docs/ai-quick-reference.md` with actionable command patterns, chaining, spec workflow, and troubleshooting.
 
 ### Tests
+
 - Added standard BATS helper loads to new coach/dispatcher test files.
 - Hardened `tests/test_coach_ops.sh` isolation by setting `DOTFILES_DIR` explicitly.
 - Full suite passes:
   - `bats tests/*.sh` -> `1..97` passing.
 
 ### Follow-up Hardening
+
 - Removed redundant second `.env` load in `scripts/startday.sh`; fallback `.env` load now only runs when `config.sh` is unavailable.
 - Hardened temp-file creation fallback in `scripts/lib/coach_ops.sh` using secure per-file creation under `${TMPDIR:-/tmp}`.
 - Added explicit format comment for spoon spend parsing (`SPEND|date|time|count|activity|remaining`).
@@ -567,6 +642,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Coherence and Documentation
+
 - Declared `CLAUDE.md` as canonical root architecture/behavior contract with explicit derived-doc governance rules.
 - Simplified root and derived docs to remove stale counts/version drift and align to runtime behavior:
   - `README.md`
@@ -578,6 +654,7 @@ This document tracks all major implementations, improvements, and fixes to the D
   - `scripts/README_aliases.md`
 
 ### AI Coach Reliability
+
 - Added timeout-guarded strategy invocation helpers in `scripts/lib/coach_ops.sh`:
   - `coach_call_with_timeout`
   - `coach_strategy_with_timeout`
@@ -587,6 +664,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 - `startday` and `goodevening` now use timeout-guarded AI calls and never stall indefinitely waiting on AI output.
 
 ### Coaching Behavior
+
 - `startday` now caches multiline AI output safely with newline escaping and decoding.
 - `startday` suggested-directory extraction now ignores malformed suggestion lines and only emits real absolute paths.
 - Startday schema ordering tightened to:
@@ -598,6 +676,7 @@ This document tracks all major implementations, improvements, and fixes to the D
   - `Evidence check`
 
 ### Config
+
 - Added `AI_COACH_REQUEST_TIMEOUT_SECONDS` (default `35`) in:
   - `scripts/lib/config.sh`
   - `.env.example`
@@ -606,6 +685,7 @@ This document tracks all major implementations, improvements, and fixes to the D
   - `AI_COACH_RETRY_TIMEOUT_SECONDS` (default `90`)
 
 ### Tests
+
 - Added timeout fallback coverage:
   - `tests/test_startday_coach.sh`
   - `tests/test_goodevening_coach.sh`
@@ -620,6 +700,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### New Features
+
 - Added `scripts/lib/coach_ops.sh` for deterministic coaching context:
   - tactical metrics (`7d` default)
   - pattern metrics (`30d` default)
@@ -643,15 +724,18 @@ This document tracks all major implementations, improvements, and fixes to the D
   - `Evidence used`
 
 ### Behavior Changes
+
 - Added daily focus-lock mode prompt (`LOCKED`/`OVERRIDE`) in interactive sessions and non-interactive default to `LOCKED`.
 - Both morning and evening AI coaching always include health/energy context.
 
 ### Interface Changes
+
 - Global token-cap semantics removed from dispatcher flows.
 - `--max-tokens` is no longer supported and is rejected as an unknown flag.
 - `bin/dhp-lib.sh` no longer injects `max_tokens` into OpenRouter payloads.
 
 ### Config Changes
+
 - Added:
   - `AI_COACH_LOG_ENABLED`
   - `AI_COACH_TACTICAL_DAYS`
@@ -664,6 +748,7 @@ This document tracks all major implementations, improvements, and fixes to the D
   - `AI_BRIEFING_MODE`
 
 ### Documentation Updates
+
 - Updated:
   - `docs/happy-path.md`
   - `docs/ai-quick-reference.md`
@@ -676,6 +761,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Improvements
+
 - Added `AI_BRIEFING_MODE` with default `guiding` to make `startday` briefing act as an execution coach for brain-fog days.
 - In `guiding` mode, the AI briefing now outputs strict sections focused on action and anti-tinkering:
   - `North Star`
@@ -686,6 +772,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 - `startday` now feeds `todo top 3` output (when available) plus yesterday journal context into the briefing prompt to keep guidance anchored to actionable work.
 
 ### Documentation Updates
+
 - Added `AI_BRIEFING_MODE` examples in `.env.example` and `docs/happy-path.md`.
 
 ---
@@ -695,6 +782,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Improvements
+
 - Tightened `scripts/startday.sh` AI briefing prompt to a strict high-signal format (`Signal`, `Next step`, `Energy guardrail`) with concise constraints.
 - `startday` now calls `dhp-strategy.sh` with configurable briefing controls:
   - `AI_BRIEFING_TEMPERATURE` (default `0.25`)
@@ -702,9 +790,11 @@ This document tracks all major implementations, improvements, and fixes to the D
 - Added the new briefing tuning variables to `.env.example`.
 
 ### Documentation Updates
+
 - Updated `docs/happy-path.md` with briefing tuning examples.
 
 ### Compatibility Fixes
+
 - `startday` now retries AI briefing generation without `--max-tokens` if the current swarm backend rejects that flag, preventing briefings from failing hard.
 
 ---
@@ -714,6 +804,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Fixes
+
 - Fixed `scripts/github_helper.sh list_commits_for_date` to treat input dates as local calendar days (converted to UTC windows), so late-night commits/pushes no longer get shifted into the wrong day in `startday`/`goodevening`.
 - Commit recap extraction now deduplicates repeated commit rows when multiple push events reference the same commit.
 
@@ -724,6 +815,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### New Features
+
 - Added `scripts/insight.sh`, a CLI for hypothesis creation, disconfirming test planning, evidence tracking, verdicting, and weekly KPI summaries.
 - Added `scripts/lib/insight_store.sh` for insight data-file initialization, ID generation, and safe record update helpers.
 - Added `scripts/lib/insight_score.sh` for falsification gate checks and verdict recommendation logic.
@@ -734,6 +826,7 @@ This document tracks all major implementations, improvements, and fixes to the D
   - `INSIGHT_VERDICTS_FILE`
 
 ### Tests
+
 - Added `tests/test_insight.sh` covering:
   - hypothesis creation
   - gate-compliant `SUPPORTED` lifecycle
@@ -741,6 +834,7 @@ This document tracks all major implementations, improvements, and fixes to the D
   - weekly KPI summary output
 
 ### Documentation Updates
+
 - Added `docs/insight.md` module guide (commands, file formats, falsification gates).
 - Updated `docs/README.md` and `scripts/README.md` to include the new module.
 - Added `insight` shell alias in `zsh/aliases.zsh`.
@@ -753,14 +847,17 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### New Features
+
 - Added `bin/morphling.sh`, a global Morphling launcher that works from any directory by resolving `ai-staff-hq` from script location.
 - `morphling` now opens an interactive Morphling session by default and supports one-shot queries via arguments.
 - `morphling` now accepts piped stdin as a one-shot query when called without arguments.
 
 ### Compatibility
+
 - Kept dispatcher-mode Morphling available as `dhp-morphling` (`bin/dhp-morphling.sh`) for context-gathering swarm behavior.
 
 ### Documentation Updates
+
 - Updated `zsh/aliases.zsh`, `scripts/cheatsheet.sh`, `docs/ai-quick-reference.md`, `docs/daily-cheatsheet.md`, `scripts/README_aliases.md`, and `bin/README.md` to reflect new Morphling command behavior.
 
 ---
@@ -770,6 +867,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Fixes
+
 - Hardened path boundary validation in `scripts/lib/common.sh` and `scripts/correlate.sh` to prevent false-safe prefix matches.
 - Fixed no-argument `set -u` crashes across utility scripts by normalizing command parsing and usage guards.
 - Extended missing-argument hardening across CLI/dispatcher flag parsers (`dhp-*`, blog workflow parsers, and time/report options) so malformed flags fail with clear errors instead of unbound-variable crashes.
@@ -778,6 +876,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 - Fixed `scripts/dotfiles_check.sh` bookmark prune step to run `g.sh prune --auto` without sourced-script side effects.
 
 ### Cleanup
+
 - Removed orphaned helpers: `decode_clipboard()` and `get_file_perms()`.
 - Standardized dynamic dotfiles root resolution (replacing hardcoded `$HOME/dotfiles`) across helper and dispatcher scripts.
 - Added `scripts/memo.sh` compatibility wrapper for the existing `memo` alias target.
@@ -785,6 +884,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 - Updated alias documentation for current `g` behavior and removed stale command references.
 
 ### Tests
+
 - Converted legacy non-Bats test files into real Bats tests (`test_file_ops.sh`, `repro_crash.sh`).
 - Fixed missing-library staging in integration fixtures.
 - Full suite now passes: `75/75` via `bats tests/*.sh`.
@@ -796,6 +896,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Fixes
+
 - Fixed `scripts/goodevening.sh` unbound variable crash in the AI reflection block by initializing and reusing `RECENT_PUSHES` consistently.
 
 ---
@@ -805,6 +906,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Fixes
+
 - `scripts/github_helper.sh` now uses per-request temp error logs (prevents stale fallback error leakage across runs).
 - Public GitHub API fallback now covers both `/users/<name>/events` and `/users/<name>/repos`, improving reliability when token auth is unavailable.
 - Added request timeout controls for GitHub API calls: `GITHUB_CONNECT_TIMEOUT` and `GITHUB_REQUEST_TIMEOUT`.
@@ -820,6 +922,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 **Status:** ✅ Production Ready
 
 ### Fixes
+
 - Updated `spec_helper.sh` to use `create_temp_file()` for safer temp handling and to source shared utilities.
 - Removed a no‑op cleanup trap from `scripts/lib/blog_common.sh`.
 - `dhp-lib.sh` now honors `DEFAULT_TEMPERATURE`/`DEFAULT_MAX_TOKENS` when set (falls back to `null`).
@@ -840,6 +943,7 @@ This document tracks all major implementations, improvements, and fixes to the D
 This release completes the previously stubbed context and reporting features.
 
 ### New Features
+
 - **Context Snapshots:** Added `context.sh` for capture/list/show/restore workflow, with optional auto‑capture on `startday` via `CONTEXT_CAPTURE_ON_START=true` and snapshot counts in `status.sh`.
 - **Time Reports:** Implemented `generate_time_report` with date ranges, `--days`, and `--summary`, plus improved `goodevening` time summaries.
 - **Correlation Patterns:** Implemented `find-patterns` and `explain` in `correlate.sh` with new pattern analysis in `scripts/lib/correlate.py`.
@@ -847,14 +951,17 @@ This release completes the previously stubbed context and reporting features.
 - **Docs updated?** ✅
 
 ### Security & Hygiene
+
 - Sanitized interactive inputs across scheduling, reminders, project creation, process management, and report generation.
 
 ### Fixes
+
 - Removed duplicate strict mode in `brain/start_brain.sh`.
 - Fixed `clipboard_manager.sh` list output formatting and made `generate_time_report` errors emit to stderr.
 - Added colon‑format fallback for bookmark lookups in `g.sh` and corrected `dotfiles_check.sh` step numbering.
 
 ### Documentation Stream Summary
+
 - Formalized the canonical doc set and consolidated content into Start Here + AI Quick Reference.
 - Added TL;DR + Related Docs blocks across canonical docs; updated doc index links to reduce hunting.
 - Added docs owner/maintenance rule and a docs status check in `scripts/dotfiles_check.sh`.
@@ -869,11 +976,13 @@ This release completes the previously stubbed context and reporting features.
 This release addresses issues identified during a comprehensive codebase health review.
 
 ### Alias Conflict Resolution
+
 - **`copy` → `aicopy`**: Resolved conflict between `copy` alias (previously mapped to `dhp-copy.sh`) and macOS `pbcopy` clipboard utility
 - `copy` now correctly maps to `pbcopy` for clipboard operations
 - `aicopy` is the new alias for the AI copywriting dispatcher (`dhp-copy.sh`)
 
 ### Configuration Enhancements (`scripts/lib/config.sh`)
+
 - Added `COPY_MODEL` configuration for the copywriting dispatcher
 - Added `NARRATIVE_MODEL` configuration for the narrative dispatcher
 - Added `MORPHLING_MODEL` configuration for the morphling dispatcher
@@ -881,17 +990,21 @@ This release addresses issues identified during a comprehensive codebase health 
 - Added `BRIEFING_CACHE_FILE` path configuration
 
 ### Library Improvements (`scripts/lib/common.sh`)
+
 - Added `validate_path()` function for secure path validation
 - Prevents path traversal attacks and validates file/directory existence
 
 ### Default Value Alignment
+
 - Changed `AI_BRIEFING_ENABLED` default from `false` to `true` in config to match documentation
 
 ### Error Handling Improvements
+
 - Scripts now consistently use `set -euo pipefail` for robust error handling
 - Improved fail-fast behavior across core scripts
 
 ### Documentation Updates
+
 - Updated `bin/README.md` with correct `aicopy` alias
 - Updated `docs/ai-examples.md` with `aicopy` examples
 - Updated `docs/flex.md` quick reference table
@@ -906,6 +1019,7 @@ This release addresses issues identified during a comprehensive codebase health 
 This release introduces Swarm Orchestration for all AI dispatchers, upgrading the AI workflow from single‑agent calls to coordinated multi‑agent execution.
 
 ### Highlights
+
 - **Universal Swarm Engine:** All `dhp-*` dispatchers route through `bin/dhp-swarm.py` for unified orchestration.
 - **Dynamic Specialist Selection:** Requests are decomposed and staffed automatically using the capability index.
 - **Parallel Execution:** Tasks execute in waves to reduce latency and increase throughput.
@@ -921,6 +1035,7 @@ This release introduces Swarm Orchestration for all AI dispatchers, upgrading th
 This release implements the first wave of advanced features from the Feature Implementation Plan, focusing on energy management, time tracking, and data correlation. All features include comprehensive test coverage and cross-platform compatibility.
 
 **Quality Metrics:**
+
 - 14/14 comprehensive tests passing (11 previous + 3 new)
 - Zero critical bugs
 - Cross-platform verified (macOS/Linux)
@@ -929,6 +1044,7 @@ This release implements the first wave of advanced features from the Feature Imp
 ### New Features
 
 #### F2: Spoon Theory Budget Tracking ⭐⭐⭐
+
 - **Spoon Manager** (`scripts/spoon_manager.sh`): Complete energy budget management system
   - Daily spoon initialization with configurable starting values
   - Activity-based spoon expenditure tracking
@@ -944,6 +1060,7 @@ This release implements the first wave of advanced features from the Feature Imp
 - **Tests**: 8/8 tests passing including edge cases and error handling
 
 #### F3: Correlation Engine (Experimental) ⭐⭐⭐
+
 - **Correlation Library** (`scripts/lib/correlation_engine.sh`): Statistical analysis foundation
   - Python-based Pearson correlation calculation
   - Multi-dataset correlation with date alignment
@@ -968,6 +1085,7 @@ This release implements the first wave of advanced features from the Feature Imp
 - **Tests**: 3/3 tests passing with graceful error handling
 
 ### Bug Fixes
+
 - **Time Log Parsing**: Fixed critical bug in `generate_report.sh` where STOP entries were parsed incorrectly due to field count mismatch
 - **Cross-Platform Date**: Corrected Linux date calculation in report generation loop
 - **Path Validation**: Improved security validation in `correlate.sh` with proper cross-platform path resolution
@@ -975,6 +1093,7 @@ This release implements the first wave of advanced features from the Feature Imp
 - **Regex Validation**: Fixed correlation coefficient regex to properly validate numeric formats
 
 ### Infrastructure Improvements
+
 - **Shared Libraries**: All new features use modular library architecture
   - `scripts/lib/spoon_budget.sh`: Core spoon theory logic
   - `scripts/lib/correlation_engine.sh`: Statistical analysis wrapper
@@ -985,6 +1104,7 @@ This release implements the first wave of advanced features from the Feature Imp
 - **Documentation**: Inline comments document data formats and algorithms
 
 ### Known Limitations
+
 - Correlation engine requires Python 3 with standard library
 - Daily reports limited to 7-day lookback (configurable in future)
 - Pattern finding and prediction features not yet implemented
@@ -999,6 +1119,7 @@ This release implements the first wave of advanced features from the Feature Imp
 This major release represents a comprehensive security audit and hardening of the entire dotfiles system. After multiple review cycles and extensive testing, all 10 critical issues have been resolved. The system is production-ready with enhanced security, monitoring, cross-platform compatibility, and professional documentation.
 
 **Quality Metrics:**
+
 - 11/11 comprehensive tests passing
 - Zero critical bugs remaining
 - Cross-platform verified (macOS/Linux)
@@ -1006,6 +1127,7 @@ This major release represents a comprehensive security audit and hardening of th
 - Code quality: A+
 
 ### Critical Bug Fixes
+
 - **API Signature Bug:** Fixed a critical bug in all 10 dispatcher scripts where non-streaming API calls were failing to log the dispatcher name correctly.
 - **`jq` Payload Builder:** Corrected a critical issue in `bin/dhp-lib.sh` that caused `temperature` and `max_tokens` parameters to be silently ignored in all API calls.
 - **Test Data Safety:** Reworked `tests/test_todo.sh` to use a temporary directory, preventing the accidental deletion of real user data during tests.
@@ -1015,6 +1137,7 @@ This major release represents a comprehensive security audit and hardening of th
 - **`howto.sh` Compatibility:** Updated `scripts/howto.sh` to use a cross-platform `find` and `stat` solution that works on macOS.
 
 ### Security Enhancements
+
 - **Command Injection:** Mitigated a command injection vulnerability in `scripts/g.sh` by replacing `eval` with an allowlist-based `case` statement.
 - **Hardcoded Secrets:** Removed a hardcoded GitHub username from `scripts/github_helper.sh` and moved it to the `.env` file.
 - **File Permissions:** Added permission checks for the GitHub token file and automated `chmod 600` in `bootstrap.sh`.
@@ -1023,35 +1146,41 @@ This major release represents a comprehensive security audit and hardening of th
 - **Data Redaction:** Implemented a redaction function in `dhp-context.sh` to filter sensitive information before it is sent to AI models.
 
 ### API & Dispatcher Improvements
+
 - **API Call Logging:** Implemented dispatcher usage logging to track API calls, models, and token usage.
 - **Rate Limiting:** Added a basic cooldown mechanism to `dhp-lib.sh` to prevent rapid-fire API calls.
 - **API Timeouts:** Added a `300s` timeout to all `curl` commands in `dhp-lib.sh`.
 - **Error Handling:** Improved error handling in streaming API calls by using `set -o pipefail`.
 
 ### Configuration & Code Quality
+
 - **Configuration Validation:** Created a `validate_env.sh` script to validate `.env` configurations and integrated it into `dotfiles_check.sh`.
 - **Dependency Versioning:** Added dependency version checks to `bootstrap.sh` to ensure compatibility.
 - **ShellCheck Compliance:** Ran `shellcheck` on all scripts and fixed numerous quoting and style issues.
 - **Magic Numbers:** Replaced hardcoded "magic numbers" with configurable environment variables in `startday.sh`, `g.sh`, and `week_in_review.sh`.
 
 ### Documentation
+
 - **`SECURITY.md`:** Created a comprehensive security policy document.
 - **`TROUBLESHOOTING.md`:** Created a guide for common issues and solutions.
 - **`VERSION` File:** Added a `VERSION` file to track the project version.
 - **`README.md`:** Updated with links to the new documentation, versioning information, and testing instructions.
 
 ### Testing
+
 - **BATS Framework:** Added the BATS testing framework and an example test file (`tests/test_todo.sh`) to provide a foundation for future automated testing.
 
 ---
 
 ### Code Quality & Technical Debt (November 20, 2025)
+
 - **Cleanup:** Removed unused variables in `dhp-content.sh`, `dhp-project.sh`, and `ai_suggest.sh`.
 - **Robustness:** Fixed return value masking in `tidy_downloads.sh` and `spec_helper.sh`.
 - **Bug Fixes:** Resolved subshell scope issues in `goodevening.sh` to correctly track project issues.
 - **Parsing:** Improved loop robustness in `meds.sh` and `health.sh` to handle input with spaces.
 
 ### Roadmap Deliverables Completed (November 20, 2025)
+
 - **Observability (O1-O3):** Streaming exit codes propagate correctly; dispatcher usage logging writes to `dispatcher_usage.log`; context redaction guards sensitive data before AI calls.
 - **Workflow (W1, W3):** Squads now load from `ai-staff-hq/squads.json` instead of hardcoded values; macOS-specific scripts are documented with guard rails and cross-platform helpers.
 - **Blog & Publishing (B1, B3-B6, B12):** Draft scaffolding and full workflow orchestration landed; validation and pre-commit hooks added; publish command finalized; drafts and recent content surface in status routines.
@@ -1066,13 +1195,16 @@ This major release represents a comprehensive security audit and hardening of th
 Addressed findings from the G3 project audit to improve portability, documentation, and observability.
 
 ### Portability & Code Quality
+
 - **Refactored Hardcoded Paths:** Replaced absolute paths (e.g., `/Users/ryanjohnson`) with dynamic paths in `setup_weekly_review.sh`, `schedule.sh`, `blog.sh`, and `dotfiles_check.sh`.
 - **Standardized Sourced Scripts:** Verified and ensured `bin/dhp-shared.sh` and `zsh/aliases.zsh` do not leak global shell options (`set -e`, etc.) into interactive sessions.
 
 ### Documentation
+
 - **Generalized Docs:** Updated `README.md` and `mssite.md` to use generic placeholders (`$HOME`, `<username>`) instead of hardcoded user paths.
 
 ### Features
+
 - **Cost Tracking:** Implemented API cost estimation in `bin/dhp-lib.sh` to track and log token usage/costs for AI dispatchers.
 
 ---
@@ -1080,6 +1212,7 @@ Addressed findings from the G3 project audit to improve portability, documentati
 ## November 2025: AI Integration & Foundation Complete
 
 ### Persona-Aware Blog Generation (B2)
+
 - Added persona playbook loader (`docs/personas.md`) with `-p/--persona` flag for `blog generate`
 - Introduced section-aware workflows: `-s/--section` writes drafts directly into the correct `content/<section>/` folder
 - Hugo archetype, section exemplar, persona, and user brief are stacked in every AI call for consistent structure/voice
@@ -1087,6 +1220,7 @@ Addressed findings from the G3 project audit to improve portability, documentati
 - Dispatchers still save `draft: true` files; publishing now just flips the flag and timestamps
 
 ### Reliability & Configuration Hardening
+
 - Resolved R1–R16 reliability issues (path validation, glob fixes, macOS compatibility, data safeguards)
 - Added shared utils (`dhp-utils.sh`), dynamic squad config (`ai-staff-hq/squads.json`), universal dispatcher entry point, and model param flags
 - Implemented streaming error propagation, usage logging, and context redaction guards
@@ -1106,11 +1240,10 @@ Addressed findings from the G3 project audit to improve portability, documentati
 
 - ✅ **Script Robustness:** Added `set -euo pipefail` to over 20 scripts to ensure they fail fast and handle errors predictably.
 - ✅ **Code Consolidation:**
-    - Created `bin/dhp-shared.sh` to centralize setup, flag parsing, and input handling for all dispatcher scripts.
-    - Refactored `dhp-brand.sh`, `dhp-tech.sh`, and `dhp-creative.sh` to use the new shared library, removing significant code duplication.
+  - Created `bin/dhp-shared.sh` to centralize setup, flag parsing, and input handling for all dispatcher scripts.
+  - Refactored `dhp-brand.sh`, `dhp-tech.sh`, and `dhp-creative.sh` to use the new shared library, removing significant code duplication.
 - ✅ **File Cleanup:** Removed 3 obsolete navigation scripts (`goto.sh.deprecated`, `recent_dirs.sh.deprecated`, `workspace_manager.sh.deprecated`) and several `.bak` files.
 - ✅ **Documentation:** Updated `README.md` to reflect the script hardening and code consolidation efforts.
-
 
 ### Dispatcher Squad Config (November 2025)
 
@@ -1128,6 +1261,7 @@ Addressed findings from the G3 project audit to improve portability, documentati
 - ✅ C4: created `dhp-utils.sh` with `validate_dependencies`/`ensure_api_key` helpers and wired every dispatcher to it.
 - ✅ Dispatchers now accept quoted arguments (no stdin required) via `read_dispatcher_input`, so copy/paste commands work anywhere.
 - ✅ Added optional `swipe` wrapper + `.env` knobs to capture impressive outputs into a Markdown log.
+
 ### Model Configuration & Spec Template System (November 10, 2025)
 
 **Phase 6: Optimized Models & Structured Workflow ✅**
@@ -1135,6 +1269,7 @@ Addressed findings from the G3 project audit to improve portability, documentati
 Upgraded all AI dispatchers with optimized free models and implemented a spec-driven workflow for complex tasks.
 
 **Model Configuration Migration:**
+
 - ✅ Migrated all dispatchers to optimized free models from OpenRouter
 - ✅ Added 7 primary dispatcher model configurations to `.env`:
   - `TECH_MODEL` → DeepSeek R1-0528 (671B params, enhanced reasoning)
@@ -1156,6 +1291,7 @@ Upgraded all AI dispatchers with optimized free models and implemented a spec-dr
 - ✅ All dispatchers now use optimized models suited to their specific tasks
 
 **Spec Template System:**
+
 - ✅ Created `~/dotfiles/templates/` directory with 8 template files
 - ✅ Dispatcher-specific templates:
   - `tech-spec.txt` - Debug/technical analysis with context
@@ -1177,6 +1313,7 @@ Upgraded all AI dispatchers with optimized free models and implemented a spec-dr
 - ✅ Created specs archive directory at `~/.config/dotfiles-data/specs/`
 
 **Workflow Improvements:**
+
 - ✅ Structured input: Templates guide comprehensive dispatcher requests
 - ✅ Reusability: Saved specs can be edited and reused
 - ✅ Documentation: Spec archive serves as project history
@@ -1184,6 +1321,7 @@ Upgraded all AI dispatchers with optimized free models and implemented a spec-dr
 - ✅ Editor integration: Works with VS Code, Vim, Nano, or any `$EDITOR`
 
 **Usage Examples:**
+
 ```bash
 # Use spec-driven workflow
 spec tech           # Opens tech template in editor
@@ -1200,12 +1338,14 @@ cat script.sh | tech --stream
 ```
 
 **Documentation:**
+
 - ✅ Updated `bin/README.md` with comprehensive spec workflow section
 - ✅ Added template descriptions and usage examples
 - ✅ Documented spec reuse patterns and multi-line input alternatives
 - ✅ Updated metadata: Phase 6 complete, November 10, 2025
 
 **Impact:**
+
 - **Cost Optimization:** Free models reduce API costs while maintaining quality
 - **Task-Specific Models:** Each dispatcher uses model optimized for its specialty
 - **Improved Output Quality:** Structured templates guide better AI responses
@@ -1219,6 +1359,7 @@ cat script.sh | tech --stream
 Addressed critical blindspots in dispatcher system for robustness and user experience.
 
 **Created Shared Library (`bin/dhp-lib.sh`):**
+
 - ✅ Centralized API interaction logic in `call_openrouter()` function
 - ✅ Error detection: Checks for `.error` field in API responses
 - ✅ Proper error reporting: Clear messages to stderr with non-zero exit codes
@@ -1226,6 +1367,7 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 - ✅ Dual-mode operation: Streaming (`--stream` flag) and traditional (default)
 
 **Updated All 10 API-Calling Dispatchers:**
+
 - ✅ `dhp-tech.sh` - Added library integration, error handling, streaming support
 - ✅ `dhp-creative.sh` - Added library integration, error handling, streaming support
 - ✅ `dhp-content.sh` - Added library integration, error handling, streaming support (with existing --context flag)
@@ -1238,6 +1380,7 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 - ✅ `dhp-copy.sh` - Added library integration, error handling, streaming support
 
 **Error Handling Improvements:**
+
 - ✅ No more silent failures - API errors now properly reported
 - ✅ Before: `curl ... | jq -r '.choices[0].message.content'` (returns empty on error)
 - ✅ After: `call_openrouter()` checks for errors and exits with code 1
@@ -1245,6 +1388,7 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 - ✅ Failed dispatchers now report: `FAILED: '<Name>' encountered an error.`
 
 **Streaming Output Features:**
+
 - ✅ Real-time text display as AI generates responses
 - ✅ All 10 dispatchers support `--stream` flag
 - ✅ Usage: `cat script.sh | dhp-tech --stream`
@@ -1254,18 +1398,21 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 - ✅ Backward compatible (opt-in via flag)
 
 **Code Quality Improvements:**
+
 - ✅ Eliminated ~1,500 lines of duplicated curl/jq logic
 - ✅ Centralized API logic: Bug fixes now update all dispatchers automatically
 - ✅ Consistent behavior: All dispatchers handle errors identically
 - ✅ Improved maintainability: API changes only require updating one file
 
 **Configuration Improvements:**
+
 - ✅ Added `CREATIVE_OUTPUT_DIR` to `.env.example` and `.env`
 - ✅ Added `CONTENT_OUTPUT_DIR` to `.env.example` and `.env`
 - ✅ Removed hard-coded paths from `dhp-creative.sh` and `dhp-content.sh`
 - ✅ Output directories now configurable via environment variables
 
 **AI Staff HQ v3 Integration:**
+
 - ✅ Upgraded submodule from main branch to v3 branch
 - ✅ Updated specialist paths for new v3 structure:
   - `creative/copywriter.yaml` → `producers/copywriter.yaml`
@@ -1276,11 +1423,13 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 - ✅ Verified all 41 specialist YAML files present in v3
 
 **Documentation:**
+
 - ✅ Updated `blindspots.md` with resolved items
 - ✅ Updated usage messages in all 10 dispatchers to include `--stream` flag
 - ✅ Added examples for streaming mode usage
 
 **Impact:**
+
 - **Robustness:** API errors now caught and reported clearly
 - **User Experience:** Real-time streaming dramatically improves feedback for long tasks
 - **Code Quality:** Centralized logic reduces maintenance burden
@@ -1289,6 +1438,7 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 ### AI Staff HQ Integration (November 7, 2025)
 
 **Added AI-Staff-HQ Submodule:**
+
 - Integrated AI-Staff-HQ repository as git submodule at `ai-staff-hq/`
 - Added 42 specialized AI professionals across 7 departments:
   - Creative (8): Art Director, Copywriter, Narrative Designer, Sound Designer, etc.
@@ -1302,6 +1452,7 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 #### Phase 1: Foundation & Infrastructure ✅
 
 **Infrastructure Fixes:**
+
 - ✅ Cleaned up `.gitignore` duplicate `.env` entry
 - ✅ Added `bin/` directory to version control with all dispatcher scripts
 - ✅ Verified `.env` configuration with all required variables
@@ -1309,11 +1460,13 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 - ✅ Added `bin/` to PATH in `.zprofile` for global dispatcher access
 
 **Dispatcher Aliases (21 total):**
+
 - ✅ Added full-name aliases: `dhp-tech`, `dhp-creative`, `dhp-content`, etc.
 - ✅ Added shorthand aliases: `tech`, `creative`, `content`, `strategy`, `brand`, `market`, `stoic`, `research`, `narrative`, `aicopy`
 - ✅ Added default alias: `dhp` → `dhp-tech.sh`
 
 **System Validation:**
+
 - ✅ Enhanced `dotfiles_check.sh` with dispatcher validation
 - ✅ Validates all 10 dispatchers exist and are executable
 - ✅ Checks `.env` file existence and readability
@@ -1321,6 +1474,7 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 - ✅ Reports: "✅ Found 10/10 dispatchers"
 
 **Documentation:**
+
 - ✅ Updated `README.md` with comprehensive AI Staff HQ section
 - ✅ Updated `bin/README.md` with complete dispatcher reference (440 lines)
 - ✅ Updated `cheatsheet.sh` with categorized dispatcher examples
@@ -1329,22 +1483,26 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 #### Phase 2: Workflow Integration ✅
 
 **Blog Workflow Integration (`blog.sh`):**
+
 - ✅ `blog generate <stub-name>` - AI-generate full content from blog stub using `dhp-content.sh`
 - ✅ `blog refine <file>` - AI-polish existing draft with Content Specialist
 - ✅ Integrated with existing `blog ideas` and `blog sync` commands
 
 **Todo Integration (`todo.sh`):**
+
 - ✅ `todo debug <num>` - Debug technical tasks using `dhp-tech.sh`
 - ✅ `todo delegate <num> <type>` - Delegate tasks to AI specialists (tech/creative/content)
 - ✅ Automatically detects script names in task descriptions for targeted debugging
 
 **Journal Analysis (`journal.sh`):**
+
 - ✅ `journal analyze` - Strategic insights from last 7 days via Chief of Staff
 - ✅ `journal mood` - Sentiment analysis on last 14 days
 - ✅ `journal themes` - Theme extraction from last 30 days
 - ✅ All use `dhp-strategy.sh` for analysis
 
 **Daily Automation:**
+
 - ✅ Added optional AI briefing to `startday.sh` (enabled via `AI_BRIEFING_ENABLED=true`)
 - ✅ Daily AI focus suggestions with caching to avoid repeated API calls
 - ✅ Added optional AI reflection to `goodevening.sh` (enabled via `AI_REFLECTION_ENABLED=true`)
@@ -1356,26 +1514,32 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 **10 Active Dispatchers:**
 
 **Technical (1):**
+
 - ✅ `dhp-tech.sh` - Automation Specialist for code debugging, optimization, technical analysis
 
 **Creative (3):**
+
 - ✅ `dhp-creative.sh` - Creative Team for complete story packages (horror specialty)
 - ✅ `dhp-narrative.sh` - Narrative Designer for story structure, plot development, character arcs
 - ✅ `dhp-copy.sh` - Copywriter for sales copy, email sequences, landing pages
 
 **Strategy & Analysis (3):**
+
 - ✅ `dhp-strategy.sh` - Chief of Staff for strategic analysis, insights, patterns
 - ✅ `dhp-brand.sh` - Brand Builder for positioning, voice/tone, competitive analysis
 - ✅ `dhp-market.sh` - Market Analyst for SEO research, trends, audience insights
 
 **Content (1):**
+
 - ✅ `dhp-content.sh` - Content Strategy Team for SEO-optimized evergreen guides
 
 **Personal Development (2):**
+
 - ✅ `dhp-stoic.sh` - Stoic Coach for mindset coaching, reframing challenges
 - ✅ `dhp-research.sh` - Head Librarian for knowledge synthesis, research organization
 
 **Dispatcher Features:**
+
 - ✅ All dispatchers include dependency checks (curl, jq)
 - ✅ API key validation with helpful error messages
 - ✅ Model configuration validation
@@ -1384,6 +1548,7 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 - ✅ OpenRouter API integration with configurable models
 
 **Configuration:**
+
 - ✅ Environment variables: `OPENROUTER_API_KEY`, `DHP_TECH_MODEL`, `DHP_CREATIVE_MODEL`, `DHP_CONTENT_MODEL`, `DHP_STRATEGY_MODEL`
 - ✅ Model defaults: GPT-4o for creative/content, GPT-4o-mini for tech
 - ✅ Optional features: `AI_BRIEFING_ENABLED`, `AI_REFLECTION_ENABLED`
@@ -1391,6 +1556,7 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 #### Phase 5: Advanced Features ✅
 
 **Multi-Specialist Orchestration (`dhp-project.sh`):**
+
 - ✅ Coordinates 5 specialists for complex projects (Market Analyst, Brand Builder, Chief of Staff, Content Specialist, Copywriter)
 - ✅ Sequential AI processing with context building between phases
 - ✅ Generates comprehensive project briefs in markdown format
@@ -1398,6 +1564,7 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 - ✅ Usage: `dhp-project "Launch new blog series on AI productivity"`
 
 **Context-Aware Suggestions (`ai_suggest.sh`):**
+
 - ✅ Analyzes current directory, git status, recent commits, and active todos
 - ✅ Suggests relevant dispatchers based on detected context
 - ✅ Time-based suggestions (morning/evening routines)
@@ -1407,6 +1574,7 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 - ✅ Alias: `ai-suggest`
 
 **Dispatcher Chaining (`dhp-chain.sh`):**
+
 - ✅ Sequential processing through multiple AI specialists
 - ✅ Pipes output from one dispatcher to the next
 - ✅ Progress display after each step
@@ -1415,6 +1583,7 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 - ✅ Usage: `dhp-chain creative narrative copy -- "story idea"`
 
 **Local Context Injection (`dhp-context.sh`):**
+
 - ✅ Context gathering library with multiple modes (minimal/full)
 - ✅ Collects git history, active todos, recent journal entries, project README
 - ✅ Blog context detection for content-related work
@@ -1423,12 +1592,14 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 - ✅ Functions: `gather_context()`, `get_git_context()`, `get_recent_journal()`, `get_active_todos()`, `get_project_readme()`
 
 **New Aliases (6 total):**
+
 - ✅ `dhp-project`, `ai-project` - Multi-specialist orchestration
 - ✅ `dhp-chain`, `ai-chain` - Dispatcher chaining
 - ✅ `ai-suggest` - Context-aware suggestions
 - ✅ `ai-context` - Source context library
 
 **Enhanced Dispatcher Features:**
+
 - ✅ `dhp-content.sh` now supports `--context` and `--full-context` flags
 - ✅ Context injection prevents duplicate content and aligns with current work
 - ✅ All context functions tested and validated
@@ -1440,12 +1611,14 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 ### Phase 1: Critical System Repairs ✅
 
 **Fix 2: Repaired Core Journaling Loop**
+
 - Fixed `journal.sh` to write to `~/.config/dotfiles-data/journal.txt`
 - Updated `week_in_review.sh` to read from correct location
 - Fixed awk compatibility (now uses gawk)
 - Context-recovery loop fully functional
 
 **Fix 3: Centralized All Data Files**
+
 - Created `~/.config/dotfiles-data/` directory for all system data
 - Migrated all data files: `todo.txt`, `journal.txt`, `health.txt`, bookmarks, clipboard history, etc.
 - Updated all core scripts: `startday.sh`, `status.sh`, `goodevening.sh`, `week_in_review.sh`
@@ -1454,16 +1627,19 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 ### Phase 2: Simplification & Cleanup ✅
 
 **Fix 4: De-duplicated Redundant Scripts**
+
 - Deleted redundant scripts: `memo.sh`, `quick_note.sh`, and duplicate utilities
 - Removed associated aliases from `aliases.zsh`
 - Reduced maintenance burden, forces consistent journaling workflow
 
 **Fix 5: Cleaned Up Shell Configuration**
+
 - Updated `.zprofile`: Added `scripts/` to PATH, removed non-existent directories
 - Cleaned `.zshrc`: Removed redundant PATH exports and legacy sourcing
 - Proper separation: PATH in `.zprofile`, interactive config in `.zshrc`
 
 **Fix 6: Modernized Aliases**
+
 - Updated all 50+ aliases to use simple script names (not hardcoded paths)
 - Changed `~/dotfiles/scripts/X.sh` → `X.sh` throughout
 - More portable and maintainable
@@ -1471,6 +1647,7 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 ### Phase 3: Robustness & Best Practices ✅
 
 **Fix 7: Hardened Core Scripts**
+
 - Added `set -euo pipefail` to all critical daily-use scripts
 - Scripts now fail fast with clear error messages
 - Improved reliability for core workflows
@@ -1482,21 +1659,25 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 **All objectives completed ✅**
 
 **0. Remaining Fixes:**
+
 - Fixed all hardcoded paths in aliases
 - Updated `TODO_FILE` path in `greeting.sh`
 - Fixed `weather.sh` to use PATH lookup
 
 **1. Morning Routine Reliability:**
+
 - Resolved all `startday.sh` issues
 - Script runs successfully in bash and zsh environments
 - Integrated health tracking without errors
 
 **2. Daily Happy Path Documentation:**
+
 - Created comprehensive `docs/happy-path.md` guide
 - Step-by-step instructions for brain fog days
 - Linked from README and cheatsheet
 
 **3. Health Context Expansion (Iteration 1):**
+
 - Extended `health.sh` with symptom notes and energy ratings
 - New subcommands: `health symptom`, `health energy`, `health summary`
 - Integrated into `startday` and `goodevening` dashboards
@@ -1585,30 +1766,35 @@ Addressed critical blindspots in dispatcher system for robustness and user exper
 ## Key Improvements Summary
 
 **System Reliability:**
+
 - All data centralized in `~/.config/dotfiles-data/`
 - Automated backups run nightly via `goodevening.sh`
 - Comprehensive validation and error handling
 - Idempotent scripts safe to run repeatedly
 
 **Cognitive Support:**
+
 - Daily focus anchor for brain fog days
 - Encouraging feedback for task completion
 - Automated context recovery each morning
 - Weekly reviews run automatically
 
 **Workflow Integration:**
+
 - Blog ↔ Todo synchronization
 - Health ↔ Productivity correlation
 - Git ↔ Todo commit integration
 - Smart navigation with usage tracking
 
 **Proactive Intelligence:**
+
 - Smart directory suggestions based on usage
 - Stale task detection and alerts
 - Health trend analysis and dashboards
 - Automated reminder system
 
 **Quality of Life:**
+
 - Unified shell environments (VS Code + Terminal)
 - Comprehensive help and documentation
 - Collision detection for new scripts
