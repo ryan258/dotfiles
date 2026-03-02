@@ -401,6 +401,159 @@ coach_collect_data_quality_flags() {
     printf '%s\n' "${flags[@]}"
 }
 
+# Compute focus coherence: % of completed tasks aligned with today's focus
+# Usage: coach_focus_coherence <focus_text> <anchor_date>
+# Output: key=value lines (focus_coherence_pct, focus_coherence_detail)
+coach_focus_coherence() {
+    local focus_text="$1"
+    local anchor_date="$2"
+    local done_file="$DONE_FILE"
+
+    if [[ -z "$focus_text" ]]; then
+        echo "focus_coherence_pct=N/A"
+        echo "focus_coherence_detail=no focus set"
+        return 0
+    fi
+
+    # Tokenize focus into keywords (lowercase, drop words < 3 chars)
+    local keywords
+    keywords=$(printf '%s' "$focus_text" | tr '[:upper:]' '[:lower:]' | tr -cs '[:alnum:]' '\n' | awk 'length >= 3' | sort -u)
+
+    if [[ -z "$keywords" ]]; then
+        echo "focus_coherence_pct=N/A"
+        echo "focus_coherence_detail=no usable keywords in focus"
+        return 0
+    fi
+
+    # Gather completed tasks for anchor_date
+    local tasks=""
+    if [[ -f "$done_file" ]]; then
+        tasks=$(awk -F'|' -v day="$anchor_date" '
+            substr($1, 1, 10) == day { print tolower($2) }
+        ' "$done_file")
+    fi
+
+    # Gather commit messages for anchor_date (best-effort from common repos)
+    local commits=""
+    local projects_dir="${PROJECTS_DIR:-$HOME/Projects}"
+    if command -v git >/dev/null 2>&1; then
+        local repo_dir
+        for repo_dir in "$HOME/dotfiles" "$projects_dir"/*; do
+            if [[ -d "$repo_dir/.git" ]]; then
+                local repo_commits
+                repo_commits=$(git -C "$repo_dir" log --format='%s' \
+                    --after="$anchor_date 00:00:00" --before="$anchor_date 23:59:59" 2>/dev/null || true)
+                if [[ -n "$repo_commits" ]]; then
+                    commits="${commits}${commits:+$'\n'}$(printf '%s' "$repo_commits" | tr '[:upper:]' '[:lower:]')"
+                fi
+            fi
+        done
+    fi
+
+    local all_items="${tasks}${tasks:+$'\n'}${commits}"
+    all_items=$(printf '%s\n' "$all_items" | sed '/^[[:space:]]*$/d')
+
+    if [[ -z "$all_items" ]]; then
+        echo "focus_coherence_pct=N/A"
+        echo "focus_coherence_detail=no tasks or commits"
+        return 0
+    fi
+
+    local total=0
+    local aligned=0
+    while IFS= read -r item; do
+        [[ -z "$item" ]] && continue
+        total=$((total + 1))
+        local kw
+        while IFS= read -r kw; do
+            if printf '%s' "$item" | grep -qi "$kw" 2>/dev/null; then
+                aligned=$((aligned + 1))
+                break
+            fi
+        done <<< "$keywords"
+    done <<< "$all_items"
+
+    if [[ "$total" -eq 0 ]]; then
+        echo "focus_coherence_pct=N/A"
+        echo "focus_coherence_detail=no items"
+        return 0
+    fi
+
+    local pct
+    pct=$(awk -v a="$aligned" -v t="$total" 'BEGIN { printf "%d", (a/t)*100 }')
+    echo "focus_coherence_pct=$pct"
+    echo "focus_coherence_detail=${aligned}/${total} items aligned"
+}
+
+# Compute 3-day energy trajectory from HEALTH_FILE
+# Usage: coach_energy_trajectory <anchor_date>
+# Output: key=value lines (energy_3d_trajectory, energy_3d_direction)
+coach_energy_trajectory() {
+    local anchor_date="$1"
+    local health_file="$HEALTH_FILE"
+
+    if [[ ! -f "$health_file" ]]; then
+        echo "energy_3d_trajectory=N/A"
+        echo "energy_3d_direction=N/A"
+        return 0
+    fi
+
+    local readings=()
+    local i
+    for i in 2 1 0; do
+        local day
+        day=$(_coach_shift_date "$anchor_date" "-$i") || continue
+        # Get last ENERGY reading for that day
+        local reading
+        reading=$(awk -F'|' -v d="$day" '
+            $1 == "ENERGY" && substr($2, 1, 10) == d && $3 ~ /^[0-9]+$/ { val = $3 }
+            END { if (val != "") print val }
+        ' "$health_file")
+        readings+=("${reading:-}")
+    done
+
+    # Need at least 2 of 3 days with data
+    local filled=0
+    local vals=()
+    for r in "${readings[@]}"; do
+        if [[ -n "$r" ]]; then
+            filled=$((filled + 1))
+            vals+=("$r")
+        fi
+    done
+
+    if [[ "$filled" -lt 2 ]]; then
+        echo "energy_3d_trajectory=N/A"
+        echo "energy_3d_direction=N/A"
+        return 0
+    fi
+
+    # Build trajectory string (e.g., "6→5→4")
+    local trajectory=""
+    for r in "${readings[@]}"; do
+        if [[ -n "$r" ]]; then
+            trajectory="${trajectory}${trajectory:+→}${r}"
+        else
+            trajectory="${trajectory}${trajectory:+→}?"
+        fi
+    done
+
+    # Direction: compare first available vs last available
+    local first_val="${vals[0]}"
+    local last_val="${vals[${#vals[@]}-1]}"
+    local direction
+    direction=$(_coach_calc_trend "$first_val" "$last_val")
+    local label
+    case "$direction" in
+        up) label="improving" ;;
+        down) label="declining" ;;
+        *) label="stable" ;;
+    esac
+
+    echo "energy_3d_trajectory=${trajectory}"
+    echo "energy_3d_direction=${label}"
+}
+
 coach_build_behavior_digest() {
     local anchor_date="$1"
     local tactical_days="${2:-7}"
@@ -412,6 +565,24 @@ coach_build_behavior_digest() {
     tactical=$(coach_collect_tactical_metrics "$anchor_date" "$tactical_days") || return 1
     pattern=$(coach_collect_pattern_metrics "$anchor_date" "$pattern_days") || return 1
     quality=$(coach_collect_data_quality_flags)
+
+    # Energy trajectory (3-day)
+    local energy_traj
+    energy_traj=$(coach_energy_trajectory "$anchor_date" 2>/dev/null || true)
+    local energy_3d_trajectory energy_3d_direction
+    energy_3d_trajectory=$(_coach_extract_value "$energy_traj" "energy_3d_trajectory")
+    energy_3d_direction=$(_coach_extract_value "$energy_traj" "energy_3d_direction")
+
+    # Focus coherence
+    local focus_text=""
+    if [[ -f "${FOCUS_FILE:-}" ]] && [[ -s "${FOCUS_FILE:-}" ]]; then
+        focus_text=$(cat "$FOCUS_FILE" 2>/dev/null || true)
+    fi
+    local coherence
+    coherence=$(coach_focus_coherence "$focus_text" "$anchor_date" 2>/dev/null || true)
+    local focus_coherence_pct focus_coherence_detail
+    focus_coherence_pct=$(_coach_extract_value "$coherence" "focus_coherence_pct")
+    focus_coherence_detail=$(_coach_extract_value "$coherence" "focus_coherence_detail")
 
     local stale_tasks completed_tasks unique_dirs dir_switches avg_energy avg_fog avg_spoon_budget avg_spoon_spend
     stale_tasks=$(_coach_extract_value "$tactical" "stale_tasks")
@@ -437,6 +608,12 @@ coach_build_behavior_digest() {
     fi
     if [[ "$(_coach_extract_value "$pattern" "journal_trend")" == "up" ]]; then
         working_signals+=("journaling trend is improving")
+    fi
+    if [[ "$focus_coherence_pct" != "N/A" ]] && [[ "$focus_coherence_pct" -ge 70 ]] 2>/dev/null; then
+        working_signals+=("focus coherence is high (${focus_coherence_pct}% — ${focus_coherence_detail})")
+    fi
+    if [[ "$energy_3d_direction" == "improving" ]]; then
+        working_signals+=("energy trajectory is improving (${energy_3d_trajectory})")
     fi
 
     if [[ "${stale_tasks:-0}" -ge "$COACH_DRIFT_STALE_THRESHOLD" ]]; then
@@ -465,6 +642,21 @@ coach_build_behavior_digest() {
         fi
     fi
 
+    if [[ "$focus_coherence_pct" != "N/A" ]] && [[ "$focus_coherence_pct" -lt 40 ]] 2>/dev/null; then
+        drift_risks+=("focus coherence is low (${focus_coherence_pct}% — ${focus_coherence_detail})")
+    fi
+    if [[ "$energy_3d_direction" == "declining" ]]; then
+        local _traj_risk="energy trajectory is declining (${energy_3d_trajectory})"
+        # If latest reading is near threshold, suggest RECOVERY
+        local _latest_reading
+        _latest_reading=$(printf '%s' "$energy_3d_trajectory" | awk -F'→' '{print $NF}')
+        local _recovery_boundary=$((COACH_LOW_ENERGY_THRESHOLD + 1))
+        if [[ "$_latest_reading" =~ ^[0-9]+$ ]] && [[ "$_latest_reading" -le "$_recovery_boundary" ]]; then
+            _traj_risk="${_traj_risk} — consider RECOVERY mode"
+        fi
+        drift_risks+=("$_traj_risk")
+    fi
+
     if [[ "$quality" != "none" ]]; then
         drift_risks+=("data quality flags detected")
     fi
@@ -472,7 +664,7 @@ coach_build_behavior_digest() {
     echo "Behavior digest (structured):"
     echo "Tactical window: ${tactical_days}d ending $anchor_date"
     echo "  open_tasks=$(_coach_extract_value "$tactical" "open_tasks"), stale_tasks=$stale_tasks, completed_tasks=$completed_tasks, journal_entries=$(_coach_extract_value "$tactical" "journal_entries")"
-    echo "  avg_energy=${avg_energy}, avg_fog=${avg_fog}, avg_spoon_budget=$(_coach_extract_value "$tactical" "avg_spoon_budget"), avg_spoon_spend=$(_coach_extract_value "$tactical" "avg_spoon_spend")"
+    echo "  avg_energy=${avg_energy}, avg_fog=${avg_fog}, energy_3d=${energy_3d_trajectory:-N/A} (${energy_3d_direction:-N/A}), avg_spoon_budget=$(_coach_extract_value "$tactical" "avg_spoon_budget"), avg_spoon_spend=$(_coach_extract_value "$tactical" "avg_spoon_spend")"
     echo "  unique_dirs=$unique_dirs, dir_switches=$dir_switches, recent_pushes=$(_coach_extract_value "$tactical" "recent_pushes_count"), commit_context=$(_coach_extract_value "$tactical" "commit_context_count")"
     echo "Pattern window: ${pattern_days}d ending $anchor_date"
     echo "  completion_trend=$(_coach_extract_value "$pattern" "completion_trend") (first=$(_coach_extract_value "$pattern" "completion_first_half"), second=$(_coach_extract_value "$pattern" "completion_second_half"))"
@@ -480,6 +672,7 @@ coach_build_behavior_digest() {
     echo "  focus_changes=$(_coach_extract_value "$pattern" "focus_changes") (~$(_coach_extract_value "$pattern" "focus_changes_per_week")/week)"
     echo "  top_directories=$(_coach_extract_value "$pattern" "top_directories")"
     echo "  top_dispatchers=$(_coach_extract_value "$pattern" "top_dispatchers")"
+    echo "  focus_coherence=${focus_coherence_pct:-N/A}% (${focus_coherence_detail:-N/A})"
     echo "Working signals:"
     if [[ ${#working_signals[@]} -eq 0 ]]; then
         echo "  - none detected"

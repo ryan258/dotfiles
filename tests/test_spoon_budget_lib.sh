@@ -60,3 +60,26 @@ teardown() {
     run type calculate_activity_cost
     [ "$status" -ne 0 ]
 }
+
+@test "predict_spoon_depletion ignores pre-reset spends" {
+    local today=$(date +%Y-%m-%d)
+    
+    init_daily_spoons 10
+    echo "SPEND|$today|08:00|2|Task 1|8" >> "$SPOON_LOG"
+    echo "SPEND|$today|10:00|3|Task 2|5" >> "$SPOON_LOG"
+    
+    set_daily_spoons 5
+    echo "SPEND|$today|12:00|1|Task 3|4" >> "$SPOON_LOG"
+    echo "SPEND|$today|13:00|1|Task 4|3" >> "$SPOON_LOG"
+    
+    date_now() {
+        echo "14:00"
+    }
+    export -f date_now
+    
+    run predict_spoon_depletion
+    [ "$status" -eq 0 ]
+    
+    # Should predict correctly using only post-reset data (12:00 to 13:00)
+    [[ "$output" =~ "by " ]]
+}

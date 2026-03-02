@@ -75,7 +75,15 @@ if [ -f "${SPOON_LOG:-}" ]; then
         _status_budget=$(echo "$_budget_line" | cut -d'|' -f3)
     fi
 fi
-echo "  Mode: ${_status_mode} | Spoons: ${_status_spoons}/${_status_budget} remaining"
+_status_depletion=""
+if command -v predict_spoon_depletion >/dev/null 2>&1; then
+    _status_depletion=$(predict_spoon_depletion 2>/dev/null || true)
+fi
+if [ -n "$_status_depletion" ]; then
+    echo "  Mode: ${_status_mode} | Spoons: ${_status_spoons}/${_status_budget} remaining (${_status_depletion})"
+else
+    echo "  Mode: ${_status_mode} | Spoons: ${_status_spoons}/${_status_budget} remaining"
+fi
 
 # --- Display Header ---
 echo ""

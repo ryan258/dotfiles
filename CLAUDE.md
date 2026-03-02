@@ -718,7 +718,7 @@ _This document should be updated whenever new patterns are established or existi
 <!-- gitnexus:start -->
 # GitNexus MCP
 
-This project is indexed by GitNexus as **dotfiles** (707 symbols, 1226 relationships, 31 execution flows).
+This project is indexed by GitNexus as **dotfiles** (709 symbols, 1228 relationships, 31 execution flows).
 
 ## Always Start Here
 

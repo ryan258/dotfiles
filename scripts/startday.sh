@@ -125,7 +125,19 @@ if [ -x "$SPOON_MANAGER" ]; then
     # Check if already initialized
     if "$SPOON_MANAGER" check &>/dev/null; then
         remaining=$("$SPOON_MANAGER" check | grep -oE -- '-?[0-9]+' || echo "?")
-        echo "  You have $remaining spoons remaining today."
+        _sd_depletion=""
+        if [ -z "$(command -v predict_spoon_depletion)" ] && [ -f "$SCRIPT_DIR/lib/spoon_budget.sh" ]; then
+            # shellcheck disable=SC1090
+            source "$SCRIPT_DIR/lib/spoon_budget.sh"
+        fi
+        if command -v predict_spoon_depletion >/dev/null 2>&1; then
+            _sd_depletion=$(predict_spoon_depletion 2>/dev/null || true)
+        fi
+        if [ -n "$_sd_depletion" ]; then
+            echo "  You have $remaining spoons remaining today (at current rate, $_sd_depletion)."
+        else
+            echo "  You have $remaining spoons remaining today."
+        fi
         if [ -t 0 ]; then
             echo -n "  Update spoon budget? [y/N]: "
             read -r update_spoons

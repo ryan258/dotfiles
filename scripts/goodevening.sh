@@ -241,11 +241,21 @@ echo ""
 echo "🌟 TODAY'S WINS:"
 TASKS_COMPLETED=0
 JOURNAL_ENTRY_COUNT=0
+_GE_COMMIT_COUNT=0
 if [ -f "$TODO_DONE_FILE" ]; then
     TASKS_COMPLETED=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {count++} END {print count+0}' "$TODO_DONE_FILE")
 fi
 if [ -f "$JOURNAL_FILE" ]; then
     JOURNAL_ENTRY_COUNT=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {count++} END {print count+0}' "$JOURNAL_FILE")
+fi
+# Count commits across repos as a win signal
+if command -v git >/dev/null 2>&1; then
+    for _ge_repo in "$HOME/dotfiles" "${PROJECTS_DIR:-$HOME/Projects}"/*; do
+        if [ -d "$_ge_repo/.git" ]; then
+            _ge_repo_commits=$(git -C "$_ge_repo" log --oneline --after="$TODAY 00:00:00" --before="$TODAY 23:59:59" --all 2>/dev/null | wc -l | tr -d ' ')
+            _GE_COMMIT_COUNT=$((_GE_COMMIT_COUNT + _ge_repo_commits))
+        fi
+    done
 fi
 
 if [ "$TASKS_COMPLETED" -gt 0 ]; then
@@ -256,8 +266,63 @@ if [ "$JOURNAL_ENTRY_COUNT" -gt 0 ]; then
     echo "  🧠 Win: You logged $JOURNAL_ENTRY_COUNT entries. Context captured."
 fi
 
-if [ "$TASKS_COMPLETED" -eq 0 ] && [ "$JOURNAL_ENTRY_COUNT" -eq 0 ]; then
-    echo "  🧘 Today was a rest day. Logging off is a valid and productive choice."
+if [ "$_GE_COMMIT_COUNT" -gt 0 ] && [ "$TASKS_COMPLETED" -eq 0 ]; then
+    echo "  💻 Win: You made $_GE_COMMIT_COUNT commit(s) today. Code shipped even without logged tasks."
+fi
+
+if [ "$TASKS_COMPLETED" -eq 0 ] && [ "$JOURNAL_ENTRY_COUNT" -eq 0 ] && [ "$_GE_COMMIT_COUNT" -eq 0 ]; then
+    # Smarter rest day detection: distinguish intentional rest from health crashes
+    _ge_had_low_energy=false
+    _ge_had_high_fog=false
+    _ge_spoons_exhausted=false
+    _ge_had_health_entries=false
+    _ge_focus_completed=false
+
+    # Check health readings
+    if [ -f "${HEALTH_FILE:-}" ]; then
+        _ge_low_energy=$(awk -F'|' -v day="$TODAY" '
+            $1 == "ENERGY" && substr($2, 1, 10) == day && $3 ~ /^[0-9]+$/ && $3 <= 3 { found=1 }
+            END { print found+0 }
+        ' "$HEALTH_FILE")
+        _ge_high_fog=$(awk -F'|' -v day="$TODAY" '
+            $1 == "FOG" && substr($2, 1, 10) == day && $3 ~ /^[0-9]+$/ && $3 >= 7 { found=1 }
+            END { print found+0 }
+        ' "$HEALTH_FILE")
+        _ge_any_health=$(awk -F'|' -v day="$TODAY" '
+            substr($2, 1, 10) == day { found=1 }
+            END { print found+0 }
+        ' "$HEALTH_FILE")
+        [ "$_ge_low_energy" -eq 1 ] && _ge_had_low_energy=true
+        [ "$_ge_high_fog" -eq 1 ] && _ge_had_high_fog=true
+        [ "$_ge_any_health" -eq 1 ] && _ge_had_health_entries=true
+    fi
+
+    # Check spoon exhaustion
+    if [ -f "${SPOON_LOG:-}" ]; then
+        _ge_budget=$(grep "^BUDGET|$TODAY" "$SPOON_LOG" 2>/dev/null | tail -1 | cut -d'|' -f3 || true)
+        _ge_last_remaining=$(grep "^SPEND|$TODAY" "$SPOON_LOG" 2>/dev/null | tail -1 | cut -d'|' -f6 || true)
+        if [ -n "$_ge_budget" ] && [ -n "$_ge_last_remaining" ] && [ "$_ge_budget" -gt 0 ] 2>/dev/null; then
+            _ge_pct_left=$(awk -v r="$_ge_last_remaining" -v b="$_ge_budget" 'BEGIN { printf "%d", (r/b)*100 }')
+            [ "$_ge_pct_left" -le 20 ] && _ge_spoons_exhausted=true
+        fi
+    fi
+
+    # Check if focus was completed
+    if [ -f "${FOCUS_HISTORY_FILE:-}" ]; then
+        if grep -q "^$TODAY|.*Completed" "$FOCUS_HISTORY_FILE" 2>/dev/null; then
+            _ge_focus_completed=true
+        fi
+    fi
+
+    if [ "$_ge_had_low_energy" = true ] || [ "$_ge_had_high_fog" = true ] || [ "$_ge_spoons_exhausted" = true ]; then
+        echo "  💪 Tough day. Your body needed rest — that's not failure, it's management."
+    elif [ "$_ge_focus_completed" = true ]; then
+        echo "  ✅ Focus completed! Tasks may not be captured but the goal was met."
+    elif [ "$_ge_had_health_entries" = true ]; then
+        echo "  🧘 Quiet day with some health tracking. Rest is productive."
+    else
+        echo "  🧘 Today was a rest day. Logging off is a valid and productive choice."
+    fi
 fi
 
 # 3. Automation Safety Nets - Check projects for potential issues

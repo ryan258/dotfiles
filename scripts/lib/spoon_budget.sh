@@ -149,6 +149,115 @@ get_remaining_spoons() {
     fi
 }
 
+# Predict when today's spoons will hit zero based on current burn rate
+# Usage: predict_spoon_depletion
+# Returns: human-readable prediction or empty string if insufficient data
+predict_spoon_depletion() {
+    local today=$(_spoon_today)
+
+    if [ ! -f "$SPOON_LOG" ]; then
+        return 0
+    fi
+
+    # Get today's budget (track line number to handle mid-day resets correctly)
+    local budget_line_info
+    budget_line_info=$(grep -n "^BUDGET|$today" "$SPOON_LOG" | tail -n 1 || true)
+    if [ -z "$budget_line_info" ]; then
+        return 0
+    fi
+    local budget_line_num="${budget_line_info%%:*}"
+    local budget_line="${budget_line_info#*:}"
+    local budget
+    budget=$(echo "$budget_line" | cut -d'|' -f3)
+
+    # Get today's SPEND records that occurred AFTER the latest budget line
+    local spend_lines
+    spend_lines=$(tail -n +$((budget_line_num + 1)) "$SPOON_LOG" 2>/dev/null | grep "^SPEND|$today" || true)
+    if [ -z "$spend_lines" ]; then
+        return 0
+    fi
+
+    local spend_count
+    spend_count=$(printf '%s\n' "$spend_lines" | wc -l | tr -d ' ')
+    if [ "$spend_count" -lt 2 ]; then
+        return 0
+    fi
+
+    # First spend time and last spend time + remaining
+    local first_time last_time last_remaining total_spent
+    first_time=$(printf '%s\n' "$spend_lines" | head -n 1 | cut -d'|' -f3)
+    last_time=$(printf '%s\n' "$spend_lines" | tail -n 1 | cut -d'|' -f3)
+    last_remaining=$(printf '%s\n' "$spend_lines" | tail -n 1 | cut -d'|' -f6)
+    total_spent=$((budget - last_remaining))
+
+    if [ "$total_spent" -le 0 ]; then
+        return 0
+    fi
+
+    # Calculate minutes elapsed between first and last spend
+    local first_h first_m last_h last_m
+    first_h=$((10#${first_time%%:*}))
+    first_m=$((10#${first_time##*:}))
+    last_h=$((10#${last_time%%:*}))
+    last_m=$((10#${last_time##*:}))
+
+    local first_mins=$((first_h * 60 + first_m))
+    local last_mins=$((last_h * 60 + last_m))
+    local elapsed_mins=$((last_mins - first_mins))
+
+    if [ "$elapsed_mins" -le 0 ]; then
+        return 0
+    fi
+
+    # Current time in minutes
+    local now_time
+    if command -v date_now >/dev/null 2>&1; then
+        now_time=$(date_now "%H:%M")
+    else
+        now_time=$(date +%H:%M)
+    fi
+    local now_h=$((10#${now_time%%:*}))
+    local now_m=$((10#${now_time##*:}))
+    local now_mins=$((now_h * 60 + now_m))
+
+    if [ "$last_remaining" -le 0 ]; then
+        echo "depleted"
+        return 0
+    fi
+
+    # Burn rate: spoons per minute
+    # Minutes until zero = remaining / (total_spent / elapsed_mins)
+    #                     = remaining * elapsed_mins / total_spent
+    local mins_until_zero
+    mins_until_zero=$(awk -v rem="$last_remaining" -v elapsed="$elapsed_mins" -v spent="$total_spent" \
+        'BEGIN { printf "%d", (rem * elapsed) / spent }')
+
+    # Project from current time
+    local depletion_mins=$((now_mins + mins_until_zero))
+    local dep_h=$((depletion_mins / 60))
+    local dep_m=$((depletion_mins % 60))
+
+    if [ "$dep_h" -ge 24 ]; then
+        echo "past midnight"
+        return 0
+    fi
+
+    # Format as 12-hour time
+    local period="am"
+    local display_h=$dep_h
+    if [ "$display_h" -ge 12 ]; then
+        period="pm"
+        if [ "$display_h" -gt 12 ]; then
+            display_h=$((display_h - 12))
+        fi
+    fi
+    if [ "$display_h" -eq 0 ]; then
+        display_h=12
+    fi
+
+    printf '~0 by %d:%02d%s' "$display_h" "$dep_m" "$period"
+}
+
 # Get spoon history for last N days
 # Usage: get_spoon_history <days>
 get_spoon_history() {
