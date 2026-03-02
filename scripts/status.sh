@@ -76,8 +76,8 @@ if [ -f "${SPOON_LOG:-}" ]; then
     fi
 fi
 _status_depletion=""
-if command -v predict_spoon_depletion >/dev/null 2>&1; then
-    _status_depletion=$(predict_spoon_depletion 2>/dev/null || true)
+if [ -x "$SCRIPT_DIR/spoon_manager.sh" ]; then
+    _status_depletion=$("$SCRIPT_DIR/spoon_manager.sh" predict 2>/dev/null || true)
 fi
 if [ -n "$_status_depletion" ]; then
     echo "  Mode: ${_status_mode} | Spoons: ${_status_spoons}/${_status_budget} remaining (${_status_depletion})"

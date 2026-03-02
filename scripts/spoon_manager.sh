@@ -18,13 +18,14 @@ source "$SCRIPT_DIR/lib/config.sh"
 source "$SCRIPT_DIR/lib/spoon_budget.sh"
 
 show_help() {
-    echo "Usage: $(basename "$0") {init|spend|check|history}"
+    echo "Usage: $(basename "$0") {init|set|spend|check|predict|history}"
     echo ""
     echo "Commands:"
     echo "  init <count>                   Initialize daily spoons (default: 10)"
     echo "  set <count>                    Update today's spoon budget"
     echo "  spend <count> [activity]       Spend spoons on an activity"
     echo "  check                          Show remaining spoons"
+    echo "  predict                        Show predicted spoon depletion time"
     echo "  history [days]                 Show spoon history (default: 7 days)"
 }
 
@@ -58,6 +59,9 @@ case "${1:-}" in
         ;;
     history)
         get_spoon_history "${2:-7}"
+        ;;
+    predict)
+        predict_spoon_depletion
         ;;
     *)
         show_help

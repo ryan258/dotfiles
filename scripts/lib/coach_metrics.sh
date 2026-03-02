@@ -183,12 +183,18 @@ coach_collect_tactical_metrics() {
     fi
 
     if [[ -f "$health_file" ]]; then
-        read -r energy_sum energy_count <<< "$(awk -F'|' -v start="$window_start" -v end="$anchor_date" '
+        read -r energy_sum energy_count afternoon_slumps <<< "$(awk -F'|' -v start="$window_start" -v end="$anchor_date" -v threshold="${COACH_LOW_ENERGY_THRESHOLD:-4}" '
             $1 == "ENERGY" && $2 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}/ && $3 ~ /^[0-9]+$/ {
                 day = substr($2, 1, 10)
-                if (day >= start && day <= end) {sum += $3; count++}
+                if (day >= start && day <= end) {
+                    sum += $3; count++
+                    if (length($2) >= 13) {
+                        hour = substr($2, 12, 2) + 0
+                        if (hour >= 14 && $3 <= threshold) slumps++
+                    }
+                }
             }
-            END {print sum+0, count+0}
+            END {print sum+0, count+0, slumps+0}
         ' "$health_file")"
 
         read -r fog_sum fog_count <<< "$(awk -F'|' -v start="$window_start" -v end="$anchor_date" '
@@ -240,6 +246,9 @@ coach_collect_tactical_metrics() {
     echo "completed_tasks=$completed_tasks"
     echo "journal_entries=$journal_entries"
     echo "avg_energy=$(_coach_average "$energy_sum" "$energy_count")"
+    local slump_bool="false"
+    if [[ "${afternoon_slumps:-0}" -gt 0 ]]; then slump_bool="true"; fi
+    echo "afternoon_slump=$slump_bool"
     echo "avg_fog=$(_coach_average "$fog_sum" "$fog_count")"
     echo "avg_spoon_budget=$(_coach_average "$spoon_budget_sum" "$spoon_budget_count")"
     echo "avg_spoon_spend=$(_coach_average "$spoon_spend_sum" "$spoon_spend_count")"
@@ -283,22 +292,22 @@ coach_collect_pattern_metrics() {
     local focus_changes=0
 
     if [[ -f "$done_file" ]]; then
-        read -r complete_first complete_second <<< "$(awk -F'|' -v start="$window_start" -v split="$split_date" -v end="$anchor_date" '
+        read -r complete_first complete_second <<< "$(awk -F'|' -v start="$window_start" -v mid="$split_date" -v end="$anchor_date" '
             $1 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]][0-9]{2}:[0-9]{2}:[0-9]{2}$/ {
                 day = substr($1, 1, 10)
-                if (day >= start && day <= split) first++
-                else if (day > split && day <= end) second++
+                if (day >= start && day <= mid) first++
+                else if (day > mid && day <= end) second++
             }
             END {print first+0, second+0}
         ' "$done_file")"
     fi
 
     if [[ -f "$journal_file" ]]; then
-        read -r journal_first journal_second <<< "$(awk -F'|' -v start="$window_start" -v split="$split_date" -v end="$anchor_date" '
+        read -r journal_first journal_second <<< "$(awk -F'|' -v start="$window_start" -v mid="$split_date" -v end="$anchor_date" '
             $1 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]][0-9]{2}:[0-9]{2}:[0-9]{2}$/ {
                 day = substr($1, 1, 10)
-                if (day >= start && day <= split) first++
-                else if (day > split && day <= end) second++
+                if (day >= start && day <= mid) first++
+                else if (day > mid && day <= end) second++
             }
             END {print first+0, second+0}
         ' "$journal_file")"
@@ -554,6 +563,100 @@ coach_energy_trajectory() {
     echo "energy_3d_direction=${label}"
 }
 
+# Compute AI suggestion adherence: did the user complete tasks recommended yesterday?
+coach_suggestion_adherence() {
+    local anchor_date="$1"
+    local briefing_file="$BRIEFING_CACHE_FILE"
+    local done_file="$DONE_FILE"
+
+    if [[ ! -f "$briefing_file" ]] || [[ ! -f "$done_file" ]]; then
+        echo "suggestion_adherence=N/A"
+        return 0
+    fi
+
+    local yesterday
+    yesterday=$(_coach_shift_date "$anchor_date" "-1") || return 0
+
+    # Extract yesterday's briefing
+    local yesterday_briefing
+    yesterday_briefing=$(grep "^$yesterday|" "$briefing_file" 2>/dev/null | tail -n 1 | cut -d'|' -f2- || true)
+
+    if [[ -z "$yesterday_briefing" ]]; then
+        echo "suggestion_adherence=N/A"
+        return 0
+    fi
+    # Unescape newlines
+    yesterday_briefing="${yesterday_briefing//\\n/$'\n'}"
+
+    # Extract "Do Next" section bullet points
+    local do_next
+    do_next=$(printf '%s\n' "$yesterday_briefing" | awk '/Do Next/,/Operating insight/' | grep -E '^[0-9]+\.' || true)
+    if [[ -z "$do_next" ]]; then
+        echo "suggestion_adherence=N/A"
+        return 0
+    fi
+
+    local keywords
+    keywords=$(printf '%s' "$do_next" | tr '[:upper:]' '[:lower:]' | tr -cs '[:alnum:]' '\n' | awk 'length >= 4' | sort -u)
+    if [[ -z "$keywords" ]]; then
+        echo "suggestion_adherence=N/A"
+        return 0
+    fi
+
+    # Gather completed tasks from yesterday
+    local tasks
+    tasks=$(awk -F'|' -v day="$yesterday" 'substr($1, 1, 10) == day { print tolower($2) }' "$done_file")
+    if [[ -z "$tasks" ]]; then
+        echo "suggestion_adherence=low"
+        return 0
+    fi
+
+    local matched=0
+    local kw
+    while IFS= read -r kw; do
+        if printf '%s\n' "$tasks" | grep -qi "$kw" 2>/dev/null; then
+            matched=$((matched + 1))
+        fi
+    done <<< "$keywords"
+
+    if [[ "$matched" -ge 1 ]]; then
+        echo "suggestion_adherence=high"
+    else
+        echo "suggestion_adherence=low"
+    fi
+}
+
+# Detect commits pushed after midnight (early morning of anchor date)
+coach_late_night_commits() {
+    local anchor_date="$1"
+    local projects_dir="${PROJECTS_DIR:-$HOME/Projects}"
+    local late_commits=""
+
+    if command -v git >/dev/null 2>&1; then
+        local repo_dir
+        for repo_dir in "$HOME/dotfiles" "$projects_dir"/*; do
+            if [[ -d "$repo_dir/.git" ]]; then
+                local repo_commits
+                repo_commits=$(git -C "$repo_dir" log --format='%cd' --date=format:'%H:%M' \
+                    --after="$anchor_date 00:00:00" --before="$anchor_date 04:00:00" 2>/dev/null || true)
+                if [[ -n "$repo_commits" ]]; then
+                    late_commits="${late_commits}${late_commits:+$'\n'}${repo_commits}"
+                fi
+            fi
+        done
+    fi
+
+    late_commits=$(printf '%s\n' "$late_commits" | sed '/^[[:space:]]*$/d' | sort -u | head -n 1)
+
+    if [[ -n "$late_commits" ]]; then
+        echo "late_night_commits=true"
+        echo "late_night_time=$late_commits"
+    else
+        echo "late_night_commits=false"
+        echo "late_night_time="
+    fi
+}
+
 coach_build_behavior_digest() {
     local anchor_date="$1"
     local tactical_days="${2:-7}"
@@ -584,6 +687,17 @@ coach_build_behavior_digest() {
     focus_coherence_pct=$(_coach_extract_value "$coherence" "focus_coherence_pct")
     focus_coherence_detail=$(_coach_extract_value "$coherence" "focus_coherence_detail")
 
+    local adherence
+    adherence=$(coach_suggestion_adherence "$anchor_date" 2>/dev/null || echo "suggestion_adherence=N/A")
+    local suggestion_adherence
+    suggestion_adherence=$(_coach_extract_value "$adherence" "suggestion_adherence")
+
+    local late_night
+    late_night=$(coach_late_night_commits "$anchor_date" 2>/dev/null || echo "late_night_commits=N/A")
+    local late_night_commits late_night_time
+    late_night_commits=$(_coach_extract_value "$late_night" "late_night_commits")
+    late_night_time=$(_coach_extract_value "$late_night" "late_night_time")
+
     local stale_tasks completed_tasks unique_dirs dir_switches avg_energy avg_fog avg_spoon_budget avg_spoon_spend
     stale_tasks=$(_coach_extract_value "$tactical" "stale_tasks")
     completed_tasks=$(_coach_extract_value "$tactical" "completed_tasks")
@@ -593,9 +707,24 @@ coach_build_behavior_digest() {
     avg_fog=$(_coach_extract_value "$tactical" "avg_fog")
     avg_spoon_budget=$(_coach_extract_value "$tactical" "avg_spoon_budget")
     avg_spoon_spend=$(_coach_extract_value "$tactical" "avg_spoon_spend")
+    local afternoon_slump
+    afternoon_slump=$(_coach_extract_value "$tactical" "afternoon_slump")
 
     local working_signals=()
     local drift_risks=()
+
+    if [[ "$suggestion_adherence" == "high" ]]; then
+        working_signals+=("adherence to yesterday's AI suggestions was high")
+    fi
+    if [[ "$suggestion_adherence" == "low" ]]; then
+        drift_risks+=("adherence to yesterday's AI suggestions was low")
+    fi
+    if [[ "$late_night_commits" == "true" ]]; then
+        drift_risks+=("late night commits detected (e.g., at ${late_night_time}) - consider whether intentional or hyperfocus drift")
+    fi
+    if [[ "$afternoon_slump" == "true" ]]; then
+        drift_risks+=("afternoon energy slump detected")
+    fi
 
     if [[ "${completed_tasks:-0}" -ge 1 ]]; then
         working_signals+=("recent task completions are present")
@@ -664,8 +793,8 @@ coach_build_behavior_digest() {
     echo "Behavior digest (structured):"
     echo "Tactical window: ${tactical_days}d ending $anchor_date"
     echo "  open_tasks=$(_coach_extract_value "$tactical" "open_tasks"), stale_tasks=$stale_tasks, completed_tasks=$completed_tasks, journal_entries=$(_coach_extract_value "$tactical" "journal_entries")"
-    echo "  avg_energy=${avg_energy}, avg_fog=${avg_fog}, energy_3d=${energy_3d_trajectory:-N/A} (${energy_3d_direction:-N/A}), avg_spoon_budget=$(_coach_extract_value "$tactical" "avg_spoon_budget"), avg_spoon_spend=$(_coach_extract_value "$tactical" "avg_spoon_spend")"
-    echo "  unique_dirs=$unique_dirs, dir_switches=$dir_switches, recent_pushes=$(_coach_extract_value "$tactical" "recent_pushes_count"), commit_context=$(_coach_extract_value "$tactical" "commit_context_count")"
+    echo "  avg_energy=${avg_energy}, avg_fog=${avg_fog}, energy_3d=${energy_3d_trajectory:-N/A} (${energy_3d_direction:-N/A}), afternoon_slump=${afternoon_slump:-N/A}, avg_spoon_budget=$(_coach_extract_value "$tactical" "avg_spoon_budget"), avg_spoon_spend=$(_coach_extract_value "$tactical" "avg_spoon_spend")"
+    echo "  unique_dirs=$unique_dirs, dir_switches=$dir_switches, suggestion_adherence=${suggestion_adherence:-N/A}, late_night_commits=${late_night_commits:-N/A}, recent_pushes=$(_coach_extract_value "$tactical" "recent_pushes_count"), commit_context=$(_coach_extract_value "$tactical" "commit_context_count")"
     echo "Pattern window: ${pattern_days}d ending $anchor_date"
     echo "  completion_trend=$(_coach_extract_value "$pattern" "completion_trend") (first=$(_coach_extract_value "$pattern" "completion_first_half"), second=$(_coach_extract_value "$pattern" "completion_second_half"))"
     echo "  journal_trend=$(_coach_extract_value "$pattern" "journal_trend") (first=$(_coach_extract_value "$pattern" "journal_first_half"), second=$(_coach_extract_value "$pattern" "journal_second_half"))"

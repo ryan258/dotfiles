@@ -401,6 +401,7 @@ if [ -d "$PROJECTS_DIR" ]; then
         return 1
     }
 
+    job_count=0
     tmp_results=$(mktemp -d)
     while IFS= read -r gitdir; do
         (
@@ -412,6 +413,11 @@ if [ -d "$PROJECTS_DIR" ]; then
                 rm -f "$tmp_results/$proj_name"
             fi
         ) &
+        job_count=$((job_count + 1))
+        if [ "$job_count" -ge 8 ]; then
+            wait
+            job_count=0
+        fi
     done < <(find "$PROJECTS_DIR" -maxdepth 2 -type d -name ".git")
 
     wait
