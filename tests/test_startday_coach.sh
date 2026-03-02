@@ -116,8 +116,8 @@ teardown() {
     [[ "$output" == *"Do Next (ordered 1-3):"* ]]
     [[ "$output" == *"Anti-tinker rule:"* ]]
 
-    # Signal metadata line with pipe delimiters
-    [[ "$output" == *"[Signal:"*" | "*"]"* ]]
+    # Signal metadata line includes confidence and reason summary
+    [[ "$output" == *"(Signal:"*" - "*")"* ]]
 
     [ -f "$DATA_DIR/coach_log.txt" ]
     grep -q '^STARTDAY|' "$DATA_DIR/coach_log.txt"

@@ -5,6 +5,8 @@
 # Log Format (spoons.txt):
 # BUDGET|YYYY-MM-DD|count
 # SPEND|YYYY-MM-DD|HH:MM|count|activity|remaining
+# Boundary: all spoon business logic and file format ownership live in
+# scripts/lib/spoon_budget.sh. This CLI validates args and delegates only.
 
 set -euo pipefail
 

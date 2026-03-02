@@ -277,15 +277,17 @@ if [ "$TASKS_COMPLETED" -eq 0 ] && [ "$JOURNAL_ENTRY_COUNT" -eq 0 ] && [ "$_GE_C
     _ge_spoons_exhausted=false
     _ge_had_health_entries=false
     _ge_focus_completed=false
+    _ge_low_energy_threshold="${COACH_LOW_ENERGY_THRESHOLD:-4}"
+    _ge_high_fog_threshold="${COACH_HIGH_FOG_THRESHOLD:-6}"
 
     # Check health readings
     if [ -f "${HEALTH_FILE:-}" ]; then
-        _ge_low_energy=$(awk -F'|' -v day="$TODAY" '
-            $1 == "ENERGY" && substr($2, 1, 10) == day && $3 ~ /^[0-9]+$/ && $3 <= 3 { found=1 }
+        _ge_low_energy=$(awk -F'|' -v day="$TODAY" -v threshold="$_ge_low_energy_threshold" '
+            $1 == "ENERGY" && substr($2, 1, 10) == day && $3 ~ /^[0-9]+$/ && $3 <= threshold { found=1 }
             END { print found+0 }
         ' "$HEALTH_FILE")
-        _ge_high_fog=$(awk -F'|' -v day="$TODAY" '
-            $1 == "FOG" && substr($2, 1, 10) == day && $3 ~ /^[0-9]+$/ && $3 >= 7 { found=1 }
+        _ge_high_fog=$(awk -F'|' -v day="$TODAY" -v threshold="$_ge_high_fog_threshold" '
+            $1 == "FOG" && substr($2, 1, 10) == day && $3 ~ /^[0-9]+$/ && $3 >= threshold { found=1 }
             END { print found+0 }
         ' "$HEALTH_FILE")
         _ge_any_health=$(awk -F'|' -v day="$TODAY" '
@@ -401,6 +403,15 @@ if [ -d "$PROJECTS_DIR" ]; then
         return 1
     }
 
+    _ge_scan_limit="${GOODEVENING_PROJECT_SCAN_LIMIT:-20}"
+    if ! [[ "$_ge_scan_limit" =~ ^[0-9]+$ ]] || [ "$_ge_scan_limit" -lt 1 ]; then
+        _ge_scan_limit=20
+    fi
+    _ge_scan_jobs="${GOODEVENING_PROJECT_SCAN_JOBS:-8}"
+    if ! [[ "$_ge_scan_jobs" =~ ^[0-9]+$ ]] || [ "$_ge_scan_jobs" -lt 1 ]; then
+        _ge_scan_jobs=8
+    fi
+
     job_count=0
     tmp_results=$(mktemp -d)
     while IFS= read -r gitdir; do
@@ -414,11 +425,11 @@ if [ -d "$PROJECTS_DIR" ]; then
             fi
         ) &
         job_count=$((job_count + 1))
-        if [ "$job_count" -ge 8 ]; then
+        if [ "$job_count" -ge "$_ge_scan_jobs" ]; then
             wait
             job_count=0
         fi
-    done < <(find "$PROJECTS_DIR" -maxdepth 2 -type d -name ".git")
+    done < <(find "$PROJECTS_DIR" -maxdepth 2 -type d -name ".git" | head -n "$_ge_scan_limit")
 
     wait
 
@@ -584,29 +595,58 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
 
     echo "$REFLECTION" | sed 's/^/  /'
 
-    # Signal metadata: show which data sources fed the reflection
-    _ge_signals=()
+    # Signal metadata: summarize confidence and why evidence is sparse.
+    _ge_present=0
+    _ge_reasons=()
     if [ -n "${TODAY_COMMITS:-}" ] && [ "$TODAY_COMMITS" != "(none)" ]; then
-        _ge_signals+=("commits ✓")
+        _ge_present=$((_ge_present + 1))
     else
-        _ge_signals+=("commits ✗")
+        _ge_reasons+=("no commits")
     fi
     if [ -n "${COMPLETED_TASKS_CONTEXT:-}" ]; then
-        _ge_signals+=("tasks ✓")
+        _ge_present=$((_ge_present + 1))
     else
-        _ge_signals+=("tasks ✗")
+        _ge_reasons+=("no completed tasks")
     fi
-    if [ -n "${TODAY_JOURNAL:-}" ]; then
-        _ge_signals+=("journal ✓")
+    _ge_journal_count=$(printf '%s\n' "${TODAY_JOURNAL:-}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')
+    if [ "${_ge_journal_count:-0}" -gt 0 ]; then
+        _ge_present=$((_ge_present + 1))
+        if [ "${_ge_journal_count:-0}" -lt 2 ]; then
+            _ge_reasons+=("sparse journal")
+        fi
     else
-        _ge_signals+=("journal ✗")
+        _ge_reasons+=("no journal")
+    fi
+    _ge_health_count=0
+    if [ -f "${HEALTH_FILE:-}" ]; then
+        _ge_health_count=$(awk -F'|' -v day="$TODAY" 'substr($2, 1, 10) == day {count++} END {print count+0}' "$HEALTH_FILE")
+    fi
+    if [ "${_ge_health_count:-0}" -gt 0 ]; then
+        _ge_present=$((_ge_present + 1))
+    else
+        _ge_reasons+=("no health logs")
     fi
     if [ "${COACH_BEHAVIOR_DIGEST:-}" != "(behavior digest unavailable)" ]; then
-        _ge_signals+=("digest ✓")
+        _ge_present=$((_ge_present + 1))
     else
-        _ge_signals+=("digest ✗")
+        _ge_reasons+=("no behavior digest")
     fi
-    printf '  [Signal: %s]\n' "$(printf '%s' "${_ge_signals[0]}"; for _s in "${_ge_signals[@]:1}"; do printf ' | %s' "$_s"; done)"
+
+    _ge_signal_confidence="LOW"
+    if [ "${_ge_present:-0}" -ge 5 ] && [ "${#_ge_reasons[@]}" -eq 0 ]; then
+        _ge_signal_confidence="HIGH"
+    elif [ "${_ge_present:-0}" -ge 3 ]; then
+        _ge_signal_confidence="MEDIUM"
+    fi
+    if [ "${#_ge_reasons[@]}" -eq 0 ]; then
+        _ge_signal_reason_text="all primary sources available"
+    else
+        _ge_signal_reason_text=$(printf '%s' "${_ge_reasons[0]}")
+        for _reason in "${_ge_reasons[@]:1}"; do
+            _ge_signal_reason_text="${_ge_signal_reason_text}, ${_reason}"
+        done
+    fi
+    printf '  (Signal: %s - %s)\n' "$_ge_signal_confidence" "$_ge_signal_reason_text"
 
     echo "$REFLECTION" > "$DATA_DIR/tomorrow_launchpad"
 

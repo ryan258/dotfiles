@@ -39,12 +39,17 @@ fi
 if [ -f "$SCRIPT_DIR/lib/spoon_budget.sh" ]; then
     source "$SCRIPT_DIR/lib/spoon_budget.sh"
 fi
+if [ -f "$SCRIPT_DIR/lib/coach_metrics.sh" ]; then
+    source "$SCRIPT_DIR/lib/coach_metrics.sh"
+fi
 
 # --- Focus ---
 echo ""
 echo "🎯 TODAY'S FOCUS:"
+_status_focus_text=""
 if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
-    echo "  $(cat "$FOCUS_FILE")"
+    _status_focus_text=$(cat "$FOCUS_FILE")
+    echo "  $_status_focus_text"
 else
     echo "  (No focus set)"
 fi
@@ -76,14 +81,28 @@ if [ -f "${SPOON_LOG:-}" ]; then
     fi
 fi
 _status_depletion=""
-if [ -x "$SCRIPT_DIR/spoon_manager.sh" ]; then
-    _status_depletion=$("$SCRIPT_DIR/spoon_manager.sh" predict 2>/dev/null || true)
+if command -v predict_spoon_depletion >/dev/null 2>&1; then
+    _status_depletion=$(predict_spoon_depletion 2>/dev/null || true)
+fi
+_status_focus_label="${_status_focus_text:-"(none set)"}"
+_status_alignment="N/A"
+if command -v coach_focus_coherence >/dev/null 2>&1; then
+    # Keep status responsive: tasks-only coherence (skip multi-repo commit scan).
+    _status_focus_metrics=$(coach_focus_coherence "$_status_focus_text" "$(date_today)" "false" 2>/dev/null || true)
+    _status_focus_pct=$(printf '%s\n' "$_status_focus_metrics" | awk -F'=' '$1 == "focus_coherence_pct" {print $2; exit}')
+    _status_focus_detail=$(printf '%s\n' "$_status_focus_metrics" | awk -F'=' '$1 == "focus_coherence_detail" {print $2; exit}')
+    if [[ "${_status_focus_pct:-}" =~ ^[0-9]+$ ]]; then
+        _status_alignment="${_status_focus_pct}% (${_status_focus_detail:-items})"
+    elif [ -n "${_status_focus_detail:-}" ]; then
+        _status_alignment="N/A (${_status_focus_detail})"
+    fi
 fi
 if [ -n "$_status_depletion" ]; then
-    echo "  Mode: ${_status_mode} | Spoons: ${_status_spoons}/${_status_budget} remaining (${_status_depletion})"
+    echo "  Mode: ${_status_mode} | Spoons: ${_status_spoons}/${_status_budget} remaining (${_status_depletion}) | Focus: ${_status_focus_label}"
 else
-    echo "  Mode: ${_status_mode} | Spoons: ${_status_spoons}/${_status_budget} remaining"
+    echo "  Mode: ${_status_mode} | Spoons: ${_status_spoons}/${_status_budget} remaining | Focus: ${_status_focus_label}"
 fi
+echo "  Focus alignment: ${_status_alignment}"
 
 # --- Display Header ---
 echo ""

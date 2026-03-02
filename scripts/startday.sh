@@ -374,7 +374,7 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
         CACHED_BRIEFING=$(grep "^$TODAY|" "$BRIEFING_CACHE" | tail -n 1 | cut -d'|' -f2- || true)
         CACHED_BRIEFING="${CACHED_BRIEFING//\\n/$'\n'}"
         echo "$CACHED_BRIEFING" | sed 's/^/  /'
-        echo "  [Signal: cached briefing from earlier today]"
+        echo "  (Signal: CACHED - briefing from earlier today)"
     else
         # Generate new briefing
         # Gather context
@@ -474,34 +474,54 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
         printf '%s|%s\n' "$TODAY" "$BRIEFING_ESCAPED" > "$BRIEFING_CACHE"
         echo "$BRIEFING" | sed 's/^/  /'
 
-        # Signal metadata: show which data sources fed the briefing
-        _sd_signals=()
+        # Signal metadata: summarize confidence and why evidence is sparse.
+        _sd_present=0
+        _sd_reasons=()
         if [ -n "${YESTERDAY_COMMITS:-}" ] && [ "$YESTERDAY_COMMITS" != "(none)" ]; then
-            _sd_signals+=("commits ✓")
+            _sd_present=$((_sd_present + 1))
         else
-            _sd_signals+=("commits ✗")
+            _sd_reasons+=("no commits")
         fi
-        if [ -n "${RECENT_JOURNAL:-}" ]; then
-            _sd_signals+=("journal ✓")
+        _sd_journal_count=$(printf '%s\n' "${RECENT_JOURNAL:-}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')
+        if [ "${_sd_journal_count:-0}" -gt 0 ]; then
+            _sd_present=$((_sd_present + 1))
+            if [ "${_sd_journal_count:-0}" -lt 2 ]; then
+                _sd_reasons+=("sparse journal")
+            fi
         else
-            _sd_signals+=("journal ✗")
+            _sd_reasons+=("no journal")
         fi
         if [ -f "${HEALTH_FILE:-}" ] && [ -s "${HEALTH_FILE:-}" ]; then
-            _sd_signals+=("health ✓")
+            _sd_present=$((_sd_present + 1))
         else
-            _sd_signals+=("health ✗")
+            _sd_reasons+=("no health logs")
         fi
         if [ -n "${TODAY_TASKS:-}" ]; then
-            _sd_signals+=("tasks ✓")
+            _sd_present=$((_sd_present + 1))
         else
-            _sd_signals+=("tasks ✗")
+            _sd_reasons+=("no tasks")
         fi
         if [ "${COACH_BEHAVIOR_DIGEST:-}" != "(behavior digest unavailable)" ]; then
-            _sd_signals+=("digest ✓")
+            _sd_present=$((_sd_present + 1))
         else
-            _sd_signals+=("digest ✗")
+            _sd_reasons+=("no behavior digest")
         fi
-        printf '  [Signal: %s]\n' "$(printf '%s' "${_sd_signals[0]}"; for _s in "${_sd_signals[@]:1}"; do printf ' | %s' "$_s"; done)"
+
+        _sd_signal_confidence="LOW"
+        if [ "${_sd_present:-0}" -ge 5 ] && [ "${#_sd_reasons[@]}" -eq 0 ]; then
+            _sd_signal_confidence="HIGH"
+        elif [ "${_sd_present:-0}" -ge 3 ]; then
+            _sd_signal_confidence="MEDIUM"
+        fi
+        if [ "${#_sd_reasons[@]}" -eq 0 ]; then
+            _sd_signal_reason_text="all primary sources available"
+        else
+            _sd_signal_reason_text=$(printf '%s' "${_sd_reasons[0]}")
+            for _reason in "${_sd_reasons[@]:1}"; do
+                _sd_signal_reason_text="${_sd_signal_reason_text}, ${_reason}"
+            done
+        fi
+        printf '  (Signal: %s - %s)\n' "$_sd_signal_confidence" "$_sd_signal_reason_text"
 
         if command -v coaching_append_log >/dev/null 2>&1; then
             COACH_METRICS_PAYLOAD="tactical:$(printf '%s' "$COACH_TACTICAL_METRICS" | tr '\n' ';') pattern:$(printf '%s' "$COACH_PATTERN_METRICS" | tr '\n' ';') quality:$(printf '%s' "$COACH_DATA_QUALITY_FLAGS" | tr '\n' ';')"

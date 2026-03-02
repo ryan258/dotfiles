@@ -2,6 +2,36 @@
 
 **Last Updated:** March 2, 2026
 
+## Version 2.2.33 (March 2, 2026) - Coaching Completion Pass
+
+**Status:** ✅ Production Ready
+
+### Improvements
+
+- **Signal clarity line upgraded** in `startday.sh` and `goodevening.sh`:
+  - now prints confidence + explicit missing/sparse reasons (for example: `Signal: LOW - no commits, sparse journal`) instead of source checkmarks only.
+- **`status.sh` DAILY CONTEXT expanded**:
+  - now includes focus label and focus coherence (`coach_focus_coherence`) in addition to mode and spoon budget.
+  - status coherence uses tasks-only mode for low-latency checks (digest remains tasks+commits).
+  - now calls `predict_spoon_depletion` from `spoon_budget.sh` directly (library-first path) instead of shelling out to `spoon_manager.sh`.
+- **Grounding feedback loop strengthened** in `coach_metrics.sh`:
+  - records daily suggestion adherence (`high|low`) to `COACH_ADHERENCE_FILE`.
+  - computes rolling adherence rate and surfaces it in the behavior digest for prompt tuning.
+- **Project safety scan performance controls** in `goodevening.sh`:
+  - added capped repo scan and configurable parallelism via `GOODEVENING_PROJECT_SCAN_LIMIT` and `GOODEVENING_PROJECT_SCAN_JOBS`.
+- **Threshold centralization completed**:
+  - `goodevening.sh` rest-day low-energy/high-fog checks now use `COACH_LOW_ENERGY_THRESHOLD` and `COACH_HIGH_FOG_THRESHOLD` from `config.sh`.
+
+### Config Additions
+
+- `COACH_ADHERENCE_FILE` (default: `$DATA_DIR/coach_adherence.txt`)
+- `GOODEVENING_PROJECT_SCAN_LIMIT` (default: `20`)
+- `GOODEVENING_PROJECT_SCAN_JOBS` (default: `8`)
+
+### Validation
+
+- `bats tests/test_status.sh tests/test_coach_prompts.sh tests/test_coach_metric_branches.sh tests/test_spoon_budget_lib.sh tests/test_goodevening_coach.sh tests/test_startday_coach.sh` — 53/53 passing.
+
 ## Version 2.2.32 (March 2, 2026) - Configurable Thresholds, Signal Metadata, Status Context
 
 **Status:** ✅ Production Ready

@@ -411,11 +411,12 @@ coach_collect_data_quality_flags() {
 }
 
 # Compute focus coherence: % of completed tasks aligned with today's focus
-# Usage: coach_focus_coherence <focus_text> <anchor_date>
+# Usage: coach_focus_coherence <focus_text> <anchor_date> [include_commits]
 # Output: key=value lines (focus_coherence_pct, focus_coherence_detail)
 coach_focus_coherence() {
     local focus_text="$1"
     local anchor_date="$2"
+    local include_commits="${3:-true}"
     local done_file="$DONE_FILE"
 
     if [[ -z "$focus_text" ]]; then
@@ -443,9 +444,10 @@ coach_focus_coherence() {
     fi
 
     # Gather commit messages for anchor_date (best-effort from common repos)
+    # Can be disabled for low-latency call sites (for example status.sh).
     local commits=""
     local projects_dir="${PROJECTS_DIR:-$HOME/Projects}"
-    if command -v git >/dev/null 2>&1; then
+    if [[ "$include_commits" == "true" ]] && command -v git >/dev/null 2>&1; then
         local repo_dir
         for repo_dir in "$HOME/dotfiles" "$projects_dir"/*; do
             if [[ -d "$repo_dir/.git" ]]; then
@@ -464,7 +466,11 @@ coach_focus_coherence() {
 
     if [[ -z "$all_items" ]]; then
         echo "focus_coherence_pct=N/A"
-        echo "focus_coherence_detail=no tasks or commits"
+        if [[ "$include_commits" == "true" ]]; then
+            echo "focus_coherence_detail=no tasks or commits"
+        else
+            echo "focus_coherence_detail=no tasks"
+        fi
         return 0
     fi
 
@@ -626,6 +632,95 @@ coach_suggestion_adherence() {
     fi
 }
 
+# Persist daily adherence as a simple feedback loop for future coaching.
+# Usage: coach_record_suggestion_adherence <anchor_date> <high|low|N/A>
+coach_record_suggestion_adherence() {
+    local anchor_date="$1"
+    local adherence="$2"
+    local adherence_file="${COACH_ADHERENCE_FILE:-${DATA_DIR:-}/coach_adherence.txt}"
+
+    if [[ "$adherence" != "high" && "$adherence" != "low" ]]; then
+        return 0
+    fi
+    if [[ -z "$anchor_date" ]]; then
+        anchor_date=$(date '+%Y-%m-%d')
+    fi
+    if [[ -z "$adherence_file" ]]; then
+        return 0
+    fi
+
+    local adherence_dir
+    adherence_dir=$(dirname "$adherence_file")
+    mkdir -p "$adherence_dir" 2>/dev/null || return 0
+
+    local tmp_file=""
+    tmp_file=$(_coach_secure_tmpfile "coach_adherence") || return 0
+    : > "$tmp_file"
+
+    if [[ -f "$adherence_file" ]]; then
+        awk -F'|' -v day="$anchor_date" '
+            $1 != day && $1 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/ && ($2 == "high" || $2 == "low") {
+                print $1 "|" $2
+            }
+        ' "$adherence_file" >> "$tmp_file" 2>/dev/null || true
+    fi
+    printf '%s|%s\n' "$anchor_date" "$adherence" >> "$tmp_file"
+
+    sort -u "$tmp_file" > "${tmp_file}.sorted" 2>/dev/null || cp "$tmp_file" "${tmp_file}.sorted"
+    mv "${tmp_file}.sorted" "$adherence_file" 2>/dev/null || true
+    rm -f "$tmp_file" "${tmp_file}.sorted" 2>/dev/null || true
+}
+
+# Compute rolling adherence rate for the feedback loop.
+# Usage: coach_suggestion_adherence_rate <anchor_date> [days]
+coach_suggestion_adherence_rate() {
+    local anchor_date="$1"
+    local days="${2:-14}"
+    local adherence_file="${COACH_ADHERENCE_FILE:-${DATA_DIR:-}/coach_adherence.txt}"
+
+    if [[ -z "$anchor_date" ]]; then
+        anchor_date=$(date '+%Y-%m-%d')
+    fi
+    if ! [[ "$days" =~ ^[0-9]+$ ]] || [[ "$days" -lt 1 ]]; then
+        days=14
+    fi
+    if [[ ! -f "$adherence_file" ]]; then
+        echo "suggestion_adherence_rate=N/A"
+        echo "suggestion_adherence_samples=0"
+        return 0
+    fi
+
+    local window_start
+    window_start=$(_coach_shift_date "$anchor_date" "-$((days-1))") || {
+        echo "suggestion_adherence_rate=N/A"
+        echo "suggestion_adherence_samples=0"
+        return 0
+    }
+
+    local high_count low_count sample_count
+    read -r high_count low_count sample_count <<< "$(awk -F'|' -v start="$window_start" -v end="$anchor_date" '
+        $1 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/ && $1 >= start && $1 <= end && ($2 == "high" || $2 == "low") {
+            total++
+            if ($2 == "high") high++
+            else low++
+        }
+        END {print high+0, low+0, total+0}
+    ' "$adherence_file")"
+
+    if [[ "${sample_count:-0}" -eq 0 ]]; then
+        echo "suggestion_adherence_rate=N/A"
+        echo "suggestion_adherence_samples=0"
+        return 0
+    fi
+
+    local pct
+    pct=$(awk -v h="$high_count" -v t="$sample_count" 'BEGIN { printf "%d", (h/t)*100 }')
+    echo "suggestion_adherence_rate=$pct"
+    echo "suggestion_adherence_samples=$sample_count"
+    echo "suggestion_adherence_high=$high_count"
+    echo "suggestion_adherence_low=$low_count"
+}
+
 # Detect commits pushed after midnight (early morning of anchor date)
 coach_late_night_commits() {
     local anchor_date="$1"
@@ -691,6 +786,13 @@ coach_build_behavior_digest() {
     adherence=$(coach_suggestion_adherence "$anchor_date" 2>/dev/null || echo "suggestion_adherence=N/A")
     local suggestion_adherence
     suggestion_adherence=$(_coach_extract_value "$adherence" "suggestion_adherence")
+    coach_record_suggestion_adherence "$anchor_date" "$suggestion_adherence" || true
+
+    local adherence_rate_blob
+    adherence_rate_blob=$(coach_suggestion_adherence_rate "$anchor_date" 14 2>/dev/null || echo $'suggestion_adherence_rate=N/A\nsuggestion_adherence_samples=0')
+    local suggestion_adherence_rate suggestion_adherence_samples
+    suggestion_adherence_rate=$(_coach_extract_value "$adherence_rate_blob" "suggestion_adherence_rate")
+    suggestion_adherence_samples=$(_coach_extract_value "$adherence_rate_blob" "suggestion_adherence_samples")
 
     local late_night
     late_night=$(coach_late_night_commits "$anchor_date" 2>/dev/null || echo "late_night_commits=N/A")
@@ -718,6 +820,13 @@ coach_build_behavior_digest() {
     fi
     if [[ "$suggestion_adherence" == "low" ]]; then
         drift_risks+=("adherence to yesterday's AI suggestions was low")
+    fi
+    if [[ "$suggestion_adherence_rate" =~ ^[0-9]+$ ]] && [[ "${suggestion_adherence_samples:-0}" =~ ^[0-9]+$ ]]; then
+        if [[ "$suggestion_adherence_rate" -ge 70 ]]; then
+            working_signals+=("recent AI suggestion follow-through is strong (${suggestion_adherence_rate}% over ${suggestion_adherence_samples} days)")
+        elif [[ "$suggestion_adherence_rate" -lt 50 ]] && [[ "$suggestion_adherence_samples" -ge 3 ]]; then
+            drift_risks+=("AI suggestion follow-through is low (${suggestion_adherence_rate}% over ${suggestion_adherence_samples} days)")
+        fi
     fi
     if [[ "$late_night_commits" == "true" ]]; then
         drift_risks+=("late night commits detected (e.g., at ${late_night_time}) - consider whether intentional or hyperfocus drift")
@@ -794,7 +903,7 @@ coach_build_behavior_digest() {
     echo "Tactical window: ${tactical_days}d ending $anchor_date"
     echo "  open_tasks=$(_coach_extract_value "$tactical" "open_tasks"), stale_tasks=$stale_tasks, completed_tasks=$completed_tasks, journal_entries=$(_coach_extract_value "$tactical" "journal_entries")"
     echo "  avg_energy=${avg_energy}, avg_fog=${avg_fog}, energy_3d=${energy_3d_trajectory:-N/A} (${energy_3d_direction:-N/A}), afternoon_slump=${afternoon_slump:-N/A}, avg_spoon_budget=$(_coach_extract_value "$tactical" "avg_spoon_budget"), avg_spoon_spend=$(_coach_extract_value "$tactical" "avg_spoon_spend")"
-    echo "  unique_dirs=$unique_dirs, dir_switches=$dir_switches, suggestion_adherence=${suggestion_adherence:-N/A}, late_night_commits=${late_night_commits:-N/A}, recent_pushes=$(_coach_extract_value "$tactical" "recent_pushes_count"), commit_context=$(_coach_extract_value "$tactical" "commit_context_count")"
+    echo "  unique_dirs=$unique_dirs, dir_switches=$dir_switches, suggestion_adherence=${suggestion_adherence:-N/A}, suggestion_adherence_rate=${suggestion_adherence_rate:-N/A} (${suggestion_adherence_samples:-0} samples), late_night_commits=${late_night_commits:-N/A}, recent_pushes=$(_coach_extract_value "$tactical" "recent_pushes_count"), commit_context=$(_coach_extract_value "$tactical" "commit_context_count")"
     echo "Pattern window: ${pattern_days}d ending $anchor_date"
     echo "  completion_trend=$(_coach_extract_value "$pattern" "completion_trend") (first=$(_coach_extract_value "$pattern" "completion_first_half"), second=$(_coach_extract_value "$pattern" "completion_second_half"))"
     echo "  journal_trend=$(_coach_extract_value "$pattern" "journal_trend") (first=$(_coach_extract_value "$pattern" "journal_first_half"), second=$(_coach_extract_value "$pattern" "journal_second_half"))"

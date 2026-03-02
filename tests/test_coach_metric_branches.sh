@@ -24,6 +24,7 @@ setup() {
     export HEALTH_FILE="$DATA_DIR/health.txt"
     export DONE_FILE="$DATA_DIR/todo_done.txt"
     export BRIEFING_CACHE_FILE="$DATA_DIR/briefing_cache.txt"
+    export COACH_ADHERENCE_FILE="$DATA_DIR/coach_adherence.txt"
     export PROJECTS_DIR="$TEST_ROOT/Projects"
     export COACH_LOW_ENERGY_THRESHOLD=4
     mkdir -p "$DATA_DIR"
@@ -94,6 +95,24 @@ EOF
     run coach_suggestion_adherence "$anchor"
     assert_success
     assert_output_contains "suggestion_adherence=high"
+}
+
+@test "coach_record_suggestion_adherence upserts and rolling rate is computed" {
+    local anchor="2024-01-05"
+    coach_record_suggestion_adherence "2024-01-03" "low"
+    coach_record_suggestion_adherence "2024-01-04" "high"
+    coach_record_suggestion_adherence "2024-01-05" "low"
+    coach_record_suggestion_adherence "2024-01-05" "high"
+
+    local day_lines
+    day_lines=$(grep -c "^2024-01-05|" "$COACH_ADHERENCE_FILE")
+    [ "$day_lines" -eq 1 ]
+    grep -q "^2024-01-05|high$" "$COACH_ADHERENCE_FILE"
+
+    run coach_suggestion_adherence_rate "$anchor" 7
+    assert_success
+    assert_output_contains "suggestion_adherence_rate=66"
+    assert_output_contains "suggestion_adherence_samples=3"
 }
 
 @test "coach_late_night_commits detects early morning pushes" {

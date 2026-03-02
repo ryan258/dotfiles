@@ -24,7 +24,7 @@ setup() {
     mkdir -p "$DATA_DIR" "$DOTFILES_DIR/scripts/lib" "$PROJECTS_DIR"
 
     # Copy core libraries
-    for lib in common.sh config.sh date_utils.sh file_ops.sh spoon_budget.sh health_ops.sh github_ops.sh; do
+    for lib in common.sh config.sh date_utils.sh file_ops.sh spoon_budget.sh health_ops.sh github_ops.sh coach_metrics.sh; do
         if [ -f "$BATS_TEST_DIRNAME/../scripts/lib/$lib" ]; then
             cp "$BATS_TEST_DIRNAME/../scripts/lib/$lib" "$DOTFILES_DIR/scripts/lib/$lib"
         fi
@@ -149,6 +149,19 @@ EOF
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"Spoons: ?/10 remaining"* ]]
+}
+
+@test "status.sh DAILY CONTEXT shows focus and focus alignment" {
+    echo "logo" > "$DATA_DIR/daily_focus.txt"
+    cat > "$DATA_DIR/todo_done.txt" <<EOF
+${TODAY} 09:00:00|ship logo
+EOF
+
+    run _run_status
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Focus: logo"* ]]
+    [[ "$output" == *"Focus alignment: 100% (1/1 items aligned)"* ]]
 }
 
 # ─── Journal section ─────────────────────────────────────────────────────

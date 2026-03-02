@@ -170,8 +170,8 @@ PY
     [[ "$output" == *"Where drift happened:"* ]]
     [[ "$output" == *"Tomorrow lock:"* ]]
 
-    # Signal metadata line with pipe delimiters
-    [[ "$output" == *"[Signal:"*" | "*"]"* ]]
+    # Signal metadata line includes confidence and reason summary
+    [[ "$output" == *"(Signal:"*" - "*")"* ]]
 
     [ -f "$DATA_DIR/coach_log.txt" ]
     grep -q '^GOODEVENING|' "$DATA_DIR/coach_log.txt"

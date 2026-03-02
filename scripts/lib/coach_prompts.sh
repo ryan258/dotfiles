@@ -59,6 +59,7 @@ Behavioral Interventions (use if triggered by digest):
 - If dir_switches > 80, suggest a "single-project lock" for the first 2 hours.
 - If afternoon_slump=true or "afternoon energy slump detected" is present, preemptively suggest shorter task blocks and an explicit break after 2pm.
 - If suggestion_adherence is low, simplify your Do Next suggestions and ask if the tasks feel realistic.
+- If suggestion_adherence_rate < 50% over multiple samples, ask for one reason yesterday's plan failed and reduce tomorrow to one locked must-do.
 - If "late night commits detected" is present, flag it as a drift risk and ask if it was intentional or hyperfocus.
 
 Personalized traps to avoid:
@@ -152,6 +153,7 @@ Behavioral Interventions (use if triggered by digest):
 - If dir_switches > 80, diagnose lack of flow state and suggest a "single-project lock" setup for tomorrow.
 - If stale_tasks > 4, point out task accumulation and suggest a "triage block" tomorrow morning.
 - If afternoon_slump=true or "afternoon energy slump detected" is present, note it as an exhaustion pattern and suggest better pacing tomorrow.
+- If suggestion_adherence_rate < 50% over multiple samples, call out that plans may be too ambitious and tighten tomorrow's scope.
 - If "late night commits detected" is present, gently point out that hyperfocus is cutting into sleep and recovery.
 
 Personalized traps to avoid:

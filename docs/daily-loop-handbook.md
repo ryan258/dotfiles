@@ -29,7 +29,7 @@ startday
 - `Health Lens`
 - `Signal Confidence` (HIGH / MEDIUM / LOW)
 - `Evidence Check`
-- `[Signal: ...]` metadata line showing which data sources were available
+- `(Signal: ...)` metadata line with confidence plus explicit missing/sparse source reasons
 
 ### Refresh Modes
 
@@ -129,7 +129,7 @@ _(Or `goodevening 2026-01-20` to close out a specific past date)._
 - `Health Lens`
 - `Signal Confidence` (HIGH / MEDIUM / LOW)
 - `Evidence Used`
-- `[Signal: ...]` metadata line showing which data sources were available
+- `(Signal: ...)` metadata line with confidence plus explicit missing/sparse source reasons
 
 **Your `Tomorrow Lock` should always include:**
 
@@ -152,7 +152,7 @@ gcal agenda 1          # Preview tomorrow's schedule
 
 | Command              | What It Does                                        |
 | -------------------- | --------------------------------------------------- |
-| `status`             | Mid-day context reset: focus, coach mode, spoons, location, tasks |
+| `status`             | Mid-day context reset: focus, coach mode, spoon depletion forecast, focus alignment, location, tasks |
 | `weekreview`         | Generate a retrospective summary of the last 7 days |
 | `context.sh capture` | Snapshot the current context                        |
 | `context.sh list`    | List saved context snapshots                        |

@@ -35,6 +35,7 @@ goodevening
 
 - `coach_mode.txt`: `YYYY-MM-DD|LOCKED|source` or `YYYY-MM-DD|OVERRIDE|source`
 - `coach_log.txt`: `TYPE|TIMESTAMP|DATE|MODE|FOCUS|METRICS|OUTPUT`
+- `coach_adherence.txt`: `YYYY-MM-DD|high` or `YYYY-MM-DD|low` (rolling AI suggestion follow-through)
 - Core daily files:
   - `todo.txt`
   - `todo_done.txt`
@@ -2720,7 +2721,7 @@ The following aliases are parsed directly from `zsh/aliases.zsh` to give you an 
 | `archextract` | `archive_manager.sh extract`                               | Extract an archive                       |
 | `archlist`    | `archive_manager.sh list`                                  | List archive contents without extracting |
 | `info`        | `weather.sh && echo && todo.sh list`                       | Weather + open tasks                     |
-| `status`      | `status.sh`                                                | Unified status dashboard                 |
+| `status`      | `status.sh`                                                | Mid-day context reset: focus, coach mode, spoons, alignment |
 | `overview`    | `system_info.sh && echo && battery_check.sh`               | Hardware + battery                       |
 | `cleanup`     | `cd ~/Downloads && file_organizer.sh bytype && findbig.sh` | Tidy Downloads, flag large files         |
 | `quickbackup` | `backup_project.sh && echo 'Backup complete!'`             | One-command project backup               |
@@ -3287,7 +3288,13 @@ Usage: github_helper.sh {list_repos|get_repo <repo>|get_latest_commit <repo>|get
   (GitHub operations library not loaded)
   🎉 Win: You completed $TASKS_COMPLETED task(s) today. Progress is progress.
   🧠 Win: You logged $JOURNAL_ENTRY_COUNT entries. Context captured.
+  💻 Win: You made N commit(s) today. Code shipped even without logged tasks.
+  💪 Tough day. Your body needed rest — that's not failure, it's management.
+  ✅ Focus completed! Tasks may not be captured but the goal was met.
+  🧘 Quiet day with some health tracking. Rest is productive.
   🧘 Today was a rest day. Logging off is a valid and productive choice.
+  (Signal: HIGH - all primary sources available)
+  (Signal: LOW - no commits, sparse journal)
   ⚠️  $proj_name: $change_count uncommitted changes
       └─ Large diff: +$additions/-$deletions lines
       └─ Could not determine current branch. Is this a valid git repository?
@@ -3586,6 +3593,7 @@ Usage: $(basename
   set <count>                    Update today
   spend <count> [activity]       Spend spoons on an activity
   check                          Show remaining spoons
+  predict                        Show predicted spoon depletion time
   history [days]                 Show spoon history (default: 7 days)
 Usage: $(basename
 ```
@@ -3602,7 +3610,7 @@ Usage: $(basename
 
 ```text
    Focus set to: $new_focus
-  You have $remaining spoons remaining today.
+  You have $remaining spoons remaining today (at current rate, ~0 by 2:30pm).
   Invalid input, defaulting to 10.
   (Non-interactive mode: defaulting to 10)
   Invalid input, defaulting to 10.
@@ -3617,6 +3625,8 @@ Usage: $(basename
   (Unable to fetch commit activity. Check your token or network.)
   (GitHub operations library not loaded)
   (No suggestions available)
+  (Signal: MEDIUM - no commits, sparse journal)
+  (Signal: CACHED - briefing from earlier today)
   ⚠️ Blog status unavailable (check BLOG_STATUS_DIR or BLOG_DIR configuration).
   ⚠️ Unable to list recent content (check BLOG_CONTENT_DIR).
   (Health operations library not loaded)
@@ -3630,13 +3640,17 @@ Usage: $(basename
 
 ### `status.sh`
 
-**Description:** status.sh - Provides a mid-day context recovery dashboard.
+**Description:** status.sh - Provides a mid-day context recovery dashboard with coaching awareness.
+
+Shows focus, coach mode, spoon budget with depletion prediction, and focus alignment score.
 
 **Usage & Examples:**
 
 ```text
   $(cat
   (No focus set)
+  Mode: LOCKED | Spoons: 4/10 remaining (~0 by 2:30pm) | Focus: march-madness
+  Focus alignment: 75% (3/4 items aligned)
   • Current directory: $CURRENT_DIR
   • Context snapshots: $CONTEXT_COUNT (context.sh list)
   • Current git branch: $GIT_BRANCH

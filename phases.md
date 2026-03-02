@@ -1,6 +1,6 @@
 # Dotfiles Masterplan Phases
 
-Last updated: February 11, 2026
+Last updated: March 2, 2026
 Owner: `dotfiles` root project
 Canonical behavior contract: `CLAUDE.md`
 
@@ -213,6 +213,18 @@ Report remediation status (from `REPORT.md`):
   - P3a: #34-#37 — critical/high regressions (Completed)
   - P3b: #38-#41 — medium hardening (Completed)
   - P3c: #42-#43, #10-#15 — cleanup and polish (Completed)
+- Quality-pass completed (v2.2.28–v2.2.33):
+  - Configurable coaching thresholds centralized in `config.sh` (v2.2.32)
+  - Signal confidence metadata + data-source transparency in startday/goodevening (v2.2.32)
+  - `status.sh` DAILY CONTEXT section: coach mode, spoon budget/depletion, focus text, focus coherence (v2.2.32–v2.2.33)
+  - Test suites added for `status.sh`, `coach_prompts.sh`, and new metric branches (v2.2.32–v2.2.33)
+  - Predictive spoon depletion in startday/status (v2.2.32)
+  - Focus coherence tracking and energy 3-day trajectory in behavior digest (v2.2.32)
+  - Smarter goodevening "Wins" with nuanced rest-day detection (v2.2.32)
+  - Behavioral intervention triggers in AI prompts (v2.2.33)
+  - Afternoon slump detection, late-night commit flagging, AI suggestion adherence (v2.2.33)
+  - Adherence persistence + rolling rate feedback loop (v2.2.33)
+  - Project safety scan perf controls: repo cap + configurable parallelism (v2.2.33)
 - Remaining (Low Priority Polish):
   - #17-#33 — minor cleanup, aliases, and non-critical edge cases
 
@@ -256,6 +268,10 @@ Key coach-related settings:
 - `AI_COACH_DRIFT_STALE_TASK_DAYS`
 - `COACH_LOG_FILE`
 - `COACH_MODE_FILE`
+- `COACH_ADHERENCE_FILE`
+- `COACH_DRIFT_STALE_THRESHOLD` .. `COACH_TREND_DELTA_THRESHOLD` (7 thresholds)
+- `GOODEVENING_PROJECT_SCAN_LIMIT`
+- `GOODEVENING_PROJECT_SCAN_JOBS`
 
 Defined in:
 
@@ -273,7 +289,7 @@ bats tests/*.sh
 
 Current known result:
 
-- Full suite passing (`1..124`).
+- Full suite passing (last verified: 53/53 targeted coach tests in v2.2.33; run `bats tests/*.sh` for full count).
 
 ## Conversation Bootstrap Template
 
