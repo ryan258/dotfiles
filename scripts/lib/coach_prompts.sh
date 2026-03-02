@@ -68,6 +68,8 @@ Action-source rules:
 - If focus and top tasks are misaligned, Do Next step 1 must be to reconcile task order/scope in the todo list.
 
 Output format (strict, no extra sections):
+Briefing Summary:
+- 3-5 bullet points covering: yesterday's momentum, today's focus alignment, current energy/health signal, top risk, and one quick win available. Synthesize across inputs; do not restate any single input section verbatim.
 North Star:
 - One sentence practical outcome for today.
 Do Next (ordered 1-3):
@@ -80,17 +82,21 @@ Anti-tinker rule:
 - One explicit boundary rule for this mode.
 Health lens:
 - Always include energy/fog/spoon-aware pacing guidance.
+Signal confidence:
+- HIGH, MEDIUM, or LOW based on how much evidence was available. If LOW, name which data sources (commits, journal, health, tasks, digest) were absent.
 Evidence check:
 - One line naming exact commits/tasks/journal/metrics cues used.
 
 Constraints:
-- Total 120-190 words.
+- Total 250-350 words.
 - No markdown headers, bold text, separators, or concluding paragraph.
 - Keep language operational and specific; avoid generic motivation.
 - If signal is missing, say so briefly instead of inventing details.
 - Do Next must be grounded in today's focus and listed top tasks.
+- Do Next steps must quote or closely paraphrase actual task text from Top tasks. Do not rephrase tasks into implementation language the user did not use.
 - Do not invent new repositories, modules, endpoints, files, APIs, or projects unless those exact items appear in today's focus or top tasks.
 - If focus and top tasks conflict, step 1 must reconcile them (for example: update top task order or capture a scoped task), not invent a new implementation track.
+- Data-quality flags (e.g., dir_usage_malformed, malformed lines) are diagnostic metadata for system health, not actionable risks for the user. Do not surface them as top risks or action items.
 - Evidence check must only cite cues that are explicitly present in the provided context.
 - Do Next must not reference commit hashes, repo names from push history, or journal-only details.
 EOF
@@ -144,21 +150,27 @@ Coach mode semantics:
 - RECOVERY: aggressive simplicity. Enforce resting constraints, strip down tasks to 1-2 bare minimums, no high-cognitive-load planning.
 
 Output format (strict, no extra sections):
+Reflection Summary:
+- 3-5 bullet points covering: key accomplishment, focus alignment, energy trajectory, main drift event, and tomorrow's setup. Synthesize across inputs; do not restate any single input section verbatim.
 What worked:
 - 1-2 lines anchored to concrete evidence.
 Where drift happened:
 - 1-2 lines on off-rails patterns or distraction loops.
 Likely trigger:
 - One probable trigger for drift based on evidence.
+Pattern watch:
+- One line noting any recurring pattern visible across recent days (e.g., "third consecutive day with context-switching drift after 2pm"). Only include if behavior digest supports it; otherwise say "not enough data for pattern detection."
 Tomorrow lock:
 - One locked first move, one done condition, and one anti-tinker boundary.
 Health lens:
 - Always include energy/fog/spoon-aware pacing guidance.
+Signal confidence:
+- HIGH, MEDIUM, or LOW based on how much evidence was available. If LOW, name which data sources (commits, journal, health, tasks, digest) were absent.
 Evidence used:
 - One line naming exact commits/tasks/journal/metrics cues used.
 
 Constraints:
-- Total 140-240 words.
+- Total 280-400 words.
 - Reflective summary tone, operationally useful.
 - No markdown headers, bold text, separators, or concluding paragraph.
 - If data is sparse, say so briefly instead of inventing details.
@@ -231,6 +243,10 @@ coach_startday_fallback_output() {
     fi
 
     cat <<EOF
+Briefing Summary:
+- Coach mode: ${mode_upper}. Focus: ${focus:-"(no focus set)"}.
+- AI coaching was ${reason}; using deterministic fallback structure.
+- First task from your list: ${first_task}.
 North Star:
 - Ship one concrete action aligned to today's focus: ${focus:-"(no focus set)"}.
 Do Next (ordered 1-3):
@@ -242,7 +258,9 @@ Operating insight (working + drift risk):
 Anti-tinker rule:
 - ${anti_tinker_rule}
 Health lens:
-- Use short blocks with a break; pause if energy drops under 4 or fog rises above 6.
+- Use short blocks with a break; pause if energy drops under ${COACH_LOW_ENERGY_THRESHOLD} or fog rises above ${COACH_HIGH_FOG_THRESHOLD}.
+Signal confidence:
+- LOW (AI ${reason}; fallback uses only focus, top tasks, and mode).
 Evidence check:
 - Deterministic fallback (${reason}) using focus, top tasks, and behavioral digest metrics.
 EOF
@@ -265,6 +283,10 @@ coach_goodevening_fallback_output() {
     fi
 
     cat <<EOF
+Reflection Summary:
+- Coach mode: ${mode_upper}. Focus: ${focus:-"(no focus set)"}.
+- AI reflection was ${reason}; using deterministic fallback structure.
+- End-of-day context was captured, preserving continuity for tomorrow.
 What worked:
 - You captured end-of-day context (focus/tasks/journal), which preserves continuity for tomorrow.
 Where drift happened:
@@ -277,6 +299,10 @@ Tomorrow lock:
 - Anti-tinker boundary: ${tomorrow_boundary}
 Health lens:
 - Keep work in short blocks with recovery breaks and stop if energy/fog thresholds are crossed.
+Pattern watch:
+- Not enough data for pattern detection (fallback mode).
+Signal confidence:
+- LOW (AI ${reason}; fallback uses only focus, mode, and completed tasks).
 Evidence used:
 - Deterministic fallback (${reason}) using today's focus, completed tasks, journal entries, and behavioral digest metrics.
 EOF

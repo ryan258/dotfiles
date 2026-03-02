@@ -108,7 +108,7 @@ teardown() {
         DOTFILES_DIR="$DOTFILES_DIR" \
         PROJECTS_DIR="$PROJECTS_DIR" \
         AI_REFLECTION_ENABLED=false \
-        bash "$DOTFILES_DIR/scripts/goodevening.sh"
+        bash "$DOTFILES_DIR/scripts/goodevening.sh" < /dev/null
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"Evening Close-Out for $expected_today"* ]]
@@ -134,7 +134,7 @@ PY
         DOTFILES_DIR="$DOTFILES_DIR" \
         PROJECTS_DIR="$PROJECTS_DIR" \
         AI_REFLECTION_ENABLED=false \
-        bash "$DOTFILES_DIR/scripts/goodevening.sh"
+        bash "$DOTFILES_DIR/scripts/goodevening.sh" < /dev/null
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"Evening Close-Out for $expected_today"* ]]
@@ -169,6 +169,9 @@ PY
     [[ "$output" == *"What worked:"* ]]
     [[ "$output" == *"Where drift happened:"* ]]
     [[ "$output" == *"Tomorrow lock:"* ]]
+
+    # Signal metadata line with pipe delimiters
+    [[ "$output" == *"[Signal:"*" | "*"]"* ]]
 
     [ -f "$DATA_DIR/coach_log.txt" ]
     grep -q '^GOODEVENING|' "$DATA_DIR/coach_log.txt"

@@ -36,6 +36,9 @@ fi
 if [ -f "$SCRIPT_DIR/lib/github_ops.sh" ]; then
     source "$SCRIPT_DIR/lib/github_ops.sh"
 fi
+if [ -f "$SCRIPT_DIR/lib/spoon_budget.sh" ]; then
+    source "$SCRIPT_DIR/lib/spoon_budget.sh"
+fi
 
 # --- Focus ---
 echo ""
@@ -45,6 +48,34 @@ if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
 else
     echo "  (No focus set)"
 fi
+
+# --- Daily Context ---
+echo ""
+echo "📊 DAILY CONTEXT:"
+_status_mode="unknown"
+if [ -f "${COACH_MODE_FILE:-}" ]; then
+    _status_mode_line=$(grep "^$(date_today)|" "$COACH_MODE_FILE" 2>/dev/null | tail -1 || true)
+    if [ -n "$_status_mode_line" ]; then
+        _status_mode=$(echo "$_status_mode_line" | cut -d'|' -f2)
+    else
+        _status_mode="${AI_COACH_MODE_DEFAULT:-LOCKED}"
+    fi
+else
+    _status_mode="${AI_COACH_MODE_DEFAULT:-LOCKED}"
+fi
+_status_spoons="?"
+_status_budget="${DEFAULT_DAILY_SPOONS:-10}"
+if command -v get_remaining_spoons >/dev/null 2>&1; then
+    _status_spoons=$(get_remaining_spoons 2>/dev/null || echo "?")
+    [ -z "$_status_spoons" ] && _status_spoons="?"
+fi
+if [ -f "${SPOON_LOG:-}" ]; then
+    _budget_line=$(grep "^BUDGET|$(date_today)|" "$SPOON_LOG" 2>/dev/null | tail -1 || true)
+    if [ -n "$_budget_line" ]; then
+        _status_budget=$(echo "$_budget_line" | cut -d'|' -f3)
+    fi
+fi
+echo "  Mode: ${_status_mode} | Spoons: ${_status_spoons}/${_status_budget} remaining"
 
 # --- Display Header ---
 echo ""

@@ -328,13 +328,6 @@ if [ -x "$CALENDAR_SCRIPT" ]; then
 else
     echo "  (calendar script not found)"
 fi
-echo ""
-echo "⏳ SCHEDULED JOBS (atq):"
-if command -v atq >/dev/null 2>&1; then
-    atq | sed 's/^/  /' || echo "  (No background jobs)"
-else
-    echo "  (at command not available)"
-fi
 
 # --- STALE TASKS (older than 7 days) ---
 STALE_TODO_FILE="$TODO_FILE"
@@ -369,6 +362,7 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
         CACHED_BRIEFING=$(grep "^$TODAY|" "$BRIEFING_CACHE" | tail -n 1 | cut -d'|' -f2- || true)
         CACHED_BRIEFING="${CACHED_BRIEFING//\\n/$'\n'}"
         echo "$CACHED_BRIEFING" | sed 's/^/  /'
+        echo "  [Signal: cached briefing from earlier today]"
     else
         # Generate new briefing
         # Gather context
@@ -467,6 +461,35 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
         BRIEFING_ESCAPED="${BRIEFING//$'\n'/\\n}"
         printf '%s|%s\n' "$TODAY" "$BRIEFING_ESCAPED" > "$BRIEFING_CACHE"
         echo "$BRIEFING" | sed 's/^/  /'
+
+        # Signal metadata: show which data sources fed the briefing
+        _sd_signals=()
+        if [ -n "${YESTERDAY_COMMITS:-}" ] && [ "$YESTERDAY_COMMITS" != "(none)" ]; then
+            _sd_signals+=("commits ✓")
+        else
+            _sd_signals+=("commits ✗")
+        fi
+        if [ -n "${RECENT_JOURNAL:-}" ]; then
+            _sd_signals+=("journal ✓")
+        else
+            _sd_signals+=("journal ✗")
+        fi
+        if [ -f "${HEALTH_FILE:-}" ] && [ -s "${HEALTH_FILE:-}" ]; then
+            _sd_signals+=("health ✓")
+        else
+            _sd_signals+=("health ✗")
+        fi
+        if [ -n "${TODAY_TASKS:-}" ]; then
+            _sd_signals+=("tasks ✓")
+        else
+            _sd_signals+=("tasks ✗")
+        fi
+        if [ "${COACH_BEHAVIOR_DIGEST:-}" != "(behavior digest unavailable)" ]; then
+            _sd_signals+=("digest ✓")
+        else
+            _sd_signals+=("digest ✗")
+        fi
+        printf '  [Signal: %s]\n' "$(printf '%s' "${_sd_signals[0]}"; for _s in "${_sd_signals[@]:1}"; do printf ' | %s' "$_s"; done)"
 
         if command -v coaching_append_log >/dev/null 2>&1; then
             COACH_METRICS_PAYLOAD="tactical:$(printf '%s' "$COACH_TACTICAL_METRICS" | tr '\n' ';') pattern:$(printf '%s' "$COACH_PATTERN_METRICS" | tr '\n' ';') quality:$(printf '%s' "$COACH_DATA_QUALITY_FLAGS" | tr '\n' ';')"

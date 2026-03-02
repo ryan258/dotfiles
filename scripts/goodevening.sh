@@ -387,7 +387,7 @@ fi
 echo ""
 echo "🧹 Tidying up old completed tasks..."
 if [ -f "$TODO_DONE_FILE" ]; then
-    CUTOFF_DATE_STR=$(date_shift_days -7 "%Y-%m-%d")
+    CUTOFF_DATE_STR=$(date_shift_days "-${STALE_TASK_DAYS}" "%Y-%m-%d")
     tasks_to_remove=$(awk -F'|' -v cutoff="$CUTOFF_DATE_STR" 'NF>=2 { date_str = substr($1, 1, 10); if (date_str < cutoff) { count++ } } END { print count+0 }' "$TODO_DONE_FILE")
     echo "$(date_now): goodevening.sh - Cleaned $tasks_to_remove old tasks." >> "$SYSTEM_LOG_FILE"
     awk -F'|' -v cutoff="$CUTOFF_DATE_STR" '
@@ -512,6 +512,31 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     fi
 
     echo "$REFLECTION" | sed 's/^/  /'
+
+    # Signal metadata: show which data sources fed the reflection
+    _ge_signals=()
+    if [ -n "${TODAY_COMMITS:-}" ] && [ "$TODAY_COMMITS" != "(none)" ]; then
+        _ge_signals+=("commits ✓")
+    else
+        _ge_signals+=("commits ✗")
+    fi
+    if [ -n "${COMPLETED_TASKS_CONTEXT:-}" ]; then
+        _ge_signals+=("tasks ✓")
+    else
+        _ge_signals+=("tasks ✗")
+    fi
+    if [ -n "${TODAY_JOURNAL:-}" ]; then
+        _ge_signals+=("journal ✓")
+    else
+        _ge_signals+=("journal ✗")
+    fi
+    if [ "${COACH_BEHAVIOR_DIGEST:-}" != "(behavior digest unavailable)" ]; then
+        _ge_signals+=("digest ✓")
+    else
+        _ge_signals+=("digest ✗")
+    fi
+    printf '  [Signal: %s]\n' "$(printf '%s' "${_ge_signals[0]}"; for _s in "${_ge_signals[@]:1}"; do printf ' | %s' "$_s"; done)"
+
     echo "$REFLECTION" > "$DATA_DIR/tomorrow_launchpad"
 
     if command -v coaching_append_log >/dev/null 2>&1; then

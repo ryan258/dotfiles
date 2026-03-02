@@ -401,7 +401,7 @@ _Refer to `CLAUDE.md` for canonical root-project guidance and `GUARDRAILS.md` fo
 <!-- gitnexus:start -->
 # GitNexus MCP
 
-This project is indexed by GitNexus as **dotfiles** (702 symbols, 1224 relationships, 31 execution flows).
+This project is indexed by GitNexus as **dotfiles** (707 symbols, 1226 relationships, 31 execution flows).
 
 ## Always Start Here
 

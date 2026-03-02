@@ -21,12 +21,15 @@ startday
 
 ### Morning Coaching Schema
 
+- `Briefing Summary` (Narrative)
 - `North Star`
 - `Do Next` (ordered 1-3)
 - `Operating Insight` (working + drift risk)
 - `Anti-tinker Rule`
 - `Health Lens`
+- `Signal Confidence` (HIGH / MEDIUM / LOW)
 - `Evidence Check`
+- `[Signal: ...]` metadata line showing which data sources were available
 
 ### Refresh Modes
 
@@ -117,12 +120,16 @@ _(Or `goodevening 2026-01-20` to close out a specific past date)._
 
 ### Evening Coaching Schema
 
+- `Reflection Summary` (Narrative)
 - `What Worked`
 - `Where Drift Happened`
 - `Likely Trigger`
+- `Pattern Watch` (multi-day recurring patterns)
 - `Tomorrow Lock`
 - `Health Lens`
+- `Signal Confidence` (HIGH / MEDIUM / LOW)
 - `Evidence Used`
+- `[Signal: ...]` metadata line showing which data sources were available
 
 **Your `Tomorrow Lock` should always include:**
 
@@ -145,7 +152,7 @@ gcal agenda 1          # Preview tomorrow's schedule
 
 | Command              | What It Does                                        |
 | -------------------- | --------------------------------------------------- |
-| `status`             | Mid-day context reset: Where am I?                  |
+| `status`             | Mid-day context reset: focus, coach mode, spoons, location, tasks |
 | `weekreview`         | Generate a retrospective summary of the last 7 days |
 | `context.sh capture` | Snapshot the current context                        |
 | `context.sh list`    | List saved context snapshots                        |

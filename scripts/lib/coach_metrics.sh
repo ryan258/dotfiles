@@ -4,7 +4,7 @@
 # NOTE: SOURCED file. Do NOT use set -euo pipefail.
 #
 # Dependencies:
-# - DATA_DIR and coach-related config values from config.sh.
+# - config.sh: DATA_DIR, coach-related config values, and COACH_*_THRESHOLD vars.
 # - date helpers from date_utils.sh (date_shift_from, timestamp_to_epoch).
 # - optional helpers from common.sh (sanitize_input).
 
@@ -13,14 +13,8 @@ if [[ -n "${_COACH_METRICS_LOADED:-}" ]]; then
 fi
 readonly _COACH_METRICS_LOADED=true
 
-# Drift thresholds (fixed deterministic defaults)
-readonly COACH_DRIFT_STALE_THRESHOLD=4
-readonly COACH_DRIFT_LOW_COMPLETION_THRESHOLD=2
-readonly COACH_DRIFT_UNIQUE_DIRS_THRESHOLD=10
-readonly COACH_DRIFT_SWITCHES_THRESHOLD=80
-readonly COACH_LOW_ENERGY_THRESHOLD=4
-readonly COACH_HIGH_FOG_THRESHOLD=6
-readonly COACH_TREND_DELTA_THRESHOLD=0.2
+# Drift & health thresholds are provided by config.sh (COACH_*_THRESHOLD vars).
+# Callers must source config.sh before this file.
 
 _coach_escape_field() {
     local raw="$1"

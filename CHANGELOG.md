@@ -1,6 +1,32 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** March 1, 2026
+**Last Updated:** March 2, 2026
+
+## Version 2.2.32 (March 2, 2026) - Configurable Thresholds, Signal Metadata, Status Context
+
+**Status:** ✅ Production Ready
+
+### New Features
+
+- **Configurable coaching thresholds**: 7 `COACH_*_THRESHOLD` variables in `config.sh` replace hardcoded `readonly` constants in `coach_metrics.sh`. All are overridable via `.env`.
+- **Signal metadata line**: `startday` and `goodevening` now display a `[Signal: ...]` line after briefing/reflection output showing which data sources (commits, journal, health, tasks, digest) were present.
+- **DAILY CONTEXT section in `status.sh`**: New section between focus and navigation showing current coach mode and spoon budget/remaining.
+
+### Fixes
+
+- Fixed `goodevening.sh` hardcoded `-7` in completed-task cleanup; now uses `$STALE_TASK_DAYS` from config.
+- Fixed `status.sh` rendering `Spoons: /10 remaining` when no budget exists; now shows `?` for remaining.
+- Fixed signal metadata delimiter: `IFS=' | '` only joins on the first character (space); replaced with explicit loop producing correct `a | b | c` format.
+
+### Tests
+
+- Added `tests/test_coach_prompts.sh` (18 tests): prompt schema validation, fallback structural completeness, mode-specific anti-tinker rules, configurable threshold propagation.
+- Added `tests/test_status.sh` (13 tests): section presence, focus display, DAILY CONTEXT mode/spoon rendering, journal display, section ordering.
+- Added signal metadata delimiter assertions to `test_startday_coach.sh` and `test_goodevening_coach.sh`.
+
+### Validation
+
+- `bats tests/test_status.sh tests/test_coach_prompts.sh tests/test_startday_coach.sh tests/test_goodevening_coach.sh tests/test_coach_ops.sh` — 49/49 passing.
 
 ## Version 2.2.31 (March 1, 2026) - Idea Management System
 
