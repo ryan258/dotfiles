@@ -64,6 +64,77 @@ _coach_extract_value() {
     printf '%s\n' "$blob" | awk -F'=' -v k="$key" '$1 == k {print $2; exit}'
 }
 
+_coach_focus_keywords() {
+    local text="$1"
+    # Use a stricter 4-character floor here than focus_coherence's 3-character floor.
+    # Git commit text is noisier than task text, so this reduces false matches on short tokens.
+    printf '%s' "$text" | tr '[:upper:]' '[:lower:]' | tr -cs '[:alnum:]' '\n' | awk '
+        length >= 4 {
+            if ($0 ~ /^(about|after|align|around|before|build|built|core|declared|daily|done|focus|from|into|main|make|move|moving|only|primary|project|projects|repo|repos|ship|shipping|spear|task|tasks|that|this|through|today|tomorrow|work|working|yesterday)$/) {
+                next
+            }
+            print
+        }
+    ' | sort -u
+}
+
+_coach_text_matches_keywords() {
+    local text="$1"
+    local keywords="$2"
+    local keyword=""
+    local lowered
+
+    lowered=$(printf '%s' "$text" | tr '[:upper:]' '[:lower:]')
+    while IFS= read -r keyword; do
+        [[ -z "$keyword" ]] && continue
+        if [[ "$lowered" == *"$keyword"* ]]; then
+            return 0
+        fi
+    done <<< "$keywords"
+
+    return 1
+}
+
+_coach_repo_from_activity_line() {
+    local line="$1"
+    printf '%s\n' "$line" | awk '
+        function trim(value) {
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
+            return value
+        }
+        {
+            raw = $0
+            sub(/^[[:space:]]*•[[:space:]]*/, "", raw)
+            repo = raw
+            if (repo ~ /: /) {
+                sub(/:.*/, "", repo)
+            } else if (repo ~ / \(pushed /) {
+                sub(/ \(pushed .*/, "", repo)
+            }
+            print trim(repo)
+        }
+    '
+}
+
+_coach_commit_message_from_activity_line() {
+    local line="$1"
+    printf '%s\n' "$line" | awk '
+        function trim(value) {
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
+            return value
+        }
+        {
+            raw = $0
+            sub(/^[[:space:]]*•[[:space:]]*/, "", raw)
+            if (raw ~ /: /) {
+                sub(/^[^:]+:[[:space:]]*/, "", raw)
+                sub(/[[:space:]]+\([0-9a-f]{7}\)$/, "", raw)
+                print trim(raw)
+            }
+        }
+    '
+}
+
 _coach_calc_trend() {
     local first="$1"
     local second="$2"
@@ -408,6 +479,131 @@ coach_collect_data_quality_flags() {
     fi
 
     printf '%s\n' "${flags[@]}"
+}
+
+# Compute focus-vs-Git evidence using commit messages and non-fork repo activity.
+# Usage: coach_focus_git_signal <focus_text> <recent_pushes> <commit_context>
+# Output: key=value lines describing primary repo, repo concentration, and coherence.
+coach_focus_git_signal() {
+    local focus_text="$1"
+    local recent_pushes="${2:-}"
+    local commit_context="${3:-}"
+    local keywords=""
+    local repo_weights=""
+    local push_lines=""
+    local commit_lines=""
+    local line=""
+    local repo=""
+    local message=""
+    local repo_count="0"
+    local primary_repo="N/A"
+    local primary_repo_weight="0"
+    local primary_repo_share="N/A"
+    local commit_total="0"
+    local commit_matches="0"
+    local commit_coherence="N/A"
+    local repo_event_total="0"
+    local status="no-git-evidence"
+    local reason="no non-fork GitHub activity available"
+    local high_threshold="${COACH_FOCUS_GIT_HIGH_THRESHOLD:-60}"
+    local low_threshold="${COACH_FOCUS_GIT_LOW_THRESHOLD:-40}"
+    local repo_drift_threshold="${COACH_FOCUS_ACTIVE_REPO_DRIFT_THRESHOLD:-2}"
+    local repo_share_threshold="${COACH_FOCUS_PRIMARY_REPO_SHARE_THRESHOLD:-60}"
+
+    if [[ -z "$focus_text" ]]; then
+        echo "focus_git_primary_repo=N/A"
+        echo "focus_git_primary_repo_share=N/A"
+        echo "focus_git_repo_count=0"
+        echo "focus_git_commit_total=0"
+        echo "focus_git_commit_matches=0"
+        echo "focus_git_commit_coherence=N/A"
+        echo "focus_git_status=no-focus"
+        echo "focus_git_reason=no daily focus set"
+        return 0
+    fi
+
+    keywords=$(_coach_focus_keywords "$focus_text")
+
+    commit_lines=$(printf '%s\n' "$commit_context" | awk '/^[[:space:]]*• /')
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        repo=$(_coach_repo_from_activity_line "$line")
+        message=$(_coach_commit_message_from_activity_line "$line")
+        if [[ -n "$repo" ]]; then
+            # Commits count double here on purpose: commit-level evidence should outweigh push cadence
+            # when determining the day's primary repo.
+            repo_weights="${repo_weights}${repo_weights:+$'\n'}${repo}"
+            repo_weights="${repo_weights}${repo_weights:+$'\n'}${repo}"
+        fi
+        if [[ -n "$message" ]]; then
+            commit_total=$((commit_total + 1))
+            if [[ -n "$keywords" ]] && _coach_text_matches_keywords "$message" "$keywords"; then
+                commit_matches=$((commit_matches + 1))
+            fi
+        fi
+    done <<< "$commit_lines"
+
+    push_lines=$(printf '%s\n' "$recent_pushes" | awk '/^[[:space:]]*• /')
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        repo=$(_coach_repo_from_activity_line "$line")
+        if [[ -n "$repo" ]]; then
+            repo_weights="${repo_weights}${repo_weights:+$'\n'}${repo}"
+        fi
+    done <<< "$push_lines"
+
+    if [[ -n "$repo_weights" ]]; then
+        repo_event_total=$(printf '%s\n' "$repo_weights" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')
+        repo_count=$(printf '%s\n' "$repo_weights" | sed '/^[[:space:]]*$/d' | sort -u | wc -l | tr -d ' ')
+        primary_repo=$(printf '%s\n' "$repo_weights" | sed '/^[[:space:]]*$/d' | sort | uniq -c | sort -nr | head -n 1 | awk '{count=$1; $1=""; sub(/^[[:space:]]+/, "", $0); print $0}')
+        primary_repo_weight=$(printf '%s\n' "$repo_weights" | sed '/^[[:space:]]*$/d' | sort | uniq -c | sort -nr | head -n 1 | awk '{print $1+0}')
+        if [[ "${repo_event_total:-0}" -gt 0 ]]; then
+            primary_repo_share=$(awk -v p="$primary_repo_weight" -v t="$repo_event_total" 'BEGIN { printf "%d", (p/t)*100 }')
+        fi
+    fi
+
+    if [[ "${commit_total:-0}" -gt 0 ]]; then
+        commit_coherence=$(awk -v m="$commit_matches" -v t="$commit_total" 'BEGIN { printf "%d", (m/t)*100 }')
+    fi
+
+    local git_signal_unavailable="false"
+    if [[ "$recent_pushes" == *"GitHub signal unavailable"* ]] || [[ "$commit_context" == *"GitHub signal unavailable"* ]]; then
+        git_signal_unavailable="true"
+    fi
+
+    if [[ "$git_signal_unavailable" == "true" ]]; then
+        status="git-unavailable"
+        reason="GitHub signal unavailable; unable to evaluate focus against non-fork activity"
+    elif [[ "${repo_event_total:-0}" -eq 0 ]]; then
+        status="no-git-evidence"
+        reason="no non-fork GitHub activity available"
+    elif [[ "$commit_coherence" == "N/A" ]]; then
+        if [[ "${repo_count:-0}" -le 1 ]] && [[ "${primary_repo_share:-0}" =~ ^[0-9]+$ ]] && [[ "${primary_repo_share:-0}" -ge "$repo_share_threshold" ]]; then
+            status="repo-locked"
+            reason="recent GitHub activity is concentrated in ${primary_repo} (${primary_repo_share}% of observed repo activity)"
+        else
+            status="diffuse"
+            reason="recent GitHub activity is spread across ${repo_count} repos without commit-level evidence"
+        fi
+    elif [[ "$commit_coherence" -ge "$high_threshold" ]] && [[ "${primary_repo_share:-0}" =~ ^[0-9]+$ ]] && [[ "${primary_repo_share:-0}" -ge "$repo_share_threshold" ]] && [[ "${repo_count:-0}" -le "$repo_drift_threshold" ]]; then
+        status="aligned"
+        reason="${commit_matches}/${commit_total} commit cues match focus; primary repo ${primary_repo} holds ${primary_repo_share}% of observed activity"
+    elif [[ "$commit_coherence" -lt "$low_threshold" ]] || [[ "${repo_count:-0}" -gt "$repo_drift_threshold" ]]; then
+        status="diffuse"
+        reason="${commit_matches}/${commit_total} commit cues match focus; activity spans ${repo_count} repos"
+    else
+        status="mixed"
+        reason="${commit_matches}/${commit_total} commit cues match focus; primary repo ${primary_repo} holds ${primary_repo_share}% of observed activity"
+    fi
+
+    echo "focus_git_primary_repo=${primary_repo:-N/A}"
+    echo "focus_git_primary_repo_share=${primary_repo_share:-N/A}"
+    echo "focus_git_repo_count=${repo_count:-0}"
+    echo "focus_git_commit_total=${commit_total:-0}"
+    echo "focus_git_commit_matches=${commit_matches:-0}"
+    echo "focus_git_commit_coherence=${commit_coherence:-N/A}"
+    echo "focus_git_status=${status}"
+    echo "focus_git_reason=${reason}"
 }
 
 # Compute focus coherence: % of completed tasks aligned with today's focus
@@ -756,6 +952,8 @@ coach_build_behavior_digest() {
     local anchor_date="$1"
     local tactical_days="${2:-7}"
     local pattern_days="${3:-30}"
+    local recent_pushes_context="${4:-}"
+    local commit_context="${5:-}"
 
     local tactical
     local pattern
@@ -781,6 +979,19 @@ coach_build_behavior_digest() {
     local focus_coherence_pct focus_coherence_detail
     focus_coherence_pct=$(_coach_extract_value "$coherence" "focus_coherence_pct")
     focus_coherence_detail=$(_coach_extract_value "$coherence" "focus_coherence_detail")
+
+    local focus_git
+    focus_git=$(coach_focus_git_signal "$focus_text" "$recent_pushes_context" "$commit_context" 2>/dev/null || echo $'focus_git_primary_repo=N/A\nfocus_git_primary_repo_share=N/A\nfocus_git_repo_count=0\nfocus_git_commit_total=0\nfocus_git_commit_matches=0\nfocus_git_commit_coherence=N/A\nfocus_git_status=no-git-evidence\nfocus_git_reason=focus-vs-git signal unavailable')
+    local focus_git_primary_repo focus_git_primary_repo_share focus_git_repo_count focus_git_commit_total
+    local focus_git_commit_matches focus_git_commit_coherence focus_git_status focus_git_reason
+    focus_git_primary_repo=$(_coach_extract_value "$focus_git" "focus_git_primary_repo")
+    focus_git_primary_repo_share=$(_coach_extract_value "$focus_git" "focus_git_primary_repo_share")
+    focus_git_repo_count=$(_coach_extract_value "$focus_git" "focus_git_repo_count")
+    focus_git_commit_total=$(_coach_extract_value "$focus_git" "focus_git_commit_total")
+    focus_git_commit_matches=$(_coach_extract_value "$focus_git" "focus_git_commit_matches")
+    focus_git_commit_coherence=$(_coach_extract_value "$focus_git" "focus_git_commit_coherence")
+    focus_git_status=$(_coach_extract_value "$focus_git" "focus_git_status")
+    focus_git_reason=$(_coach_extract_value "$focus_git" "focus_git_reason")
 
     local adherence
     adherence=$(coach_suggestion_adherence "$anchor_date" 2>/dev/null || echo "suggestion_adherence=N/A")
@@ -815,11 +1026,18 @@ coach_build_behavior_digest() {
     local working_signals=()
     local drift_risks=()
 
-    if [[ "$suggestion_adherence" == "high" ]]; then
-        working_signals+=("adherence to yesterday's AI suggestions was high")
-    fi
-    if [[ "$suggestion_adherence" == "low" ]]; then
-        drift_risks+=("adherence to yesterday's AI suggestions was low")
+    if [[ "$focus_git_status" == "aligned" ]]; then
+        working_signals+=("Git activity supports the declared focus (${focus_git_reason})")
+    elif [[ "$focus_git_status" == "repo-locked" ]]; then
+        working_signals+=("recent GitHub activity is concentrated in ${focus_git_primary_repo}")
+    elif [[ "$focus_git_status" == "mixed" ]]; then
+        drift_risks+=("Git activity only partially supports the declared focus (${focus_git_reason})")
+    elif [[ "$focus_git_status" == "diffuse" ]]; then
+        drift_risks+=("Git activity is drifting from the declared focus (${focus_git_reason})")
+    elif [[ "$focus_git_status" == "no-git-evidence" ]]; then
+        drift_risks+=("recent non-fork GitHub evidence is thin; focus movement is unproven")
+    elif [[ "$focus_git_status" == "git-unavailable" ]]; then
+        working_signals+=("GitHub signal was unavailable, so spear movement could not be evaluated from remote activity")
     fi
     if [[ "$suggestion_adherence_rate" =~ ^[0-9]+$ ]] && [[ "${suggestion_adherence_samples:-0}" =~ ^[0-9]+$ ]]; then
         if [[ "$suggestion_adherence_rate" -ge 70 ]]; then
@@ -846,9 +1064,6 @@ coach_build_behavior_digest() {
     fi
     if [[ "$(_coach_extract_value "$pattern" "journal_trend")" == "up" ]]; then
         working_signals+=("journaling trend is improving")
-    fi
-    if [[ "$focus_coherence_pct" != "N/A" ]] && [[ "$focus_coherence_pct" -ge 70 ]] 2>/dev/null; then
-        working_signals+=("focus coherence is high (${focus_coherence_pct}% — ${focus_coherence_detail})")
     fi
     if [[ "$energy_3d_direction" == "improving" ]]; then
         working_signals+=("energy trajectory is improving (${energy_3d_trajectory})")
@@ -880,8 +1095,10 @@ coach_build_behavior_digest() {
         fi
     fi
 
-    if [[ "$focus_coherence_pct" != "N/A" ]] && [[ "$focus_coherence_pct" -lt 40 ]] 2>/dev/null; then
-        drift_risks+=("focus coherence is low (${focus_coherence_pct}% — ${focus_coherence_detail})")
+    if [[ "$focus_git_status" == "aligned" ]] && [[ "$focus_coherence_pct" != "N/A" ]] && [[ "$focus_coherence_pct" -ge 70 ]] 2>/dev/null; then
+        working_signals+=("tasks completed today also reinforce the focus (${focus_coherence_pct}% — ${focus_coherence_detail})")
+    elif [[ "$focus_git_status" == "no-git-evidence" ]] && [[ "$focus_coherence_pct" != "N/A" ]] && [[ "$focus_coherence_pct" -lt 40 ]] 2>/dev/null; then
+        drift_risks+=("task completion also looks weakly aligned to focus (${focus_coherence_pct}% — ${focus_coherence_detail})")
     fi
     if [[ "$energy_3d_direction" == "declining" ]]; then
         local _traj_risk="energy trajectory is declining (${energy_3d_trajectory})"
@@ -910,7 +1127,9 @@ coach_build_behavior_digest() {
     echo "  focus_changes=$(_coach_extract_value "$pattern" "focus_changes") (~$(_coach_extract_value "$pattern" "focus_changes_per_week")/week)"
     echo "  top_directories=$(_coach_extract_value "$pattern" "top_directories")"
     echo "  top_dispatchers=$(_coach_extract_value "$pattern" "top_dispatchers")"
-    echo "  focus_coherence=${focus_coherence_pct:-N/A}% (${focus_coherence_detail:-N/A})"
+    echo "  focus_git_status=${focus_git_status:-N/A}, primary_repo=${focus_git_primary_repo:-N/A}, primary_repo_share=${focus_git_primary_repo_share:-N/A}, commit_coherence=${focus_git_commit_coherence:-N/A}, active_repos=${focus_git_repo_count:-0}"
+    echo "  focus_git_reason=${focus_git_reason:-N/A}"
+    echo "  focus_coherence_secondary=${focus_coherence_pct:-N/A}% (${focus_coherence_detail:-N/A})"
     echo "Working signals:"
     if [[ ${#working_signals[@]} -eq 0 ]]; then
         echo "  - none detected"

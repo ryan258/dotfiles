@@ -164,6 +164,7 @@ PY
     [[ "$prompt" == *"Behavior digest:"* ]]
     [[ "$prompt" == *"Tomorrow lock:"* ]]
     [[ "$prompt" == *"Health lens:"* ]]
+    [[ "$prompt" == *"declared focus and non-fork GitHub evidence"* ]]
     [[ "$args" == *"--temperature"* ]]
 
     [[ "$output" == *"What worked:"* ]]

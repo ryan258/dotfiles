@@ -1,6 +1,41 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** March 2, 2026
+**Last Updated:** March 11, 2026
+
+## Version 2.2.34 (March 11, 2026) - Focus + Git Spear Coach
+
+**Status:** ✅ Production Ready
+
+### Improvements
+
+- **Coaching evidence model repointed** around declared daily focus plus non-fork GitHub activity:
+  - `startday.sh` and `goodevening.sh` now pass recent push + commit context into the behavior digest instead of relying on task/journal signals as the main grounding layer.
+  - signal confidence in both flows now prioritizes focus, non-fork GitHub momentum/activity, health logs, and behavior digest availability.
+- **New focus-vs-Git signal** in `scripts/lib/coach_metrics.sh`:
+  - computes primary repo concentration, commit-message coherence, active repo count, and an `aligned|mixed|diffuse|repo-locked` spear verdict.
+  - surfaces that signal directly inside the behavior digest for prompt grounding and drift detection.
+  - makes focus-vs-Git the primary spear signal; daily suggestion-adherence entries remain supporting telemetry instead of front-line drift classification.
+- **Prompt instructions updated** in `scripts/lib/coach_prompts.sh`:
+  - startday now treats focus + non-fork GitHub activity as the spear.
+  - goodevening now judges whether the spear moved, stalled, or diffused based primarily on Git evidence.
+- **Fork noise removed from Git evidence**:
+  - `scripts/github_helper.sh list_commits_for_date` now respects the same fork/exclusion filters already used by repo listings.
+  - `GITHUB_EXCLUDE_FORKS` is now configured in `config.sh` and defaults to `true`.
+- **`status.sh` DAILY CONTEXT upgraded**:
+  - replaces the old tasks-first focus alignment line with a Git-backed `Spear alignment` summary.
+
+### Config Additions
+
+- `GITHUB_EXCLUDE_FORKS` (default: `true`)
+- `COACH_FOCUS_GIT_HIGH_THRESHOLD` (default: `60`)
+- `COACH_FOCUS_GIT_LOW_THRESHOLD` (default: `40`)
+- `COACH_FOCUS_ACTIVE_REPO_DRIFT_THRESHOLD` (default: `2`)
+- `COACH_FOCUS_PRIMARY_REPO_SHARE_THRESHOLD` (default: `60`)
+
+### Validation
+
+- `bash -n scripts/startday.sh scripts/goodevening.sh scripts/status.sh scripts/github_helper.sh scripts/lib/coach_metrics.sh scripts/lib/coach_prompts.sh scripts/lib/config.sh`
+- `bats tests/test_status.sh tests/test_coach_prompts.sh tests/test_coach_metric_branches.sh tests/test_startday_coach.sh tests/test_goodevening_coach.sh tests/test_coach_ops.sh` — 57/57 passing.
 
 ## Version 2.2.33 (March 2, 2026) - Coaching Completion Pass
 

@@ -244,6 +244,7 @@ fi
 # --- ACTIVE PROJECTS (from GitHub) ---
 echo ""
 echo "🚀 ACTIVE PROJECTS (pushed to GitHub in last 7 days):"
+RECENT_PUSHES=""
 if command -v get_recent_github_activity >/dev/null 2>&1; then
     if RECENT_PUSHES=$(get_recent_github_activity 7); then
         if [ -n "$RECENT_PUSHES" ]; then
@@ -253,11 +254,11 @@ if command -v get_recent_github_activity >/dev/null 2>&1; then
         fi
     else
         echo "  (Unable to fetch GitHub activity. Check your token or network.)"
-        RECENT_PUSHES="(none)"
+        RECENT_PUSHES="(GitHub signal unavailable)"
     fi
 else
     echo "  (GitHub operations library not loaded)"
-    RECENT_PUSHES="(none)"
+    RECENT_PUSHES="(GitHub signal unavailable)"
 fi
 
 # --- YESTERDAY'S COMMITS ---
@@ -274,9 +275,11 @@ if command -v get_commit_activity_for_date >/dev/null 2>&1; then
         fi
     else
         echo "  (Unable to fetch commit activity. Check your token or network.)"
+        YESTERDAY_COMMITS="(GitHub signal unavailable)"
     fi
 else
     echo "  (GitHub operations library not loaded)"
+    YESTERDAY_COMMITS="(GitHub signal unavailable)"
 fi
 
 # --- SUGGESTED DIRECTORIES ---
@@ -409,7 +412,7 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
             COACH_DATA_QUALITY_FLAGS=$(coaching_collect_data_quality_flags 2>/dev/null || true)
         fi
         if command -v coaching_build_behavior_digest >/dev/null 2>&1; then
-            COACH_BEHAVIOR_DIGEST=$(coaching_build_behavior_digest "$TODAY" "$COACH_TACTICAL_DAYS" "$COACH_PATTERN_DAYS" 2>/dev/null || echo "(behavior digest unavailable)")
+            COACH_BEHAVIOR_DIGEST=$(coaching_build_behavior_digest "$TODAY" "$COACH_TACTICAL_DAYS" "$COACH_PATTERN_DAYS" "${RECENT_PUSHES:-}" "${YESTERDAY_COMMITS:-}" 2>/dev/null || echo "(behavior digest unavailable)")
         fi
 
         if command -v dhp-strategy.sh &> /dev/null; then
@@ -477,29 +480,22 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
         # Signal metadata: summarize confidence and why evidence is sparse.
         _sd_present=0
         _sd_reasons=()
-        if [ -n "${YESTERDAY_COMMITS:-}" ] && [ "$YESTERDAY_COMMITS" != "(none)" ]; then
+        if [ -n "${FOCUS_CONTEXT:-}" ]; then
             _sd_present=$((_sd_present + 1))
         else
-            _sd_reasons+=("no commits")
+            _sd_reasons+=("no focus")
         fi
-        _sd_journal_count=$(printf '%s\n' "${RECENT_JOURNAL:-}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')
-        if [ "${_sd_journal_count:-0}" -gt 0 ]; then
+        if [[ "${YESTERDAY_COMMITS:-}" == *"GitHub signal unavailable"* ]] || [[ "${RECENT_PUSHES:-}" == *"GitHub signal unavailable"* ]]; then
+            _sd_reasons+=("github signal unavailable")
+        elif { [ -n "${YESTERDAY_COMMITS:-}" ] && [ "$YESTERDAY_COMMITS" != "(none)" ]; } || { [ -n "${RECENT_PUSHES:-}" ] && [ "$RECENT_PUSHES" != "(none)" ]; }; then
             _sd_present=$((_sd_present + 1))
-            if [ "${_sd_journal_count:-0}" -lt 2 ]; then
-                _sd_reasons+=("sparse journal")
-            fi
         else
-            _sd_reasons+=("no journal")
+            _sd_reasons+=("no non-fork github momentum")
         fi
         if [ -f "${HEALTH_FILE:-}" ] && [ -s "${HEALTH_FILE:-}" ]; then
             _sd_present=$((_sd_present + 1))
         else
             _sd_reasons+=("no health logs")
-        fi
-        if [ -n "${TODAY_TASKS:-}" ]; then
-            _sd_present=$((_sd_present + 1))
-        else
-            _sd_reasons+=("no tasks")
         fi
         if [ "${COACH_BEHAVIOR_DIGEST:-}" != "(behavior digest unavailable)" ]; then
             _sd_present=$((_sd_present + 1))
@@ -508,7 +504,7 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
         fi
 
         _sd_signal_confidence="LOW"
-        if [ "${_sd_present:-0}" -ge 5 ] && [ "${#_sd_reasons[@]}" -eq 0 ]; then
+        if [ "${_sd_present:-0}" -ge 4 ] && [ "${#_sd_reasons[@]}" -eq 0 ]; then
             _sd_signal_confidence="HIGH"
         elif [ "${_sd_present:-0}" -ge 3 ]; then
             _sd_signal_confidence="MEDIUM"

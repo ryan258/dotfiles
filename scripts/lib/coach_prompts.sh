@@ -29,6 +29,8 @@ coach_build_startday_prompt() {
 Produce a high-signal morning execution guide for a user with brain fog.
 Prioritize clarity, momentum, anti-tinkering boundaries, and health-aware pacing.
 Use the provided behavior digest as ground truth for what is working vs drift.
+Treat the declared focus and non-fork GitHub activity as the primary evidence of the spear.
+Treat top tasks and journal context as secondary scope-sharpeners only.
 
 Today's focus:
 ${focus_context:-"(no focus set)"}
@@ -71,9 +73,11 @@ Coach mode semantics:
 - RECOVERY: aggressive simplicity. Enforce resting constraints, strip down tasks to 1-2 bare minimums, no high-cognitive-load planning.
 
 Action-source rules:
-- Use Today's focus and Top tasks as the ONLY source for Do Next actions.
-- Yesterday commits, pushes, and journal are momentum context only (for Operating insight/Evidence check), not action selection.
-- If focus and top tasks are misaligned, Do Next step 1 must be to reconcile task order/scope in the todo list.
+- Use Today's focus as the PRIMARY source for Do Next actions.
+- Use Top tasks only when they sharpen or restate the focus; they are secondary and may be ignored if stale or off-spear.
+- Use yesterday commits and recent pushes to infer likely repo continuity and momentum, but do not invent new work from them.
+- Journal entries are drift context only (for Operating insight/Evidence check), not action selection.
+- If focus and top tasks are misaligned, Do Next step 1 must be to reconcile task order/scope around the focus rather than expanding scope.
 
 Output format (strict, no extra sections):
 Briefing Summary:
@@ -102,11 +106,13 @@ Constraints:
 - If signal is missing, say so briefly instead of inventing details.
 - Do Next must be grounded in today's focus and listed top tasks.
 - Do Next steps must quote or closely paraphrase actual task text from Top tasks. Do not rephrase tasks into implementation language the user did not use.
+- When Top tasks are absent, stale, or misaligned, ground Do Next directly in the focus text and Git momentum instead of inventing task prose.
 - Do not invent new repositories, modules, endpoints, files, APIs, or projects unless those exact items appear in today's focus or top tasks.
 - If focus and top tasks conflict, step 1 must reconcile them (for example: update top task order or capture a scoped task), not invent a new implementation track.
 - Data-quality flags (e.g., dir_usage_malformed, malformed lines) are diagnostic metadata for system health, not actionable risks for the user. Do not surface them as top risks or action items.
 - Evidence check must only cite cues that are explicitly present in the provided context.
-- Do Next must not reference commit hashes, repo names from push history, or journal-only details.
+- Do Next must not reference commit hashes or journal-only details.
+- If the behavior digest includes `focus_git_status`, `primary_repo`, or `commit_coherence`, use those as the primary grounding cues for working vs drift.
 EOF
 }
 
@@ -127,6 +133,8 @@ coach_build_goodevening_prompt() {
 Produce a reflective daily coaching summary for a user managing brain fog and fatigue.
 Use the behavior digest and today's evidence to identify what worked, where drift happened, and how to lock tomorrow.
 Always include health/energy context.
+Judge the day primarily against the declared focus and non-fork GitHub evidence.
+Treat completed tasks and journal entries as secondary explanation layers, not the main verdict source.
 
 Coach mode used today:
 ${coach_mode:-LOCKED}
@@ -166,7 +174,7 @@ Coach mode semantics:
 
 Output format (strict, no extra sections):
 Reflection Summary:
-- 3-5 bullet points covering: key accomplishment, focus alignment, energy trajectory, main drift event, and tomorrow's setup. Synthesize across inputs; do not restate any single input section verbatim.
+- 3-5 bullet points covering: key accomplishment, focus-to-Git alignment, energy trajectory, main drift event, and tomorrow's setup. Synthesize across inputs; do not restate any single input section verbatim.
 What worked:
 - 1-2 lines anchored to concrete evidence.
 Where drift happened:
@@ -189,6 +197,8 @@ Constraints:
 - Reflective summary tone, operationally useful.
 - No markdown headers, bold text, separators, or concluding paragraph.
 - If data is sparse, say so briefly instead of inventing details.
+- Make the main verdict about whether the spear moved, stalled, or diffused based on focus plus Git evidence.
+- Prefer commit/repo evidence over task/journal evidence when they conflict.
 EOF
 }
 

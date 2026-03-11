@@ -17,7 +17,7 @@ startday
 - **Focus Check:** Reviewing or setting your daily intention.
 - **Spoon Budget:** Acknowledging your starting energy capacity.
 - **Context Recovery:** Surfacing yesterday's journal, commits, and stale tasks.
-- **AI Briefing:** Providing a structured, deterministic coaching plan.
+- **AI Briefing:** Providing a structured, deterministic coaching plan grounded primarily in your declared focus and non-fork GitHub momentum.
 
 ### Morning Coaching Schema
 
@@ -118,6 +118,14 @@ _(Or `goodevening 2026-01-20` to close out a specific past date)._
 
 `goodevening` preserves today's outcomes, summarizes wins, checks project safety, validates data files, runs a system backup, and generates an AI reflection.
 
+Both morning and evening coaching now judge the day primarily through:
+
+- your declared daily focus
+- non-fork GitHub activity
+- health and energy context
+
+Tasks and journal entries remain useful, but they are secondary evidence rather than the main verdict source.
+
 ### Evening Coaching Schema
 
 - `Reflection Summary` (Narrative)
@@ -152,7 +160,7 @@ gcal agenda 1          # Preview tomorrow's schedule
 
 | Command              | What It Does                                        |
 | -------------------- | --------------------------------------------------- |
-| `status`             | Mid-day context reset: focus, coach mode, spoon depletion forecast, focus alignment, location, tasks |
+| `status`             | Mid-day context reset: focus, coach mode, spoon depletion forecast, spear alignment, location, tasks |
 | `weekreview`         | Generate a retrospective summary of the last 7 days |
 | `context.sh capture` | Snapshot the current context                        |
 | `context.sh list`    | List saved context snapshots                        |

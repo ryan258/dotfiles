@@ -207,9 +207,11 @@ if command -v get_recent_github_activity >/dev/null 2>&1; then
         fi
     else
         echo "  (Unable to fetch GitHub activity. Check your token or network.)"
+        RECENT_PUSHES="(GitHub signal unavailable)"
     fi
 else
     echo "  (GitHub operations library not loaded)"
+    RECENT_PUSHES="(GitHub signal unavailable)"
 fi
 
 # --- COMMIT RECAP ---
@@ -231,9 +233,11 @@ if command -v get_commit_activity_for_date >/dev/null 2>&1; then
         fi
     else
         echo "  (Unable to fetch commit activity. Check your token or network.)"
+        TODAY_COMMITS="(GitHub signal unavailable)"
     fi
 else
     echo "  (GitHub operations library not loaded)"
+    TODAY_COMMITS="(GitHub signal unavailable)"
 fi
 
 # --- Gamify Progress ---
@@ -544,7 +548,7 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
         COACH_DATA_QUALITY_FLAGS=$(coaching_collect_data_quality_flags 2>/dev/null || true)
     fi
     if command -v coaching_build_behavior_digest >/dev/null 2>&1; then
-        COACH_BEHAVIOR_DIGEST=$(coaching_build_behavior_digest "$TODAY" "$COACH_TACTICAL_DAYS" "$COACH_PATTERN_DAYS" 2>/dev/null || echo "(behavior digest unavailable)")
+        COACH_BEHAVIOR_DIGEST=$(coaching_build_behavior_digest "$TODAY" "$COACH_TACTICAL_DAYS" "$COACH_PATTERN_DAYS" "${RECENT_PUSHES:-}" "${TODAY_COMMITS:-}" 2>/dev/null || echo "(behavior digest unavailable)")
     fi
 
     if command -v coaching_build_goodevening_prompt >/dev/null 2>&1; then
@@ -598,24 +602,17 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     # Signal metadata: summarize confidence and why evidence is sparse.
     _ge_present=0
     _ge_reasons=()
-    if [ -n "${TODAY_COMMITS:-}" ] && [ "$TODAY_COMMITS" != "(none)" ]; then
+    if [ -n "${FOCUS_CONTEXT:-}" ]; then
         _ge_present=$((_ge_present + 1))
     else
-        _ge_reasons+=("no commits")
+        _ge_reasons+=("no focus")
     fi
-    if [ -n "${COMPLETED_TASKS_CONTEXT:-}" ]; then
+    if [[ "${TODAY_COMMITS:-}" == *"GitHub signal unavailable"* ]] || [[ "${RECENT_PUSHES:-}" == *"GitHub signal unavailable"* ]]; then
+        _ge_reasons+=("github signal unavailable")
+    elif { [ -n "${TODAY_COMMITS:-}" ] && [ "$TODAY_COMMITS" != "(none)" ]; } || { [ -n "${RECENT_PUSHES:-}" ] && [ "$RECENT_PUSHES" != "(none)" ]; }; then
         _ge_present=$((_ge_present + 1))
     else
-        _ge_reasons+=("no completed tasks")
-    fi
-    _ge_journal_count=$(printf '%s\n' "${TODAY_JOURNAL:-}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')
-    if [ "${_ge_journal_count:-0}" -gt 0 ]; then
-        _ge_present=$((_ge_present + 1))
-        if [ "${_ge_journal_count:-0}" -lt 2 ]; then
-            _ge_reasons+=("sparse journal")
-        fi
-    else
-        _ge_reasons+=("no journal")
+        _ge_reasons+=("no non-fork github activity")
     fi
     _ge_health_count=0
     if [ -f "${HEALTH_FILE:-}" ]; then
@@ -633,7 +630,7 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     fi
 
     _ge_signal_confidence="LOW"
-    if [ "${_ge_present:-0}" -ge 5 ] && [ "${#_ge_reasons[@]}" -eq 0 ]; then
+    if [ "${_ge_present:-0}" -ge 4 ] && [ "${#_ge_reasons[@]}" -eq 0 ]; then
         _ge_signal_confidence="HIGH"
     elif [ "${_ge_present:-0}" -ge 3 ]; then
         _ge_signal_confidence="MEDIUM"

@@ -85,16 +85,51 @@ if command -v predict_spoon_depletion >/dev/null 2>&1; then
     _status_depletion=$(predict_spoon_depletion 2>/dev/null || true)
 fi
 _status_focus_label="${_status_focus_text:-"(none set)"}"
-_status_alignment="N/A"
-if command -v coach_focus_coherence >/dev/null 2>&1; then
-    # Keep status responsive: tasks-only coherence (skip multi-repo commit scan).
+_status_alignment="no focus set"
+if [ -n "$_status_focus_text" ] && command -v coach_focus_git_signal >/dev/null 2>&1; then
+    _status_commit_context=""
+    if command -v get_commit_activity_for_date >/dev/null 2>&1; then
+        if ! _status_commit_context=$(get_commit_activity_for_date "$(date_today)" 2>/dev/null); then
+            _status_commit_context="(GitHub signal unavailable)"
+        fi
+    fi
+    _status_git_metrics=$(coach_focus_git_signal "$_status_focus_text" "" "$_status_commit_context" 2>/dev/null || true)
+    _status_git_state=$(printf '%s\n' "$_status_git_metrics" | awk -F'=' '$1 == "focus_git_status" {print $2; exit}')
+    _status_git_repo=$(printf '%s\n' "$_status_git_metrics" | awk -F'=' '$1 == "focus_git_primary_repo" {print $2; exit}')
+    _status_git_repo_share=$(printf '%s\n' "$_status_git_metrics" | awk -F'=' '$1 == "focus_git_primary_repo_share" {print $2; exit}')
+    _status_git_commit_pct=$(printf '%s\n' "$_status_git_metrics" | awk -F'=' '$1 == "focus_git_commit_coherence" {print $2; exit}')
+    _status_git_repo_count=$(printf '%s\n' "$_status_git_metrics" | awk -F'=' '$1 == "focus_git_repo_count" {print $2; exit}')
+    case "${_status_git_state:-}" in
+        aligned)
+            _status_alignment="aligned via ${_status_git_repo:-N/A} (${_status_git_commit_pct:-N/A}% commit coherence; ${_status_git_repo_count:-0} repo active)"
+            ;;
+        mixed)
+            _status_alignment="mixed via ${_status_git_repo:-N/A} (${_status_git_commit_pct:-N/A}% commit coherence; ${_status_git_repo_count:-0} repos active)"
+            ;;
+        diffuse)
+            _status_alignment="diffuse (${_status_git_commit_pct:-N/A}% commit coherence; ${_status_git_repo_count:-0} repos active)"
+            ;;
+        repo-locked)
+            _status_alignment="repo-locked via ${_status_git_repo:-N/A} (${_status_git_repo_share:-N/A}% of observed activity)"
+            ;;
+        no-git-evidence)
+            _status_alignment="no non-fork Git evidence yet"
+            ;;
+        git-unavailable)
+            _status_alignment="GitHub signal unavailable"
+            ;;
+        *)
+            _status_alignment="signal unavailable"
+            ;;
+    esac
+elif [ -n "$_status_focus_text" ] && command -v coach_focus_coherence >/dev/null 2>&1; then
     _status_focus_metrics=$(coach_focus_coherence "$_status_focus_text" "$(date_today)" "false" 2>/dev/null || true)
     _status_focus_pct=$(printf '%s\n' "$_status_focus_metrics" | awk -F'=' '$1 == "focus_coherence_pct" {print $2; exit}')
     _status_focus_detail=$(printf '%s\n' "$_status_focus_metrics" | awk -F'=' '$1 == "focus_coherence_detail" {print $2; exit}')
     if [[ "${_status_focus_pct:-}" =~ ^[0-9]+$ ]]; then
-        _status_alignment="${_status_focus_pct}% (${_status_focus_detail:-items})"
+        _status_alignment="task-fallback ${_status_focus_pct}% (${_status_focus_detail:-items})"
     elif [ -n "${_status_focus_detail:-}" ]; then
-        _status_alignment="N/A (${_status_focus_detail})"
+        _status_alignment="task-fallback N/A (${_status_focus_detail})"
     fi
 fi
 if [ -n "$_status_depletion" ]; then
@@ -102,7 +137,7 @@ if [ -n "$_status_depletion" ]; then
 else
     echo "  Mode: ${_status_mode} | Spoons: ${_status_spoons}/${_status_budget} remaining | Focus: ${_status_focus_label}"
 fi
-echo "  Focus alignment: ${_status_alignment}"
+echo "  Spear alignment: ${_status_alignment}"
 
 # --- Display Header ---
 echo ""

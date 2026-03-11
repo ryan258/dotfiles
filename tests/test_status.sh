@@ -39,6 +39,23 @@ echo "  1. Sample task"
 STUB
     chmod +x "$DOTFILES_DIR/scripts/todo.sh"
 
+    cat > "$DOTFILES_DIR/scripts/github_helper.sh" <<'STUB'
+#!/usr/bin/env bash
+set -euo pipefail
+
+case "${1:-}" in
+    list_commits_for_date)
+        if [ -n "${GITHUB_COMMITS_FIXTURE:-}" ] && [ -f "$GITHUB_COMMITS_FIXTURE" ]; then
+            cat "$GITHUB_COMMITS_FIXTURE"
+        fi
+        ;;
+    list_repos|list_user_events)
+        echo "[]"
+        ;;
+esac
+STUB
+    chmod +x "$DOTFILES_DIR/scripts/github_helper.sh"
+
     export TODAY
     TODAY="$(date +%Y-%m-%d)"
 }
@@ -151,17 +168,17 @@ EOF
     [[ "$output" == *"Spoons: ?/10 remaining"* ]]
 }
 
-@test "status.sh DAILY CONTEXT shows focus and focus alignment" {
+@test "status.sh DAILY CONTEXT shows focus and spear alignment from Git evidence" {
     echo "logo" > "$DATA_DIR/daily_focus.txt"
-    cat > "$DATA_DIR/todo_done.txt" <<EOF
-${TODAY} 09:00:00|ship logo
+    cat > "$DATA_DIR/github_commits.txt" <<'EOF'
+dotfiles|abc1234|ship logo
 EOF
 
-    run _run_status
+    run _run_status GITHUB_COMMITS_FIXTURE="$DATA_DIR/github_commits.txt"
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"Focus: logo"* ]]
-    [[ "$output" == *"Focus alignment: 100% (1/1 items aligned)"* ]]
+    [[ "$output" == *"Spear alignment: aligned via dotfiles (100% commit coherence; 1 repo active)"* ]]
 }
 
 # ─── Journal section ─────────────────────────────────────────────────────

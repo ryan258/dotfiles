@@ -110,6 +110,7 @@ teardown() {
     [[ "$prompt" == *"Behavior digest:"* ]]
     [[ "$prompt" == *"Health lens:"* ]]
     [[ "$prompt" == *"Anti-tinker rule:"* ]]
+    [[ "$prompt" == *"non-fork GitHub activity as the primary evidence of the spear"* ]]
     [[ "$args" == *"--temperature"* ]]
 
     [[ "$output" == *"North Star:"* ]]

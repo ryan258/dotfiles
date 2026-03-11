@@ -25,8 +25,8 @@ Canonical architecture and policy live in `../CLAUDE.md`.
 - `scripts/lib/coach_ops.sh` validates coaching runtime dependencies.
 - `scripts/lib/coach_metrics.sh`, `scripts/lib/coach_prompts.sh`, and `scripts/lib/coach_scoring.sh` provide metrics, prompt construction, timeout-guarded AI calls, mode persistence, and append-only coaching logs.
 - Drift and health thresholds (`COACH_*_THRESHOLD`) are defined in `config.sh` and overridable via `.env`.
-- `startday.sh` and `goodevening.sh` consume structured digest data, persist coaching outcomes, and display signal confidence with explicit missing/sparse source reasons.
-- `status.sh` shows current coach mode, spoon budget/depletion, focus text, and a low-latency (tasks-only) focus coherence signal in a DAILY CONTEXT section.
+- `startday.sh` and `goodevening.sh` now treat daily focus plus non-fork GitHub activity as the primary coaching evidence, with tasks/journal context kept secondary.
+- `status.sh` shows current coach mode, spoon budget/depletion, focus text, and a Git-backed spear alignment signal in a DAILY CONTEXT section.
 
 ## Data Location
 

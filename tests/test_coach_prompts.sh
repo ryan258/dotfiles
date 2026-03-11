@@ -63,6 +63,7 @@ teardown() {
     [[ "$output" == *"Health lens:"* ]]
     [[ "$output" == *"Signal confidence:"* ]]
     [[ "$output" == *"Evidence check:"* ]]
+    [[ "$output" == *"non-fork GitHub activity as the primary evidence of the spear"* ]]
 }
 
 @test "coach_build_startday_prompt includes custom traps when traps.txt exists" {
@@ -109,6 +110,7 @@ teardown() {
     [[ "$output" == *"Health lens:"* ]]
     [[ "$output" == *"Signal confidence:"* ]]
     [[ "$output" == *"Evidence used:"* ]]
+    [[ "$output" == *"declared focus and non-fork GitHub evidence"* ]]
 }
 
 @test "coach_build_goodevening_prompt includes custom traps when traps.txt exists" {

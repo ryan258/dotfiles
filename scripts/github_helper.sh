@@ -270,6 +270,45 @@ _github_api_call() {
 
 # --- Public Interface Functions ---
 
+_filter_repo_json() {
+    local json_data="$1"
+    local filter="."
+
+    if [ "${GITHUB_EXCLUDE_FORKS:-false}" = "true" ]; then
+        filter+=" | map(select(.fork == false))"
+    fi
+
+    if [ "${GITHUB_EXCLUDE_REPOS:-}" ]; then
+        printf "%s" "$json_data" | jq --arg exclude "$GITHUB_EXCLUDE_REPOS" \
+            "(\$exclude | split(\",\") | map(gsub(\"^[[:space:]]+|[[:space:]]+$\";\"\"))) as \$ex_list | $filter | map(select(.name as \$n | \$ex_list | index(\$n) | not))"
+    else
+        printf "%s" "$json_data" | jq "$filter"
+    fi
+}
+
+_allowed_repo_names() {
+    local repo_endpoint="/users/$USERNAME/repos?sort=pushed&per_page=100"
+    local cache_file=""
+    local repo_json=""
+
+    cache_file=$(_cache_path_for "$repo_endpoint")
+    if [ -n "$cache_file" ] && [ -f "$cache_file" ]; then
+        repo_json=$(cat "$cache_file" 2>/dev/null || true)
+        if [ -n "$repo_json" ]; then
+            _filter_repo_json "$repo_json" | jq -r '.[].name' 2>/dev/null || true
+            return 0
+        fi
+    fi
+
+    if repo_json=$(list_repos 2>/dev/null); then
+        printf '%s' "$repo_json" | jq -r '.[].name' 2>/dev/null || true
+        return 0
+    fi
+
+    echo "Warning: Unable to refresh filtered repository list; commit filtering may include forks." >&2
+    return 1
+}
+
 # Lists all repositories for the configured user, sorted by most recently pushed.
 # Fetches up to 100 repositories.
 list_repos() {
@@ -279,20 +318,7 @@ list_repos() {
         return 1
     fi
 
-    local filter="."
-
-    if [ "${GITHUB_EXCLUDE_FORKS:-false}" = "true" ]; then
-        filter+=" | map(select(.fork == false))"
-    fi
-
-    if [ "${GITHUB_EXCLUDE_REPOS:-}" ]; then
-        # Use jq to parse the comma-separated list and filter
-        # We use --arg to pass the environment variable safely
-        printf "%s" "$json_data" | jq --arg exclude "$GITHUB_EXCLUDE_REPOS" \
-            "(\$exclude | split(\",\") | map(gsub(\"^[[:space:]]+|[[:space:]]+$\";\"\"))) as \$ex_list | $filter | map(select(.name as \$n | \$ex_list | index(\$n) | not))"
-    else
-        printf "%s" "$json_data" | jq "$filter"
-    fi
+    _filter_repo_json "$json_data"
 }
 
 
@@ -353,12 +379,20 @@ list_commits_for_date() {
 
     [ -z "$repo_branches" ] && return 0
 
+    local allowed_repos=""
+    if [ "${GITHUB_EXCLUDE_FORKS:-false}" = "true" ] || [ -n "${GITHUB_EXCLUDE_REPOS:-}" ]; then
+        allowed_repos=$(_allowed_repo_names || true)
+    fi
+
     local all_commits=""
 
     # For each repo/branch, query the Commits API
     while IFS=: read -r repo_name branch; do
         [ -z "$repo_name" ] && continue
         [ -z "$branch" ] && branch="HEAD"
+        if [ -n "$allowed_repos" ] && ! printf '%s\n' "$allowed_repos" | grep -Fxq "$repo_name"; then
+            continue
+        fi
 
         local commits_json
         commits_json=$(_github_api_call "/repos/$USERNAME/$repo_name/commits?sha=$branch&author=$USERNAME&since=${utc_start}&until=${utc_end}&per_page=20" 2>/dev/null) || continue

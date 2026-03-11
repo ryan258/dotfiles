@@ -160,3 +160,70 @@ EOF
     assert_success
     assert_output_contains "late_night_commits=false"
 }
+
+@test "coach_focus_git_signal reports aligned focus with concentrated repo activity" {
+    run coach_focus_git_signal \
+        "Ship the dotfiles coach focus pass" \
+        $'  • dotfiles (pushed today)\n  • dotfiles (pushed yesterday)' \
+        $'  • dotfiles: ship coach focus pass (abc1234)\n  • dotfiles: tighten dotfiles coach signal (def5678)'
+
+    assert_success
+    assert_output_contains "focus_git_primary_repo=dotfiles"
+    assert_output_contains "focus_git_commit_coherence=100"
+    assert_output_contains "focus_git_status=aligned"
+}
+
+@test "coach_focus_git_signal reports repo-locked when pushes stay in one repo without commit evidence" {
+    run coach_focus_git_signal \
+        "Ship the dotfiles coach focus pass" \
+        $'  • dotfiles (pushed today)\n  • dotfiles (pushed yesterday)' \
+        ""
+
+    assert_success
+    assert_output_contains "focus_git_primary_repo=dotfiles"
+    assert_output_contains "focus_git_status=repo-locked"
+}
+
+@test "coach_focus_git_signal reports mixed when coherence is between thresholds" {
+    run coach_focus_git_signal \
+        "Ship the dotfiles coach focus pass" \
+        $'  • dotfiles (pushed today)' \
+        $'  • dotfiles: ship coach focus pass (abc1234)\n  • dotfiles: update release notes (def5678)'
+
+    assert_success
+    assert_output_contains "focus_git_commit_coherence=50"
+    assert_output_contains "focus_git_status=mixed"
+}
+
+@test "coach_focus_git_signal reports diffuse activity across unrelated repos" {
+    run coach_focus_git_signal \
+        "Ship the dotfiles coach focus pass" \
+        $'  • dotfiles (pushed today)\n  • playground (pushed today)' \
+        $'  • playground: explore random experiment (abc1234)\n  • notes-repo: tweak backlog copy (def5678)'
+
+    assert_success
+    assert_output_contains "focus_git_repo_count=3"
+    assert_output_contains "focus_git_commit_coherence=0"
+    assert_output_contains "focus_git_status=diffuse"
+}
+
+@test "coach_focus_git_signal reports no focus when focus text is empty" {
+    run coach_focus_git_signal "" "" ""
+
+    assert_success
+    assert_output_contains "focus_git_status=no-focus"
+}
+
+@test "coach_focus_git_signal reports no Git evidence when activity is empty" {
+    run coach_focus_git_signal "Ship the dotfiles coach focus pass" "" ""
+
+    assert_success
+    assert_output_contains "focus_git_status=no-git-evidence"
+}
+
+@test "coach_focus_git_signal reports Git signal unavailable separately from no activity" {
+    run coach_focus_git_signal "Ship the dotfiles coach focus pass" "(GitHub signal unavailable)" ""
+
+    assert_success
+    assert_output_contains "focus_git_status=git-unavailable"
+}
