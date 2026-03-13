@@ -11,15 +11,30 @@ if [[ -n "${_COACH_PROMPTS_LOADED:-}" ]]; then
 fi
 readonly _COACH_PROMPTS_LOADED=true
 
+_coach_reason_label() {
+    local reason="${1:-unavailable}"
+    case "$reason" in
+        ungrounded-actions)
+            printf '%s\n' "AI briefing failed evidence check"
+            ;;
+        ungrounded-reflection)
+            printf '%s\n' "AI reflection failed evidence check"
+            ;;
+        dispatcher-missing)
+            printf '%s\n' "dispatcher missing"
+            ;;
+        *)
+            printf '%s\n' "$reason"
+            ;;
+    esac
+}
+
 coach_build_startday_prompt() {
     local focus_context="$1"
     local coach_mode="$2"
     local yesterday_commits="$3"
     local recent_pushes="$4"
-    local recent_journal="$5"
-    local yesterday_journal_context="$6"
-    local today_tasks="$7"
-    local behavior_digest="$8"
+    local behavior_digest="$5"
     local custom_traps=""
     if [[ -n "${DATA_DIR:-}" ]] && [[ -f "$DATA_DIR/traps.txt" ]]; then
         custom_traps=$(cat "$DATA_DIR/traps.txt" 2>/dev/null || echo "(none defined)")
@@ -30,7 +45,8 @@ Produce a high-signal morning execution guide for a user with brain fog.
 Prioritize clarity, momentum, anti-tinkering boundaries, and health-aware pacing.
 Use the provided behavior digest as ground truth for what is working vs drift.
 Treat the declared focus and non-fork GitHub activity as the primary evidence of the spear.
-Treat top tasks and journal context as secondary scope-sharpeners only.
+Treat GitHub projects and recent commit activity as the single source of truth for project insight, blindspot detection, and enhancement opportunities.
+Keep journals and todos out of coaching; they remain local notes, not planning input.
 
 Today's focus:
 ${focus_context:-"(no focus set)"}
@@ -43,15 +59,6 @@ ${yesterday_commits:-"(none)"}
 
 Recent GitHub pushes (last 7 days):
 ${recent_pushes:-"(none)"}
-
-Recent journal entries:
-${recent_journal:-"(none)"}
-
-Yesterday's journal entries:
-${yesterday_journal_context:-"(none)"}
-
-Top tasks:
-${today_tasks:-"(none)"}
 
 Behavior digest:
 ${behavior_digest:-"(none)"}
@@ -74,18 +81,28 @@ Coach mode semantics:
 
 Action-source rules:
 - Use Today's focus as the PRIMARY source for Do Next actions.
-- Use Top tasks only when they sharpen or restate the focus; they are secondary and may be ignored if stale or off-spear.
-- Use yesterday commits and recent pushes to infer likely repo continuity and momentum, but do not invent new work from them.
-- Journal entries are drift context only (for Operating insight/Evidence check), not action selection.
-- If focus and top tasks are misaligned, Do Next step 1 must be to reconcile task order/scope around the focus rather than expanding scope.
+- Use yesterday commits and recent pushes to infer likely repo continuity, blindspots, and adjacent enhancement opportunities, but do not invent new work from them.
+- Do not use journals or todos for action selection, evidence checks, or momentum claims.
+- Use recent repo names and commit-message patterns to surface 10 blindspots or enhancement opportunities the user may not be considering.
 
 Output format (strict, no extra sections):
 Briefing Summary:
-- 3-5 bullet points covering: yesterday's momentum, today's focus alignment, current energy/health signal, top risk, and one quick win available. Synthesize across inputs; do not restate any single input section verbatim.
+- 4-5 bullet points covering: yesterday's momentum, today's focus alignment, current energy/health signal, and top risk. Synthesize across inputs; do not restate any single input section verbatim.
+GitHub blindspots/opportunities (1-10):
+1. First concise, GitHub-grounded blindspot or enhancement opportunity.
+2. Second concise, GitHub-grounded blindspot or enhancement opportunity.
+3. Third concise, GitHub-grounded blindspot or enhancement opportunity.
+4. Fourth concise, GitHub-grounded blindspot or enhancement opportunity.
+5. Fifth concise, GitHub-grounded blindspot or enhancement opportunity.
+6. Sixth concise, GitHub-grounded blindspot or enhancement opportunity.
+7. Seventh concise, GitHub-grounded blindspot or enhancement opportunity.
+8. Eighth concise, GitHub-grounded blindspot or enhancement opportunity.
+9. Ninth concise, GitHub-grounded blindspot or enhancement opportunity.
+10. Tenth concise, GitHub-grounded blindspot or enhancement opportunity.
 North Star:
 - One sentence practical outcome for today.
 Do Next (ordered 1-3):
-1. First 10-15 minute action mapped directly to focus/top task text.
+1. First 10-15 minute action mapped directly to focus text and/or the provided GitHub activity.
 2. Second action after step 1.
 3. Done condition for today.
 Operating insight (working + drift risk):
@@ -95,24 +112,28 @@ Anti-tinker rule:
 Health lens:
 - Always include energy/fog/spoon-aware pacing guidance.
 Signal confidence:
-- HIGH, MEDIUM, or LOW based on how much evidence was available. If LOW, name which data sources (commits, journal, health, tasks, digest) were absent.
+- HIGH, MEDIUM, or LOW based on how much evidence was available. If LOW, name which data sources (commits, health, digest) were absent.
 Evidence check:
-- One line naming exact commits/tasks/journal/metrics cues used.
+- One line naming exact commit/repo/metric cues used.
 
 Constraints:
-- Total 250-350 words.
+- Total 450-700 words.
 - No markdown headers, bold text, separators, or concluding paragraph.
 - Keep language operational and specific; avoid generic motivation.
 - If signal is missing, say so briefly instead of inventing details.
-- Do Next must be grounded in today's focus and listed top tasks.
-- Do Next steps must quote or closely paraphrase actual task text from Top tasks. Do not rephrase tasks into implementation language the user did not use.
-- When Top tasks are absent, stale, or misaligned, ground Do Next directly in the focus text and Git momentum instead of inventing task prose.
-- Do not invent new repositories, modules, endpoints, files, APIs, or projects unless those exact items appear in today's focus or top tasks.
-- If focus and top tasks conflict, step 1 must reconcile them (for example: update top task order or capture a scoped task), not invent a new implementation track.
+- Do Next must be grounded in today's focus and listed GitHub activity.
+- Do not use todo items, completed tasks, or journal notes as evidence or action anchors.
+- If the focus is broad and does not name a concrete asset, page, file, or deliverable, do not invent one. Step 1 should capture or choose the next concrete move before execution begins.
+- Do not invent new repositories, modules, endpoints, files, APIs, or projects unless those exact items appear in today's focus or provided GitHub activity.
+- Do not invent page names, paragraphs, homepage sections, drafts, or publication status unless those exact items appear in today's focus or provided GitHub activity.
 - Data-quality flags (e.g., dir_usage_malformed, malformed lines) are diagnostic metadata for system health, not actionable risks for the user. Do not surface them as top risks or action items.
 - Evidence check must only cite cues that are explicitly present in the provided context.
-- Do Next must not reference commit hashes or journal-only details.
-- If the behavior digest includes `focus_git_status`, `primary_repo`, or `commit_coherence`, use those as the primary grounding cues for working vs drift.
+- Do not mention journal evidence, journal momentum, todo completion, or journaling habits.
+- Do Next must not reference commit hashes.
+- If the behavior digest includes focus_git_status, primary_repo, or commit_coherence, use those as the primary grounding cues for working vs drift.
+- Any blindspot, enhancement opportunity, or project idea must stay adjacent to actual repo names and commit patterns present in the provided GitHub activity.
+- The GitHub blindspot/opportunity section must contain exactly 10 numbered lines.
+- At least half of the 10 lines must mention a real repo name from the provided GitHub activity when repo names are available.
 EOF
 }
 
@@ -121,9 +142,7 @@ coach_build_goodevening_prompt() {
     local focus_context="$2"
     local today_commits="$3"
     local recent_pushes="$4"
-    local today_tasks="$5"
-    local today_journal="$6"
-    local behavior_digest="$7"
+    local behavior_digest="$5"
     local custom_traps=""
     if [[ -n "${DATA_DIR:-}" ]] && [[ -f "$DATA_DIR/traps.txt" ]]; then
         custom_traps=$(cat "$DATA_DIR/traps.txt" 2>/dev/null || echo "(none defined)")
@@ -134,7 +153,7 @@ Produce a reflective daily coaching summary for a user managing brain fog and fa
 Use the behavior digest and today's evidence to identify what worked, where drift happened, and how to lock tomorrow.
 Always include health/energy context.
 Judge the day primarily against the declared focus and non-fork GitHub evidence.
-Treat completed tasks and journal entries as secondary explanation layers, not the main verdict source.
+Keep journals and todos out of the coaching verdict; they remain local notes for later querying.
 
 Coach mode used today:
 ${coach_mode:-LOCKED}
@@ -147,12 +166,6 @@ ${today_commits:-"(none)"}
 
 Recent GitHub pushes (last 7 days):
 ${recent_pushes:-"(none)"}
-
-Completed tasks today:
-${today_tasks:-"(none)"}
-
-Today's journal entries:
-${today_journal:-"(none)"}
 
 Behavior digest:
 ${behavior_digest:-"(none)"}
@@ -175,6 +188,17 @@ Coach mode semantics:
 Output format (strict, no extra sections):
 Reflection Summary:
 - 3-5 bullet points covering: key accomplishment, focus-to-Git alignment, energy trajectory, main drift event, and tomorrow's setup. Synthesize across inputs; do not restate any single input section verbatim.
+Blindspots to sleep on (1-10):
+1. First concise, GitHub-grounded blindspot or enhancement opportunity to revisit tomorrow.
+2. Second concise blindspot/opportunity.
+3. Third concise blindspot/opportunity.
+4. Fourth concise blindspot/opportunity.
+5. Fifth concise blindspot/opportunity.
+6. Sixth concise blindspot/opportunity.
+7. Seventh concise blindspot/opportunity.
+8. Eighth concise blindspot/opportunity.
+9. Ninth concise blindspot/opportunity.
+10. Tenth concise blindspot/opportunity.
 What worked:
 - 1-2 lines anchored to concrete evidence.
 Where drift happened:
@@ -188,17 +212,20 @@ Tomorrow lock:
 Health lens:
 - Always include energy/fog/spoon-aware pacing guidance.
 Signal confidence:
-- HIGH, MEDIUM, or LOW based on how much evidence was available. If LOW, name which data sources (commits, journal, health, tasks, digest) were absent.
+- HIGH, MEDIUM, or LOW based on how much evidence was available. If LOW, name which data sources (commits, health, digest) were absent.
 Evidence used:
-- One line naming exact commits/tasks/journal/metrics cues used.
+- One line naming exact commit/repo/metrics cues used.
 
 Constraints:
-- Total 280-400 words.
+- Total 420-700 words.
 - Reflective summary tone, operationally useful.
 - No markdown headers, bold text, separators, or concluding paragraph.
 - If data is sparse, say so briefly instead of inventing details.
 - Make the main verdict about whether the spear moved, stalled, or diffused based on focus plus Git evidence.
-- Prefer commit/repo evidence over task/journal evidence when they conflict.
+- Do not use completed tasks or journal notes as evidence or explanation.
+- Prefer commit/repo evidence over local notes when they conflict.
+- The blindspot section must contain exactly 10 numbered lines.
+- At least half of the 10 lines must mention a real repo name from today's commits or recent pushes when repo names are available.
 EOF
 }
 
@@ -242,22 +269,559 @@ _coach_extract_first_task() {
             }
         }
     ')
-    if [[ -z "$cleaned" ]]; then
-        cleaned="the first listed top task"
-    fi
     printf '%s' "$cleaned"
+}
+
+_coach_digest_inline_value() {
+    local digest="$1"
+    local key="$2"
+
+    printf '%s\n' "$digest" | awk -v k="$key" '
+        /focus_git_status=/ {
+            n = split($0, fields, /,[[:space:]]*/)
+            for (i = 1; i <= n; i++) {
+                split(fields[i], pair, "=")
+                gsub(/^[[:space:]]+|[[:space:]]+$/, "", pair[1])
+                gsub(/^[[:space:]]+|[[:space:]]+$/, "", pair[2])
+                if (pair[1] == k) {
+                    print pair[2]
+                    exit
+                }
+            }
+        }
+    '
+}
+
+_coach_digest_line_value() {
+    local digest="$1"
+    local key="$2"
+
+    printf '%s\n' "$digest" | awk -v k="$key" '
+        {
+            line = $0
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
+            prefix = k "="
+            if (index(line, prefix) == 1) {
+                sub("^" prefix, "", line)
+                print line
+                exit
+            }
+        }
+    '
+}
+
+_coach_commit_repo_summary() {
+    local commit_context="$1"
+
+    printf '%s\n' "$commit_context" | awk '
+        function trim(value) {
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
+            return value
+        }
+        /^[[:space:]]*[•-][[:space:]]+/ {
+            line = $0
+            sub(/^[[:space:]]*[•-][[:space:]]+/, "", line)
+            line = trim(line)
+            if (line == "" || line ~ /^\(none\)/ || line ~ /^\(GitHub signal unavailable\)/) {
+                next
+            }
+            repo = line
+            if (index(repo, ":") > 0) {
+                sub(/:.*/, "", repo)
+            } else if (repo ~ /[[:space:]]+\(/) {
+                sub(/[[:space:]]+\(.*/, "", repo)
+            }
+            repo = trim(repo)
+            if (repo == "" || seen[repo]) {
+                next
+            }
+            seen[repo] = 1
+            repos[++n] = repo
+        }
+        END {
+            if (n == 1) {
+                print repos[1]
+            } else if (n == 2) {
+                print repos[1] " and " repos[2]
+            } else if (n >= 3) {
+                print repos[1] ", " repos[2] ", and " (n - 2) " more"
+            }
+        }
+    '
+}
+
+_coach_commit_repo_list() {
+    local commit_context="$1"
+
+    printf '%s\n' "$commit_context" | awk '
+        function trim(value) {
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
+            return value
+        }
+        /^[[:space:]]*[•-][[:space:]]+/ {
+            line = $0
+            sub(/^[[:space:]]*[•-][[:space:]]+/, "", line)
+            line = trim(line)
+            if (line == "" || line ~ /^\(none\)/ || line ~ /^\(GitHub signal unavailable\)/) {
+                next
+            }
+            repo = line
+            if (index(repo, ":") > 0) {
+                sub(/:.*/, "", repo)
+            } else if (repo ~ /[[:space:]]+\(/) {
+                sub(/[[:space:]]+\(.*/, "", repo)
+            }
+            repo = trim(repo)
+            if (repo == "" || seen[repo]) {
+                next
+            }
+            seen[repo] = 1
+            print repo
+        }
+    '
+}
+
+_coach_focus_is_contentish() {
+    local focus_text
+    focus_text=$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')
+
+    case "$focus_text" in
+        *content*|*blog*|*post*|*article*|*site*|*website*|*homepage*|*publish*|*writing*|*copy*|*ryanleej.com*)
+            return 0
+            ;;
+    esac
+
+    return 1
+}
+
+_coach_commit_pattern_metrics() {
+    local commit_context="$1"
+
+    printf '%s\n' "$commit_context" | awk '
+        function trim(value) {
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
+            return value
+        }
+        /^[[:space:]]*[•-][[:space:]]+/ {
+            line = $0
+            sub(/^[[:space:]]*[•-][[:space:]]+/, "", line)
+            line = trim(line)
+            if (line == "" || line ~ /^\(none\)/ || line ~ /^\(GitHub signal unavailable\)/) {
+                next
+            }
+            if (index(line, ":") == 0) {
+                next
+            }
+
+            message = line
+            sub(/^[^:]+:[[:space:]]*/, "", message)
+            gsub(/[[:space:]]+\([0-9a-f]{7,}\)$/, "", message)
+            message = tolower(trim(message))
+            total++
+
+            if (message ~ /(^|[^[:alpha:]])(feat|feature|implement|implemented|implementing|add|added|rewrite|rewrote|refactor|refactored|build|built|create|created|introduce|introduced|optimize|optimized|counterfactual|fingerprinting|retry)([^[:alpha:]]|$)/) {
+                feature++
+            }
+            if (message ~ /(^|[^[:alpha:]])(docs|doc|readme|guide|demo|example|examples|test|tests|fix|fixed|polish|polished|cleanup|review|release|ship|content|copy|article)([^[:alpha:]]|$)/) {
+                polish++
+            }
+        }
+        END {
+            print "feature_commits=" (feature + 0)
+            print "polish_commits=" (polish + 0)
+            print "total_commits=" (total + 0)
+        }
+    '
+}
+
+_coach_commit_pattern_value() {
+    local metrics="$1"
+    local key="$2"
+
+    printf '%s\n' "$metrics" | awk -F'=' -v key="$key" '$1 == key { print $2; exit }'
+}
+
+_coach_github_opportunity_line() {
+    local focus="$1"
+    local commit_context="$2"
+    local focus_git_status="$3"
+    local primary_repo="$4"
+    local active_repos="$5"
+    local repo_summary="$6"
+    local commit_metrics=""
+    local feature_commits=0
+    local polish_commits=0
+    local total_commits=0
+
+    commit_metrics=$(_coach_commit_pattern_metrics "$commit_context")
+    feature_commits=$(_coach_commit_pattern_value "$commit_metrics" "feature_commits")
+    polish_commits=$(_coach_commit_pattern_value "$commit_metrics" "polish_commits")
+    total_commits=$(_coach_commit_pattern_value "$commit_metrics" "total_commits")
+
+    if [[ -n "$repo_summary" ]] && [[ "${total_commits:-0}" -gt 0 ]] && [[ "${feature_commits:-0}" -gt "${polish_commits:-0}" ]]; then
+        if _coach_focus_is_contentish "$focus"; then
+            printf '%s\n' "GitHub blindspot opportunity: recent work is feature-heavy across ${repo_summary}; turn one real change from that work into a write-up, changelog, or demo angle instead of starting from a blank page."
+        else
+            printf '%s\n' "GitHub blindspot opportunity: recent work is feature-heavy across ${repo_summary}; docs, demo, or polish work is likely lagging behind shipping."
+        fi
+        return 0
+    fi
+
+    if [[ "$focus_git_status" == "diffuse" ]] && [[ "${active_repos:-0}" =~ ^[0-9]+$ ]] && [[ "${active_repos:-0}" -ge 3 ]]; then
+        printf '%s\n' "GitHub blindspot opportunity: breadth across ${active_repos} repos may be outrunning finish work; pick one repo to deepen instead of spreading more feature work."
+        return 0
+    fi
+
+    if [[ -n "$primary_repo" && "$primary_repo" != "N/A" ]]; then
+        printf '%s\n' "Enhancement opportunity: use ${primary_repo} as the candidate for a small polish pass before opening a new lane."
+        return 0
+    fi
+
+    return 1
+}
+
+_coach_append_unique_candidate() {
+    local existing="$1"
+    local candidate="$2"
+
+    if [[ -z "$candidate" ]]; then
+        printf '%s' "$existing"
+        return 0
+    fi
+
+    if printf '%s\n' "$existing" | grep -Fqx "$candidate"; then
+        printf '%s' "$existing"
+        return 0
+    fi
+
+    if [[ -n "$existing" ]]; then
+        printf '%s\n%s' "$existing" "$candidate"
+    else
+        printf '%s' "$candidate"
+    fi
+}
+
+_coach_github_blindspot_scan() {
+    local focus="$1"
+    local commit_context="$2"
+    local focus_git_status="$3"
+    local primary_repo="$4"
+    local primary_repo_share="$5"
+    local commit_coherence="$6"
+    local active_repos="$7"
+    local focus_git_reason="$8"
+    local repo_summary="$9"
+    local commit_metrics=""
+    local feature_commits=0
+    local polish_commits=0
+    local total_commits=0
+    local repos_blob=""
+    local repo=""
+    local candidates=""
+    local count=0
+    local line=""
+    local limit=10
+    local commit_coherence_value="N/A"
+
+    commit_metrics=$(_coach_commit_pattern_metrics "$commit_context")
+    feature_commits=$(_coach_commit_pattern_value "$commit_metrics" "feature_commits")
+    polish_commits=$(_coach_commit_pattern_value "$commit_metrics" "polish_commits")
+    total_commits=$(_coach_commit_pattern_value "$commit_metrics" "total_commits")
+    repos_blob=$(_coach_commit_repo_list "$commit_context")
+    if [[ "${commit_coherence:-}" =~ ^[0-9]+$ ]]; then
+        commit_coherence_value="$commit_coherence"
+    fi
+
+    if [[ -n "$repo_summary" ]] && [[ "${total_commits:-0}" -gt 0 ]] && [[ "${feature_commits:-0}" -gt "${polish_commits:-0}" ]]; then
+        if _coach_focus_is_contentish "$focus"; then
+            candidates=$(_coach_append_unique_candidate "$candidates" "Recent work is feature-heavy across ${repo_summary}; turn one shipped change into a write-up, changelog, or demo angle instead of starting from a blank page.")
+        else
+            candidates=$(_coach_append_unique_candidate "$candidates" "Recent work is feature-heavy across ${repo_summary}; docs, demo, or polish work is likely lagging behind shipping.")
+        fi
+    fi
+
+    if [[ "$focus_git_status" == "diffuse" ]] && [[ "${active_repos:-0}" =~ ^[0-9]+$ ]] && [[ "${active_repos:-0}" -ge 3 ]]; then
+        candidates=$(_coach_append_unique_candidate "$candidates" "Breadth across ${active_repos} repos may be outrunning finish work; pick one repo to deepen instead of spreading more feature work.")
+    fi
+
+    if [[ -n "$primary_repo" && "$primary_repo" != "N/A" ]]; then
+        candidates=$(_coach_append_unique_candidate "$candidates" "Use ${primary_repo} as the candidate for a small polish pass before opening a new lane.")
+    fi
+
+    if [[ "${commit_coherence:-}" =~ ^[0-9]+$ ]] && [[ "${commit_coherence:-0}" -lt 40 ]] && [[ "${total_commits:-0}" -gt 0 ]]; then
+        candidates=$(_coach_append_unique_candidate "$candidates" "Commit language is only ${commit_coherence_value}% aligned with the declared focus; either tighten the work around the focus or rename the focus to match the real lane.")
+    fi
+
+    if [[ "${polish_commits:-0}" -eq 0 ]] && [[ "${total_commits:-0}" -gt 0 ]]; then
+        candidates=$(_coach_append_unique_candidate "$candidates" "Recent commit language shows almost no docs, demo, or test cues; quality and legibility work may be hiding behind feature momentum.")
+    fi
+
+    if [[ -n "$focus_git_reason" ]]; then
+        candidates=$(_coach_append_unique_candidate "$candidates" "Focus-vs-Git drift summary: ${focus_git_reason}; treat that as an input to prune one lane, not as background noise.")
+    fi
+
+    if _coach_focus_is_contentish "$focus" && [[ -n "$repo_summary" ]]; then
+        candidates=$(_coach_append_unique_candidate "$candidates" "Your content focus can mine ${repo_summary} for a before/after story, a lessons-learned post, or a command-sheet artifact.")
+    fi
+
+    for repo in $repos_blob; do
+        candidates=$(_coach_append_unique_candidate "$candidates" "Repo ${repo} likely wants a short demo, screenshot, or walkthrough so the newest capability is legible without code-reading.")
+    done
+    for repo in $repos_blob; do
+        candidates=$(_coach_append_unique_candidate "$candidates" "Repo ${repo} is a candidate for a README or changelog pass tied directly to the newest change.")
+    done
+    for repo in $repos_blob; do
+        candidates=$(_coach_append_unique_candidate "$candidates" "Repo ${repo} may have one onboarding or setup friction point worth removing before adding more features.")
+    done
+    for repo in $repos_blob; do
+        candidates=$(_coach_append_unique_candidate "$candidates" "Repo ${repo} is worth scanning for one reusable script, pattern, or helper that could be extracted instead of staying one-off.")
+    done
+    for repo in $repos_blob; do
+        candidates=$(_coach_append_unique_candidate "$candidates" "Repo ${repo} may need a stability or test pass before the next feature wave lands.")
+    done
+
+    if [[ -z "$candidates" ]]; then
+        candidates="Non-fork GitHub evidence is sparse, so the first opportunity is to produce one visible commit early and let the next scan work from that."
+    fi
+
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        count=$((count + 1))
+        printf '%s. %s\n' "$count" "$line"
+        if [[ "$count" -ge "$limit" ]]; then
+            break
+        fi
+    done <<< "$candidates"
+}
+
+_coach_blindspot_line_is_noise() {
+    local line="$1"
+    local lowered=""
+
+    lowered=$(printf '%s' "$line" | tr '[:upper:]' '[:lower:]')
+    if [[ "$lowered" == *"journal"* || "$lowered" == *"todo"* || "$lowered" == *"completed task"* || "$lowered" == *"task completion"* ]]; then
+        return 0
+    fi
+    if [[ "$lowered" == *"data quality"* || "$lowered" == *"malformed"* || "$lowered" == *"dir_usage_malformed"* || "$lowered" == *"todo_done_malformed"* || "$lowered" == *"commit_context"* || "$lowered" == *"commit context"* ]]; then
+        return 0
+    fi
+    if [[ "$lowered" == *"focus_git_status"* || "$lowered" == *"primary_repo_share"* || "$lowered" == *"avg_fog"* || "$lowered" == *"afternoon_slump"* ]]; then
+        return 0
+    fi
+    if [[ "$lowered" == *"brain fog"* || "$lowered" == *"fog score"* || "$lowered" == *"cognitive load"* || "$lowered" == *"health constraint"* || "$lowered" == *"task scheduling"* || "$lowered" == *"afternoon slump"* || "$lowered" == *"energy slump"* || "$lowered" == *"suggestion adherence"* || "$lowered" == *"adherence rate"* || "$lowered" == *"completion trend"* || "$lowered" == *"focus aid"* || "$lowered" == *"planned intervention"* ]]; then
+        return 0
+    fi
+    if [[ "$lowered" == *"impossible to judge"* || "$lowered" == *"makes it impossible"* || "$lowered" == *"cannot verify"* || "$lowered" == *"can't verify"* || "$lowered" == *"no recent commit evidence"* || "$lowered" == *"local-only stage"* ]]; then
+        return 0
+    fi
+    if [[ "$lowered" =~ [a-z0-9_]+=[^[:space:]]+ ]]; then
+        return 0
+    fi
+    return 1
+}
+
+_coach_extract_numbered_section_lines() {
+    local response="$1"
+    local section_prefix="$2"
+
+    printf '%s\n' "$response" | awk -v prefix="$section_prefix" '
+        BEGIN { in_section = 0 }
+        index($0, prefix) == 1 { in_section = 1; next }
+        in_section && /^[[:space:]]*[0-9]+\.[[:space:]]+/ { print; next }
+        in_section && /^[[:space:]]*[A-Za-z][^:]*:[[:space:]]*$/ { in_section = 0 }
+    '
+}
+
+_coach_clean_blindspot_section() {
+    local existing_lines="$1"
+    local grounded_scan="$2"
+    local limit="${3:-10}"
+    local cleaned=""
+    local line=""
+    local bare=""
+    local count=0
+
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        bare=$(printf '%s' "$line" | sed -E 's/^[[:space:]]*[0-9]+\.[[:space:]]+//')
+        if _coach_blindspot_line_is_noise "$bare"; then
+            continue
+        fi
+        cleaned=$(_coach_append_unique_candidate "$cleaned" "$bare")
+    done <<< "$existing_lines"
+
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        bare=$(printf '%s' "$line" | sed -E 's/^[[:space:]]*[0-9]+\.[[:space:]]+//')
+        if _coach_blindspot_line_is_noise "$bare"; then
+            continue
+        fi
+        cleaned=$(_coach_append_unique_candidate "$cleaned" "$bare")
+    done <<< "$grounded_scan"
+
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        count=$((count + 1))
+        printf '%s. %s\n' "$count" "$line"
+        if [[ "$count" -ge "$limit" ]]; then
+            break
+        fi
+    done <<< "$cleaned"
+}
+
+_coach_replace_or_insert_numbered_section() {
+    local response="$1"
+    local section_prefix="$2"
+    local section_heading="$3"
+    local insert_before_heading="$4"
+    local section_lines="$5"
+    local line=""
+    local in_section=0
+    local inserted=0
+
+    _coach_print_replacement() {
+        if [[ "$inserted" -eq 1 ]]; then
+            return 0
+        fi
+        printf '%s\n' "$section_heading"
+        if [[ -n "$section_lines" ]]; then
+            printf '%s\n' "$section_lines"
+        fi
+        inserted=1
+        return 0
+    }
+
+    while IFS= read -r line; do
+        if [[ "$in_section" -eq 1 ]]; then
+            if [[ "$line" =~ ^[[:space:]]*[A-Za-z][^:]*:[[:space:]]*$ ]]; then
+                in_section=0
+            else
+                continue
+            fi
+        fi
+
+        if [[ "$line" == "$section_prefix"* ]]; then
+            _coach_print_replacement
+            in_section=1
+            continue
+        fi
+
+        if [[ "$inserted" -eq 0 && "$line" == "$insert_before_heading" ]]; then
+            _coach_print_replacement
+        fi
+
+        printf '%s\n' "$line"
+    done <<< "$response"
+
+    if [[ "$inserted" -eq 0 ]]; then
+        _coach_print_replacement
+    fi
+
+    unset -f _coach_print_replacement
+}
+
+coach_sanitize_startday_blindspots() {
+    local response="$1"
+    local focus="$2"
+    local behavior_digest="${3:-}"
+    local commit_context="${4:-}"
+    local focus_git_status=""
+    local primary_repo=""
+    local primary_repo_share=""
+    local commit_coherence=""
+    local active_repos=""
+    local focus_git_reason=""
+    local repo_summary=""
+    local grounded_scan=""
+    local existing_lines=""
+    local cleaned_lines=""
+
+    if [[ -n "$behavior_digest" ]]; then
+        focus_git_status=$(_coach_digest_inline_value "$behavior_digest" "focus_git_status")
+        primary_repo=$(_coach_digest_inline_value "$behavior_digest" "primary_repo")
+        primary_repo_share=$(_coach_digest_inline_value "$behavior_digest" "primary_repo_share")
+        commit_coherence=$(_coach_digest_inline_value "$behavior_digest" "commit_coherence")
+        active_repos=$(_coach_digest_inline_value "$behavior_digest" "active_repos")
+        focus_git_reason=$(_coach_digest_line_value "$behavior_digest" "focus_git_reason")
+    fi
+    repo_summary=$(_coach_commit_repo_summary "$commit_context")
+    grounded_scan=$(_coach_github_blindspot_scan "$focus" "$commit_context" "$focus_git_status" "$primary_repo" "$primary_repo_share" "$commit_coherence" "$active_repos" "$focus_git_reason" "$repo_summary")
+    existing_lines=$(_coach_extract_numbered_section_lines "$response" "GitHub blindspots/opportunities")
+    cleaned_lines=$(_coach_clean_blindspot_section "$existing_lines" "$grounded_scan" 10)
+    _coach_replace_or_insert_numbered_section "$response" "GitHub blindspots/opportunities" "GitHub blindspots/opportunities (1-10):" "North Star:" "$cleaned_lines"
+}
+
+coach_sanitize_goodevening_blindspots() {
+    local response="$1"
+    local focus="$2"
+    local behavior_digest="${3:-}"
+    local commit_context="${4:-}"
+    local focus_git_status=""
+    local primary_repo=""
+    local primary_repo_share=""
+    local commit_coherence=""
+    local active_repos=""
+    local focus_git_reason=""
+    local repo_summary=""
+    local grounded_scan=""
+    local existing_lines=""
+    local cleaned_lines=""
+
+    if [[ -n "$behavior_digest" ]]; then
+        focus_git_status=$(_coach_digest_inline_value "$behavior_digest" "focus_git_status")
+        primary_repo=$(_coach_digest_inline_value "$behavior_digest" "primary_repo")
+        primary_repo_share=$(_coach_digest_inline_value "$behavior_digest" "primary_repo_share")
+        commit_coherence=$(_coach_digest_inline_value "$behavior_digest" "commit_coherence")
+        active_repos=$(_coach_digest_inline_value "$behavior_digest" "active_repos")
+        focus_git_reason=$(_coach_digest_line_value "$behavior_digest" "focus_git_reason")
+    fi
+    repo_summary=$(_coach_commit_repo_summary "$commit_context")
+    grounded_scan=$(_coach_github_blindspot_scan "$focus" "$commit_context" "$focus_git_status" "$primary_repo" "$primary_repo_share" "$commit_coherence" "$active_repos" "$focus_git_reason" "$repo_summary")
+    existing_lines=$(_coach_extract_numbered_section_lines "$response" "Blindspots to sleep on")
+    cleaned_lines=$(_coach_clean_blindspot_section "$existing_lines" "$grounded_scan" 10)
+    _coach_replace_or_insert_numbered_section "$response" "Blindspots to sleep on" "Blindspots to sleep on (1-10):" "What worked:" "$cleaned_lines"
 }
 
 coach_startday_fallback_output() {
     local focus="$1"
     local mode="$2"
-    local top_tasks="$3"
-    local reason="${4:-unavailable}"
-    local first_task=""
+    local reason="${3:-unavailable}"
+    local behavior_digest="${4:-}"
+    local commit_context="${5:-}"
+    local reason_detail="${6:-}"
+    local reason_label=""
+    local reason_phrase=""
     local mode_upper=""
     local anti_tinker_rule=""
+    local briefing_scope_line=""
+    local briefing_reason_line=""
+    local briefing_reason_detail_line=""
+    local step_one=""
+    local step_two=""
+    local step_three=""
+    local working_signal="focus is declared"
+    local drift_risk="keep scope locked to the declared focus"
+    local evidence_sources="focus"
+    local focus_git_status=""
+    local primary_repo=""
+    local primary_repo_share=""
+    local commit_coherence=""
+    local active_repos=""
+    local focus_git_reason=""
+    local git_summary="Git focus signal unavailable in fallback context."
+    local focus_label="$focus"
+    local commit_repo_summary=""
+    local commit_summary_line=""
+    local github_opportunity_line=""
+    local github_blindspot_scan=""
+    local fallback_kind="Deterministic fallback"
 
-    first_task=$(_coach_extract_first_task "$top_tasks")
+    if [[ -z "$focus_label" ]]; then
+        focus_label="(no focus set)"
+    fi
+    reason_label=$(_coach_reason_label "$reason")
+    reason_phrase="AI ${reason_label}"
+    commit_repo_summary=$(_coach_commit_repo_summary "$commit_context")
     mode_upper=$(printf '%s' "$mode" | tr '[:lower:]' '[:upper:]')
     if [[ "$mode_upper" == "OVERRIDE" ]]; then
         anti_tinker_rule="Allow one 15-minute exploration slot only after Step 1, then return to the locked plan."
@@ -267,27 +831,127 @@ coach_startday_fallback_output() {
         anti_tinker_rule="No side-quest work until Step 3 is complete and logged."
     fi
 
+    briefing_scope_line="Fallback is grounded in today's focus and recent GitHub activity only."
+    step_one="Capture the first concrete move for today's focus (${focus_label}), then spend 10-15 minutes starting it."
+    step_two="If the next move is still vague after that block, write one explicit same-focus task before touching another repo or side quest."
+    step_three="Done condition: one short focus block is completed and the next concrete move is captured."
+
+    if [[ -n "$commit_repo_summary" ]]; then
+        commit_summary_line="Yesterday's actual GitHub work landed in ${commit_repo_summary}."
+        evidence_sources="${evidence_sources}, recent_commit_repos=${commit_repo_summary}"
+        if _coach_focus_is_contentish "$focus_label"; then
+            step_two="Before reopening ${commit_repo_summary}, turn one real change from that work into one explicit ${focus_label} angle or task and start it in the same block."
+        else
+            step_two="Before reopening ${commit_repo_summary}, write one explicit ${focus_label} task and start it in the same block."
+        fi
+        if [[ "$focus_git_status" == "diffuse" || "$focus_git_status" == "mixed" || -z "$focus_git_status" ]]; then
+            working_signal="recent GitHub work shipped in ${commit_repo_summary}"
+            drift_risk="that momentum is real, but it does not yet advance ${focus_label}"
+        fi
+    fi
+
+    if [[ "$reason" == "ungrounded-actions" ]]; then
+        reason_phrase="$reason_label"
+        if [[ -n "$commit_repo_summary" ]]; then
+            briefing_reason_line="${reason_label}; salvaging the plan from explicit focus and Git evidence."
+            fallback_kind="Salvaged fallback"
+        else
+            briefing_reason_line="${reason_label}; using deterministic fallback structure."
+        fi
+        if [[ -n "$reason_detail" ]]; then
+            briefing_reason_detail_line="Evidence-check detail: ${reason_detail}."
+        else
+            briefing_reason_detail_line="Evidence-check detail: no additional failure detail was captured."
+        fi
+    else
+        briefing_reason_line="AI coaching was ${reason_label}; using deterministic fallback structure."
+    fi
+
+    if [[ -n "$behavior_digest" ]]; then
+        focus_git_status=$(_coach_digest_inline_value "$behavior_digest" "focus_git_status")
+        primary_repo=$(_coach_digest_inline_value "$behavior_digest" "primary_repo")
+        primary_repo_share=$(_coach_digest_inline_value "$behavior_digest" "primary_repo_share")
+        commit_coherence=$(_coach_digest_inline_value "$behavior_digest" "commit_coherence")
+        active_repos=$(_coach_digest_inline_value "$behavior_digest" "active_repos")
+        focus_git_reason=$(_coach_digest_line_value "$behavior_digest" "focus_git_reason")
+    fi
+
+    case "$focus_git_status" in
+        aligned)
+            working_signal="Git activity supports the declared focus via ${primary_repo:-the primary repo} (${commit_coherence:-N/A}% commit coherence)"
+            drift_risk="activity is aligned now; stay inside ${primary_repo:-the current repo} and avoid extra repo switches"
+            git_summary="Recent non-fork GitHub activity is aligned via ${primary_repo:-N/A} (${commit_coherence:-N/A}% commit coherence, ${primary_repo_share:-N/A}% primary-repo share)."
+            evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}, primary_repo=${primary_repo:-N/A}, commit_coherence=${commit_coherence:-N/A}"
+            ;;
+        repo-locked)
+            working_signal="recent GitHub activity is concentrated in ${primary_repo:-the primary repo}"
+            drift_risk="commit-level alignment is still unproven, so verify that the next block advances today's focus"
+            git_summary="Recent non-fork GitHub activity is concentrated in ${primary_repo:-N/A} (${primary_repo_share:-N/A}% primary-repo share) without commit-level focus proof."
+            evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}, primary_repo=${primary_repo:-N/A}, primary_repo_share=${primary_repo_share:-N/A}"
+            ;;
+        mixed)
+            working_signal="some Git activity supports the declared focus (${commit_coherence:-N/A}% commit coherence)"
+            drift_risk="activity is only partially aligned across ${active_repos:-N/A} repos, so tighten scope before switching contexts"
+            git_summary="Recent non-fork GitHub activity is mixed (${commit_coherence:-N/A}% commit coherence, ${active_repos:-N/A} repos active)."
+            evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}, primary_repo=${primary_repo:-N/A}, commit_coherence=${commit_coherence:-N/A}, active_repos=${active_repos:-N/A}"
+            ;;
+        diffuse)
+            if [[ -n "$commit_repo_summary" ]]; then
+                working_signal="recent GitHub work shipped in ${commit_repo_summary}"
+                drift_risk="${focus_git_reason:-recent GitHub activity is diffuse relative to the declared focus today}; that momentum is real, but it does not yet advance ${focus_label}"
+            else
+                working_signal="focus is declared, but it needs a fresh lock"
+                drift_risk="${focus_git_reason:-recent GitHub activity is diffuse relative to the declared focus today}"
+            fi
+            git_summary="Recent non-fork GitHub activity is diffuse: ${focus_git_reason:-focus-vs-Git signal shows drift}."
+            evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}, primary_repo=${primary_repo:-N/A}, commit_coherence=${commit_coherence:-N/A}, active_repos=${active_repos:-N/A}"
+            ;;
+        no-git-evidence)
+            working_signal="focus is declared"
+            drift_risk="recent non-fork GitHub evidence is thin, so spear movement is still unproven"
+            git_summary="No recent non-fork GitHub evidence was available to confirm spear movement."
+            evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}"
+            ;;
+        git-unavailable)
+            working_signal="focus is declared"
+            drift_risk="GitHub signal is unavailable, so use the focus text rather than repo momentum to choose the next move"
+            git_summary="GitHub signal was unavailable, so focus-vs-Git alignment could not be scored."
+            evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}"
+            ;;
+    esac
+
+    github_opportunity_line=$(_coach_github_opportunity_line "$focus_label" "$commit_context" "$focus_git_status" "$primary_repo" "$active_repos" "$commit_repo_summary" || true)
+    github_blindspot_scan=$(_coach_github_blindspot_scan "$focus_label" "$commit_context" "$focus_git_status" "$primary_repo" "$primary_repo_share" "$commit_coherence" "$active_repos" "$focus_git_reason" "$commit_repo_summary")
+    if [[ -n "$github_opportunity_line" || -n "$github_blindspot_scan" ]]; then
+        evidence_sources="${evidence_sources}, github_opportunity_scan"
+    fi
+
     cat <<EOF
 Briefing Summary:
 - Coach mode: ${mode_upper}. Focus: ${focus:-"(no focus set)"}.
-- AI coaching was ${reason}; using deterministic fallback structure.
-- First task from your list: ${first_task}.
+- ${briefing_reason_line}
+${briefing_reason_detail_line:+- ${briefing_reason_detail_line}}
+- ${briefing_scope_line}
+- ${commit_summary_line:-No commit-level repo summary was available for fallback grounding.}
+- ${git_summary}
+GitHub blindspots/opportunities (1-10):
+${github_blindspot_scan:-1. GitHub opportunity scan did not find grounded opportunities beyond the current focus-vs-activity drift.}
 North Star:
 - Ship one concrete action aligned to today's focus: ${focus:-"(no focus set)"}.
 Do Next (ordered 1-3):
-1. Spend 10-15 minutes starting: $first_task.
-2. Complete one additional short block on the same task before switching contexts.
-3. Done condition: log completion/progress in todo or journal for today.
+1. ${step_one}
+2. ${step_two}
+3. ${step_three}
 Operating insight (working + drift risk):
-- Working: focus and top tasks are available. Drift risk: AI response ${reason}, so keep scope locked to listed work.
+- Working: ${working_signal}. Drift risk: ${drift_risk}; ${reason_phrase}, so keep the next move explicit and evidence-backed.
 Anti-tinker rule:
 - ${anti_tinker_rule}
 Health lens:
 - Use short blocks with a break; pause if energy drops under ${COACH_LOW_ENERGY_THRESHOLD} or fog rises above ${COACH_HIGH_FOG_THRESHOLD}.
 Signal confidence:
-- LOW (AI ${reason}; fallback uses only focus, top tasks, and mode).
+- LOW (${reason_phrase}; fallback uses ${evidence_sources}, mode, and behavioral digest metrics as available).
 Evidence check:
-- Deterministic fallback (${reason}) using focus, top tasks, and behavioral digest metrics.
+- ${fallback_kind} (${reason_label}) using ${evidence_sources}, mode, and behavioral digest metrics.
 EOF
 }
 
@@ -295,8 +959,36 @@ coach_goodevening_fallback_output() {
     local focus="$1"
     local mode="$2"
     local reason="${3:-unavailable}"
+    local behavior_digest="${4:-}"
+    local commit_context="${5:-}"
+    local reason_detail="${6:-}"
     local mode_upper=""
     local tomorrow_boundary=""
+    local focus_label="$focus"
+    local focus_git_status=""
+    local primary_repo=""
+    local primary_repo_share=""
+    local commit_coherence=""
+    local active_repos=""
+    local focus_git_reason=""
+    local git_summary="Git focus signal unavailable in fallback context."
+    local what_worked="You captured end-of-day context, which preserves continuity for tomorrow."
+    local where_drift="drift diagnosis is partial and must stay conservative"
+    local likely_trigger="context switching without a hard stop condition late in the day."
+    local tomorrow_first_move=""
+    local tomorrow_done_condition="complete one focused 10-15 minute block and log whether it moved the spear."
+    local pattern_watch="not enough data for pattern detection (fallback mode)."
+    local evidence_sources="focus"
+    local reason_label=""
+    local reason_detail_line=""
+    local commit_repo_summary=""
+    local blindspots_to_sleep_on=""
+
+    if [[ -z "$focus_label" ]]; then
+        focus_label="(no focus set)"
+    fi
+    reason_label=$(_coach_reason_label "$reason")
+    commit_repo_summary=$(_coach_commit_repo_summary "$commit_context")
 
     mode_upper=$(printf '%s' "$mode" | tr '[:lower:]' '[:upper:]')
     if [[ "$mode_upper" == "OVERRIDE" ]]; then
@@ -307,28 +999,112 @@ coach_goodevening_fallback_output() {
         tomorrow_boundary="No side quests before the first locked task block is completed and logged."
     fi
 
+    if [[ -n "$behavior_digest" ]]; then
+        focus_git_status=$(_coach_digest_inline_value "$behavior_digest" "focus_git_status")
+        primary_repo=$(_coach_digest_inline_value "$behavior_digest" "primary_repo")
+        primary_repo_share=$(_coach_digest_inline_value "$behavior_digest" "primary_repo_share")
+        commit_coherence=$(_coach_digest_inline_value "$behavior_digest" "commit_coherence")
+        active_repos=$(_coach_digest_inline_value "$behavior_digest" "active_repos")
+        focus_git_reason=$(_coach_digest_line_value "$behavior_digest" "focus_git_reason")
+    fi
+
+    tomorrow_first_move="capture the first concrete move for ${focus_label} before opening any unrelated repo or side quest."
+
+    case "$focus_git_status" in
+        aligned)
+            git_summary="Recent non-fork GitHub activity stayed aligned via ${primary_repo:-N/A} (${commit_coherence:-N/A}% commit coherence, ${primary_repo_share:-N/A}% primary-repo share)."
+            what_worked="Git activity stayed concentrated in ${primary_repo:-the primary repo} and supported the declared focus."
+            where_drift="the main risk is losing this lock tomorrow by reopening extra repos before the spear moves"
+            likely_trigger="finishing the day without a clearly named next move inside the aligned lane."
+            tomorrow_first_move="resume the spear by naming the next concrete move for ${focus_label}, then start it before opening any second repo."
+            pattern_watch="focus-vs-Git alignment was visible today; if tomorrow starts the same way, protect that single-lane momentum."
+            evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}, primary_repo=${primary_repo:-N/A}, commit_coherence=${commit_coherence:-N/A}"
+            ;;
+        repo-locked)
+            git_summary="Recent non-fork GitHub activity stayed concentrated in ${primary_repo:-N/A} (${primary_repo_share:-N/A}% primary-repo share) without commit-level focus proof."
+            what_worked="Git activity stayed concentrated in ${primary_repo:-the primary repo}, which gives tomorrow a clean re-entry point."
+            where_drift="commit-level alignment to the declared focus is still unproven"
+            likely_trigger="working from repo momentum without an explicit done condition tied to the declared focus."
+            tomorrow_first_move="turn ${focus_label} into one explicit next move, then start it before widening scope beyond ${primary_repo:-the current repo}."
+            pattern_watch="single-repo momentum was visible today; if tomorrow begins the same way, verify it is actually advancing the declared focus."
+            evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}, primary_repo=${primary_repo:-N/A}, primary_repo_share=${primary_repo_share:-N/A}"
+            ;;
+        mixed)
+            git_summary="Recent non-fork GitHub activity was mixed (${commit_coherence:-N/A}% commit coherence, ${active_repos:-N/A} repos active)."
+            what_worked="part of today's Git activity matched the declared focus, so the spear was visible at times."
+            where_drift="activity only partially matched focus across ${active_repos:-N/A} repos"
+            likely_trigger="scope drift after the first aligned block."
+            tomorrow_first_move="pick one concrete move for ${focus_label}, then refuse any second repo until that move is started."
+            pattern_watch="focus-vs-Git alignment was mixed today; if tomorrow also splits across repos, treat that as a real drift pattern."
+            evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}, primary_repo=${primary_repo:-N/A}, commit_coherence=${commit_coherence:-N/A}, active_repos=${active_repos:-N/A}"
+            ;;
+        diffuse)
+            git_summary="Recent non-fork GitHub activity was diffuse: ${focus_git_reason:-focus-vs-Git signal shows drift}."
+            what_worked="you still closed the day with a declared focus and enough evidence to see the drift clearly."
+            where_drift="${focus_git_reason:-recent GitHub activity diffused away from the declared focus}"
+            likely_trigger="multiple active repos without a hard spear lock."
+            tomorrow_first_move="write the first concrete move for ${focus_label} before opening any repo or task that does not directly serve it."
+            pattern_watch="focus-vs-Git drift was visible today; if tomorrow also diffuses, treat it as a real pattern instead of a one-off."
+            evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}, primary_repo=${primary_repo:-N/A}, commit_coherence=${commit_coherence:-N/A}, active_repos=${active_repos:-N/A}"
+            ;;
+        no-git-evidence)
+            git_summary="No recent non-fork GitHub evidence was available to confirm spear movement."
+            what_worked="the day still ended with a declared focus and captured context for tomorrow."
+            where_drift="recent non-fork GitHub evidence was too thin to prove whether the spear moved"
+            likely_trigger="work stayed too implicit to evaluate cleanly."
+            tomorrow_first_move="define one explicit move for ${focus_label} and start it early enough to produce evidence."
+            evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}"
+            ;;
+        git-unavailable)
+            git_summary="GitHub signal was unavailable, so focus-vs-Git alignment could not be scored."
+            what_worked="the day still ended with a declared focus and a saved shutdown note."
+            where_drift="the evidence gap is about unavailable GitHub signal, not a confirmed lack of movement"
+            likely_trigger="signal quality, not necessarily behavior."
+            tomorrow_first_move="use the declared focus itself to choose one concrete first move before relying on repo memory."
+            evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}"
+            ;;
+    esac
+
+    if [[ -n "$commit_repo_summary" ]]; then
+        evidence_sources="${evidence_sources}, recent_commit_repos=${commit_repo_summary}"
+    fi
+    if [[ "$reason" == "ungrounded-reflection" ]]; then
+        if [[ -n "$reason_detail" ]]; then
+            reason_detail_line="Evidence-check detail: ${reason_detail}."
+        else
+            reason_detail_line="Evidence-check detail: no additional failure detail was captured."
+        fi
+    fi
+    blindspots_to_sleep_on=$(_coach_github_blindspot_scan "$focus_label" "$commit_context" "$focus_git_status" "$primary_repo" "$primary_repo_share" "$commit_coherence" "$active_repos" "$focus_git_reason" "$commit_repo_summary")
+    if [[ -n "$blindspots_to_sleep_on" ]]; then
+        evidence_sources="${evidence_sources}, github_opportunity_scan"
+    fi
+
     cat <<EOF
 Reflection Summary:
-- Coach mode: ${mode_upper}. Focus: ${focus:-"(no focus set)"}.
-- AI reflection was ${reason}; using deterministic fallback structure.
-- End-of-day context was captured, preserving continuity for tomorrow.
+- Coach mode: ${mode_upper}. Focus: ${focus_label}.
+- AI reflection was ${reason_label}; using deterministic fallback structure.
+${reason_detail_line:+- ${reason_detail_line}}
+- ${git_summary}
+Blindspots to sleep on (1-10):
+${blindspots_to_sleep_on:-1. Non-fork GitHub evidence is sparse, so the first blindspot to sleep on is how to create one visible commit early tomorrow.}
 What worked:
-- You captured end-of-day context (focus/tasks/journal), which preserves continuity for tomorrow.
+- ${what_worked}
 Where drift happened:
-- AI reflection was ${reason}, so drift diagnosis is partial and must stay conservative.
+- ${where_drift}; AI reflection was ${reason_label}, so keep the diagnosis conservative.
 Likely trigger:
-- Context switching without a hard stop condition late in the day.
+- ${likely_trigger}
+Pattern watch:
+- ${pattern_watch}
 Tomorrow lock:
-- First move: start with the top task aligned to focus (${focus:-"(no focus set)"}).
-- Done condition: complete one focused 10-15 minute block and log progress.
+- First move: ${tomorrow_first_move}
+- Done condition: ${tomorrow_done_condition}
 - Anti-tinker boundary: ${tomorrow_boundary}
 Health lens:
 - Keep work in short blocks with recovery breaks and stop if energy/fog thresholds are crossed.
-Pattern watch:
-- Not enough data for pattern detection (fallback mode).
 Signal confidence:
-- LOW (AI ${reason}; fallback uses only focus, mode, and completed tasks).
+- LOW (AI ${reason_label}; fallback uses ${evidence_sources}, mode, and behavioral digest metrics as available).
 Evidence used:
-- Deterministic fallback (${reason}) using today's focus, completed tasks, journal entries, and behavioral digest metrics.
+- Deterministic fallback (${reason_label}) using ${evidence_sources}, mode, and behavioral digest metrics.
 EOF
 }

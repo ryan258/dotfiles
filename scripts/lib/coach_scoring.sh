@@ -12,6 +12,59 @@ if [[ -n "${_COACH_SCORING_LOADED:-}" ]]; then
 fi
 readonly _COACH_SCORING_LOADED=true
 
+COACH_GROUNDING_FAILURE_REASON=""
+COACH_GROUNDING_FAILURE_DETAIL=""
+
+_coach_set_grounding_failure() {
+    COACH_GROUNDING_FAILURE_REASON="$1"
+    COACH_GROUNDING_FAILURE_DETAIL="${2:-}"
+    return 1
+}
+
+_coach_failure_detail_from_line() {
+    local line="$1"
+    local trimmed=""
+
+    trimmed=$(printf '%s' "$line" | tr '\n' ' ' | sed -E 's/[[:space:]]+/ /g; s/^[[:space:]]+|[[:space:]]+$//g')
+    if [[ -z "$trimmed" ]]; then
+        return 0
+    fi
+    if [[ "${#trimmed}" -gt 140 ]]; then
+        trimmed="${trimmed:0:137}..."
+    fi
+    printf 'line="%s"' "$trimmed"
+}
+
+coach_grounding_failure_message() {
+    local reason="${COACH_GROUNDING_FAILURE_REASON:-unknown grounding failure}"
+    local detail="${COACH_GROUNDING_FAILURE_DETAIL:-}"
+
+    if [[ -n "$detail" ]]; then
+        printf '%s; %s\n' "$reason" "$detail"
+    else
+        printf '%s\n' "$reason"
+    fi
+}
+
+coach_strategy_dispatcher_name() {
+    local configured="${AI_COACH_DISPATCHER:-}"
+    local candidate=""
+
+    if [[ -n "$configured" ]] && command -v "$configured" >/dev/null 2>&1; then
+        printf '%s\n' "$configured"
+        return 0
+    fi
+
+    for candidate in dhp-coach.sh dhp-strategy.sh; do
+        if command -v "$candidate" >/dev/null 2>&1; then
+            printf '%s\n' "$candidate"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
 coach_call_with_timeout() {
     local prompt="$1"
     local timeout_seconds="${2:-${AI_COACH_REQUEST_TIMEOUT_SECONDS:-35}}"
@@ -40,7 +93,8 @@ try:
         command,
         input=prompt,
         text=True,
-        capture_output=True,
+        stdout=subprocess.PIPE,
+        stderr=None,
         timeout=timeout_seconds,
     )
 except subprocess.TimeoutExpired as exc:
@@ -54,10 +108,7 @@ except subprocess.TimeoutExpired as exc:
 if result.stdout:
     sys.stdout.write(result.stdout)
 
-if result.returncode != 0:
-    if result.stderr:
-        sys.stderr.write(result.stderr)
-    sys.exit(result.returncode)
+sys.exit(result.returncode)
 PY
 )
         python_status=$?
@@ -102,7 +153,7 @@ PY
 
     wait "$child_pid" || child_status=$?
     cat "$output_file"
-    if [[ "$child_status" -ne 0 && -s "$error_file" ]]; then
+    if [[ -s "$error_file" ]]; then
         cat "$error_file" >&2
     fi
 
@@ -114,8 +165,10 @@ coach_strategy_with_timeout() {
     local prompt="$1"
     local temperature="${2:-0.25}"
     local timeout_seconds="${3:-${AI_COACH_REQUEST_TIMEOUT_SECONDS:-35}}"
+    local dispatcher=""
 
-    coach_call_with_timeout "$prompt" "$timeout_seconds" dhp-strategy.sh --temperature "$temperature"
+    dispatcher=$(coach_strategy_dispatcher_name) || return 127
+    coach_call_with_timeout "$prompt" "$timeout_seconds" "$dispatcher" --temperature "$temperature"
 }
 
 coach_strategy_with_retry() {
@@ -123,7 +176,7 @@ coach_strategy_with_retry() {
     local temperature="${2:-0.25}"
     local timeout_seconds="${3:-${AI_COACH_REQUEST_TIMEOUT_SECONDS:-35}}"
     local retry_timeout_seconds="${4:-${AI_COACH_RETRY_TIMEOUT_SECONDS:-90}}"
-    local retry_enabled="${AI_COACH_RETRY_ON_TIMEOUT:-true}"
+    local retry_enabled="${AI_COACH_RETRY_ON_TIMEOUT:-false}"
 
     local first_status=0
     local second_status=0
@@ -189,7 +242,7 @@ _coach_line_has_ungrounded_scope_expansion() {
     local context="$2"
     local risky=""
 
-    for risky in folder endpoint repository repo clone api manifest module database server scaffold microservice; do
+    for risky in folder endpoint clone api manifest module database server scaffold microservice homepage paragraph headline subheading bullet draft publish published live shipping; do
         if [[ "$line" == *"$risky"* ]] && [[ "$context" != *"$risky"* ]]; then
             return 0
         fi
@@ -200,14 +253,58 @@ _coach_line_has_ungrounded_scope_expansion() {
 coach_startday_response_is_grounded() {
     local response="$1"
     local focus="$2"
-    local tasks="$3"
+    local github_context="${3:-}"
     local context=""
+    local action_anchor_context=""
+    local evidence_lines=""
     local do_next_lines=""
     local first_line=""
     local line=""
     local count=0
 
-    context=$(printf '%s\n%s\n' "$focus" "$tasks" | tr '[:upper:]' '[:lower:]')
+    COACH_GROUNDING_FAILURE_REASON=""
+    COACH_GROUNDING_FAILURE_DETAIL=""
+    context=$(printf '%s\n%s\n' "$focus" "$github_context" | tr '[:upper:]' '[:lower:]')
+    action_anchor_context=$(printf '%s\n' "$focus" | tr '[:upper:]' '[:lower:]')
+    if [[ -z "$action_anchor_context" ]]; then
+        action_anchor_context="$context"
+    fi
+    evidence_lines=$(printf '%s\n' "$response" | awk '
+        BEGIN { section = "" }
+        /^Briefing Summary:[[:space:]]*$/ { section = "summary"; next }
+        /^North Star:[[:space:]]*$/ { section = "north"; next }
+        /^Do Next \(ordered 1-3\):[[:space:]]*$/ { section = "do_next"; next }
+        /^Evidence check:[[:space:]]*$/ { section = "evidence"; next }
+        /^[[:space:]]*[A-Za-z][^:]*:[[:space:]]*$/ { section = ""; next }
+        section == "summary" && /^[[:space:]]*-[[:space:]]+/ { print; next }
+        section == "north" && /^[[:space:]]*-[[:space:]]+/ { print; next }
+        section == "do_next" && /^[[:space:]]*[1-3]\.[[:space:]]+/ { print; next }
+        section == "evidence" && /^[[:space:]]*-[[:space:]]+/ { print; next }
+    ')
+
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        line=$(printf '%s' "$line" | sed -E 's/^[[:space:]]*-[[:space:]]+//; s/^[[:space:]]*[1-3]\.[[:space:]]+//')
+        line=$(printf '%s' "$line" | tr '[:upper:]' '[:lower:]')
+        if _coach_line_has_ungrounded_scope_expansion "$line" "$context"; then
+            _coach_set_grounding_failure "invented repo/page/publish detail" "$(_coach_failure_detail_from_line "$line")"
+            return 1
+        fi
+        if [[ "$line" == *"journal"* || "$line" == *"journaling"* ]]; then
+            _coach_set_grounding_failure "invented journal evidence" "$(_coach_failure_detail_from_line "$line")"
+            return 1
+        fi
+        if [[ "$line" == *"todo"* || "$line" == *"top task"* || "$line" == *"completed task"* ]]; then
+            _coach_set_grounding_failure "invented task evidence" "$(_coach_failure_detail_from_line "$line")"
+            return 1
+        fi
+    done <<< "$evidence_lines"
+
+    if ! printf '%s\n' "$response" | grep -q '^Do Next (ordered 1-3):[[:space:]]*$'; then
+        _coach_set_grounding_failure "missing required 'Do Next (ordered 1-3)' heading"
+        return 1
+    fi
+
     do_next_lines=$(printf '%s\n' "$response" | awk '
         BEGIN { in_do_next = 0 }
         /^Do Next \(ordered 1-3\):[[:space:]]*$/ { in_do_next = 1; next }
@@ -221,6 +318,11 @@ coach_startday_response_is_grounded() {
         line=$(printf '%s' "$line" | sed -E 's/^[[:space:]]*[1-3]\.[[:space:]]+//')
         line=$(printf '%s' "$line" | tr '[:upper:]' '[:lower:]')
         if _coach_line_has_ungrounded_scope_expansion "$line" "$context"; then
+            _coach_set_grounding_failure "invented repo/page/publish detail" "$(_coach_failure_detail_from_line "$line")"
+            return 1
+        fi
+        if [[ "$line" == *"todo"* || "$line" == *"top task"* || "$line" == *"completed task"* ]]; then
+            _coach_set_grounding_failure "invented task evidence" "$(_coach_failure_detail_from_line "$line")"
             return 1
         fi
         if [[ "$count" -eq 1 ]]; then
@@ -229,11 +331,109 @@ coach_startday_response_is_grounded() {
     done <<< "$do_next_lines"
 
     if [[ "$count" -lt 3 ]]; then
+        _coach_set_grounding_failure "missing grounded 3-step action plan"
         return 1
     fi
-    if ! _coach_line_has_context_overlap "$first_line" "$context"; then
+    if ! _coach_line_has_context_overlap "$first_line" "$action_anchor_context"; then
+        _coach_set_grounding_failure "first action is not anchored to focus" "$(_coach_failure_detail_from_line "$first_line")"
         return 1
     fi
+    return 0
+}
+
+coach_goodevening_response_is_grounded() {
+    local response="$1"
+    local focus="$2"
+    local github_context="${3:-}"
+    local context=""
+    local evidence_lines=""
+    local tomorrow_lock_lines=""
+    local blindspot_lines=""
+    local line=""
+    local count=0
+
+    COACH_GROUNDING_FAILURE_REASON=""
+    COACH_GROUNDING_FAILURE_DETAIL=""
+    context=$(printf '%s\n%s\n' "$focus" "$github_context" | tr '[:upper:]' '[:lower:]')
+
+    evidence_lines=$(printf '%s\n' "$response" | awk '
+        BEGIN { section = "" }
+        /^Reflection Summary:[[:space:]]*$/ { section = "summary"; next }
+        /^Blindspots to sleep on \(1-10\):[[:space:]]*$/ { section = "blindspots"; next }
+        /^What worked:[[:space:]]*$/ { section = "worked"; next }
+        /^Where drift happened:[[:space:]]*$/ { section = "drift"; next }
+        /^Likely trigger:[[:space:]]*$/ { section = "trigger"; next }
+        /^Pattern watch:[[:space:]]*$/ { section = "pattern"; next }
+        /^Tomorrow lock:[[:space:]]*$/ { section = "tomorrow"; next }
+        /^Health lens:[[:space:]]*$/ { section = "health"; next }
+        /^Signal confidence:[[:space:]]*$/ { section = "signal"; next }
+        /^Evidence used:[[:space:]]*$/ { section = "evidence"; next }
+        /^[[:space:]]*[A-Za-z][^:]*:[[:space:]]*$/ { section = ""; next }
+        (section == "summary" || section == "worked" || section == "drift" || section == "trigger" || section == "pattern" || section == "tomorrow" || section == "evidence") && /^[[:space:]]*-[[:space:]]+/ { print; next }
+        section == "blindspots" && /^[[:space:]]*[0-9]+\.[[:space:]]+/ { print; next }
+    ')
+
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        line=$(printf '%s' "$line" | sed -E 's/^[[:space:]]*-[[:space:]]+//; s/^[[:space:]]*[0-9]+\.[[:space:]]+//')
+        line=$(printf '%s' "$line" | tr '[:upper:]' '[:lower:]')
+        if [[ "$line" == repo* ]] && ! _coach_line_has_context_overlap "$line" "$context"; then
+            _coach_set_grounding_failure "invented repo evidence" "$(_coach_failure_detail_from_line "$line")"
+            return 1
+        fi
+        if _coach_line_has_ungrounded_scope_expansion "$line" "$context"; then
+            _coach_set_grounding_failure "invented repo/page/publish detail" "$(_coach_failure_detail_from_line "$line")"
+            return 1
+        fi
+        if [[ "$line" == *"journal"* || "$line" == *"journaling"* ]]; then
+            _coach_set_grounding_failure "invented journal evidence" "$(_coach_failure_detail_from_line "$line")"
+            return 1
+        fi
+        if [[ "$line" == *"todo"* || "$line" == *"top task"* || "$line" == *"completed task"* || "$line" == *"task completion"* ]]; then
+            _coach_set_grounding_failure "invented task evidence" "$(_coach_failure_detail_from_line "$line")"
+            return 1
+        fi
+    done <<< "$evidence_lines"
+
+    if ! printf '%s\n' "$response" | grep -q '^Tomorrow lock:[[:space:]]*$'; then
+        _coach_set_grounding_failure "missing required 'Tomorrow lock' heading"
+        return 1
+    fi
+
+    tomorrow_lock_lines=$(printf '%s\n' "$response" | awk '
+        BEGIN { section = 0 }
+        /^Tomorrow lock:[[:space:]]*$/ { section = 1; next }
+        section && /^[[:space:]]*-[[:space:]]+/ { print; next }
+        section && /^[[:space:]]*[A-Za-z][^:]*:[[:space:]]*$/ { section = 0 }
+    ')
+    count=0
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        count=$((count + 1))
+    done <<< "$tomorrow_lock_lines"
+    if [[ "$count" -lt 3 ]]; then
+        _coach_set_grounding_failure "missing grounded tomorrow lock"
+        return 1
+    fi
+
+    if printf '%s\n' "$response" | grep -q '^Blindspots to sleep on (1-10):[[:space:]]*$'; then
+        blindspot_lines=$(printf '%s\n' "$response" | awk '
+            BEGIN { section = 0 }
+            /^Blindspots to sleep on \(1-10\):[[:space:]]*$/ { section = 1; next }
+            section && /^[[:space:]]*[0-9]+\.[[:space:]]+/ { print; next }
+            section && /^[[:space:]]*[A-Za-z][^:]*:[[:space:]]*$/ { section = 0 }
+        ')
+        count=0
+        while IFS= read -r line; do
+            [[ -z "$line" ]] && continue
+            count=$((count + 1))
+        done <<< "$blindspot_lines"
+        if [[ "$count" -ne 10 ]]; then
+            _coach_set_grounding_failure "blindspots section must contain 10 items"
+            return 1
+        fi
+    fi
+
     return 0
 }
 

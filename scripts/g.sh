@@ -48,6 +48,13 @@ HISTORY_FILE="${HISTORY_FILE:-$DIR_HISTORY_FILE}"
 USAGE_LOG="${USAGE_LOG:-$DIR_USAGE_LOG}"
 APP_LAUNCHER="${APP_LAUNCHER:-$DOTFILES_DIR/scripts/app_launcher.sh}"
 
+_g_secure_bookmarks_file() {
+  if [ ! -e "$BOOKMARKS_FILE" ]; then
+    : > "$BOOKMARKS_FILE"
+  fi
+  chmod 600 "$BOOKMARKS_FILE" 2>/dev/null || true
+}
+
 # --- Subcommands ---
 case "${1:-list}" in
   -r|recent)
@@ -109,7 +116,9 @@ case "${1:-list}" in
     VENV_PATH=$(sanitize_input "$VENV_PATH")
     APPS=$(sanitize_input "$APPS")
 
+    _g_secure_bookmarks_file
     echo "$BOOKMARK_NAME|$DIR_TO_SAVE|$ON_ENTER_CMD|$VENV_PATH|$APPS" >> "$BOOKMARKS_FILE"
+    chmod 600 "$BOOKMARKS_FILE" 2>/dev/null || true
     echo "Saved bookmark '$BOOKMARK_NAME' to $DIR_TO_SAVE"
     ;;
 
@@ -208,6 +217,7 @@ case "${1:-list}" in
 
     # Replace bookmarks file with cleaned version
     mv "$TEMP_FILE" "$BOOKMARKS_FILE"
+    chmod 600 "$BOOKMARKS_FILE" 2>/dev/null || true
 
     echo ""
     echo "Pruning complete: $REMOVED_COUNT removed, $KEPT_COUNT kept"

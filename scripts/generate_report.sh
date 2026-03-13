@@ -32,6 +32,10 @@ else
     die "date utilities not found at $DATE_UTILS" "$EXIT_FILE_NOT_FOUND"
 fi
 
+if [[ "${BASH_VERSINFO[0]:-0}" -lt 4 ]]; then
+    die "generate_report.sh requires Bash 4+ because it uses associative arrays. Ensure /usr/bin/env bash resolves to a newer Bash, not macOS /bin/bash 3.2." "$EXIT_SERVICE_ERROR"
+fi
+
 REPORTS_DIR=$(validate_path "$REPORTS_DIR") || die "Invalid reports directory path: $REPORTS_DIR" "$EXIT_INVALID_ARGS"
 mkdir -p "$REPORTS_DIR"
 

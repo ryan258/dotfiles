@@ -385,14 +385,6 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
         if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
             FOCUS_CONTEXT=$(cat "$FOCUS_FILE")
         fi
-        RECENT_JOURNAL=$(tail -n 5 "$JOURNAL_FILE" 2>/dev/null || echo "")
-        TODAY_TASKS=""
-        if [ -x "$SCRIPT_DIR/todo.sh" ]; then
-            TODAY_TASKS=$("$SCRIPT_DIR/todo.sh" top 3 2>/dev/null || true)
-        fi
-        if [ -z "$TODAY_TASKS" ]; then
-            TODAY_TASKS=$(head -n 5 "$TODO_FILE" 2>/dev/null || echo "")
-        fi
         BRIEFING_TEMPERATURE="${AI_BRIEFING_TEMPERATURE:-0.25}"
         COACH_TACTICAL_DAYS="${AI_COACH_TACTICAL_DAYS:-7}"
         COACH_PATTERN_DAYS="${AI_COACH_PATTERN_DAYS:-30}"
@@ -415,25 +407,28 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
             COACH_BEHAVIOR_DIGEST=$(coaching_build_behavior_digest "$TODAY" "$COACH_TACTICAL_DAYS" "$COACH_PATTERN_DAYS" "${RECENT_PUSHES:-}" "${YESTERDAY_COMMITS:-}" 2>/dev/null || echo "(behavior digest unavailable)")
         fi
 
-        if command -v dhp-strategy.sh &> /dev/null; then
+        COACH_DISPATCHER=""
+        if command -v coaching_strategy_dispatcher_name >/dev/null 2>&1; then
+            COACH_DISPATCHER=$(coaching_strategy_dispatcher_name 2>/dev/null || true)
+        fi
+
+        if [ -n "$COACH_DISPATCHER" ]; then
             if command -v coaching_build_startday_prompt >/dev/null 2>&1; then
                 BRIEFING_PROMPT="$(coaching_build_startday_prompt \
                     "${FOCUS_CONTEXT:-}" \
                     "${COACH_MODE:-LOCKED}" \
                     "${YESTERDAY_COMMITS:-}" \
                     "${RECENT_PUSHES:-}" \
-                    "${RECENT_JOURNAL:-}" \
-                    "${YESTERDAY_JOURNAL_CONTEXT:-}" \
-                    "${TODAY_TASKS:-}" \
                     "${COACH_BEHAVIOR_DIGEST:-}")"
             else
-                BRIEFING_PROMPT="Produce a high-signal morning execution guide grounded only in today's focus and top tasks."
+                BRIEFING_PROMPT="Produce a high-signal morning execution guide grounded only in today's focus and GitHub activity."
             fi
             BRIEFING=""
             BRIEFING_REASON="ai-error"
+            BRIEFING_REASON_DETAIL=""
 
             if command -v coaching_strategy_with_retry >/dev/null 2>&1; then
-                if BRIEFING=$(coaching_strategy_with_retry "$BRIEFING_PROMPT" "$BRIEFING_TEMPERATURE" "${AI_COACH_REQUEST_TIMEOUT_SECONDS:-35}" "${AI_COACH_RETRY_TIMEOUT_SECONDS:-90}" 2>/dev/null); then
+                if BRIEFING=$(coaching_strategy_with_retry "$BRIEFING_PROMPT" "$BRIEFING_TEMPERATURE" "${AI_COACH_REQUEST_TIMEOUT_SECONDS:-35}" "${AI_COACH_RETRY_TIMEOUT_SECONDS:-90}"); then
                     BRIEFING_REASON=""
                 else
                     strategy_status=$?
@@ -444,7 +439,7 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
                     fi
                 fi
             else
-                if BRIEFING=$(printf '%s' "$BRIEFING_PROMPT" | dhp-strategy.sh --temperature "$BRIEFING_TEMPERATURE" 2>/dev/null); then
+                if BRIEFING=$(printf '%s' "$BRIEFING_PROMPT" | "$COACH_DISPATCHER" --temperature "$BRIEFING_TEMPERATURE"); then
                     BRIEFING_REASON=""
                 else
                     BRIEFING_REASON="error"
@@ -453,24 +448,42 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
 
             if [ -z "$BRIEFING" ]; then
                 if command -v coaching_startday_fallback_output >/dev/null 2>&1; then
-                    BRIEFING=$(coaching_startday_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${TODAY_TASKS:-}" "${BRIEFING_REASON:-unavailable}")
+                    BRIEFING=$(coaching_startday_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${BRIEFING_REASON:-unavailable}" "${COACH_BEHAVIOR_DIGEST:-}" "${YESTERDAY_COMMITS:-}")
                 else
                     BRIEFING="Unable to generate AI briefing at this time."
                 fi
-            elif [ -z "$BRIEFING_REASON" ] && command -v coaching_startday_response_is_grounded >/dev/null 2>&1; then
-                if ! coaching_startday_response_is_grounded "$BRIEFING" "${FOCUS_CONTEXT:-"(no focus set)"}" "${TODAY_TASKS:-}"; then
+            elif [ -z "$BRIEFING_REASON" ] && [ "${AI_COACH_EVIDENCE_CHECK_ENABLED:-true}" = "true" ] && command -v coaching_startday_response_is_grounded >/dev/null 2>&1; then
+                if ! coaching_startday_response_is_grounded "$BRIEFING" "${FOCUS_CONTEXT:-"(no focus set)"}" "$(printf '%s\n%s\n' "${YESTERDAY_COMMITS:-}" "${RECENT_PUSHES:-}")"; then
+                    if command -v coach_grounding_failure_message >/dev/null 2>&1; then
+                        BRIEFING_REASON_DETAIL=$(coach_grounding_failure_message)
+                    elif [[ -n "${COACH_GROUNDING_FAILURE_REASON:-}" ]]; then
+                        BRIEFING_REASON_DETAIL="${COACH_GROUNDING_FAILURE_REASON:-}"
+                    fi
                     BRIEFING_REASON="ungrounded-actions"
+                    if [[ -n "${BRIEFING_REASON_DETAIL:-}" ]]; then
+                        printf 'AI coach: rejected response (%s).\n' "$BRIEFING_REASON_DETAIL" >&2
+                    else
+                        echo "AI coach: rejected response (ungrounded-actions)." >&2
+                    fi
                     if command -v coaching_startday_fallback_output >/dev/null 2>&1; then
-                        BRIEFING=$(coaching_startday_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${TODAY_TASKS:-}" "$BRIEFING_REASON")
+                        BRIEFING=$(coaching_startday_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "$BRIEFING_REASON" "${COACH_BEHAVIOR_DIGEST:-}" "${YESTERDAY_COMMITS:-}" "${BRIEFING_REASON_DETAIL:-}")
                     fi
                 fi
             fi
         else
             if command -v coaching_startday_fallback_output >/dev/null 2>&1; then
-                BRIEFING=$(coaching_startday_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${TODAY_TASKS:-}" "dispatcher-missing")
+                BRIEFING=$(coaching_startday_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "dispatcher-missing" "${COACH_BEHAVIOR_DIGEST:-}" "${YESTERDAY_COMMITS:-}")
             else
                 BRIEFING="Unable to generate AI briefing at this time."
             fi
+        fi
+
+        if command -v coaching_sanitize_startday_blindspots >/dev/null 2>&1; then
+            BRIEFING=$(coaching_sanitize_startday_blindspots \
+                "$BRIEFING" \
+                "${FOCUS_CONTEXT:-"(no focus set)"}" \
+                "${COACH_BEHAVIOR_DIGEST:-}" \
+                "$(printf '%s\n%s\n' "${YESTERDAY_COMMITS:-}" "${RECENT_PUSHES:-}")")
         fi
 
         BRIEFING_ESCAPED="${BRIEFING//$'\n'/\\n}"

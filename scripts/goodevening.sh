@@ -181,11 +181,15 @@ if [ -f "$TIME_TRACKING_LIB" ]; then
     # shellcheck disable=SC1090
     source "$TIME_TRACKING_LIB"
     if [ -f "$TIME_LOG" ]; then
-        total_seconds=$(get_total_time_for_date "$TODAY")
-        if [ "$total_seconds" -gt 0 ]; then
-            echo "  Total: $(format_duration "$total_seconds")"
+        if command -v time_tracking_supports_assoc_arrays >/dev/null 2>&1 && ! time_tracking_supports_assoc_arrays; then
+            echo "  (Time tracking requires Bash 4+; current shell: ${BASH_VERSION:-unknown}. Ensure /usr/bin/env bash resolves to a newer Bash.)"
         else
-            echo "  (No time tracked today)"
+            total_seconds=$(get_total_time_for_date "$TODAY")
+            if [ "$total_seconds" -gt 0 ]; then
+                echo "  Total: $(format_duration "$total_seconds")"
+            else
+                echo "  (No time tracked today)"
+            fi
         fi
     else
         echo "  (No time log found)"
@@ -497,7 +501,7 @@ if bash "$(dirname "$0")/data_validate.sh"; then
     echo "  ✅ Data validation passed."
     # 9. Backup of dotfiles data
     echo "$(date_now): goodevening.sh - Backing up dotfiles data." >> "$SYSTEM_LOG_FILE"
-    if ! backup_output=$(/bin/bash "$(dirname "$0")/backup_data.sh" 2>&1); then
+if ! backup_output=$("$SCRIPT_DIR/backup_data.sh" 2>&1); then
         echo "  ⚠️  WARNING: Backup failed: $backup_output"
         echo "$(date_now): goodevening.sh - Backup failed: $backup_output" >> "$SYSTEM_LOG_FILE"
     fi
@@ -512,11 +516,6 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
 
     # Gather today's data
     # TODAY is already set globally (handling overrides)
-    COMPLETED_TASKS_CONTEXT="${COMPLETED_TASKS:-}"
-    if [ -z "$COMPLETED_TASKS_CONTEXT" ] && [ -f "$TODO_DONE_FILE" ]; then
-        COMPLETED_TASKS_CONTEXT=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {print}' "$TODO_DONE_FILE" 2>/dev/null || echo "")
-    fi
-    TODAY_JOURNAL=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {print}' "$JOURNAL_FILE" 2>/dev/null || echo "")
     FOCUS_CONTEXT=""
     if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
         FOCUS_CONTEXT=$(cat "$FOCUS_FILE")
@@ -557,18 +556,22 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
             "${FOCUS_CONTEXT:-}" \
             "${TODAY_COMMITS:-}" \
             "${RECENT_PUSHES:-}" \
-            "${COMPLETED_TASKS_CONTEXT:-}" \
-            "${TODAY_JOURNAL:-}" \
             "${COACH_BEHAVIOR_DIGEST:-}")"
     else
-        REFLECTION_PROMPT="Produce a reflective coaching summary grounded in today's completed tasks, journal entries, and focus."
+        REFLECTION_PROMPT="Produce a reflective coaching summary grounded in today's focus and GitHub evidence."
     fi
     REFLECTION=""
     REFLECTION_REASON="ai-error"
+    REFLECTION_REASON_DETAIL=""
 
-    if command -v dhp-strategy.sh >/dev/null 2>&1; then
+    COACH_DISPATCHER=""
+    if command -v coaching_strategy_dispatcher_name >/dev/null 2>&1; then
+        COACH_DISPATCHER=$(coaching_strategy_dispatcher_name 2>/dev/null || true)
+    fi
+
+    if [ -n "$COACH_DISPATCHER" ]; then
         if command -v coaching_strategy_with_retry >/dev/null 2>&1; then
-            if REFLECTION=$(coaching_strategy_with_retry "$REFLECTION_PROMPT" "$COACH_TEMPERATURE" "${AI_COACH_REQUEST_TIMEOUT_SECONDS:-35}" "${AI_COACH_RETRY_TIMEOUT_SECONDS:-90}" 2>/dev/null); then
+            if REFLECTION=$(coaching_strategy_with_retry "$REFLECTION_PROMPT" "$COACH_TEMPERATURE" "${AI_COACH_REQUEST_TIMEOUT_SECONDS:-35}" "${AI_COACH_RETRY_TIMEOUT_SECONDS:-90}"); then
                 REFLECTION_REASON=""
             else
                 strategy_status=$?
@@ -579,7 +582,7 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
                 fi
             fi
         else
-            if REFLECTION=$(printf '%s' "$REFLECTION_PROMPT" | dhp-strategy.sh --temperature "$COACH_TEMPERATURE" 2>/dev/null); then
+            if REFLECTION=$(printf '%s' "$REFLECTION_PROMPT" | "$COACH_DISPATCHER" --temperature "$COACH_TEMPERATURE"); then
                 REFLECTION_REASON=""
             else
                 REFLECTION_REASON="error"
@@ -591,10 +594,35 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
 
     if [ -z "$REFLECTION" ]; then
         if command -v coaching_goodevening_fallback_output >/dev/null 2>&1; then
-            REFLECTION=$(coaching_goodevening_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${REFLECTION_REASON:-unavailable}")
+            REFLECTION=$(coaching_goodevening_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${REFLECTION_REASON:-unavailable}" "${COACH_BEHAVIOR_DIGEST:-}" "${TODAY_COMMITS:-}" "${REFLECTION_REASON_DETAIL:-}")
         else
             REFLECTION="Unable to generate AI reflection at this time."
         fi
+    elif [ -z "$REFLECTION_REASON" ] && [ "${AI_COACH_EVIDENCE_CHECK_ENABLED:-true}" = "true" ] && command -v coaching_goodevening_response_is_grounded >/dev/null 2>&1; then
+        if ! coaching_goodevening_response_is_grounded "$REFLECTION" "${FOCUS_CONTEXT:-"(no focus set)"}" "$(printf '%s\n%s\n' "${TODAY_COMMITS:-}" "${RECENT_PUSHES:-}")"; then
+            if command -v coach_grounding_failure_message >/dev/null 2>&1; then
+                REFLECTION_REASON_DETAIL=$(coach_grounding_failure_message)
+            elif [[ -n "${COACH_GROUNDING_FAILURE_REASON:-}" ]]; then
+                REFLECTION_REASON_DETAIL="${COACH_GROUNDING_FAILURE_REASON:-}"
+            fi
+            REFLECTION_REASON="ungrounded-reflection"
+            if [[ -n "${REFLECTION_REASON_DETAIL:-}" ]]; then
+                printf 'AI coach: rejected reflection (%s).\n' "$REFLECTION_REASON_DETAIL" >&2
+            else
+                echo "AI coach: rejected reflection (ungrounded-reflection)." >&2
+            fi
+            if command -v coaching_goodevening_fallback_output >/dev/null 2>&1; then
+                REFLECTION=$(coaching_goodevening_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${REFLECTION_REASON:-unavailable}" "${COACH_BEHAVIOR_DIGEST:-}" "${TODAY_COMMITS:-}" "${REFLECTION_REASON_DETAIL:-}")
+            fi
+        fi
+    fi
+
+    if command -v coaching_sanitize_goodevening_blindspots >/dev/null 2>&1; then
+        REFLECTION=$(coaching_sanitize_goodevening_blindspots \
+            "$REFLECTION" \
+            "${FOCUS_CONTEXT:-"(no focus set)"}" \
+            "${COACH_BEHAVIOR_DIGEST:-}" \
+            "$(printf '%s\n%s\n' "${TODAY_COMMITS:-}" "${RECENT_PUSHES:-}")")
     fi
 
     echo "$REFLECTION" | sed 's/^/  /'

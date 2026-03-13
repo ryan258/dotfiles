@@ -15,14 +15,16 @@ readonly _DOTFILES_CONFIG_LOADED=true
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
 ENV_FILE="${ENV_FILE:-$DOTFILES_DIR/.env}"
 
-# Load environment file (only once)
-if [[ -z "${_DOTFILES_ENV_LOADED:-}" ]]; then
+# Load environment file once per shell per resolved path.
+# Do not trust legacy exported _DOTFILES_ENV_LOADED markers from parent shells:
+# they can freeze stale AI/model settings after .env changes.
+if [[ "${_DOTFILES_ENV_FILE_LOADED:-}" != "$ENV_FILE" ]]; then
     if [[ -f "$ENV_FILE" ]]; then
         set -a
         source "$ENV_FILE"
         set +a
     fi
-    export _DOTFILES_ENV_LOADED=1
+    _DOTFILES_ENV_FILE_LOADED="$ENV_FILE"
 fi
 
 #=============================================================================
@@ -193,13 +195,16 @@ get_output_dir() {
 AI_BRIEFING_ENABLED="${AI_BRIEFING_ENABLED:-true}"
 AI_REFLECTION_ENABLED="${AI_REFLECTION_ENABLED:-true}"
 AI_BRIEFING_TEMPERATURE="${AI_BRIEFING_TEMPERATURE:-0.25}"
+AI_COACH_MODEL="${AI_COACH_MODEL:-nvidia/nemotron-3-nano-30b-a3b:free}"
+AI_COACH_DISPATCHER="${AI_COACH_DISPATCHER:-dhp-coach.sh}"
 AI_COACH_LOG_ENABLED="${AI_COACH_LOG_ENABLED:-true}"
 AI_COACH_TACTICAL_DAYS="${AI_COACH_TACTICAL_DAYS:-7}"
 AI_COACH_PATTERN_DAYS="${AI_COACH_PATTERN_DAYS:-30}"
 AI_COACH_MODE_DEFAULT="${AI_COACH_MODE_DEFAULT:-LOCKED}"
 AI_COACH_REQUEST_TIMEOUT_SECONDS="${AI_COACH_REQUEST_TIMEOUT_SECONDS:-35}"
-AI_COACH_RETRY_ON_TIMEOUT="${AI_COACH_RETRY_ON_TIMEOUT:-true}"
+AI_COACH_RETRY_ON_TIMEOUT="${AI_COACH_RETRY_ON_TIMEOUT:-false}"
 AI_COACH_RETRY_TIMEOUT_SECONDS="${AI_COACH_RETRY_TIMEOUT_SECONDS:-90}"
+AI_COACH_EVIDENCE_CHECK_ENABLED="${AI_COACH_EVIDENCE_CHECK_ENABLED:-true}"
 
 # Logging features
 SWIPE_LOG_ENABLED="${SWIPE_LOG_ENABLED:-true}"

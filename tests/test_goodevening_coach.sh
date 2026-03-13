@@ -55,21 +55,31 @@ set -euo pipefail
 printf '%s\n' "$*" > "$DATA_DIR/strategy_args_goodevening.txt"
 cat > "$DATA_DIR/strategy_prompt_goodevening.txt"
 cat <<'OUT'
+Reflection Summary:
+- Closed the day with one clear repo lane.
 What worked:
-- Finished one concrete deliverable and logged context.
+- Focus stayed mostly inside the declared repo lane.
 Where drift happened:
 - Switched contexts before closing the primary task.
 Likely trigger:
 - Open-ended tooling exploration after commit work.
 Tomorrow lock:
-- Start with one locked task and stop side quests until done condition.
+- First move: start with one locked task.
+- Done condition: ship one visible next step.
+- Anti-tinker boundary: stop side quests until the done condition.
 Health lens:
 - Work in two bounded blocks with a break.
 Evidence used:
-- done tasks + journal + commits + behavior digest.
+- focus text + commit repos + behavior digest.
 OUT
 EOF
     chmod +x "$DOTFILES_DIR/bin/dhp-strategy.sh"
+    cat > "$DOTFILES_DIR/bin/dhp-coach.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+exec "$(dirname "$0")/dhp-strategy.sh" "$@"
+EOF
+    chmod +x "$DOTFILES_DIR/bin/dhp-coach.sh"
 
     export TEST_DAY
     TEST_DAY="$(shift_date -1)"
@@ -162,9 +172,11 @@ PY
 
     [[ "$prompt" == *"Coach mode used today:"* ]]
     [[ "$prompt" == *"Behavior digest:"* ]]
+    [[ "$prompt" == *"Blindspots to sleep on (1-10):"* ]]
     [[ "$prompt" == *"Tomorrow lock:"* ]]
     [[ "$prompt" == *"Health lens:"* ]]
     [[ "$prompt" == *"declared focus and non-fork GitHub evidence"* ]]
+    [[ "$prompt" == *"Keep journals and todos out of the coaching verdict"* ]]
     [[ "$args" == *"--temperature"* ]]
 
     [[ "$output" == *"What worked:"* ]]
@@ -207,6 +219,7 @@ EOF
     [[ "$output" == *"Tomorrow lock:"* ]]
     [[ "$output" == *"Evidence used:"* ]]
     [[ "$output" == *"Deterministic fallback (timeout)"* ]]
+    [[ "$output" != *"top task aligned to focus"* ]]
 }
 
 @test "goodevening retries after timeout and returns AI output when retry succeeds" {
@@ -215,6 +228,8 @@ EOF
 set -euo pipefail
 sleep 2
 cat <<'OUT'
+Reflection Summary:
+- Retry delivered output.
 What worked:
 - Retry delivered output.
 Where drift happened:
@@ -222,7 +237,9 @@ Where drift happened:
 Likely trigger:
 - Open loops.
 Tomorrow lock:
-- First move + done condition + boundary.
+- First move: resume one repo lane.
+- Done condition: ship one visible next step.
+- Anti-tinker boundary: no side quests before the first block lands.
 Health lens:
 - Pace blocks.
 Evidence used:
@@ -240,6 +257,7 @@ EOF
         AI_REFLECTION_ENABLED=true \
         AI_COACH_LOG_ENABLED=true \
         AI_COACH_MODE_DEFAULT=LOCKED \
+        AI_COACH_EVIDENCE_CHECK_ENABLED=false \
         AI_COACH_REQUEST_TIMEOUT_SECONDS=1 \
         AI_COACH_RETRY_ON_TIMEOUT=true \
         AI_COACH_RETRY_TIMEOUT_SECONDS=4 \
@@ -248,4 +266,157 @@ EOF
     [ "$status" -eq 0 ]
     [[ "$output" == *"Retry delivered output."* ]]
     [[ "$output" != *"Deterministic fallback (timeout)"* ]]
+}
+
+@test "goodevening replaces invented journal/task evidence with deterministic fallback when evidence check is enabled" {
+    cat > "$DOTFILES_DIR/bin/dhp-strategy.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+cat <<'OUT'
+Reflection Summary:
+- note
+What worked:
+- Task completion trend is improving and journal capture remained active.
+Where drift happened:
+- Drift note.
+Likely trigger:
+- fog.
+Tomorrow lock:
+- First move: resume one repo lane.
+- Done condition: ship one visible next step.
+- Anti-tinker boundary: no side quests before the first block lands.
+Health lens:
+- pace blocks.
+Evidence used:
+- focus text only.
+OUT
+EOF
+    chmod +x "$DOTFILES_DIR/bin/dhp-strategy.sh"
+
+    run env \
+        PATH="$DOTFILES_DIR/bin:$PATH" \
+        HOME="$HOME" \
+        DATA_DIR="$DATA_DIR" \
+        DOTFILES_DIR="$DOTFILES_DIR" \
+        PROJECTS_DIR="$PROJECTS_DIR" \
+        AI_REFLECTION_ENABLED=true \
+        AI_COACH_LOG_ENABLED=true \
+        AI_COACH_MODE_DEFAULT=LOCKED \
+        AI_COACH_EVIDENCE_CHECK_ENABLED=true \
+        AI_COACH_REQUEST_TIMEOUT_SECONDS=5 \
+        AI_COACH_RETRY_ON_TIMEOUT=false \
+        bash -c "$DOTFILES_DIR/scripts/goodevening.sh --refresh $TEST_DAY < /dev/null"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"AI coach: rejected reflection (invented journal evidence"* ]]
+    [[ "$output" == *"Deterministic fallback (AI reflection failed evidence check)"* ]]
+    [[ "$output" == *"Blindspots to sleep on (1-10):"* ]]
+}
+
+@test "goodevening accepts raw AI reflection when evidence check is disabled" {
+    cat > "$DOTFILES_DIR/bin/dhp-strategy.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+cat <<'OUT'
+Reflection Summary:
+- note
+What worked:
+- Task completion trend is improving and journal capture remained active.
+Where drift happened:
+- Drift note.
+Likely trigger:
+- fog.
+Tomorrow lock:
+- First move: resume one repo lane.
+- Done condition: ship one visible next step.
+- Anti-tinker boundary: no side quests before the first block lands.
+Health lens:
+- pace blocks.
+Evidence used:
+- focus text only.
+OUT
+EOF
+    chmod +x "$DOTFILES_DIR/bin/dhp-strategy.sh"
+
+    run env \
+        PATH="$DOTFILES_DIR/bin:$PATH" \
+        HOME="$HOME" \
+        DATA_DIR="$DATA_DIR" \
+        DOTFILES_DIR="$DOTFILES_DIR" \
+        PROJECTS_DIR="$PROJECTS_DIR" \
+        AI_REFLECTION_ENABLED=true \
+        AI_COACH_LOG_ENABLED=true \
+        AI_COACH_MODE_DEFAULT=LOCKED \
+        AI_COACH_EVIDENCE_CHECK_ENABLED=false \
+        AI_COACH_REQUEST_TIMEOUT_SECONDS=5 \
+        AI_COACH_RETRY_ON_TIMEOUT=false \
+        bash -c "$DOTFILES_DIR/scripts/goodevening.sh --refresh $TEST_DAY < /dev/null"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Task completion trend is improving and journal capture remained active."* ]]
+    [[ "$output" != *"AI coach: rejected reflection"* ]]
+    [[ "$output" != *"Deterministic fallback (AI reflection failed evidence check)"* ]]
+}
+
+@test "goodevening cleans noisy blindspots even when evidence check is disabled" {
+    cat > "$DOTFILES_DIR/bin/dhp-strategy.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+cat <<'OUT'
+Reflection Summary:
+- Closed the day with one clear repo lane.
+Blindspots to sleep on (1-10):
+1. dir_usage_malformed=162 means your tracking stack is unstable.
+2. focus_git_status=diffuse proves the spear is broken.
+3. commit_context data is absent so the pattern is unknowable.
+4. High brain fog score suggests a mismatch between cognitive load and capacity.
+5. Low suggestion adherence rate implies planned interventions are being ignored.
+6. The afternoon slump is likely derailing any complex planning work.
+7. The upward completion trend is positive but based on only one recent task.
+8. The lack of commit context (0) means we cannot verify whether the work is only local.
+9. Keep the repo lane visible to future you.
+What worked:
+- Focus stayed mostly inside the declared repo lane.
+Where drift happened:
+- Switched contexts before closing the primary task.
+Likely trigger:
+- Open-ended tooling exploration after commit work.
+Tomorrow lock:
+- First move: start with one locked task.
+- Done condition: ship one visible next step.
+- Anti-tinker boundary: stop side quests until the done condition.
+Health lens:
+- Work in two bounded blocks with a break.
+Evidence used:
+- focus text + commit repos + behavior digest.
+OUT
+EOF
+    chmod +x "$DOTFILES_DIR/bin/dhp-strategy.sh"
+
+    run env \
+        PATH="$DOTFILES_DIR/bin:$PATH" \
+        HOME="$HOME" \
+        DATA_DIR="$DATA_DIR" \
+        DOTFILES_DIR="$DOTFILES_DIR" \
+        PROJECTS_DIR="$PROJECTS_DIR" \
+        AI_REFLECTION_ENABLED=true \
+        AI_COACH_LOG_ENABLED=true \
+        AI_COACH_MODE_DEFAULT=LOCKED \
+        AI_COACH_EVIDENCE_CHECK_ENABLED=false \
+        AI_COACH_REQUEST_TIMEOUT_SECONDS=5 \
+        AI_COACH_RETRY_ON_TIMEOUT=false \
+        bash -c "$DOTFILES_DIR/scripts/goodevening.sh --refresh $TEST_DAY < /dev/null"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Blindspots to sleep on (1-10):"* ]]
+    [[ "$output" == *"Keep the repo lane visible to future you."* ]]
+    [[ "$output" != *"dir_usage_malformed=162"* ]]
+    [[ "$output" != *"focus_git_status=diffuse proves"* ]]
+    [[ "$output" != *"commit_context data is absent"* ]]
+    [[ "$output" != *"High brain fog score"* ]]
+    [[ "$output" != *"Low suggestion adherence rate"* ]]
+    [[ "$output" != *"afternoon slump is likely derailing"* ]]
+    [[ "$output" != *"upward completion trend"* ]]
+    [[ "$output" != *"lack of commit context (0)"* ]]
+    [[ "$output" != *"cannot verify whether the work is only local"* ]]
 }

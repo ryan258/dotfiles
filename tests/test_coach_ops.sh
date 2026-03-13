@@ -199,6 +199,13 @@ EOF
     [ "$output" = "Vectorize logo" ]
 }
 
+@test "_coach_extract_first_task returns empty when no real task is present" {
+    run bash -c "$COACH_SOURCE_PREFIX; _coach_extract_first_task '--- Top 3 Tasks ---'"
+
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
+
 @test "coach_strategy_with_retry succeeds on second attempt after timeout" {
     mock_bin="$TEST_ROOT/bin"
     mkdir -p "$mock_bin"
@@ -220,14 +227,146 @@ EOF
     chmod +x "$mock_bin/dhp-strategy.sh"
     echo "0" > "$TEST_ROOT/counter.txt"
 
-    run env COUNTER_FILE="$TEST_ROOT/counter.txt" PATH="$mock_bin:$PATH" bash -c "$COACH_SOURCE_PREFIX; AI_COACH_RETRY_ON_TIMEOUT=true; coach_strategy_with_retry 'prompt' '0.25' '1' '4'"
+    run env COUNTER_FILE="$TEST_ROOT/counter.txt" PATH="$mock_bin:$PATH" AI_COACH_DISPATCHER=dhp-strategy.sh bash -c "$COACH_SOURCE_PREFIX; AI_COACH_RETRY_ON_TIMEOUT=true; coach_strategy_with_retry 'prompt' '0.25' '1' '4'"
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"retry success"* ]]
 }
 
+@test "config.sh reloads .env even when a parent shell exports stale _DOTFILES_ENV_LOADED" {
+    cat > "$TEST_ROOT/coach.env" <<'EOF'
+AI_COACH_REQUEST_TIMEOUT_SECONDS=45
+AI_COACH_RETRY_ON_TIMEOUT=false
+AI_COACH_RETRY_TIMEOUT_SECONDS=75
+EOF
+
+    run env \
+        _DOTFILES_ENV_LOADED=1 \
+        AI_COACH_REQUEST_TIMEOUT_SECONDS=35 \
+        AI_COACH_RETRY_ON_TIMEOUT=true \
+        AI_COACH_RETRY_TIMEOUT_SECONDS=90 \
+        ENV_FILE="$TEST_ROOT/coach.env" \
+        DOTFILES_DIR="$DOTFILES_DIR" \
+        bash -lc "source '$COACH_CONFIG_LIB'; printf '%s|%s|%s|%s\n' \"\$AI_COACH_RETRY_ON_TIMEOUT\" \"\$AI_COACH_REQUEST_TIMEOUT_SECONDS\" \"\$AI_COACH_RETRY_TIMEOUT_SECONDS\" \"\${_DOTFILES_ENV_FILE_LOADED:-}\""
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "false|45|75|$TEST_ROOT/coach.env" ]
+}
+
+@test "coach_strategy_with_retry does not retry by default after timeout" {
+    mock_bin="$TEST_ROOT/bin"
+    mkdir -p "$mock_bin"
+
+    cat > "$mock_bin/dhp-coach.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+COUNTER_FILE="${COUNTER_FILE:?missing}"
+count="$(cat "$COUNTER_FILE" 2>/dev/null || echo 0)"
+count=$((count + 1))
+echo "$count" > "$COUNTER_FILE"
+sleep 2
+echo "late response"
+EOF
+    chmod +x "$mock_bin/dhp-coach.sh"
+    echo "0" > "$TEST_ROOT/counter.txt"
+
+    run env COUNTER_FILE="$TEST_ROOT/counter.txt" PATH="$mock_bin:$PATH" AI_COACH_DISPATCHER=dhp-coach.sh bash -c "$COACH_SOURCE_PREFIX; unset AI_COACH_RETRY_ON_TIMEOUT; coach_strategy_with_retry 'prompt' '0.25' '1' '4'"
+
+    [ "$status" -eq 124 ]
+    [ "$(cat "$TEST_ROOT/counter.txt")" = "1" ]
+}
+
+@test "coach_strategy_dispatcher_name prefers dhp-coach over dhp-strategy" {
+    mock_bin="$TEST_ROOT/bin"
+    mkdir -p "$mock_bin"
+
+    cat > "$mock_bin/dhp-coach.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+echo coach
+EOF
+    chmod +x "$mock_bin/dhp-coach.sh"
+
+    cat > "$mock_bin/dhp-strategy.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+echo strategy
+EOF
+    chmod +x "$mock_bin/dhp-strategy.sh"
+
+    run env PATH="$mock_bin:$PATH" bash -c "$COACH_SOURCE_PREFIX; coach_strategy_dispatcher_name"
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "dhp-coach.sh" ]
+}
+
+@test "coach_strategy_with_retry passes dispatcher stderr through on success" {
+    mock_bin="$TEST_ROOT/bin"
+    mkdir -p "$mock_bin"
+
+    cat > "$mock_bin/dhp-coach.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+echo "AI coach: querying test-model..." >&2
+echo "North Star:"
+echo "- Direct coach output."
+EOF
+    chmod +x "$mock_bin/dhp-coach.sh"
+
+    run env PATH="$mock_bin:$PATH" AI_COACH_DISPATCHER=dhp-coach.sh bash -c "$COACH_SOURCE_PREFIX; coach_strategy_with_retry 'prompt' '0.25' '2' '4'"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"AI coach: querying test-model..."* ]]
+    [[ "$output" == *"Direct coach output."* ]]
+}
+
 @test "coach_startday_response_is_grounded rejects ungrounded scope expansion" {
-    run bash -c "$COACH_SOURCE_PREFIX; coach_startday_response_is_grounded \$'North Star:\n- Test\nDo Next (ordered 1-3):\n1. Start Vectorize logo task.\n2. Create a folder named Coach and scaffold an endpoint.\n3. Verify endpoint output.\nOperating insight (working + drift risk):\n- note' 'Set up AI coach for the AI Briefings' \$'--- Top 3 Tasks ---\n1    $DAY_MINUS2   Vectorize the logo images for Aaron\n2    $DAY_MINUS2   Prepare and set posting times the Linkedin Article Series on content systems.'"
+    run bash -c "$COACH_SOURCE_PREFIX; coach_startday_response_is_grounded \$'North Star:\n- Test\nDo Next (ordered 1-3):\n1. Capture the next concrete move for Set up AI coach for the AI Briefings.\n2. Create a folder named Coach and scaffold an endpoint.\n3. Verify endpoint output.\nOperating insight (working + drift risk):\n- note' 'Set up AI coach for the AI Briefings' \$'  • dotfiles: feat: tighten startday fallback\n  • ai-ethics-comparator: docs: add report notes'"
 
     [ "$status" -ne 0 ]
+}
+
+@test "coach_startday_response_is_grounded rejects invented content deliverables" {
+    run bash -c "$COACH_SOURCE_PREFIX; coach_startday_response_is_grounded \$'North Star:\n- Publish the polished homepage copy.\nDo Next (ordered 1-3):\n1. Open the homepage draft and write the missing paragraph.\n2. Publish the update live.\n3. Mark it done.\nOperating insight (working + drift risk):\n- note' 'Making and polishing content for ryanleej.com' ''"
+
+    [ "$status" -ne 0 ]
+}
+
+@test "coach_startday_response_is_grounded rejects invented journal evidence when journal context is empty" {
+    run bash -c "$COACH_SOURCE_PREFIX; coach_startday_response_is_grounded \$'Briefing Summary:\n- Recent journal note shows homepage progress.\nNorth Star:\n- Keep the content moving.\nDo Next (ordered 1-3):\n1. Capture the next concrete move for Making and polishing content for ryanleej.com.\n2. Spend 10 minutes starting it.\n3. Stop after one short block and log the result.\nOperating insight (working + drift risk):\n- note\nEvidence check:\n- Uses focus text and journal note.' 'Making and polishing content for ryanleej.com' ''"
+
+    [ "$status" -ne 0 ]
+}
+
+@test "coach_startday_response_is_grounded rejects invented task evidence" {
+    run bash -c "$COACH_SOURCE_PREFIX; coach_startday_response_is_grounded \$'Briefing Summary:\n- Top task momentum is strong.\nNorth Star:\n- Keep the content moving.\nDo Next (ordered 1-3):\n1. Open the todo list and pick the top task.\n2. Spend 10 minutes starting it.\n3. Stop after one short block.\nOperating insight (working + drift risk):\n- note\nEvidence check:\n- Uses top task order and focus text.' 'Making and polishing content for ryanleej.com' ''"
+
+    [ "$status" -ne 0 ]
+}
+
+@test "coach_startday_response_is_grounded exposes offending line detail" {
+    run bash -c "$COACH_SOURCE_PREFIX; coach_startday_response_is_grounded \$'North Star:\n- Publish the polished homepage copy.\nDo Next (ordered 1-3):\n1. Open the homepage draft and write the missing paragraph.\n2. Publish the update live.\n3. Mark it done.\nOperating insight (working + drift risk):\n- note' 'Making and polishing content for ryanleej.com' ''; rc=\$?; coach_grounding_failure_message; exit \$rc"
+
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"invented repo/page/publish detail; line=\"publish the polished homepage copy.\""* ]]
+}
+
+@test "coach_startday_response_is_grounded exposes rejection reason for missing heading" {
+    run bash -c "$COACH_SOURCE_PREFIX; coach_startday_response_is_grounded \$'Briefing Summary:\n- note\nNorth Star:\n- Keep momentum.\nDo Next:\n1. Capture the next move.\n2. Start it.\n3. Stop after one short block.\nEvidence check:\n- Uses focus text.' 'Making and polishing content for ryanleej.com' ''; rc=\$?; printf '%s' \"\$COACH_GROUNDING_FAILURE_REASON\"; exit \$rc"
+
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"missing required 'Do Next (ordered 1-3)' heading"* ]]
+}
+
+@test "coach_goodevening_response_is_grounded rejects invented journal evidence" {
+    run bash -c "$COACH_SOURCE_PREFIX; coach_goodevening_response_is_grounded \$'Reflection Summary:\n- note\nWhat worked:\n- Journal capture remained active and strong.\nWhere drift happened:\n- Drift note.\nLikely trigger:\n- fog.\nPattern watch:\n- not enough data for pattern detection.\nTomorrow lock:\n- First move: capture the next move.\n- Done condition: ship one small step.\n- Anti-tinker boundary: no side quests.\nHealth lens:\n- pace blocks.\nEvidence used:\n- focus text only.' 'Making and polishing content for ryanleej.com' ''"
+
+    [ "$status" -ne 0 ]
+}
+
+@test "coach_goodevening_response_is_grounded exposes offending line detail" {
+    run bash -c "$COACH_SOURCE_PREFIX; coach_goodevening_response_is_grounded \$'Reflection Summary:\n- note\nWhat worked:\n- Task completion trend is improving.\nWhere drift happened:\n- Drift note.\nLikely trigger:\n- fog.\nPattern watch:\n- not enough data for pattern detection.\nTomorrow lock:\n- First move: capture the next move.\n- Done condition: ship one small step.\n- Anti-tinker boundary: no side quests.\nHealth lens:\n- pace blocks.\nEvidence used:\n- focus text only.' 'Making and polishing content for ryanleej.com' ''; rc=\$?; coach_grounding_failure_message; exit \$rc"
+
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"invented task evidence; line=\"task completion trend is improving.\""* ]]
 }

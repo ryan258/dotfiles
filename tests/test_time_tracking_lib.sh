@@ -74,3 +74,16 @@ teardown() {
     run format_duration 65
     [ "$output" = "00:01:05" ]
 }
+
+@test "get_total_time_for_date degrades clearly under /bin/bash 3.2" {
+    cat > "$TIME_LOG" <<'EOF'
+START|task-1|desc|2025-01-01 10:00:00
+STOP|task-1|2025-01-01 11:00:00
+EOF
+
+    run /bin/bash -lc "export HOME='$HOME'; export DOTFILES_DIR='$BATS_TEST_DIRNAME/..'; source '$BATS_TEST_DIRNAME/../scripts/lib/config.sh'; source '$BATS_TEST_DIRNAME/../scripts/lib/common.sh'; source '$BATS_TEST_DIRNAME/../scripts/lib/date_utils.sh'; source '$BATS_TEST_DIRNAME/../scripts/lib/time_tracking.sh'; get_total_time_for_date '2025-01-01' 2>&1"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"requires Bash 4+"* ]]
+    [[ "$output" == *$'\n0' || "$output" == "0" ]]
+}

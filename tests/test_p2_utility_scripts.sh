@@ -135,6 +135,60 @@ EOF
     [[ "$output" == *"Usage:"* ]]
 }
 
+@test "run_with_modern_bash.sh uses configured modern bash wrapper" {
+    local fake_bin="$TEST_DIR/fake-bin"
+    mkdir -p "$fake_bin"
+
+    cat > "$fake_bin/bash-modern" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "${1:-}" == "-c" ]]; then
+  printf '5'
+  exit 0
+fi
+printf 'wrapper=%s\n' "$0" > "${TARGET_MARKER:?missing}"
+exec /bin/bash "$@"
+EOF
+    chmod +x "$fake_bin/bash-modern"
+
+    cat > "$TEST_DIR/target.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+echo "target:$1"
+EOF
+    chmod +x "$TEST_DIR/target.sh"
+
+    run env TARGET_MARKER="$TEST_DIR/wrapper_marker.txt" DOTFILES_BASH_BIN="$fake_bin/bash-modern" "$DOTFILES_DIR/scripts/run_with_modern_bash.sh" "$TEST_DIR/target.sh" sample
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"target:sample"* ]]
+    assert_file_contains "$TEST_DIR/wrapper_marker.txt" "bash-modern"
+}
+
+@test "g save creates dir_bookmarks with private permissions" {
+    rm -f "$DOTFILES_DATA_DIR/dir_bookmarks"
+    mkdir -p "$TEST_DIR/project"
+
+    run env HOME="$HOME" DOTFILES_DIR="$DOTFILES_DIR" /bin/bash -lc "cd '$TEST_DIR/project' && source '$DOTFILES_DIR/scripts/g.sh' save sample"
+
+    [ "$status" -eq 0 ]
+    [ -f "$DOTFILES_DATA_DIR/dir_bookmarks" ]
+    perms="$(stat -f '%Lp' "$DOTFILES_DATA_DIR/dir_bookmarks")"
+    [ "$perms" = "600" ]
+}
+
+@test "g prune preserves private permissions on dir_bookmarks" {
+    mkdir -p "$TEST_DIR/project"
+    printf 'sample|%s/project|||\n' "$TEST_DIR" > "$DOTFILES_DATA_DIR/dir_bookmarks"
+    chmod 644 "$DOTFILES_DATA_DIR/dir_bookmarks"
+
+    run env HOME="$HOME" DOTFILES_DIR="$DOTFILES_DIR" /bin/bash -lc "source '$DOTFILES_DIR/scripts/g.sh' prune --auto"
+
+    [ "$status" -eq 0 ]
+    perms="$(stat -f '%Lp' "$DOTFILES_DATA_DIR/dir_bookmarks")"
+    [ "$perms" = "600" ]
+}
+
 @test "health.sh list does not report no-appointments when appointments exist" {
     local today
     local appt_time

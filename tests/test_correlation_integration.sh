@@ -96,3 +96,10 @@ teardown() {
     [[ "$output" =~ "Total Focus Time:** 0h 0m" ]]
     [[ "$output" =~ "No data" ]]
 }
+
+@test "generate_report.sh fails clearly under /bin/bash 3.2" {
+    run /bin/bash "$TEST_DIR/scripts/generate_report.sh" daily
+
+    [ "$status" -eq 5 ]
+    [[ "$output" == *"requires Bash 4+"* ]]
+}

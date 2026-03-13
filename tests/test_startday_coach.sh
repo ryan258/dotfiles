@@ -44,9 +44,9 @@ cat <<'OUT'
 North Star:
 - Keep momentum tied to focus.
 Do Next (ordered 1-3):
-1. Start with Vectorize logo as the first concrete task.
-2. Complete second leverage task.
-3. Done when top task is shipped.
+1. Capture the next concrete move for Ship the logo.
+2. Start it in one short block.
+3. Done when one concrete move is started.
 Anti-tinker rule:
 - No side quests before done condition.
 Operating insight (working + drift risk):
@@ -54,10 +54,16 @@ Operating insight (working + drift risk):
 Health lens:
 - Use two 45-minute blocks with a break.
 Evidence check:
-- commits + todos + journal + digest metrics.
+- focus text + commit repos + digest metrics.
 OUT
 EOF
     chmod +x "$DOTFILES_DIR/bin/dhp-strategy.sh"
+    cat > "$DOTFILES_DIR/bin/dhp-coach.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+exec "$(dirname "$0")/dhp-strategy.sh" "$@"
+EOF
+    chmod +x "$DOTFILES_DIR/bin/dhp-coach.sh"
 
     local day_minus_2
     local day_minus_1
@@ -73,6 +79,9 @@ $day_minus_1 10:00:00|Finished setup
 EOF
     cat > "$DATA_DIR/journal.txt" <<EOF
 $day_minus_1 08:00:00|Progress note
+EOF
+    cat > "$DATA_DIR/daily_focus.txt" <<'EOF'
+Ship the logo
 EOF
     cat > "$DATA_DIR/health.txt" <<EOF
 ENERGY|$day_minus_1 09:00|5
@@ -148,8 +157,8 @@ EOF
     [ "$status" -eq 0 ]
     [[ "$output" == *"North Star:"* ]]
     [[ "$output" == *"Do Next (ordered 1-3):"* ]]
-    [[ "$output" == *"starting: Vectorize logo"* ]]
-    [[ "$output" != *"starting: -- Top 3 Tasks ---"* ]]
+    [[ "$output" == *"Capture the first concrete move for today's focus (Ship the logo)"* ]]
+    [[ "$output" != *"Vectorize logo"* ]]
     [[ "$output" == *"Operating insight (working + drift risk):"* ]]
     [[ "$output" == *"Evidence check:"* ]]
     [[ "$output" == *"Deterministic fallback (timeout)"* ]]
@@ -233,6 +242,140 @@ EOF
         bash -c "$DOTFILES_DIR/scripts/startday.sh refresh < /dev/null"
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"Deterministic fallback (ungrounded-actions)"* ]]
+    [[ "$output" == *"Deterministic fallback (AI briefing failed evidence check)"* ]]
     [[ "$output" != *"Create a folder named Coach"* ]]
+}
+
+@test "startday surfaces grounding rejection reason before fallback" {
+    cat > "$DOTFILES_DIR/bin/dhp-strategy.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+cat <<'OUT'
+Briefing Summary:
+- note
+North Star:
+- Keep momentum.
+Do Next:
+1. Start with Vectorize logo.
+2. Execute second action.
+3. Done condition captured.
+Operating insight:
+- Working and drift cues.
+Evidence check:
+- retry-path test.
+OUT
+EOF
+    chmod +x "$DOTFILES_DIR/bin/dhp-strategy.sh"
+
+    run env \
+        PATH="$DOTFILES_DIR/bin:$PATH" \
+        HOME="$HOME" \
+        DATA_DIR="$DATA_DIR" \
+        DOTFILES_DIR="$DOTFILES_DIR" \
+        AI_BRIEFING_ENABLED=true \
+        AI_COACH_LOG_ENABLED=true \
+        AI_COACH_MODE_DEFAULT=LOCKED \
+        AI_COACH_REQUEST_TIMEOUT_SECONDS=5 \
+        AI_COACH_RETRY_ON_TIMEOUT=false \
+        bash -c "$DOTFILES_DIR/scripts/startday.sh refresh < /dev/null"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"AI coach: rejected response (missing required 'Do Next (ordered 1-3)' heading)."* ]]
+    [[ "$output" == *"Deterministic fallback (AI briefing failed evidence check)"* ]]
+}
+
+@test "startday can accept ungrounded output when evidence check is disabled" {
+    cat > "$DOTFILES_DIR/bin/dhp-strategy.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+cat <<'OUT'
+Briefing Summary:
+- Publish the polished homepage copy today.
+North Star:
+- Publish the polished homepage copy.
+Do Next:
+1. Open the homepage draft and write the missing paragraph.
+2. Publish the update live.
+3. Mark it done.
+Operating insight (working + drift risk):
+- Working and drift cues.
+Anti-tinker rule:
+- Avoid side quests.
+Health lens:
+- Pace work.
+Evidence check:
+- focus text only.
+OUT
+EOF
+    chmod +x "$DOTFILES_DIR/bin/dhp-strategy.sh"
+
+    run env \
+        PATH="$DOTFILES_DIR/bin:$PATH" \
+        HOME="$HOME" \
+        DATA_DIR="$DATA_DIR" \
+        DOTFILES_DIR="$DOTFILES_DIR" \
+        AI_BRIEFING_ENABLED=true \
+        AI_COACH_LOG_ENABLED=true \
+        AI_COACH_MODE_DEFAULT=LOCKED \
+        AI_COACH_EVIDENCE_CHECK_ENABLED=false \
+        AI_COACH_REQUEST_TIMEOUT_SECONDS=5 \
+        AI_COACH_RETRY_ON_TIMEOUT=false \
+        bash -c "$DOTFILES_DIR/scripts/startday.sh refresh < /dev/null"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Publish the polished homepage copy."* ]]
+    [[ "$output" == *"Do Next:"* ]]
+    [[ "$output" != *"AI coach: evidence check disabled; accepting response despite"* ]]
+    [[ "$output" != *"Deterministic fallback (AI briefing failed evidence check)"* ]]
+}
+
+@test "startday cleans noisy GitHub blindspots even when evidence check is disabled" {
+    cat > "$DOTFILES_DIR/bin/dhp-strategy.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+cat <<'OUT'
+Briefing Summary:
+- GitHub-first note.
+GitHub blindspots/opportunities (1-10):
+1. dir_usage_malformed=162 means the system is untrustworthy.
+2. focus_git_status=diffuse proves the spear is broken.
+3. commit_context is missing so there is nothing to learn.
+4. Keep the repo lane visible to future you.
+North Star:
+- Keep momentum tied to focus.
+Do Next (ordered 1-3):
+1. Capture the next concrete move for Ship the logo.
+2. Start it in one short block.
+3. Done when one concrete move is started.
+Anti-tinker rule:
+- No side quests before done condition.
+Operating insight (working + drift risk):
+- Working: recent delivery. Drift: context switching.
+Health lens:
+- Use two 45-minute blocks with a break.
+Evidence check:
+- focus text + commit repos + digest metrics.
+OUT
+EOF
+    chmod +x "$DOTFILES_DIR/bin/dhp-strategy.sh"
+
+    run env \
+        PATH="$DOTFILES_DIR/bin:$PATH" \
+        HOME="$HOME" \
+        DATA_DIR="$DATA_DIR" \
+        DOTFILES_DIR="$DOTFILES_DIR" \
+        AI_BRIEFING_ENABLED=true \
+        AI_COACH_LOG_ENABLED=true \
+        AI_COACH_MODE_DEFAULT=LOCKED \
+        AI_COACH_EVIDENCE_CHECK_ENABLED=false \
+        AI_COACH_REQUEST_TIMEOUT_SECONDS=5 \
+        AI_COACH_RETRY_ON_TIMEOUT=false \
+        bash -c "$DOTFILES_DIR/scripts/startday.sh refresh < /dev/null"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"GitHub blindspots/opportunities (1-10):"* ]]
+    [[ "$output" == *"Keep the repo lane visible to future you."* ]]
+    [[ "$output" != *"dir_usage_malformed=162"* ]]
+    [[ "$output" != *"focus_git_status=diffuse proves"* ]]
+    [[ "$output" != *"commit_context is missing"* ]]
 }

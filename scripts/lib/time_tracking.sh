@@ -39,6 +39,22 @@ if [[ -z "$TIME_LOG" ]]; then
     return 1
 fi
 
+time_tracking_supports_assoc_arrays() {
+    [[ "${BASH_VERSINFO[0]:-0}" -ge 4 ]]
+}
+
+time_tracking_bash_requirement_message() {
+    printf '%s' "time_tracking.sh requires Bash 4+ because it uses associative arrays. Current shell: ${BASH_VERSION:-unknown}. Ensure /usr/bin/env bash resolves to a newer Bash, not macOS /bin/bash 3.2."
+}
+
+_time_tracking_require_assoc_arrays() {
+    if time_tracking_supports_assoc_arrays; then
+        return 0
+    fi
+    echo "Error: $(time_tracking_bash_requirement_message)" >&2
+    return 1
+}
+
 # Ensure data directory exists
 mkdir -p "$DATA_DIR"
 
@@ -211,6 +227,11 @@ get_total_time_for_date() {
         return
     fi
 
+    if ! _time_tracking_require_assoc_arrays; then
+        echo "0"
+        return 0
+    fi
+
     local total_seconds=0
     declare -A start_ts_by_id
     declare -A start_date_by_id
@@ -267,6 +288,10 @@ generate_time_report() {
     local end_date=""
     local days=7
     local summary=false
+
+    if ! _time_tracking_require_assoc_arrays; then
+        return 1
+    fi
 
     while [[ $# -gt 0 ]]; do
         case "$1" in

@@ -8,7 +8,7 @@ source "$SCRIPT_DIR/lib/common.sh"
 echo "Scheduling the weekly review script to run every Sunday at 8 PM..."
 
 # The command to schedule
-COMMAND="$SCRIPT_DIR/week_in_review.sh --file"
+COMMAND="\"$SCRIPT_DIR/run_with_modern_bash.sh\" \"$SCRIPT_DIR/week_in_review.sh\" --file"
 
 # Schedule the command to run every Sunday at 8 PM
 # Note: The 'at' command is not ideal for recurring tasks.
@@ -20,4 +20,4 @@ COMMAND="$SCRIPT_DIR/week_in_review.sh --file"
 
 echo ""
 echo "The weekly review has been scheduled."
-echo "To make this a recurring task, you should add it to your crontab."
+echo "For recurring cron/launchd automation, use run_with_modern_bash.sh so the job does not fall back to macOS /bin/bash 3.2."

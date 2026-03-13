@@ -61,9 +61,19 @@ coaching_strategy_with_retry() {
     coach_strategy_with_retry "$@"
 }
 
+coaching_strategy_dispatcher_name() {
+    _coaching_require_fn "coach_strategy_dispatcher_name" || return 1
+    coach_strategy_dispatcher_name "$@"
+}
+
 coaching_startday_response_is_grounded() {
     _coaching_require_fn "coach_startday_response_is_grounded" || return 1
     coach_startday_response_is_grounded "$@"
+}
+
+coaching_goodevening_response_is_grounded() {
+    _coaching_require_fn "coach_goodevening_response_is_grounded" || return 1
+    coach_goodevening_response_is_grounded "$@"
 }
 
 coaching_startday_fallback_output() {
@@ -74,6 +84,16 @@ coaching_startday_fallback_output() {
 coaching_goodevening_fallback_output() {
     _coaching_require_fn "coach_goodevening_fallback_output" || return 1
     coach_goodevening_fallback_output "$@"
+}
+
+coaching_sanitize_startday_blindspots() {
+    _coaching_require_fn "coach_sanitize_startday_blindspots" || return 1
+    coach_sanitize_startday_blindspots "$@"
+}
+
+coaching_sanitize_goodevening_blindspots() {
+    _coaching_require_fn "coach_sanitize_goodevening_blindspots" || return 1
+    coach_sanitize_goodevening_blindspots "$@"
 }
 
 coaching_append_log() {

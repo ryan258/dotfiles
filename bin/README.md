@@ -1,8 +1,8 @@
 # AI Staff HQ Dispatcher System
 
-This directory contains 12 core AI dispatcher scripts (including `dhp-morphling.sh` and `dhp-finance.sh`) plus 4 advanced orchestration features that provide instant access to specialized AI professionals from the [AI-Staff-HQ](https://github.com/ryan258/AI-Staff-HQ) workforce. Each dispatcher is a high-speed orchestration layer that connects your workflow to the right specialist via OpenRouter API.
+This directory contains 13 core AI dispatcher scripts (including `dhp-morphling.sh`, `dhp-finance.sh`, and the lightweight `dhp-coach.sh`) plus 4 advanced orchestration features that provide instant access to specialized AI professionals from the [AI-Staff-HQ](https://github.com/ryan258/AI-Staff-HQ) workforce. Each dispatcher is a high-speed orchestration layer that connects your workflow to the right specialist via OpenRouter API.
 
-**Status:** ✅ 12/12 Core Dispatchers Active + 4 Advanced Features (Phases 1-3, 5-6 Complete)
+**Status:** ✅ 13/13 Core Dispatchers Active + 4 Advanced Features (Phases 1-3, 5-6 Complete)
 
 **Latest Update (February 3, 2026):**
 
@@ -21,6 +21,7 @@ This directory contains 12 core AI dispatcher scripts (including `dhp-morphling.
 | `dhp-creative.sh`  | `creative`  | Story packages      | argument     |
 | `dhp-content.sh`   | `content`   | SEO content         | argument     |
 | `dhp-strategy.sh`  | `strategy`  | Strategic analysis  | stdin        |
+| `dhp-coach.sh`     | `dhp-coach` | Daily coaching      | stdin        |
 | `dhp-brand.sh`     | `brand`     | Brand positioning   | stdin        |
 | `dhp-market.sh`    | `market`    | Market research     | stdin        |
 | `dhp-stoic.sh`     | `stoic`     | Stoic coaching      | stdin        |
@@ -228,6 +229,25 @@ cat weekly-metrics.txt | strategy
 - `--stream` - Enable real-time streaming output
 
 **Output:** Key insights, strategic recommendations, risks/opportunities
+
+### `dhp-coach.sh` (Daily Coach)
+
+**Purpose:** Fast, single-call coaching for `startday` and `goodevening`
+
+**Input:** Reads from stdin
+**Model:** `AI_COACH_MODEL` (defaults to `nvidia/nemotron-3-nano-30b-a3b:free`)
+**Architecture:** Direct OpenRouter call, not swarm orchestration
+
+**Usage:**
+
+```bash
+echo "Ground this morning plan in focus plus yesterday's commits." | dhp-coach.sh
+```
+
+**Notes:**
+
+- Prefer this for daily coaching loops where latency matters.
+- `startday` and `goodevening` resolve `dhp-coach.sh` before `dhp-strategy.sh`.
 
 **Integrated with:**
 
@@ -480,8 +500,9 @@ journal themes              # Uses dhp-strategy.sh
 
 ```bash
 # Set in .env:
-AI_BRIEFING_ENABLED=true    # Uses dhp-strategy.sh in startday
-AI_REFLECTION_ENABLED=true  # Uses dhp-strategy.sh in goodevening
+AI_BRIEFING_ENABLED=true    # Uses dhp-coach.sh in startday
+AI_REFLECTION_ENABLED=true  # Uses dhp-coach.sh in goodevening
+AI_COACH_MODEL="nvidia/nemotron-3-nano-30b-a3b:free"
 ```
 
 ---

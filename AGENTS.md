@@ -91,6 +91,9 @@ source "$(dirname "$0")/dhp-shared.sh"
 
 - `#!/usr/bin/env bash` (NOT `#!/bin/bash`)
 - `set -euo pipefail` (strict mode mandatory)
+- Avoid Bash 4-only features in root `dotfiles` scripts/libs unless the requirement is explicit.
+- If a Bash 4+ feature is unavoidable, add a runtime guard and document the requirement in `CLAUDE.md`, `AGENTS.md`, `scripts/README.md`, and `CHANGELOG.md`.
+- Bootstrap wrappers whose only job is to locate and exec a modern Bash for launchd/cron may use POSIX `sh`; keep that exception narrow and document it inline.
 - Resolve script directory for reliable sourcing
 - `scripts/*.sh` should source `common.sh` (and `config.sh` when needed)
 - `bin/dhp-*.sh` should use `dhp-shared.sh`

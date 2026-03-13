@@ -275,6 +275,12 @@ weekreview --file      # Export to Markdown
 scripts/setup_weekly_review.sh
 ```
 
+For cron/launchd entrypoints that must avoid macOS `/bin/bash` 3.2, route the job through:
+
+```bash
+scripts/run_with_modern_bash.sh scripts/week_in_review.sh --file
+```
+
 **Why this matters:** Memory issues mean you forget accomplishments. The review reminds you of your progress.
 
 ---

@@ -1,6 +1,6 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** March 11, 2026
+**Last Updated:** March 12, 2026
 
 ## Version 2.2.34 (March 11, 2026) - Focus + Git Spear Coach
 
@@ -18,11 +18,55 @@
 - **Prompt instructions updated** in `scripts/lib/coach_prompts.sh`:
   - startday now treats focus + non-fork GitHub activity as the spear.
   - goodevening now judges whether the spear moved, stalled, or diffused based primarily on Git evidence.
+  - journals and todos now stay local for later querying and no longer feed the morning/evening coach prompts or deterministic fallback steps.
 - **Fork noise removed from Git evidence**:
   - `scripts/github_helper.sh list_commits_for_date` now respects the same fork/exclusion filters already used by repo listings.
   - `GITHUB_EXCLUDE_FORKS` is now configured in `config.sh` and defaults to `true`.
 - **`status.sh` DAILY CONTEXT upgraded**:
   - replaces the old tasks-first focus alignment line with a Git-backed `Spear alignment` summary.
+
+### Fixes
+
+- **Coaching now ignores stale inherited `.env` markers from parent shells**:
+  - `scripts/lib/config.sh` now reloads the current root `.env` per process/path instead of trusting an exported `_DOTFILES_ENV_LOADED` flag from an older shell state.
+  - this fixes cases where `startday` kept using stale coach timeout/retry/model values after `.env` edits.
+- **Morning briefing grounding rejects unsupported summary/journal claims more aggressively**:
+  - `scripts/lib/coach_scoring.sh` now aligns its retry default with `config.sh` (`false`) instead of silently retrying when unset.
+  - `coach_startday_response_is_grounded` now inspects `Briefing Summary`, `North Star`, `Do Next`, and `Evidence check`, and rejects invented journal/task evidence because those local notes are no longer part of coaching context.
+  - added `AI_COACH_EVIDENCE_CHECK_ENABLED` so you can intentionally accept raw AI output instead of forcing fallback when the model overreaches.
+  - rejection output now includes a concrete offending-line detail instead of only a category label, and fallback briefings surface that detail when evidence check fails.
+  - user-facing fallback copy now labels `ungrounded-actions` as `AI briefing failed evidence check` instead of exposing the internal reason code.
+  - when the AI overreaches, `startday` now salvages the fallback from explicit recent commit repos instead of dropping straight to a fully generic script.
+- **Startday fallback now surfaces GitHub blindspots and enhancement opportunities**:
+  - `scripts/lib/coach_prompts.sh` now treats GitHub projects and commit activity as the single source of truth for project insight in the morning prompt.
+  - startday prompt now asks for a dedicated `GitHub blindspots/opportunities (1-10)` section instead of a single blindspot bullet.
+  - deterministic fallback now generates a 10-item GitHub blindspot/opportunity scan using repo spread, feature-vs-polish commit patterns, focus-vs-Git drift, and repo-specific polish/demo/onboarding ideas.
+- **Daily coaching no longer goes through the full swarm path**:
+  - added `bin/dhp-coach.sh`, a lightweight direct OpenRouter dispatcher for `startday` and `goodevening`.
+  - `scripts/lib/coach_scoring.sh` now resolves `dhp-coach.sh` first and only falls back to `dhp-strategy.sh` if needed.
+  - `startday.sh` and `goodevening.sh` no longer suppress coach stderr, so model/progress lines are visible while the AI call is running.
+  - documented `AI_COACH_MODEL` in root `.env.example` and clarified that daily coaching reads root `dotfiles/.env`, not `ai-staff-hq/.env`.
+- **`startday` deterministic fallback is now focus-first when tasks are empty**:
+  - `scripts/lib/coach_prompts.sh` no longer falls back to the placeholder "the first listed top task" when `todo.sh top 3` returns only headers.
+  - fallback briefings now cite `focus_git_status`, primary repo, commit coherence, and active repo count when the behavior digest includes them.
+  - `scripts/startday.sh` now passes the behavior digest into fallback generation for timeout, dispatcher-missing, and ungrounded-action paths.
+- **`goodevening` tomorrow lock now uses the same spear model**:
+  - `scripts/lib/coach_prompts.sh` now builds fallback reflections and tomorrow-lock handoffs from declared focus plus focus-vs-Git evidence instead of the generic "top task aligned to focus" wording.
+  - `scripts/goodevening.sh` now passes the behavior digest into fallback reflection generation so `tomorrow_launchpad` carries repo drift/alignment evidence into the next morning.
+  - goodevening prompt and fallback now include a `Blindspots to sleep on (1-10)` section built from recent GitHub evidence.
+  - added a lighter `coach_goodevening_response_is_grounded` path that rejects invented journal/task evidence and malformed tomorrow-lock output only when `AI_COACH_EVIDENCE_CHECK_ENABLED=true`.
+  - when the evidence check flag is `false`, `goodevening` now accepts raw AI reflection silently instead of validating just to complain.
+  - accepted blindspot sections in both flows now get a non-blocking cleanup pass that strips raw metric/debug noise such as `dir_usage_malformed`, `commit_context`, or `focus_git_status=...` and backfills grounded GitHub opportunity lines.
+- **Time tracking now fails clearly on macOS Bash 3.2 paths**:
+  - `scripts/lib/time_tracking.sh` now reports a clear Bash 4+ requirement for associative-array code paths instead of surfacing raw `declare -A` errors.
+  - `scripts/goodevening.sh` degrades cleanly in the time-tracking section when invoked under an older Bash.
+  - `scripts/generate_report.sh` now exits early with an explicit Bash 4+ requirement message.
+- **`dir_bookmarks` permissions are preserved at `600`**:
+  - `scripts/g.sh` now secures `dir_bookmarks` when saving and after prune rewrites so validation warnings do not recur after bookmark edits.
+- **Non-interactive entrypoints can now force modern Bash explicitly**:
+  - added `scripts/run_with_modern_bash.sh`, a narrow POSIX `sh` bootstrap wrapper for launchd/cron paths that need Bash 4+ before the target script starts.
+  - `scripts/setup_weekly_review.sh` now schedules weekly review via that wrapper.
+  - `scripts/goodevening.sh` no longer hardcodes `/bin/bash` for `backup_data.sh`.
 
 ### Config Additions
 
@@ -36,6 +80,10 @@
 
 - `bash -n scripts/startday.sh scripts/goodevening.sh scripts/status.sh scripts/github_helper.sh scripts/lib/coach_metrics.sh scripts/lib/coach_prompts.sh scripts/lib/config.sh`
 - `bats tests/test_status.sh tests/test_coach_prompts.sh tests/test_coach_metric_branches.sh tests/test_startday_coach.sh tests/test_goodevening_coach.sh tests/test_coach_ops.sh` — 57/57 passing.
+- `bats tests/test_coach_prompts.sh tests/test_coach_ops.sh tests/test_startday_coach.sh tests/test_status.sh tests/test_coach_metric_branches.sh` — 60/60 passing.
+- `bats tests/test_coach_prompts.sh tests/test_goodevening_coach.sh tests/test_coach_ops.sh` — 37/37 passing.
+- `bats tests/test_time_tracking_lib.sh tests/test_correlation_integration.sh tests/test_goodevening_coach.sh` — 16/16 passing.
+- `bats -f "g save creates dir_bookmarks with private permissions" tests/test_p2_utility_scripts.sh` and `bats -f "g prune preserves private permissions on dir_bookmarks" tests/test_p2_utility_scripts.sh` — 2/2 passing.
 
 ## Version 2.2.33 (March 2, 2026) - Coaching Completion Pass
 
