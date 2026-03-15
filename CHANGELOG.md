@@ -24,6 +24,8 @@
   - `GITHUB_EXCLUDE_FORKS` is now configured in `config.sh` and defaults to `true`.
 - **`status.sh` DAILY CONTEXT upgraded**:
   - replaces the old tasks-first focus alignment line with a Git-backed `Spear alignment` summary.
+  - `status.sh --coach` now adds an on-demand mid-day AI recenter brief using the same direct coach path as `startday`/`goodevening`, grounded in focus, current GitHub activity, current project context, and the existing blindspot scrubber.
+  - when `status.sh --coach` is run from inside a git repo, the coach prompt and fallback now scope themselves to that repo; when run outside a repo, they keep the existing global multi-repo view.
 
 ### Fixes
 
@@ -71,6 +73,8 @@
 ### Config Additions
 
 - `GITHUB_EXCLUDE_FORKS` (default: `true`)
+- `AI_STATUS_ENABLED` (default: `false`)
+- `AI_STATUS_TEMPERATURE` (default: `0.2`)
 - `COACH_FOCUS_GIT_HIGH_THRESHOLD` (default: `60`)
 - `COACH_FOCUS_GIT_LOW_THRESHOLD` (default: `40`)
 - `COACH_FOCUS_ACTIVE_REPO_DRIFT_THRESHOLD` (default: `2`)

@@ -56,6 +56,11 @@ coaching_build_goodevening_prompt() {
     coach_build_goodevening_prompt "$@"
 }
 
+coaching_build_status_prompt() {
+    _coaching_require_fn "coach_build_status_prompt" || return 1
+    coach_build_status_prompt "$@"
+}
+
 coaching_strategy_with_retry() {
     _coaching_require_fn "coach_strategy_with_retry" || return 1
     coach_strategy_with_retry "$@"
@@ -76,6 +81,11 @@ coaching_goodevening_response_is_grounded() {
     coach_goodevening_response_is_grounded "$@"
 }
 
+coaching_status_response_is_grounded() {
+    _coaching_require_fn "coach_status_response_is_grounded" || return 1
+    coach_status_response_is_grounded "$@"
+}
+
 coaching_startday_fallback_output() {
     _coaching_require_fn "coach_startday_fallback_output" || return 1
     coach_startday_fallback_output "$@"
@@ -86,6 +96,11 @@ coaching_goodevening_fallback_output() {
     coach_goodevening_fallback_output "$@"
 }
 
+coaching_status_fallback_output() {
+    _coaching_require_fn "coach_status_fallback_output" || return 1
+    coach_status_fallback_output "$@"
+}
+
 coaching_sanitize_startday_blindspots() {
     _coaching_require_fn "coach_sanitize_startday_blindspots" || return 1
     coach_sanitize_startday_blindspots "$@"
@@ -94,6 +109,11 @@ coaching_sanitize_startday_blindspots() {
 coaching_sanitize_goodevening_blindspots() {
     _coaching_require_fn "coach_sanitize_goodevening_blindspots" || return 1
     coach_sanitize_goodevening_blindspots "$@"
+}
+
+coaching_sanitize_status_repo_scope() {
+    _coaching_require_fn "coach_sanitize_status_repo_scope" || return 1
+    coach_sanitize_status_repo_scope "$@"
 }
 
 coaching_append_log() {

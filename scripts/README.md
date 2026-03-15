@@ -32,6 +32,7 @@ Canonical architecture and policy live in `../CLAUDE.md`.
 - Coaching model selection comes from root `dotfiles/.env` via `AI_COACH_MODEL`; changing `ai-staff-hq/.env` does not change `startday` or `goodevening`.
 - `AI_COACH_EVIDENCE_CHECK_ENABLED=true` keeps the morning coach on strict focus+Git evidence; set it to `false` if you want to see raw AI output even when the model invents unsupported specifics.
 - The same `AI_COACH_EVIDENCE_CHECK_ENABLED` flag now controls the evening validator too; when disabled, `goodevening` accepts raw AI reflection without warning noise.
+- `status.sh --coach` now uses the same direct `dhp-coach.sh` path for an on-demand mid-day recenter brief. When you run it from inside a git repo, the coach narrows its prompt/fallback to that repo's context; outside a repo it keeps the global multi-repo view. Set `AI_STATUS_ENABLED=true` if you want that section on every `status` run, or tune `AI_STATUS_TEMPERATURE` separately from the morning briefing.
 - `config.sh` now reloads the current root `.env` per process/path instead of trusting inherited `_DOTFILES_ENV_LOADED` markers from older shell state, so coach timeout/model changes take effect reliably.
 - Drift and health thresholds (`COACH_*_THRESHOLD`) are defined in `config.sh` and overridable via `.env`.
 - `startday.sh` and `goodevening.sh` now treat daily focus plus non-fork GitHub activity as the only coaching evidence; journal and todo data stay local for later querying but do not steer the coach.
@@ -39,6 +40,7 @@ Canonical architecture and policy live in `../CLAUDE.md`.
 - `goodevening.sh` now asks for, and fallback now generates, a 10-item `Blindspots to sleep on` scan grounded in recent GitHub evidence so the evening handoff carries real repo-specific opportunities into tomorrow.
 - Even with evidence checking disabled, both flows now scrub obviously bad blindspot items such as raw metric flags or data-quality/debug tokens and replace them with grounded GitHub opportunity lines.
 - `status.sh` shows current coach mode, spoon budget/depletion, focus text, and a Git-backed spear alignment signal in a DAILY CONTEXT section.
+- When the AI status coach is enabled, `status.sh` also renders a GitHub-first recenter section using today's commits, recent pushes, current project context, and the same blindspot scrubber used by the morning coach.
 
 ## Data Location
 

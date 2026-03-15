@@ -237,6 +237,7 @@ EOF
         AI_BRIEFING_ENABLED=true \
         AI_COACH_LOG_ENABLED=true \
         AI_COACH_MODE_DEFAULT=LOCKED \
+        AI_COACH_EVIDENCE_CHECK_ENABLED=true \
         AI_COACH_REQUEST_TIMEOUT_SECONDS=5 \
         AI_COACH_RETRY_ON_TIMEOUT=false \
         bash -c "$DOTFILES_DIR/scripts/startday.sh refresh < /dev/null"
@@ -275,6 +276,7 @@ EOF
         AI_BRIEFING_ENABLED=true \
         AI_COACH_LOG_ENABLED=true \
         AI_COACH_MODE_DEFAULT=LOCKED \
+        AI_COACH_EVIDENCE_CHECK_ENABLED=true \
         AI_COACH_REQUEST_TIMEOUT_SECONDS=5 \
         AI_COACH_RETRY_ON_TIMEOUT=false \
         bash -c "$DOTFILES_DIR/scripts/startday.sh refresh < /dev/null"

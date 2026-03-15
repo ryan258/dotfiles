@@ -42,6 +42,147 @@ fi
 if [ -f "$SCRIPT_DIR/lib/coach_metrics.sh" ]; then
     source "$SCRIPT_DIR/lib/coach_metrics.sh"
 fi
+if [ -f "$SCRIPT_DIR/lib/coach_prompts.sh" ]; then
+    source "$SCRIPT_DIR/lib/coach_prompts.sh"
+fi
+if [ -f "$SCRIPT_DIR/lib/coach_scoring.sh" ]; then
+    source "$SCRIPT_DIR/lib/coach_scoring.sh"
+fi
+if [ -f "$SCRIPT_DIR/lib/coaching.sh" ]; then
+    source "$SCRIPT_DIR/lib/coaching.sh"
+fi
+
+_status_extract_repo_name_from_line() {
+    local raw_line="$1"
+    local cleaned=""
+
+    cleaned=$(_status_trim_ascii_whitespace "$raw_line")
+    case "$cleaned" in
+        '• '*)
+            cleaned=${cleaned#'• '}
+            ;;
+        '- '*)
+            cleaned=${cleaned#'- '}
+            ;;
+    esac
+    cleaned=$(_status_trim_ascii_whitespace "$cleaned")
+    if [[ -z "$cleaned" || "$cleaned" == \(* ]]; then
+        return 0
+    fi
+    if [[ "$cleaned" == *"|"* ]]; then
+        printf '%s\n' "${cleaned%%|*}"
+        return 0
+    fi
+    if [[ "$cleaned" == *":"* ]]; then
+        printf '%s\n' "${cleaned%%:*}"
+        return 0
+    fi
+    if [[ "$cleaned" == *" ("* ]]; then
+        cleaned="${cleaned%% \(*}"
+    fi
+    printf '%s\n' "$cleaned"
+}
+
+_status_trim_ascii_whitespace() {
+    local value="$1"
+
+    value="${value#"${value%%[![:space:]]*}"}"
+    value="${value%"${value##*[![:space:]]}"}"
+    printf '%s' "$value"
+}
+
+_status_filter_activity_for_repo() {
+    local activity="$1"
+    local repo_name="$2"
+    local filtered=""
+    local line=""
+    local line_repo=""
+
+    if [[ -z "$repo_name" || -z "$activity" ]]; then
+        printf '%s' "$activity"
+        return 0
+    fi
+    case "$activity" in
+        "(none)"|"(GitHub signal unavailable)")
+            printf '%s' "$activity"
+            return 0
+            ;;
+    esac
+
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        line_repo=$(_status_extract_repo_name_from_line "$line")
+        if [[ "$line_repo" == "$repo_name" ]]; then
+            if [[ -n "$filtered" ]]; then
+                filtered="${filtered}"$'\n'"$line"
+            else
+                filtered="$line"
+            fi
+        fi
+    done <<< "$activity"
+
+    if [[ -n "$filtered" ]]; then
+        printf '%s' "$filtered"
+    else
+        printf '%s' "(none)"
+    fi
+}
+
+STATUS_COACH_ENABLED="${AI_STATUS_ENABLED:-false}"
+case "${1:-}" in
+    --coach)
+        STATUS_COACH_ENABLED=true
+        ;;
+    "")
+        ;;
+    *)
+        die "Usage: status.sh [--coach]" "$EXIT_INVALID_ARGS"
+        ;;
+esac
+
+_status_today=$(date_today)
+CURRENT_DIR=$(pwd)
+_status_project_context="(no project context)"
+_status_git_repo_focus=false
+_status_git_toplevel=""
+if _status_git_toplevel=$(git rev-parse --show-toplevel 2>/dev/null); then
+    _status_project_context=$(basename "$_status_git_toplevel")
+    _status_git_repo_focus=true
+elif [[ "$CURRENT_DIR" == "$PROJECTS_DIR"* ]]; then
+    _status_project_context=$(basename "$CURRENT_DIR")
+fi
+
+STATUS_TODAY_COMMITS=""
+if command -v get_commit_activity_for_date >/dev/null 2>&1; then
+    if ! STATUS_TODAY_COMMITS=$(get_commit_activity_for_date "$_status_today" 2>/dev/null); then
+        STATUS_TODAY_COMMITS="(GitHub signal unavailable)"
+    elif [ -z "$STATUS_TODAY_COMMITS" ]; then
+        STATUS_TODAY_COMMITS="(none)"
+    fi
+else
+    STATUS_TODAY_COMMITS="(GitHub signal unavailable)"
+fi
+
+STATUS_RECENT_PUSHES=""
+if command -v get_recent_github_activity >/dev/null 2>&1; then
+    if ! STATUS_RECENT_PUSHES=$(get_recent_github_activity 7 2>/dev/null); then
+        STATUS_RECENT_PUSHES="(GitHub signal unavailable)"
+    elif [ -z "$STATUS_RECENT_PUSHES" ]; then
+        STATUS_RECENT_PUSHES="(none)"
+    fi
+else
+    STATUS_RECENT_PUSHES="(GitHub signal unavailable)"
+fi
+
+STATUS_COACH_TODAY_COMMITS="${STATUS_TODAY_COMMITS:-}"
+STATUS_COACH_RECENT_PUSHES="${STATUS_RECENT_PUSHES:-}"
+_status_context_scope="global"
+if [[ "$_status_git_repo_focus" == "true" ]] && [[ "${_status_project_context:-}" != "(no project context)" ]]; then
+    STATUS_COACH_TODAY_COMMITS=$(_status_filter_activity_for_repo "${STATUS_TODAY_COMMITS:-}" "${_status_project_context:-}")
+    STATUS_COACH_RECENT_PUSHES=$(_status_filter_activity_for_repo "${STATUS_RECENT_PUSHES:-}" "${_status_project_context:-}")
+    _status_context_scope="repo-local"
+fi
+_status_combined_git=$(printf '%s\n%s\n' "${STATUS_COACH_TODAY_COMMITS:-}" "${STATUS_COACH_RECENT_PUSHES:-}")
 
 # --- Focus ---
 echo ""
@@ -59,7 +200,7 @@ echo ""
 echo "📊 DAILY CONTEXT:"
 _status_mode="unknown"
 if [ -f "${COACH_MODE_FILE:-}" ]; then
-    _status_mode_line=$(grep "^$(date_today)|" "$COACH_MODE_FILE" 2>/dev/null | tail -1 || true)
+    _status_mode_line=$(grep "^${_status_today}|" "$COACH_MODE_FILE" 2>/dev/null | tail -1 || true)
     if [ -n "$_status_mode_line" ]; then
         _status_mode=$(echo "$_status_mode_line" | cut -d'|' -f2)
     else
@@ -75,7 +216,7 @@ if command -v get_remaining_spoons >/dev/null 2>&1; then
     [ -z "$_status_spoons" ] && _status_spoons="?"
 fi
 if [ -f "${SPOON_LOG:-}" ]; then
-    _budget_line=$(grep "^BUDGET|$(date_today)|" "$SPOON_LOG" 2>/dev/null | tail -1 || true)
+    _budget_line=$(grep "^BUDGET|${_status_today}|" "$SPOON_LOG" 2>/dev/null | tail -1 || true)
     if [ -n "$_budget_line" ]; then
         _status_budget=$(echo "$_budget_line" | cut -d'|' -f3)
     fi
@@ -87,13 +228,7 @@ fi
 _status_focus_label="${_status_focus_text:-"(none set)"}"
 _status_alignment="no focus set"
 if [ -n "$_status_focus_text" ] && command -v coach_focus_git_signal >/dev/null 2>&1; then
-    _status_commit_context=""
-    if command -v get_commit_activity_for_date >/dev/null 2>&1; then
-        if ! _status_commit_context=$(get_commit_activity_for_date "$(date_today)" 2>/dev/null); then
-            _status_commit_context="(GitHub signal unavailable)"
-        fi
-    fi
-    _status_git_metrics=$(coach_focus_git_signal "$_status_focus_text" "" "$_status_commit_context" 2>/dev/null || true)
+    _status_git_metrics=$(coach_focus_git_signal "$_status_focus_text" "${STATUS_RECENT_PUSHES:-}" "${STATUS_TODAY_COMMITS:-}" 2>/dev/null || true)
     _status_git_state=$(printf '%s\n' "$_status_git_metrics" | awk -F'=' '$1 == "focus_git_status" {print $2; exit}')
     _status_git_repo=$(printf '%s\n' "$_status_git_metrics" | awk -F'=' '$1 == "focus_git_primary_repo" {print $2; exit}')
     _status_git_repo_share=$(printf '%s\n' "$_status_git_metrics" | awk -F'=' '$1 == "focus_git_primary_repo_share" {print $2; exit}')
@@ -139,10 +274,139 @@ else
 fi
 echo "  Spear alignment: ${_status_alignment}"
 
+if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
+    echo ""
+    echo "🤖 STATUS COACH:"
+    _status_behavior_digest="(behavior digest unavailable)"
+    _status_prompt=""
+    _status_briefing=""
+    _status_reason="ai-error"
+    _status_reason_detail=""
+    _status_temperature="${AI_STATUS_TEMPERATURE:-${AI_BRIEFING_TEMPERATURE:-0.25}}"
+    _status_dispatcher=""
+    _status_exit_code=0
+
+    if command -v coaching_build_behavior_digest >/dev/null 2>&1; then
+        _status_behavior_digest=$(coaching_build_behavior_digest "$_status_today" "${AI_COACH_TACTICAL_DAYS:-7}" "${AI_COACH_PATTERN_DAYS:-30}" "${STATUS_COACH_RECENT_PUSHES:-}" "${STATUS_COACH_TODAY_COMMITS:-}" 2>/dev/null || echo "(behavior digest unavailable)")
+    fi
+
+    if command -v coaching_build_status_prompt >/dev/null 2>&1; then
+        _status_prompt=$(coaching_build_status_prompt \
+            "${_status_mode:-LOCKED}" \
+            "${_status_focus_text:-}" \
+            "${STATUS_COACH_TODAY_COMMITS:-}" \
+            "${STATUS_COACH_RECENT_PUSHES:-}" \
+            "${_status_behavior_digest:-}" \
+            "$CURRENT_DIR" \
+            "${_status_project_context:-}" \
+            "${_status_context_scope:-global}")
+    else
+        _status_prompt="Produce a concise mid-day GitHub-first coaching brief grounded in today's focus and current GitHub activity."
+    fi
+
+    if command -v coaching_strategy_dispatcher_name >/dev/null 2>&1; then
+        _status_dispatcher=$(coaching_strategy_dispatcher_name 2>/dev/null || true)
+    fi
+
+    if [ -n "$_status_dispatcher" ]; then
+        # status --coach is intentionally uncached because current directory,
+        # repo-local scope, and live GitHub activity can change between checks.
+        if command -v coaching_strategy_with_retry >/dev/null 2>&1; then
+            set +e
+            _status_briefing=$(coaching_strategy_with_retry "$_status_prompt" "$_status_temperature" "${AI_COACH_REQUEST_TIMEOUT_SECONDS:-35}" "${AI_COACH_RETRY_TIMEOUT_SECONDS:-90}")
+            _status_exit_code=$?
+            set -e
+            if [ "$_status_exit_code" -eq 0 ]; then
+                _status_reason=""
+            else
+                if [ "$_status_exit_code" -eq 124 ]; then
+                    _status_reason="timeout"
+                else
+                    _status_reason="error"
+                fi
+            fi
+        else
+            set +e
+            _status_briefing=$(printf '%s' "$_status_prompt" | "$_status_dispatcher" --temperature "$_status_temperature")
+            _status_exit_code=$?
+            set -e
+            if [ "$_status_exit_code" -eq 0 ]; then
+                _status_reason=""
+            else
+                _status_reason="error"
+            fi
+        fi
+    else
+        _status_reason="dispatcher-missing"
+    fi
+
+    if [ -z "$_status_briefing" ]; then
+        if command -v coaching_status_fallback_output >/dev/null 2>&1; then
+            _status_briefing=$(coaching_status_fallback_output \
+                "${_status_focus_text:-"(no focus set)"}" \
+                "${_status_mode:-LOCKED}" \
+                "${_status_reason:-unavailable}" \
+                "${_status_behavior_digest:-}" \
+                "$_status_combined_git" \
+                "$CURRENT_DIR" \
+                "${_status_project_context:-}" \
+                "${_status_reason_detail:-}" \
+                "${_status_context_scope:-global}")
+        else
+            _status_briefing="Unable to generate status coach output at this time."
+        fi
+    elif [ -z "$_status_reason" ] && [ "${AI_COACH_EVIDENCE_CHECK_ENABLED:-true}" = "true" ] && command -v coaching_status_response_is_grounded >/dev/null 2>&1; then
+        if ! coaching_status_response_is_grounded "$_status_briefing" "${_status_focus_text:-"(no focus set)"}" "$_status_combined_git"; then
+            if command -v coach_grounding_failure_message >/dev/null 2>&1; then
+                _status_reason_detail=$(coach_grounding_failure_message)
+            elif [[ -n "${COACH_GROUNDING_FAILURE_REASON:-}" ]]; then
+                _status_reason_detail="${COACH_GROUNDING_FAILURE_REASON:-}"
+            fi
+            _status_reason="ungrounded-status"
+            if [[ -n "${_status_reason_detail:-}" ]]; then
+                printf 'AI coach: rejected status response (%s).\n' "$_status_reason_detail" >&2
+            else
+                echo "AI coach: rejected status response (ungrounded-status)." >&2
+            fi
+            if command -v coaching_status_fallback_output >/dev/null 2>&1; then
+                _status_briefing=$(coaching_status_fallback_output \
+                    "${_status_focus_text:-"(no focus set)"}" \
+                    "${_status_mode:-LOCKED}" \
+                    "${_status_reason:-unavailable}" \
+                    "${_status_behavior_digest:-}" \
+                    "$_status_combined_git" \
+                    "$CURRENT_DIR" \
+                    "${_status_project_context:-}" \
+                    "${_status_reason_detail:-}" \
+                    "${_status_context_scope:-global}")
+            fi
+        fi
+    fi
+
+    if command -v coaching_sanitize_status_repo_scope >/dev/null 2>&1; then
+        _status_briefing=$(coaching_sanitize_status_repo_scope \
+            "$_status_briefing" \
+            "${_status_focus_text:-"(no focus set)"}" \
+            "${_status_project_context:-}" \
+            "${_status_context_scope:-global}")
+    fi
+
+    if command -v coaching_sanitize_startday_blindspots >/dev/null 2>&1; then
+        _status_briefing=$(coaching_sanitize_startday_blindspots \
+            "$_status_briefing" \
+            "${_status_focus_text:-"(no focus set)"}" \
+            "${_status_behavior_digest:-}" \
+            "$_status_combined_git")
+    fi
+
+    # status --coach is on-demand and intentionally not appended to coach_log,
+    # so repeated mid-day recenter checks do not create noisy history.
+    echo "$_status_briefing" | sed 's/^/  /'
+fi
+
 # --- Display Header ---
 echo ""
 echo "🧭 WHERE YOU ARE:"
-CURRENT_DIR=$(pwd)
 echo "  • Current directory: $CURRENT_DIR"
 
 # --- Context Snapshots ---
@@ -196,15 +460,14 @@ fi
 echo ""
 echo "🧾 TODAY'S COMMITS:"
 if command -v get_commit_activity_for_date >/dev/null 2>&1; then
-    TODAY=$(date_today)
-    if TODAY_COMMITS=$(get_commit_activity_for_date "$TODAY" 2>/dev/null); then
-        if [ -n "$TODAY_COMMITS" ]; then
-            echo "$TODAY_COMMITS"
+    if [[ "${STATUS_TODAY_COMMITS:-}" == "(GitHub signal unavailable)" ]]; then
+        echo "  (Unable to fetch commit activity)"
+    elif [ -n "${STATUS_TODAY_COMMITS:-}" ]; then
+        if [ "$STATUS_TODAY_COMMITS" != "(none)" ]; then
+            echo "$STATUS_TODAY_COMMITS"
         else
             echo "  (No commits yet today)"
         fi
-    else
-        echo "  (Unable to fetch commit activity)"
     fi
 else
     echo "  (GitHub operations library not loaded)"

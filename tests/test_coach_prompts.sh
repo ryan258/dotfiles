@@ -126,6 +126,25 @@ teardown() {
     [[ "$output" == *"Stop refactoring at 9pm"* ]]
 }
 
+@test "coach_build_status_prompt includes all required schema sections" {
+    run bash -c "$SOURCE_PREFIX; coach_build_status_prompt \
+        'LOCKED' 'Ship the logo' 'today commit' 'push data' 'digest blob' '/tmp/project' 'dotfiles'"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Coach mode for today:"* ]]
+    [[ "$output" == *"Today's focus:"* ]]
+    [[ "$output" == *"Today's commits:"* ]]
+    [[ "$output" == *"Recent GitHub pushes (last 7 days):"* ]]
+    [[ "$output" == *"Behavior digest:"* ]]
+    [[ "$output" == *"Current directory:"* ]]
+    [[ "$output" == *"/tmp/project"* ]]
+    [[ "$output" == *"Current project context:"* ]]
+    [[ "$output" == *"dotfiles"* ]]
+    [[ "$output" == *"GitHub blindspots/opportunities (1-10):"* ]]
+    [[ "$output" == *"Do Next (ordered 1-3):"* ]]
+    [[ "$output" == *"Bias toward one immediate action"* ]]
+}
+
 # ─── coach_startday_fallback_output ───────────────────────────────────────
 
 @test "startday fallback contains all required structural sections" {

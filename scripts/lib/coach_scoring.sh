@@ -437,6 +437,10 @@ coach_goodevening_response_is_grounded() {
     return 0
 }
 
+coach_status_response_is_grounded() {
+    coach_startday_response_is_grounded "$@"
+}
+
 coach_get_mode_for_date() {
     local target_date="$1"
     local interactive="${2:-false}"

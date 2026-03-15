@@ -17,6 +17,9 @@ _coach_reason_label() {
         ungrounded-actions)
             printf '%s\n' "AI briefing failed evidence check"
             ;;
+        ungrounded-status)
+            printf '%s\n' "AI status coach failed evidence check"
+            ;;
         ungrounded-reflection)
             printf '%s\n' "AI reflection failed evidence check"
             ;;
@@ -225,6 +228,92 @@ Constraints:
 - Do not use completed tasks or journal notes as evidence or explanation.
 - Prefer commit/repo evidence over local notes when they conflict.
 - The blindspot section must contain exactly 10 numbered lines.
+- At least half of the 10 lines must mention a real repo name from today's commits or recent pushes when repo names are available.
+EOF
+}
+
+coach_build_status_prompt() {
+    local coach_mode="$1"
+    local focus_context="$2"
+    local today_commits="$3"
+    local recent_pushes="$4"
+    local behavior_digest="$5"
+    local current_dir="$6"
+    local project_context="$7"
+    local context_scope="${8:-global}"
+
+    cat <<EOF
+Produce a concise mid-day recenter coaching brief for a user managing brain fog and fatigue.
+Use declared focus and non-fork GitHub activity as the primary evidence of whether the spear is moving.
+Treat GitHub projects and recent commit/push activity as the single source of truth for blindspots, enhancement ideas, and project opportunities.
+Keep journals and todos out of coaching; they remain local notes for later querying.
+Bias toward one immediate action that can be started right now.
+
+Coach mode for today:
+${coach_mode:-LOCKED}
+
+Today's focus:
+${focus_context:-"(no focus set)"}
+
+Today's commits:
+${today_commits:-"(none)"}
+
+Recent GitHub pushes (last 7 days):
+${recent_pushes:-"(none)"}
+
+Behavior digest:
+${behavior_digest:-"(none)"}
+
+Current directory:
+${current_dir:-"(unknown)"}
+
+Current project context:
+${project_context:-"(none)"}
+
+Context scope:
+${context_scope:-global}
+
+Output format (strict, no extra sections):
+Briefing Summary:
+- 3-4 bullets covering: current GitHub lane, drift risk, best immediate opening, and one project/blindspot insight. Synthesize across inputs; do not restate any single input section verbatim.
+GitHub blindspots/opportunities (1-10):
+1. First concise, GitHub-grounded blindspot or enhancement opportunity.
+2. Second concise, GitHub-grounded blindspot or enhancement opportunity.
+3. Third concise, GitHub-grounded blindspot or enhancement opportunity.
+4. Fourth concise, GitHub-grounded blindspot or enhancement opportunity.
+5. Fifth concise, GitHub-grounded blindspot or enhancement opportunity.
+6. Sixth concise, GitHub-grounded blindspot or enhancement opportunity.
+7. Seventh concise, GitHub-grounded blindspot or enhancement opportunity.
+8. Eighth concise, GitHub-grounded blindspot or enhancement opportunity.
+9. Ninth concise, GitHub-grounded blindspot or enhancement opportunity.
+10. Tenth concise, GitHub-grounded blindspot or enhancement opportunity.
+North Star:
+- One sentence describing what matters for the next block of work.
+Do Next (ordered 1-3):
+1. First 10-15 minute action that can be started immediately.
+2. Second action that stays inside the same repo/focus lane.
+3. Done condition for this recenter block.
+Operating insight (working + drift risk):
+- One line naming what is working and what could derail the next block.
+Anti-tinker rule:
+- One explicit repo-switching or scope-switching boundary.
+Health lens:
+- One short pacing note that respects energy/fog/spoons if the digest supports it.
+Signal confidence:
+- HIGH, MEDIUM, or LOW based on how much GitHub and digest evidence was available.
+Evidence check:
+- One line naming exact repo/commit/metric cues used.
+
+Constraints:
+- Total 280-520 words.
+- Keep language operational and immediate; avoid reflection-heavy tone.
+- If signal is missing, say so briefly instead of inventing details.
+- Do Next must be grounded in today's focus, today's commits, recent pushes, and current project context when present.
+- Do not use journal notes, todo items, completed tasks, or vague productivity language as evidence.
+- Do not invent new repositories, modules, pages, endpoints, or publish states unless those exact items appear in the provided GitHub activity or focus text.
+- If Context scope is repo-local, keep repo commentary, blindspots, and actions inside Current project context; do not widen back out to other repos.
+- If Context scope is global, synthesize across the visible repo set and name the most likely lane.
+- The GitHub blindspot/opportunity section must contain exactly 10 numbered lines.
 - At least half of the 10 lines must mention a real repo name from today's commits or recent pushes when repo names are available.
 EOF
 }
@@ -620,16 +709,47 @@ _coach_blindspot_line_is_noise() {
     return 1
 }
 
+_coach_trim_ascii_whitespace() {
+    local value="$1"
+
+    value="${value#"${value%%[![:space:]]*}"}"
+    value="${value%"${value##*[![:space:]]}"}"
+    printf '%s' "$value"
+}
+
+_coach_strip_numbered_prefix() {
+    local line="$1"
+
+    line=$(_coach_trim_ascii_whitespace "$line")
+    if [[ "$line" =~ ^[0-9]+\.[[:space:]]+ ]]; then
+        line="${line#*.}"
+        line=$(_coach_trim_ascii_whitespace "$line")
+    fi
+    printf '%s' "$line"
+}
+
 _coach_extract_numbered_section_lines() {
     local response="$1"
     local section_prefix="$2"
+    local line=""
+    local in_section=0
 
-    printf '%s\n' "$response" | awk -v prefix="$section_prefix" '
-        BEGIN { in_section = 0 }
-        index($0, prefix) == 1 { in_section = 1; next }
-        in_section && /^[[:space:]]*[0-9]+\.[[:space:]]+/ { print; next }
-        in_section && /^[[:space:]]*[A-Za-z][^:]*:[[:space:]]*$/ { in_section = 0 }
-    '
+    while IFS= read -r line; do
+        if [[ "$in_section" -eq 0 ]]; then
+            if _coach_line_has_prefix "$line" "$section_prefix"; then
+                in_section=1
+            fi
+            continue
+        fi
+
+        if [[ "$line" =~ ^[[:space:]]*[0-9]+\.[[:space:]]+ ]]; then
+            printf '%s\n' "$line"
+            continue
+        fi
+        if _coach_line_is_heading "$line"; then
+            break
+        fi
+    done <<< "$response"
 }
 
 _coach_clean_blindspot_section() {
@@ -643,7 +763,7 @@ _coach_clean_blindspot_section() {
 
     while IFS= read -r line; do
         [[ -z "$line" ]] && continue
-        bare=$(printf '%s' "$line" | sed -E 's/^[[:space:]]*[0-9]+\.[[:space:]]+//')
+        bare=$(_coach_strip_numbered_prefix "$line")
         if _coach_blindspot_line_is_noise "$bare"; then
             continue
         fi
@@ -652,7 +772,7 @@ _coach_clean_blindspot_section() {
 
     while IFS= read -r line; do
         [[ -z "$line" ]] && continue
-        bare=$(printf '%s' "$line" | sed -E 's/^[[:space:]]*[0-9]+\.[[:space:]]+//')
+        bare=$(_coach_strip_numbered_prefix "$line")
         if _coach_blindspot_line_is_noise "$bare"; then
             continue
         fi
@@ -667,6 +787,45 @@ _coach_clean_blindspot_section() {
             break
         fi
     done <<< "$cleaned"
+}
+
+_coach_normalize_heading_line() {
+    local line="$1"
+
+    line=$(_coach_trim_ascii_whitespace "$line")
+    while [[ "$line" == \** ]]; do
+        line="${line#\*}"
+    done
+    while [[ "$line" == *\* ]]; do
+        line="${line%\*}"
+    done
+    line=$(_coach_trim_ascii_whitespace "$line")
+    printf '%s' "$line"
+}
+
+_coach_line_is_heading() {
+    local normalized=""
+
+    normalized=$(_coach_normalize_heading_line "$1")
+    [[ "$normalized" =~ ^[[:space:]]*[A-Za-z][^:]*:[[:space:]]*$ ]]
+}
+
+_coach_line_has_prefix() {
+    local line="$1"
+    local prefix="$2"
+    local normalized=""
+
+    normalized=$(_coach_normalize_heading_line "$line")
+    [[ "$normalized" == "$prefix"* ]]
+}
+
+_coach_line_equals_heading() {
+    local line="$1"
+    local heading="$2"
+    local normalized=""
+
+    normalized=$(_coach_normalize_heading_line "$line")
+    [[ "$normalized" == "$heading" ]]
 }
 
 _coach_replace_or_insert_numbered_section() {
@@ -693,20 +852,20 @@ _coach_replace_or_insert_numbered_section() {
 
     while IFS= read -r line; do
         if [[ "$in_section" -eq 1 ]]; then
-            if [[ "$line" =~ ^[[:space:]]*[A-Za-z][^:]*:[[:space:]]*$ ]]; then
+            if _coach_line_is_heading "$line"; then
                 in_section=0
             else
                 continue
             fi
         fi
 
-        if [[ "$line" == "$section_prefix"* ]]; then
+        if _coach_line_has_prefix "$line" "$section_prefix"; then
             _coach_print_replacement
             in_section=1
             continue
         fi
 
-        if [[ "$inserted" -eq 0 && "$line" == "$insert_before_heading" ]]; then
+        if [[ "$inserted" -eq 0 ]] && _coach_line_equals_heading "$line" "$insert_before_heading"; then
             _coach_print_replacement
         fi
 
@@ -718,6 +877,57 @@ _coach_replace_or_insert_numbered_section() {
     fi
 
     unset -f _coach_print_replacement
+}
+
+_coach_replace_or_insert_text_section() {
+    local response="$1"
+    local section_prefix="$2"
+    local section_heading="$3"
+    local insert_before_heading="$4"
+    local section_body="$5"
+    local line=""
+    local in_section=0
+    local inserted=0
+
+    _coach_print_text_replacement() {
+        if [[ "$inserted" -eq 1 ]]; then
+            return 0
+        fi
+        printf '%s\n' "$section_heading"
+        if [[ -n "$section_body" ]]; then
+            printf '%s\n' "$section_body"
+        fi
+        inserted=1
+        return 0
+    }
+
+    while IFS= read -r line; do
+        if [[ "$in_section" -eq 1 ]]; then
+            if _coach_line_is_heading "$line"; then
+                in_section=0
+            else
+                continue
+            fi
+        fi
+
+        if _coach_line_has_prefix "$line" "$section_prefix"; then
+            _coach_print_text_replacement
+            in_section=1
+            continue
+        fi
+
+        if [[ "$inserted" -eq 0 ]] && _coach_line_equals_heading "$line" "$insert_before_heading"; then
+            _coach_print_text_replacement
+        fi
+
+        printf '%s\n' "$line"
+    done <<< "$response"
+
+    if [[ "$inserted" -eq 0 ]]; then
+        _coach_print_text_replacement
+    fi
+
+    unset -f _coach_print_text_replacement
 }
 
 coach_sanitize_startday_blindspots() {
@@ -780,6 +990,210 @@ coach_sanitize_goodevening_blindspots() {
     existing_lines=$(_coach_extract_numbered_section_lines "$response" "Blindspots to sleep on")
     cleaned_lines=$(_coach_clean_blindspot_section "$existing_lines" "$grounded_scan" 10)
     _coach_replace_or_insert_numbered_section "$response" "Blindspots to sleep on" "Blindspots to sleep on (1-10):" "What worked:" "$cleaned_lines"
+}
+
+coach_sanitize_status_repo_scope() {
+    local response="$1"
+    local focus="$2"
+    local project_context="$3"
+    local context_scope="${4:-global}"
+    local focus_label=""
+    local do_next_lines=""
+    local anti_tinker_line=""
+    local scoped_response=""
+
+    if [[ "$context_scope" != "repo-local" ]]; then
+        printf '%s\n' "$response"
+        return 0
+    fi
+    if [[ -z "$project_context" || "$project_context" == "(no project context)" ]]; then
+        printf '%s\n' "$response"
+        return 0
+    fi
+
+    focus_label="${focus:-current work}"
+    do_next_lines=$(cat <<EOF
+1. Pick one concrete next move inside ${project_context} that advances ${focus_label}, then start it now.
+2. Keep the same ${project_context} repo open for one more short block before switching lanes.
+3. Done when one focused block lands in ${project_context} and the next move is still obvious.
+EOF
+)
+    anti_tinker_line="- Do not leave ${project_context} until Step 3 is complete or you explicitly decide to change the repo-local lane."
+
+    scoped_response=$(_coach_replace_or_insert_text_section "$response" "Do Next" "Do Next (ordered 1-3):" "Operating insight:" "$do_next_lines")
+    _coach_replace_or_insert_text_section "$scoped_response" "Anti-tinker rule" "Anti-tinker rule:" "Health lens:" "$anti_tinker_line"
+}
+
+coach_status_fallback_output() {
+    local focus="$1"
+    local mode="$2"
+    local reason="${3:-unavailable}"
+    local behavior_digest="${4:-}"
+    local git_context="${5:-}"
+    local current_dir="${6:-}"
+    local project_context="${7:-}"
+    local reason_detail="${8:-}"
+    local context_scope="${9:-global}"
+    local reason_label=""
+    local focus_label=""
+    local mode_upper=""
+    local focus_git_status=""
+    local primary_repo=""
+    local primary_repo_share=""
+    local commit_coherence=""
+    local active_repos=""
+    local focus_git_reason=""
+    local repo_summary=""
+    local github_opportunity_line=""
+    local blindspot_scan=""
+    local current_project_label=""
+    local summary_project_line=""
+    local repo_local_scope_line=""
+    local step_one=""
+    local step_two=""
+    local step_three=""
+    local working_signal="focus is declared but the next move still needs to be locked"
+    local drift_risk="repo drift will keep compounding until one lane is chosen"
+    local anti_tinker_rule="No repo switch until Step 3 is complete."
+    local health_lens="Use one short block, then reassess energy and fog before broadening scope."
+    local evidence_sources="focus"
+    local signal_confidence="LOW"
+    local reason_line=""
+    local reason_detail_line=""
+    local working_signal_cap=""
+
+    focus_label="${focus:-"(no focus set)"}"
+    mode_upper=$(printf '%s' "${mode:-LOCKED}" | tr '[:lower:]' '[:upper:]')
+    reason_label=$(_coach_reason_label "$reason")
+    repo_summary=$(_coach_commit_repo_summary "$git_context")
+    current_project_label="${project_context:-"(no project context)"}"
+
+    if [[ -n "$behavior_digest" ]]; then
+        focus_git_status=$(_coach_digest_inline_value "$behavior_digest" "focus_git_status")
+        primary_repo=$(_coach_digest_inline_value "$behavior_digest" "primary_repo")
+        primary_repo_share=$(_coach_digest_inline_value "$behavior_digest" "primary_repo_share")
+        commit_coherence=$(_coach_digest_inline_value "$behavior_digest" "commit_coherence")
+        active_repos=$(_coach_digest_inline_value "$behavior_digest" "active_repos")
+        focus_git_reason=$(_coach_digest_line_value "$behavior_digest" "focus_git_reason")
+    fi
+
+    if [[ -n "$repo_summary" ]]; then
+        working_signal="today's visible GitHub lane is ${repo_summary}"
+        evidence_sources="${evidence_sources}, repo_summary=${repo_summary}"
+    fi
+    if [[ "$context_scope" == "repo-local" ]] && [[ -n "$current_project_label" && "$current_project_label" != "(no project context)" ]]; then
+        repo_local_scope_line="- Status coach is scoped to the current repo (${current_project_label}), so the next block stays inside that repo unless you deliberately choose to leave it."
+        evidence_sources="${evidence_sources}, context_scope=repo-local"
+        if [[ -z "$repo_summary" ]]; then
+            working_signal="status coach is scoped to ${current_project_label}, even though same-repo GitHub evidence is thin right now"
+        fi
+        if [[ -z "$focus_git_reason" ]]; then
+            drift_risk="switching out of ${current_project_label} before a concrete next move is locked will blur the repo-local context"
+        fi
+    fi
+    if [[ -n "$focus_git_reason" ]]; then
+        drift_risk="${focus_git_reason}"
+    elif [[ "$focus_git_status" == "diffuse" ]]; then
+        drift_risk="recent GitHub activity is spread across multiple repos relative to the declared focus"
+    fi
+
+    if [[ -n "$primary_repo" && "$primary_repo" != "N/A" ]]; then
+        evidence_sources="${evidence_sources}, primary_repo=${primary_repo}"
+        if [[ -n "$current_project_label" && "$current_project_label" != "(no project context)" && "$current_project_label" != "$primary_repo" ]]; then
+            summary_project_line="- Current directory is ${current_project_label}, while the primary GitHub lane looks like ${primary_repo}; decide that mismatch explicitly before drifting further."
+            drift_risk="${drift_risk}; current directory does not match the primary lane"
+        fi
+    elif [[ -n "$current_project_label" && "$current_project_label" != "(no project context)" ]]; then
+        summary_project_line="- Current directory is ${current_project_label}; use that only if it directly advances the declared focus."
+    fi
+
+    github_opportunity_line=$(_coach_github_opportunity_line "$focus_label" "$git_context" "$focus_git_status" "$primary_repo" "$active_repos" "$repo_summary" || true)
+    blindspot_scan=$(_coach_github_blindspot_scan "$focus_label" "$git_context" "$focus_git_status" "$primary_repo" "$primary_repo_share" "$commit_coherence" "$active_repos" "$focus_git_reason" "$repo_summary")
+    if [[ "$context_scope" == "repo-local" ]] && [[ -n "$current_project_label" && "$current_project_label" != "(no project context)" ]] && [[ -z "$repo_summary" ]]; then
+        github_opportunity_line="GitHub blindspot opportunity: ${current_project_label} likely has one visible polish, demo, or packaging gap worth naming before you widen back out to other repos."
+        blindspot_scan=$(cat <<EOF
+1. Repo ${current_project_label} likely wants one visible polish pass before more feature work is opened elsewhere.
+2. Repo ${current_project_label} may have one demo, screenshot, or walkthrough gap that would make the current lane more legible.
+3. Repo ${current_project_label} is a candidate for a README or changelog pass tied to the next concrete change.
+4. Repo ${current_project_label} may hide one setup or onboarding friction point worth removing before adding scope.
+5. Repo ${current_project_label} is worth scanning for one reusable helper or pattern that could be clarified or extracted.
+6. Repo ${current_project_label} may benefit from one tight finish-line definition before another repo steals attention.
+7. Repo ${current_project_label} is a good place to look for one test, stability, or guardrail pass before more feature work lands.
+8. Repo ${current_project_label} may contain one small UX or legibility improvement that would compound quickly.
+9. Repo ${current_project_label} is a candidate for one artifact, note, or demo angle that captures what changed.
+10. Repo ${current_project_label} likely has one tiny cleanup that would make the current lane easier to resume later.
+EOF
+)
+    fi
+
+    if [[ -n "$github_opportunity_line" ]]; then
+        evidence_sources="${evidence_sources}, github_opportunity_scan"
+    fi
+    if [[ "$context_scope" == "repo-local" ]] && [[ -n "$current_project_label" && "$current_project_label" != "(no project context)" ]] && [[ -z "$repo_summary" ]]; then
+        step_one="Pick one concrete next move inside ${current_project_label} that advances ${focus_label}, then start it for 10-15 minutes."
+        step_two="Keep the same ${current_project_label} repo open for one more short block before switching lanes."
+    elif [[ -n "$repo_summary" ]]; then
+        if _coach_focus_is_contentish "$focus_label"; then
+            step_one="Turn one real change from ${repo_summary} into one explicit ${focus_label} angle or task, then start it for 10-15 minutes."
+            step_two="Stay inside the same repo or content lane for one additional short block before opening anything else."
+        else
+            step_one="Pick one next visible move inside ${repo_summary} that advances ${focus_label}, then start it for 10-15 minutes."
+            step_two="Keep the same repo lane open for one more short block before switching."
+        fi
+    else
+        step_one="Write the next concrete move for ${focus_label}, then start it immediately for 10-15 minutes."
+        step_two="If the move is still vague after that block, reduce it to one repo, file, or artifact before continuing."
+    fi
+    if [[ "$context_scope" == "repo-local" ]] && [[ -n "$current_project_label" && "$current_project_label" != "(no project context)" ]]; then
+        anti_tinker_rule="Do not leave ${current_project_label} until Step 3 is complete or you explicitly decide to change the repo-local lane."
+    elif [[ -n "$primary_repo" && "$primary_repo" != "N/A" ]]; then
+        anti_tinker_rule="Do not switch away from ${primary_repo} until Step 3 is complete or you explicitly decide that today's focus has changed."
+    fi
+    step_three="Done condition: one focused block lands in the chosen lane and the next move is still obvious without opening a new repo."
+
+    if [[ "$behavior_digest" != "(behavior digest unavailable)" && -n "$behavior_digest" ]]; then
+        signal_confidence="MEDIUM"
+        if [[ -n "$repo_summary" || -n "$focus_git_reason" ]]; then
+            signal_confidence="HIGH"
+        fi
+    fi
+
+    if [[ "$reason" != "unavailable" && "$reason" != "" ]]; then
+        reason_line="- AI status coach was ${reason_label}; using deterministic fallback structure."
+    fi
+    if [[ -n "$reason_detail" ]]; then
+        reason_detail_line="- Fallback detail: ${reason_detail}."
+    fi
+    working_signal_cap=$(printf '%s' "$working_signal" | awk '{ if (length($0) > 0) { printf "%s%s", toupper(substr($0, 1, 1)), substr($0, 2) } }')
+
+    cat <<EOF | awk 'NF'
+Briefing Summary:
+- Coach mode: ${mode_upper}. Focus: ${focus_label}.
+${reason_line}
+- ${working_signal_cap:-$working_signal}.
+${repo_local_scope_line}
+${summary_project_line}
+- ${github_opportunity_line:-GitHub blindspot opportunity: keep the next move anchored to a real repo lane instead of abstract planning.}
+${reason_detail_line}
+GitHub blindspots/opportunities (1-10):
+${blindspot_scan}
+North Star:
+- Move one GitHub-visible step that matches ${focus_label} before switching lanes.
+Do Next (ordered 1-3):
+1. ${step_one}
+2. ${step_two}
+3. ${step_three}
+Operating insight (working + drift risk):
+- Working: ${working_signal}. Drift risk: ${drift_risk}.
+Anti-tinker rule:
+- ${anti_tinker_rule}
+Health lens:
+- ${health_lens}
+Signal confidence:
+- ${signal_confidence} (fallback uses focus, today's GitHub activity, current project context, and behavior digest when available).
+Evidence check:
+- Deterministic fallback (${reason_label}) using ${evidence_sources}, context_scope=${context_scope:-global}, current_dir=${current_dir:-"(unknown)"}, current_project=${current_project_label}.
+EOF
 }
 
 coach_startday_fallback_output() {
