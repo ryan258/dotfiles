@@ -46,6 +46,7 @@ The default source-of-truth rule is:
 - the launcher expects `/Users/ryanjohnson/dotfiles/scripts/lib/config.sh`
 - the target Cyborg Lab repo must have a `content/` directory
 - AI mode needs `OPENROUTER_API_KEY`
+- GitNexus enhancement needs the `gitnexus` CLI reachable via `npx gitnexus`
 
 The launcher resolves the model in this order:
 
@@ -53,6 +54,42 @@ The launcher resolves the model in this order:
 2. `CONTENT_MODEL`
 3. `STRATEGY_MODEL`
 4. fallback: `moonshotai/kimi-k2:free`
+
+## Git Repo Enhancement Model
+
+For non-git sources, `cyborg` ignores GitNexus and just uses the native scan.
+
+For git repos, `cyborg` now does this automatically:
+
+1. run a zero-write GitNexus health check
+2. decide whether GitNexus is healthy enough to use immediately
+3. stop for approval before any repo-writing GitNexus step
+4. merge GitNexus graph signals with the native scan when the index is healthy
+
+Important boundary:
+
+- health checks are automatic
+- `gitnexus analyze` is never automatic
+- repo writes only happen after you explicitly approve with `/gitnexus enhance` or `/gitnexus refresh`
+
+What counts as unhealthy:
+
+- no `.gitnexus/meta.json`
+- repo not indexed
+- current HEAD differs from indexed commit
+- tracked repo changes since last analyze
+- index older than the freshness threshold
+- GitNexus CLI unavailable or status failing
+
+Large repo boundary:
+
+- if tracked source/docs exceed `100 MB`, `cyborg` stops and asks before enhancement
+
+Embeddings policy:
+
+- if embeddings already exist, refresh preserves them
+- if they do not exist, `cyborg` only recommends them as an optional upgrade
+- embeddings are not auto-enabled
 
 ## Command Surface
 
@@ -151,16 +188,18 @@ Interactive prompt behavior:
 The intended workflow is:
 
 1. start `cyborg ingest`
-2. let the repo scan complete if a repo is active
-3. add intake notes in plain text
-4. run `/map`
-5. adjust focus with more notes if needed
-6. run `/plan`
-7. run `/draft all` or target selected keys
-8. use `/review <key>` and plain-text notes for editorial passes
-9. run `/links` and then `/patch-links ...` if you want existing-page edits
-10. run `/apply drafts --yes`, `/apply links --yes`, or `/apply all --yes`
-11. run `cyborg resume <session-id>` later if the session goes cold
+2. if the source is a git repo, respond to the GitNexus prompt first when enhancement or refresh is needed
+3. let the repo scan complete if a repo is active
+4. add intake notes in plain text
+5. run `/map`
+6. adjust focus with more notes if needed
+7. run `/plan`
+8. run `/draft all` or target selected keys
+9. use `/review <key>` and plain-text notes for editorial passes
+10. run `/links` and then `/patch-links ...` if you want existing-page edits
+11. use `/rewrite <id> ...` when a refreshed repo maps strongly onto an existing Cyborg Lab page
+12. run `/apply drafts --yes`, `/apply links --yes`, or `/apply all --yes`
+13. run `cyborg resume <session-id>` later if the session goes cold
 
 ## Interactive Commands
 
@@ -180,7 +219,32 @@ Shows:
 - number of content-map items
 - pending draft keys
 - pending existing-page edit count
+- rewrite recommendation count
 - current review target
+- GitNexus health, mode, commit, tracked-size, and embeddings status
+
+### `/gitnexus status|enhance|refresh|skip|explain`
+
+Use `/gitnexus` to control the repo-enhancement layer explicitly.
+
+Subcommands:
+
+- `status` shows current GitNexus health
+- `enhance` approves first-time analyze/setup for the current repo
+- `refresh` forces a refresh when the repo changed or the index is stale
+- `skip` disables GitNexus for the current session and continues natively
+- `explain` prints the exact enhancement plan and why it is being proposed
+
+Typical flow when `cyborg` starts in a git repo without a healthy index:
+
+1. automatic zero-write health check runs
+2. `cyborg` prints the approval prompt
+3. you choose `/gitnexus enhance`, `/gitnexus refresh`, or `/gitnexus skip`
+
+Failure behavior:
+
+- if enhancement fails, `cyborg` stops and offers retry, native continuation, or session stop
+- when possible, it also attempts to clean partial GitNexus state created during a failed first-time setup
 
 ### `/scan`
 
@@ -197,6 +261,7 @@ Scans the active repo and writes a repo summary into the session. The scan inclu
 - docs excerpt
 - representative code excerpt
 - duplicate candidates already present in the Cyborg Lab repo
+- GitNexus flow/definition signals when a healthy index exists
 
 Local scanning uses:
 
@@ -215,6 +280,7 @@ Builds the content graph for the source material. The output is a content map wi
 - target file paths
 - rationale for each page
 - existing-page recommendations for update-or-link decisions
+- strong rewrite candidates after a refreshed repo-backed session
 
 In deterministic mode, the default core set is usually:
 
@@ -228,6 +294,8 @@ And it may add:
 - `reference-main` when the repo has enough surface area
 - `stack-main` when setup/config friction is obvious
 - `protocol-main` when prompt contracts are part of the system
+
+If the current repo changed since the last saved session and GitNexus has been refreshed, `/map` can also surface strong existing-page matches that should be handled explicitly before drafting.
 
 ### `/plan`
 
@@ -270,6 +338,24 @@ Prints the full pending draft markdown for the selected key.
 ### `/links`
 
 Prints the current recommendation list for existing Cyborg Lab pages that should probably absorb links or receive related-page updates.
+
+When strong rewrite candidates exist, `/links` also shows which pages can be handled with `/rewrite`.
+
+### `/rewrite <id> <mode>`
+
+Choose one of three rewrite modes for a strong existing-page match:
+
+- `update` rewrites the matching page in place on the next draft/apply cycle
+- `iteration-log` preserves the existing page and routes the new narrative update into a fresh log draft
+- `merge` keeps the existing page and stages only related-link style merge behavior
+
+Example:
+
+```bash
+/rewrite 1 update
+/rewrite 1 iteration-log
+/rewrite 1 merge
+```
 
 ### `/patch-links 1 2`
 
@@ -325,6 +411,7 @@ The session folder can contain:
 - `content-map.md`
 - `publishing-plan.json`
 - `publishing-plan.md`
+- GitNexus health and summary are embedded in `session.json`
 - `preview/` - pending draft files
 - `existing-edits/` - pending edits for existing Cyborg Lab pages
 - `backups/` - original file backups created during `/apply`
@@ -373,6 +460,24 @@ The workflow is:
 
 This is designed to reduce duplicate pages and force an explicit merge-or-link decision.
 
+## Rewrite Flow For Existing Pages
+
+Rewrite choices are only surfaced when all of these are true:
+
+- the session is repo-backed
+- GitNexus has been refreshed or is healthy
+- the repo changed since the last saved session
+- `cyborg` finds a strong existing-page match after the refreshed map is built
+
+Then the flow is:
+
+1. refresh GitNexus if needed
+2. run `/map`
+3. review the strong match list
+4. choose `/rewrite <id> update|iteration-log|merge`
+5. draft the affected page(s)
+6. review and apply as usual
+
 ## AI Mode vs Deterministic Mode
 
 ### AI Mode
@@ -402,10 +507,12 @@ CYBORG_DISABLE_AI=true cyborg ingest --repo .
 Deterministic mode still supports the full workflow:
 
 - repo scan
+- GitNexus approval and status handling
 - content map
 - publishing plan
 - draft generation
 - link recommendations
+- rewrite-mode selection
 - resume
 - explicit apply
 
@@ -417,10 +524,12 @@ This is the main reliability fallback when API access is down or when you want s
 
 - pending drafts stay in the session preview area until `/apply`
 - pending existing-page edits stay in the session staging area until `/apply`
+- GitNexus repo writes only happen after explicit approval
 - writes into the blog repo are validated against the blog root
 - session preview writes are validated against the session preview root
 - existing files are backed up under `backups/` before they are overwritten
 - repo names used during duplicate detection are treated as fixed strings, not regexes
+- local `.gitnexus` files do not count as meaningful repo dirt for freshness checks
 
 ## Environment Variables
 
@@ -430,6 +539,7 @@ This is the main reliability fallback when API access is down or when you want s
 - `DOTFILES_DIR` - explicit path to the dotfiles repo
 - `OPENROUTER_API_KEY` - enables AI mode
 - `CYBORG_DISABLE_AI=true` - force deterministic mode
+- `CYBORG_DISABLE_GITNEXUS=true` - disable GitNexus integration and stay native
 - `CYBORG_MODEL` - primary model override
 - `CONTENT_MODEL` - secondary model fallback
 - `STRATEGY_MODEL` - tertiary model fallback
@@ -450,6 +560,7 @@ cyborg ingest
 Then:
 
 ```text
+/gitnexus enhance
 /map
 /plan
 /draft workflow-main artifact-main project log-main
@@ -472,6 +583,23 @@ cyborg ingest --repo ~/Projects/rockit --file notes/rockit-field-report.md
 ```
 
 Use this when the repo should drive the structure but you already have article-grade source material to preserve and restructure.
+
+### Resume After Repo Changes
+
+```bash
+cyborg resume 20260315-101500-rockit-abc123
+```
+
+Then:
+
+```text
+/gitnexus refresh
+/map
+/rewrite 1 update
+/draft workflow-main
+```
+
+Use this when the repo evolved and an existing Cyborg Lab page should be updated in place or spun into a new iteration log.
 
 ### Pasted Article Into a Repo-Aware Session
 
@@ -505,6 +633,14 @@ Set `CYBORG_LAB_DIR` or pass `--blog-root`.
 
 Your `--file` path is wrong, unreadable, or outside the allowed home-directory boundary.
 
+### GitNexus prompt appears before scan/map
+
+That is expected for git repos when GitNexus is missing, stale, too old, too large, or unavailable. Choose:
+
+- `/gitnexus enhance`
+- `/gitnexus refresh`
+- `/gitnexus skip`
+
 ### `Error: Repo path not found`
 
 Your `--repo` path does not exist or is not a directory.
@@ -520,6 +656,10 @@ An AI request probably failed and `cyborg` fell back to the deterministic path. 
 ### Resume fails with a numeric-choice error
 
 Interactive `cyborg resume` expects a valid numbered session from the printed list.
+
+### GitNexus says the repo is stale immediately after analyze
+
+`cyborg` ignores local `.gitnexus` infrastructure files for freshness checks. If you still see a stale prompt, the likely cause is a real repo change, indexed commit mismatch, or age threshold.
 
 ## Current Boundaries
 

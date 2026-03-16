@@ -778,20 +778,23 @@ cyborg resume 20260315-101500-rockit-abc123
 **Workflow:**
 
 1. Intake notes and source material
-2. Native repo scan (`git ls-files`, README/docs/code heuristics)
-3. Content map across project/workflow/artifact/log/reference
-4. Publishing plan
-5. Near-publishable draft generation held in preview
-6. Editorial review loop with explicit `/apply`
+2. Auto GitNexus health check for git repos, with explicit approval before any repo-writing enhancement step
+3. Native repo scan plus GitNexus graph signals when available
+4. Content map across project/workflow/artifact/log/reference
+5. Publishing plan
+6. Near-publishable draft generation held in preview
+7. Editorial review loop with explicit `/apply`
 
 **Session Commands:**
 
+- `/gitnexus status|enhance|refresh|skip|explain`
 - `/scan`
 - `/map`
 - `/plan`
 - `/draft [all|key]`
 - `/links`
 - `/patch-links 1 2`
+- `/rewrite <id> update|iteration-log|merge`
 - `/review <key>`
 - `/show <key>`
 - `/apply [drafts|links|all] --yes`
@@ -800,7 +803,10 @@ cyborg resume 20260315-101500-rockit-abc123
 **Behavior Rules:**
 
 - Repo is source of truth when repo and article draft are both present
+- git repos get an automatic zero-write GitNexus health check on ingest/resume
+- stale or missing GitNexus state pauses repo-backed flow until you choose `/gitnexus enhance`, `/gitnexus refresh`, or `/gitnexus skip`
 - Existing-page edits are recommended first, then generated only for selected pages
+- strong existing-page matches can be routed into `update`, `iteration-log`, or `merge` modes with `/rewrite`
 - Drafts stay pending until explicit apply
 - `cyborg` is Cyborg-Lab-specific, not a general dispatcher
 - use `--stdin-source` if you want to pipe supporting markdown before the interactive session starts

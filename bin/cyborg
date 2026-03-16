@@ -1,24 +1,39 @@
 #!/usr/bin/env bash
+# cyborg - Shell launcher for the Cyborg Lab ingest agent.
+# This small script sets up the environment and then hands off
+# to the real Python agent (scripts/cyborg_agent.py).
 set -euo pipefail
 
+# Find where this script lives so we can locate sibling files.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# The dotfiles root is one folder up from bin/.
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+# We need the shared config library to load .env settings.
 CONFIG_LIB="$DOTFILES_DIR/scripts/lib/config.sh"
 
+# Stop early if the config library is missing.
 if [[ ! -f "$CONFIG_LIB" ]]; then
     echo "Error: required config library is missing: $CONFIG_LIB" >&2
     exit 1
 fi
 
+# Load environment variables (API keys, model names, paths, etc.).
 # shellcheck disable=SC1090
 source "$CONFIG_LIB"
 
+# The Python agent is the real brain; we cannot run without it.
 if ! command -v python3 >/dev/null 2>&1; then
     echo "Error: python3 is required. Install Python 3 and retry." >&2
     exit 1
 fi
 
+# Tell the Python agent which directory the user was in when they
+# typed the command, so it can find the right repo to scan.
 export USER_CWD="$(pwd)"
+# Pick the AI model to use. Try CYBORG_MODEL first, then fall back
+# through CONTENT_MODEL, STRATEGY_MODEL, and finally a free default.
 export CYBORG_MODEL="${CYBORG_MODEL:-${CONTENT_MODEL:-${STRATEGY_MODEL:-moonshotai/kimi-k2:free}}}"
 
+# Replace this shell process with the Python agent.
+# Any arguments the user typed (like "ingest" or "resume") pass through.
 exec python3 "$DOTFILES_DIR/scripts/cyborg_agent.py" "$@"

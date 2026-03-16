@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""Interactive Cyborg Lab ingest agent."""
+"""Interactive Cyborg Lab ingest agent.
+
+This is the brain of the `cyborg` command.  It scans a source repo,
+builds a content map for a Hugo blog (Cyborg Lab), generates near-
+publishable drafts, and lets the user revise them before writing
+anything to disk.  Everything is interactive and session-based so
+work can be saved and resumed later.
+"""
 
 from __future__ import annotations
 
@@ -7,6 +14,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import shlex
 import subprocess
 import sys
@@ -15,24 +23,42 @@ import urllib.error
 import urllib.request
 import uuid
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, List, Optional, Tuple
 
+# readline gives us arrow-key history in the interactive prompt.
+# It is optional; some systems do not ship it.
 try:
     import readline  # noqa: F401
 except ImportError:  # pragma: no cover - readline is optional on some systems
     readline = None  # type: ignore[assignment]
 
 
-SESSION_VERSION = 1
+# --- Global constants ---
+
+# Bump this number when the session JSON shape changes.
+SESSION_VERSION = 2
+# Keep only the last N exchanges in the AI conversation window.
 MAX_CHAT_HISTORY = 8
+# Where we send AI requests (OpenRouter acts as a model gateway).
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+# How long shell commands are allowed to run before we stop them.
 DEFAULT_COMMAND_TIMEOUT_SECONDS = 30
+# GitNexus analyze can be slow on big repos, so it gets extra time.
+GITNEXUS_ANALYZE_TIMEOUT_SECONDS = 180
+# If the GitNexus index is older than this, we call it "stale."
+GITNEXUS_STALE_HOURS = 72
+# Repos bigger than 100 MB of source/docs skip auto-enhancement.
+GITNEXUS_SIZE_THRESHOLD_BYTES = 100 * 1024 * 1024
+# How many execution flows / symbols to ask GitNexus for at once.
+GITNEXUS_QUERY_LIMIT = 4
+# Common places where the Cyborg Lab blog repo might live on disk.
 KNOWN_BLOG_PATHS = (
     Path.home() / "Projects" / "cyborg" / "my-ms-ai-blog",
     Path.home() / "Projects" / "cyborg-lab",
 )
+# If a folder contains one of these files, it is probably a project.
 PROJECT_FILE_MARKERS = {
     "pyproject.toml",
     "package.json",
@@ -48,7 +74,9 @@ PROJECT_FILE_MARKERS = {
     "composer.json",
     ".gitignore",
 }
+# If a folder contains one of these sub-folders, it is probably a project.
 PROJECT_DIR_MARKERS = {"src", "lib", "app", "tests", "docs", ".github"}
+# File endings we treat as "source code or documentation" when scanning.
 SOURCE_FILE_SUFFIXES = {
     ".py",
     ".js",
@@ -67,7 +95,16 @@ SOURCE_FILE_SUFFIXES = {
     ".hpp",
     ".sh",
     ".md",
+    ".txt",
+    ".rst",
+    ".toml",
+    ".yaml",
+    ".yml",
+    ".json",
 }
+# Files that are plain text even though they have no file extension.
+TEXT_FILE_NAMES = {"Makefile", "justfile", "Dockerfile"}
+# The blog organizes workflows into named "tracks" (topic buckets).
 WORKFLOW_TRACKS = (
     "AI Frameworks",
     "Brain Fog Systems",
@@ -76,6 +113,8 @@ WORKFLOW_TRACKS = (
     "Productivity Systems",
     "Thinking Frameworks",
 )
+# Each content type maps to a Hugo directory, a unit description,
+# and a tone note so the AI (or heuristic) knows how to write it.
 CONTENT_TYPES: dict[str, dict[str, str]] = {
     "project": {
         "dir": "content/projects",
@@ -113,6 +152,8 @@ CONTENT_TYPES: dict[str, dict[str, str]] = {
         "tone": "integration/config page",
     },
 }
+# The system prompt sent to the AI model for every request.
+# It tells the model what role it plays and what rules to follow.
 SYSTEM_CONTRACT = textwrap.dedent(
     """
     You are the Cyborg Lab ingest agent.
@@ -127,12 +168,13 @@ SYSTEM_CONTRACT = textwrap.dedent(
     - Repo is source of truth when both repo and article are supplied.
     - Preserve user claims and source links unless there is a clear conflict.
     - Suggest edits to existing Cyborg Lab pages conservatively. Prefer merge/update/link over duplicates.
-    - Output must respect Hugo markdown. No H1 headings in body, no accordion shortcodes, visible code blocks only.
+    - Output must respect Hugo markdown. No H1 headings in body, visible code blocks only.
     - Drafts must be near publishable and use draft: true.
     - Descriptions should be action-oriented and roughly 140-160 characters.
     - Repo-backed pages should surface the repo link early in the body.
     """
 ).strip()
+# Extra instructions appended when the user sends free-form notes.
 INTAKE_GUIDANCE = textwrap.dedent(
     """
     The session is interactive and collaborative.
@@ -143,17 +185,20 @@ INTAKE_GUIDANCE = textwrap.dedent(
     - recommend the next command only when it is timely
     """
 ).strip()
+# The text shown when the user types /help.
 HELP_TEXT = textwrap.dedent(
     """
     Commands:
       /help                 Show this help
       /status               Show session status
+      /gitnexus <subcmd>    Manage GitNexus enhancement state
       /scan                 Scan the source repo or current directory
       /map                  Generate or refresh the Cyborg Lab content map
       /plan                 Generate or refresh the publishing plan
       /draft [all|key ...]  Generate pending near-publishable drafts
       /links                Recommend existing-page cross-link edits
       /patch-links 1 2      Generate pending edits for selected link recommendations
+      /rewrite <id> <mode>  Choose update|iteration-log|merge for a strong match
       /review <key>         Make a draft active for editorial back-and-forth
       /show <key>           Print the current pending draft
       /apply [target]       Write pending drafts or link edits into the blog repo
@@ -168,24 +213,37 @@ HELP_TEXT = textwrap.dedent(
 
 
 def utc_now() -> str:
+    """Return the current time in UTC as a short ISO string."""
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
 def load_env_file(dotfiles_dir: Path) -> None:
+    """Read the .env file and put its values into the environment.
+
+    Values that already exist in the environment are NOT overwritten,
+    so real env vars always win over .env defaults.
+    """
     env_file = dotfiles_dir / ".env"
     if not env_file.exists():
         return
     for raw_line in env_file.read_text(encoding="utf-8").splitlines():
         line = raw_line.strip()
+        # Skip blank lines, comments, and lines without an = sign.
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
         key = key.strip()
+        # Remove surrounding quotes from the value.
         value = value.strip().strip("'").strip('"')
         os.environ.setdefault(key, value)
 
 
 def canonical_home_path(path_value: Any) -> Path:
+    """Turn a string into an absolute Path that must be inside the home folder.
+
+    This is a safety check so the agent never reads or writes files
+    outside the user's home directory.
+    """
     path = Path(path_value).expanduser().resolve()
     home = Path.home().resolve()
     if path == home or home in path.parents:
@@ -194,6 +252,7 @@ def canonical_home_path(path_value: Any) -> Path:
 
 
 def slugify(text: str, max_words: int = 8, max_len: int = 60) -> str:
+    """Turn any text into a short, URL-safe slug like 'my-cool-project'."""
     normalized = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
     words = [word for word in normalized.split("-") if word]
     slug = "-".join(words[:max_words]) if words else "untitled"
@@ -201,14 +260,17 @@ def slugify(text: str, max_words: int = 8, max_len: int = 60) -> str:
 
 
 def title_from_slug(slug: str) -> str:
+    """Turn a slug back into a nice title: 'my-project' -> 'My Project'."""
     return " ".join(word.capitalize() for word in slug.replace("_", "-").split("-") if word) or "Untitled"
 
 
 def track_slug(track_name: str) -> str:
+    """Make a slug for a workflow track name (shorter than a normal slug)."""
     return slugify(track_name, max_words=6, max_len=40)
 
 
 def short_preview(text: str, limit: int = 180) -> str:
+    """Collapse whitespace and cut text to a short preview string."""
     collapsed = re.sub(r"\s+", " ", text).strip()
     if len(collapsed) <= limit:
         return collapsed
@@ -222,6 +284,11 @@ def run_command(
     allow_failure: bool = False,
     timeout: int = DEFAULT_COMMAND_TIMEOUT_SECONDS,
 ) -> str:
+    """Run a shell command and return its stdout as a string.
+
+    If the command fails and allow_failure is False, raise an error.
+    If the command takes too long, treat it the same as a failure.
+    """
     try:
         result = subprocess.run(
             argv,
@@ -241,7 +308,131 @@ def run_command(
     return (result.stdout or "").strip()
 
 
+def run_command_result(
+    argv: list[str],
+    *,
+    cwd: Optional[Path] = None,
+    timeout: int = DEFAULT_COMMAND_TIMEOUT_SECONDS,
+) -> tuple[int, str, str]:
+    """Run a shell command and return (exit_code, stdout, stderr).
+
+    Unlike run_command(), this never raises on failure -- it just
+    returns the exit code so the caller can decide what to do.
+    """
+    try:
+        result = subprocess.run(
+            argv,
+            cwd=str(cwd) if cwd else None,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        # Exit code 124 is the same code the `timeout` command uses.
+        return 124, "", f"Command timed out after {timeout}s: {' '.join(argv)}"
+    return result.returncode, (result.stdout or "").strip(), (result.stderr or "").strip()
+
+
+def format_bytes(num_bytes: int) -> str:
+    """Turn a byte count into a human-friendly string like '2.3 MB'."""
+    units = ["B", "KB", "MB", "GB"]
+    value = float(num_bytes)
+    for unit in units:
+        if value < 1024 or unit == units[-1]:
+            return f"{value:.1f} {unit}" if unit != "B" else f"{int(value)} B"
+        value /= 1024.0
+    return f"{num_bytes} B"
+
+
+def parse_iso_datetime(value: str) -> Optional[datetime]:
+    """Try to read an ISO date string.  Return None if it is bad."""
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def is_source_or_doc_file(path: Path) -> bool:
+    """Return True if this file looks like source code or documentation."""
+    name = path.name
+    if path.suffix.lower() in SOURCE_FILE_SUFFIXES:
+        return True
+    if name in PROJECT_FILE_MARKERS or name in TEXT_FILE_NAMES:
+        return True
+    if name.lower().startswith("readme"):
+        return True
+    return "docs" in path.parts
+
+
+def section_type_from_content_path(path_value: str) -> Optional[str]:
+    """Given a blog content path like 'content/log/foo.md', return the
+    content type ('log').  Returns None if the path does not match any
+    known section.
+    """
+    parts = Path(path_value).parts
+    if len(parts) < 2 or parts[0] != "content":
+        return None
+    if parts[1] == "projects":
+        return "project"
+    if parts[1] == "workflows":
+        return "workflow"
+    if parts[1] == "artifacts":
+        return "artifact"
+    if parts[1] == "log":
+        return "log"
+    if parts[1] == "reference":
+        return "reference"
+    if parts[1] == "stacks":
+        return "stack"
+    if parts[1:3] == ("systems", "protocols"):
+        return "protocol"
+    return None
+
+
+def parse_gitnexus_list_output(output: str) -> list[dict[str, str]]:
+    """Parse the human-readable output of `gitnexus list` into a list
+    of dicts with keys like 'name', 'path', 'commit', etc.
+
+    The output uses indentation to separate repo names from their
+    details, so we track which repo block we are inside.
+    """
+    repos: list[dict[str, str]] = []
+    current: Optional[dict[str, str]] = None
+    for raw_line in output.splitlines():
+        line = raw_line.rstrip()
+        stripped = line.strip()
+        # A blank line ends the current repo block.
+        if not stripped:
+            if current:
+                repos.append(current)
+                current = None
+            continue
+        # Skip the header line like "Indexed Repositories (3)".
+        if stripped.startswith("Indexed Repositories"):
+            continue
+        # A line indented 2 spaces (but not 4) with no colon is a repo name.
+        if line.startswith("  ") and not line.startswith("    ") and ":" not in stripped:
+            if current:
+                repos.append(current)
+            current = {"name": stripped}
+            continue
+        # A line indented 4 spaces with a colon is a detail field.
+        if current and line.startswith("    ") and ":" in stripped:
+            key, value = stripped.split(":", 1)
+            current[key.lower()] = value.strip()
+    # Don't forget the last block if the output didn't end with a blank line.
+    if current:
+        repos.append(current)
+    return repos
+
+
 def detect_git_root(start_path: Path) -> Optional[Path]:
+    """Ask git for the top-level directory.  Return None if this is
+    not inside a git repo.
+    """
     try:
         output = run_command(["git", "rev-parse", "--show-toplevel"], cwd=start_path, allow_failure=False)
     except RuntimeError:
@@ -250,6 +441,7 @@ def detect_git_root(start_path: Path) -> Optional[Path]:
 
 
 def extract_first_heading(markdown: str) -> Optional[str]:
+    """Find the first markdown heading (# ...) and return its text."""
     for line in markdown.splitlines():
         stripped = line.strip()
         if stripped.startswith("#"):
@@ -260,6 +452,7 @@ def extract_first_heading(markdown: str) -> Optional[str]:
 
 
 def extract_links(markdown: str) -> list[str]:
+    """Pull all unique http/https URLs out of a markdown string."""
     links = []
     seen: set[str] = set()
     for match in re.finditer(r"https?://[^\s)>\]]+", markdown):
@@ -271,14 +464,21 @@ def extract_links(markdown: str) -> list[str]:
 
 
 def normalize_description(text: str) -> str:
+    """Clean up a description so it is between 140 and 160 characters,
+    ends with punctuation, and has no stray quotes.  Hugo frontmatter
+    descriptions look best at that length.
+    """
     cleaned = re.sub(r"\s+", " ", text).strip().replace('"', "")
     if not cleaned:
         cleaned = "Action-oriented summary for immediate execution."
+    # Make sure it ends with a sentence-ending mark.
     if cleaned[-1:] not in ".!?":
         cleaned += "."
+    # Pad short descriptions so they meet the 140-char minimum.
     if len(cleaned) < 140:
         padding = " Use it to act immediately, reduce friction, and keep momentum."
         cleaned = f"{cleaned}{padding}"
+    # Trim long descriptions to 160 characters without cutting a word.
     if len(cleaned) > 160:
         trimmed = cleaned[:157].rstrip()
         if " " in trimmed:
@@ -288,6 +488,7 @@ def normalize_description(text: str) -> str:
 
 
 def prompt_input(prompt: str) -> str:
+    """Show a prompt and read one line.  Return '' on end-of-input."""
     try:
         return input(prompt)
     except EOFError:
@@ -295,6 +496,9 @@ def prompt_input(prompt: str) -> str:
 
 
 def resolve_within_root(root: Path, target_path: Path, *, label: str) -> Path:
+    """Make sure target_path is inside root.  This stops path-traversal
+    attacks like '../../etc/passwd' from escaping the allowed folder.
+    """
     resolved_root = root.resolve()
     resolved_target = target_path.resolve()
     if resolved_target != resolved_root and resolved_root not in resolved_target.parents:
@@ -303,8 +507,13 @@ def resolve_within_root(root: Path, target_path: Path, *, label: str) -> Path:
 
 
 def looks_like_project_dir(path: Path) -> bool:
+    """Return True if the folder has signs of being a real project
+    (like a README plus source files, or a package.json, etc.).
+    We use this to avoid treating random folders as repos.
+    """
     if not path.exists() or not path.is_dir():
         return False
+    # Never treat the home directory itself as a project.
     if path.resolve() == Path.home().resolve():
         return False
 
@@ -313,8 +522,10 @@ def looks_like_project_dir(path: Path) -> bool:
     try:
         for child in path.iterdir():
             name = child.name
+            # A project-marker file is a strong signal by itself.
             if child.is_file() and name in PROJECT_FILE_MARKERS:
                 return True
+            # A project-marker folder is also a strong signal.
             if child.is_dir() and name in PROJECT_DIR_MARKERS:
                 return True
             if child.is_file() and name.lower().startswith("readme"):
@@ -323,41 +534,476 @@ def looks_like_project_dir(path: Path) -> bool:
                 has_source = True
     except OSError:
         return False
+    # A readme plus at least one source file is good enough.
     return has_readme and has_source
+
+
+# =====================================================================
+# Blog-awareness parsers (archetypes, shortcodes, content strategy)
+# =====================================================================
+
+
+def parse_archetype(text: str) -> dict[str, Any]:
+    """Parse a Hugo archetype markdown file into structured data.
+
+    Returns a dict with:
+      - fields: list of dicts (name, value, allowed, is_list)
+      - body: the markdown body below the frontmatter
+      - raw_frontmatter: the raw YAML text
+    """
+    parts = text.split("---", 2)
+    if len(parts) < 3:
+        return {"fields": [], "body": text.strip(), "raw_frontmatter": ""}
+    raw_fm = parts[1].strip()
+    body = parts[2].strip()
+
+    fields: list[dict[str, Any]] = []
+    pending_allowed: Optional[str] = None
+
+    for line in raw_fm.splitlines():
+        stripped = line.strip()
+        # Extract "# Allowed X values: a, b, c" comments.
+        if stripped.startswith("#"):
+            match = re.match(r"#\s*Allowed\s+(\w+)\s+values?:\s*(.+)", stripped, re.IGNORECASE)
+            if match:
+                pending_allowed = match.group(2).strip()
+            continue
+        if not stripped:
+            continue
+        # List continuation like "  - zsh"
+        if stripped.startswith("- ") and fields:
+            last = fields[-1]
+            if isinstance(last["value"], list):
+                last["value"].append(stripped[2:].strip().strip('"').strip("'"))
+            continue
+        if ":" not in stripped:
+            continue
+        key, raw_val = stripped.split(":", 1)
+        key = key.strip()
+        raw_val = raw_val.strip()
+        # Skip Hugo template expressions like {{ .Date }}
+        if "{{" in raw_val:
+            raw_val = ""
+        # Detect list start
+        if raw_val == "":
+            # Could be a list or empty value — peek was a list continuation.
+            pass
+        raw_val = raw_val.strip('"').strip("'")
+        # Check if next lines are list items (we handle that above).
+        is_list = raw_val == "" or raw_val.startswith("[")
+        if raw_val.startswith("[") and raw_val.endswith("]"):
+            raw_val = [item.strip().strip('"').strip("'") for item in raw_val[1:-1].split(",") if item.strip()]
+            is_list = True
+        elif is_list and raw_val == "":
+            raw_val = []
+        field_entry: dict[str, Any] = {"name": key, "value": raw_val, "is_list": is_list}
+        if pending_allowed:
+            field_entry["allowed"] = [v.strip() for v in pending_allowed.split(",")]
+            pending_allowed = None
+        fields.append(field_entry)
+
+    return {"fields": fields, "body": body, "raw_frontmatter": raw_fm}
+
+
+def parse_shortcode(name: str, text: str) -> dict[str, Any]:
+    """Parse a Hugo shortcode HTML template to extract its parameters.
+
+    Returns a dict with:
+      - name: shortcode name (from filename)
+      - params: list of dicts (name, default)
+      - is_paired: True if the shortcode uses .Inner
+      - purpose: first HTML comment or empty string
+    """
+    params: list[dict[str, str]] = []
+    seen: set[str] = set()
+    # Match patterns like .Get "title" | default "Quick Path"
+    for match in re.finditer(r'\.Get\s+"([^"]+)"(?:\s*\|\s*default\s+"([^"]*)")?', text):
+        param_name = match.group(1)
+        default_val = match.group(2) or ""
+        if param_name not in seen:
+            seen.add(param_name)
+            params.append({"name": param_name, "default": default_val})
+
+    is_paired = ".Inner" in text
+    # Try to extract purpose from the first HTML comment.
+    purpose = ""
+    comment_match = re.search(r"<!--\s*(.+?)\s*-->", text)
+    if comment_match:
+        purpose = comment_match.group(1).strip()
+        # Clean up the "layouts/shortcodes/X.html" prefix.
+        purpose = re.sub(r"^layouts/shortcodes/\S+\s*", "", purpose).strip()
+
+    return {"name": name, "params": params, "is_paired": is_paired, "purpose": purpose}
+
+
+def load_blog_archetypes(blog_root: Path) -> dict[str, dict[str, Any]]:
+    """Read all archetype files from the blog repo.
+    Returns a dict keyed by type name (e.g., 'workflow').
+    """
+    archetypes_dir = blog_root / "archetypes"
+    if not archetypes_dir.is_dir():
+        return {}
+    result: dict[str, dict[str, Any]] = {}
+    for path in sorted(archetypes_dir.glob("*.md")):
+        type_name = path.stem  # "workflow.md" -> "workflow"
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        result[type_name] = parse_archetype(text)
+    return result
+
+
+def load_blog_shortcodes(blog_root: Path) -> list[dict[str, Any]]:
+    """Read all shortcode templates from the blog repo.
+    Returns a list of parsed shortcode dicts.
+    """
+    shortcodes_dir = blog_root / "layouts" / "shortcodes"
+    if not shortcodes_dir.is_dir():
+        return []
+    result: list[dict[str, Any]] = []
+    for path in sorted(shortcodes_dir.glob("*.html")):
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        result.append(parse_shortcode(path.stem, text))
+    return result
+
+
+def load_blog_content_strategy(blog_root: Path) -> str:
+    """Read the content strategy document from the blog repo.
+    Returns the full text, or empty string if not found.
+    """
+    strategy_path = blog_root / "docs" / "CONTENT-STRATEGY.md"
+    if not strategy_path.is_file():
+        return ""
+    try:
+        return strategy_path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
+
+
+class GitNexusCli:
+    """Wrapper around the `npx gitnexus` command-line tool.
+
+    GitNexus builds a knowledge graph of a repo's symbols and
+    execution flows.  This class runs it, reads its output, and
+    checks whether the index is healthy or needs a refresh.
+    """
+
+    def __init__(self) -> None:
+        # The user can turn off GitNexus entirely with an env var.
+        self.disabled = os.environ.get("CYBORG_DISABLE_GITNEXUS", "").lower() in {"1", "true", "yes"}
+        # Cache the repo list so we don't call `gitnexus list` twice.
+        self._repo_index_cache: Optional[list[dict[str, str]]] = None
+
+    @property
+    def available(self) -> bool:
+        """True if GitNexus is enabled and the `npx` command exists."""
+        return not self.disabled and shutil.which("npx") is not None
+
+    def _run(self, args: list[str], *, cwd: Path, timeout: int = DEFAULT_COMMAND_TIMEOUT_SECONDS) -> str:
+        """Run a gitnexus subcommand and return its text output.
+        Raises RuntimeError if the command fails.
+        """
+        code, stdout, stderr = run_command_result(["npx", "gitnexus", *args], cwd=cwd, timeout=timeout)
+        if code != 0:
+            message = stderr or stdout or f"gitnexus {' '.join(args)} failed"
+            raise RuntimeError(message)
+        return stdout or stderr
+
+    def _run_json(self, args: list[str], *, cwd: Path, timeout: int = DEFAULT_COMMAND_TIMEOUT_SECONDS) -> dict[str, Any]:
+        """Run a gitnexus subcommand and parse its output as JSON."""
+        output = self._run(args, cwd=cwd, timeout=timeout)
+        try:
+            return json.loads(output)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(f"GitNexus returned non-JSON output: {short_preview(output, 240)}") from exc
+
+    def _read_meta(self, repo_path: Path) -> dict[str, Any]:
+        """Read the local .gitnexus/meta.json file (if it exists).
+        Returns an empty dict when the file is missing or broken.
+        """
+        meta_path = repo_path / ".gitnexus" / "meta.json"
+        if not meta_path.exists():
+            return {}
+        try:
+            return json.loads(meta_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {}
+
+    def repo_entries(self, cwd: Path) -> list[dict[str, str]]:
+        """Get the list of repos that GitNexus has already indexed."""
+        if self._repo_index_cache is not None:
+            return self._repo_index_cache
+        try:
+            output = self._run(["list"], cwd=cwd)
+        except RuntimeError:
+            self._repo_index_cache = []
+            return self._repo_index_cache
+        self._repo_index_cache = parse_gitnexus_list_output(output)
+        return self._repo_index_cache
+
+    def repo_name_for_path(self, repo_path: Path) -> Optional[str]:
+        """Look up the GitNexus name for a repo by its disk path."""
+        for entry in self.repo_entries(repo_path):
+            if entry.get("path") == str(repo_path):
+                return entry.get("name")
+        return None
+
+    def tracked_source_docs_bytes(self, repo_path: Path) -> int:
+        """Add up the sizes of all tracked source and doc files.
+        We use this to decide if the repo is too large for GitNexus.
+        """
+        total = 0
+        output = run_command(["git", "ls-files"], cwd=repo_path, allow_failure=True)
+        for line in output.splitlines():
+            rel_path = line.strip()
+            if not rel_path:
+                continue
+            file_path = repo_path / rel_path
+            if not file_path.is_file() or not is_source_or_doc_file(file_path):
+                continue
+            try:
+                total += file_path.stat().st_size
+            except OSError:
+                continue
+        return total
+
+    def health_check(self, repo_path: Path, *, previous: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+        """Run a read-only check to find out if GitNexus is healthy,
+        stale, missing, or broken for this repo.  Returns a dict full
+        of flags the agent uses to decide what to show the user.
+
+        If `previous` is given (the status from the last saved session),
+        we also detect whether the repo changed since then.
+        """
+        status: dict[str, Any] = {
+            "enabled": not self.disabled,
+            "available": self.available,
+            "mode": "native",
+            "state": "disabled" if self.disabled else "unknown",
+            "decision_required": False,
+            "repo_path": str(repo_path),
+            "repo_name": None,
+            "configured": False,
+            "indexed": False,
+            "healthy": False,
+            "stale": False,
+            "stale_reasons": [],
+            "current_commit": "",
+            "indexed_commit": "",
+            "indexed_at": "",
+            "dirty": False,
+            "tracked_bytes": 0,
+            "too_large": False,
+            "embeddings_present": False,
+            "status_output": "",
+            "repo_changed_since_session": False,
+        }
+        git_root = detect_git_root(repo_path)
+        if not git_root:
+            status["state"] = "not-git"
+            status["enabled"] = False
+            return status
+        status["repo_path"] = str(git_root)
+        repo_path = git_root
+        status["current_commit"] = run_command(["git", "rev-parse", "HEAD"], cwd=repo_path, allow_failure=True)
+        git_status_output = run_command(["git", "status", "--short"], cwd=repo_path, allow_failure=True)
+        meaningful_status_lines = [line for line in git_status_output.splitlines() if ".gitnexus" not in line]
+        status["dirty"] = bool(meaningful_status_lines)
+        status["tracked_bytes"] = self.tracked_source_docs_bytes(repo_path)
+        status["too_large"] = status["tracked_bytes"] > GITNEXUS_SIZE_THRESHOLD_BYTES
+        meta = self._read_meta(repo_path)
+        status["configured"] = bool(meta)
+        status["indexed_commit"] = str(meta.get("lastCommit", ""))
+        status["indexed_at"] = str(meta.get("indexedAt", ""))
+        stats = meta.get("stats", {}) if isinstance(meta, dict) else {}
+        status["embeddings_present"] = bool(stats.get("embeddings", 0))
+
+        if self.disabled:
+            status["state"] = "disabled"
+            return status
+        if not self.available:
+            status["state"] = "unavailable"
+            status["decision_required"] = True
+            status["stale_reasons"].append("GitNexus CLI is unavailable in this shell.")
+            return status
+
+        code, stdout, stderr = run_command_result(["npx", "gitnexus", "status"], cwd=repo_path)
+        status_output = stdout or stderr
+        status["status_output"] = status_output
+        if code == 0 and "Not a git repository." in status_output:
+            status["state"] = "not-git"
+            status["enabled"] = False
+            return status
+        if code != 0:
+            status["state"] = "error"
+            status["decision_required"] = True
+            status["stale_reasons"].append(stderr or stdout or "GitNexus status failed.")
+            return status
+
+        status["repo_name"] = self.repo_name_for_path(repo_path) or repo_path.name
+        status["indexed"] = "Repository not indexed." not in status_output and bool(meta)
+        if not status["configured"]:
+            status["stale_reasons"].append("GitNexus metadata is not configured in this repo.")
+        if not status["indexed"]:
+            status["stale_reasons"].append("This repo is not indexed yet.")
+        if status["indexed"] and status["current_commit"] and status["indexed_commit"] and status["current_commit"] != status["indexed_commit"]:
+            status["stale_reasons"].append("Current HEAD differs from the indexed commit.")
+        if status["dirty"]:
+            status["stale_reasons"].append("Tracked files changed since the last analyze.")
+        indexed_at = parse_iso_datetime(status["indexed_at"])
+        if indexed_at and indexed_at < datetime.now(timezone.utc) - timedelta(hours=GITNEXUS_STALE_HOURS):
+            status["stale_reasons"].append(f"The index is older than {GITNEXUS_STALE_HOURS} hours.")
+        if status["too_large"]:
+            status["stale_reasons"].append(
+                f"Tracked source/docs total {format_bytes(status['tracked_bytes'])}, above the {format_bytes(GITNEXUS_SIZE_THRESHOLD_BYTES)} enhancement threshold."
+            )
+        status["stale"] = bool(status["stale_reasons"]) and status["indexed"]
+        status["healthy"] = status["indexed"] and not status["stale_reasons"] and not status["too_large"]
+        status["decision_required"] = not status["healthy"]
+        if status["healthy"]:
+            status["state"] = "healthy"
+        elif status["too_large"]:
+            status["state"] = "too-large"
+        elif not status["indexed"]:
+            status["state"] = "not-indexed"
+        else:
+            status["state"] = "stale"
+        status["mode"] = "graph" if status["healthy"] else "native"
+
+        # Compare with the previous session's status to detect changes.
+        if previous:
+            prior_commit = str(previous.get("current_commit", ""))
+            prior_dirty = bool(previous.get("dirty"))
+            prior_indexed = str(previous.get("indexed_commit", ""))
+            status["repo_changed_since_session"] = bool(
+                prior_commit and (prior_commit != status["current_commit"] or prior_dirty != status["dirty"] or prior_indexed != status["indexed_commit"])
+            )
+            # If it was already flagged as changed, keep it flagged.
+            if previous.get("repo_changed_since_session"):
+                status["repo_changed_since_session"] = True
+        return status
+
+    def enhance(self, repo_path: Path, *, force: bool = False) -> dict[str, Any]:
+        """Run `gitnexus analyze` to build or refresh the repo index.
+
+        When `force` is True, the --force flag is passed so the index
+        is rebuilt from scratch even if it already exists.  If the
+        repo had embeddings before, we keep them.
+        """
+        meta_before = self._read_meta(repo_path)
+        preserve_embeddings = bool(meta_before.get("stats", {}).get("embeddings", 0))
+        args = ["analyze"]
+        if force:
+            args.append("--force")
+        if preserve_embeddings:
+            args.append("--embeddings")
+        args.append(".")
+        try:
+            output = self._run(args, cwd=repo_path, timeout=GITNEXUS_ANALYZE_TIMEOUT_SECONDS)
+        except RuntimeError as exc:
+            # If this was the very first analyze and it failed, clean up
+            # the partial .gitnexus folder so we don't leave garbage.
+            cleaned = False
+            if not meta_before:
+                code, _, _ = run_command_result(["npx", "gitnexus", "clean", "--force"], cwd=repo_path)
+                cleaned = code == 0
+            raise RuntimeError(f"{exc}\nCleanup attempted: {'yes' if cleaned else 'no'}") from exc
+        # Clear the cache so the next list call picks up fresh data.
+        self._repo_index_cache = None
+        return {
+            "output": output,
+            "preserved_embeddings": preserve_embeddings,
+        }
+
+    def query_summary(self, repo_path: Path, *, repo_name: Optional[str], search_query: str, goal: str, context: str) -> dict[str, Any]:
+        """Ask GitNexus for the repo's top execution flows, symbols,
+        and file definitions.  Returns an empty dict on failure so the
+        caller can fall back to native scanning.
+        """
+        if not repo_name:
+            return {}
+        try:
+            payload = self._run_json(
+                [
+                    "query",
+                    "--repo",
+                    repo_name,
+                    "-l",
+                    str(GITNEXUS_QUERY_LIMIT),
+                    "-g",
+                    goal,
+                    "-c",
+                    context,
+                    search_query,
+                ],
+                cwd=repo_path,
+            )
+        except RuntimeError:
+            return {}
+        return {
+            "processes": payload.get("processes", [])[:GITNEXUS_QUERY_LIMIT],
+            "process_symbols": payload.get("process_symbols", [])[:8],
+            "definitions": payload.get("definitions", [])[:8],
+        }
 
 
 @dataclass
 class SessionState:
-    session_id: str
-    version: int
-    created_at: str
-    updated_at: str
-    blog_root: str
-    session_dir: str
-    cwd: str
-    repo_path: Optional[str] = None
-    repo_name: Optional[str] = None
-    repo_remote: Optional[str] = None
-    markdown_file: Optional[str] = None
-    source_text: str = ""
-    article_text: str = ""
-    phase: str = "intake"
-    intake_notes: list[str] = field(default_factory=list)
-    planning_notes: list[str] = field(default_factory=list)
-    editorial_notes: list[str] = field(default_factory=list)
-    chat_history: list[dict[str, str]] = field(default_factory=list)
-    scan_summary: str = ""
-    scan_details: dict[str, Any] = field(default_factory=dict)
-    duplicate_candidates: list[dict[str, str]] = field(default_factory=list)
-    content_map: dict[str, Any] = field(default_factory=dict)
-    publishing_plan: dict[str, Any] = field(default_factory=dict)
-    pending_drafts: dict[str, dict[str, Any]] = field(default_factory=dict)
-    link_recommendations: list[dict[str, Any]] = field(default_factory=list)
-    pending_existing_edits: dict[str, dict[str, Any]] = field(default_factory=dict)
-    active_review_key: Optional[str] = None
+    """Everything the agent needs to remember between commands.
+
+    This dataclass is saved as JSON inside the session folder so work
+    can be paused and resumed later.  Each field maps to one piece of
+    the conversation or content pipeline.
+    """
+
+    session_id: str              # Unique ID like "20260316-143000-my-repo-abc123"
+    version: int                 # Schema version; bump when the shape changes
+    created_at: str              # UTC timestamp when the session started
+    updated_at: str              # UTC timestamp of the last save
+    blog_root: str               # Absolute path to the Hugo blog repo
+    session_dir: str             # Folder where this session's files live
+    cwd: str                     # The directory the user was in when they started
+    repo_path: Optional[str] = None      # Path to the source repo being ingested
+    repo_name: Optional[str] = None      # Short name of the repo (folder name)
+    repo_remote: Optional[str] = None    # Git remote URL (if available)
+    markdown_file: Optional[str] = None  # Path to an optional supporting article
+    source_text: str = ""                # Free-text idea the user typed at launch
+    article_text: str = ""               # Full text of the supporting article
+    phase: str = "intake"                # Current pipeline stage (intake -> applied)
+    gitnexus_status: dict[str, Any] = field(default_factory=dict)      # Latest GitNexus health check
+    gitnexus_summary: dict[str, Any] = field(default_factory=dict)     # Graph query results
+    gitnexus_skip: bool = False          # True if user chose to skip GitNexus
+    intake_notes: list[str] = field(default_factory=list)              # Free-form notes from early phase
+    planning_notes: list[str] = field(default_factory=list)            # Notes added after the map exists
+    editorial_notes: list[str] = field(default_factory=list)           # Feedback on specific drafts
+    chat_history: list[dict[str, str]] = field(default_factory=list)   # Rolling AI conversation log
+    scan_summary: str = ""               # Markdown summary of the repo scan
+    scan_details: dict[str, Any] = field(default_factory=dict)         # Structured scan data
+    duplicate_candidates: list[dict[str, str]] = field(default_factory=list)  # Blog pages that might overlap
+    content_map: dict[str, Any] = field(default_factory=dict)          # Proposed set of new pages
+    publishing_plan: dict[str, Any] = field(default_factory=dict)      # Ordered plan for drafting
+    pending_drafts: dict[str, dict[str, Any]] = field(default_factory=dict)   # Drafts waiting to be applied
+    link_recommendations: list[dict[str, Any]] = field(default_factory=list)  # Suggested edits to existing pages
+    rewrite_recommendations: list[dict[str, Any]] = field(default_factory=list)  # Strong existing-page matches
+    rewrite_choices: dict[str, str] = field(default_factory=dict)      # User's chosen rewrite mode per path
+    pending_existing_edits: dict[str, dict[str, Any]] = field(default_factory=dict)  # Edits staged for existing pages
+    active_review_key: Optional[str] = None  # Which draft the user is currently editing
+    blog_archetypes: dict[str, dict[str, Any]] = field(default_factory=dict)    # Parsed archetype schemas per type
+    blog_shortcodes: list[dict[str, Any]] = field(default_factory=list)          # Parsed shortcode inventory
+    blog_content_strategy: str = ""                                              # Full text of CONTENT-STRATEGY.md
 
 
 class OpenRouterClient:
+    """Simple HTTP client that talks to the OpenRouter AI gateway.
+
+    Sends a system prompt plus a user prompt and gets back either
+    plain text or JSON, depending on which method you call.
+    """
+
     def __init__(self) -> None:
         self.api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
         self.model = os.environ.get("CYBORG_MODEL", "moonshotai/kimi-k2:free").strip()
@@ -365,9 +1011,11 @@ class OpenRouterClient:
 
     @property
     def enabled(self) -> bool:
+        """True when we have an API key, a model, and AI is not turned off."""
         return bool(self.api_key and self.model and not self.disabled)
 
     def _request(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Send a raw JSON payload to OpenRouter and return the response."""
         data = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(
             OPENROUTER_URL,
@@ -382,25 +1030,56 @@ class OpenRouterClient:
         with urllib.request.urlopen(req, timeout=120) as response:
             return json.loads(response.read().decode("utf-8"))
 
-    def chat_text(self, system_prompt: str, user_prompt: str, *, temperature: float = 0.35) -> str:
+    @staticmethod
+    def _with_cache_control(message: dict[str, Any]) -> dict[str, Any]:
+        """Return a copy of *message* with ``cache_control`` attached."""
+        return {**message, "cache_control": {"type": "ephemeral"}}
+
+    def chat_text(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        *,
+        temperature: float = 0.35,
+        cache_system: bool = False,
+    ) -> str:
+        """Ask the AI a question and get a plain-text answer back."""
+        sys_msg: dict[str, Any] = {"role": "system", "content": system_prompt}
+        if cache_system:
+            sys_msg = self._with_cache_control(sys_msg)
         payload = {
             "model": self.model,
             "temperature": temperature,
             "messages": [
-                {"role": "system", "content": system_prompt},
+                sys_msg,
                 {"role": "user", "content": user_prompt},
             ],
         }
         response = self._request(payload)
         return str(response["choices"][0]["message"]["content"]).strip()
 
-    def chat_json(self, system_prompt: str, user_prompt: str, *, temperature: float = 0.25) -> dict[str, Any]:
+    def chat_json(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        *,
+        temperature: float = 0.25,
+        cache_system: bool = False,
+    ) -> dict[str, Any]:
+        """Ask the AI a question and get a JSON object back.
+
+        The response_format field tells the model to return valid JSON.
+        If it fails, we raise a RuntimeError with details.
+        """
+        sys_msg: dict[str, Any] = {"role": "system", "content": system_prompt}
+        if cache_system:
+            sys_msg = self._with_cache_control(sys_msg)
         payload = {
             "model": self.model,
             "temperature": temperature,
             "response_format": {"type": "json_object"},
             "messages": [
-                {"role": "system", "content": system_prompt},
+                sys_msg,
                 {"role": "user", "content": user_prompt},
             ],
         }
@@ -416,16 +1095,319 @@ class OpenRouterClient:
         except json.JSONDecodeError as exc:
             raise RuntimeError(f"AI returned non-JSON content: {short_preview(content, 240)}") from exc
 
+    def chat_json_messages(
+        self,
+        messages: list[dict[str, Any]],
+        *,
+        temperature: float = 0.25,
+    ) -> dict[str, Any]:
+        """Like ``chat_json`` but accepts a pre-built message list.
+
+        This is used by the draft loop to send a multi-message pattern
+        (system + shared-context + per-item instruction) where the first
+        two messages carry ``cache_control`` for provider-level caching.
+        """
+        payload = {
+            "model": self.model,
+            "temperature": temperature,
+            "response_format": {"type": "json_object"},
+            "messages": messages,
+        }
+        try:
+            response = self._request(payload)
+        except urllib.error.URLError as exc:
+            raise RuntimeError(f"AI request failed: {exc.reason}") from exc
+        except TimeoutError as exc:  # pragma: no cover - depends on network
+            raise RuntimeError("AI request timed out") from exc
+        content = str(response["choices"][0]["message"]["content"]).strip()
+        try:
+            return json.loads(content)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(f"AI returned non-JSON content: {short_preview(content, 240)}") from exc
+
 
 class CyborgAgent:
+    """The main agent that drives the whole interactive session.
+
+    It holds the session state, talks to the AI when available,
+    runs GitNexus commands, scans repos, builds content maps,
+    generates drafts, and writes approved changes into the blog.
+    """
+
     def __init__(self, state: SessionState, *, ai_client: OpenRouterClient, interactive: bool) -> None:
         self.state = state
         self.ai_client = ai_client
+        # True when the user is typing at a terminal (not piped input).
         self.interactive = interactive
         self.blog_root = Path(state.blog_root)
         self.session_dir = Path(state.session_dir)
+        self.gitnexus_cli = GitNexusCli()
+        self._cached_system_prompt: Optional[str] = None
+
+    # --- Small helpers ---
+
+    def _repo_path(self) -> Optional[Path]:
+        """Return the source repo path as a Path, or None."""
+        return Path(self.state.repo_path) if self.state.repo_path else None
+
+    def _gitnexus_status(self) -> dict[str, Any]:
+        """Shortcut to get the latest GitNexus health-check dict."""
+        return self.state.gitnexus_status or {}
+
+    def _gitnexus_decision_pending(self) -> bool:
+        """True when GitNexus needs the user to say enhance or skip."""
+        status = self._gitnexus_status()
+        return bool(self.state.repo_path and not self.state.gitnexus_skip and status.get("decision_required"))
+
+    def _gitnexus_prompt_text(self) -> str:
+        """Build the message we show the user when GitNexus needs attention."""
+        status = self._gitnexus_status()
+        state = status.get("state")
+        tracked_size = format_bytes(int(status.get("tracked_bytes", 0)))
+        base_lines = []
+        if state == "not-indexed":
+            base_lines.append("GitNexus is not configured here. I can initialize and analyze this repo to improve content mapping, cross-linking, and rewrite quality. Proceed?")
+        elif state == "stale":
+            base_lines.append("GitNexus is stale for this repo. I can refresh the index so the next content map reflects the current project state. Proceed?")
+        elif state == "too-large":
+            base_lines.append(
+                f"GitNexus enhancement is paused because tracked source/docs total {tracked_size}, above the {format_bytes(GITNEXUS_SIZE_THRESHOLD_BYTES)} threshold. Proceed anyway?"
+            )
+        elif state == "unavailable":
+            base_lines.append("GitNexus is not available in this shell, so I cannot enhance this repo until the CLI is reachable.")
+        elif state == "error":
+            base_lines.append("GitNexus health check failed. I can retry the enhancement flow, or you can continue with the native scan.")
+        else:
+            base_lines.append("GitNexus needs attention before I keep using it as the higher-confidence repo map.")
+        base_lines.extend(
+            [
+                "Planned GitNexus step:",
+                "- zero-write health check already completed",
+                "- run `gitnexus analyze` in this repo only if you approve",
+                "- preserve embeddings if they already exist",
+                "- keep `.gitnexus` local unless you explicitly decide otherwise",
+                "Options:",
+                "- `/gitnexus explain` for the full plan",
+                "- `/gitnexus enhance` to approve the repo write step",
+                "- `/gitnexus skip` to continue with native scanning only",
+            ]
+        )
+        if status.get("embeddings_present"):
+            base_lines.append("- embeddings already exist here, so a refresh will preserve them")
+        elif status.get("indexed"):
+            base_lines.append("- embeddings are not enabled here; I can recommend them later as an optional upgrade")
+        return "\n".join(base_lines)
+
+    def _gitnexus_status_lines(self) -> list[str]:
+        """Format the GitNexus status as lines for the /status display."""
+        status = self._gitnexus_status()
+        if not status:
+            return ["GitNexus: not checked yet"]
+        lines = [
+            f"GitNexus: {status.get('state', 'unknown')} ({status.get('mode', 'native')} mode)",
+            f"GitNexus repo: {status.get('repo_name') or '(none)'}",
+            f"GitNexus indexed commit: {status.get('indexed_commit') or '(none)'}",
+            f"GitNexus current commit: {status.get('current_commit') or '(none)'}",
+            f"GitNexus tracked source/docs: {format_bytes(int(status.get('tracked_bytes', 0)))}",
+            f"GitNexus embeddings: {'present' if status.get('embeddings_present') else 'not enabled'}",
+        ]
+        if status.get("stale_reasons"):
+            lines.append("GitNexus notes:")
+            lines.extend(f"- {reason}" for reason in status["stale_reasons"])
+        return lines
+
+    def _gitnexus_explain_text(self) -> str:
+        """Build the detailed explanation shown for /gitnexus explain."""
+        status = self._gitnexus_status()
+        lines = [
+            "GitNexus enhancement plan:",
+            "- detect repo health without writing anything",
+            "- if approved, run `gitnexus analyze` in the repo root",
+            "- preserve embeddings if they already exist",
+            "- merge GitNexus signals with the native scan, with GitNexus treated as higher confidence",
+            "- use the graph to improve execution-flow extraction, draft targeting, and strong-match rewrite prompts",
+            "- keep `.gitnexus` local-only unless you explicitly choose a different policy later",
+        ]
+        if status.get("too_large"):
+            lines.append(f"- current tracked source/docs size is {format_bytes(int(status.get('tracked_bytes', 0)))} so this exceeds the auto-enhancement threshold")
+        if status.get("stale_reasons"):
+            lines.append("Current blockers:")
+            lines.extend(f"- {reason}" for reason in status["stale_reasons"])
+        return "\n".join(lines)
+
+    def _gitnexus_search_query(self) -> str:
+        """Pick the best search string for the GitNexus graph query."""
+        candidates = [
+            self.state.repo_name or "",
+            extract_first_heading(self.state.article_text or "") or "",
+            self.state.source_text,
+        ]
+        for candidate in candidates:
+            cleaned = short_preview(candidate, 120).strip()
+            if cleaned:
+                return cleaned
+        return "core workflow execution path reusable artifact"
+
+    def _refresh_gitnexus_summary(self) -> None:
+        """Ask GitNexus for fresh execution-flow and symbol data."""
+        repo_path = self._repo_path()
+        status = self._gitnexus_status()
+        if not repo_path or not status.get("healthy"):
+            self.state.gitnexus_summary = {}
+            return
+        summary = self.gitnexus_cli.query_summary(
+            repo_path,
+            repo_name=status.get("repo_name"),
+            search_query=self._gitnexus_search_query(),
+            goal="Identify the repo's core execution flows, reusable artifacts, and update candidates for Cyborg Lab content.",
+            context="Cyborg Lab ingest session: merge GitNexus graph signals with native repo scanning for content mapping and rewrites.",
+        )
+        self.state.gitnexus_summary = summary
+
+    def refresh_gitnexus_status(self, *, announce: bool = False) -> dict[str, Any]:
+        """Re-run the GitNexus health check and update the session.
+        If announce=True and a decision is needed, print the prompt.
+        """
+        repo_path = self._repo_path()
+        if not repo_path:
+            self.state.gitnexus_status = {}
+            self.state.gitnexus_summary = {}
+            return {}
+        previous = self.state.gitnexus_status or None
+        status = self.gitnexus_cli.health_check(repo_path, previous=previous)
+        self.state.gitnexus_status = status
+        if status.get("healthy"):
+            self._refresh_gitnexus_summary()
+        else:
+            self.state.gitnexus_summary = {}
+        if announce and self._gitnexus_decision_pending():
+            self.assistant_say(self._gitnexus_prompt_text())
+        return status
+
+    # --- Blog awareness ---
+
+    def _load_blog_awareness(self) -> None:
+        """Read archetypes, shortcodes, and content strategy from the
+        blog repo so the agent knows the real frontmatter schemas,
+        available shortcodes, and editorial rules.  Skips if already
+        loaded (e.g., on a resumed session with unchanged blog).
+        """
+        if self.state.blog_archetypes and self.state.blog_shortcodes:
+            return
+        self.state.blog_archetypes = load_blog_archetypes(self.blog_root)
+        self.state.blog_shortcodes = load_blog_shortcodes(self.blog_root)
+        self.state.blog_content_strategy = load_blog_content_strategy(self.blog_root)
+        self._cached_system_prompt = None
+
+    def _build_system_prompt(self) -> str:
+        """Assemble the full system prompt from the static contract
+        plus live blog-awareness data (archetypes, shortcodes, strategy).
+
+        The result is cached on the instance.  Call
+        ``self._cached_system_prompt = None`` to force a rebuild (done
+        automatically when blog awareness data is reloaded).
+        """
+        if self._cached_system_prompt is not None:
+            return self._cached_system_prompt
+
+        sections = [SYSTEM_CONTRACT]
+
+        # Static content-type and workflow-track rules (previously sent
+        # in every user payload — now part of the cached system prompt).
+        ct_lines = [
+            "",
+            "Content type rules (use these when proposing pages):",
+        ]
+        for ctype, meta in CONTENT_TYPES.items():
+            ct_lines.append(f"- {ctype}: dir={meta['dir']}, unit={meta['unit']}, tone={meta['tone']}")
+        ct_lines.append("")
+        ct_lines.append(f"Workflow tracks: {', '.join(WORKFLOW_TRACKS)}")
+        sections.append("\n".join(ct_lines))
+
+        # Archetype contracts
+        if self.state.blog_archetypes:
+            lines = [
+                "",
+                "Archetype contracts (every draft MUST match the frontmatter and "
+                "section structure of its archetype — do not invent fields):",
+            ]
+            for type_name, archetype in sorted(self.state.blog_archetypes.items()):
+                if type_name == "default":
+                    continue
+                field_parts: list[str] = []
+                for f in archetype.get("fields", []):
+                    part = f["name"]
+                    if f.get("allowed"):
+                        part += f" (allowed: {', '.join(f['allowed'])})"
+                    field_parts.append(part)
+                body_headings = [
+                    line.lstrip("#").strip()
+                    for line in archetype.get("body", "").splitlines()
+                    if line.strip().startswith("##")
+                ]
+                lines.append(f"- {type_name}: frontmatter: {', '.join(field_parts)}")
+                if body_headings:
+                    lines.append(f"  body sections: {' → '.join(body_headings)}")
+            sections.append("\n".join(lines))
+
+        # Available shortcodes
+        if self.state.blog_shortcodes:
+            lines = [
+                "",
+                "Available Hugo shortcodes (use only these — do not invent shortcodes):",
+            ]
+            for sc in self.state.blog_shortcodes:
+                param_names = [p["name"] for p in sc.get("params", [])]
+                paired = "paired" if sc.get("is_paired") else "self-closing"
+                params_str = ", ".join(param_names) if param_names else "none"
+                purpose = sc.get("purpose", "")
+                desc = f"- {sc['name']}: {paired}, params: {params_str}"
+                if purpose:
+                    desc += f". {purpose}"
+                lines.append(desc)
+            sections.append("\n".join(lines))
+
+        # Content strategy summary
+        if self.state.blog_content_strategy:
+            sections.append(
+                "\nContent strategy (follow these rules when proposing content types, "
+                "prioritizing pages, and checking definition of done):\n"
+                + self.state.blog_content_strategy
+            )
+
+        self._cached_system_prompt = "\n".join(sections)
+        return self._cached_system_prompt
+
+    def auto_prepare_repo_context(self) -> None:
+        """Called at session start: check GitNexus health and scan the
+        repo if needed.  Pauses if the user needs to make a choice.
+        """
+        self._load_blog_awareness()
+        repo_path = self._repo_path()
+        if not repo_path:
+            return
+        status = self.refresh_gitnexus_status(announce=True)
+        if self._gitnexus_decision_pending():
+            return
+        if not self.state.scan_summary or status.get("repo_changed_since_session"):
+            if status.get("repo_changed_since_session") and self.state.scan_summary:
+                self.assistant_say(
+                    "Repo state changed since the last saved session. I’m refreshing the repo scan now. Rebuild the map with `/map` when you want updated rewrite choices."
+                )
+            self.scan_repo()
+
+    # --- Persistence ---
 
     def save(self, *, include_previews: bool = True) -> None:
+        """Write the full session state to disk (JSON + markdown files).
+
+        The session folder gets:
+        - session.json (the complete state, so we can resume later)
+        - transcript.md (human-readable chat log)
+        - scan.md, content-map.md/json, publishing-plan.md/json
+        - preview/ folder with draft markdown files
+        - existing-edits/ folder with patched existing pages
+        """
         self.state.updated_at = utc_now()
         self.session_dir.mkdir(parents=True, exist_ok=True)
         (self.session_dir / "session.json").write_text(
@@ -481,23 +1463,29 @@ class CyborgAgent:
                     self._write_session_artifact(edit_root, rel_path, edit["markdown"], label="session existing-edits root")
 
     def append_chat(self, role: str, content: str) -> None:
+        """Add a message to the rolling chat history and auto-save.
+        Old messages are trimmed to keep the window small.
+        """
         self.state.chat_history.append({"role": role, "content": content})
         if len(self.state.chat_history) > MAX_CHAT_HISTORY * 2:
             self.state.chat_history = self.state.chat_history[-MAX_CHAT_HISTORY * 2 :]
         self.save(include_previews=False)
 
     def assistant_say(self, message: str) -> None:
+        """Print a message to the user and record it in the chat log."""
         print(message)
         self.append_chat("assistant", message)
 
     def user_said(self, message: str) -> None:
+        """Record something the user typed into the chat log."""
         self.append_chat("user", message)
 
     def status_lines(self) -> list[str]:
+        """Build the lines shown when the user types /status."""
         map_items = self.state.content_map.get("items", [])
         pending_keys = ", ".join(sorted(self.state.pending_drafts)) or "(none)"
         review_target = self.state.active_review_key or "(none)"
-        return [
+        lines = [
             f"Session: {self.state.session_id}",
             f"Phase: {self.state.phase}",
             f"Repo: {self.state.repo_path or '(none)'}",
@@ -506,19 +1494,29 @@ class CyborgAgent:
             f"Content map items: {len(map_items)}",
             f"Pending drafts: {pending_keys}",
             f"Pending existing edits: {len(self.state.pending_existing_edits)}",
+            f"Rewrite recommendations: {len(self.state.rewrite_recommendations)}",
             f"Active review target: {review_target}",
         ]
+        lines.extend(self._gitnexus_status_lines())
+        return lines
 
     def content_map_markdown(self) -> str:
+        """Render the content map as a markdown document."""
         items = self.state.content_map.get("items", [])
         lines = [
             f"# Content Map: {self.state.session_id}",
             "",
             self.state.content_map.get("summary", "No summary generated."),
             "",
-            "## Proposed Pages",
-            "",
         ]
+        if self.state.gitnexus_summary:
+            lines.extend(["## GitNexus Signals", ""])
+            for process in self.state.gitnexus_summary.get("processes", [])[:4]:
+                lines.append(f"- Flow: {process.get('summary', 'unknown flow')} ({process.get('step_count', '?')} steps)")
+            for definition in self.state.gitnexus_summary.get("definitions", [])[:4]:
+                lines.append(f"- Definition: {definition.get('name', 'unknown')} -> `{definition.get('filePath', '')}`")
+            lines.append("")
+        lines.extend(["## Proposed Pages", ""])
         for item in items:
             lines.append(f"- `{item['key']}` [{item['type']}] -> `{item['path']}`")
             lines.append(f"  {item['title']}: {item['why']}")
@@ -526,15 +1524,26 @@ class CyborgAgent:
             lines.extend(["", "## Existing Page Recommendations", ""])
             for rec in self.state.link_recommendations:
                 lines.append(f"- [{rec['id']}] `{rec['path']}`: {rec['reason']}")
+        if self.state.rewrite_recommendations:
+            lines.extend(["", "## Strong Rewrite Candidates", ""])
+            for rec in self.state.rewrite_recommendations:
+                lines.append(f"- [{rec['id']}] `{rec['path']}` ({rec['match_type']}): {rec['reason']}")
         return "\n".join(lines).rstrip() + "\n"
 
     def plan_markdown(self) -> str:
+        """Render the publishing plan as a markdown document."""
         lines = [
             f"# Publishing Plan: {self.state.session_id}",
             "",
             self.state.publishing_plan.get("summary", "No plan generated."),
             "",
         ]
+        if self.state.rewrite_recommendations:
+            lines.extend(["## Rewrite Choices", ""])
+            for rec in self.state.rewrite_recommendations:
+                choice = self.state.rewrite_choices.get(rec["path"], "(pending)")
+                lines.append(f"- [{rec['id']}] `{rec['path']}` -> {choice}")
+            lines.append("")
         phases = self.state.publishing_plan.get("phases", [])
         if phases:
             lines.append("## Phases")
@@ -559,9 +1568,19 @@ class CyborgAgent:
             lines.append("")
         return "\n".join(lines).rstrip() + "\n"
 
+    # --- Repo scanning ---
+
     def scan_repo(self) -> None:
+        """Walk the source repo and collect files, languages, readmes,
+        docs, tests, git history, and duplicate blog candidates into
+        a structured scan summary.
+        """
         if not self.state.repo_path:
             self.assistant_say("No repo path is active. Add notes or restart with `cyborg ingest --repo <path>` if you want repo-backed scanning.")
+            return
+
+        if self._gitnexus_decision_pending():
+            self.assistant_say(self._gitnexus_prompt_text())
             return
 
         repo_path = Path(self.state.repo_path)
@@ -569,6 +1588,11 @@ class CyborgAgent:
         scan_root = git_root or repo_path
         self.state.repo_path = str(scan_root)
         self.state.repo_name = scan_root.name
+
+        status = self.refresh_gitnexus_status()
+        if self._gitnexus_decision_pending():
+            self.assistant_say(self._gitnexus_prompt_text())
+            return
 
         files = self._list_files(scan_root, git_root is not None)
         language_counts = self._language_counts(files)
@@ -630,6 +1654,15 @@ class CyborgAgent:
             "## Language Mix",
             "",
         ]
+        if status:
+            summary_lines.extend(
+                [
+                    f"- GitNexus: {status.get('state', 'unknown')} ({status.get('mode', 'native')} mode)",
+                    f"- GitNexus Repo Name: {status.get('repo_name') or '(none detected)'}",
+                    f"- GitNexus Indexed Commit: {status.get('indexed_commit') or '(none)'}",
+                    "",
+                ]
+            )
         for ext, count in sorted(language_counts.items(), key=lambda item: (-item[1], item[0])):
             summary_lines.append(f"- {ext}: {count}")
 
@@ -642,6 +1675,12 @@ class CyborgAgent:
         if recent_commits:
             summary_lines.extend(["", "## Recent Commits", ""])
             summary_lines.extend(f"- {line}" for line in recent_commits.splitlines())
+        if self.state.gitnexus_summary:
+            summary_lines.extend(["", "## GitNexus Signals", ""])
+            for process in self.state.gitnexus_summary.get("processes", [])[:4]:
+                summary_lines.append(f"- Flow: {process.get('summary', 'unknown flow')} ({process.get('step_count', '?')} steps)")
+            for definition in self.state.gitnexus_summary.get("definitions", [])[:4]:
+                summary_lines.append(f"- Definition: {definition.get('name', 'unknown')} -> `{definition.get('filePath', '')}`")
         if duplicate_candidates:
             summary_lines.extend(["", "## Cyborg Lab Candidates", ""])
             for candidate in duplicate_candidates:
@@ -663,6 +1702,9 @@ class CyborgAgent:
         )
 
     def _list_files(self, root: Path, use_git: bool) -> list[Path]:
+        """Get a list of files in the repo.  Prefers `git ls-files`,
+        falls back to `rg --files`, then to Python's rglob.
+        """
         if use_git:
             try:
                 output = run_command(["git", "ls-files"], cwd=root, allow_failure=False)
@@ -676,6 +1718,7 @@ class CyborgAgent:
             return [path for path in root.rglob("*") if path.is_file()]
 
     def _language_counts(self, files: list[Path]) -> dict[str, int]:
+        """Count how many files exist for each file extension."""
         counts: dict[str, int] = {}
         for path in files:
             ext = path.suffix.lower() or "(no-ext)"
@@ -683,6 +1726,7 @@ class CyborgAgent:
         return counts
 
     def _read_excerpt(self, path: Path, *, max_lines: int = 60) -> str:
+        """Read the first N lines of a file for use in the scan summary."""
         try:
             lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
         except OSError:
@@ -691,6 +1735,10 @@ class CyborgAgent:
         return "\n".join(excerpt).strip()
 
     def find_duplicate_candidates(self) -> list[dict[str, str]]:
+        """Search the blog's content/ folder for existing pages that
+        already mention this repo.  Uses `rg -F` (fixed-string) so
+        special characters in repo names don't break the search.
+        """
         blog_content = self.blog_root / "content"
         if not blog_content.exists():
             return []
@@ -721,9 +1769,167 @@ class CyborgAgent:
                     return candidates
         return candidates
 
+    def _classify_duplicate_match(self, candidate: dict[str, str]) -> str:
+        """Decide if a duplicate candidate is a 'strong' or 'medium' match."""
+        repo_slug = slugify(self.state.repo_name or "")
+        candidate_path = candidate["path"].lower()
+        snippet = candidate.get("snippet", "").lower()
+        if repo_slug and repo_slug in candidate_path:
+            return "strong"
+        repo_name = (self.state.repo_name or "").lower()
+        if repo_name and repo_name in snippet:
+            return "strong"
+        return "medium"
+
+    def _build_rewrite_recommendations(self) -> list[dict[str, Any]]:
+        """Build the list of existing pages that are strong enough
+        matches to offer the user update/iteration-log/merge choices.
+        Returns the existing list unchanged when nothing new happened.
+        """
+        if not self.state.gitnexus_status.get("repo_changed_since_session"):
+            return self.state.rewrite_recommendations
+        recommendations: list[dict[str, Any]] = []
+        for candidate in self.state.duplicate_candidates:
+            if self._classify_duplicate_match(candidate) != "strong":
+                continue
+            path = candidate["path"]
+            match_type = section_type_from_content_path(path) or "unknown"
+            matched_item = self._matching_item_for_existing_path(path)
+            if not matched_item:
+                continue
+            recommendations.append(
+                {
+                    "id": len(recommendations) + 1,
+                    "path": path,
+                    "reason": f"Existing {match_type} page already matches this repo thread closely enough to consider an iteration update.",
+                    "match_type": match_type,
+                    "content_key": matched_item["key"],
+                    "link_id": next((rec["id"] for rec in self.state.link_recommendations if rec["path"] == path), None),
+                }
+            )
+        return recommendations
+
+    def _pending_rewrite_recommendations(self) -> list[dict[str, Any]]:
+        """Filter rewrite recommendations to only those the user
+        has not made a choice for yet.
+        """
+        return [rec for rec in self.state.rewrite_recommendations if rec["path"] not in self.state.rewrite_choices]
+
+    def _rewrite_prompt_text(self, recommendations: Optional[list[dict[str, Any]]] = None) -> str:
+        """Format the prompt that lists strong matches and asks the
+        user to choose update, iteration-log, or merge for each.
+        """
+        prompt_recommendations = recommendations if recommendations is not None else self._pending_rewrite_recommendations()
+        lines = ["Strong existing-page matches detected after the refreshed map:"]
+        for rec in prompt_recommendations:
+            lines.append(f"[{rec['id']}] {rec['path']} ({rec['match_type']})")
+            lines.append(f"    {rec['reason']}")
+            lines.append("    Choose with `/rewrite <id> update|iteration-log|merge`.")
+        return "\n".join(lines)
+
+    def _matching_item_for_existing_path(self, path_value: str) -> Optional[dict[str, Any]]:
+        """Find the content-map item that best matches an existing
+        blog page path (by type and slug similarity).
+        """
+        match_type = section_type_from_content_path(path_value)
+        if not match_type:
+            return None
+        repo_slug = slugify(self.state.repo_name or "")
+        items = self.state.content_map.get("items", [])
+        typed_items = [item for item in items if item["type"] == match_type]
+        for item in typed_items:
+            if repo_slug and repo_slug in item["path"]:
+                return item
+        return typed_items[0] if typed_items else None
+
+    def _set_iteration_log_target(self) -> dict[str, Any]:
+        """Create (or return) a log-iteration content-map item that
+        will hold a dated narrative update instead of overwriting
+        the original log page.
+        """
+        repo_slug = slugify(self.state.repo_name or extract_first_heading(self.state.article_text or "") or "cyborg-lab-source")
+        today = datetime.now().date().isoformat()
+        items = self.state.content_map.get("items", [])
+        for item in items:
+            if item["key"] == "log-iteration":
+                return item
+        log_item = {
+            "key": "log-iteration",
+            "type": "log",
+            "title": f"Iteration Log: {title_from_slug(repo_slug)}",
+            "path": f"content/log/{repo_slug}-iteration-{today}.md",
+            "why": "Narrative iteration log for the latest repo update.",
+            "voice_mode": "log",
+            "depends_on": ["project"],
+            "existing_page_actions": [],
+        }
+        items.append(log_item)
+        return log_item
+
+    def choose_rewrite_mode(self, recommendation_id: int, mode: str) -> None:
+        """Handle the /rewrite command.  The user picks one of three
+        modes for a strong existing-page match:
+        - update: rewrite the existing page in place
+        - iteration-log: keep the old page, add a new dated log
+        - merge: just add cross-links, no content change
+        """
+        normalized_mode = mode.strip().lower()
+        if normalized_mode not in {"update", "iteration-log", "merge"}:
+            self.assistant_say("Rewrite mode must be one of: update, iteration-log, merge.")
+            return
+        recommendation = next((rec for rec in self.state.rewrite_recommendations if rec["id"] == recommendation_id), None)
+        if not recommendation:
+            self.assistant_say("No rewrite recommendation exists for that ID.")
+            return
+
+        target_path = recommendation["path"]
+        matched_item = self._matching_item_for_existing_path(target_path)
+        if normalized_mode == "update":
+            if not matched_item:
+                self.assistant_say("No compatible content-map item was found for that existing page.")
+                return
+            matched_item["path"] = target_path
+            matched_item.setdefault("existing_page_actions", []).append(f"Rewrite in place: {target_path}")
+            pending = self.state.pending_drafts.get(matched_item["key"])
+            if pending:
+                pending["path"] = target_path
+            self.state.rewrite_choices[target_path] = "update"
+            self.save()
+            self.assistant_say(
+                f"`{matched_item['key']}` will now update `{target_path}` in place. Re-run `/draft {matched_item['key']}` if you want a fresh draft for that target."
+            )
+            return
+
+        if normalized_mode == "iteration-log":
+            log_item = self._set_iteration_log_target()
+            self.state.rewrite_choices[target_path] = "iteration-log"
+            self.save()
+            self.assistant_say(
+                f"The refreshed session will preserve `{target_path}` and route the next narrative update into `{log_item['path']}`."
+            )
+            return
+
+        self.state.rewrite_choices[target_path] = "merge"
+        self.save()
+        link_id = recommendation.get("link_id")
+        if isinstance(link_id, int):
+            self.patch_links([link_id])
+        else:
+            self.assistant_say("Merge mode saved. Use `/links` and `/patch-links` when you want to stage the related-link update.")
+
+    # --- Content map ---
+
     def build_content_map(self) -> None:
+        """Generate or refresh the content map (the set of proposed
+        new pages).  Tries AI first; falls back to heuristics.
+        """
+        if self._gitnexus_decision_pending():
+            self.assistant_say(self._gitnexus_prompt_text())
+            return
         if not self.state.scan_summary and self.state.repo_path:
             self.scan_repo()
+            if self._gitnexus_decision_pending():
+                return
 
         content_map: dict[str, Any]
         if self.ai_client.enabled:
@@ -736,11 +1942,23 @@ class CyborgAgent:
             content_map = self._heuristic_content_map()
 
         self.state.content_map = content_map
+        self.state.rewrite_recommendations = self._build_rewrite_recommendations()
+        if self.state.gitnexus_status.get("repo_changed_since_session"):
+            self.state.gitnexus_status["repo_changed_since_session"] = False
         self.state.phase = "mapped"
         self.save()
         self.assistant_say(self.content_map_markdown().strip())
+        pending_rewrites = self._pending_rewrite_recommendations()
+        if pending_rewrites:
+            self.assistant_say(self._rewrite_prompt_text(pending_rewrites))
 
     def _ai_content_map(self) -> dict[str, Any]:
+        """Ask the AI to generate a content map from the scan data."""
+        # Include available archetype types so the AI proposes only
+        # content types that the blog actually supports.
+        archetype_types = sorted(
+            k for k in self.state.blog_archetypes if k != "default"
+        ) if self.state.blog_archetypes else []
         prompt = {
             "repo_name": self.state.repo_name,
             "repo_remote": self.state.repo_remote,
@@ -749,11 +1967,12 @@ class CyborgAgent:
             "intake_notes": self.state.intake_notes,
             "scan_summary": self.state.scan_summary,
             "duplicate_candidates": self.state.duplicate_candidates,
-            "content_type_rules": CONTENT_TYPES,
-            "workflow_tracks": WORKFLOW_TRACKS,
+            "gitnexus_status": self.state.gitnexus_status,
+            "gitnexus_summary": self.state.gitnexus_summary,
+            "available_content_types": archetype_types,
         }
         response = self.ai_client.chat_json(
-            SYSTEM_CONTRACT,
+            self._build_system_prompt(),
             textwrap.dedent(
                 f"""
                 Generate the first Cyborg Lab content map for this source material.
@@ -785,14 +2004,23 @@ class CyborgAgent:
                 {json.dumps(prompt, indent=2)}
                 """
             ).strip(),
+            cache_system=True,
         )
         return self._normalize_content_map(response)
 
     def _heuristic_content_map(self) -> dict[str, Any]:
+        """Build a content map without AI using simple rules.
+
+        Always creates project + workflow + artifact + log pages.
+        Adds reference, stack, or protocol pages when the scan data
+        suggests they are useful.
+        """
         repo_slug = slugify(self.state.repo_name or extract_first_heading(self.state.article_text or "") or "cyborg-lab-source")
         repo_title = title_from_slug(repo_slug)
         track_name = self._infer_track()
         track_segment = track_slug(track_name)
+        top_flow = next(iter(self.state.gitnexus_summary.get("processes", [])), {})
+        flow_hint = top_flow.get("summary", "").strip()
         log_title = extract_first_heading(self.state.article_text or "") or f"Field Report: Building {repo_title}"
         workflow_title = f"{repo_title} Workflow"
         artifact_title = f"{repo_title} Command Sheet"
@@ -814,7 +2042,8 @@ class CyborgAgent:
                 "type": "workflow",
                 "title": workflow_title,
                 "path": f"content/workflows/{track_segment}/{repo_slug}-workflow.md",
-                "why": "Execution-first page that teaches the repeatable path through the repo from setup to successful output.",
+                "why": "Execution-first page that teaches the repeatable path through the repo from setup to successful output."
+                + (f" GitNexus highlighted `{flow_hint}` as a core execution flow." if flow_hint else ""),
                 "voice_mode": "documentation",
                 "depends_on": [],
                 "existing_page_actions": [],
@@ -893,6 +2122,8 @@ class CyborgAgent:
             f"Start with a four-page core set around {repo_title}: project, workflow, artifact, and log. "
             "Add a reference page only if the repo has enough command density or navigation surface to justify it."
         )
+        if flow_hint:
+            summary += f" GitNexus surfaced `{flow_hint}` as a likely high-signal flow to anchor the workflow page."
         return self._normalize_content_map(
             {
                 "summary": summary,
@@ -902,6 +2133,9 @@ class CyborgAgent:
         )
 
     def _normalize_content_map(self, content_map: dict[str, Any]) -> dict[str, Any]:
+        """Clean up and standardize a content map (from AI or heuristics).
+        Makes sure every item has all required fields and unique keys.
+        """
         items = []
         seen_keys: set[str] = set()
         for raw_item in content_map.get("items", []):
@@ -940,6 +2174,9 @@ class CyborgAgent:
         }
 
     def _infer_track(self) -> str:
+        """Guess which workflow track this repo belongs to by looking
+        for keywords in the repo name, article, and scan summary.
+        """
         signal = " ".join(
             filter(
                 None,
@@ -964,19 +2201,36 @@ class CyborgAgent:
         return "Productivity Systems"
 
     def _should_add_reference(self) -> bool:
+        """True if the repo has enough files or docs to justify a
+        standalone reference/index page.
+        """
         details = self.state.scan_details
         return details.get("file_count", 0) >= 20 or bool(details.get("sample_docs"))
 
     def _should_add_stack(self) -> bool:
+        """True if the repo has package manifests that suggest a
+        local-stack setup page would be helpful.
+        """
         details = self.state.scan_details
         signal = " ".join(details.get("manifests", [])).lower()
         return any(name in signal for name in ("pyproject", "package", "requirements", "cargo", "go.mod"))
 
     def _should_add_protocol(self) -> bool:
+        """True if the source material mentions prompt contracts or
+        system instructions — a sign that a protocol page is useful.
+        """
         signal = " ".join([self.state.source_text, self.state.article_text, self.state.scan_summary]).lower()
         return any(term in signal for term in ("system prompt", "prompt contract", "instruction template", "persona"))
 
+    # --- Publishing plan ---
+
     def build_publishing_plan(self) -> None:
+        """Create a phased plan that tells the user what order to
+        draft and publish pages.  Tries AI first; falls back.
+        """
+        if self._gitnexus_decision_pending():
+            self.assistant_say(self._gitnexus_prompt_text())
+            return
         if not self.state.content_map:
             self.assistant_say("Generate the content map first with `/map`.")
             return
@@ -996,14 +2250,18 @@ class CyborgAgent:
         self.assistant_say(self.plan_markdown().strip())
 
     def _ai_plan(self) -> dict[str, Any]:
+        """Ask the AI to turn the content map into a publishing plan."""
         payload = {
             "content_map": self.state.content_map,
             "planning_notes": self.state.planning_notes,
             "duplicate_candidates": self.state.duplicate_candidates,
             "repo_scan": self.state.scan_summary,
+            "gitnexus_status": self.state.gitnexus_status,
+            "gitnexus_summary": self.state.gitnexus_summary,
+            "rewrite_recommendations": self.state.rewrite_recommendations,
         }
         response = self.ai_client.chat_json(
-            SYSTEM_CONTRACT,
+            self._build_system_prompt(),
             textwrap.dedent(
                 f"""
                 Turn this approved content map into a concrete publishing plan.
@@ -1019,6 +2277,7 @@ class CyborgAgent:
                 {json.dumps(payload, indent=2)}
                 """
             ).strip(),
+            cache_system=True,
         )
         return {
             "summary": response.get("summary", ""),
@@ -1028,10 +2287,15 @@ class CyborgAgent:
         }
 
     def _heuristic_plan(self) -> dict[str, Any]:
+        """Build a three-phase plan without AI: lock scope, draft
+        core pages, then do narrative and cross-links.
+        """
         items = self.state.content_map.get("items", [])
         ordered = [item["key"] for item in items if item["type"] in {"workflow", "artifact", "project", "log", "reference", "stack", "protocol"}]
+        gitnexus_hint = next(iter(self.state.gitnexus_summary.get("processes", [])), {}).get("summary", "")
         return {
-            "summary": "Lock the graph first, then draft the highest-signal reusable pages before the narrative log. Keep duplicate risk low by reviewing existing-page recommendations before writing anything into the live repo.",
+            "summary": "Lock the graph first, then draft the highest-signal reusable pages before the narrative log. Keep duplicate risk low by reviewing existing-page recommendations before writing anything into the live repo."
+            + (f" GitNexus highlighted `{gitnexus_hint}` as a strong execution-flow anchor." if gitnexus_hint else ""),
             "phases": [
                 {
                     "name": "Lock Scope",
@@ -1052,6 +2316,7 @@ class CyborgAgent:
                     "steps": [
                         "Draft the log page once the documentation pages exist so the narrative can point into the reusable set.",
                         "Generate patch-ready edits for selected existing pages only after you approve the recommendation list.",
+                        "If strong rewrite matches exist, pick update-in-place vs iteration-log before drafting the final log or workflow refresh.",
                     ],
                 },
             ],
@@ -1063,7 +2328,15 @@ class CyborgAgent:
             ],
         }
 
+    # --- Draft generation ---
+
     def build_drafts(self, targets: list[str]) -> None:
+        """Generate near-publishable markdown drafts for the given
+        content-map keys (or all keys if 'all' is passed).
+        """
+        if self._gitnexus_decision_pending():
+            self.assistant_say(self._gitnexus_prompt_text())
+            return
         if not self.state.publishing_plan:
             self.assistant_say("Generate the publishing plan first with `/plan`.")
             return
@@ -1075,10 +2348,14 @@ class CyborgAgent:
             self.assistant_say("No matching content-map keys were found for draft generation.")
             return
 
+        # Compute shared context once for the whole batch so the draft
+        # loop can send it as a single cacheable message.
+        shared_context = self._build_draft_shared_context() if self.ai_client.enabled else None
+
         for item in selected_items:
             if self.ai_client.enabled:
                 try:
-                    draft = self._ai_draft(item)
+                    draft = self._ai_draft(item, shared_context=shared_context)
                 except RuntimeError as exc:
                     self.assistant_say(f"AI draft generation failed for `{item['key']}`, using deterministic draft.\nReason: {exc}")
                     draft = self._heuristic_draft(item)
@@ -1100,48 +2377,108 @@ class CyborgAgent:
             )
         )
 
-    def _ai_draft(self, item: dict[str, Any]) -> dict[str, Any]:
+    def _build_draft_shared_context(self) -> str:
+        """Assemble the large, item-independent payload that every draft
+        call needs.  Computed once in ``build_drafts`` and sent as a
+        cacheable user message so OpenRouter can reuse the KV cache
+        across the whole batch.
+        """
         sibling_index = [
-            {"key": sibling["key"], "title": sibling["title"], "type": sibling["type"], "path": sibling["path"]}
-            for sibling in self.state.content_map.get("items", [])
+            {"key": s["key"], "title": s["title"], "type": s["type"], "path": s["path"]}
+            for s in self.state.content_map.get("items", [])
         ]
-        payload = {
-            "target_item": item,
+        shared = {
             "siblings": sibling_index,
             "repo_name": self.state.repo_name,
             "repo_remote": self.state.repo_remote,
             "repo_scan": self.state.scan_summary,
+            "gitnexus_status": self.state.gitnexus_status,
+            "gitnexus_summary": self.state.gitnexus_summary,
             "article_text": self.state.article_text,
             "source_text": self.state.source_text,
             "planning_notes": self.state.planning_notes,
+            "rewrite_choices": self.state.rewrite_choices,
+        }
+        return f"Shared draft context (applies to every item in this batch):\n{json.dumps(shared, indent=2)}"
+
+    def _ai_draft(self, item: dict[str, Any], *, shared_context: Optional[str] = None) -> dict[str, Any]:
+        """Ask the AI to write a full Hugo markdown draft for one item.
+
+        When *shared_context* is provided (the normal path from
+        ``build_drafts``), a 3-message pattern is used so OpenRouter can
+        cache the system prompt and shared context across the batch:
+
+        1. System message  (``cache_control``)
+        2. Shared context  (``cache_control``)
+        3. Per-item instruction  (unique per draft)
+
+        Calls 2-N in a batch only pay for message 3.
+        """
+        per_item = {
+            "target_item": item,
             "editorial_notes": self.state.editorial_notes[-6:],
         }
-        response = self.ai_client.chat_json(
-            SYSTEM_CONTRACT,
-            textwrap.dedent(
-                f"""
-                Write a near-publishable Cyborg Lab draft for the target item.
-                Return JSON with:
-                {{
-                  "title": "page title",
-                  "path": "content/.../page.md",
-                  "markdown": "full markdown file including frontmatter"
-                }}
+        instruction = textwrap.dedent(
+            f"""
+            Write a near-publishable Cyborg Lab draft for the target item.
+            Return JSON with:
+            {{
+              "title": "page title",
+              "path": "content/.../page.md",
+              "markdown": "full markdown file including frontmatter"
+            }}
 
-                Requirements:
-                - Frontmatter must match the target content type.
-                - Use draft: true.
-                - No H1 headings in the body.
-                - Link to sibling pages with real paths from the sibling index.
-                - If a repo URL exists, surface it early in the body.
-                - Preserve supplied source links from the article when relevant.
+            Requirements:
+            - Frontmatter must match the target content type.
+            - Use draft: true.
+            - No H1 headings in the body.
+            - Link to sibling pages with real paths from the sibling index.
+            - If a repo URL exists, surface it early in the body.
+            - Preserve supplied source links from the article when relevant.
 
-                Source payload:
-                {json.dumps(payload, indent=2)}
-                """
-            ).strip(),
-            temperature=0.35,
-        )
+            Per-item payload:
+            {json.dumps(per_item, indent=2)}
+            """
+        ).strip()
+
+        if shared_context is not None:
+            messages = [
+                OpenRouterClient._with_cache_control(
+                    {"role": "system", "content": self._build_system_prompt()}
+                ),
+                OpenRouterClient._with_cache_control(
+                    {"role": "user", "content": shared_context}
+                ),
+                {"role": "user", "content": instruction},
+            ]
+            response = self.ai_client.chat_json_messages(messages, temperature=0.35)
+        else:
+            # Fallback: single-call path (e.g. individual re-draft).
+            sibling_index = [
+                {"key": s["key"], "title": s["title"], "type": s["type"], "path": s["path"]}
+                for s in self.state.content_map.get("items", [])
+            ]
+            payload = {
+                "target_item": item,
+                "siblings": sibling_index,
+                "repo_name": self.state.repo_name,
+                "repo_remote": self.state.repo_remote,
+                "repo_scan": self.state.scan_summary,
+                "gitnexus_status": self.state.gitnexus_status,
+                "gitnexus_summary": self.state.gitnexus_summary,
+                "article_text": self.state.article_text,
+                "source_text": self.state.source_text,
+                "planning_notes": self.state.planning_notes,
+                "rewrite_choices": self.state.rewrite_choices,
+                "editorial_notes": self.state.editorial_notes[-6:],
+            }
+            response = self.ai_client.chat_json(
+                self._build_system_prompt(),
+                f"{instruction}\n\nSource payload:\n{json.dumps(payload, indent=2)}",
+                temperature=0.35,
+                cache_system=True,
+            )
+
         return {
             "key": item["key"],
             "type": item["type"],
@@ -1151,6 +2488,7 @@ class CyborgAgent:
         }
 
     def _heuristic_draft(self, item: dict[str, Any]) -> dict[str, Any]:
+        """Build a draft from templates when AI is not available."""
         repo_title = item["title"]
         repo_url = self.state.repo_remote or ""
         sibling_links = self._sibling_links(item["key"])
@@ -1164,6 +2502,9 @@ class CyborgAgent:
         }
 
     def _sibling_links(self, current_key: str) -> list[tuple[str, str]]:
+        """Get a list of (title, web_path) pairs for sibling pages
+        so drafts can link to each other.
+        """
         links = []
         for sibling in self.state.content_map.get("items", []):
             if sibling["key"] == current_key:
@@ -1173,6 +2514,9 @@ class CyborgAgent:
         return links[:5]
 
     def _draft_template(self, item: dict[str, Any], title: str, repo_url: str, sibling_links: list[tuple[str, str]]) -> str:
+        """Assemble a full Hugo markdown file (frontmatter + body)
+        for one content-map item using the deterministic template.
+        """
         description = normalize_description(
             {
                 "project": f"Integrated project page for {title} that connects setup, execution, and reusable outputs so readers can move from repo context to measurable results fast.",
@@ -1189,7 +2533,80 @@ class CyborgAgent:
         return f"---\n{frontmatter}---\n\n{body}".rstrip() + "\n"
 
     def _frontmatter_for_item(self, item: dict[str, Any], description: str) -> str:
+        """Generate the YAML frontmatter block for a Hugo page.
+
+        If blog archetypes were loaded, the frontmatter is driven by the
+        archetype's parsed field list so it always matches the real Hugo
+        schema.  Falls back to a hardcoded mapping when archetypes are
+        not available (e.g., blog repo missing or offline work).
+        """
         today = datetime.now().date().isoformat()
+        type_name = item["type"]
+        archetype = self.state.blog_archetypes.get(type_name)
+
+        if archetype:
+            return self._frontmatter_from_archetype(
+                archetype, item, description, today
+            )
+        return self._frontmatter_hardcoded(item, description, today)
+
+    def _frontmatter_from_archetype(
+        self,
+        archetype: dict[str, Any],
+        item: dict[str, Any],
+        description: str,
+        today: str,
+    ) -> str:
+        """Build frontmatter by walking the archetype's field list.
+
+        Each field gets its default value from the archetype, with
+        overrides for title, description, date, and categories.
+        """
+        # Fields we emit manually (title, description already handled).
+        skip_fields = {"title", "description"}
+        type_name = item["type"]
+        lines = [
+            f'type: "{type_name}"',
+            f'title: "{item["title"]}"',
+            f'description: "{description}"',
+        ]
+        for fld in archetype.get("fields", []):
+            name = fld["name"]
+            if name in skip_fields or name == "type":
+                continue
+            value = fld.get("value", "")
+            # Replace Hugo template date placeholders with today.
+            if name in {"date", "lastmod", "last_tested", "last_generated"}:
+                lines.append(f"{name}: {today}")
+            elif name == "categories" and type_name == "workflow":
+                lines.append(f'categories: ["{self._infer_track()}"]')
+            elif fld.get("is_list"):
+                # Lists like tags, tools, prerequisites — emit YAML list.
+                if isinstance(value, list) and value:
+                    lines.append(f"{name}:")
+                    for v in value:
+                        lines.append(f"  - {v}")
+                else:
+                    lines.append(f"{name}: []")
+            elif value == "":
+                # Empty string placeholder — keep the field present.
+                lines.append(f'{name}: ""')
+            elif isinstance(value, bool) or str(value).lower() in {"true", "false"}:
+                # Booleans must be bare YAML (draft: true, not "true").
+                lines.append(f"{name}: {str(value).lower()}")
+            else:
+                # Scalar with a default (may be quoted or bare).
+                cleaned = re.sub(r"\{\{.*?\}\}", "", str(value)).strip()
+                if cleaned:
+                    lines.append(f'{name}: "{cleaned}"')
+                else:
+                    lines.append(f'{name}: ""')
+        return "\n".join(lines) + "\n"
+
+    def _frontmatter_hardcoded(
+        self, item: dict[str, Any], description: str, today: str
+    ) -> str:
+        """Legacy hardcoded frontmatter when archetypes are unavailable."""
         type_name = item["type"]
         lines = [
             f'type: "{type_name}"',
@@ -1258,12 +2675,15 @@ class CyborgAgent:
             "reference": ["reference"],
             "stack": ["stack", "automation", "accessibility"],
             "protocol": ["protocol", "agent-config"],
-        }[type_name]
+        }.get(type_name, [type_name])
         lines.append("tags:")
         lines.extend(f"  - {tag}" for tag in tags)
         return "\n".join(lines) + "\n"
 
     def _body_for_item(self, item: dict[str, Any], title: str, repo_url: str, sibling_links: list[tuple[str, str]]) -> str:
+        """Generate the markdown body for a draft.  Each content type
+        has its own template with placeholder sections the user fills in.
+        """
         repo_line = f"Repository: [{repo_url}]({repo_url})" if repo_url else "Repository: add the canonical repo URL here before publishing."
         article_links = extract_links(self.state.article_text)
         source_lines = "\n".join(f"- {url}" for url in article_links[:8]) if article_links else "- Add source links from the fact-checked draft before publishing."
@@ -1507,23 +2927,106 @@ class CyborgAgent:
         return textwrap.dedent(body).strip()
 
     def _related_block(self, sibling_links: list[tuple[str, str]]) -> str:
+        """Format sibling links as a markdown bullet list for the
+        '## Related' section at the bottom of each draft.
+        """
         if not sibling_links:
             return "- Add sibling links after the first draft pass."
         return "\n".join(f"- [{title}]({path})" for title, path in sibling_links)
 
+    # --- GitNexus commands ---
+
+    def handle_gitnexus_command(self, args: list[str]) -> None:
+        """Route /gitnexus subcommands: status, explain, skip,
+        enhance, and refresh.
+        """
+        subcommand = args[0] if args else "status"
+        repo_path = self._repo_path()
+        if not repo_path:
+            self.assistant_say("No repo is active in this session, so GitNexus is not relevant here.")
+            return
+        if subcommand == "status":
+            self.refresh_gitnexus_status()
+            self.assistant_say("\n".join(self._gitnexus_status_lines()))
+            return
+        if subcommand == "explain":
+            self.refresh_gitnexus_status()
+            self.assistant_say(self._gitnexus_explain_text())
+            return
+        if subcommand == "skip":
+            self.state.gitnexus_skip = True
+            self.save()
+            self.assistant_say("GitNexus is skipped for this session. I’ll continue with native repo scanning.")
+            if not self.state.scan_summary:
+                self.scan_repo()
+            return
+        if subcommand in {"enhance", "refresh"}:
+            status = self.refresh_gitnexus_status()
+            if status.get("state") == "not-git":
+                self.assistant_say("This source is not a git repo, so GitNexus enhancement does not apply.")
+                return
+            if not self.gitnexus_cli.available:
+                self.assistant_say("GitNexus CLI is unavailable here. Use `/gitnexus skip` to continue natively or make the CLI available first.")
+                return
+            try:
+                result = self.gitnexus_cli.enhance(repo_path, force=subcommand == "refresh" or bool(status.get("stale")))
+            except RuntimeError as exc:
+                self.assistant_say(
+                    "\n".join(
+                        [
+                            "GitNexus enhancement failed.",
+                            str(exc),
+                            "Choose one:",
+                            "- `/gitnexus refresh` to retry",
+                            "- `/gitnexus skip` to continue with native scanning",
+                            "- `/quit` if you want to stop here",
+                        ]
+                    )
+                )
+                return
+            self.state.gitnexus_skip = False
+            refreshed = self.refresh_gitnexus_status()
+            self.save()
+            self.assistant_say(
+                "\n".join(
+                    [
+                        "GitNexus enhancement completed.",
+                        f"- Repo: {refreshed.get('repo_name') or repo_path.name}",
+                        f"- State: {refreshed.get('state')}",
+                        f"- Embeddings preserved: {'yes' if result.get('preserved_embeddings') else 'no'}",
+                        "I’ll use graph-enhanced scanning from here.",
+                    ]
+                )
+            )
+            self.scan_repo()
+            return
+        self.assistant_say("Usage: /gitnexus status|enhance|refresh|skip|explain")
+
+    # --- Link and review commands ---
+
     def recommend_links(self) -> None:
-        if self.state.link_recommendations:
+        """Show existing-page link recommendations and rewrite candidates."""
+        if self.state.link_recommendations or self.state.rewrite_recommendations:
             lines = ["Existing-page recommendations:"]
             for recommendation in self.state.link_recommendations:
                 lines.append(
                     f"[{recommendation['id']}] {recommendation['path']} - {recommendation['reason']} ({recommendation['action']})"
                 )
             lines.append("Use `/patch-links 1 2` to generate pending edits for selected recommendations.")
+            if self.state.rewrite_recommendations:
+                lines.extend(["", "Strong rewrite candidates:"])
+                for recommendation in self.state.rewrite_recommendations:
+                    lines.append(
+                        f"[{recommendation['id']}] {recommendation['path']} - choose `/rewrite {recommendation['id']} update|iteration-log|merge`"
+                    )
             self.assistant_say("\n".join(lines))
             return
         self.assistant_say("No existing-page recommendations are available yet. Generate `/map` first.")
 
     def patch_links(self, ids: list[int]) -> None:
+        """Generate pending edits for selected link recommendations.
+        Reads the existing blog page and appends a Related section.
+        """
         if not self.state.link_recommendations:
             self.assistant_say("No link recommendations are available yet. Run `/links` after `/map`.")
             return
@@ -1555,6 +3058,9 @@ class CyborgAgent:
         )
 
     def _patch_existing_page(self, original: str) -> str:
+        """Add sibling links to an existing page's Related section.
+        Creates the section if it does not exist yet.
+        """
         new_links = self._related_block(self._sibling_links(""))
         related_heading = "\n## Related\n"
         if related_heading in original:
@@ -1567,6 +3073,9 @@ class CyborgAgent:
         return original.rstrip() + f"\n\n## Related\n\n{new_links}\n"
 
     def set_review_target(self, key: str) -> None:
+        """Set a pending draft as the active review target so the
+        user's next free-text messages are treated as editorial notes.
+        """
         if key not in self.state.pending_drafts:
             self.assistant_say(f"No pending draft exists for `{key}`.")
             return
@@ -1585,6 +3094,7 @@ class CyborgAgent:
         )
 
     def show_draft(self, key: str) -> None:
+        """Print the full markdown of a pending draft."""
         draft = self.state.pending_drafts.get(key)
         if not draft:
             self.assistant_say(f"No pending draft exists for `{key}`.")
@@ -1592,6 +3102,10 @@ class CyborgAgent:
         self.assistant_say(draft["markdown"])
 
     def revise_active_draft(self, feedback: str) -> None:
+        """Apply editorial feedback to the active review draft.
+        If AI is on, it rewrites the draft automatically.
+        If AI is off, it just saves the note for manual follow-up.
+        """
         target_key = self.state.active_review_key
         if not target_key or target_key not in self.state.pending_drafts:
             self.assistant_say("No active review target is set. Use `/review <key>` first.")
@@ -1602,7 +3116,7 @@ class CyborgAgent:
         if self.ai_client.enabled:
             try:
                 response = self.ai_client.chat_json(
-                    SYSTEM_CONTRACT,
+                    self._build_system_prompt(),
                     textwrap.dedent(
                         f"""
                         Revise the current Cyborg Lab draft based on the user's editorial feedback.
@@ -1621,6 +3135,7 @@ class CyborgAgent:
                         """
                     ).strip(),
                     temperature=0.3,
+                    cache_system=True,
                 )
                 revised_markdown = str(response.get("markdown", "")).strip()
                 if not revised_markdown:
@@ -1637,7 +3152,13 @@ class CyborgAgent:
         self.save()
         self.assistant_say(summary)
 
+    # --- Apply (write to disk) ---
+
     def apply_changes(self, target: str, *, assume_yes: bool) -> None:
+        """Write pending drafts and/or link edits into the blog repo.
+        Backs up any existing files first.  Requires confirmation
+        unless --yes was passed.
+        """
         if target == "drafts" and not self.state.pending_drafts:
             self.assistant_say("There are no pending drafts to apply.")
             return
@@ -1675,6 +3196,9 @@ class CyborgAgent:
         self.assistant_say("Applied the selected pending changes into the Cyborg Lab repo.")
 
     def _safe_write(self, target_path: Path, content: str, backup_root: Path) -> None:
+        """Write a file into the blog repo after checking it stays
+        inside the blog root.  Backs up the old version if it exists.
+        """
         resolved_target = resolve_within_root(self.blog_root, target_path, label="blog root")
         blog_root = self.blog_root.resolve()
         if resolved_target.exists():
@@ -1685,12 +3209,32 @@ class CyborgAgent:
         resolved_target.write_text(content, encoding="utf-8")
 
     def _write_session_artifact(self, base_root: Path, relative_path: str, content: str, *, label: str) -> None:
+        """Write a preview or edit file inside the session folder.
+        Also checks that the path stays inside the allowed root.
+        """
         preview_path = resolve_within_root(base_root, base_root / relative_path, label=label)
         preview_path.parent.mkdir(parents=True, exist_ok=True)
         preview_path.write_text(content, encoding="utf-8")
 
+    # --- Free-text note handling ---
+
     def handle_note(self, note: str) -> None:
+        """Process a line that is NOT a slash-command.
+
+        If a GitNexus decision is pending and the user typed 'yes' or
+        'skip', route it there.  If a review target is active, treat
+        the text as editorial feedback.  Otherwise save it as an intake
+        or planning note and optionally ask the AI for guidance.
+        """
         self.user_said(note)
+        normalized = note.strip().lower()
+        if self._gitnexus_decision_pending():
+            if normalized in {"yes", "y", "proceed", "approve"}:
+                self.handle_gitnexus_command(["enhance"])
+                return
+            if normalized in {"skip", "no", "n"}:
+                self.handle_gitnexus_command(["skip"])
+                return
         if self.state.active_review_key:
             self.revise_active_draft(note)
             return
@@ -1701,10 +3245,10 @@ class CyborgAgent:
             self.state.planning_notes.append(note)
         self.save()
 
-        if self.ai_client.enabled:
+        if self.ai_client.enabled and not self._gitnexus_decision_pending():
             try:
                 response = self.ai_client.chat_text(
-                    f"{SYSTEM_CONTRACT}\n\n{INTAKE_GUIDANCE}",
+                    f"{self._build_system_prompt()}\n\n{INTAKE_GUIDANCE}",
                     textwrap.dedent(
                         f"""
                         Current phase: {self.state.phase}
@@ -1719,12 +3263,17 @@ class CyborgAgent:
                         """
                     ).strip(),
                     temperature=0.35,
+                    cache_system=True,
                 )
                 self.assistant_say(response)
                 return
             except RuntimeError as exc:
                 self.assistant_say(f"Saved the note. AI guidance is unavailable right now.\nReason: {exc}")
                 return
+
+        if self._gitnexus_decision_pending():
+            self.assistant_say(f"Saved the note. {self._gitnexus_prompt_text()}")
+            return
 
         next_step = {
             "intake": "Run `/scan` if you want repo-grounded context, then `/map` when the intake notes feel complete.",
@@ -1738,7 +3287,17 @@ class CyborgAgent:
         self.assistant_say(f"Saved the note. {next_step}")
 
 
+# =====================================================================
+# Session setup helpers (called before the REPL starts)
+# =====================================================================
+
+
 def resolve_blog_root(explicit: Optional[str], *, interactive: bool) -> Path:
+    """Figure out where the Cyborg Lab Hugo blog lives on disk.
+
+    Checks (in order): the --blog-root flag, CYBORG_LAB_DIR env var,
+    known default paths, and finally asks the user interactively.
+    """
     candidates: list[Path] = []
     if explicit:
         candidates.append(canonical_home_path(explicit))
@@ -1767,6 +3326,12 @@ def resolve_blog_root(explicit: Optional[str], *, interactive: bool) -> Path:
 
 
 def resolve_repo_path(explicit: Optional[str], cwd: Path) -> Optional[Path]:
+    """Figure out which source repo the user wants to ingest.
+
+    If --repo was passed, use that.  Otherwise look for a git root
+    or project folder in the current directory.  Returns None when
+    no project is detected (the user can still add notes manually).
+    """
     if explicit:
         candidate = canonical_home_path(explicit)
         if not candidate.exists():
@@ -1784,6 +3349,9 @@ def resolve_repo_path(explicit: Optional[str], cwd: Path) -> Optional[Path]:
 
 
 def read_file_text(file_path: Optional[str]) -> Tuple[Optional[str], str]:
+    """Read a markdown file from disk.  Returns (path, contents).
+    Raises a friendly ValueError if the file cannot be read.
+    """
     if not file_path:
         return None, ""
     path = canonical_home_path(file_path)
@@ -1794,12 +3362,14 @@ def read_file_text(file_path: Optional[str]) -> Tuple[Optional[str], str]:
 
 
 def read_stdin_text() -> str:
+    """Read piped input from stdin.  Returns '' if nothing was piped."""
     if sys.stdin.isatty():
         return ""
     return sys.stdin.read()
 
 
 def make_session_id(seed: str) -> str:
+    """Create a unique session ID like '20260316-143000-my-repo-abc123'."""
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     return f"{timestamp}-{slugify(seed, max_words=4, max_len=24)}-{uuid.uuid4().hex[:6]}"
 
@@ -1813,6 +3383,7 @@ def create_session(
     source_text: str,
     article_text: str,
 ) -> SessionState:
+    """Build a fresh SessionState for a new ingest session."""
     seed = repo_path.name if repo_path else extract_first_heading(article_text or source_text) or "cyborg-session"
     session_id = make_session_id(seed)
     session_dir = blog_root / "drafts" / "ingest" / session_id
@@ -1837,6 +3408,7 @@ def create_session(
 
 
 def list_sessions(blog_root: Path) -> list[Path]:
+    """Return saved session folders sorted newest-first."""
     session_root = blog_root / "drafts" / "ingest"
     if not session_root.exists():
         return []
@@ -1844,6 +3416,11 @@ def list_sessions(blog_root: Path) -> list[Path]:
 
 
 def load_session(blog_root: Path, session_id: Optional[str], *, interactive: bool) -> SessionState:
+    """Load a previously saved session from its JSON file.
+
+    If session_id is given, load that one directly.  If interactive,
+    show a list and let the user pick.  Otherwise load the newest.
+    """
     sessions = list_sessions(blog_root)
     if not sessions:
         raise ValueError("No saved Cyborg sessions were found.")
@@ -1870,6 +3447,7 @@ def load_session(blog_root: Path, session_id: Optional[str], *, interactive: boo
 
 
 def parse_command(raw: str) -> tuple[str, list[str]]:
+    """Split '/map foo bar' into ('map', ['foo', 'bar'])."""
     text = raw[1:] if raw.startswith("/") else raw
     parts = shlex.split(text)
     if not parts:
@@ -1877,7 +3455,19 @@ def parse_command(raw: str) -> tuple[str, list[str]]:
     return parts[0], parts[1:]
 
 
+# =====================================================================
+# Interactive command loop (REPL)
+# =====================================================================
+
+
 def run_repl(agent: CyborgAgent) -> int:
+    """Run the interactive read-eval-print loop.
+
+    Shows the welcome message, auto-scans the repo if needed, then
+    loops forever reading user input.  Lines starting with '/' are
+    commands; everything else is treated as a free-text note.
+    Returns 0 on clean exit.
+    """
     intro_lines = [
         f"Cyborg session: {agent.state.session_id}",
         f"Repo: {agent.state.repo_path or '(none)'}",
@@ -1889,8 +3479,7 @@ def run_repl(agent: CyborgAgent) -> int:
     print(intro)
     agent.append_chat("assistant", intro)
 
-    if agent.state.repo_path and not agent.state.scan_summary:
-        agent.scan_repo()
+    agent.auto_prepare_repo_context()
 
     while True:
         prompt = "cyborg> " if sys.stdin.isatty() else ""
@@ -1901,7 +3490,7 @@ def run_repl(agent: CyborgAgent) -> int:
                 return 0
             continue
 
-        if line.startswith("/") or line in {"help", "status", "scan", "map", "plan", "draft", "links", "review", "show", "apply", "quit", "exit"}:
+        if line.startswith("/") or line in {"help", "status", "gitnexus", "scan", "map", "plan", "draft", "links", "review", "rewrite", "show", "apply", "quit", "exit"}:
             command, args = parse_command(line)
             if command in {"quit", "exit"}:
                 agent.assistant_say("Session saved. Use `cyborg resume %s` to reopen it later." % agent.state.session_id)
@@ -1910,6 +3499,8 @@ def run_repl(agent: CyborgAgent) -> int:
                 agent.assistant_say(HELP_TEXT)
             elif command == "status":
                 agent.assistant_say("\n".join(agent.status_lines()))
+            elif command == "gitnexus":
+                agent.handle_gitnexus_command(args)
             elif command == "scan":
                 agent.scan_repo()
             elif command == "map":
@@ -1927,6 +3518,11 @@ def run_repl(agent: CyborgAgent) -> int:
                     agent.assistant_say("`/patch-links` expects numeric recommendation IDs.")
                     continue
                 agent.patch_links(ids)
+            elif command == "rewrite":
+                if len(args) != 2 or not args[0].isdigit():
+                    agent.assistant_say("Usage: /rewrite <id> update|iteration-log|merge")
+                else:
+                    agent.choose_rewrite_mode(int(args[0]), args[1])
             elif command == "review":
                 if not args:
                     agent.assistant_say("Usage: /review <draft-key>")
@@ -1949,7 +3545,13 @@ def run_repl(agent: CyborgAgent) -> int:
         agent.handle_note(line)
 
 
+# =====================================================================
+# CLI argument parsing and entry point
+# =====================================================================
+
+
 def build_parser() -> argparse.ArgumentParser:
+    """Set up the argument parser with 'ingest' and 'resume' subcommands."""
     parser = argparse.ArgumentParser(description="Cyborg Lab ingest agent")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -1968,13 +3570,21 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Optional[List[str]] = None) -> int:
+    """Entry point.  Parses arguments, loads config, and starts either
+    a new ingest session or resumes an existing one.
+    """
+    # Use the provided argv, or fall back to the real command line.
     argv = argv if argv is not None else sys.argv[1:]
     parser = build_parser()
     try:
         args = parser.parse_args(argv)
+        # Find the dotfiles root so we can load .env.
         dotfiles_dir = canonical_home_path(os.environ.get("DOTFILES_DIR", str(Path(__file__).resolve().parents[1])))
         load_env_file(dotfiles_dir)
+        # Are we talking to a real human at a terminal?
         interactive = sys.stdin.isatty() and sys.stdout.isatty()
+        # The shell launcher exports USER_CWD so we know where the
+        # user was standing when they ran the command.
         cwd = canonical_home_path(os.environ.get("USER_CWD", os.getcwd()))
     except ValueError:
         cwd = Path.home().resolve()
@@ -1983,6 +3593,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         ai_client = OpenRouterClient()
 
         if args.command == "ingest":
+            # Starting a brand-new ingest session.
             repo_path = resolve_repo_path(args.repo, cwd)
             markdown_file, article_text = read_file_text(args.file)
             stdin_text = read_stdin_text() if args.stdin_source else ""
@@ -2001,13 +3612,16 @@ def main(argv: Optional[List[str]] = None) -> int:
             agent.save()
             return run_repl(agent)
 
+        # Resuming a previously saved session.
         state = load_session(blog_root, args.session_id, interactive=interactive)
         agent = CyborgAgent(state, ai_client=ai_client, interactive=interactive)
         return run_repl(agent)
     except ValueError as exc:
+        # Show a friendly error instead of a Python traceback.
         print(f"Error: {exc}", file=sys.stderr)
         return 2
 
 
+# When this file is run directly: python3 cyborg_agent.py ...
 if __name__ == "__main__":
     raise SystemExit(main())
