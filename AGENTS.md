@@ -249,6 +249,11 @@ dhp_dispatch \
 - `--verbose` - Debug logging
 - `--temperature <float>` - Override default
 
+### Specialized Standalone Agents
+
+- Repo-specific agents may live directly in `bin/` when they own an interactive workflow that does not fit the shared `dhp-*` dispatcher contract.
+- `bin/cyborg` is the dedicated Cyborg Lab ingest/resume agent. It stages session state under `my-ms-ai-blog/drafts/ingest/` and only writes to the blog repo on explicit apply.
+
 ---
 
 ## Alias Conventions
@@ -266,6 +271,7 @@ dhp_dispatch \
 | -------------- | ----------- | ------------------------------ |
 | Git            | `g` prefix  | `gs`, `ga`, `gc`, `gp`         |
 | AI Dispatchers | Type name   | `tech`, `creative`, `strategy` |
+| Repo Agents    | Project name | `cyborg`                      |
 | Scripts        | Full/abbrev | `todo`, `journal`, `j`         |
 | Spoons         | `s-` prefix | `s-check`, `s-spend`           |
 
@@ -404,7 +410,7 @@ _Refer to `CLAUDE.md` for canonical root-project guidance and `GUARDRAILS.md` fo
 <!-- gitnexus:start -->
 # GitNexus MCP
 
-This project is indexed by GitNexus as **dotfiles** (709 symbols, 1229 relationships, 31 execution flows).
+This project is indexed by GitNexus as **dotfiles** (802 symbols, 1568 relationships, 39 execution flows).
 
 ## Always Start Here
 

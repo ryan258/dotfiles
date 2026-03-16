@@ -753,6 +753,60 @@ Recent commits:
 
 ---
 
+### `cyborg` - Cyborg Lab Ingest Agent
+
+**Purpose:** Run a long-lived interactive session dedicated to the Cyborg Lab content workflow
+
+**Input:** Current repo, `--repo` path, `--file` markdown, stdin, or plain idea text
+**Output:** Session state under `my-ms-ai-blog/drafts/ingest/`, pending content map/plan/drafts, and explicit apply into the blog repo
+
+**Full Guide:** [`cyborg-readme.md`](./cyborg-readme.md)
+
+**Usage:**
+
+```bash
+# Start in the current repo
+cyborg ingest
+
+# Start with an explicit repo and supporting draft
+cyborg ingest --repo ~/Projects/rockit --file notes/field-report.md
+
+# Resume the latest session later
+cyborg resume 20260315-101500-rockit-abc123
+```
+
+**Workflow:**
+
+1. Intake notes and source material
+2. Native repo scan (`git ls-files`, README/docs/code heuristics)
+3. Content map across project/workflow/artifact/log/reference
+4. Publishing plan
+5. Near-publishable draft generation held in preview
+6. Editorial review loop with explicit `/apply`
+
+**Session Commands:**
+
+- `/scan`
+- `/map`
+- `/plan`
+- `/draft [all|key]`
+- `/links`
+- `/patch-links 1 2`
+- `/review <key>`
+- `/show <key>`
+- `/apply [drafts|links|all] --yes`
+- `/quit`
+
+**Behavior Rules:**
+
+- Repo is source of truth when repo and article draft are both present
+- Existing-page edits are recommended first, then generated only for selected pages
+- Drafts stay pending until explicit apply
+- `cyborg` is Cyborg-Lab-specific, not a general dispatcher
+- use `--stdin-source` if you want to pipe supporting markdown before the interactive session starts
+
+---
+
 ### `dhp-context.sh` - Local Context Injection
 
 **Purpose:** Gather and inject local context into AI dispatcher prompts

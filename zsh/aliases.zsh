@@ -539,6 +539,7 @@ alias dhp-project="$DOTFILES_ALIAS_ROOT/bin/dhp-project.sh"     # Multi-speciali
 alias ai-project="$DOTFILES_ALIAS_ROOT/bin/dhp-project.sh"      # Shorthand for dhp-project
 alias dhp-chain="$DOTFILES_ALIAS_ROOT/bin/dhp-chain.sh"         # Chain dispatchers sequentially (pipe output)
 alias ai-chain="$DOTFILES_ALIAS_ROOT/bin/dhp-chain.sh"          # Shorthand for dhp-chain
+alias cyborg="$DOTFILES_ALIAS_ROOT/bin/cyborg"                  # Cyborg Lab ingest/resume agent
 alias ai-suggest="ai_suggest.sh"                                 # Context-aware AI suggestions for current task
 alias ai-context="source $DOTFILES_ALIAS_ROOT/bin/dhp-context.sh"  # Load context-gathering helpers (sourced, not executed)
 
