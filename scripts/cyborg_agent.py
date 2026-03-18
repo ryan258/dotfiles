@@ -152,6 +152,41 @@ CONTENT_TYPES: dict[str, dict[str, str]] = {
         "tone": "integration/config page",
     },
 }
+# The default directory where new projects are scaffolded.
+DEFAULT_PROJECTS_DIR = Path.home() / "Projects"
+# System prompt for the Morphling build step.  This tells the AI to
+# shapeshift into a senior engineer and produce a complete project
+# scaffold as a JSON object.
+MORPHLING_BUILD_PROMPT = textwrap.dedent(
+    """
+    You are the Morphling — a shapeshifting universal specialist.
+
+    SHAPESHIFT into the ideal senior engineer for this project idea.
+    Generate a complete, working project scaffold returned as a single
+    JSON object.
+
+    Return JSON with exactly this shape:
+    {
+      "name": "project-name-slug",
+      "description": "One-line description of the project",
+      "files": {
+        "relative/path/file.py": "full file contents...",
+        "README.md": "readme contents..."
+      }
+    }
+
+    Rules:
+    - The "name" must be a lowercase slug (letters, numbers, hyphens only).
+    - The project must be functional and runnable.
+    - Include a README.md with a summary and basic setup/usage instructions.
+    - Include basic tests or a test placeholder when the language supports it.
+    - Keep it focused: minimum viable project, not over-engineered.
+    - Use the most appropriate language, framework, and tools for the idea.
+    - File paths are relative to the project root (no leading slash).
+    - Do NOT include binary files, images, or lock files.
+    - Every file must contain real, working code — no placeholder comments.
+    """
+).strip()
 # The system prompt sent to the AI model for every request.
 # It tells the model what role it plays and what rules to follow.
 SYSTEM_CONTRACT = textwrap.dedent(
@@ -3667,8 +3702,240 @@ def parse_command(raw: str) -> tuple[str, list[str]]:
 
 
 # =====================================================================
+# Project scaffolding (Morphling build step)
+# =====================================================================
+
+
+def build_project_from_idea(
+    idea: str,
+    ai_client: OpenRouterClient,
+    *,
+    projects_dir: Optional[Path] = None,
+) -> Path:
+    """Use the Morphling persona to scaffold a new project from an idea.
+
+    Calls the AI to generate a project structure as JSON, writes the
+    files into ``~/Projects/<name>/``, initialises a git repo, and
+    returns the project path.  Raises ``RuntimeError`` if the AI call
+    or file-writing step fails.
+    """
+    target_root = projects_dir or DEFAULT_PROJECTS_DIR
+    target_root.mkdir(parents=True, exist_ok=True)
+
+    print("Morphling is building your project...")
+
+    # Use a higher temperature for creative scaffolding.
+    scaffold = ai_client.chat_json(
+        MORPHLING_BUILD_PROMPT,
+        f"Build a project from this idea:\n\n{idea}",
+        temperature=0.5,
+    )
+
+    name = slugify(scaffold.get("name") or "untitled-project", max_words=6, max_len=40)
+    description = scaffold.get("description", idea)
+    files: dict[str, str] = scaffold.get("files", {})
+
+    if not files:
+        raise RuntimeError("Morphling returned an empty project scaffold (no files).")
+
+    project_dir = target_root / name
+    if project_dir.exists():
+        # Avoid clobbering existing work.  Append a short suffix.
+        suffix = uuid.uuid4().hex[:6]
+        project_dir = target_root / f"{name}-{suffix}"
+
+    print(f"  Project: {project_dir}")
+    print(f"  Description: {description}")
+    print(f"  Files: {len(files)}")
+
+    skipped: list[str] = []
+    for rel_path, contents in files.items():
+        # Reject absolute, traversal, or otherwise unsafe paths.
+        if rel_path.startswith("/") or ".." in rel_path.split("/"):
+            skipped.append(rel_path)
+            continue
+        file_path = (project_dir / rel_path).resolve()
+        if project_dir.resolve() not in file_path.parents and file_path != project_dir.resolve():
+            skipped.append(rel_path)
+            continue
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_text(contents, encoding="utf-8")
+
+    if skipped:
+        print(f"  Warning: skipped {len(skipped)} file(s) with unsafe paths: {', '.join(skipped)}")
+
+    # Initialise a git repo so Cyborg can scan it properly.
+    run_command(["git", "init", "-q"], cwd=project_dir, allow_failure=True)
+    run_command(["git", "add", "."], cwd=project_dir, allow_failure=True)
+    run_command(
+        ["git", "-c", "user.name=Morphling", "-c", "user.email=morphling@cyborg-lab",
+         "commit", "-qm", f"Initial scaffold: {description}"],
+        cwd=project_dir,
+        allow_failure=True,
+    )
+
+    print("  Project scaffolded and committed.")
+    print()
+    return project_dir
+
+
+# =====================================================================
 # Interactive command loop (REPL)
 # =====================================================================
+
+
+def run_autopilot(agent: CyborgAgent, *, assume_yes: bool = False) -> int:
+    """Run the full Cyborg pipeline hands-free.
+
+    Chains scan → map → plan → draft → links automatically, making
+    safe default choices at every decision point.  Only pauses at the
+    very end with a single A-E confirmation before writing anything
+    into the blog repo.  Designed for low-interaction sessions.
+    """
+    print(f"Cyborg autopilot session: {agent.state.session_id}")
+    print(f"Repo: {agent.state.repo_path or '(none)'}")
+    print(f"Blog root: {agent.state.blog_root}")
+    print()
+
+    # Incorporate Morphling pre-analysis if the launcher provided one.
+    morphling_brief = os.environ.get("CYBORG_MORPHLING_BRIEF", "").strip()
+    if morphling_brief:
+        agent.assistant_say("Morphling pre-analysis loaded.")
+        if agent.state.article_text:
+            agent.state.article_text += "\n\n--- MORPHLING ANALYSIS ---\n" + morphling_brief
+        else:
+            agent.state.article_text = "--- MORPHLING ANALYSIS ---\n" + morphling_brief
+        agent.save()
+
+    # Each phase is wrapped so a mid-pipeline failure saves the session
+    # and tells the user how to resume instead of losing all work.
+    def _phase(label: str, fn: Any) -> bool:
+        """Run *fn*; on failure save and print recovery info.  Returns True on success."""
+        try:
+            fn()
+            agent.save()
+            return True
+        except Exception as exc:
+            agent.assistant_say(f"Autopilot error during {label}: {exc}")
+            agent.save()
+            print(f"\nSession saved. Resume with: cyborg resume {agent.state.session_id}", file=sys.stderr)
+            return False
+
+    # --- Phase 1: Repo context ---
+    def _phase_repo_context() -> None:
+        agent.auto_prepare_repo_context()
+
+        # In autopilot, auto-resolve GitNexus decisions instead of waiting.
+        if agent._gitnexus_decision_pending():
+            status = agent._gitnexus_status()
+            gn_state = status.get("state")
+            if gn_state in {"not-indexed", "stale"} and agent.gitnexus_cli.available:
+                tracked = int(status.get("tracked_bytes", 0))
+                if tracked <= GITNEXUS_SIZE_THRESHOLD_BYTES:
+                    agent.assistant_say("Autopilot: auto-enhancing GitNexus (repo is small enough).")
+                    agent.handle_gitnexus_command(["enhance"])
+                else:
+                    agent.assistant_say("Autopilot: skipping GitNexus (repo is large).")
+                    agent.handle_gitnexus_command(["skip"])
+            else:
+                agent.assistant_say("Autopilot: skipping GitNexus.")
+                agent.handle_gitnexus_command(["skip"])
+
+        # auto_prepare_repo_context returns early when a GitNexus
+        # decision was pending, so the scan may not have happened yet.
+        if not agent.state.scan_summary and agent.state.repo_path:
+            agent.scan_repo()
+
+    if not _phase("repo context", _phase_repo_context):
+        return 1
+
+    # --- Phase 2: Content map ---
+    def _phase_map() -> None:
+        agent.assistant_say("Autopilot: building content map...")
+        agent.build_content_map()
+        pending_rewrites = agent._pending_rewrite_recommendations()
+        if pending_rewrites:
+            agent.assistant_say("Autopilot: auto-selecting 'update' for rewrite candidates.")
+            for rec in pending_rewrites:
+                agent.choose_rewrite_mode(rec["id"], "update")
+
+    if not _phase("content map", _phase_map):
+        return 1
+
+    # --- Phase 3: Publishing plan ---
+    def _phase_plan() -> None:
+        agent.assistant_say("Autopilot: building publishing plan...")
+        agent.build_publishing_plan()
+
+    if not _phase("publishing plan", _phase_plan):
+        return 1
+
+    # --- Phase 4: Draft all pages ---
+    def _phase_drafts() -> None:
+        agent.assistant_say("Autopilot: drafting all pages...")
+        agent.build_drafts(["all"])
+
+    if not _phase("drafting", _phase_drafts):
+        return 1
+
+    # --- Phase 5: Link recommendations ---
+    def _phase_links() -> None:
+        if agent.state.link_recommendations:
+            agent.assistant_say("Autopilot: patching all link recommendations...")
+            all_ids = [rec["id"] for rec in agent.state.link_recommendations]
+            agent.patch_links(all_ids)
+
+    if not _phase("link patches", _phase_links):
+        return 1
+
+    # --- Final: Summary + single confirmation ---
+    print()
+    print("=" * 60)
+    print("  AUTOPILOT COMPLETE")
+    print("=" * 60)
+    print()
+    for line in agent.status_lines():
+        print(f"  {line}")
+    print()
+
+    draft_count = len(agent.state.pending_drafts)
+    edit_count = len(agent.state.pending_existing_edits)
+    if draft_count == 0 and edit_count == 0:
+        agent.assistant_say("Nothing to apply. Session saved.")
+        return 0
+
+    if assume_yes:
+        agent.apply_changes("all", assume_yes=True)
+        agent.assistant_say("All changes applied.")
+        return 0
+
+    if not agent.interactive:
+        agent.assistant_say(f"Non-interactive mode. Resume with: cyborg resume {agent.state.session_id}")
+        return 0
+
+    print(f"  {draft_count} draft(s) and {edit_count} existing-page edit(s) ready.")
+    print()
+    print("  A. Apply everything to the blog repo")
+    print("  B. Apply drafts only")
+    print("  C. Apply link edits only")
+    print("  D. Save for later (don't apply yet)")
+    print("  E. Drop into interactive mode to review first")
+    print()
+    choice = prompt_input("  Choice [A-E]: ").strip().lower()
+
+    if choice in {"a", "yes", "y"}:
+        agent.apply_changes("all", assume_yes=True)
+    elif choice == "b":
+        agent.apply_changes("drafts", assume_yes=True)
+    elif choice == "c":
+        agent.apply_changes("links", assume_yes=True)
+    elif choice == "e":
+        agent.assistant_say("Switching to interactive mode. Type /help for commands.")
+        return run_repl(agent)
+    else:
+        agent.assistant_say(f"Session saved. Resume with: cyborg resume {agent.state.session_id}")
+
+    return 0
 
 
 def run_repl(agent: CyborgAgent) -> int:
@@ -3773,6 +4040,17 @@ def build_parser() -> argparse.ArgumentParser:
     ingest.add_argument("--stdin-source", action="store_true", help="Treat stdin as supporting source material before starting the session")
     ingest.add_argument("idea", nargs="*", help="Plain-text idea or focus notes")
 
+    auto = subparsers.add_parser("auto", help="Run the full pipeline hands-free (scan, map, plan, draft, links)")
+    auto.add_argument("--repo", help="Repo or directory to scan")
+    auto.add_argument("--file", help="Markdown file to use as supporting material")
+    auto.add_argument("--blog-root", help="Path to my-ms-ai-blog")
+    auto.add_argument("--stdin-source", action="store_true", help="Treat stdin as supporting source material")
+    auto.add_argument("--yes", action="store_true", help="Apply changes without final confirmation")
+    auto.add_argument("--no-morphling", action="store_true", help="Skip Morphling pre-analysis even if available")
+    auto.add_argument("--build", action="store_true", help="Morphling builds the project from your idea first, then Cyborg documents it")
+    auto.add_argument("--projects-dir", help="Where to create the project (default: ~/Projects)")
+    auto.add_argument("idea", nargs="*", help="Plain-text idea or focus notes")
+
     resume = subparsers.add_parser("resume", help="Resume a saved Cyborg ingest session")
     resume.add_argument("session_id", nargs="?", help="Saved session ID")
     resume.add_argument("--blog-root", help="Path to my-ms-ai-blog")
@@ -3803,14 +4081,32 @@ def main(argv: Optional[List[str]] = None) -> int:
         blog_root = resolve_blog_root(getattr(args, "blog_root", None), interactive=interactive)
         ai_client = OpenRouterClient()
 
-        if args.command == "ingest":
-            # Starting a brand-new ingest session.
+        if args.command in {"ingest", "auto"}:
+            # Starting a brand-new session (interactive or autopilot).
+            source_text = " ".join(args.idea).strip()
+
+            # --- Morphling build step ---
+            # When --build is used, scaffold a new project from the idea
+            # before creating the Cyborg session.
+            if args.command == "auto" and getattr(args, "build", False):
+                if not source_text and not args.repo:
+                    raise ValueError("--build requires an idea (positional text) or --repo.")
+                if not ai_client.enabled:
+                    raise ValueError("--build requires AI mode (set OPENROUTER_API_KEY).")
+                projects_dir = Path(args.projects_dir) if getattr(args, "projects_dir", None) else None
+                built_path = build_project_from_idea(
+                    source_text or "project from repo context",
+                    ai_client,
+                    projects_dir=projects_dir,
+                )
+                # The freshly built repo becomes the scan target.
+                args.repo = str(built_path)
+
             repo_path = resolve_repo_path(args.repo, cwd)
             markdown_file, article_text = read_file_text(args.file)
             stdin_text = read_stdin_text() if args.stdin_source else ""
             if stdin_text:
                 article_text = "\n\n".join(part for part in [article_text, stdin_text] if part.strip())
-            source_text = " ".join(args.idea).strip()
             state = create_session(
                 blog_root=blog_root,
                 cwd=cwd,
@@ -3821,6 +4117,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             )
             agent = CyborgAgent(state, ai_client=ai_client, interactive=interactive)
             agent.save()
+            if args.command == "auto":
+                return run_autopilot(agent, assume_yes=getattr(args, "yes", False))
             return run_repl(agent)
 
         # Resuming a previously saved session.

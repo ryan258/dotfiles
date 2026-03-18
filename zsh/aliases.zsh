@@ -594,6 +594,42 @@ alias ez="code \$DOTFILES_ALIAS_ROOT/zsh/aliases.zsh"  # Edit this aliases file 
 alias ezrc="code ~/.zshrc"               # Edit .zshrc in VS Code
 alias reload="source ~/.zshrc && echo 'Zsh reloaded!'"  # Apply config changes instantly
 
+# =============================================================================
+# AUTOPILOT — BRAIN-FOG-DAY SHORTCUTS
+# When typing is hard and decisions are harder. One word, AI does the rest.
+# Full guide: docs/autopilot-happy-path.md
+# =============================================================================
+
+# Autopilot the repo you're standing in (Morphling analyzes, Cyborg documents)
+alias ap="$DOTFILES_ALIAS_ROOT/bin/cyborg auto"
+
+# Autopilot + apply without asking
+alias apy="$DOTFILES_ALIAS_ROOT/bin/cyborg auto --yes"
+
+# Build a project from an idea, then document it
+# Usage: apb "a CLI that tracks energy with spoon theory"
+# (Named apb not build — 'build' shadows too many tools)
+apb() {
+    if [[ -z "$1" ]]; then
+        echo "Usage: apb \"your idea here\"" >&2
+        return 1
+    fi
+    "$DOTFILES_ALIAS_ROOT/bin/cyborg" auto --build "$@"
+}
+
+# Build + apply without asking
+# Usage: apby "terminal pomodoro timer"
+apby() {
+    if [[ -z "$1" ]]; then
+        echo "Usage: apby \"your idea here\"" >&2
+        return 1
+    fi
+    "$DOTFILES_ALIAS_ROOT/bin/cyborg" auto --build --yes "$@"
+}
+
+# Resume the last autopilot or cyborg session
+alias apc="$DOTFILES_ALIAS_ROOT/bin/cyborg resume"
+
 # SPEC-DRIVEN DISPATCHER WORKFLOW
 # =============================================================================
 # Loads spec_helper.sh which provides functions for creating and editing

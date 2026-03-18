@@ -548,6 +548,64 @@ teardown() {
     [ "$status" -eq 0 ]
 }
 
+# ---- Autopilot mode ----
+
+# Test: 'cyborg auto' runs the full pipeline hands-free and applies
+# drafts when --yes is passed, without any interactive prompts.
+@test "cyborg auto runs full pipeline and applies with --yes" {
+    run bash -lc "env DOTFILES_DIR='$DOTFILES_DIR' CYBORG_LAB_DIR='$BLOG_DIR' CYBORG_DISABLE_AI=true '$DOTFILES_DIR/bin/cyborg' auto --repo '$SOURCE_REPO' --yes 'focus on CLI'"
+
+    [ "$status" -eq 0 ]
+    # Should show the autopilot header.
+    [[ "$output" == *"Cyborg autopilot session:"* ]]
+    # Should run through the pipeline phases.
+    [[ "$output" == *"Autopilot: building content map"* ]]
+    [[ "$output" == *"Autopilot: building publishing plan"* ]]
+    [[ "$output" == *"Autopilot: drafting all pages"* ]]
+    # Should show the summary banner.
+    [[ "$output" == *"AUTOPILOT COMPLETE"* ]]
+    # Should apply changes.
+    [[ "$output" == *"Applied the selected pending changes into the Cyborg Lab repo."* ]]
+}
+
+# Test: 'cyborg auto' on a git repo auto-skips GitNexus when CLI is
+# unavailable and still completes the full pipeline.
+@test "cyborg auto skips GitNexus when CLI is unavailable" {
+    # Do not put fake-bin on PATH so gitnexus CLI is not found.
+    run bash -lc "env DOTFILES_DIR='$DOTFILES_DIR' CYBORG_LAB_DIR='$BLOG_DIR' CYBORG_DISABLE_AI=true CYBORG_DISABLE_GITNEXUS=false '$DOTFILES_DIR/bin/cyborg' auto --repo '$GIT_SOURCE_REPO' --yes"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Cyborg autopilot session:"* ]]
+    [[ "$output" == *"AUTOPILOT COMPLETE"* ]]
+    [[ "$output" == *"Applied the selected pending changes into the Cyborg Lab repo."* ]]
+}
+
+# Test: 'cyborg auto' without --yes in non-interactive mode saves
+# the session instead of applying.
+@test "cyborg auto without --yes saves session in non-interactive mode" {
+    run bash -lc "env DOTFILES_DIR='$DOTFILES_DIR' CYBORG_LAB_DIR='$BLOG_DIR' CYBORG_DISABLE_AI=true '$DOTFILES_DIR/bin/cyborg' auto --repo '$SOURCE_REPO'"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"AUTOPILOT COMPLETE"* ]]
+    [[ "$output" == *"Non-interactive mode. Resume with: cyborg resume"* ]]
+}
+
+# Test: 'cyborg auto --build' without AI mode gives a friendly error.
+@test "cyborg auto --build requires AI mode" {
+    run bash -lc "env DOTFILES_DIR='$DOTFILES_DIR' CYBORG_LAB_DIR='$BLOG_DIR' CYBORG_DISABLE_AI=true '$DOTFILES_DIR/bin/cyborg' auto --build 'a spoon tracker CLI'"
+
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"--build requires AI mode"* ]]
+}
+
+# Test: 'cyborg auto --build' without an idea gives a friendly error.
+@test "cyborg auto --build requires an idea" {
+    run bash -lc "env DOTFILES_DIR='$DOTFILES_DIR' CYBORG_LAB_DIR='$BLOG_DIR' OPENROUTER_API_KEY=test-key '$DOTFILES_DIR/bin/cyborg' auto --build"
+
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"--build requires an idea"* ]]
+}
+
 # ---- Error handling ----
 
 # Test: passing a file that does not exist should print a friendly

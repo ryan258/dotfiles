@@ -2,6 +2,38 @@
 
 **Last Updated:** March 17, 2026
 
+## Version 2.2.36 (March 17, 2026) - Cyborg Autopilot + Morphling Build Mode
+
+**Status:** ✅ Production Ready
+
+### New Features
+
+- **`cyborg auto` autopilot mode**: Runs the full Cyborg pipeline hands-free (scan → map → plan → draft → links) with a single A-E confirmation at the end. Designed for low-energy and brain-fog sessions.
+- **Morphling pre-analysis**: When `cyborg auto` runs on an existing repo, the shell launcher calls Morphling first for a domain-expert brief that enriches Cyborg's AI context.
+- **`cyborg auto --build` build mode**: Pitch an idea, Morphling scaffolds a working project in `~/Projects/`, then Cyborg documents it — idea to blog-ready content in one command.
+- **`--projects-dir`**: Override where `--build` creates new projects (default: `~/Projects`).
+- **`--yes`**: Skip the final apply confirmation for fully unattended runs.
+- **`--no-morphling`**: Opt out of the Morphling pre-analysis step.
+
+### Documentation
+
+- New [`bin/autopilot-readme.md`](bin/autopilot-readme.md) — dedicated guide for the Morphling + Cyborg autopilot integration.
+- Cross-links added to [`bin/README.md`](bin/README.md) and [`bin/cyborg-readme.md`](bin/cyborg-readme.md).
+
+### Aliases
+
+- Build aliases renamed from `build`/`buildy` to `apb`/`apby` to avoid shadowing common system tools. Pattern: `ap` (auto), `apy` (auto+yes), `apb` (auto+build), `apby` (auto+build+yes).
+
+### Robustness
+
+- Autopilot now saves the session between pipeline phases so a mid-run failure never loses work.
+- `build_project_from_idea` validates scaffold file paths using `resolve()` and warns on skipped unsafe paths instead of silently dropping them.
+- Shell launcher handles `--repo=PATH` syntax in addition to `--repo PATH`.
+
+### Tests
+
+- 5 new tests in `tests/test_cyborg.sh` covering autopilot pipeline, GitNexus auto-skip, non-interactive save, and `--build` error handling.
+
 ## Version 2.2.35 (March 17, 2026) - Cyborg Accessible Choice Prompts
 
 **Status:** ✅ Production Ready

@@ -1,5 +1,7 @@
 # Cyborg Agent Wiki
 
+> **Looking for the hands-free autopilot or the Morphling + Cyborg combo?** See [`autopilot-readme.md`](./autopilot-readme.md).
+
 `cyborg` is a dedicated interactive agent for turning a repo, a draft, or a loose idea into a linked Cyborg Lab content set.
 
 It is not a general dispatcher. It is a repo-aware writing workflow that stays focused on the Cyborg Lab publishing model:
@@ -26,6 +28,23 @@ It is not a general dispatcher. It is a repo-aware writing workflow that stays f
 
 `cyborg resume` reopens a saved session and lets you continue the same content graph, draft set, and editorial loop later.
 
+`cyborg auto` runs the full pipeline hands-free. It chains scan, map, plan, draft, and link recommendations automatically — making safe default choices at every decision point — and only pauses with a single A-E confirmation before writing anything into the blog repo. If Morphling is available, it runs a pre-analysis first to enrich the AI context. Designed for low-energy or brain-fog sessions when you need AI to take the wheel.
+
+```bash
+cyborg auto                          # current dir, full autopilot
+cyborg auto --repo ~/Projects/foo    # specific repo
+cyborg auto --yes                    # skip even the final confirm
+cyborg auto --no-morphling           # skip Morphling pre-analysis
+```
+
+`cyborg auto --build` goes one step further: pitch an idea, and Morphling scaffolds the project in `~/Projects/` first, then Cyborg documents it. Idea to blog-ready content in a single command.
+
+```bash
+cyborg auto --build "a CLI that tracks daily energy with spoon theory"
+cyborg auto --build --yes "terminal pomodoro timer with MS-friendly breaks"
+cyborg auto --build --projects-dir ~/Labs "rust grep alternative"
+```
+
 ## Mental Model
 
 Use `cyborg` when you have one of these starting points:
@@ -33,6 +52,7 @@ Use `cyborg` when you have one of these starting points:
 - a repo you built and want to decompose into Cyborg Lab content
 - a fact-checked markdown draft that should become repo-linked Cyborg Lab pages
 - a plain idea that needs to be worked into a publishable content plan
+- just an idea — Morphling builds the project, Cyborg documents it (`--build`)
 
 The default source-of-truth rule is:
 
@@ -163,6 +183,26 @@ Anything after `cyborg ingest` is stored as source text:
 
 ```bash
 cyborg ingest "focus on the setup path and the reusable command sheet"
+```
+
+### 6. Autopilot Mode
+
+`cyborg auto` accepts the same input sources as `cyborg ingest` (`--repo`, `--file`, `--stdin-source`, plain idea text) but runs the full pipeline without interactive prompts. If Morphling (`uv` + `ai-staff-hq/`) is available, the launcher calls it first for a repo pre-analysis that enriches the AI context. Use `--no-morphling` to skip it, or `--yes` to also skip the final apply confirmation.
+
+```bash
+cyborg auto --repo ~/Projects/rockit "focus on the CLI setup path"
+cyborg auto --repo ~/Projects/rockit --yes
+cat brief.md | cyborg auto --stdin-source --repo .
+```
+
+### 7. Build Mode (Idea to Project to Blog)
+
+`cyborg auto --build` takes just an idea and does everything: Morphling scaffolds a working project in `~/Projects/`, then Cyborg runs the full autopilot pipeline on it. Requires AI mode (`OPENROUTER_API_KEY`).
+
+```bash
+cyborg auto --build "a CLI that tracks daily energy with spoon theory"
+cyborg auto --build --projects-dir ~/Labs "terminal habit tracker"
+cyborg auto --build --yes "rust CLI for batch image resizing"
 ```
 
 ## Blog Repo Resolution

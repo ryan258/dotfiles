@@ -102,6 +102,14 @@ focus show
 - Run one 10-15 minute block on your top task.
 - Add one journal line when you finish it.
 
+**If the fog is too heavy for regular work**, switch to autopilot content creation instead — AI does the work, you just confirm at the end:
+
+```bash
+apb "your idea here"
+```
+
+See the [Autopilot Happy Path](autopilot-happy-path.md) for the full brain-fog cheat sheet.
+
 ---
 
 ## 🌙 Evening Closeout (Preserve Context for Tomorrow)

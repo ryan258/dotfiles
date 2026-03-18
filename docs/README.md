@@ -84,6 +84,7 @@ If you need to dig deeper into the actual codebase architectures, policies, or t
 
 ### Capabilities & R&D
 
+- **[🤖 Autopilot Happy Path](autopilot-happy-path.md)** - Brain-fog cheat sheet for the Morphling + Cyborg pipeline.
 - **[🔋 Energy-Contingent Roadmap](ROADMAP-ENERGY.md)** - Strategic roadmap aligned with bio-rhythms.
 - **[🏥 Health System Product Brief](products/health_brief.md)** - Bio-rhythm intelligence tool.
 - **[My MS Site Integration](my-ms-site-integration.md)** - Blog integration specifics

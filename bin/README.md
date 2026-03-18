@@ -467,6 +467,7 @@ Morphling automatically gathers:
 - When you're unsure which specialist to use
 - General-purpose tasks that span multiple domains
 - Quick context-aware assistance in any project
+- Autopilot pre-analysis and project scaffolding with Cyborg — see [`autopilot-readme.md`](./autopilot-readme.md)
 
 ---
 
@@ -761,6 +762,7 @@ Recent commits:
 **Output:** Session state under `my-ms-ai-blog/drafts/ingest/`, pending content map/plan/drafts, and explicit apply into the blog repo
 
 **Full Guide:** [`cyborg-readme.md`](./cyborg-readme.md)
+**Autopilot + Morphling Integration:** [`autopilot-readme.md`](./autopilot-readme.md)
 
 **Usage:**
 
@@ -773,6 +775,12 @@ cyborg ingest --repo ~/Projects/rockit --file notes/field-report.md
 
 # Resume the latest session later
 cyborg resume 20260315-101500-rockit-abc123
+
+# Autopilot: full pipeline, hands-free
+cyborg auto --repo ~/Projects/rockit
+
+# Build + document from just an idea
+cyborg auto --build "a CLI that tracks daily energy with spoon theory"
 ```
 
 **Workflow:**
