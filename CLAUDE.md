@@ -320,7 +320,7 @@ dhp_dispatch \
 
 - Not every AI entrypoint needs to be a `dhp-*` dispatcher.
 - Repo-specific agents may live in `bin/` as standalone executables when they own a focused workflow that would be awkward to force through `dhp-shared.sh`.
-- `bin/cyborg` is the Cyborg Lab ingest/resume agent: an interactive session tool that scans a source repo, proposes a Cyborg Lab content graph, stages near-publishable drafts, only writes to `my-ms-ai-blog` on explicit apply, and should prefer accessible `A/B/C/D/E` short-choice prompts when it asks the user to choose.
+- `bin/cyborg` is the Cyborg Lab ingest/resume agent: an interactive session tool that scans a source repo, proposes a Cyborg Lab content graph, stages near-publishable drafts, only writes to `my-ms-ai-blog` on explicit apply, and should prefer accessible `A/B/C/D/E` short-choice prompts when it asks the user to choose. `cyborg auto` runs the full pipeline hands-free for low-energy sessions; `cyborg auto --build` converges Morphling (project scaffolding) with Cyborg (documentation). See [`bin/autopilot-readme.md`](bin/autopilot-readme.md) for the convergence architecture.
 - Standalone agents must still follow root-project rules: strict mode for shell launchers, predictable config loading, explicit path validation, and session state stored in repo-appropriate locations.
 
 ### Input Handling

@@ -606,6 +606,19 @@ teardown() {
     [[ "$output" == *"--build requires an idea"* ]]
 }
 
+# Test: 'cyborg auto --no-morphling' skips the Morphling pre-analysis
+# and still completes the full autopilot pipeline.
+@test "cyborg auto --no-morphling skips pre-analysis and completes pipeline" {
+    run bash -lc "env DOTFILES_DIR='$DOTFILES_DIR' CYBORG_LAB_DIR='$BLOG_DIR' CYBORG_DISABLE_AI=true '$DOTFILES_DIR/bin/cyborg' auto --no-morphling --repo '$SOURCE_REPO' --yes"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Cyborg autopilot session:"* ]]
+    [[ "$output" == *"AUTOPILOT COMPLETE"* ]]
+    # Morphling pre-analysis should NOT have been loaded.
+    [[ "$output" != *"Morphling pre-analysis loaded"* ]]
+    [[ "$output" == *"Applied the selected pending changes into the Cyborg Lab repo."* ]]
+}
+
 # ---- Error handling ----
 
 # Test: passing a file that does not exist should print a friendly

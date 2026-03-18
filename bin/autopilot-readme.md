@@ -180,6 +180,7 @@ Once resumed, you're in full interactive mode with all commands available.
 | `CYBORG_LAB_DIR` | Explicit path to the Cyborg Lab blog repo |
 | `CYBORG_DISABLE_AI` | Set to `true` to force deterministic mode (no `--build`) |
 | `CYBORG_DISABLE_GITNEXUS` | Set to `true` to skip GitNexus entirely |
+| `CYBORG_MORPHLING_BRIEF` | Auto-set by the shell launcher — contains the Morphling pre-analysis. Not user-configured; injected into the session's AI context by `run_autopilot()` |
 
 ## Related Files
 

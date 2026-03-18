@@ -34,11 +34,32 @@ export USER_CWD="$(pwd)"
 # through CONTENT_MODEL, STRATEGY_MODEL, and finally a free default.
 export CYBORG_MODEL="${CYBORG_MODEL:-${CONTENT_MODEL:-${STRATEGY_MODEL:-moonshotai/kimi-k2:free}}}"
 
-# --- Morphling pre-analysis for autopilot mode ---
-# When 'auto' is used and Morphling is available, run a quick repo
-# analysis first.  The result is passed to the Python agent via an
-# environment variable so it can enrich the AI context.
+# --- Morphling pre-analysis for autopilot mode (convergence path 1) ---
+#
+# When the user runs `cyborg auto`, Morphling and Cyborg converge:
+# the shell launcher runs Morphling *first* to produce a domain-expert
+# analysis of the target repo, then the Python agent uses that analysis
+# as additional context for content mapping and drafting.
+#
+# This block handles convergence path 1 (pre-analysis).  Path 2 (--build)
+# is handled entirely inside the Python agent and is mutually exclusive:
+# --build skips pre-analysis because there's no repo to analyze yet.
+#
+# Preconditions for pre-analysis to run:
+#   1. Subcommand is "auto" (not "ingest" or "resume")
+#   2. Neither --no-morphling nor --build is present
+#   3. `uv` is installed (Morphling's dispatcher needs it)
+#   4. ai-staff-hq/ submodule exists (Morphling YAML definitions)
+#
+# The result is exported as CYBORG_MORPHLING_BRIEF.  The Python agent's
+# run_autopilot() picks it up and appends it to the session's
+# article_text so every AI prompt benefits from the analysis.
+# If Morphling fails or returns nothing, we continue silently — the
+# pre-analysis is always optional.
 if [[ "${1:-}" == "auto" ]]; then
+    # Check for flags that make pre-analysis irrelevant.
+    # --no-morphling: user explicitly opted out.
+    # --build: no repo exists yet; Morphling builds it in the Python agent.
     _skip_morphling=false
     for _arg in "$@"; do
         if [[ "$_arg" == "--no-morphling" || "$_arg" == "--build" ]]; then
@@ -53,8 +74,10 @@ if [[ "${1:-}" == "auto" ]]; then
         && command -v uv >/dev/null 2>&1 \
         && [[ -d "$AI_STAFF_DIR" ]]; then
 
-        # Figure out which repo to analyze (--repo flag or cwd).
-        # Handles both '--repo PATH' and '--repo=PATH' syntax.
+        # Determine which repo to analyze.  Default to the user's cwd;
+        # override with --repo if provided.
+        # Handles both '--repo PATH' and '--repo=PATH' syntax so we
+        # match whatever argparse would accept on the Python side.
         _morph_repo="$USER_CWD"
         _prev=""
         for _arg in "$@"; do
@@ -68,6 +91,13 @@ if [[ "${1:-}" == "auto" ]]; then
             _prev="$_arg"
         done
 
+        # Pipe a structured prompt to morphling.sh, which calls the
+        # Morphling dispatcher (dhp-morphling.sh) under the hood.
+        # morphling.sh runs via `uv` and the ai-staff-hq YAML definitions.
+        # We cd into the target repo so Morphling can read its files.
+        # stderr is suppressed to keep the user-facing output clean;
+        # the `|| true` ensures a Morphling failure never aborts the
+        # launcher (pre-analysis is always best-effort).
         echo "Morphling is pre-analyzing the repo..." >&2
         _morph_brief=$(
             cd "$_morph_repo" 2>/dev/null || cd "$USER_CWD"
@@ -75,6 +105,9 @@ if [[ "${1:-}" == "auto" ]]; then
                 | "$SCRIPT_DIR/morphling.sh" 2>/dev/null
         ) || true
 
+        # Export the brief so the Python agent can read it from the
+        # environment.  If empty, log a skip message but continue — the
+        # autopilot pipeline works fine without the pre-analysis.
         if [[ -n "${_morph_brief:-}" ]]; then
             export CYBORG_MORPHLING_BRIEF="$_morph_brief"
             echo "Morphling analysis ready." >&2

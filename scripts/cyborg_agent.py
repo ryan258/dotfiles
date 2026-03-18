@@ -152,11 +152,39 @@ CONTENT_TYPES: dict[str, dict[str, str]] = {
         "tone": "integration/config page",
     },
 }
-# The default directory where new projects are scaffolded.
+# ---------------------------------------------------------------------------
+# Morphling ↔ Cyborg convergence constants
+# ---------------------------------------------------------------------------
+# Morphling is the dotfiles system's "shapeshifting universal specialist"
+# dispatcher (bin/morphling.sh, bin/dhp-morphling.sh).  When Cyborg runs in
+# autopilot mode (`cyborg auto`), the two agents converge:
+#
+#   1. PRE-ANALYSIS (shell-side, bin/cyborg):
+#      The shell launcher pipes a structured prompt to morphling.sh, which
+#      shapeshifts into a domain expert for the target repo and returns a
+#      concise brief.  That brief is exported as CYBORG_MORPHLING_BRIEF so
+#      run_autopilot() can inject it into the Cyborg session's article_text.
+#
+#   2. BUILD MODE (Python-side, build_project_from_idea):
+#      When --build is passed, the Python agent calls OpenRouter directly
+#      with a Morphling-persona system prompt (MORPHLING_BUILD_PROMPT).
+#      The AI returns a JSON scaffold, and we write the files to disk,
+#      git-init the result, and hand the freshly-built repo path to the
+#      normal Cyborg autopilot pipeline for documentation.
+#
+# The two paths are mutually exclusive: --build skips pre-analysis (the
+# shell launcher checks for --build and sets _skip_morphling=true).
+# ---------------------------------------------------------------------------
+
+# Default directory where `--build` scaffolds new projects.
+# Overridable with `--projects-dir`.
 DEFAULT_PROJECTS_DIR = Path.home() / "Projects"
-# System prompt for the Morphling build step.  This tells the AI to
-# shapeshift into a senior engineer and produce a complete project
-# scaffold as a JSON object.
+
+# System prompt for the Morphling build step (path 2 above).
+# Instructs the AI to shapeshift into a senior engineer and return a
+# complete project as a single JSON object.  The JSON shape is strict:
+# { "name": slug, "description": string, "files": { path: contents } }.
+# build_project_from_idea() parses this and writes the files to disk.
 MORPHLING_BUILD_PROMPT = textwrap.dedent(
     """
     You are the Morphling — a shapeshifting universal specialist.
@@ -1100,7 +1128,12 @@ class OpenRouterClient:
         return bool(self.api_key and self.model and not self.disabled)
 
     def _request(self, payload: dict[str, Any]) -> dict[str, Any]:
-        """Send a raw JSON payload to OpenRouter and return the response."""
+        """Send a raw JSON payload to OpenRouter and return the response.
+
+        Raises ``RuntimeError`` with the provider error message when the
+        API returns an error payload (missing ``choices`` key) or an HTTP
+        error status.
+        """
         data = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(
             OPENROUTER_URL,
@@ -1112,8 +1145,22 @@ class OpenRouterClient:
                 "X-Title": "Cyborg Lab Ingest Agent",
             },
         )
-        with urllib.request.urlopen(req, timeout=120) as response:
-            return json.loads(response.read().decode("utf-8"))
+        try:
+            with urllib.request.urlopen(req, timeout=120) as response:
+                result = json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            try:
+                body = json.loads(exc.read().decode("utf-8"))
+                msg = body.get("error", {}).get("message", str(body))
+            except Exception:
+                msg = f"HTTP {exc.code}"
+            raise RuntimeError(f"AI request failed ({exc.code}): {msg}") from exc
+        # OpenRouter sometimes returns 200 with an error payload.
+        if "choices" not in result:
+            error_info = result.get("error", {})
+            msg = error_info.get("message", json.dumps(result)[:200])
+            raise RuntimeError(f"AI request failed: {msg}")
+        return result
 
     @staticmethod
     def _with_cache_control(message: dict[str, Any]) -> dict[str, Any]:
@@ -3704,6 +3751,18 @@ def parse_command(raw: str) -> tuple[str, list[str]]:
 # =====================================================================
 # Project scaffolding (Morphling build step)
 # =====================================================================
+# This is convergence path 2: the Python-side Morphling build.
+# Called when the user runs `cyborg auto --build "idea"`.
+#
+# Flow:
+#   main() validates flags → build_project_from_idea() →
+#     AI returns JSON scaffold → write files → git init + commit →
+#     return project path → main() feeds it to run_autopilot()
+#
+# The resulting directory becomes the --repo for the Cyborg session,
+# so the normal scan → map → plan → draft pipeline documents the
+# freshly-built project as if it were any other repo.
+# =====================================================================
 
 
 def build_project_from_idea(
@@ -3714,23 +3773,40 @@ def build_project_from_idea(
 ) -> Path:
     """Use the Morphling persona to scaffold a new project from an idea.
 
-    Calls the AI to generate a project structure as JSON, writes the
-    files into ``~/Projects/<name>/``, initialises a git repo, and
-    returns the project path.  Raises ``RuntimeError`` if the AI call
-    or file-writing step fails.
+    Calls the AI with ``MORPHLING_BUILD_PROMPT`` to generate a project
+    structure as JSON, writes the files into ``~/Projects/<name>/``,
+    initialises a git repo, and returns the project path.
+
+    Args:
+        idea:         Plain-text project description from the user.
+        ai_client:    Configured OpenRouter client (must be enabled).
+        projects_dir: Override for the parent directory.  Defaults to
+                      ``DEFAULT_PROJECTS_DIR`` (~/Projects).
+
+    Returns:
+        Path to the newly-created and git-committed project directory.
+
+    Raises:
+        RuntimeError: If the AI returns an empty scaffold or the API
+                      call itself fails (handled by ``_request``).
     """
+    # Resolve the target parent directory, creating it if needed.
     target_root = projects_dir or DEFAULT_PROJECTS_DIR
     target_root.mkdir(parents=True, exist_ok=True)
 
     print("Morphling is building your project...")
 
-    # Use a higher temperature for creative scaffolding.
+    # Temperature 0.5 gives the model room to make creative tech-stack
+    # choices while still producing coherent, structured JSON output.
     scaffold = ai_client.chat_json(
         MORPHLING_BUILD_PROMPT,
         f"Build a project from this idea:\n\n{idea}",
         temperature=0.5,
     )
 
+    # Extract the three required fields from the AI's JSON response.
+    # "name" is slugified to produce a safe directory name; "files" is
+    # the dict of { relative_path: file_contents } that we write to disk.
     name = slugify(scaffold.get("name") or "untitled-project", max_words=6, max_len=40)
     description = scaffold.get("description", idea)
     files: dict[str, str] = scaffold.get("files", {})
@@ -3738,9 +3814,11 @@ def build_project_from_idea(
     if not files:
         raise RuntimeError("Morphling returned an empty project scaffold (no files).")
 
+    # Pick the project directory.  If a directory with this name already
+    # exists (e.g. from a previous build), append a random suffix so we
+    # never clobber the user's existing work.
     project_dir = target_root / name
     if project_dir.exists():
-        # Avoid clobbering existing work.  Append a short suffix.
         suffix = uuid.uuid4().hex[:6]
         project_dir = target_root / f"{name}-{suffix}"
 
@@ -3748,9 +3826,14 @@ def build_project_from_idea(
     print(f"  Description: {description}")
     print(f"  Files: {len(files)}")
 
+    # --- Write scaffold files with path-safety validation ---
+    # The AI controls the file paths in the "files" dict, so we must
+    # guard against path traversal.  Two checks:
+    #   1. Reject obviously bad patterns (absolute paths, ".." segments).
+    #   2. Resolve the final path and confirm it's still under project_dir.
+    # Skipped files are logged as a warning rather than silently dropped.
     skipped: list[str] = []
     for rel_path, contents in files.items():
-        # Reject absolute, traversal, or otherwise unsafe paths.
         if rel_path.startswith("/") or ".." in rel_path.split("/"):
             skipped.append(rel_path)
             continue
@@ -3764,7 +3847,13 @@ def build_project_from_idea(
     if skipped:
         print(f"  Warning: skipped {len(skipped)} file(s) with unsafe paths: {', '.join(skipped)}")
 
-    # Initialise a git repo so Cyborg can scan it properly.
+    # --- Git init ---
+    # Cyborg's scan_repo() expects a git repo to extract commit history,
+    # file lists, and diff context.  We create a minimal repo with a
+    # single commit attributed to "Morphling" so it's clearly machine-
+    # generated.  allow_failure=True on each step so a git problem
+    # doesn't block the entire autopilot pipeline — Cyborg can still
+    # scan a non-git directory, just with less context.
     run_command(["git", "init", "-q"], cwd=project_dir, allow_failure=True)
     run_command(["git", "add", "."], cwd=project_dir, allow_failure=True)
     run_command(
@@ -3797,10 +3886,24 @@ def run_autopilot(agent: CyborgAgent, *, assume_yes: bool = False) -> int:
     print(f"Blog root: {agent.state.blog_root}")
     print()
 
-    # Incorporate Morphling pre-analysis if the launcher provided one.
+    # --- Morphling pre-analysis injection (convergence path 1) ---
+    # The shell launcher (bin/cyborg) runs morphling.sh *before* exec'ing
+    # the Python agent and exports the result as CYBORG_MORPHLING_BRIEF.
+    # Here we pull that brief into the session's article_text, which is
+    # included in every AI prompt as source context.  This means the
+    # Morphling domain-expert analysis enriches Cyborg's content map,
+    # publishing plan, and drafts — all without the user doing anything.
+    #
+    # This env var is only set when:
+    #   - The subcommand is "auto" (not "ingest" or "resume")
+    #   - --no-morphling was NOT passed
+    #   - --build was NOT passed (build mode uses path 2 instead)
+    #   - uv and ai-staff-hq/ are available on the system
     morphling_brief = os.environ.get("CYBORG_MORPHLING_BRIEF", "").strip()
     if morphling_brief:
         agent.assistant_say("Morphling pre-analysis loaded.")
+        # Append to existing article text (which may contain --file or
+        # --stdin-source material) rather than replacing it.
         if agent.state.article_text:
             agent.state.article_text += "\n\n--- MORPHLING ANALYSIS ---\n" + morphling_brief
         else:
@@ -3840,6 +3943,14 @@ def run_autopilot(agent: CyborgAgent, *, assume_yes: bool = False) -> int:
             else:
                 agent.assistant_say("Autopilot: skipping GitNexus.")
                 agent.handle_gitnexus_command(["skip"])
+
+        # If GitNexus is still pending after our best attempt (e.g. the
+        # enhance succeeded but the status flipped to "stale" immediately),
+        # force-skip so downstream phases don't keep bailing out.
+        if agent._gitnexus_decision_pending():
+            agent.assistant_say("Autopilot: forcing GitNexus skip to avoid stale loop.")
+            agent.state.gitnexus_skip = True
+            agent.save()
 
         # auto_prepare_repo_context returns early when a GitNexus
         # decision was pending, so the scan may not have happened yet.
@@ -4085,9 +4196,25 @@ def main(argv: Optional[List[str]] = None) -> int:
             # Starting a brand-new session (interactive or autopilot).
             source_text = " ".join(args.idea).strip()
 
-            # --- Morphling build step ---
-            # When --build is used, scaffold a new project from the idea
-            # before creating the Cyborg session.
+            # --- Morphling build step (convergence path 2) ---
+            # When --build is used, Morphling scaffolds a new project
+            # *before* the Cyborg session is created.  The resulting
+            # directory is then injected as args.repo so the downstream
+            # session-creation and autopilot code treats it like any
+            # existing repo the user pointed us at.
+            #
+            # Preconditions enforced here:
+            #   - An idea string or --repo must be provided (so the AI
+            #     knows what to build).
+            #   - AI mode must be enabled (OPENROUTER_API_KEY set),
+            #     because the build step calls OpenRouter directly.
+            #
+            # After build_project_from_idea() returns, args.repo is
+            # overwritten with the scaffold path.  The shell launcher
+            # already skipped Morphling pre-analysis for --build (the
+            # two paths are mutually exclusive), so CYBORG_MORPHLING_BRIEF
+            # will be empty and the injection block in run_autopilot()
+            # is a no-op.
             if args.command == "auto" and getattr(args, "build", False):
                 if not source_text and not args.repo:
                     raise ValueError("--build requires an idea (positional text) or --repo.")
@@ -4099,7 +4226,8 @@ def main(argv: Optional[List[str]] = None) -> int:
                     ai_client,
                     projects_dir=projects_dir,
                 )
-                # The freshly built repo becomes the scan target.
+                # Overwrite the repo arg so the session targets the
+                # freshly scaffolded directory instead of cwd.
                 args.repo = str(built_path)
 
             repo_path = resolve_repo_path(args.repo, cwd)
@@ -4125,7 +4253,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         state = load_session(blog_root, args.session_id, interactive=interactive)
         agent = CyborgAgent(state, ai_client=ai_client, interactive=interactive)
         return run_repl(agent)
-    except ValueError as exc:
+    except (ValueError, RuntimeError) as exc:
         # Show a friendly error instead of a Python traceback.
         print(f"Error: {exc}", file=sys.stderr)
         return 2
