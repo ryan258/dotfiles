@@ -1,6 +1,23 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** March 12, 2026
+**Last Updated:** March 17, 2026
+
+## Version 2.2.35 (March 17, 2026) - Cyborg Accessible Choice Prompts
+
+**Status:** ✅ Production Ready
+
+### Improvements
+
+- **`cyborg` now prefers accessible `A/B/C/D/E` choice prompts** for built-in interaction points that previously required longer typing:
+  - GitNexus approval prompts now accept one-letter answers (`A` explain, `B` approve, `C` skip, `D` status, `E` custom).
+  - strong rewrite recommendations now accept compact responses like `A` or `1B` in addition to `/rewrite ...`.
+  - interactive `/apply` confirmation now uses A-E choices instead of requiring the full word `yes`.
+  - interactive `cyborg resume` session selection now offers A-E choices for the newest sessions plus a custom path.
+- **AI follow-up questions inside `cyborg` are now instructed to use the same A-E format** and the session note pipeline preserves the meaning of one-letter answers so later map/plan generation does not lose that context.
+
+### Tests
+
+- Added `tests/test_cyborg.sh` coverage for letter-based GitNexus approval and compact rewrite-choice replies.
 
 ## Version 2.2.34 (March 11, 2026) - Focus + Git Spear Coach
 

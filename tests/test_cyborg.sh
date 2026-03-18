@@ -352,7 +352,7 @@ teardown() {
     # The agent should have asked for permission first.
     [[ "$output" == *"GitNexus is not configured here. I can initialize and analyze this repo to improve content mapping, cross-linking, and rewrite quality. Proceed?"* ]]
     # After skipping, native scanning should still work.
-    [[ "$output" == *"GitNexus is skipped for this session. I'll continue with native repo scanning."* ]]
+    [[ "$output" == *"GitNexus is skipped for this session."* ]]
     [[ "$output" == *"Repo scan complete."* ]]
 }
 
@@ -377,6 +377,18 @@ teardown() {
     [ "$status" -eq 1 ]
 
     # But it should contain a plain "analyze ." call.
+    run grep -n 'gitnexus analyze \.' "$FAKE_GITNEXUS_LOG"
+    [ "$status" -eq 0 ]
+}
+
+@test "cyborg ingest accepts letter choices for pending GitNexus approval" {
+    run bash -lc "cd '$GIT_SOURCE_REPO' && printf 'B\n/quit\n' | env PATH='$FAKE_BIN:$PATH' DOTFILES_DIR='$DOTFILES_DIR' CYBORG_LAB_DIR='$BLOG_DIR' CYBORG_DISABLE_AI=true '$DOTFILES_DIR/bin/cyborg' ingest 'focus on graph signals'"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"A. Explain the GitNexus plan in more detail."* ]]
+    [[ "$output" == *"B. Approve the repo write step and run \`gitnexus analyze\` in this repo."* ]]
+    [[ "$output" == *"GitNexus enhancement completed."* ]]
+
     run grep -n 'gitnexus analyze \.' "$FAKE_GITNEXUS_LOG"
     [ "$status" -eq 0 ]
 }
@@ -410,6 +422,27 @@ teardown() {
     [[ "$output" == *"GitNexus enhancement completed."* ]]
     [[ "$output" == *"Strong existing-page matches detected after the refreshed map:"* ]]
     [[ "$output" == *"legacy-iteration-workflow.md"* ]]
+    [[ "$output" == *"will now update"* ]]
+}
+
+@test "cyborg resume accepts compact letter choices for rewrite decisions" {
+    run bash -lc "cd '$GIT_SOURCE_REPO' && printf '/gitnexus enhance\n/quit\n' | env PATH='$FAKE_BIN:$PATH' DOTFILES_DIR='$DOTFILES_DIR' CYBORG_LAB_DIR='$BLOG_DIR' CYBORG_DISABLE_AI=true '$DOTFILES_DIR/bin/cyborg' ingest 'capture the initial workflow'"
+    [ "$status" -eq 0 ]
+
+    session_id=$(basename "$(find "$BLOG_DIR/drafts/ingest" -mindepth 1 -maxdepth 1 -type d | head -n 1)")
+    [ -n "$session_id" ]
+
+    (
+        cd "$GIT_SOURCE_REPO"
+        printf '\nprint("letter-choice")\n' >> tool.py
+        git add tool.py
+        git commit -qm "letter-choice"
+    )
+
+    run bash -lc "printf 'B\n/map\nA\n/quit\n' | env PATH='$FAKE_BIN:$PATH' DOTFILES_DIR='$DOTFILES_DIR' CYBORG_LAB_DIR='$BLOG_DIR' CYBORG_DISABLE_AI=true '$DOTFILES_DIR/bin/cyborg' resume '$session_id'"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Reply with \`A\`, \`B\`, \`C\`, \`D\`, or \`E\`"* ]]
     [[ "$output" == *"will now update"* ]]
 }
 

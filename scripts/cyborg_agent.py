@@ -182,6 +182,9 @@ INTAKE_GUIDANCE = textwrap.dedent(
     - acknowledge what changed
     - reflect it into the likely content map or editorial direction
     - ask at most one useful follow-up question when needed
+    - when you ask a follow-up question, prefer A/B/C/D choices plus E for custom
+    - make the option labels explicit with `A.`, `B.`, `C.`, `D.`, and `E.`
+    - when the user replies with only a letter, interpret it against your most recent A-E question
     - recommend the next command only when it is timely
     """
 ).strip()
@@ -206,6 +209,8 @@ HELP_TEXT = textwrap.dedent(
 
     Notes:
       - Any non-command text is treated as intake guidance or editorial feedback.
+      - When Cyborg shows A-E choices, you can reply with the letter only.
+      - `E` always means "custom" if the listed options do not fit.
       - Draft changes are held until you explicitly run /apply.
       - Use /review <key> before giving revision notes for a specific draft.
     """
@@ -493,6 +498,51 @@ def prompt_input(prompt: str) -> str:
         return input(prompt)
     except EOFError:
         return ""
+
+
+def extract_letter_choices(text: str) -> dict[str, str]:
+    """Parse assistant text like ``A. foo`` into ``{"a": "foo"}``."""
+    choices: dict[str, str] = {}
+    for raw_line in text.splitlines():
+        match = re.match(r"^\s*([A-E])\.\s+(.+?)\s*$", raw_line)
+        if match:
+            choices[match.group(1).lower()] = match.group(2).strip()
+    return choices
+
+
+def contextualize_choice_reply(reply: str, history: list[dict[str, str]]) -> str:
+    """Expand a bare A-E reply into the last matching assistant option."""
+    normalized = reply.strip().lower()
+    if normalized not in {"a", "b", "c", "d", "e"}:
+        return reply
+    for entry in reversed(history):
+        if entry.get("role") != "assistant":
+            continue
+        choices = extract_letter_choices(str(entry.get("content", "")))
+        if normalized in choices:
+            return f"Selected {normalized.upper()}: {choices[normalized]}"
+    return reply
+
+
+def recent_chat_excerpt(history: list[dict[str, str]], *, limit: int = 6) -> str:
+    """Return a short chat transcript snippet for AI follow-up calls."""
+    if not history:
+        return "(none)"
+    lines = []
+    for entry in history[-limit:]:
+        role = str(entry.get("role", "user"))
+        content = short_preview(str(entry.get("content", "")), 220)
+        lines.append(f"{role}: {content}")
+    return "\n".join(lines)
+
+
+def parse_compact_letter_choice(text: str) -> tuple[Optional[int], Optional[str]]:
+    """Parse ``A`` or ``2B`` into ``(None, 'A')`` / ``(2, 'B')``."""
+    match = re.match(r"^\s*(?:(\d+)\s*)?([A-E])\s*$", text, flags=re.IGNORECASE)
+    if not match:
+        return None, None
+    choice_id = int(match.group(1)) if match.group(1) else None
+    return choice_id, match.group(2).upper()
 
 
 def resolve_within_root(root: Path, target_path: Path, *, label: str) -> Path:
@@ -1164,6 +1214,13 @@ class CyborgAgent:
         status = self._gitnexus_status()
         state = status.get("state")
         tracked_size = format_bytes(int(status.get("tracked_bytes", 0)))
+        primary_action = "Approve the repo write step and run `gitnexus analyze` in this repo."
+        if state == "stale":
+            primary_action = "Approve the refresh and run `gitnexus analyze` so the graph matches the current repo state."
+        elif state == "too-large":
+            primary_action = "Approve the larger-repo analyze anyway and keep the index local to this repo."
+        elif state == "error":
+            primary_action = "Retry the enhancement flow for this repo."
         base_lines = []
         if state == "not-indexed":
             base_lines.append("GitNexus is not configured here. I can initialize and analyze this repo to improve content mapping, cross-linking, and rewrite quality. Proceed?")
@@ -1187,9 +1244,12 @@ class CyborgAgent:
                 "- preserve embeddings if they already exist",
                 "- keep `.gitnexus` local unless you explicitly decide otherwise",
                 "Options:",
-                "- `/gitnexus explain` for the full plan",
-                "- `/gitnexus enhance` to approve the repo write step",
-                "- `/gitnexus skip` to continue with native scanning only",
+                "A. Explain the GitNexus plan in more detail.",
+                f"B. {primary_action}",
+                "C. Skip GitNexus and continue with native scanning only.",
+                "D. Show the current GitNexus status again.",
+                "E. Custom command or note.",
+                "Reply with A-E, or use `/gitnexus ...` directly.",
             ]
         )
         if status.get("embeddings_present"):
@@ -1821,10 +1881,19 @@ class CyborgAgent:
         """
         prompt_recommendations = recommendations if recommendations is not None else self._pending_rewrite_recommendations()
         lines = ["Strong existing-page matches detected after the refreshed map:"]
+        single_choice_mode = len(prompt_recommendations) == 1
         for rec in prompt_recommendations:
+            choice_prefix = "" if single_choice_mode else str(rec["id"])
             lines.append(f"[{rec['id']}] {rec['path']} ({rec['match_type']})")
             lines.append(f"    {rec['reason']}")
-            lines.append("    Choose with `/rewrite <id> update|iteration-log|merge`.")
+            lines.append("    A. Update the existing page in place.")
+            lines.append("    B. Keep the page and route the new narrative into an iteration log.")
+            lines.append("    C. Merge via related-link updates only.")
+            lines.append("    D. Leave this choice pending for now.")
+            lines.append("    E. Custom `/rewrite` command or note.")
+            lines.append(
+                f"    Reply with `{choice_prefix}A`, `{choice_prefix}B`, `{choice_prefix}C`, `{choice_prefix}D`, or `{choice_prefix}E`, or use `/rewrite {rec['id']} update|iteration-log|merge`."
+            )
         return "\n".join(lines)
 
     def _matching_item_for_existing_path(self, path_value: str) -> Optional[dict[str, Any]]:
@@ -1874,8 +1943,13 @@ class CyborgAgent:
         - merge: just add cross-links, no content change
         """
         normalized_mode = mode.strip().lower()
+        normalized_mode = {
+            "a": "update",
+            "b": "iteration-log",
+            "c": "merge",
+        }.get(normalized_mode, normalized_mode)
         if normalized_mode not in {"update", "iteration-log", "merge"}:
-            self.assistant_say("Rewrite mode must be one of: update, iteration-log, merge.")
+            self.assistant_say("Rewrite mode must be one of: A/update, B/iteration-log, C/merge.")
             return
         recommendation = next((rec for rec in self.state.rewrite_recommendations if rec["id"] == recommendation_id), None)
         if not recommendation:
@@ -2976,10 +3050,12 @@ class CyborgAgent:
                         [
                             "GitNexus enhancement failed.",
                             str(exc),
-                            "Choose one:",
-                            "- `/gitnexus refresh` to retry",
-                            "- `/gitnexus skip` to continue with native scanning",
-                            "- `/quit` if you want to stop here",
+                            "Options:",
+                            "A. Explain the GitNexus plan again.",
+                            "B. Retry the enhancement flow.",
+                            "C. Skip GitNexus and continue with native scanning.",
+                            "D. Show the current GitNexus status again.",
+                            "E. Custom command or note (`/quit` is also available).",
                         ]
                     )
                 )
@@ -3015,9 +3091,11 @@ class CyborgAgent:
             lines.append("Use `/patch-links 1 2` to generate pending edits for selected recommendations.")
             if self.state.rewrite_recommendations:
                 lines.extend(["", "Strong rewrite candidates:"])
+                single_rewrite_choice = len(self._pending_rewrite_recommendations()) == 1
                 for recommendation in self.state.rewrite_recommendations:
+                    reply_hint = "A/B/C" if single_rewrite_choice else f"{recommendation['id']}A/{recommendation['id']}B/{recommendation['id']}C"
                     lines.append(
-                        f"[{recommendation['id']}] {recommendation['path']} - choose `/rewrite {recommendation['id']} update|iteration-log|merge`"
+                        f"[{recommendation['id']}] {recommendation['path']} - choose `/rewrite {recommendation['id']} update|iteration-log|merge` or reply `{reply_hint}`"
                     )
             self.assistant_say("\n".join(lines))
             return
@@ -3111,7 +3189,8 @@ class CyborgAgent:
             self.assistant_say("No active review target is set. Use `/review <key>` first.")
             return
 
-        self.state.editorial_notes.append(feedback)
+        expanded_feedback = contextualize_choice_reply(feedback, self.state.chat_history)
+        self.state.editorial_notes.append(expanded_feedback)
         draft = self.state.pending_drafts[target_key]
         if self.ai_client.enabled:
             try:
@@ -3131,7 +3210,7 @@ class CyborgAgent:
                         {draft['markdown']}
 
                         Editorial feedback:
-                        {feedback}
+                        {expanded_feedback}
                         """
                     ).strip(),
                     temperature=0.3,
@@ -3154,6 +3233,57 @@ class CyborgAgent:
 
     # --- Apply (write to disk) ---
 
+    def _pending_apply_lines(self, target: str) -> list[str]:
+        """Build a compact summary of what /apply would write."""
+        lines = [f"Pending apply target: {target}"]
+        if target in {"drafts", "all"}:
+            draft_paths = sorted(draft["path"] for draft in self.state.pending_drafts.values())
+            if draft_paths:
+                lines.append("Draft files:")
+                for path_value in draft_paths[:6]:
+                    lines.append(f"- {path_value}")
+                if len(draft_paths) > 6:
+                    lines.append(f"- ...and {len(draft_paths) - 6} more")
+        if target in {"links", "all"}:
+            edit_paths = sorted(self.state.pending_existing_edits.keys())
+            if edit_paths:
+                lines.append("Existing-page edits:")
+                for path_value in edit_paths[:6]:
+                    lines.append(f"- {path_value}")
+                if len(edit_paths) > 6:
+                    lines.append(f"- ...and {len(edit_paths) - 6} more")
+        return lines
+
+    def _confirm_apply_interactively(self, target: str) -> bool:
+        """Ask for an accessible A-E confirmation before /apply."""
+        prompt = textwrap.dedent(
+            f"""
+            Apply pending changes for `{target}`?
+            A. Apply now.
+            B. Cancel.
+            C. Show /status first.
+            D. Show the pending file list first.
+            E. Custom answer.
+            Reply with A-E: """
+        )
+        while True:
+            answer = prompt_input(prompt).strip().lower()
+            if answer in {"a", "yes"}:
+                return True
+            if answer in {"", "b", "no", "n"}:
+                self.assistant_say("Apply cancelled.")
+                return False
+            if answer == "c":
+                self.assistant_say("\n".join(self.status_lines()))
+                continue
+            if answer == "d":
+                self.assistant_say("\n".join(self._pending_apply_lines(target)))
+                continue
+            if answer == "e":
+                self.assistant_say("Custom apply choice: run `/status`, `/show <key>`, or reply with `A` to apply and `B` to cancel.")
+                continue
+            self.assistant_say("Reply with A, B, C, D, or E.")
+
     def apply_changes(self, target: str, *, assume_yes: bool) -> None:
         """Write pending drafts and/or link edits into the blog repo.
         Backs up any existing files first.  Requires confirmation
@@ -3170,9 +3300,7 @@ class CyborgAgent:
             return
 
         if not assume_yes and self.interactive:
-            answer = prompt_input("Type 'yes' to apply pending changes: ").strip().lower()
-            if answer != "yes":
-                self.assistant_say("Apply cancelled.")
+            if not self._confirm_apply_interactively(target):
                 return
         elif not assume_yes and not self.interactive:
             self.assistant_say("Non-interactive apply requires `--yes`.")
@@ -3218,31 +3346,87 @@ class CyborgAgent:
 
     # --- Free-text note handling ---
 
+    def _handle_gitnexus_letter_choice(self, normalized: str) -> bool:
+        """Accept short A-E answers when a GitNexus decision is pending."""
+        if normalized in {"a"}:
+            self.handle_gitnexus_command(["explain"])
+            return True
+        if normalized in {"b", "yes", "y", "proceed", "approve"}:
+            self.handle_gitnexus_command(["enhance"])
+            return True
+        if normalized in {"c", "skip", "no", "n"}:
+            self.handle_gitnexus_command(["skip"])
+            return True
+        if normalized in {"d", "status"}:
+            self.handle_gitnexus_command(["status"])
+            return True
+        if normalized in {"e"}:
+            self.assistant_say("Custom GitNexus choice: use `/gitnexus explain`, `/gitnexus enhance`, `/gitnexus skip`, `/gitnexus status`, or type the extra detail you want.")
+            return True
+        return False
+
+    def _handle_rewrite_letter_choice(self, note: str) -> bool:
+        """Accept ``A`` / ``1B`` style rewrite choices after /map."""
+        pending = self._pending_rewrite_recommendations()
+        if not pending:
+            return False
+        recommendation_id, letter = parse_compact_letter_choice(note)
+        if not letter:
+            return False
+        if recommendation_id is None:
+            if len(pending) != 1:
+                return False
+            recommendation_id = pending[0]["id"]
+        recommendation = next((rec for rec in pending if rec["id"] == recommendation_id), None)
+        if not recommendation:
+            self.assistant_say("No pending rewrite recommendation exists for that ID.")
+            return True
+        if letter in {"A", "B", "C"}:
+            self.choose_rewrite_mode(recommendation_id, letter)
+            return True
+        if letter == "D":
+            if len(pending) == 1:
+                self.assistant_say("Kept the rewrite choice pending. Reply with `A`, `B`, or `C` when you are ready.")
+            else:
+                self.assistant_say(
+                    f"Kept rewrite recommendation [{recommendation_id}] pending. Reply with `{recommendation_id}A`, `{recommendation_id}B`, or `{recommendation_id}C` when you are ready."
+                )
+            return True
+        if len(pending) == 1:
+            self.assistant_say(
+                f"Custom rewrite choice: use `/rewrite {recommendation_id} update|iteration-log|merge`, or add the detail you want in plain text."
+            )
+        else:
+            self.assistant_say(
+                f"Custom rewrite choice: use `/rewrite {recommendation_id} update|iteration-log|merge`, or add the detail you want in plain text."
+            )
+        return True
+
     def handle_note(self, note: str) -> None:
         """Process a line that is NOT a slash-command.
 
-        If a GitNexus decision is pending and the user typed 'yes' or
-        'skip', route it there.  If a review target is active, treat
-        the text as editorial feedback.  Otherwise save it as an intake
-        or planning note and optionally ask the AI for guidance.
+        If a GitNexus decision is pending and the user typed a short
+        choice like A-E, yes, or skip, route it there.  If a review
+        target is active, treat the text as editorial feedback.
+        Otherwise save it as an intake or planning note and optionally
+        ask the AI for guidance.
         """
         self.user_said(note)
         normalized = note.strip().lower()
         if self._gitnexus_decision_pending():
-            if normalized in {"yes", "y", "proceed", "approve"}:
-                self.handle_gitnexus_command(["enhance"])
-                return
-            if normalized in {"skip", "no", "n"}:
-                self.handle_gitnexus_command(["skip"])
+            if self._handle_gitnexus_letter_choice(normalized):
                 return
         if self.state.active_review_key:
             self.revise_active_draft(note)
             return
+        if self._handle_rewrite_letter_choice(note):
+            return
 
+        expanded_note = contextualize_choice_reply(note, self.state.chat_history)
         if self.state.phase in {"intake", "scanned"}:
-            self.state.intake_notes.append(note)
+            self.state.intake_notes.append(expanded_note)
         else:
-            self.state.planning_notes.append(note)
+            self.state.planning_notes.append(expanded_note)
         self.save()
 
         if self.ai_client.enabled and not self._gitnexus_decision_pending():
@@ -3253,7 +3437,9 @@ class CyborgAgent:
                         f"""
                         Current phase: {self.state.phase}
                         Repo path: {self.state.repo_path}
-                        Last user note: {note}
+                        Last user note: {expanded_note}
+                        Recent chat context:
+                        {recent_chat_excerpt(self.state.chat_history, limit=6)}
                         Intake notes: {json.dumps(self.state.intake_notes[-6:], indent=2)}
                         Planning notes: {json.dumps(self.state.planning_notes[-6:], indent=2)}
                         Content map summary: {short_preview(self.state.content_map.get('summary', ''), 320)}
@@ -3428,15 +3614,40 @@ def load_session(blog_root: Path, session_id: Optional[str], *, interactive: boo
         session_dir = blog_root / "drafts" / "ingest" / session_id
     elif interactive:
         print("Saved sessions:")
-        for index, session_dir in enumerate(sessions, start=1):
-            print(f"  [{index}] {session_dir.name}")
-        answer = prompt_input("Resume which session number? ").strip()
-        if not answer.isdigit():
-            raise ValueError("Resume requires a numeric choice.")
-        choice = int(answer)
-        if choice < 1 or choice > len(sessions):
-            raise ValueError(f"Resume choice must be between 1 and {len(sessions)}.")
-        session_dir = sessions[choice - 1]
+        preview_sessions = sessions[:4]
+        for index, preview_dir in enumerate(preview_sessions):
+            print(f"  {chr(ord('A') + index)}. {preview_dir.name}")
+        if len(sessions) > 4:
+            print("  E. Another session number or exact session ID")
+        else:
+            print("  E. Enter an exact session ID")
+        answer = prompt_input("Resume which session? ").strip()
+        normalized = answer.lower()
+        if normalized in {"a", "b", "c", "d"}:
+            choice_index = ord(normalized) - ord("a")
+            if choice_index >= len(preview_sessions):
+                raise ValueError("That letter is not available for the current session list.")
+            session_dir = preview_sessions[choice_index]
+        elif normalized == "e":
+            custom = prompt_input("Enter a session number or exact session ID: ").strip()
+            if not custom:
+                raise ValueError("Resume selection cancelled.")
+            if custom.isdigit():
+                choice = int(custom)
+                if choice < 1 or choice > len(sessions):
+                    raise ValueError(f"Resume choice must be between 1 and {len(sessions)}.")
+                session_dir = sessions[choice - 1]
+            else:
+                session_dir = blog_root / "drafts" / "ingest" / custom
+        elif answer.isdigit():
+            choice = int(answer)
+            if choice < 1 or choice > len(sessions):
+                raise ValueError(f"Resume choice must be between 1 and {len(sessions)}.")
+            session_dir = sessions[choice - 1]
+        elif answer:
+            session_dir = blog_root / "drafts" / "ingest" / answer
+        else:
+            raise ValueError("Resume selection cancelled.")
     else:
         session_dir = sessions[0]
     session_file = session_dir / "session.json"

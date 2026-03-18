@@ -111,7 +111,7 @@ cyborg resume 20260315-101500-rockit-abc123
 
 `cyborg resume` behavior:
 
-- interactive terminal + no session ID: shows a numbered session list
+- interactive terminal + no session ID: shows an A-E session picker for the newest saved sessions
 - non-interactive + no session ID: reopens the newest saved session
 - explicit session ID: loads that exact session
 
@@ -201,6 +201,13 @@ The intended workflow is:
 12. run `/apply drafts --yes`, `/apply links --yes`, or `/apply all --yes`
 13. run `cyborg resume <session-id>` later if the session goes cold
 
+Accessibility input pattern:
+
+- when `cyborg` asks a clarifying or approval question, it now prefers `A/B/C/D/E` choices
+- you can answer with the letter only when that is easier than typing a full command
+- `E` always means a custom answer, command, or extra detail
+- built-in cases include GitNexus approval, rewrite-mode selection, apply confirmation, and interactive resume selection
+
 ## Interactive Commands
 
 ### `/help`
@@ -241,10 +248,28 @@ Typical flow when `cyborg` starts in a git repo without a healthy index:
 2. `cyborg` prints the approval prompt
 3. you choose `/gitnexus enhance`, `/gitnexus refresh`, or `/gitnexus skip`
 
+Accessible answer pattern:
+
+- `A` explain the plan
+- `B` approve the enhancement or refresh step
+- `C` skip GitNexus for this session
+- `D` show GitNexus status again
+- `E` give a custom answer or command
+
 Failure behavior:
 
 - if enhancement fails, `cyborg` stops and offers retry, native continuation, or session stop
 - when possible, it also attempts to clean partial GitNexus state created during a failed first-time setup
+
+Strong rewrite matches also accept compact letter answers:
+
+- when there is one pending rewrite choice, reply with `A`, `B`, or `C`
+- when there are multiple pending rewrite choices, reply with forms like `1A` or `2C`
+- `A` = update in place
+- `B` = iteration log
+- `C` = merge via links only
+- `D` = leave pending
+- `E` = custom note or explicit `/rewrite` command
 
 ### `/scan`
 

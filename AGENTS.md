@@ -252,7 +252,7 @@ dhp_dispatch \
 ### Specialized Standalone Agents
 
 - Repo-specific agents may live directly in `bin/` when they own an interactive workflow that does not fit the shared `dhp-*` dispatcher contract.
-- `bin/cyborg` is the dedicated Cyborg Lab ingest/resume agent. It stages session state under `my-ms-ai-blog/drafts/ingest/` and only writes to the blog repo on explicit apply.
+- `bin/cyborg` is the dedicated Cyborg Lab ingest/resume agent. It stages session state under `my-ms-ai-blog/drafts/ingest/`, only writes to the blog repo on explicit apply, and should prefer accessible `A/B/C/D/E` short-choice prompts when it asks the user to choose.
 
 ---
 

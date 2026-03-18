@@ -805,8 +805,9 @@ cyborg resume 20260315-101500-rockit-abc123
 - Repo is source of truth when repo and article draft are both present
 - git repos get an automatic zero-write GitNexus health check on ingest/resume
 - stale or missing GitNexus state pauses repo-backed flow until you choose `/gitnexus enhance`, `/gitnexus refresh`, or `/gitnexus skip`
+- when `cyborg` asks for a built-in choice, it prefers `A/B/C/D/E` answers so you can reply with a single letter; `E` means custom detail or command
 - Existing-page edits are recommended first, then generated only for selected pages
-- strong existing-page matches can be routed into `update`, `iteration-log`, or `merge` modes with `/rewrite`
+- strong existing-page matches can be routed into `update`, `iteration-log`, or `merge` modes with `/rewrite` or compact answers like `A` / `1B`
 - Drafts stay pending until explicit apply
 - `cyborg` is Cyborg-Lab-specific, not a general dispatcher
 - use `--stdin-source` if you want to pipe supporting markdown before the interactive session starts
