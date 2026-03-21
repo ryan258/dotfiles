@@ -28,16 +28,17 @@ It is not a general dispatcher. It is a repo-aware writing workflow that stays f
 
 `cyborg resume` reopens a saved session and lets you continue the same content graph, draft set, and editorial loop later.
 
-`cyborg auto` runs the full pipeline hands-free. It chains scan, map, plan, draft, and link recommendations automatically — making safe default choices at every decision point — and only pauses with a single A-E confirmation before writing anything into the blog repo. If Morphling is available, it runs a pre-analysis first to enrich the AI context. Designed for low-energy or brain-fog sessions when you need AI to take the wheel.
+`cyborg auto` is now code-first. It scans the repo, plans source-repo improvements, stages the top code change, and stops there by default so the repo can be reviewed or updated before documentation drifts ahead. If Morphling is available, it runs a pre-analysis first to enrich that repo understanding. Add `--docs-after-code` when you want the full docs pipeline to continue after the code stage.
 
 ```bash
-cyborg auto                          # current dir, full autopilot
+cyborg auto                          # current dir, code-first autopilot
 cyborg auto --repo ~/Projects/foo    # specific repo
-cyborg auto --yes                    # skip even the final confirm
+cyborg auto --yes                    # apply staged code edits and stop
+cyborg auto --docs-after-code        # continue into map/plan/draft after code
 cyborg auto --no-morphling           # skip Morphling pre-analysis
 ```
 
-`cyborg auto --build` goes one step further: pitch an idea, and Morphling scaffolds the project in `~/Projects/` first, then Cyborg documents it. Idea to blog-ready content in a single command.
+`cyborg auto --build` goes one step further: pitch an idea, and Morphling scaffolds the project in `~/Projects/` first, then Cyborg runs the same code-first pass against that new repo. Add `--docs-after-code` if you also want the documentation pipeline in the same run.
 
 ```bash
 cyborg auto --build "a CLI that tracks daily energy with spoon theory"
@@ -52,7 +53,7 @@ Use `cyborg` when you have one of these starting points:
 - a repo you built and want to decompose into Cyborg Lab content
 - a fact-checked markdown draft that should become repo-linked Cyborg Lab pages
 - a plain idea that needs to be worked into a publishable content plan
-- just an idea — Morphling builds the project, Cyborg documents it (`--build`)
+- just an idea — Morphling builds the project, Cyborg improves it first and can document it after (`--build`)
 
 The default source-of-truth rule is:
 
@@ -66,14 +67,14 @@ The default source-of-truth rule is:
 - the launcher expects `/Users/ryanjohnson/dotfiles/scripts/lib/config.sh`
 - the target Cyborg Lab repo must have a `content/` directory
 - AI mode needs `OPENROUTER_API_KEY`
-- GitNexus enhancement needs the `gitnexus` CLI reachable via `npx gitnexus`
+- GitNexus enhancement needs `npx`; Cyborg pins `gitnexus@1.4.7` internally
 
 The launcher resolves the model in this order:
 
 1. `CYBORG_MODEL`
 2. `CONTENT_MODEL`
 3. `STRATEGY_MODEL`
-4. fallback: `moonshotai/kimi-k2:free`
+4. `DEFAULT_MODEL` via the shared env/config loader fallback chain
 
 ## Git Repo Enhancement Model
 
@@ -187,17 +188,18 @@ cyborg ingest "focus on the setup path and the reusable command sheet"
 
 ### 6. Autopilot Mode
 
-`cyborg auto` accepts the same input sources as `cyborg ingest` (`--repo`, `--file`, `--stdin-source`, plain idea text) but runs the full pipeline without interactive prompts. If Morphling (`uv` + `ai-staff-hq/`) is available, the launcher calls it first for a repo pre-analysis that enriches the AI context. Use `--no-morphling` to skip it, or `--yes` to also skip the final apply confirmation.
+`cyborg auto` accepts the same input sources as `cyborg ingest` (`--repo`, `--file`, `--stdin-source`, plain idea text) but now defaults to a code-first path. It scans the repo, stages the top source-repo improvement, and then stops unless there are no staged repo edits. Use `--docs-after-code` when you want the content-map, publishing-plan, and draft phases in the same run. If Morphling (`uv` + `ai-staff-hq/`) is available, the launcher calls it first for a repo pre-analysis that enriches the repo context. Use `--no-morphling` to skip it, or `--yes` to apply the staged code edits without a final confirmation.
 
 ```bash
 cyborg auto --repo ~/Projects/rockit "focus on the CLI setup path"
 cyborg auto --repo ~/Projects/rockit --yes
+cyborg auto --repo ~/Projects/rockit --docs-after-code
 cat brief.md | cyborg auto --stdin-source --repo .
 ```
 
 ### 7. Build Mode (Idea to Project to Blog)
 
-`cyborg auto --build` takes just an idea and does everything: Morphling scaffolds a working project in `~/Projects/`, then Cyborg runs the full autopilot pipeline on it. Requires AI mode (`OPENROUTER_API_KEY`).
+`cyborg auto --build` takes just an idea and does everything: Morphling scaffolds a working project in `~/Projects/`, then Cyborg runs the code-first autopilot against it. Requires AI mode (`OPENROUTER_API_KEY`). Add `--docs-after-code` if you also want the documentation pass in that same run.
 
 ```bash
 cyborg auto --build "a CLI that tracks daily energy with spoon theory"

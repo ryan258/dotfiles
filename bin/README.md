@@ -51,7 +51,7 @@ This directory contains 13 core AI dispatcher scripts (including `dhp-morphling.
 **Purpose:** Debug code, optimize scripts, provide technical analysis
 
 **Input:** Reads from stdin
-**Model:** `TECH_MODEL` (default: `moonshotai/kimi-k2:free`)
+**Model:** `TECH_MODEL` (default: `nvidia/nemotron-3-super-120b-a12b:free`)
 **Specialist:** `ai-staff-hq/staff/tech/automation-specialist.yaml`
 
 **Usage:**
@@ -85,7 +85,7 @@ echo "TypeError: undefined is not a function" | tech
 **Purpose:** Generate complete story packages with beat sheets, characters, sensory details
 
 **Input:** Story idea or logline as argument
-**Model:** `CREATIVE_MODEL` (default: `moonshotai/kimi-k2:free`)
+**Model:** `CREATIVE_MODEL` (default: `nvidia/nemotron-3-super-120b-a12b:free`)
 **Specialists:** Chief of Staff, Narrative Designer, Creative Strategist, Meditation Instructor
 **Output Location:** Configurable via `CREATIVE_OUTPUT_DIR` (default: `~/Projects/creative-writing/`)
 
@@ -172,7 +172,7 @@ echo "SaaS tool for content creators - convert visitors" | aicopy
 **Purpose:** SEO-optimized evergreen guides and blog content
 
 **Input:** Topic as argument
-**Model:** `CONTENT_MODEL` (default: `moonshotai/kimi-k2:free`)
+**Model:** `CONTENT_MODEL` (default: `nvidia/nemotron-3-super-120b-a12b:free`)
 **Specialists:** Chief of Staff, Market Analyst, Copywriter
 **Output Location:** Configurable via `CONTENT_OUTPUT_DIR` (falls back to `$BLOG_DIR/content/guides/`)
 
@@ -208,7 +208,7 @@ dhp-content.sh --stream --context "Advanced Git workflows"
 **Purpose:** Strategic analysis, insights, patterns, and actionable recommendations
 
 **Input:** Reads from stdin
-**Model:** `STRATEGY_MODEL` (defaults to `DEFAULT_MODEL` / `moonshotai/kimi-k2:free`)
+**Model:** `STRATEGY_MODEL` (defaults to `DEFAULT_MODEL` / `nvidia/nemotron-3-super-120b-a12b:free`)
 **Specialist:** `ai-staff-hq/staff/strategy/chief-of-staff.yaml`
 
 **Usage:**
@@ -320,7 +320,7 @@ echo "Who's searching for AI writing assistance?" | market
 **Purpose:** Tax and admin strategy (S‑Corp, R&D credits, Medicare SGA constraints)
 
 **Input:** Reads from stdin or arguments
-**Model:** `FINANCE_MODEL` (default: `moonshotai/kimi-k2:free`)
+**Model:** `FINANCE_MODEL` (default: `nvidia/nemotron-3-super-120b-a12b:free`)
 **Usage:**
 
 ```bash
@@ -431,7 +431,7 @@ cat error.log | morphling
 **Purpose:** Universal "shapeshifting" specialist that auto-adapts to any task by analyzing context
 
 **Input:** Task description as argument
-**Model:** `MORPHLING_MODEL` (default: `moonshotai/kimi-k2:free`)
+**Model:** `MORPHLING_MODEL` (default: `nvidia/nemotron-3-super-120b-a12b:free`)
 **Specialist:** `ai-staff-hq/staff/meta/morphling.yaml`
 **Output Location:** `~/Documents/AI_Staff_HQ_Outputs/Morphling/`
 
@@ -521,13 +521,13 @@ All dispatchers require:
 2. **Model Configuration** in `.env`:
 
    ```bash
-   DEFAULT_MODEL=moonshotai/kimi-k2:free
-   TECH_MODEL=moonshotai/kimi-k2:free
-   CREATIVE_MODEL=moonshotai/kimi-k2:free
-   CONTENT_MODEL=moonshotai/kimi-k2:free
-   STRATEGY_MODEL=moonshotai/kimi-k2:free
-   BRAND_MODEL=moonshotai/kimi-k2:free   # Optional brand override
-   MORPHLING_MODEL=moonshotai/kimi-k2:free
+   DEFAULT_MODEL=nvidia/nemotron-3-super-120b-a12b:free
+   TECH_MODEL=nvidia/nemotron-3-super-120b-a12b:free
+   CREATIVE_MODEL=nvidia/nemotron-3-super-120b-a12b:free
+   CONTENT_MODEL=nvidia/nemotron-3-super-120b-a12b:free
+   STRATEGY_MODEL=nvidia/nemotron-3-super-120b-a12b:free
+   BRAND_MODEL=nvidia/nemotron-3-super-120b-a12b:free   # Optional brand override
+   MORPHLING_MODEL=nvidia/nemotron-3-super-120b-a12b:free
    ```
 
 3. **AI-Staff-HQ Submodule** at `~/dotfiles/ai-staff-hq/`

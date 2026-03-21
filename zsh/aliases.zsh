@@ -111,7 +111,16 @@ alias gd="git diff"                       # Unstaged changes vs last commit
 alias gb="git branch"                     # List or create branches
 alias gco="git checkout"                  # Switch branches or restore files
 alias glog="git log --oneline"            # Compact one-line-per-commit log
-alias gn="npx gitnexus analyze"           # Analyze repo with GitNexus
+# GitNexus helper: `gn` analyzes the current repo; `gn --audit` audits workspace health
+gn() {
+  if [[ "$1" == "--audit" ]]; then
+    shift
+    /Users/ryanjohnson/Projects/bin/gitnexus_audit.py /Users/ryanjohnson/Projects "$@"
+  else
+    npx --yes --package="${CYBORG_GITNEXUS_PACKAGE:-gitnexus@1.4.7}" gitnexus analyze "$@"
+  fi
+}
+alias rboot="$HOME/Projects/bin/repo-bootstrap.sh"  # Bootstrap a new repo scaffold
 
 # =============================================================================
 # TEXT EDITING & VIEWING
@@ -197,7 +206,7 @@ alias todolist="todo.sh list"             # List all open tasks
 alias tododone="todo.sh done"             # Mark a task as completed
 alias todoadd="todo.sh add"              # Add a new task
 alias journal="journal.sh"               # Journal entry point
-alias break="take_a_break.sh"            # Flexible break timer (default duration)
+alias tbreak="take_a_break.sh"           # Flexible break timer (default duration)
 alias focus="focus.sh"                    # Focus mode — block distractions
 
 # --- Time Tracking (task-level start/stop timers) ---

@@ -9,9 +9,9 @@ source "$(dirname "$0")/dhp-shared.sh"
 
 dhp_dispatch \
     "Narrative Design" \
-    "moonshotai/kimi-k2:free" \
+    "NARRATIVE" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Creative/Narratives" \
-    "CREATIVE_MODEL" \
+    "NARRATIVE_MODEL" \
     "DHP_NARRATIVE_OUTPUT_DIR" \
     "
 --- NARRATIVE DESIGN OBJECTIVES ---

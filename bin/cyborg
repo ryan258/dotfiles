@@ -30,9 +30,9 @@ fi
 # Tell the Python agent which directory the user was in when they
 # typed the command, so it can find the right repo to scan.
 export USER_CWD="$(pwd)"
-# Pick the AI model to use. Try CYBORG_MODEL first, then fall back
-# through CONTENT_MODEL, STRATEGY_MODEL, and finally a free default.
-export CYBORG_MODEL="${CYBORG_MODEL:-${CONTENT_MODEL:-${STRATEGY_MODEL:-moonshotai/kimi-k2:free}}}"
+# Pick the AI model to use from env/config. Prefer an explicit Cyborg
+# override, then the content/strategy lanes, then the shared default.
+export CYBORG_MODEL="${CYBORG_MODEL:-$(get_model CONTENT)}"
 
 # --- Morphling pre-analysis for autopilot mode (convergence path 1) ---
 #

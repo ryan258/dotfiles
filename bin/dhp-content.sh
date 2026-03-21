@@ -209,7 +209,7 @@ export USE_BRAIN
 
 dhp_dispatch \
     "Content Workflow" \
-    "moonshotai/kimi-k2:free" \
+    "CONTENT" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Content/Guides" \
     "CONTENT_MODEL" \
     "DHP_CONTENT_OUTPUT_DIR" \

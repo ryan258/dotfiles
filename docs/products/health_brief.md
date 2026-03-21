@@ -1,6 +1,6 @@
 # Product Brief: Health.sh
 
-**Version:** 2.1.0
+**Version:** 2.2.0
 **Status:** Enterprise Grade / Production Ready
 **One-Liner:** A bio-rhythm intelligence tool that correlates energy levels with productivity output to prevent burnout.
 
@@ -64,7 +64,7 @@ It turns "listening to your body" from a vague concept into a hard data point. I
 
 ## Related Docs
 
-- [MS-Friendly Features](../ms-friendly-features.md)
-- [System Overview](../system-overview.md)
-- [Start Here](../start-here.md)
+- [General Reference Handbook](../general-reference-handbook.md) — MS-friendly features and energy management
+- [Daily Loop Handbook](../daily-loop-handbook.md) — Daily workflow integration
+- [Energy-Contingent Roadmap](../ROADMAP-ENERGY.md) — Task selection by energy level
 - [Troubleshooting](../../TROUBLESHOOTING.md)

@@ -9,7 +9,7 @@ source "$(dirname "$0")/dhp-shared.sh"
 
 dhp_dispatch \
     "Creative Workflow" \
-    "moonshotai/kimi-k2:free" \
+    "CREATIVE" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Creative/Stories" \
     "CREATIVE_MODEL" \
     "DHP_CREATIVE_OUTPUT_DIR" \

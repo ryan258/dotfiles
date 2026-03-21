@@ -8,15 +8,9 @@ Welcome to the comprehensive guide for using the AI Staff HQ and dispatchers wit
 
 Your AI assistants are available from the command line across your entire system. They are specialized personas connected via the OpenRouter API.
 
-### Primary Command
+### Direct Aliases (Primary Entry Points)
 
-```bash
-dispatch <squad> "brief"
-```
-
-### Direct Aliases
-
-For the fastest access, use these direct aliases which map straightforwardly to specific personas:
+The fastest way to use AI — single-word aliases that invoke specialized dispatchers directly:
 
 - `tech` - Technical architecture, coding, debugging
 - `content` - Long-form writing, blog posts, essays
@@ -30,6 +24,15 @@ For the fastest access, use these direct aliases which map straightforwardly to 
 - `aicopy` - Short-form copywriting, ads, emails
 - `finance` - Financial analysis, bookkeeping, S-Corp advice
 - `morphling` - Universal interactive specialist
+- `memory` / `memory-search` - Knowledge base store and recall
+
+### Generic Entry Point
+
+```bash
+dispatch <squad> "brief"
+```
+
+Use `dispatch` when routing through `squads.json` or when you need the unified entry point. For daily use, the aliases above are faster.
 
 ### Common Flags
 
@@ -417,7 +420,7 @@ Keep this doc up to date if Hugo paths or workflows change. It should be the one
 
 ## 📚 Dispatcher Technical Reference
 
-This directory contains 12 core AI dispatcher scripts (including `dhp-morphling.sh` and `dhp-finance.sh`) plus 4 advanced orchestration features that provide instant access to specialized AI professionals from the [AI-Staff-HQ](https://github.com/ryan258/AI-Staff-HQ) workforce. Each dispatcher is a high-speed orchestration layer that connects your workflow to the right specialist via OpenRouter API.
+This directory contains 13 core AI dispatcher scripts (including `dhp-morphling.sh`, `dhp-finance.sh`, and `dhp-memory.sh`) plus 4 advanced orchestration features that provide instant access to specialized AI professionals from the [AI-Staff-HQ](https://github.com/ryan258/AI-Staff-HQ) workforce. Each dispatcher is a high-speed orchestration layer that connects your workflow to the right specialist via OpenRouter API.
 
 **Status:** ✅ 12/12 Core Dispatchers Active + 4 Advanced Features (Phases 1-3, 5-6 Complete)
 

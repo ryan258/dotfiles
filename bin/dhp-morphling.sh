@@ -54,7 +54,7 @@ $Current_Dir
 
 dhp_dispatch \
     "Morphling Agent" \
-    "moonshotai/kimi-k2:free" \
+    "MORPHLING" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Morphling" \
     "MORPHLING_MODEL" \
     "DHP_MORPHLING_OUTPUT_DIR" \

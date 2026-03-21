@@ -9,7 +9,7 @@ source "$(dirname "$0")/dhp-shared.sh"
 
 dhp_dispatch \
     "Brand Strategy" \
-    "moonshotai/kimi-k2:free" \
+    "BRAND" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Strategy/Brand" \
     "BRAND_MODEL" \
     "DHP_BRAND_OUTPUT_DIR" \

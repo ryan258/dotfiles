@@ -23,6 +23,11 @@
 ### Aliases
 
 - Build aliases renamed from `build`/`buildy` to `apb`/`apby` to avoid shadowing common system tools. Pattern: `ap` (auto), `apy` (auto+yes), `apb` (auto+build), `apby` (auto+build+yes).
+- Break alias renamed from `break` to `tbreak` to avoid shadowing the shell builtin keyword.
+
+### Configuration
+
+- Added configuration support for `COPY_MODEL` and `NARRATIVE_MODEL` to allow explicit model overrides for copy and narrative generation tasks.
 
 ### Robustness
 

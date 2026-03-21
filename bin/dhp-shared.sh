@@ -226,10 +226,10 @@ dhp_save_artifact() {
 }
 
 # Centralized Dispatcher Function
-# Usage: dhp_dispatch "SERVICE_NAME" "DEFAULT_MODEL" "OUTPUT_DIR_BASE" "ENV_MODEL_VAR" "ENV_OUTPUT_VAR" "SYSTEM_BRIEF" "DEFAULT_TEMP" -- "$@"
+# Usage: dhp_dispatch "SERVICE_NAME" "MODEL_TYPE" "OUTPUT_DIR_BASE" "ENV_MODEL_VAR" "ENV_OUTPUT_VAR" "SYSTEM_BRIEF" "DEFAULT_TEMP" -- "$@"
 dhp_dispatch() {
     local service_name="$1"
-    local default_model="$2"
+    local model_type="${2:-DEFAULT}"
     local output_base="$3"
     local env_model_var="$4"
     local env_output_var="$5"
@@ -283,7 +283,7 @@ dhp_dispatch() {
     elif [ -n "$strategy_override" ]; then
         model_final="$strategy_override"
     else
-        model_final="$default_model"
+        model_final="$(get_model "$model_type")"
     fi
     
     # Resolve Output Directory

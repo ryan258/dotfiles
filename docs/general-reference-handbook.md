@@ -10,10 +10,13 @@ This is a derived architecture view. Canonical contracts live in `../CLAUDE.md`.
 
 ```text
 Terminal (zsh)
-  -> aliases + wrappers (`zsh/aliases.zsh`)
-  -> scripts (`scripts/*.sh`)
-  -> AI dispatchers (`bin/dhp-*.sh`, `bin/dispatch.sh`)
-  -> data (`~/.config/dotfiles-data/*`)
+  -> aliases + functions (zsh/aliases.zsh — ~200 aliases)
+  -> 66 CLI scripts (scripts/*.sh)
+  -> 21 shared libraries (scripts/lib/*.sh)
+  -> 13 AI dispatchers + orchestration (bin/dhp-*.sh)
+  -> Cyborg Lab agent (bin/cyborg + scripts/cyborg_agent.py)
+  -> Brain/knowledge base (brain/ — ChromaDB vector store)
+  -> data (~/.config/dotfiles-data/ — pipe-delimited flat files)
 ```
 
 ## Daily Coaching Flow
@@ -50,6 +53,75 @@ goodevening
 - Timeout/error/missing dispatcher returns deterministic structured output.
 - User input is sanitized before persistence.
 - Paths are validated before file writes.
+
+## 🤖 Cyborg Lab Agent
+
+The Cyborg Lab agent (`bin/cyborg` + `scripts/cyborg_agent.py`) is a ~4,900-line Python interactive agent for content ingestion. It scans a source repo, proposes a content graph for the Hugo blog, stages near-publishable drafts, and only writes to `my-ms-ai-blog` on explicit apply.
+
+### Key Commands
+
+```bash
+cyborg                    # Interactive REPL mode
+cyborg auto               # Full pipeline hands-free (low-energy sessions)
+cyborg auto --build       # Morphling scaffolding + Cyborg documentation convergence
+cyborg resume             # Resume a previous session
+```
+
+### Features
+
+- GitNexus integration for codebase analysis
+- Token caching and draft loop optimization
+- Accessible A/B/C/D/E short-choice prompts
+- Session state persistence for resume capability
+- OpenRouter API integration with configurable models
+
+See [`bin/cyborg-readme.md`](../bin/cyborg-readme.md) for full documentation.
+
+---
+
+## 🚀 Autopilot Mode (Brain-Fog Days)
+
+When energy is too low for interactive work, autopilot mode runs the full Morphling + Cyborg pipeline with minimal interaction.
+
+### Aliases
+
+| Alias | Action |
+| ----- | ------ |
+| `ap`  | Auto-document current repo |
+| `apy` | Auto-document, auto-confirm all prompts |
+| `apb "idea"` | Build + document a project from an idea |
+| `apby "idea"` | Build + document, auto-confirm |
+| `apc` | Continue/resume a previous autopilot session |
+
+### How It Works
+
+1. **Morphling pre-analysis** scans the repo and generates a project overview
+2. **Cyborg agent** uses that analysis to propose a content graph
+3. Drafts are staged for review (or auto-applied with `-y` flag)
+4. Only writes to the blog repo on explicit apply
+
+See [`docs/autopilot-happy-path.md`](autopilot-happy-path.md) for the cheat sheet and [`bin/autopilot-readme.md`](../bin/autopilot-readme.md) for the convergence architecture.
+
+---
+
+## 🧠 Brain / Knowledge Base
+
+The `brain/` directory contains a ChromaDB vector database for cross-project memory and knowledge retrieval.
+
+### Commands
+
+```bash
+memory "Store this insight for later"    # Save to knowledge base
+memory-search "energy tracking"          # Search stored memories
+```
+
+### Integration
+
+- Used by dispatchers via `dhp-memory.sh` and `dhp-memory-search.sh`
+- Stores insights, decisions, and context across projects
+- See [`brain/HANDBOOK.md`](../brain/HANDBOOK.md) for usage details
+
+---
 
 ## 🧠 MS-Friendly Features & Accessibility
 
@@ -336,7 +408,7 @@ todo debug 3           # AI analyzes task 3
 todo delegate 5 tech   # Send task 5 to tech AI
 ```
 
-**All 12 AI dispatchers are free-tier.** Use them without guilt.
+**All 13 AI dispatchers are free-tier.** Use them without guilt.
 
 ---
 
@@ -804,19 +876,21 @@ ai-suggest             # What should I do next?
 
 **Documentation:**
 
-- `docs/start-here.md` - Feature Discovery section
-- `docs/daily-cheatsheet.md` - One-page reference
-- `docs/happy-path.md` - Daily walkthrough
+- `docs/README.md` - Documentation index and orientation
+- `docs/daily-loop-handbook.md` - Daily workflow walkthrough
+- `docs/ai-handbook.md` - AI dispatcher usage and patterns
+- `docs/autopilot-happy-path.md` - Low-energy automation cheat sheet
 - `TROUBLESHOOTING.md` - Common issues
 
 ---
 
 #### Related Docs
 
-- [Start Here](start-here.md)
-- [Daily Cheat Sheet](daily-cheatsheet.md)
-- [Happy Path](happy-path.md)
-- [System Overview](system-overview.md)
+- [Documentation Index](README.md)
+- [Daily Loop Handbook](daily-loop-handbook.md)
+- [AI Handbook](ai-handbook.md)
+- [Autopilot Happy Path](autopilot-happy-path.md)
+- [Energy-Contingent Roadmap](ROADMAP-ENERGY.md)
 - [Troubleshooting](../TROUBLESHOOTING.md)
 
 ---
@@ -837,7 +911,7 @@ This guide covers proven strategies for maximizing productivity, maintaining dat
 >
 > **Security Note:** For detailed information on security practices, how to report vulnerabilities, and credential management, please refer to our [Security Policy](../../SECURITY.md).
 
-**Last Updated:** January 1, 2026
+**Last Updated:** March 20, 2026
 
 ---
 
@@ -935,7 +1009,7 @@ echo "challenge" | stoic       # For mindset
 
 ❌ **DON'T:**
 
-- Try to learn all 12 dispatchers at once
+- Try to learn all 13 dispatchers at once
 - Set up complex chaining workflows
 - Integrate AI into every workflow immediately
 

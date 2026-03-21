@@ -85,32 +85,21 @@ GITHUB_EXCLUDE_FORKS="${GITHUB_EXCLUDE_FORKS:-true}"
 # Model Configuration - SINGLE SOURCE OF TRUTH
 #=============================================================================
 
+MODEL_FALLBACK="${MODEL_FALLBACK:-nvidia/nemotron-3-super-120b-a12b:free}"
+
 # Get model for a dispatcher type
 # Usage: model=$(get_model "TECH")
 get_model() {
     local type="${1:-DEFAULT}"
     local env_var="${type}_MODEL"
 
-    # Check environment first, then defaults
     if [[ -n "${!env_var:-}" ]]; then
         echo "${!env_var}"
-        return
+    elif [[ -n "${DEFAULT_MODEL:-}" ]]; then
+        echo "${DEFAULT_MODEL}"
+    else
+        echo "${MODEL_FALLBACK}"
     fi
-
-    case "$type" in
-        TECH) echo "${TECH_MODEL:-moonshotai/kimi-k2:free}" ;;
-        STRATEGY) echo "${STRATEGY_MODEL:-moonshotai/kimi-k2:free}" ;;
-        CREATIVE) echo "${CREATIVE_MODEL:-moonshotai/kimi-k2:free}" ;;
-        CONTENT) echo "${CONTENT_MODEL:-moonshotai/kimi-k2:free}" ;;
-        STOIC) echo "${STOIC_MODEL:-moonshotai/kimi-k2:free}" ;;
-        RESEARCH) echo "${RESEARCH_MODEL:-moonshotai/kimi-k2:free}" ;;
-        MARKET) echo "${MARKET_MODEL:-moonshotai/kimi-k2:free}" ;;
-        BRAND) echo "${BRAND_MODEL:-moonshotai/kimi-k2:free}" ;;
-        COPY) echo "${COPY_MODEL:-moonshotai/kimi-k2:free}" ;;
-        NARRATIVE) echo "${NARRATIVE_MODEL:-moonshotai/kimi-k2:free}" ;;
-        MORPHLING) echo "${MORPHLING_MODEL:-moonshotai/kimi-k2:free}" ;;
-        DEFAULT|*) echo "${DEFAULT_MODEL:-moonshotai/kimi-k2:free}" ;;
-    esac
 }
 
 # Get temperature for a dispatcher type

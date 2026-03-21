@@ -9,7 +9,7 @@ source "$(dirname "$0")/dhp-shared.sh"
 
 dhp_dispatch \
     "Financial Strategy" \
-    "moonshotai/kimi-k2:free" \
+    "FINANCE" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Strategy/Finance" \
     "FINANCE_MODEL" \
     "DHP_FINANCE_OUTPUT_DIR" \

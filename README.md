@@ -1,29 +1,36 @@
 # Dotfiles: Brain-Fog-Friendly CLI System
 
-This repository is a shell-first operating system for daily execution, energy-aware pacing, and context recovery. It combines `startday`/`goodevening`, task+journal tracking, health signals, and AI dispatchers into a single workflow designed to reduce drift when brain fog is high.
+A shell-first productivity operating system for daily execution, energy-aware pacing, AI coaching, and automated content generation. Built for a developer with MS — designed to reduce cognitive load and keep things moving when brain fog is high.
 
 ## What It Does
 
-- Runs a daily execution loop (`startday` -> `status` -> `goodevening`)
-- Tracks task, journal, health, and spoon-budget signals in plain text files
-- Generates AI coaching with deterministic fallback when models fail/time out
-- Captures recent GitHub activity and local context to anchor daily planning
-- Provides dispatcher aliases (`tech`, `strategy`, `content`, etc.) for focused AI work
+- Runs a daily execution loop (`startday` -> `status` -> `goodevening`) with AI coaching and deterministic fallbacks
+- Tracks tasks, journal, health, and spoon-budget signals in plain text files
+- Provides 13 AI dispatchers (`tech`, `strategy`, `content`, `morphling`, etc.) via OpenRouter API
+- Generates grounded AI coaching that validates responses against actual data (rejects hallucinations)
+- Automates content generation from source repos via the Cyborg Lab agent
+- Offers brain-fog autopilot mode (`ap`, `apb`) — one command, AI does the rest
+
+## Architecture at a Glance
+
+```text
+Terminal (zsh)
+  -> aliases + functions (zsh/aliases.zsh — ~200 aliases)
+  -> 66 CLI scripts (scripts/*.sh)
+  -> 21 shared libraries (scripts/lib/*.sh)
+  -> 13 AI dispatchers + orchestration (bin/dhp-*.sh)
+  -> Cyborg Lab agent (bin/cyborg + scripts/cyborg_agent.py)
+  -> Brain/knowledge base (brain/ — ChromaDB vector store)
+  -> data (~/. config/dotfiles-data/ — pipe-delimited flat files)
+```
 
 ## Source of Truth
 
 - Canonical architecture/behavior contract: `CLAUDE.md`
 - Scope guardrails: `GUARDRAILS.md`
+- Feature roadmap: `ROADMAP.md`
 
 All other docs are derived views and must align to `CLAUDE.md`.
-
-## Daily Loop
-
-```bash
-startday
-status
-goodevening
-```
 
 ## Install Quickstart
 
@@ -39,25 +46,44 @@ dotfiles-check
 ## Prerequisites
 
 - macOS or Linux with Bash
-- `python3` available (used for robust date/time and timeout helpers)
+- `python3` available (used for Cyborg agent, date/time helpers, and coaching timeout handling)
 - Homebrew if using `bootstrap.sh` on macOS
-- Optional: OpenRouter API key for AI dispatchers
+- Optional: OpenRouter API key for AI dispatchers and coaching
+- Optional: `uv` for Morphling and ai-staff-hq integration
 
 ## Quick Start
 
-1. Validate setup: `dotfiles-check`
-2. Run morning routine: `startday`
-3. Work from `todo top` + `focus`
-4. Close day: `goodevening`
+```bash
+# Daily loop
+startday                          # Morning briefing + AI coaching
+status                            # Mid-day context recovery
+goodevening                       # Evening reflection + backup
+
+# Task management
+todo add "Fix the login bug"      # Add a task
+todo top                          # Show top priority
+focus set "Ship the API"          # Set daily focus
+
+# AI dispatchers
+tech "Why is this function slow?" # Technical analysis
+strategy "Should I refactor?"     # Strategic advice
+morphling "Analyze this repo"     # Universal adaptive specialist
+
+# Autopilot (brain-fog days)
+ap                                # Auto-document current repo
+apb "a CLI energy tracker"        # Build + document from idea
+```
 
 ## Key Docs
 
-- `docs/start-here.md` - 5-minute orientation
-- `docs/happy-path.md` - daily operating flow
-- `docs/ai-quick-reference.md` - dispatcher usage
-- `docs/system-overview.md` - architecture map
-- `TROUBLESHOOTING.md` - common failure modes + fixes
-- `CHANGELOG.md` - release history
+- `docs/README.md` - Documentation index and 5-minute orientation
+- `docs/daily-loop-handbook.md` - Morning, during-day, and evening workflows
+- `docs/ai-handbook.md` - AI dispatcher usage and patterns
+- `docs/autopilot-happy-path.md` - Low-energy automation cheat sheet
+- `docs/general-reference-handbook.md` - Full system reference
+- `TROUBLESHOOTING.md` - Common failure modes + fixes
+- `CHANGELOG.md` - Release history
+- `ROADMAP.md` - Feature roadmap and project status
 
 ## Tests
 
@@ -65,4 +91,4 @@ dotfiles-check
 bats tests/*.sh
 ```
 
-Run this after script/config changes to validate daily-flow and dispatcher behavior.
+37 test files covering coaching, dispatchers, cyborg, correlation, context, spoons, time tracking, and syntax validation.

@@ -5,9 +5,9 @@ source "$(dirname "$0")/dhp-shared.sh"
 
 dhp_dispatch \
     "Copywriting" \
-    "moonshotai/kimi-k2:free" \
+    "COPY" \
     "$HOME/Documents/AI_Staff_HQ_Outputs/Creative/Copywriting" \
-    "CREATIVE_MODEL" \
+    "COPY_MODEL" \
     "DHP_COPY_OUTPUT_DIR" \
     "
 --- COPYWRITING OBJECTIVES ---

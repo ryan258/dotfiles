@@ -47,6 +47,9 @@ OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 DEFAULT_COMMAND_TIMEOUT_SECONDS = 30
 # GitNexus analyze can be slow on big repos, so it gets extra time.
 GITNEXUS_ANALYZE_TIMEOUT_SECONDS = 180
+# Cyborg uses the same pinned GitNexus package as the shell helper.
+GITNEXUS_PACKAGE = os.environ.get("CYBORG_GITNEXUS_PACKAGE", "gitnexus@1.4.7")
+GITNEXUS_NPX_COMMAND = ["npx", "--yes", f"--package={GITNEXUS_PACKAGE}", "gitnexus"]
 # If the GitNexus index is older than this, we call it "stale."
 GITNEXUS_STALE_HOURS = 72
 # Repos bigger than 100 MB of source/docs skip auto-enhancement.
@@ -152,6 +155,8 @@ CONTENT_TYPES: dict[str, dict[str, str]] = {
         "tone": "integration/config page",
     },
 }
+# Default model if none is provided via environment.
+MODEL_FALLBACK = "nvidia/nemotron-3-super-120b-a12b:free"
 # ---------------------------------------------------------------------------
 # Morphling ↔ Cyborg convergence constants
 # ---------------------------------------------------------------------------
@@ -251,6 +256,19 @@ INTAKE_GUIDANCE = textwrap.dedent(
     - recommend the next command only when it is timely
     """
 ).strip()
+CODE_IMPROVEMENT_CONTRACT = textwrap.dedent(
+    """
+    You are a senior software engineer doing a code-first repo improvement pass.
+
+    Hard constraints:
+    - Prioritize real source-repo improvements before documentation polish.
+    - Use the repo scan, GitNexus graph signals, and Morphling context when available.
+    - Prefer concrete, testable improvements over broad rewrites.
+    - Keep scope tight: a few high-signal changes are better than a vague backlog.
+    - When staging code edits, only touch the files explicitly allowed in the prompt.
+    - Return valid JSON only when asked for JSON.
+    """
+).strip()
 # The text shown when the user types /help.
 HELP_TEXT = textwrap.dedent(
     """
@@ -259,6 +277,8 @@ HELP_TEXT = textwrap.dedent(
       /status               Show session status
       /gitnexus <subcmd>    Manage GitNexus enhancement state
       /scan                 Scan the source repo or current directory
+      /improve              Generate or refresh the source-repo improvement plan
+      /patch-code [id]      Stage pending source-repo edits for the top improvement or a chosen ID
       /map                  Generate or refresh the Cyborg Lab content map
       /plan                 Generate or refresh the publishing plan
       /draft [all|key ...]  Generate pending near-publishable drafts
@@ -267,7 +287,7 @@ HELP_TEXT = textwrap.dedent(
       /rewrite <id> <mode>  Choose update|iteration-log|merge for a strong match
       /review <key>         Make a draft active for editorial back-and-forth
       /show <key>           Print the current pending draft
-      /apply [target]       Write pending drafts or link edits into the blog repo
+      /apply [target]       Write staged source-repo edits or blog edits to disk
       /quit                 Save and exit
 
     Notes:
@@ -798,7 +818,7 @@ def load_blog_content_strategy(blog_root: Path) -> str:
 
 
 class GitNexusCli:
-    """Wrapper around the `npx gitnexus` command-line tool.
+    """Wrapper around the pinned npm GitNexus command-line tool.
 
     GitNexus builds a knowledge graph of a repo's symbols and
     execution flows.  This class runs it, reads its output, and
@@ -813,14 +833,30 @@ class GitNexusCli:
 
     @property
     def available(self) -> bool:
-        """True if GitNexus is enabled and the `npx` command exists."""
+        """True if GitNexus is enabled and `npx` is available."""
         return not self.disabled and shutil.which("npx") is not None
+
+    @staticmethod
+    def _status_path(line: str) -> str:
+        """Extract the repo-relative path from one `git status --short` line."""
+        raw = re.sub(r"^[ MADRCU?!]{1,2}\s+", "", line.rstrip())
+        if " -> " in raw:
+            raw = raw.split(" -> ", 1)[1].strip()
+        return raw
+
+    @classmethod
+    def _is_gitnexus_managed_path(cls, line: str) -> bool:
+        """True when a git-status line points at GitNexus-managed artifacts."""
+        path = cls._status_path(line)
+        if not path:
+            return False
+        return path.startswith(".gitnexus/") or path.startswith(".claude/skills/gitnexus/")
 
     def _run(self, args: list[str], *, cwd: Path, timeout: int = DEFAULT_COMMAND_TIMEOUT_SECONDS) -> str:
         """Run a gitnexus subcommand and return its text output.
         Raises RuntimeError if the command fails.
         """
-        code, stdout, stderr = run_command_result(["npx", "gitnexus", *args], cwd=cwd, timeout=timeout)
+        code, stdout, stderr = run_command_result([*GITNEXUS_NPX_COMMAND, *args], cwd=cwd, timeout=timeout)
         if code != 0:
             message = stderr or stdout or f"gitnexus {' '.join(args)} failed"
             raise RuntimeError(message)
@@ -845,6 +881,10 @@ class GitNexusCli:
             return json.loads(meta_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             return {}
+
+    def _local_db_present(self, repo_path: Path) -> bool:
+        """True when the local GitNexus database exists for this repo."""
+        return (repo_path / ".gitnexus" / "lbug").exists()
 
     def repo_entries(self, cwd: Path) -> list[dict[str, str]]:
         """Get the list of repos that GitNexus has already indexed."""
@@ -924,11 +964,12 @@ class GitNexusCli:
         repo_path = git_root
         status["current_commit"] = run_command(["git", "rev-parse", "HEAD"], cwd=repo_path, allow_failure=True)
         git_status_output = run_command(["git", "status", "--short"], cwd=repo_path, allow_failure=True)
-        meaningful_status_lines = [line for line in git_status_output.splitlines() if ".gitnexus" not in line]
+        meaningful_status_lines = [line for line in git_status_output.splitlines() if not self._is_gitnexus_managed_path(line)]
         status["dirty"] = bool(meaningful_status_lines)
         status["tracked_bytes"] = self.tracked_source_docs_bytes(repo_path)
         status["too_large"] = status["tracked_bytes"] > GITNEXUS_SIZE_THRESHOLD_BYTES
         meta = self._read_meta(repo_path)
+        local_db_present = self._local_db_present(repo_path)
         status["configured"] = bool(meta)
         status["indexed_commit"] = str(meta.get("lastCommit", ""))
         status["indexed_at"] = str(meta.get("indexedAt", ""))
@@ -944,23 +985,13 @@ class GitNexusCli:
             status["stale_reasons"].append("GitNexus CLI is unavailable in this shell.")
             return status
 
-        code, stdout, stderr = run_command_result(["npx", "gitnexus", "status"], cwd=repo_path)
-        status_output = stdout or stderr
-        status["status_output"] = status_output
-        if code == 0 and "Not a git repository." in status_output:
-            status["state"] = "not-git"
-            status["enabled"] = False
-            return status
-        if code != 0:
-            status["state"] = "error"
-            status["decision_required"] = True
-            status["stale_reasons"].append(stderr or stdout or "GitNexus status failed.")
-            return status
-
+        status["status_output"] = "local GitNexus health check (meta.json + .gitnexus/lbug + git state)"
         status["repo_name"] = self.repo_name_for_path(repo_path) or repo_path.name
-        status["indexed"] = "Repository not indexed." not in status_output and bool(meta)
+        status["indexed"] = bool(meta) and local_db_present
         if not status["configured"]:
             status["stale_reasons"].append("GitNexus metadata is not configured in this repo.")
+        if status["configured"] and not local_db_present:
+            status["stale_reasons"].append("Local GitNexus database (.gitnexus/lbug) is missing.")
         if not status["indexed"]:
             status["stale_reasons"].append("This repo is not indexed yet.")
         if status["indexed"] and status["current_commit"] and status["indexed_commit"] and status["current_commit"] != status["indexed_commit"]:
@@ -1022,7 +1053,7 @@ class GitNexusCli:
             # the partial .gitnexus folder so we don't leave garbage.
             cleaned = False
             if not meta_before:
-                code, _, _ = run_command_result(["npx", "gitnexus", "clean", "--force"], cwd=repo_path)
+                code, _, _ = run_command_result([*GITNEXUS_NPX_COMMAND, "clean", "--force"], cwd=repo_path)
                 cleaned = code == 0
             raise RuntimeError(f"{exc}\nCleanup attempted: {'yes' if cleaned else 'no'}") from exc
         # Clear the cache so the next list call picks up fresh data.
@@ -1097,6 +1128,8 @@ class SessionState:
     scan_summary: str = ""               # Markdown summary of the repo scan
     scan_details: dict[str, Any] = field(default_factory=dict)         # Structured scan data
     duplicate_candidates: list[dict[str, str]] = field(default_factory=list)  # Blog pages that might overlap
+    code_improvement_plan: dict[str, Any] = field(default_factory=dict)       # Prioritized source-repo improvement plan
+    pending_repo_edits: dict[str, dict[str, Any]] = field(default_factory=dict)  # Staged edits for the source repo
     content_map: dict[str, Any] = field(default_factory=dict)          # Proposed set of new pages
     publishing_plan: dict[str, Any] = field(default_factory=dict)      # Ordered plan for drafting
     pending_drafts: dict[str, dict[str, Any]] = field(default_factory=dict)   # Drafts waiting to be applied
@@ -1119,7 +1152,13 @@ class OpenRouterClient:
 
     def __init__(self) -> None:
         self.api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
-        self.model = os.environ.get("CYBORG_MODEL", "moonshotai/kimi-k2:free").strip()
+        self.model = (
+            os.environ.get("CYBORG_MODEL")
+            or os.environ.get("CONTENT_MODEL")
+            or os.environ.get("STRATEGY_MODEL")
+            or os.environ.get("DEFAULT_MODEL")
+            or MODEL_FALLBACK
+        ).strip()
         self.disabled = os.environ.get("CYBORG_DISABLE_AI", "").lower() in {"1", "true", "yes"}
 
     @property
@@ -1174,6 +1213,7 @@ class OpenRouterClient:
         *,
         temperature: float = 0.35,
         cache_system: bool = False,
+        max_tokens: Optional[int] = None,
     ) -> str:
         """Ask the AI a question and get a plain-text answer back."""
         sys_msg: dict[str, Any] = {"role": "system", "content": system_prompt}
@@ -1187,6 +1227,8 @@ class OpenRouterClient:
                 {"role": "user", "content": user_prompt},
             ],
         }
+        if max_tokens is not None:
+            payload["max_tokens"] = max_tokens
         response = self._request(payload)
         return str(response["choices"][0]["message"]["content"]).strip()
 
@@ -1197,6 +1239,7 @@ class OpenRouterClient:
         *,
         temperature: float = 0.25,
         cache_system: bool = False,
+        max_tokens: Optional[int] = None,
     ) -> dict[str, Any]:
         """Ask the AI a question and get a JSON object back.
 
@@ -1215,6 +1258,8 @@ class OpenRouterClient:
                 {"role": "user", "content": user_prompt},
             ],
         }
+        if max_tokens is not None:
+            payload["max_tokens"] = max_tokens
         try:
             response = self._request(payload)
         except urllib.error.URLError as exc:
@@ -1232,6 +1277,7 @@ class OpenRouterClient:
         messages: list[dict[str, Any]],
         *,
         temperature: float = 0.25,
+        max_tokens: Optional[int] = None,
     ) -> dict[str, Any]:
         """Like ``chat_json`` but accepts a pre-built message list.
 
@@ -1245,6 +1291,8 @@ class OpenRouterClient:
             "response_format": {"type": "json_object"},
             "messages": messages,
         }
+        if max_tokens is not None:
+            payload["max_tokens"] = max_tokens
         try:
             response = self._request(payload)
         except urllib.error.URLError as exc:
@@ -1281,6 +1329,20 @@ class CyborgAgent:
     def _repo_path(self) -> Optional[Path]:
         """Return the source repo path as a Path, or None."""
         return Path(self.state.repo_path) if self.state.repo_path else None
+
+    def _normalize_repo_relative_path(self, path_value: Any) -> Optional[str]:
+        """Return a safe repo-relative path or None if it escapes the repo."""
+        repo_root = self._repo_path()
+        if not repo_root:
+            return None
+        rel = str(path_value or "").strip().lstrip("/")
+        if not rel:
+            return None
+        try:
+            resolved = resolve_within_root(repo_root, repo_root / rel, label="source repo")
+        except ValueError:
+            return None
+        return str(resolved.relative_to(repo_root.resolve()))
 
     def _gitnexus_status(self) -> dict[str, Any]:
         """Shortcut to get the latest GitNexus health-check dict."""
@@ -1579,6 +1641,13 @@ class CyborgAgent:
         if self.state.scan_summary:
             (self.session_dir / "scan.md").write_text(self.state.scan_summary.rstrip() + "\n", encoding="utf-8")
 
+        if self.state.code_improvement_plan:
+            (self.session_dir / "code-improvements.json").write_text(
+                json.dumps(self.state.code_improvement_plan, indent=2, sort_keys=True),
+                encoding="utf-8",
+            )
+            (self.session_dir / "code-improvements.md").write_text(self.code_improvement_markdown(), encoding="utf-8")
+
         if self.state.content_map:
             (self.session_dir / "content-map.json").write_text(
                 json.dumps(self.state.content_map, indent=2, sort_keys=True),
@@ -1603,6 +1672,11 @@ class CyborgAgent:
             if self.state.pending_existing_edits:
                 for rel_path, edit in self.state.pending_existing_edits.items():
                     self._write_session_artifact(edit_root, rel_path, edit["markdown"], label="session existing-edits root")
+
+            repo_edit_root = self.session_dir / "repo-edits"
+            if self.state.pending_repo_edits:
+                for rel_path, edit in self.state.pending_repo_edits.items():
+                    self._write_session_artifact(repo_edit_root, rel_path, edit["content"], label="session repo-edits root")
 
     def append_chat(self, role: str, content: str) -> None:
         """Add a message to the rolling chat history and auto-save.
@@ -1633,6 +1707,8 @@ class CyborgAgent:
             f"Repo: {self.state.repo_path or '(none)'}",
             f"Blog root: {self.state.blog_root}",
             f"Source notes: {len(self.state.intake_notes)} intake, {len(self.state.planning_notes)} planning, {len(self.state.editorial_notes)} editorial",
+            f"Code improvements: {len(self.state.code_improvement_plan.get('items', []))}",
+            f"Pending repo edits: {len(self.state.pending_repo_edits)}",
             f"Content map items: {len(map_items)}",
             f"Pending drafts: {pending_keys}",
             f"Pending existing edits: {len(self.state.pending_existing_edits)}",
@@ -1641,6 +1717,34 @@ class CyborgAgent:
         ]
         lines.extend(self._gitnexus_status_lines())
         return lines
+
+    def code_improvement_markdown(self) -> str:
+        """Render the staged source-repo improvement plan as markdown."""
+        lines = [
+            f"# Code Improvements: {self.state.session_id}",
+            "",
+            self.state.code_improvement_plan.get("summary", "No source-repo improvement plan generated."),
+            "",
+        ]
+        items = self.state.code_improvement_plan.get("items", [])
+        if items:
+            lines.extend(["## Prioritized Improvements", ""])
+            for item in items:
+                target_files = ", ".join(f"`{path}`" for path in item.get("target_files", [])) or "(none)"
+                lines.append(f"- [{item['id']}] {item['title']} [{item['priority']}/{item['kind']}]")
+                lines.append(f"  Why: {item['why']}")
+                lines.append(f"  Targets: {target_files}")
+                acceptance = item.get("acceptance", [])
+                if acceptance:
+                    lines.append(f"  Acceptance: {'; '.join(acceptance[:3])}")
+            lines.append("")
+        if self.state.pending_repo_edits:
+            lines.extend(["## Pending Repo Edits", ""])
+            for rel_path, edit in sorted(self.state.pending_repo_edits.items()):
+                reason = edit.get("reason", "Staged source-repo edit.")
+                lines.append(f"- `{rel_path}`: {reason}")
+            lines.append("")
+        return "\n".join(lines).rstrip() + "\n"
 
     def content_map_markdown(self) -> str:
         """Render the content map as a markdown document."""
@@ -1838,6 +1942,7 @@ class CyborgAgent:
                     f"- Root: {scan_root}",
                     f"- Files: {len(files)}",
                     f"- Duplicate candidates: {len(duplicate_candidates)}",
+                    f"- GitNexus: {status.get('state', 'unknown')} ({status.get('mode', 'native')} mode)",
                     "Run `/map` when you want the first content graph.",
                 ]
             )
@@ -2161,8 +2266,12 @@ class CyborgAgent:
                 """
             ).strip(),
             cache_system=True,
+            max_tokens=1400,
         )
-        return self._normalize_content_map(response)
+        normalized = self._normalize_content_map(response)
+        if not normalized.get("items"):
+            raise RuntimeError("AI returned no usable content-map items.")
+        return normalized
 
     def _heuristic_content_map(self) -> dict[str, Any]:
         """Build a content map without AI using simple rules.
@@ -2295,16 +2404,27 @@ class CyborgAgent:
         items = []
         seen_keys: set[str] = set()
         for raw_item in content_map.get("items", []):
+            if not isinstance(raw_item, dict):
+                continue
             key = raw_item.get("key") or slugify(raw_item.get("title", "item"))
+            item_type = str(raw_item.get("type", "project")).strip().lower() or "project"
+            if item_type not in CONTENT_TYPES:
+                item_type = "project"
+            title = str(raw_item.get("title", "")).strip() or title_from_slug(key)
+            dir_template = CONTENT_TYPES[item_type]["dir"]
+            default_dir = dir_template.format(track_slug=track_slug(self._infer_track()))
+            path = str(raw_item.get("path", "")).strip() or f"{default_dir}/{slugify(key or title or item_type)}.md"
+            if not path.startswith("content/") or not path.endswith(".md"):
+                path = f"{default_dir}/{slugify(key or title or item_type)}.md"
             if key in seen_keys:
                 key = f"{key}-{len(seen_keys) + 1}"
             seen_keys.add(key)
             items.append(
                 {
                     "key": key,
-                    "type": raw_item["type"],
-                    "title": raw_item["title"],
-                    "path": raw_item["path"],
+                    "type": item_type,
+                    "title": title,
+                    "path": path,
                     "why": raw_item.get("why", ""),
                     "voice_mode": raw_item.get("voice_mode", "documentation"),
                     "depends_on": raw_item.get("depends_on", []),
@@ -2314,11 +2434,16 @@ class CyborgAgent:
 
         recommendations = []
         for index, rec in enumerate(content_map.get("existing_page_recommendations", []), start=1):
+            if not isinstance(rec, dict):
+                continue
+            rec_path = str(rec.get("path", "")).strip()
+            if not rec_path:
+                continue
             recommendations.append(
                 {
                     "id": rec.get("id", index),
-                    "path": rec["path"],
-                    "reason": rec["reason"],
+                    "path": rec_path,
+                    "reason": rec.get("reason", "Related existing page worth reviewing."),
                     "action": rec.get("action", "Add related-set links."),
                 }
             )
@@ -2378,6 +2503,368 @@ class CyborgAgent:
         signal = " ".join([self.state.source_text, self.state.article_text, self.state.scan_summary]).lower()
         return any(term in signal for term in ("system prompt", "prompt contract", "instruction template", "persona"))
 
+    # --- Code improvements ---
+
+    def build_code_improvement_plan(self) -> None:
+        """Generate a prioritized, code-first improvement plan for the source repo."""
+        if not self.state.repo_path:
+            self.assistant_say("No repo path is active. Start with `cyborg ingest --repo <path>` or `/scan` in a project folder.")
+            return
+        if self._gitnexus_decision_pending():
+            self.assistant_say(self._gitnexus_prompt_text())
+            return
+        if not self.state.scan_summary:
+            self.scan_repo()
+            if self._gitnexus_decision_pending():
+                return
+
+        if self.ai_client.enabled:
+            try:
+                plan = self._ai_code_improvement_plan()
+            except RuntimeError as exc:
+                self.assistant_say(f"AI improvement planning failed, using deterministic heuristics.\nReason: {exc}")
+                plan = self._heuristic_code_improvement_plan()
+        else:
+            plan = self._heuristic_code_improvement_plan()
+
+        self.state.code_improvement_plan = plan
+        self.state.pending_repo_edits = {}
+        self.save()
+        self.assistant_say(self.code_improvement_markdown().strip())
+
+    def _ai_code_improvement_plan(self) -> dict[str, Any]:
+        """Ask the AI for a small, high-signal source-repo improvement backlog."""
+        payload = {
+            "repo_name": self.state.repo_name,
+            "repo_remote": self.state.repo_remote,
+            "repo_scan": self.state.scan_summary,
+            "scan_details": self.state.scan_details,
+            "gitnexus_status": self.state.gitnexus_status,
+            "gitnexus_summary": self.state.gitnexus_summary,
+            "morphling_context": self.state.article_text,
+        }
+        response = self.ai_client.chat_json(
+            CODE_IMPROVEMENT_CONTRACT,
+            textwrap.dedent(
+                f"""
+                Build a prioritized code-improvement plan for this repository.
+                Return JSON with:
+                {{
+                  "summary": "short paragraph",
+                  "items": [
+                    {{
+                      "title": "short improvement title",
+                      "priority": "high|medium|low",
+                      "kind": "bugfix|refactor|test|config|cleanup",
+                      "why": "why this matters now",
+                      "target_files": ["relative/path.py", "tests/test_x.py"],
+                      "acceptance": ["observable outcome 1", "observable outcome 2"]
+                    }}
+                  ]
+                }}
+
+                Rules:
+                - Prioritize code changes over documentation changes.
+                - Prefer 1-3 high-signal improvements, not a laundry list.
+                - Every improvement must name concrete target files.
+                - Use GitNexus execution flows when they help identify the core path.
+
+                Source payload:
+                {json.dumps(payload, indent=2)}
+                """
+            ).strip(),
+            temperature=0.25,
+            cache_system=True,
+            max_tokens=1200,
+        )
+        normalized = self._normalize_code_improvement_plan(response)
+        if not normalized.get("items"):
+            raise RuntimeError("AI returned no usable source-repo improvements.")
+        return normalized
+
+    def _heuristic_code_improvement_plan(self) -> dict[str, Any]:
+        """Build a small deterministic improvement plan when AI is unavailable."""
+        sample_code = [self._normalize_repo_relative_path(path) for path in self.state.scan_details.get("sample_code", [])]
+        sample_code = [path for path in sample_code if path]
+        manifest_paths = [self._normalize_repo_relative_path(path) for path in self.state.scan_details.get("manifests", [])]
+        manifest_paths = [path for path in manifest_paths if path]
+        flow = next(iter(self.state.gitnexus_summary.get("processes", [])), {})
+        flow_hint = flow.get("summary", "").strip()
+        graph_files: list[str] = []
+        for entry in self.state.gitnexus_summary.get("process_symbols", [])[:6]:
+            normalized = self._normalize_repo_relative_path(entry.get("filePath"))
+            if normalized and normalized not in graph_files:
+                graph_files.append(normalized)
+        for entry in self.state.gitnexus_summary.get("definitions", [])[:6]:
+            normalized = self._normalize_repo_relative_path(entry.get("filePath"))
+            if normalized and normalized not in graph_files:
+                graph_files.append(normalized)
+
+        items: list[dict[str, Any]] = []
+        core_targets = (graph_files or sample_code)[:2]
+        if core_targets:
+            title = "Harden the core execution flow"
+            if flow_hint:
+                title = f"Harden core flow: {flow_hint}"
+            items.append(
+                {
+                    "id": 1,
+                    "title": title,
+                    "priority": "high",
+                    "kind": "refactor",
+                    "why": "Tighten the highest-signal execution path first so future features land on a more stable base.",
+                    "target_files": core_targets,
+                    "acceptance": [
+                        "The main flow is easier to follow and less error-prone.",
+                        "Core control flow has clearer boundaries or validation.",
+                    ],
+                }
+            )
+
+        if self.state.scan_details.get("tests_count", 0) == 0 and sample_code:
+            items.append(
+                {
+                    "id": len(items) + 1,
+                    "title": "Add a regression-oriented smoke test",
+                    "priority": "medium",
+                    "kind": "test",
+                    "why": "This repo has code but no visible test surface in the tracked files.",
+                    "target_files": [sample_code[0], "tests/test_smoke.py"],
+                    "acceptance": [
+                        "A basic test path exists for the core module.",
+                        "The repo has a repeatable verification entry point.",
+                    ],
+                }
+            )
+
+        config_targets = [path for path in sample_code + manifest_paths if "config" in path.lower() or path.endswith(".toml") or path.endswith(".json")]
+        if config_targets:
+            items.append(
+                {
+                    "id": len(items) + 1,
+                    "title": "Tighten configuration and runtime validation",
+                    "priority": "medium",
+                    "kind": "config",
+                    "why": "Configuration drift is a common source of avoidable runtime failures.",
+                    "target_files": config_targets[:2],
+                    "acceptance": [
+                        "Invalid configuration fails earlier and more clearly.",
+                        "Defaults and overrides are easier to reason about.",
+                    ],
+                }
+            )
+
+        if not items and sample_code:
+            items.append(
+                {
+                    "id": 1,
+                    "title": "Tighten the primary source module",
+                    "priority": "medium",
+                    "kind": "cleanup",
+                    "why": "Use the most representative source file as the first improvement surface.",
+                    "target_files": [sample_code[0]],
+                    "acceptance": [
+                        "The module is clearer, safer, or easier to extend.",
+                    ],
+                }
+            )
+
+        summary = "Prioritize a small set of source-repo improvements before drafting documentation."
+        if flow_hint:
+            summary += f" GitNexus highlighted `{flow_hint}` as the best place to start."
+        return {
+            "summary": summary,
+            "items": items[:3],
+        }
+
+    def _normalize_code_improvement_plan(self, plan: dict[str, Any]) -> dict[str, Any]:
+        """Validate and normalize a repo-improvement plan payload."""
+        normalized_items: list[dict[str, Any]] = []
+        for raw_item in plan.get("items", []):
+            if not isinstance(raw_item, dict):
+                continue
+            title = str(raw_item.get("title", "")).strip() or "Untitled source-repo improvement"
+            priority = str(raw_item.get("priority", "medium")).strip().lower()
+            if priority not in {"high", "medium", "low"}:
+                priority = "medium"
+            kind = str(raw_item.get("kind", "refactor")).strip().lower()
+            if kind not in {"bugfix", "refactor", "test", "config", "cleanup"}:
+                kind = "refactor"
+            raw_targets = raw_item.get("target_files", [])
+            if isinstance(raw_targets, str):
+                raw_targets = [raw_targets]
+            target_files: list[str] = []
+            for raw_target in raw_targets:
+                normalized = self._normalize_repo_relative_path(raw_target)
+                if normalized and normalized not in target_files:
+                    target_files.append(normalized)
+            if not target_files:
+                fallback_targets = [
+                    self._normalize_repo_relative_path(path)
+                    for path in self.state.scan_details.get("sample_code", [])[:2]
+                ]
+                target_files = [path for path in fallback_targets if path]
+            if not target_files:
+                continue
+            acceptance = raw_item.get("acceptance", [])
+            if isinstance(acceptance, str):
+                acceptance = [acceptance]
+            acceptance = [str(item).strip() for item in acceptance if str(item).strip()]
+            normalized_items.append(
+                {
+                    "id": len(normalized_items) + 1,
+                    "title": title,
+                    "priority": priority,
+                    "kind": kind,
+                    "why": str(raw_item.get("why", "")).strip() or "High-signal source-repo improvement.",
+                    "target_files": target_files[:4],
+                    "acceptance": acceptance[:5],
+                }
+            )
+        return {
+            "summary": str(plan.get("summary", "")).strip() or "Source-repo improvements prioritized before documentation drafting.",
+            "items": normalized_items[:4],
+        }
+
+    def _select_code_improvement(self, improvement_id: Optional[int]) -> Optional[dict[str, Any]]:
+        """Return a planned improvement by ID, defaulting to the first item."""
+        items = self.state.code_improvement_plan.get("items", [])
+        if not items:
+            return None
+        if improvement_id is None:
+            return items[0]
+        return next((item for item in items if item["id"] == improvement_id), None)
+
+    def stage_code_improvement(self, improvement_id: Optional[int] = None) -> None:
+        """Generate staged source-repo edits for the selected improvement."""
+        if not self.state.repo_path:
+            self.assistant_say("No source repo is active for code improvements.")
+            return
+        if not self.state.code_improvement_plan:
+            self.assistant_say("Generate the code improvement plan first with `/improve`.")
+            return
+        if not self.ai_client.enabled:
+            self.assistant_say("AI is disabled, so I cannot stage source-repo edits right now.")
+            return
+
+        item = self._select_code_improvement(improvement_id)
+        if not item:
+            self.assistant_say("No matching code improvement ID was found.")
+            return
+
+        repo_root = self._repo_path()
+        if not repo_root:
+            self.assistant_say("No source repo is active for code improvements.")
+            return
+
+        file_payload: list[dict[str, Any]] = []
+        skipped_oversized: list[str] = []
+        for rel_path in item.get("target_files", [])[:4]:
+            normalized = self._normalize_repo_relative_path(rel_path)
+            if not normalized:
+                continue
+            abs_path = resolve_within_root(repo_root, repo_root / normalized, label="source repo")
+            exists = abs_path.exists()
+            content = ""
+            if exists and abs_path.is_file():
+                try:
+                    content = abs_path.read_text(encoding="utf-8")
+                except OSError:
+                    continue
+                if len(content) > 24000:
+                    skipped_oversized.append(normalized)
+                    continue
+            file_payload.append(
+                {
+                    "path": normalized,
+                    "exists": exists,
+                    "content": content,
+                }
+            )
+
+        if not file_payload:
+            note = ""
+            if skipped_oversized:
+                note = f" Oversized files: {', '.join(skipped_oversized)}."
+            self.assistant_say(f"I could not safely stage repo edits for `{item['title']}` from the current target file set.{note}")
+            return
+
+        response = self.ai_client.chat_json(
+            CODE_IMPROVEMENT_CONTRACT,
+            textwrap.dedent(
+                f"""
+                Stage a concrete source-repo improvement.
+                Return JSON with:
+                {{
+                  "summary": "short summary of the staged improvement",
+                  "edits": [
+                    {{
+                      "path": "relative/path.py",
+                      "reason": "why this file changes",
+                      "content": "full file contents"
+                    }}
+                  ],
+                  "tests_to_run": ["optional verification command"]
+                }}
+
+                Rules:
+                - Only edit paths from the allowed target file list below.
+                - Keep changes surgical and focused on the chosen improvement.
+                - Return complete file contents for each edited file.
+                - If no safe edit is justified, return an empty edits list and explain why in summary.
+
+                Chosen improvement:
+                {json.dumps(item, indent=2)}
+
+                Allowed target files with current contents:
+                {json.dumps(file_payload, indent=2)}
+                """
+            ).strip(),
+            temperature=0.2,
+            cache_system=True,
+            max_tokens=3200,
+        )
+
+        allowed_paths = {entry["path"] for entry in file_payload}
+        pending: dict[str, dict[str, Any]] = {}
+        for raw_edit in response.get("edits", []):
+            if not isinstance(raw_edit, dict):
+                continue
+            rel_path = self._normalize_repo_relative_path(raw_edit.get("path"))
+            if not rel_path or rel_path not in allowed_paths:
+                continue
+            content = str(raw_edit.get("content", ""))
+            if not content.strip():
+                continue
+            pending[rel_path] = {
+                "reason": str(raw_edit.get("reason", "")).strip() or item["why"],
+                "content": content,
+                "improvement_id": item["id"],
+                "title": item["title"],
+            }
+
+        if not pending:
+            summary = str(response.get("summary", "")).strip() or "No safe source-repo edits were staged."
+            self.assistant_say(summary)
+            return
+
+        self.state.pending_repo_edits = pending
+        self.save()
+        lines = [
+            str(response.get("summary", "")).strip() or f"Staged source-repo edits for improvement [{item['id']}] {item['title']}.",
+            "Pending source-repo edits:",
+        ]
+        for rel_path, edit in sorted(pending.items()):
+            lines.append(f"- `{rel_path}`: {edit['reason']}")
+        if skipped_oversized:
+            lines.append(f"Skipped oversized targets: {', '.join(skipped_oversized)}")
+        tests_to_run = response.get("tests_to_run", [])
+        if isinstance(tests_to_run, list) and tests_to_run:
+            lines.append("Suggested verification:")
+            lines.extend(f"- {str(cmd).strip()}" for cmd in tests_to_run[:4] if str(cmd).strip())
+        lines.append("Use `/apply code --yes` when you want to write these source-repo edits.")
+        self.assistant_say("\n".join(lines))
+
     # --- Publishing plan ---
 
     def build_publishing_plan(self) -> None:
@@ -2434,6 +2921,7 @@ class CyborgAgent:
                 """
             ).strip(),
             cache_system=True,
+            max_tokens=1000,
         )
         return {
             "summary": response.get("summary", ""),
@@ -2508,7 +2996,9 @@ class CyborgAgent:
         # loop can send it as a single cacheable message.
         shared_context = self._build_draft_shared_context() if self.ai_client.enabled else None
 
-        for item in selected_items:
+        total = len(selected_items)
+        for index, item in enumerate(selected_items, start=1):
+            self.assistant_say(f"Drafting [{index}/{total}] `{item['key']}`...")
             if self.ai_client.enabled:
                 try:
                     draft = self._ai_draft(item, shared_context=shared_context)
@@ -2518,6 +3008,8 @@ class CyborgAgent:
             else:
                 draft = self._heuristic_draft(item)
             self.state.pending_drafts[item["key"]] = draft
+            self.save()
+            self.assistant_say(f"Draft ready [{index}/{total}] `{item['key']}` -> `{draft['path']}`")
 
         self.state.phase = "drafted"
         self.save()
@@ -2607,7 +3099,7 @@ class CyborgAgent:
                 ),
                 {"role": "user", "content": instruction},
             ]
-            response = self.ai_client.chat_json_messages(messages, temperature=0.35)
+            response = self.ai_client.chat_json_messages(messages, temperature=0.35, max_tokens=2600)
         else:
             # Fallback: single-call path (e.g. individual re-draft).
             sibling_index = [
@@ -2633,6 +3125,7 @@ class CyborgAgent:
                 f"{instruction}\n\nSource payload:\n{json.dumps(payload, indent=2)}",
                 temperature=0.35,
                 cache_system=True,
+                max_tokens=2600,
             )
 
         return {
@@ -3318,7 +3811,15 @@ class CyborgAgent:
     def _pending_apply_lines(self, target: str) -> list[str]:
         """Build a compact summary of what /apply would write."""
         lines = [f"Pending apply target: {target}"]
-        if target in {"drafts", "all"}:
+        if target in {"code", "all"}:
+            repo_edit_paths = sorted(self.state.pending_repo_edits.keys())
+            if repo_edit_paths:
+                lines.append("Source-repo edits:")
+                for path_value in repo_edit_paths[:6]:
+                    lines.append(f"- {path_value}")
+                if len(repo_edit_paths) > 6:
+                    lines.append(f"- ...and {len(repo_edit_paths) - 6} more")
+        if target in {"drafts", "docs", "all"}:
             draft_paths = sorted(draft["path"] for draft in self.state.pending_drafts.values())
             if draft_paths:
                 lines.append("Draft files:")
@@ -3326,7 +3827,7 @@ class CyborgAgent:
                     lines.append(f"- {path_value}")
                 if len(draft_paths) > 6:
                     lines.append(f"- ...and {len(draft_paths) - 6} more")
-        if target in {"links", "all"}:
+        if target in {"links", "docs", "all"}:
             edit_paths = sorted(self.state.pending_existing_edits.keys())
             if edit_paths:
                 lines.append("Existing-page edits:")
@@ -3367,10 +3868,19 @@ class CyborgAgent:
             self.assistant_say("Reply with A, B, C, D, or E.")
 
     def apply_changes(self, target: str, *, assume_yes: bool) -> None:
-        """Write pending drafts and/or link edits into the blog repo.
-        Backs up any existing files first.  Requires confirmation
+        """Write staged source-repo edits and/or blog edits to disk.
+        Backs up any existing files first. Requires confirmation
         unless --yes was passed.
         """
+        target = target.lower()
+        if target == "all" and self.state.pending_repo_edits:
+            self.assistant_say("Pending source-repo edits exist. Apply `code` or `docs` explicitly so you do not mix code and documentation writes accidentally.")
+            return
+        if target == "code" and not self.state.pending_repo_edits:
+            self.assistant_say("There are no pending source-repo edits to apply.")
+            return
+        if target == "docs":
+            target = "all"
         if target == "drafts" and not self.state.pending_drafts:
             self.assistant_say("There are no pending drafts to apply.")
             return
@@ -3391,6 +3901,34 @@ class CyborgAgent:
         backup_root = self.session_dir / "backups"
         backup_root.mkdir(parents=True, exist_ok=True)
 
+        if target == "code":
+            repo_root = self._repo_path()
+            if not repo_root:
+                self.assistant_say("No source repo is active, so there is nowhere to apply code edits.")
+                return
+            repo_backup_root = backup_root / "source-repo"
+            repo_backup_root.mkdir(parents=True, exist_ok=True)
+            for rel_path, edit in self.state.pending_repo_edits.items():
+                target_path = repo_root / rel_path
+                self._safe_write_within_root(repo_root, target_path, edit["content"], repo_backup_root, label="source repo")
+            self.state.pending_repo_edits = {}
+            # Code changes invalidate the derived documentation state.
+            self.state.scan_summary = ""
+            self.state.scan_details = {}
+            self.state.duplicate_candidates = []
+            self.state.code_improvement_plan = {}
+            self.state.content_map = {}
+            self.state.publishing_plan = {}
+            self.state.pending_drafts = {}
+            self.state.link_recommendations = []
+            self.state.rewrite_recommendations = []
+            self.state.rewrite_choices = {}
+            self.state.pending_existing_edits = {}
+            self.state.phase = "intake"
+            self.save()
+            self.assistant_say("Applied the selected source-repo edits. Re-run `/scan`, then `/improve` or `/map`, because the repo state changed.")
+            return
+
         if target in {"drafts", "all"}:
             for draft in self.state.pending_drafts.values():
                 target_path = self.blog_root / draft["path"]
@@ -3409,10 +3947,15 @@ class CyborgAgent:
         """Write a file into the blog repo after checking it stays
         inside the blog root.  Backs up the old version if it exists.
         """
-        resolved_target = resolve_within_root(self.blog_root, target_path, label="blog root")
-        blog_root = self.blog_root.resolve()
+        self._safe_write_within_root(self.blog_root, target_path, content, backup_root, label="blog root")
+
+    @staticmethod
+    def _safe_write_within_root(root: Path, target_path: Path, content: str, backup_root: Path, *, label: str) -> None:
+        """Write a file under an approved root and back up the prior version first."""
+        resolved_target = resolve_within_root(root, target_path, label=label)
+        resolved_root = root.resolve()
         if resolved_target.exists():
-            backup_path = backup_root / resolved_target.relative_to(blog_root)
+            backup_path = backup_root / resolved_target.relative_to(resolved_root)
             backup_path.parent.mkdir(parents=True, exist_ok=True)
             backup_path.write_text(resolved_target.read_text(encoding="utf-8"), encoding="utf-8")
         resolved_target.parent.mkdir(parents=True, exist_ok=True)
@@ -3543,15 +4086,20 @@ class CyborgAgent:
             self.assistant_say(f"Saved the note. {self._gitnexus_prompt_text()}")
             return
 
-        next_step = {
-            "intake": "Run `/scan` if you want repo-grounded context, then `/map` when the intake notes feel complete.",
-            "scanned": "Run `/map` for the first content graph, or add more notes if the angle still feels fuzzy.",
-            "mapped": "Run `/plan` when the content map looks right, or add planning notes if you want to reshape the publishing order.",
-            "planned": "Run `/draft all` when you want near-publishable drafts held in preview.",
-            "drafted": "Use `/review <key>` for editorial feedback, or `/links` to start the existing-page cross-link pass.",
-            "review": "Keep sending editorial notes, or `/apply drafts --yes` when a draft is ready to write into the repo.",
-            "applied": "The repo has been updated. Keep reviewing with `/review <key>` if you want another pass before publish.",
-        }.get(self.state.phase, "Use `/status` if you want a quick state snapshot.")
+        if self.state.pending_repo_edits:
+            next_step = "Use `/apply code --yes` to write the staged source-repo edits, or `/patch-code <id>` to replace them with a different improvement."
+        elif self.state.code_improvement_plan.get("items") and self.state.phase in {"intake", "scanned"}:
+            next_step = "Run `/patch-code` to stage the top source-repo improvement, or `/map` if you want to skip straight to documentation."
+        else:
+            next_step = {
+                "intake": "Run `/scan` if you want repo-grounded context, then `/improve` or `/map` when the intake notes feel complete.",
+                "scanned": "Run `/improve` for a code-first pass, or `/map` for the first content graph.",
+                "mapped": "Run `/plan` when the content map looks right, or add planning notes if you want to reshape the publishing order.",
+                "planned": "Run `/draft all` when you want near-publishable drafts held in preview.",
+                "drafted": "Use `/review <key>` for editorial feedback, or `/links` to start the existing-page cross-link pass.",
+                "review": "Keep sending editorial notes, or `/apply drafts --yes` when a draft is ready to write into the repo.",
+                "applied": "The repo has been updated. Keep reviewing with `/review <key>` if you want another pass before publish.",
+            }.get(self.state.phase, "Use `/status` if you want a quick state snapshot.")
         self.assistant_say(f"Saved the note. {next_step}")
 
 
@@ -3873,14 +4421,15 @@ def build_project_from_idea(
 # =====================================================================
 
 
-def run_autopilot(agent: CyborgAgent, *, assume_yes: bool = False) -> int:
+def run_autopilot(agent: CyborgAgent, *, assume_yes: bool = False, docs_after_code: bool = False) -> int:
     """Run the full Cyborg pipeline hands-free.
 
-    Chains scan → map → plan → draft → links automatically, making
-    safe default choices at every decision point.  Only pauses at the
-    very end with a single A-E confirmation before writing anything
-    into the blog repo.  Designed for low-interaction sessions.
+    Default behavior is code-first: scan → improve → patch-code, then
+    stop so source-repo changes can be reviewed or applied before any
+    documentation pass. When ``docs_after_code`` is True, the normal
+    docs pipeline continues after the code phase.
     """
+    docs_after_code = docs_after_code or os.environ.get("CYBORG_DOCS_AFTER_CODE", "").lower() in {"1", "true", "yes"}
     print(f"Cyborg autopilot session: {agent.state.session_id}")
     print(f"Repo: {agent.state.repo_path or '(none)'}")
     print(f"Blog root: {agent.state.blog_root}")
@@ -3901,7 +4450,7 @@ def run_autopilot(agent: CyborgAgent, *, assume_yes: bool = False) -> int:
     #   - uv and ai-staff-hq/ are available on the system
     morphling_brief = os.environ.get("CYBORG_MORPHLING_BRIEF", "").strip()
     if morphling_brief:
-        agent.assistant_say("Morphling pre-analysis loaded.")
+        agent.assistant_say("Morphling pre-analysis loaded. This enriches the documentation pass; it does not modify repo code.")
         # Append to existing article text (which may contain --file or
         # --stdin-source material) rather than replacing it.
         if agent.state.article_text:
@@ -3960,7 +4509,74 @@ def run_autopilot(agent: CyborgAgent, *, assume_yes: bool = False) -> int:
     if not _phase("repo context", _phase_repo_context):
         return 1
 
-    # --- Phase 2: Content map ---
+    # --- Phase 2: Code-first repo improvements ---
+    def _phase_code_improvements() -> None:
+        if not agent.state.repo_path:
+            return
+        agent.assistant_say("Autopilot: planning source-repo improvements...")
+        agent.build_code_improvement_plan()
+        if agent.state.code_improvement_plan.get("items"):
+            agent.assistant_say("Autopilot: staging the top source-repo improvement...")
+            agent.stage_code_improvement()
+            if os.environ.get("CYBORG_AUTO_APPLY_CODE", "").lower() in {"1", "true", "yes"} and agent.state.pending_repo_edits:
+                agent.assistant_say("Autopilot: applying staged source-repo edits before documentation...")
+                agent.apply_changes("code", assume_yes=True)
+                if agent.state.repo_path:
+                    agent.state.gitnexus_skip = True
+                    agent.assistant_say("Autopilot: rescanning repo after code changes (native scan until the next GitNexus refresh)...")
+                    agent.scan_repo()
+
+    if not _phase("code improvements", _phase_code_improvements):
+        return 1
+
+    code_edit_count = len(agent.state.pending_repo_edits)
+    if code_edit_count and not docs_after_code:
+        print()
+        print("=" * 60)
+        print("  CODE-FIRST STAGE COMPLETE")
+        print("=" * 60)
+        print()
+        for line in agent.status_lines():
+            print(f"  {line}")
+        print()
+
+        if assume_yes:
+            agent.apply_changes("code", assume_yes=True)
+            agent.assistant_say("Source-repo edits applied. Re-run `cyborg auto --docs-after-code ...` after the new scan if you want documentation.")
+            return 0
+
+        if not agent.interactive:
+            agent.assistant_say(
+                "Code-first stage complete. Review the staged source-repo edits, or resume later with "
+                f"`cyborg resume {agent.state.session_id}`. Use `/apply code --yes` when you want to write them."
+            )
+            return 0
+
+        print(f"  {code_edit_count} source-repo edit(s) ready.")
+        print()
+        print("  A. Apply source-repo edits only")
+        print("  B. Save for later (don't apply yet)")
+        print("  C. Show /status first")
+        print("  D. Drop into interactive mode to review first")
+        print("  E. Continue into documentation anyway")
+        print()
+        choice = prompt_input("  Choice [A-E]: ").strip().lower()
+
+        if choice in {"a", "yes", "y"}:
+            agent.apply_changes("code", assume_yes=True)
+        elif choice == "c":
+            agent.assistant_say("\n".join(agent.status_lines()))
+            agent.assistant_say(f"Session saved. Resume with: cyborg resume {agent.state.session_id}")
+        elif choice == "d":
+            agent.assistant_say("Switching to interactive mode. Type /help for commands.")
+            return run_repl(agent)
+        elif choice == "e":
+            agent.assistant_say("Continuing into documentation after the code-first stage.")
+        else:
+            agent.assistant_say(f"Session saved. Resume with: cyborg resume {agent.state.session_id}")
+            return 0
+
+    # --- Phase 3: Content map ---
     def _phase_map() -> None:
         agent.assistant_say("Autopilot: building content map...")
         agent.build_content_map()
@@ -3973,7 +4589,7 @@ def run_autopilot(agent: CyborgAgent, *, assume_yes: bool = False) -> int:
     if not _phase("content map", _phase_map):
         return 1
 
-    # --- Phase 3: Publishing plan ---
+    # --- Phase 4: Publishing plan ---
     def _phase_plan() -> None:
         agent.assistant_say("Autopilot: building publishing plan...")
         agent.build_publishing_plan()
@@ -3981,7 +4597,7 @@ def run_autopilot(agent: CyborgAgent, *, assume_yes: bool = False) -> int:
     if not _phase("publishing plan", _phase_plan):
         return 1
 
-    # --- Phase 4: Draft all pages ---
+    # --- Phase 5: Draft all pages ---
     def _phase_drafts() -> None:
         agent.assistant_say("Autopilot: drafting all pages...")
         agent.build_drafts(["all"])
@@ -3989,7 +4605,7 @@ def run_autopilot(agent: CyborgAgent, *, assume_yes: bool = False) -> int:
     if not _phase("drafting", _phase_drafts):
         return 1
 
-    # --- Phase 5: Link recommendations ---
+    # --- Phase 6: Link recommendations ---
     def _phase_links() -> None:
         if agent.state.link_recommendations:
             agent.assistant_say("Autopilot: patching all link recommendations...")
@@ -4009,42 +4625,71 @@ def run_autopilot(agent: CyborgAgent, *, assume_yes: bool = False) -> int:
         print(f"  {line}")
     print()
 
+    code_edit_count = len(agent.state.pending_repo_edits)
     draft_count = len(agent.state.pending_drafts)
     edit_count = len(agent.state.pending_existing_edits)
-    if draft_count == 0 and edit_count == 0:
+    if code_edit_count == 0 and draft_count == 0 and edit_count == 0:
         agent.assistant_say("Nothing to apply. Session saved.")
         return 0
 
     if assume_yes:
-        agent.apply_changes("all", assume_yes=True)
-        agent.assistant_say("All changes applied.")
+        if code_edit_count:
+            agent.apply_changes("code", assume_yes=True)
+            agent.assistant_say("Source-repo edits applied. Re-run the docs pass after the new scan if you want fresh documentation.")
+        else:
+            agent.apply_changes("all", assume_yes=True)
+            agent.assistant_say("All changes applied.")
         return 0
 
     if not agent.interactive:
         agent.assistant_say(f"Non-interactive mode. Resume with: cyborg resume {agent.state.session_id}")
         return 0
 
-    print(f"  {draft_count} draft(s) and {edit_count} existing-page edit(s) ready.")
-    print()
-    print("  A. Apply everything to the blog repo")
-    print("  B. Apply drafts only")
-    print("  C. Apply link edits only")
-    print("  D. Save for later (don't apply yet)")
-    print("  E. Drop into interactive mode to review first")
-    print()
-    choice = prompt_input("  Choice [A-E]: ").strip().lower()
+    if code_edit_count:
+        print(f"  {code_edit_count} source-repo edit(s), {draft_count} draft(s), and {edit_count} existing-page edit(s) ready.")
+        print()
+        print("  A. Apply source-repo edits only")
+        print("  B. Apply documentation edits only")
+        print("  C. Save for later (don't apply yet)")
+        print("  D. Show /status first")
+        print("  E. Drop into interactive mode to review first")
+        print()
+        choice = prompt_input("  Choice [A-E]: ").strip().lower()
 
-    if choice in {"a", "yes", "y"}:
-        agent.apply_changes("all", assume_yes=True)
-    elif choice == "b":
-        agent.apply_changes("drafts", assume_yes=True)
-    elif choice == "c":
-        agent.apply_changes("links", assume_yes=True)
-    elif choice == "e":
-        agent.assistant_say("Switching to interactive mode. Type /help for commands.")
-        return run_repl(agent)
+        if choice in {"a", "yes", "y"}:
+            agent.apply_changes("code", assume_yes=True)
+        elif choice == "b":
+            agent.apply_changes("docs", assume_yes=True)
+        elif choice == "d":
+            agent.assistant_say("\n".join(agent.status_lines()))
+            agent.assistant_say(f"Session saved. Resume with: cyborg resume {agent.state.session_id}")
+        elif choice == "e":
+            agent.assistant_say("Switching to interactive mode. Type /help for commands.")
+            return run_repl(agent)
+        else:
+            agent.assistant_say(f"Session saved. Resume with: cyborg resume {agent.state.session_id}")
     else:
-        agent.assistant_say(f"Session saved. Resume with: cyborg resume {agent.state.session_id}")
+        print(f"  {draft_count} draft(s) and {edit_count} existing-page edit(s) ready.")
+        print()
+        print("  A. Apply everything to the blog repo")
+        print("  B. Apply drafts only")
+        print("  C. Apply link edits only")
+        print("  D. Save for later (don't apply yet)")
+        print("  E. Drop into interactive mode to review first")
+        print()
+        choice = prompt_input("  Choice [A-E]: ").strip().lower()
+
+        if choice in {"a", "yes", "y"}:
+            agent.apply_changes("all", assume_yes=True)
+        elif choice == "b":
+            agent.apply_changes("drafts", assume_yes=True)
+        elif choice == "c":
+            agent.apply_changes("links", assume_yes=True)
+        elif choice == "e":
+            agent.assistant_say("Switching to interactive mode. Type /help for commands.")
+            return run_repl(agent)
+        else:
+            agent.assistant_say(f"Session saved. Resume with: cyborg resume {agent.state.session_id}")
 
     return 0
 
@@ -4079,7 +4724,7 @@ def run_repl(agent: CyborgAgent) -> int:
                 return 0
             continue
 
-        if line.startswith("/") or line in {"help", "status", "gitnexus", "scan", "map", "plan", "draft", "links", "review", "rewrite", "show", "apply", "quit", "exit"}:
+        if line.startswith("/") or line in {"help", "status", "gitnexus", "scan", "improve", "patch-code", "map", "plan", "draft", "links", "review", "rewrite", "show", "apply", "quit", "exit"}:
             command, args = parse_command(line)
             if command in {"quit", "exit"}:
                 agent.assistant_say("Session saved. Use `cyborg resume %s` to reopen it later." % agent.state.session_id)
@@ -4092,6 +4737,16 @@ def run_repl(agent: CyborgAgent) -> int:
                 agent.handle_gitnexus_command(args)
             elif command == "scan":
                 agent.scan_repo()
+            elif command == "improve":
+                agent.build_code_improvement_plan()
+            elif command == "patch-code":
+                improvement_id = None
+                if args:
+                    if not args[0].isdigit():
+                        agent.assistant_say("Usage: /patch-code [improvement-id]")
+                        continue
+                    improvement_id = int(args[0])
+                agent.stage_code_improvement(improvement_id)
             elif command == "map":
                 agent.build_content_map()
             elif command == "plan":
@@ -4151,14 +4806,15 @@ def build_parser() -> argparse.ArgumentParser:
     ingest.add_argument("--stdin-source", action="store_true", help="Treat stdin as supporting source material before starting the session")
     ingest.add_argument("idea", nargs="*", help="Plain-text idea or focus notes")
 
-    auto = subparsers.add_parser("auto", help="Run the full pipeline hands-free (scan, map, plan, draft, links)")
+    auto = subparsers.add_parser("auto", help="Run the code-first autopilot (scan, improve, patch-code, then optionally docs)")
     auto.add_argument("--repo", help="Repo or directory to scan")
     auto.add_argument("--file", help="Markdown file to use as supporting material")
     auto.add_argument("--blog-root", help="Path to my-ms-ai-blog")
     auto.add_argument("--stdin-source", action="store_true", help="Treat stdin as supporting source material")
     auto.add_argument("--yes", action="store_true", help="Apply changes without final confirmation")
+    auto.add_argument("--docs-after-code", action="store_true", help="Continue into the documentation pipeline after the code-first stage")
     auto.add_argument("--no-morphling", action="store_true", help="Skip Morphling pre-analysis even if available")
-    auto.add_argument("--build", action="store_true", help="Morphling builds the project from your idea first, then Cyborg documents it")
+    auto.add_argument("--build", action="store_true", help="Morphling builds the project from your idea first, then Cyborg runs the code-first pass")
     auto.add_argument("--projects-dir", help="Where to create the project (default: ~/Projects)")
     auto.add_argument("idea", nargs="*", help="Plain-text idea or focus notes")
 
@@ -4246,7 +4902,11 @@ def main(argv: Optional[List[str]] = None) -> int:
             agent = CyborgAgent(state, ai_client=ai_client, interactive=interactive)
             agent.save()
             if args.command == "auto":
-                return run_autopilot(agent, assume_yes=getattr(args, "yes", False))
+                return run_autopilot(
+                    agent,
+                    assume_yes=getattr(args, "yes", False),
+                    docs_after_code=getattr(args, "docs_after_code", False),
+                )
             return run_repl(agent)
 
         # Resuming a previously saved session.

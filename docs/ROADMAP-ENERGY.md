@@ -29,8 +29,8 @@ _Requires: Focus, Creative Strategy, Complex Coding. Do these ONLY when you feel
 
 ### Priority: Specialist Expansion
 
-- [ ] **S1 · Build Niche Specialists:** Create YAML definitions for the remaining 66 specialists.
-- [ ] **S3 · Advanced Workflow Automation:** Design complex multi-agent flows.
+- [ ] **S1 · Build Niche Specialists:** Create additional YAML definitions in ai-staff-hq (15+ already defined).
+- [ ] **S3 · Advanced Workflow Automation:** Extend multi-agent flows beyond existing dhp-chain and dhp-project.
 
 ### Priority: Content
 
@@ -64,7 +64,7 @@ _Requires: Low Cognitive Load, Repetition, Admin. Do these when recovering or in
 
 ## 🧊 Icebox (Deprioritized High-Friction Items)
 
-_These generate stress without immediate capability gain. Avoid until Phase 3._
+_These generate stress without immediate capability gain. Defer until energy allows._
 
 - [ ] S-Corp Formation / Legal Entity Setup
 - [ ] Complex Tax Accounting / Payroll
@@ -74,7 +74,8 @@ _These generate stress without immediate capability gain. Avoid until Phase 3._
 
 ## Related Docs
 
-- [Start Here](start-here.md)
-- [System Overview](system-overview.md)
-- [Best Practices](best-practices.md)
+- [Documentation Index](README.md)
+- [Daily Loop Handbook](daily-loop-handbook.md)
+- [AI Handbook](ai-handbook.md)
+- [Autopilot Happy Path](autopilot-happy-path.md)
 - [Troubleshooting](../TROUBLESHOOTING.md)
