@@ -4,56 +4,7 @@ set -euo pipefail
 
 # --- Configuration ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
-    # shellcheck disable=SC1090
-    source "$SCRIPT_DIR/lib/common.sh"
-else
-    echo "Error: common utilities not found at $SCRIPT_DIR/lib/common.sh" >&2
-    exit 1
-fi
-if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
-    # shellcheck disable=SC1090
-    source "$SCRIPT_DIR/lib/config.sh"
-else
-    die "configuration library not found at $SCRIPT_DIR/lib/config.sh" "$EXIT_FILE_NOT_FOUND"
-fi
-if [ -f "$SCRIPT_DIR/lib/date_utils.sh" ]; then
-    # shellcheck disable=SC1090
-    source "$SCRIPT_DIR/lib/date_utils.sh"
-else
-    die "date utilities not found at $SCRIPT_DIR/lib/date_utils.sh" "$EXIT_FILE_NOT_FOUND"
-fi
-
-FOCUS_FILE="${FOCUS_FILE:?FOCUS_FILE is not set by config.sh}"
-JOURNAL_FILE="${JOURNAL_FILE:?JOURNAL_FILE is not set by config.sh}"
-TODO_FILE="${TODO_FILE:?TODO_FILE is not set by config.sh}"
-PROJECTS_DIR="${PROJECTS_DIR:-$HOME/Projects}"
-
-# Source new libraries
-if [ -f "$SCRIPT_DIR/lib/health_ops.sh" ]; then
-    source "$SCRIPT_DIR/lib/health_ops.sh"
-fi
-if [ -f "$SCRIPT_DIR/lib/github_ops.sh" ]; then
-    source "$SCRIPT_DIR/lib/github_ops.sh"
-fi
-if [ -f "$SCRIPT_DIR/lib/spoon_budget.sh" ]; then
-    source "$SCRIPT_DIR/lib/spoon_budget.sh"
-fi
-if [ -f "$SCRIPT_DIR/lib/coach_metrics.sh" ]; then
-    source "$SCRIPT_DIR/lib/coach_metrics.sh"
-fi
-if [ -f "$SCRIPT_DIR/lib/coach_prompts.sh" ]; then
-    source "$SCRIPT_DIR/lib/coach_prompts.sh"
-fi
-if [ -f "$SCRIPT_DIR/lib/coach_scoring.sh" ]; then
-    source "$SCRIPT_DIR/lib/coach_scoring.sh"
-fi
-if [ -f "$SCRIPT_DIR/lib/coaching.sh" ]; then
-    source "$SCRIPT_DIR/lib/coaching.sh"
-fi
-if [ -f "$SCRIPT_DIR/lib/coach_chat.sh" ]; then
-    source "$SCRIPT_DIR/lib/coach_chat.sh"
-fi
+source "$SCRIPT_DIR/lib/loader.sh" || exit 1
 
 _status_extract_repo_name_from_line() {
     local raw_line="$1"
@@ -307,99 +258,10 @@ if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
         _status_prompt="Produce a concise mid-day GitHub-first coaching brief grounded in today's focus and current GitHub activity."
     fi
 
-    if command -v coaching_strategy_dispatcher_name >/dev/null 2>&1; then
-        _status_dispatcher=$(coaching_strategy_dispatcher_name 2>/dev/null || true)
-    fi
-
-    if [ -n "$_status_dispatcher" ]; then
-        # status --coach is intentionally uncached because current directory,
-        # repo-local scope, and live GitHub activity can change between checks.
-        if command -v coaching_strategy_with_retry >/dev/null 2>&1; then
-            set +e
-            _status_briefing=$(coaching_strategy_with_retry "$_status_prompt" "$_status_temperature" "${AI_COACH_REQUEST_TIMEOUT_SECONDS:-35}" "${AI_COACH_RETRY_TIMEOUT_SECONDS:-90}")
-            _status_exit_code=$?
-            set -e
-            if [ "$_status_exit_code" -eq 0 ]; then
-                _status_reason=""
-            else
-                if [ "$_status_exit_code" -eq 124 ]; then
-                    _status_reason="timeout"
-                else
-                    _status_reason="error"
-                fi
-            fi
-        else
-            set +e
-            _status_briefing=$(printf '%s' "$_status_prompt" | "$_status_dispatcher" --temperature "$_status_temperature")
-            _status_exit_code=$?
-            set -e
-            if [ "$_status_exit_code" -eq 0 ]; then
-                _status_reason=""
-            else
-                _status_reason="error"
-            fi
-        fi
+    if command -v coaching_generate_response >/dev/null 2>&1; then
+        _status_briefing=$(coaching_generate_response "$_status_prompt" "$_status_temperature" "${_status_focus_text:-"(no focus set)"}" "${_status_mode:-LOCKED}" "$_status_combined_git" "${_status_behavior_digest:-}" "status" "${_status_project_context:-}" "${_status_context_scope:-global}" "$CURRENT_DIR")
     else
-        _status_reason="dispatcher-missing"
-    fi
-
-    if [ -z "$_status_briefing" ]; then
-        if command -v coaching_status_fallback_output >/dev/null 2>&1; then
-            _status_briefing=$(coaching_status_fallback_output \
-                "${_status_focus_text:-"(no focus set)"}" \
-                "${_status_mode:-LOCKED}" \
-                "${_status_reason:-unavailable}" \
-                "${_status_behavior_digest:-}" \
-                "$_status_combined_git" \
-                "$CURRENT_DIR" \
-                "${_status_project_context:-}" \
-                "${_status_reason_detail:-}" \
-                "${_status_context_scope:-global}")
-        else
-            _status_briefing="Unable to generate status coach output at this time."
-        fi
-    elif [ -z "$_status_reason" ] && [ "${AI_COACH_EVIDENCE_CHECK_ENABLED:-true}" = "true" ] && command -v coaching_status_response_is_grounded >/dev/null 2>&1; then
-        if ! coaching_status_response_is_grounded "$_status_briefing" "${_status_focus_text:-"(no focus set)"}" "$_status_combined_git" "$_status_mode"; then
-            if command -v coach_grounding_failure_message >/dev/null 2>&1; then
-                _status_reason_detail=$(coach_grounding_failure_message)
-            elif [[ -n "${COACH_GROUNDING_FAILURE_REASON:-}" ]]; then
-                _status_reason_detail="${COACH_GROUNDING_FAILURE_REASON:-}"
-            fi
-            _status_reason="ungrounded-status"
-            if [[ -n "${_status_reason_detail:-}" ]]; then
-                printf 'AI coach: rejected status response (%s).\n' "$_status_reason_detail" >&2
-            else
-                echo "AI coach: rejected status response (ungrounded-status)." >&2
-            fi
-            if command -v coaching_status_fallback_output >/dev/null 2>&1; then
-                _status_briefing=$(coaching_status_fallback_output \
-                    "${_status_focus_text:-"(no focus set)"}" \
-                    "${_status_mode:-LOCKED}" \
-                    "${_status_reason:-unavailable}" \
-                    "${_status_behavior_digest:-}" \
-                    "$_status_combined_git" \
-                    "$CURRENT_DIR" \
-                    "${_status_project_context:-}" \
-                    "${_status_reason_detail:-}" \
-                    "${_status_context_scope:-global}")
-            fi
-        fi
-    fi
-
-    if command -v coaching_sanitize_status_repo_scope >/dev/null 2>&1; then
-        _status_briefing=$(coaching_sanitize_status_repo_scope \
-            "$_status_briefing" \
-            "${_status_focus_text:-"(no focus set)"}" \
-            "${_status_project_context:-}" \
-            "${_status_context_scope:-global}")
-    fi
-
-    if command -v coaching_sanitize_startday_blindspots >/dev/null 2>&1; then
-        _status_briefing=$(coaching_sanitize_startday_blindspots \
-            "$_status_briefing" \
-            "${_status_focus_text:-"(no focus set)"}" \
-            "${_status_behavior_digest:-}" \
-            "$_status_combined_git")
+        _status_briefing="Unable to generate status coach output at this time."
     fi
 
     # status --coach is on-demand and intentionally not appended to coach_log,

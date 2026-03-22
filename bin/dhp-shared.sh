@@ -100,7 +100,7 @@ dhp_parse_flags() {
 
 # Human-readable list used by UX/help paths.
 dhp_available_dispatchers() {
-    printf '%s\n' "tech, creative, content, strategy, brand, market, stoic, research, narrative, copy, finance"
+    printf '%s\n' "tech, creative, content, strategy, brand, market, stoic, research, narrative, copy, finance, morphling"
 }
 
 # Resolve dispatcher aliases to canonical script names.
@@ -119,6 +119,7 @@ dhp_dispatcher_script_name() {
         narrative|dhp-narrative|dhp-narrative.sh) echo "dhp-narrative.sh" ;;
         copy|dhp-copy|dhp-copy.sh) echo "dhp-copy.sh" ;;
         finance|dhp-finance|dhp-finance.sh) echo "dhp-finance.sh" ;;
+        morphling|dhp-morphling|dhp-morphling.sh) echo "dhp-morphling.sh" ;;
         *) return 1 ;;
     esac
 }
@@ -268,21 +269,15 @@ dhp_dispatch() {
     fi
 
     # 4. Configuration (Model & Output)
-    # Primary env var is passed in (e.g., TECH_MODEL); fall back to legacy DHP_* if set.
+    # Primary env var is passed in (e.g., TECH_MODEL).
     local model_primary="${!env_model_var:-}"
-    local legacy_var="DHP_${env_model_var}"
-    local model_legacy="${!legacy_var:-}"
-    local strategy_override="${STRATEGY_MODEL:-${DHP_STRATEGY_MODEL:-}}"
-    local default_model_env="${DEFAULT_MODEL:-${DHP_DEFAULT_MODEL:-}}"
+    local default_model_env="${DEFAULT_MODEL:-}"
     local model_final=""
+    
     if [ -n "$model_primary" ]; then
         model_final="$model_primary"
-    elif [ -n "$model_legacy" ]; then
-        model_final="$model_legacy"
     elif [ -n "$default_model_env" ]; then
         model_final="$default_model_env"
-    elif [ -n "$strategy_override" ]; then
-        model_final="$strategy_override"
     else
         model_final="$(get_model "$model_type")"
     fi

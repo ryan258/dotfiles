@@ -3,61 +3,7 @@ set -euo pipefail
 # startday.sh - Enhanced morning routine
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMON_LIB="$SCRIPT_DIR/lib/common.sh"
-DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
-CONFIG_LIB="$SCRIPT_DIR/lib/config.sh"
-
-if [ -f "$CONFIG_LIB" ]; then
-    # shellcheck disable=SC1090
-    source "$CONFIG_LIB"
-else
-    echo "Error: configuration library not found at $CONFIG_LIB" >&2
-    exit 1
-fi
-
-if [ -f "$COMMON_LIB" ]; then
-    # shellcheck disable=SC1090
-    source "$COMMON_LIB"
-else
-    echo "Error: common utilities not found at $COMMON_LIB" >&2
-    exit 1
-fi
-
-if [ -f "$DATE_UTILS" ]; then
-    # shellcheck disable=SC1090
-    source "$DATE_UTILS"
-else
-    die "date utilities not found at $DATE_UTILS" "$EXIT_FILE_NOT_FOUND"
-fi
-
-# Source supporting libraries
-if [ -f "$SCRIPT_DIR/lib/github_ops.sh" ]; then
-    source "$SCRIPT_DIR/lib/github_ops.sh"
-fi
-if [ -f "$SCRIPT_DIR/lib/health_ops.sh" ]; then
-    source "$SCRIPT_DIR/lib/health_ops.sh"
-fi
-if [ -f "$SCRIPT_DIR/lib/coach_ops.sh" ]; then
-    source "$SCRIPT_DIR/lib/coach_ops.sh"
-else
-    die "coach operations library not found at $SCRIPT_DIR/lib/coach_ops.sh" "$EXIT_FILE_NOT_FOUND"
-fi
-for coach_module in coach_metrics.sh coach_prompts.sh coach_scoring.sh; do
-    if [ -f "$SCRIPT_DIR/lib/$coach_module" ]; then
-        # shellcheck disable=SC1090
-        source "$SCRIPT_DIR/lib/$coach_module"
-    else
-        die "coach module not found at $SCRIPT_DIR/lib/$coach_module" "$EXIT_FILE_NOT_FOUND"
-    fi
-done
-if [ -f "$SCRIPT_DIR/lib/coaching.sh" ]; then
-    source "$SCRIPT_DIR/lib/coaching.sh"
-else
-    die "coaching facade not found at $SCRIPT_DIR/lib/coaching.sh" "$EXIT_FILE_NOT_FOUND"
-fi
-if [ -f "$SCRIPT_DIR/lib/coach_chat.sh" ]; then
-    source "$SCRIPT_DIR/lib/coach_chat.sh"
-fi
+source "$SCRIPT_DIR/lib/loader.sh" || exit 1
 
 mkdir -p "$DATA_DIR"
 CURRENT_DAY_FILE="$DATA_DIR/current_day"
@@ -411,83 +357,24 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
             COACH_BEHAVIOR_DIGEST=$(coaching_build_behavior_digest "$TODAY" "$COACH_TACTICAL_DAYS" "$COACH_PATTERN_DAYS" "${RECENT_PUSHES:-}" "${YESTERDAY_COMMITS:-}" 2>/dev/null || echo "(behavior digest unavailable)")
         fi
 
-        COACH_DISPATCHER=""
-        if command -v coaching_strategy_dispatcher_name >/dev/null 2>&1; then
-            COACH_DISPATCHER=$(coaching_strategy_dispatcher_name 2>/dev/null || true)
-        fi
+        local _sd_git_combined
+        _sd_git_combined=$(printf '%s\n%s\n' "${YESTERDAY_COMMITS:-}" "${RECENT_PUSHES:-}")
 
-        if [ -n "$COACH_DISPATCHER" ]; then
-            if command -v coaching_build_startday_prompt >/dev/null 2>&1; then
-                BRIEFING_PROMPT="$(coaching_build_startday_prompt \
-                    "${FOCUS_CONTEXT:-}" \
-                    "${COACH_MODE:-LOCKED}" \
-                    "${YESTERDAY_COMMITS:-}" \
-                    "${RECENT_PUSHES:-}" \
-                    "${COACH_BEHAVIOR_DIGEST:-}")"
-            else
-                BRIEFING_PROMPT="Produce a high-signal morning execution guide grounded only in today's focus and GitHub activity."
-            fi
-            BRIEFING=""
-            BRIEFING_REASON="ai-error"
-            BRIEFING_REASON_DETAIL=""
-
-            if command -v coaching_strategy_with_retry >/dev/null 2>&1; then
-                if BRIEFING=$(coaching_strategy_with_retry "$BRIEFING_PROMPT" "$BRIEFING_TEMPERATURE" "${AI_COACH_REQUEST_TIMEOUT_SECONDS:-35}" "${AI_COACH_RETRY_TIMEOUT_SECONDS:-90}"); then
-                    BRIEFING_REASON=""
-                else
-                    strategy_status=$?
-                    if [ "$strategy_status" -eq 124 ]; then
-                        BRIEFING_REASON="timeout"
-                    else
-                        BRIEFING_REASON="error"
-                    fi
-                fi
-            else
-                if BRIEFING=$(printf '%s' "$BRIEFING_PROMPT" | "$COACH_DISPATCHER" --temperature "$BRIEFING_TEMPERATURE"); then
-                    BRIEFING_REASON=""
-                else
-                    BRIEFING_REASON="error"
-                fi
-            fi
-
-            if [ -z "$BRIEFING" ]; then
-                if command -v coaching_startday_fallback_output >/dev/null 2>&1; then
-                    BRIEFING=$(coaching_startday_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${BRIEFING_REASON:-unavailable}" "${COACH_BEHAVIOR_DIGEST:-}" "${YESTERDAY_COMMITS:-}")
-                else
-                    BRIEFING="Unable to generate AI briefing at this time."
-                fi
-            elif [ -z "$BRIEFING_REASON" ] && [ "${AI_COACH_EVIDENCE_CHECK_ENABLED:-true}" = "true" ] && command -v coaching_startday_response_is_grounded >/dev/null 2>&1; then
-                if ! coaching_startday_response_is_grounded "$BRIEFING" "${FOCUS_CONTEXT:-"(no focus set)"}" "$(printf '%s\n%s\n' "${YESTERDAY_COMMITS:-}" "${RECENT_PUSHES:-}")" "$COACH_MODE"; then
-                    if command -v coach_grounding_failure_message >/dev/null 2>&1; then
-                        BRIEFING_REASON_DETAIL=$(coach_grounding_failure_message)
-                    elif [[ -n "${COACH_GROUNDING_FAILURE_REASON:-}" ]]; then
-                        BRIEFING_REASON_DETAIL="${COACH_GROUNDING_FAILURE_REASON:-}"
-                    fi
-                    BRIEFING_REASON="ungrounded-actions"
-                    if [[ -n "${BRIEFING_REASON_DETAIL:-}" ]]; then
-                        printf 'AI coach: rejected response (%s).\n' "$BRIEFING_REASON_DETAIL" >&2
-                    else
-                        echo "AI coach: rejected response (ungrounded-actions)." >&2
-                    fi
-                    if command -v coaching_startday_fallback_output >/dev/null 2>&1; then
-                        BRIEFING=$(coaching_startday_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "$BRIEFING_REASON" "${COACH_BEHAVIOR_DIGEST:-}" "${YESTERDAY_COMMITS:-}" "${BRIEFING_REASON_DETAIL:-}")
-                    fi
-                fi
-            fi
+        if command -v coaching_build_startday_prompt >/dev/null 2>&1; then
+            BRIEFING_PROMPT="$(coaching_build_startday_prompt \
+                "${FOCUS_CONTEXT:-}" \
+                "${COACH_MODE:-LOCKED}" \
+                "${YESTERDAY_COMMITS:-}" \
+                "${RECENT_PUSHES:-}" \
+                "${COACH_BEHAVIOR_DIGEST:-}")"
         else
-            if command -v coaching_startday_fallback_output >/dev/null 2>&1; then
-                BRIEFING=$(coaching_startday_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "dispatcher-missing" "${COACH_BEHAVIOR_DIGEST:-}" "${YESTERDAY_COMMITS:-}")
-            else
-                BRIEFING="Unable to generate AI briefing at this time."
-            fi
+            BRIEFING_PROMPT="Produce a high-signal morning execution guide grounded only in today's focus and GitHub activity."
         fi
 
-        if command -v coaching_sanitize_startday_blindspots >/dev/null 2>&1; then
-            BRIEFING=$(coaching_sanitize_startday_blindspots \
-                "$BRIEFING" \
-                "${FOCUS_CONTEXT:-"(no focus set)"}" \
-                "${COACH_BEHAVIOR_DIGEST:-}" \
-                "$(printf '%s\n%s\n' "${YESTERDAY_COMMITS:-}" "${RECENT_PUSHES:-}")")
+        if command -v coaching_generate_response >/dev/null 2>&1; then
+            BRIEFING=$(coaching_generate_response "$BRIEFING_PROMPT" "$BRIEFING_TEMPERATURE" "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "$_sd_git_combined" "${COACH_BEHAVIOR_DIGEST:-}" "startday")
+        else
+            BRIEFING="Unable to generate AI briefing at this time."
         fi
 
         BRIEFING_ESCAPED="${BRIEFING//$'\n'/\\n}"

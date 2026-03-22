@@ -9,7 +9,6 @@ Comprehensive analysis of the dotfiles project identifying optimization opportun
 
 ## Table of Contents
 
-- [Critical — Must Fix](#critical--must-fix)
 - [High Priority — Architecture & DRY](#high-priority--architecture--dry)
 - [Medium Priority — Code Quality](#medium-priority--code-quality)
 - [Low Priority — Polish & Consistency](#low-priority--polish--consistency)
@@ -20,150 +19,6 @@ Comprehensive analysis of the dotfiles project identifying optimization opportun
 
 ---
 
-## Critical — Must Fix
-
-### C1. API Cooldown Is a No-Op
-
-**File:** `bin/dhp-lib.sh` (~line 30-34)
-
-`_api_cooldown()` checks `API_COOLDOWN_SECONDS` and calls `sleep`, but the variable is never set in default config. Rate limiting is effectively disabled. Under heavy dispatcher use, this risks hitting OpenRouter rate limits with no backoff.
-
-**Fix:** Set a default in `config.sh` (e.g., `API_COOLDOWN_SECONDS="${API_COOLDOWN_SECONDS:-1}"`) and verify `_api_cooldown` is called between sequential API requests.
-
-### C2. Temperature Flag Accepts Non-Numeric Values
-
-**File:** `bin/dhp-shared.sh` `dhp_parse_flags()` (~line 71)
-
-`--temperature foo` is accepted without validation and passed to the API, causing a downstream error with no useful feedback.
-
-**Fix:** Add numeric validation:
-
-```bash
-if [[ ! "$2" =~ ^[0-9]*\.?[0-9]+$ ]]; then
-    echo "Error: --temperature requires a numeric value, got '$2'" >&2
-    return 1
-fi
-```
-
-### C3. Project Safety Check Race Condition
-
-**File:** `scripts/goodevening.sh` (~line 427)
-
-Parallel git scanning uses `mktemp -d` without checking success. If `mktemp` fails, subsequent writes go to an undefined path. Additionally, if the script crashes mid-scan, temp directories are orphaned.
-
-**Fix:** Validate `mktemp` output and use a trap for cleanup:
-
-```bash
-tmp_results=$(mktemp -d) || die "Failed to create temp directory"
-trap "rm -rf '$tmp_results'" EXIT
-```
-
-### C4. Finance Dispatcher Missing from Availability List
-
-**File:** `bin/dhp-shared.sh` (~lines 102-123)
-
-`dhp_available_dispatchers()` and `dhp_dispatcher_script_name()` omit `finance`, even though `dhp-finance.sh` exists. Users can't discover it via help/listing.
-
-**Fix:** Add `finance` to both the display list and the mapping function.
-
-### C5. Morphling Duplication
-
-**Files:** `bin/morphling.sh` AND `bin/dhp-morphling.sh`
-
-Two separate files exist for what should be a single dispatcher. The aliasing structure (`morphling` → `morphling.sh`, `dhp-morphling` → `dhp-morphling.sh`) violates the convention where `dhp-*` are the canonical files and short names are aliases.
-
-**Fix:** Keep `dhp-morphling.sh` as canonical. Make `morphling.sh` a thin wrapper or symlink. Update aliases accordingly.
-
----
-
-## High Priority — Architecture & DRY
-
-### H1. Extract AI Briefing Logic (~478 Lines of Duplication)
-
-**Files:** `scripts/startday.sh` (~lines 369-545), `scripts/goodevening.sh` (~lines 515-686), `scripts/status.sh` (~lines 280-409)
-
-All three scripts implement nearly identical patterns: cache check, prompt building, API call with retry, evidence validation, fallback handling. This is the single largest source of duplication in the project.
-
-**Fix:** Create `coaching_generate_response()` in `scripts/lib/coaching.sh` that accepts prompt, temperature, context, and evidence-check callback. Reduce each caller to ~20 lines.
-
-### H2. Create Library Loader to Eliminate Sourcing Boilerplate
-
-**Files:** `scripts/startday.sh`, `goodevening.sh`, `status.sh` (50+ lines each for library loading)
-
-Each major script manually sources 8-10 libraries with individual file-exists checks and error messages. This is ~150 lines of boilerplate across just three files.
-
-**Fix:** Create `scripts/lib/loader.sh`:
-
-```bash
-load_dotfiles_libs() {
-    local script_dir="$1"; shift
-    # Always load core trio
-    source "$script_dir/lib/config.sh" || die "config.sh not found"
-    source "$script_dir/lib/file_ops.sh" || die "file_ops.sh not found"
-    source "$script_dir/lib/common.sh" || die "common.sh not found"
-    # Load requested optional libs
-    for lib in "$@"; do
-        source "$script_dir/lib/$lib.sh" || die "$lib.sh not found"
-    done
-}
-```
-
-Then callers become: `load_dotfiles_libs "$SCRIPT_DIR" date_utils coach_ops coach_metrics`
-
-### H3. Consolidate Journal AI Analysis Blocks (~120 Lines)
-
-**File:** `scripts/journal.sh` (~lines 109-222)
-
-Three nearly identical blocks (`analyze`, `mood`, `themes`) each: gather date range, filter entries, pipe to dispatcher. Only the prompt text differs.
-
-**Fix:** Extract `ai_analyze_entries()` function accepting a prompt argument.
-
-### H4. Consolidate Todo AI Delegation (~80 Lines)
-
-**File:** `scripts/todo.sh` (~lines 301-385)
-
-`cmd_debug()` and `cmd_delegate()` are nearly identical — both get task text, route to a dispatcher, and display output.
-
-**Fix:** Create `route_task_to_dispatcher()` with a dispatcher argument.
-
-### H5. dhp-coach.sh Reimplements Shared Framework
-
-**File:** `bin/dhp-coach.sh` (~lines 9-96)
-
-This dispatcher reimplements flag parsing, input handling, and API calling instead of using `dhp_dispatch()`. Creates a maintenance burden where bug fixes to the shared framework don't propagate.
-
-**Fix:** Either refactor to use `dhp_dispatch()` or document clearly why the bypass is necessary (performance? different API flow?).
-
-### H6. dhp-content.sh Duplicates Flag Parsing
-
-**File:** `bin/dhp-content.sh` (~lines 41-113)
-
-Custom flag parser re-implements `--stream`, `--verbose`, `--temperature`, `--brain` because it also needs `--persona` and `--context` flags.
-
-**Fix:** Extract persona/context parsing into a pre-processing step, then delegate standard flags to `dhp_parse_flags()`.
-
-### H7. Standardize Model Environment Variable Naming
-
-**Files:** Various dispatchers and `coach-chat.py`
-
-Inconsistent naming conventions:
-- Standard dispatchers: `TECH_MODEL`, `CREATIVE_MODEL`
-- Coach: `AI_COACH_MODEL` (different prefix pattern)
-- Coach chat: `AI_COACH_CHAT_TEMPERATURE`, `AI_BRIEFING_TEMPERATURE`
-
-Users can't predict variable names.
-
-**Fix:** Standardize on `<TYPE>_MODEL` everywhere. Add aliases in config.sh for backward compatibility during transition.
-
-### H8. Simplify Model Fallback Hierarchy
-
-**File:** `bin/dhp-shared.sh` (~lines 270-287)
-
-The fallback chain is: `TECH_MODEL` -> `DHP_TECH_MODEL` -> `DEFAULT_MODEL` -> `DHP_DEFAULT_MODEL` -> `STRATEGY_MODEL` -> `DHP_STRATEGY_MODEL` -> `get_model()`. The inclusion of `STRATEGY_MODEL` in the fallback is non-intuitive and undocumented.
-
-**Fix:** Simplify to: Primary env var -> `DEFAULT_MODEL` -> `get_model()`. Document in config.sh.
-
----
 
 ## Medium Priority — Code Quality
 
@@ -404,14 +259,14 @@ Productivity aliases use bare script names (rely on PATH). Dispatcher aliases us
 
 ### Critical Coverage Gaps (No Tests At All)
 
-| Category | Scripts Missing Tests |
-|----------|---------------------|
-| Core data | `health.sh`, `journal.sh`, `focus.sh`, `done.sh` |
-| Input validation | `sanitize_input()`, `validate_path()`, `validate_numeric()`, `validate_range()` |
-| Blog pipeline | `blog_gen.sh`, `blog_lifecycle.sh`, `blog_ops.sh`, `blog_common.sh` |
-| Libraries | `coaching.sh`, `health_ops.sh`, `insight_store.sh`, `insight_score.sh`, `github_ops.sh`, `context_capture.sh`, `coach_chat.sh` |
-| Utilities | `github_helper.sh`, `gcal.sh`, `data_validate.sh`, `validate_env.sh`, `migrate_data.sh` |
-| File ops | `tidy_downloads.sh`, `file_organizer.sh`, `media_converter.sh`, `duplicate_finder.sh` |
+| Category         | Scripts Missing Tests                                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Core data        | `health.sh`, `journal.sh`, `focus.sh`, `done.sh`                                                                               |
+| Input validation | `sanitize_input()`, `validate_path()`, `validate_numeric()`, `validate_range()`                                                |
+| Blog pipeline    | `blog_gen.sh`, `blog_lifecycle.sh`, `blog_ops.sh`, `blog_common.sh`                                                            |
+| Libraries        | `coaching.sh`, `health_ops.sh`, `insight_store.sh`, `insight_score.sh`, `github_ops.sh`, `context_capture.sh`, `coach_chat.sh` |
+| Utilities        | `github_helper.sh`, `gcal.sh`, `data_validate.sh`, `validate_env.sh`, `migrate_data.sh`                                        |
+| File ops         | `tidy_downloads.sh`, `file_organizer.sh`, `media_converter.sh`, `duplicate_finder.sh`                                          |
 
 ### Test Quality Improvements Needed
 
@@ -433,11 +288,11 @@ Productivity aliases use bare script names (rely on PATH). Dispatcher aliases us
 
 ### Stale Counts
 
-| File | Claims | Actual | Fix |
-|------|--------|--------|-----|
-| `README.md` (~line 75) | "37 automatic tests" | 33 test files | Update count |
-| `docs/README.md` (~line 3) | "21 helper files" | 22 libraries | Update count |
-| `docs/general-reference-handbook.md` (~lines 14-18) | "21 shared libraries" | 22 | Update count |
+| File                                                | Claims                | Actual        | Fix          |
+| --------------------------------------------------- | --------------------- | ------------- | ------------ |
+| `README.md` (~line 75)                              | "37 automatic tests"  | 33 test files | Update count |
+| `docs/README.md` (~line 3)                          | "21 helper files"     | 22 libraries  | Update count |
+| `docs/general-reference-handbook.md` (~lines 14-18) | "21 shared libraries" | 22            | Update count |
 
 ### Missing Documentation
 
@@ -453,28 +308,28 @@ Productivity aliases use bare script names (rely on PATH). Dispatcher aliases us
 
 ### Script UX
 
-| Script | Enhancement | Complexity | Benefit |
-|--------|-------------|-----------|---------|
-| `startday.sh` | `--help` flag | Low | Discoverability |
-| `startday.sh` | `--skip-briefing` flag | Low | Faster low-energy starts |
-| `startday.sh` | `--quiet` flag | Low | Batch/automation support |
-| `goodevening.sh` | `--help` flag | Low | Discoverability |
-| `goodevening.sh` | `--skip-checks` flag | Low | Faster non-interactive runs |
-| `status.sh` | `--help` flag | Low | Discoverability |
-| `status.sh` | `--export json` output | Medium | Enable external tool consumption |
-| `health.sh` | `--predict` energy depletion forecast | High | Planning value for MS management |
-| `todo.sh` | Task priority levels (1-5) | Medium | Better prioritization |
-| `journal.sh` | Tag-based organization (#work, #health) | Medium | Better searchability |
-| `blog.sh` | `--dry-run` for publish | Low | Safety before deploy |
+| Script           | Enhancement                             | Complexity | Benefit                          |
+| ---------------- | --------------------------------------- | ---------- | -------------------------------- |
+| `startday.sh`    | `--help` flag                           | Low        | Discoverability                  |
+| `startday.sh`    | `--skip-briefing` flag                  | Low        | Faster low-energy starts         |
+| `startday.sh`    | `--quiet` flag                          | Low        | Batch/automation support         |
+| `goodevening.sh` | `--help` flag                           | Low        | Discoverability                  |
+| `goodevening.sh` | `--skip-checks` flag                    | Low        | Faster non-interactive runs      |
+| `status.sh`      | `--help` flag                           | Low        | Discoverability                  |
+| `status.sh`      | `--export json` output                  | Medium     | Enable external tool consumption |
+| `health.sh`      | `--predict` energy depletion forecast   | High       | Planning value for MS management |
+| `todo.sh`        | Task priority levels (1-5)              | Medium     | Better prioritization            |
+| `journal.sh`     | Tag-based organization (#work, #health) | Medium     | Better searchability             |
+| `blog.sh`        | `--dry-run` for publish                 | Low        | Safety before deploy             |
 
 ### Dispatcher Infrastructure
 
-| Enhancement | Complexity | Benefit |
-|-------------|-----------|---------|
-| Retry with exponential backoff on API failures | Medium | Reliability under rate limits |
-| Configurable `--max-parallel` per dispatcher | Low | Tunable for system resources |
-| Conversation history for non-coach dispatchers | Medium | Context-aware multi-turn use |
-| Token usage tracking in streaming mode | High | Accurate cost reporting |
+| Enhancement                                    | Complexity | Benefit                       |
+| ---------------------------------------------- | ---------- | ----------------------------- |
+| Retry with exponential backoff on API failures | Medium     | Reliability under rate limits |
+| Configurable `--max-parallel` per dispatcher   | Low        | Tunable for system resources  |
+| Conversation history for non-coach dispatchers | Medium     | Context-aware multi-turn use  |
+| Token usage tracking in streaming mode         | High       | Accurate cost reporting       |
 
 ---
 
@@ -485,6 +340,7 @@ The system is well-designed for the stated MS accessibility goal. These addition
 ### A1. Low-Energy Mode
 
 Add `--low-energy` flag to `startday.sh` and `status.sh` that:
+
 - Skips AI briefings (slow, high-cognitive-load)
 - Skips GitHub checks (network-dependent, can hang)
 - Shows only: focus, spoon budget, top 3 tasks
@@ -493,6 +349,7 @@ Add `--low-energy` flag to `startday.sh` and `status.sh` that:
 ### A2. Energy Cost Estimates Per Task
 
 Add estimated spoon cost to task display. Based on historical time-tracking and energy data, show predictions like:
+
 ```
 1. Fix login bug [~2 spoons, ~45min]
 2. Write blog post [~4 spoons, ~90min]
@@ -509,6 +366,7 @@ AI_CALL_TIMEOUT="${AI_CALL_TIMEOUT:-30}"
 ### A4. Circuit Breaker Suggestions
 
 When `health.sh check` triggers the circuit breaker (low energy / high fog), suggest specific low-energy actions instead of just warning:
+
 ```
 Energy is low. Consider:
   - Review yesterday's journal (journal list)
@@ -522,8 +380,6 @@ Energy is low. Consider:
 
 ### Quick Wins (< 30 min each)
 
-- C2: Temperature validation
-- C4: Add finance to dispatcher list
 - L4: Fix ez alias quoting
 - L5: Convert cleanup to function
 - M9: Create require_task_number()
@@ -532,22 +388,12 @@ Energy is low. Consider:
 
 ### Medium Effort (1-3 hours each)
 
-- C1: Fix API cooldown
-- C3: Fix race condition in goodevening
-- C5: Resolve morphling duplication
-- H3: Consolidate journal AI blocks
-- H4: Consolidate todo AI delegation
-- H6: Extract content.sh flag parsing
 - M6: Replace health.sh date_utils duplication
 - M7: Extract session date determination
 - M12: Fix config failure handling
 
 ### Larger Efforts (half-day to multi-day)
 
-- H1: Extract AI briefing logic (saves ~450 lines, touches 3 scripts + coaching.sh)
-- H2: Create library loader (touches all major scripts)
-- H5: Refactor dhp-coach.sh to use shared framework
-- H7: Standardize model env var naming (touches all dispatchers + config)
 - M1: Health metrics aggregation library
 - M2: Structured GitHub activity data
 - M8: Todo task ID system

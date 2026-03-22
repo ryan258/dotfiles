@@ -39,14 +39,11 @@ load_persona_block() {
 }
 
 # --- 2. CUSTOM FLAG PARSING ---
-# We use a custom parser here because of --persona and --context which are unique to content
 USE_CONTEXT=false
-USE_STREAMING=false
-USE_VERBOSE=false
-PERSONA_NAME=""
-REMAINING_ARGS_LOCAL=()
 CONTEXT_MODE=""
-PARAM_TEMPERATURE="${PARAM_TEMPERATURE:-}"
+PERSONA_NAME=""
+
+declare -a REMAINING_CUSTOM=()
 
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -59,14 +56,6 @@ while [[ "$#" -gt 0 ]]; do
             CONTEXT_MODE="--full"
             shift
             ;;
-        --stream)
-            USE_STREAMING=true
-            shift
-            ;;
-        --verbose)
-            USE_VERBOSE=true
-            shift
-            ;;
         --persona)
             if [[ -z "${2:-}" || "${2:-}" == --* ]]; then
                 echo "Error: --persona requires a value." >&2
@@ -75,39 +64,24 @@ while [[ "$#" -gt 0 ]]; do
             PERSONA_NAME="$2"
             shift 2
             ;;
-        --temperature)
-            if [[ -z "${2:-}" || "${2:-}" == --* ]]; then
-                echo "Error: --temperature requires a numeric value." >&2
-                exit 1
-            fi
-            PARAM_TEMPERATURE="$2"
-            shift 2
-            ;;
-        --brain)
-            USE_BRAIN=true
-            shift
-            ;;
-        --)
-            shift
-            while [[ "$#" -gt 0 ]]; do
-                REMAINING_ARGS_LOCAL+=("$1")
-                shift
-            done
-            ;;
-        --*)
-            echo "Error: Unknown flag: $1" >&2
-            exit 1
-            ;;
         *)
-            REMAINING_ARGS_LOCAL+=("$1")
+            REMAINING_CUSTOM+=("$1")
             shift
             ;;
     esac
 done
 
+if [ ${#REMAINING_CUSTOM[@]} -gt 0 ]; then
+    set -- "${REMAINING_CUSTOM[@]}"
+else
+    set --
+fi
+
+dhp_parse_flags "$@"
+
 # Restore args for dhp_get_input
-if [ ${#REMAINING_ARGS_LOCAL[@]} -gt 0 ]; then
-    set -- "${REMAINING_ARGS_LOCAL[@]}"
+if [ ${#REMAINING_ARGS[@]} -gt 0 ]; then
+    set -- "${REMAINING_ARGS[@]}"
 else
     set --
 fi
@@ -202,10 +176,7 @@ Deliver a 'First-Draft Skeleton' for a new evergreen guide:
 DELIVERABLE: Return a single, well-formatted Hugo markdown document."
 
 # Re-export manual flags to global vars for dhp_dispatch usage
-export USE_VERBOSE
-export USE_STREAMING
-export PARAM_TEMPERATURE
-export USE_BRAIN
+# Flags are set by dhp_parse_flags above.
 
 dhp_dispatch \
     "Content Workflow" \

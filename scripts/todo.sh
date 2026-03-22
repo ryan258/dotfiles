@@ -27,6 +27,19 @@ touch "$TODO_FILE" "$DONE_FILE"
 # Subcommand Functions
 #=============================================================================
 
+_require_task_text() {
+    local task_num="$1"
+    validate_numeric "$task_num" "task number" || die "Invalid task number '$task_num'" "$EXIT_ERROR"
+    local task_text
+    if ! task_text=$(get_todo_text "$task_num"); then
+        die "Unable to read task $task_num" "$EXIT_ERROR"
+    fi
+    if [[ -z "$task_text" ]]; then
+        die "Task $task_num not found" "$EXIT_ERROR"
+    fi
+    printf '%s' "$task_text"
+}
+
 cmd_add() {
     local task_text="$*"
 
@@ -241,15 +254,8 @@ cmd_time_wrapper() {
 
 cmd_start() {
     local task_num="$1"
-    validate_numeric "$task_num" "task number" || die "Invalid task number '$task_num'" "$EXIT_ERROR"
-    
     local task_text
-    if ! task_text=$(get_todo_text "$task_num"); then
-        die "Unable to read task $task_num" "$EXIT_ERROR"
-    fi
-    if [[ -z "$task_text" ]]; then
-        die "Task $task_num not found" "$EXIT_ERROR"
-    fi
+    task_text=$(_require_task_text "$task_num")
     
     cmd_time_wrapper "start" "$task_num" "$task_text"
 }
@@ -268,16 +274,10 @@ cmd_spend() {
     local task_num="$1"
     local count="$2"
     
-    validate_numeric "$task_num" "task id" || die "Invalid task id '$task_num'" "$EXIT_ERROR"
     validate_numeric "$count" "spoon count" || die "Invalid spoon count '$count'" "$EXIT_ERROR"
     
     local task_text
-    if ! task_text=$(get_todo_text "$task_num"); then
-        die "Unable to read task $task_num" "$EXIT_ERROR"
-    fi
-    if [[ -z "$task_text" ]]; then
-        die "Task $task_num not found" "$EXIT_ERROR"
-    fi
+    task_text=$(_require_task_text "$task_num")
     
     if [[ ! -x "$SPOON_MANAGER" ]]; then
         die "Spoon manager not found at $SPOON_MANAGER" "$EXIT_FILE_NOT_FOUND"
@@ -299,16 +299,11 @@ cmd_up() {
 }
 
 cmd_debug() {
-    local task_num="$1"
-    validate_numeric "$task_num" "task number" || die "Invalid task number '$task_num'" "$EXIT_ERROR"
+    local task_num="${1:-}"
+    [[ -z "$task_num" ]] && die "Usage: $(basename "$0") debug <number>" "$EXIT_INVALID_ARGS"
     
     local task_text
-    if ! task_text=$(get_todo_text "$task_num"); then
-        die "Unable to read task $task_num" "$EXIT_ERROR"
-    fi
-    if [[ -z "$task_text" ]]; then
-        die "Task $task_num not found" "$EXIT_ERROR"
-    fi
+    task_text=$(_require_task_text "$task_num")
     
     echo "🤖 Debugging task #$task_num with AI Staff..."
     echo "Task: $task_text"
@@ -338,19 +333,14 @@ cmd_debug() {
 }
 
 cmd_delegate() {
-    local task_num="$1"
-    local dispatcher="$2"
+    local task_num="${1:-}"
+    local dispatcher="${2:-}"
     
-    validate_numeric "$task_num" "task number" || die "Invalid task number '$task_num'" "$EXIT_ERROR"
+    [[ -z "$task_num" ]] && die "Usage: $(basename "$0") delegate <number> <type>" "$EXIT_INVALID_ARGS"
     [[ -z "$dispatcher" ]] && die "Dispatcher required (tech|creative|content)" "$EXIT_ERROR"
 
     local task_text
-    if ! task_text=$(get_todo_text "$task_num"); then
-        die "Unable to read task $task_num" "$EXIT_ERROR"
-    fi
-    if [[ -z "$task_text" ]]; then
-        die "Task $task_num not found" "$EXIT_ERROR"
-    fi
+    task_text=$(_require_task_text "$task_num")
 
     echo "🤖 Delegating task #$task_num to AI Staff ($dispatcher dispatcher)..."
     echo "Task: $task_text"

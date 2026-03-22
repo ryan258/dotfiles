@@ -2,6 +2,92 @@
 
 **Last Updated:** March 21, 2026
 
+## Version 2.2.38 (March 22, 2026) - Architectural Consolidation (H1-H8) & Critical Fixes
+
+**Status:** ✅ Production Ready
+
+### Critical — Must Fix
+
+### C1. API Cooldown Is a No-Op
+
+**File:** `bin/dhp-lib.sh` (~line 30-34)
+
+`_api_cooldown()` checks `API_COOLDOWN_SECONDS` and calls `sleep`, but the variable is never set in default config. Rate limiting is effectively disabled. Under heavy dispatcher use, this risks hitting OpenRouter rate limits with no backoff.
+
+**Fix:** Set a default in `config.sh` (e.g., `API_COOLDOWN_SECONDS="${API_COOLDOWN_SECONDS:-1}"`) and verify `_api_cooldown` is called between sequential API requests.
+
+### C2. Temperature Flag Accepts Non-Numeric Values
+
+**File:** `bin/dhp-shared.sh` `dhp_parse_flags()` (~line 71)
+
+`--temperature foo` is accepted without validation and passed to the API, causing a downstream error with no useful feedback.
+
+**Fix:** Add numeric validation:
+
+```bash
+if [[ ! "$2" =~ ^[0-9]*\.?[0-9]+$ ]]; then
+    echo "Error: --temperature requires a numeric value, got '$2'" >&2
+    return 1
+fi
+```
+
+### C3. Project Safety Check Race Condition
+
+**File:** `scripts/goodevening.sh` (~line 427)
+
+Parallel git scanning uses `mktemp -d` without checking success. If `mktemp` fails, subsequent writes go to an undefined path. Additionally, if the script crashes mid-scan, temp directories are orphaned.
+
+**Fix:** Validate `mktemp` output and use a trap for cleanup:
+
+```bash
+tmp_results=$(mktemp -d) || die "Failed to create temp directory"
+trap "rm -rf '$tmp_results'" EXIT
+```
+
+### C4. Finance Dispatcher Missing from Availability List
+
+**File:** `bin/dhp-shared.sh` (~lines 102-123)
+
+`dhp_available_dispatchers()` and `dhp_dispatcher_script_name()` omit `finance`, even though `dhp-finance.sh` exists. Users can't discover it via help/listing.
+
+**Fix:** Add `finance` to both the display list and the mapping function.
+
+### C5. Morphling Duplication
+
+**Files:** `bin/morphling.sh` AND `bin/dhp-morphling.sh`
+
+Two separate files exist for what should be a single dispatcher. The aliasing structure (`morphling` → `morphling.sh`, `dhp-morphling` → `dhp-morphling.sh`) violates the convention where `dhp-*` are the canonical files and short names are aliases.
+
+**Fix:** Keep `dhp-morphling.sh` as canonical. Make `morphling.sh` a thin wrapper or symlink. Update aliases accordingly.
+
+### High Priority — Architecture & DRY
+
+### H1. Extract AI Briefing Logic
+Extracted AI briefing generation logic from `startday.sh`, `goodevening.sh`, and `status.sh` into a shared `coaching_generate_response()` handler in `coaching.sh`. This removed ~478 lines of duplication and centralized the prompt building, API caching, validation, and fallback mechanisms.
+
+### H2. Create Library Loader to Eliminate Sourcing Boilerplate
+Created `scripts/lib/loader.sh` to centralize imports. Replaced 50+ lines of individual library loading boilerplate and error checking across major top-level scripts with a simple `load_dotfiles_libs` call.
+
+### H3. Consolidate Journal AI Analysis Blocks
+Consolidated the `analyze`, `mood`, and `themes` logic in `journal.sh` via a new shared `_journal_ai_analysis()` function. Replaced three nearly identical 40-line blocks.
+
+### H4. Consolidate Todo AI Delegation
+Reduced repetitive verification duplication in `todo.sh` by introducing `_require_task_text()`, saving validation steps across `debug`, `spend`, `time`, `start`, and `delegate` commands.
+
+### H5. dhp-coach.sh Reimplements Shared Framework
+Refactored `bin/dhp-coach.sh` to leverage the shared `dhp_dispatch` framework directly. This eliminates a custom 80-line API implementation loop while preserving the correct OpenRouter hit semantics and parameters.
+
+### H6. dhp-content.sh Duplicates Flag Parsing
+Refactored `bin/dhp-content.sh` to intercept unique flags (`--context`, `--persona`) and then delegate all standard flag parsing to the shared `dhp_parse_flags()` framework.
+
+### H7. Standardize Model Environment Variable Naming
+Standardized fallback conventions to cleanly rely on `<TYPE>_MODEL`. In `scripts/lib/config.sh`, added `COACH_MODEL` logic while leaving `AI_COACH_MODEL` active for backward compatibility during the transition.
+
+### H8. Simplify Model Fallback Hierarchy
+Cleaned up environment variable precedence in `bin/dhp-shared.sh` by eliminating the confusing fallback leakage to `STRATEGY_MODEL`. The fallback chain is now safely isolated: Primary env var -> `DEFAULT_MODEL` -> `get_model()`.
+
+---
+
 ## Version 2.2.37 (March 21, 2026) - Neurodivergent-Friendly Coach Overhaul + Interactive Chat
 
 **Status:** ✅ Production Ready

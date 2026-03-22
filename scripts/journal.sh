@@ -22,6 +22,46 @@ trap cleanup EXIT
 
 # --- Main Logic ---
 
+_journal_ai_analysis() {
+    local days="$1"
+    local title="$2"
+    local reviewing_msg="$3"
+    local prompt_msg="$4"
+
+    echo "$title"
+    echo "$reviewing_msg"
+    echo "---"
+    echo ""
+
+    # Get entries from last N days
+    local cutoff_date
+    cutoff_date=$(date_shift_days "-$days" "%Y-%m-%d")
+    local recent_entries
+    recent_entries=$(awk -F'|' -v cutoff="$cutoff_date" 'NF>=2 { if (substr($1,1,10) >= cutoff) print }' "$JOURNAL_FILE")
+
+    if [ -z "$recent_entries" ]; then
+        echo "No journal entries found in the last $days days."
+        echo "Add entries with: $(basename "$0") 'your thoughts here'"
+        exit 0
+    fi
+
+    # Send to Chief of Staff for analysis
+    if command -v dhp-strategy.sh &> /dev/null; then
+        {
+            echo "$prompt_msg"
+            echo ""
+            echo "Journal entries (last $days days):"
+            echo "---"
+            echo "$recent_entries"
+        } | dhp-strategy.sh
+    else
+        die "dhp-strategy.sh dispatcher not found. Make sure bin/ is in your PATH" "$EXIT_FILE_NOT_FOUND"
+    fi
+
+    echo ""
+    echo "✅ Analysis complete"
+}
+
 case "${1:-add}" in
   add)
     # Add a new journal entry.
@@ -108,117 +148,35 @@ case "${1:-add}" in
 
   analyze)
     # AI-powered analysis of recent journal entries
-    echo "🤖 Analyzing your journal with AI Staff: Chief of Staff"
-    echo "Reviewing last 7 days of entries..."
-    echo "---"
-    echo ""
-
-    # Get entries from last 7 days
-    SEVEN_DAYS_AGO=$(date_shift_days -7 "%Y-%m-%d")
-    RECENT_ENTRIES=$(awk -F'|' -v cutoff="$SEVEN_DAYS_AGO" 'NF>=2 { if (substr($1,1,10) >= cutoff) print }' "$JOURNAL_FILE")
-
-    if [ -z "$RECENT_ENTRIES" ]; then
-        echo "No journal entries found in the last 7 days."
-        echo "Add entries with: $(basename "$0") 'your thoughts here'"
-        exit 0
-    fi
-
-    # Send to Chief of Staff for analysis
-    if command -v dhp-strategy.sh &> /dev/null; then
-        {
-            echo "Please analyze the following journal entries from the past 7 days."
-            echo "Focus on:"
-            echo "- Emotional patterns and mood trends"
-            echo "- Recurring themes or concerns"
-            echo "- Progress indicators and wins"
-            echo "- Areas that might need attention"
-            echo ""
-            echo "Journal entries (last 7 days):"
-            echo "---"
-            echo "$RECENT_ENTRIES"
-        } | dhp-strategy.sh
-    else
-        die "dhp-strategy.sh dispatcher not found. Make sure bin/ is in your PATH" "$EXIT_FILE_NOT_FOUND"
-    fi
-
-    echo ""
-    echo "✅ Analysis complete"
+    prompt="Please analyze the following journal entries from the past 7 days.
+Focus on:
+- Emotional patterns and mood trends
+- Recurring themes or concerns
+- Progress indicators and wins
+- Areas that might need attention"
+    _journal_ai_analysis 7 "🤖 Analyzing your journal with AI Staff: Chief of Staff" "Reviewing last 7 days of entries..." "$prompt"
     ;;
 
   mood)
     # AI-powered sentiment analysis
-    echo "🎭 Analyzing mood from recent journal entries"
-    echo "Reviewing last 14 days..."
-    echo "---"
-    echo ""
-
-    # Get entries from last 14 days
-    FOURTEEN_DAYS_AGO=$(date_shift_days -14 "%Y-%m-%d")
-    RECENT_ENTRIES=$(awk -F'|' -v cutoff="$FOURTEEN_DAYS_AGO" 'NF>=2 { if (substr($1,1,10) >= cutoff) print }' "$JOURNAL_FILE")
-
-    if [ -z "$RECENT_ENTRIES" ]; then
-        echo "No journal entries found in the last 14 days."
-        exit 0
-    fi
-
-    # Send to Chief of Staff for mood analysis
-    if command -v dhp-strategy.sh &> /dev/null; then
-        {
-            echo "Please perform a sentiment/mood analysis on these journal entries."
-            echo "Provide:"
-            echo "- Overall mood trend (improving/declining/stable)"
-            echo "- Specific emotional patterns detected"
-            echo "- Day-by-day mood summary if helpful"
-            echo "- Suggestions for emotional wellbeing"
-            echo ""
-            echo "Journal entries (last 14 days):"
-            echo "---"
-            echo "$RECENT_ENTRIES"
-        } | dhp-strategy.sh
-    else
-        die "dhp-strategy.sh dispatcher not found. Make sure bin/ is in your PATH" "$EXIT_FILE_NOT_FOUND"
-    fi
-
-    echo ""
-    echo "✅ Mood analysis complete"
+    prompt="Please perform a sentiment/mood analysis on these journal entries.
+Provide:
+- Overall mood trend (improving/declining/stable)
+- Specific emotional patterns detected
+- Day-by-day mood summary if helpful
+- Suggestions for emotional wellbeing"
+    _journal_ai_analysis 14 "🎭 Analyzing mood from recent journal entries" "Reviewing last 14 days..." "$prompt"
     ;;
 
   themes)
     # AI-powered theme extraction
-    echo "🔍 Extracting recurring themes from journal"
-    echo "Analyzing last 30 days..."
-    echo "---"
-    echo ""
-
-    # Get entries from last 30 days
-    THIRTY_DAYS_AGO=$(date_shift_days -30 "%Y-%m-%d")
-    RECENT_ENTRIES=$(awk -F'|' -v cutoff="$THIRTY_DAYS_AGO" 'NF>=2 { if (substr($1,1,10) >= cutoff) print }' "$JOURNAL_FILE")
-
-    if [ -z "$RECENT_ENTRIES" ]; then
-        echo "No journal entries found in the last 30 days."
-        exit 0
-    fi
-
-    # Send to Chief of Staff for theme analysis
-    if command -v dhp-strategy.sh &> /dev/null; then
-        {
-            echo "Please identify recurring themes in these journal entries."
-            echo "Provide:"
-            echo "- Top 3-5 recurring themes or topics"
-            echo "- Patterns in what I'm focused on or worried about"
-            echo "- Themes that appear to be growing vs. fading"
-            echo "- Any connections between themes"
-            echo ""
-            echo "Journal entries (last 30 days):"
-            echo "---"
-            echo "$RECENT_ENTRIES"
-        } | dhp-strategy.sh
-    else
-        die "dhp-strategy.sh dispatcher not found. Make sure bin/ is in your PATH" "$EXIT_FILE_NOT_FOUND"
-    fi
-
-    echo ""
-    echo "✅ Theme analysis complete"
+    prompt="Please identify recurring themes in these journal entries.
+Provide:
+- Top 3-5 recurring themes or topics
+- Patterns in what I'm focused on or worried about
+- Themes that appear to be growing vs. fading
+- Any connections between themes"
+    _journal_ai_analysis 30 "🔍 Extracting recurring themes from journal" "Analyzing last 30 days..." "$prompt"
     ;;
 
   up|update)

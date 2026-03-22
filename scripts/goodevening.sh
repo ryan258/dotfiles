@@ -2,61 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMON_LIB="$SCRIPT_DIR/lib/common.sh"
-DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
-CONFIG_LIB="$SCRIPT_DIR/lib/config.sh"
-
-if [ -f "$COMMON_LIB" ]; then
-    # shellcheck disable=SC1090
-    source "$COMMON_LIB"
-else
-    echo "Error: common utilities not found at $COMMON_LIB" >&2
-    exit 1
-fi
-
-if [ -f "$DATE_UTILS" ]; then
-    # shellcheck disable=SC1090
-    source "$DATE_UTILS"
-else
-    die "date utilities not found at $DATE_UTILS" "$EXIT_FILE_NOT_FOUND"
-fi
-
-# --- Configuration ---
-if [ -f "$CONFIG_LIB" ]; then
-    # shellcheck disable=SC1090
-    source "$CONFIG_LIB"
-else
-    die "configuration library not found at $CONFIG_LIB" "$EXIT_FILE_NOT_FOUND"
-fi
-
-# Source GitHub operations (for recent pushes + commit recap)
-if [ -f "$SCRIPT_DIR/lib/github_ops.sh" ]; then
-    # shellcheck disable=SC1090
-    source "$SCRIPT_DIR/lib/github_ops.sh"
-fi
-if [ -f "$SCRIPT_DIR/lib/coach_ops.sh" ]; then
-    # shellcheck disable=SC1090
-    source "$SCRIPT_DIR/lib/coach_ops.sh"
-else
-    die "coach operations library not found at $SCRIPT_DIR/lib/coach_ops.sh" "$EXIT_FILE_NOT_FOUND"
-fi
-for coach_module in coach_metrics.sh coach_prompts.sh coach_scoring.sh; do
-    if [ -f "$SCRIPT_DIR/lib/$coach_module" ]; then
-        # shellcheck disable=SC1090
-        source "$SCRIPT_DIR/lib/$coach_module"
-    else
-        die "coach module not found at $SCRIPT_DIR/lib/$coach_module" "$EXIT_FILE_NOT_FOUND"
-    fi
-done
-if [ -f "$SCRIPT_DIR/lib/coaching.sh" ]; then
-    # shellcheck disable=SC1090
-    source "$SCRIPT_DIR/lib/coaching.sh"
-else
-    die "coaching facade not found at $SCRIPT_DIR/lib/coaching.sh" "$EXIT_FILE_NOT_FOUND"
-fi
-if [ -f "$SCRIPT_DIR/lib/coach_chat.sh" ]; then
-    source "$SCRIPT_DIR/lib/coach_chat.sh"
-fi
+source "$SCRIPT_DIR/lib/loader.sh" || exit 1
 
 mkdir -p "$DATA_DIR"
 
@@ -567,65 +513,13 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     REFLECTION_REASON="ai-error"
     REFLECTION_REASON_DETAIL=""
 
-    COACH_DISPATCHER=""
-    if command -v coaching_strategy_dispatcher_name >/dev/null 2>&1; then
-        COACH_DISPATCHER=$(coaching_strategy_dispatcher_name 2>/dev/null || true)
-    fi
-
-    if [ -n "$COACH_DISPATCHER" ]; then
-        if command -v coaching_strategy_with_retry >/dev/null 2>&1; then
-            if REFLECTION=$(coaching_strategy_with_retry "$REFLECTION_PROMPT" "$COACH_TEMPERATURE" "${AI_COACH_REQUEST_TIMEOUT_SECONDS:-35}" "${AI_COACH_RETRY_TIMEOUT_SECONDS:-90}"); then
-                REFLECTION_REASON=""
-            else
-                strategy_status=$?
-                if [ "$strategy_status" -eq 124 ]; then
-                    REFLECTION_REASON="timeout"
-                else
-                    REFLECTION_REASON="error"
-                fi
-            fi
-        else
-            if REFLECTION=$(printf '%s' "$REFLECTION_PROMPT" | "$COACH_DISPATCHER" --temperature "$COACH_TEMPERATURE"); then
-                REFLECTION_REASON=""
-            else
-                REFLECTION_REASON="error"
-            fi
-        fi
+    local _ge_git_combined
+    _ge_git_combined=$(printf '%s\n%s\n' "${TODAY_COMMITS:-}" "${RECENT_PUSHES:-}")
+    
+    if command -v coaching_generate_response >/dev/null 2>&1; then
+        REFLECTION=$(coaching_generate_response "$REFLECTION_PROMPT" "$COACH_TEMPERATURE" "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "$_ge_git_combined" "${COACH_BEHAVIOR_DIGEST:-}" "goodevening")
     else
-        REFLECTION_REASON="dispatcher-missing"
-    fi
-
-    if [ -z "$REFLECTION" ]; then
-        if command -v coaching_goodevening_fallback_output >/dev/null 2>&1; then
-            REFLECTION=$(coaching_goodevening_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${REFLECTION_REASON:-unavailable}" "${COACH_BEHAVIOR_DIGEST:-}" "${TODAY_COMMITS:-}" "${REFLECTION_REASON_DETAIL:-}")
-        else
-            REFLECTION="Unable to generate AI reflection at this time."
-        fi
-    elif [ -z "$REFLECTION_REASON" ] && [ "${AI_COACH_EVIDENCE_CHECK_ENABLED:-true}" = "true" ] && command -v coaching_goodevening_response_is_grounded >/dev/null 2>&1; then
-        if ! coaching_goodevening_response_is_grounded "$REFLECTION" "${FOCUS_CONTEXT:-"(no focus set)"}" "$(printf '%s\n%s\n' "${TODAY_COMMITS:-}" "${RECENT_PUSHES:-}")" "$COACH_MODE"; then
-            if command -v coach_grounding_failure_message >/dev/null 2>&1; then
-                REFLECTION_REASON_DETAIL=$(coach_grounding_failure_message)
-            elif [[ -n "${COACH_GROUNDING_FAILURE_REASON:-}" ]]; then
-                REFLECTION_REASON_DETAIL="${COACH_GROUNDING_FAILURE_REASON:-}"
-            fi
-            REFLECTION_REASON="ungrounded-reflection"
-            if [[ -n "${REFLECTION_REASON_DETAIL:-}" ]]; then
-                printf 'AI coach: rejected reflection (%s).\n' "$REFLECTION_REASON_DETAIL" >&2
-            else
-                echo "AI coach: rejected reflection (ungrounded-reflection)." >&2
-            fi
-            if command -v coaching_goodevening_fallback_output >/dev/null 2>&1; then
-                REFLECTION=$(coaching_goodevening_fallback_output "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "${REFLECTION_REASON:-unavailable}" "${COACH_BEHAVIOR_DIGEST:-}" "${TODAY_COMMITS:-}" "${REFLECTION_REASON_DETAIL:-}")
-            fi
-        fi
-    fi
-
-    if command -v coaching_sanitize_goodevening_blindspots >/dev/null 2>&1; then
-        REFLECTION=$(coaching_sanitize_goodevening_blindspots \
-            "$REFLECTION" \
-            "${FOCUS_CONTEXT:-"(no focus set)"}" \
-            "${COACH_BEHAVIOR_DIGEST:-}" \
-            "$(printf '%s\n%s\n' "${TODAY_COMMITS:-}" "${RECENT_PUSHES:-}")")
+        REFLECTION="Unable to generate AI reflection at this time."
     fi
 
     echo "$REFLECTION" | sed 's/^/  /'
