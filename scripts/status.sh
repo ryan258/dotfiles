@@ -51,6 +51,9 @@ fi
 if [ -f "$SCRIPT_DIR/lib/coaching.sh" ]; then
     source "$SCRIPT_DIR/lib/coaching.sh"
 fi
+if [ -f "$SCRIPT_DIR/lib/coach_chat.sh" ]; then
+    source "$SCRIPT_DIR/lib/coach_chat.sh"
+fi
 
 _status_extract_repo_name_from_line() {
     local raw_line="$1"
@@ -356,7 +359,7 @@ if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
             _status_briefing="Unable to generate status coach output at this time."
         fi
     elif [ -z "$_status_reason" ] && [ "${AI_COACH_EVIDENCE_CHECK_ENABLED:-true}" = "true" ] && command -v coaching_status_response_is_grounded >/dev/null 2>&1; then
-        if ! coaching_status_response_is_grounded "$_status_briefing" "${_status_focus_text:-"(no focus set)"}" "$_status_combined_git"; then
+        if ! coaching_status_response_is_grounded "$_status_briefing" "${_status_focus_text:-"(no focus set)"}" "$_status_combined_git" "$_status_mode"; then
             if command -v coach_grounding_failure_message >/dev/null 2>&1; then
                 _status_reason_detail=$(coach_grounding_failure_message)
             elif [[ -n "${COACH_GROUNDING_FAILURE_REASON:-}" ]]; then
@@ -402,6 +405,7 @@ if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
     # status --coach is on-demand and intentionally not appended to coach_log,
     # so repeated mid-day recenter checks do not create noisy history.
     echo "$_status_briefing" | sed 's/^/  /'
+    _COACH_CHAT_BRIEFING="$_status_briefing"
 fi
 
 # --- Display Header ---
@@ -513,6 +517,11 @@ if [ -x "$SCRIPT_DIR/todo.sh" ]; then
     "$SCRIPT_DIR/todo.sh" top 3
 else
     echo "  (todo.sh not found)"
+fi
+
+# Interactive coach chat
+if [[ -n "${_COACH_CHAT_BRIEFING:-}" ]] && type coach_start_chat >/dev/null 2>&1; then
+    coach_start_chat "$_COACH_CHAT_BRIEFING" "status"
 fi
 
 # --- Footer ---

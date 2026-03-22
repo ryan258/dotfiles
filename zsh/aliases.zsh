@@ -111,13 +111,18 @@ alias gd="git diff"                       # Unstaged changes vs last commit
 alias gb="git branch"                     # List or create branches
 alias gco="git checkout"                  # Switch branches or restore files
 alias glog="git log --oneline"            # Compact one-line-per-commit log
-# GitNexus helper: `gn` analyzes the current repo; `gn --audit` audits workspace health
+# GitNexus helper: `gitnexus` and `gn` both use the pinned package version.
+gitnexus() {
+  npx --yes --package="${CYBORG_GITNEXUS_PACKAGE:-gitnexus@1.4.7}" gitnexus "$@"
+}
+
+# `gn` analyzes the current repo; `gn --audit` audits workspace health
 gn() {
   if [[ "$1" == "--audit" ]]; then
     shift
     /Users/ryanjohnson/Projects/bin/gitnexus_audit.py /Users/ryanjohnson/Projects "$@"
   else
-    npx --yes --package="${CYBORG_GITNEXUS_PACKAGE:-gitnexus@1.4.7}" gitnexus analyze "$@"
+    gitnexus analyze "$@"
   fi
 }
 alias rboot="$HOME/Projects/bin/repo-bootstrap.sh"  # Bootstrap a new repo scaffold

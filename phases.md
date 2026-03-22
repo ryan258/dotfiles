@@ -72,17 +72,20 @@ Delivered:
   - tactical metrics (default 7d)
   - pattern metrics (default 30d)
   - malformed-line/data-quality flags
-  - drift/working signal classification
+  - exploration pattern/working signal classification
 - Mode + log persistence:
-  - `coach_mode.txt` (`LOCKED`/`OVERRIDE`)
+  - `coach_mode.txt` (`LOCKED`/`FLOW`/`OVERRIDE`/`RECOVERY`)
   - `coach_log.txt` (append-only coaching records)
 - Strict schema contracts:
-  - startday: `North Star`, `Do Next`, `Operating insight`, `Anti-tinker rule`, `Health lens`, `Evidence check`
-  - goodevening: `What worked`, `Where drift happened`, `Likely trigger`, `Tomorrow lock`, `Health lens`, `Evidence used`
+  - startday: `North Star`, `Do Next`, `Operating insight (momentum + exploration)`, `Scope anchor`, `Health lens`, `Evidence check`, `Mode suggestion`
+  - goodevening: `What worked`, `Off-script momentum`, `What pulled you in`, `Tomorrow lock`, `Health lens`, `Evidence used`, `Tomorrow mode suggestion`
+- Interactive coach chat (`/j`, `/t`, `/f`, `/q`) after each briefing
 
 Primary artifacts:
 
 - `scripts/lib/coach_ops.sh`
+- `scripts/lib/coach_chat.sh`
+- `bin/coach-chat.py`
 - `scripts/startday.sh`
 - `scripts/goodevening.sh`
 - `scripts/lib/config.sh`
@@ -162,7 +165,7 @@ Current focus:
 
 - Increase "high signal, low noise" guidance quality.
 - Keep "Do Next" tightly grounded in focus + top tasks.
-- Calibrate anti-tinker boundaries for realistic execution.
+- Calibrate scope anchor boundaries for realistic execution.
 - Tune wording for disability-aware pacing without over-prescription.
 
 Work items:

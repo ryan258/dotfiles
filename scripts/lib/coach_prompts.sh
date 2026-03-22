@@ -45,10 +45,10 @@ coach_build_startday_prompt() {
 
     cat <<EOF
 Produce a high-signal morning execution guide for a user with brain fog.
-Prioritize clarity, momentum, anti-tinkering boundaries, and health-aware pacing.
-Use the provided behavior digest as ground truth for what is working vs drift.
-Treat the declared focus and non-fork GitHub activity as the primary evidence of the spear.
-Treat GitHub projects and recent commit activity as the single source of truth for project insight, blindspot detection, and enhancement opportunities.
+Prioritize clarity, momentum, and health-aware pacing. Empathize with and validate their natural ADHD-driven exploration.
+Use the provided behavior digest as ground truth for what is working. DO NOT shame "drift"—treat deviation as natural exploration of what they are drawn to.
+Treat the declared focus and non-fork GitHub activity as the primary evidence of the spear, but firmly accept that working on other projects is valid.
+Treat GitHub projects and recent commit activity as a map of their interests. Do NOT frame other repos as "neglected" or treat them as chores that "need attention."
 Keep journals and todos out of coaching; they remain local notes, not planning input.
 
 Today's focus:
@@ -72,21 +72,25 @@ Behavioral Interventions (use if triggered by digest):
 - If afternoon_slump=true or "afternoon energy slump detected" is present, preemptively suggest shorter task blocks and an explicit break after 2pm.
 - If suggestion_adherence is low, simplify your Do Next suggestions and ask if the tasks feel realistic.
 - If suggestion_adherence_rate < 50% over multiple samples, ask for one reason yesterday's plan failed and reduce tomorrow to one locked must-do.
-- If "late night commits detected" is present, flag it as a drift risk and ask if it was intentional or hyperfocus.
+- If "late night commits detected" is present, note it as a possible hyperfocus signal and ask if it was intentional or something that pulled them in.
 
 Personalized traps to avoid:
 ${custom_traps:-"(none defined)"}
 
 Coach mode semantics:
-- LOCKED: no side quests until done condition is met.
+- LOCKED: primary energy stays on declared focus; side-quest ideas get noted in a parking lot for later.
+- FLOW: follow your energy, but check in before switching repos. If a new thread is compelling, name it and timebox it before diving in.
 - OVERRIDE: allow one bounded exploration block, then return to locked plan.
 - RECOVERY: aggressive simplicity. Enforce resting constraints, strip down tasks to 1-2 bare minimums, no high-cognitive-load planning.
+
+Mode check:
+- If digest metrics suggest a different mode than what was declared, recommend a switch. Signals: spoon budget <= 4 or fog >= 7 → suggest RECOVERY; late-night commits + low spoons → suggest RECOVERY; high dir_switches + scattered repos → suggest LOCKED; strong single-repo momentum → suggest FLOW. Only suggest if the evidence is clear; otherwise affirm the current mode.
 
 Action-source rules:
 - Use Today's focus as the PRIMARY source for Do Next actions.
 - Use yesterday commits and recent pushes to infer likely repo continuity, blindspots, and adjacent enhancement opportunities, but do not invent new work from them.
 - Do not use journals or todos for action selection, evidence checks, or momentum claims.
-- Use recent repo names and commit-message patterns to surface 10 blindspots or enhancement opportunities the user may not be considering.
+- Use recent repo names and commit-message patterns to surface 10 blindspots, side-quests, or enhancement opportunities. Frame these purely as optional explorations they might enjoy, NOT as overdue chores.
 
 Output format (strict, no extra sections):
 Briefing Summary:
@@ -108,16 +112,23 @@ Do Next (ordered 1-3):
 1. First 10-15 minute action mapped directly to focus text and/or the provided GitHub activity.
 2. Second action after step 1.
 3. Done condition for today.
-Operating insight (working + drift risk):
-- One line naming what is working and one drift risk from digest metrics.
-Anti-tinker rule:
+Operating insight (momentum + exploration):
+- One line naming what is working and one observation on exploration patterns from digest metrics, framed positively.
+Scope anchor:
 - One explicit boundary rule for this mode.
 Health lens:
-- Always include energy/fog/spoon-aware pacing guidance.
+- Always include energy/fog/spoon-aware pacing guidance with a specific timer command. Pick the right tool for the context:
+  - LOCKED/FLOW mode focus blocks: suggest "Run: pomo" (25-min Pomodoro timer with break notification)
+  - Longer focus sessions: suggest "Run: remind '+45m' 'Body check: stretch, hydrate, check numbness/vision/heat'"
+  - RECOVERY mode gentle pacing: suggest "Run: tbreak 10" (short break timer)
+  - If active_timer in the digest shows 2+ hours: urgently suggest "Run: tbreak 5" NOW for an immediate body check
+- ADHD time blindness means internal clocks are unreliable — always include a concrete command, never just say "set a timer."
 Signal confidence:
 - HIGH, MEDIUM, or LOW based on how much evidence was available. If LOW, name which data sources (commits, health, digest) were absent.
 Evidence check:
 - One line naming exact commit/repo/metric cues used.
+Mode suggestion:
+- If digest signals suggest a different mode, say "Consider switching to [MODE] because [reason]." If the current mode fits, say "Current mode looks right" and briefly say why.
 
 Constraints:
 - Total 450-700 words.
@@ -137,6 +148,7 @@ Constraints:
 - Any blindspot, enhancement opportunity, or project idea must stay adjacent to actual repo names and commit patterns present in the provided GitHub activity.
 - The GitHub blindspot/opportunity section must contain exactly 10 numbered lines.
 - At least half of the 10 lines must mention a real repo name from the provided GitHub activity when repo names are available.
+- RECOVERY mode override: If coach mode is RECOVERY, collapse the output to reduce decision fatigue. Use only 3 blindspots (not 10), only 1 Do Next action (not 3), drop the Scope anchor section entirely, and keep total output under 300 words. The goal is one clear thing to do, not a menu.
 EOF
 }
 
@@ -153,9 +165,11 @@ coach_build_goodevening_prompt() {
 
     cat <<EOF
 Produce a reflective daily coaching summary for a user managing brain fog and fatigue.
-Use the behavior digest and today's evidence to identify what worked, where drift happened, and how to lock tomorrow.
+Use the behavior digest and today's evidence to identify what worked, where natural deviation (drift) happened, and how to lock tomorrow.
+Validate ADHD-driven exploration. Never shame the user for deviating to work on what they were drawn to.
 Always include health/energy context.
-Judge the day primarily against the declared focus and non-fork GitHub evidence.
+Judge the day primarily against the declared focus and non-fork GitHub evidence, but accept changing paths as valid.
+If today's commits show a long unbroken stretch in one repo (4+ hours of commits without switching), flag it as a hyperfocus session and ask whether the user remembered to eat, hydrate, move, and check body signals (numbness, vision, heat). Hyperfocus with MS burns spoons invisibly.
 Keep journals and todos out of the coaching verdict; they remain local notes for later querying.
 
 Coach mode used today:
@@ -184,13 +198,17 @@ Personalized traps to avoid:
 ${custom_traps:-"(none defined)"}
 
 Coach mode semantics:
-- LOCKED: no side quests until done condition is met.
+- LOCKED: primary energy stays on declared focus; side-quest ideas get noted in a parking lot for later.
+- FLOW: follow your energy, but check in before switching repos. If a new thread is compelling, name it and timebox it before diving in.
 - OVERRIDE: allow one bounded exploration block, then return to locked plan.
 - RECOVERY: aggressive simplicity. Enforce resting constraints, strip down tasks to 1-2 bare minimums, no high-cognitive-load planning.
 
+Tomorrow mode suggestion:
+- Based on today's digest, energy trajectory, and patterns, recommend a mode for tomorrow in the output. Signals: low spoons or high fog at end of day → suggest RECOVERY; scattered repos all day → suggest LOCKED; strong single-lane energy → suggest FLOW. Frame it as a suggestion, not a command.
+
 Output format (strict, no extra sections):
 Reflection Summary:
-- 3-5 bullet points covering: key accomplishment, focus-to-Git alignment, energy trajectory, main drift event, and tomorrow's setup. Synthesize across inputs; do not restate any single input section verbatim.
+- 3-5 bullet points covering: key accomplishment, focus-to-Git alignment, energy trajectory, main exploration detour, and tomorrow's setup. Synthesize across inputs; do not restate any single input section verbatim.
 Blindspots to sleep on (1-10):
 1. First concise, GitHub-grounded blindspot or enhancement opportunity to revisit tomorrow.
 2. Second concise blindspot/opportunity.
@@ -204,20 +222,26 @@ Blindspots to sleep on (1-10):
 10. Tenth concise blindspot/opportunity.
 What worked:
 - 1-2 lines anchored to concrete evidence.
-Where drift happened:
-- 1-2 lines on off-rails patterns or distraction loops.
-Likely trigger:
-- One probable trigger for drift based on evidence.
+Off-script momentum:
+- 1-2 lines observing unexpected exploration, side-quests, or off-script momentum. Frame this neutrally without calling it a "distraction".
+What pulled you in:
+- One probable reason this direction was compelling, based on evidence.
 Pattern watch:
 - One line noting any recurring pattern visible across recent days (e.g., "third consecutive day with context-switching drift after 2pm"). Only include if behavior digest supports it; otherwise say "not enough data for pattern detection."
 Tomorrow lock:
-- One locked first move, one done condition, and one anti-tinker boundary.
+- One locked first move, one done condition, and one scope anchor boundary.
 Health lens:
-- Always include energy/fog/spoon-aware pacing guidance.
+- Include energy/fog/spoon-aware pacing guidance. When recommending tomorrow's setup, suggest a specific timer command:
+  - For focus blocks: "Start tomorrow with: pomo" (25-min Pomodoro)
+  - For gentle recovery days: "Pace with: tbreak 10" (10-min break timer)
+  - If today showed hyperfocus sessions: "Set a body-check alarm: remind '+90m' 'Body check: stretch, hydrate, check numbness/vision/heat'"
+- Always give a concrete command — ADHD time blindness means "set a timer" alone won't happen.
 Signal confidence:
 - HIGH, MEDIUM, or LOW based on how much evidence was available. If LOW, name which data sources (commits, health, digest) were absent.
 Evidence used:
 - One line naming exact commit/repo/metrics cues used.
+Tomorrow mode suggestion:
+- Recommend a coach mode for tomorrow based on today's energy trajectory and patterns (e.g., "Tomorrow try FLOW — your energy was strong and single-lane today"). Frame as a suggestion.
 
 Constraints:
 - Total 420-700 words.
@@ -229,6 +253,7 @@ Constraints:
 - Prefer commit/repo evidence over local notes when they conflict.
 - The blindspot section must contain exactly 10 numbered lines.
 - At least half of the 10 lines must mention a real repo name from today's commits or recent pushes when repo names are available.
+- RECOVERY mode override: If coach mode is RECOVERY, collapse the output to reduce decision fatigue. Use only 3 blindspots (not 10), shorten Reflection Summary to 2-3 bullets, drop Pattern watch, and keep total output under 300 words. Focus on one win and one thing for tomorrow.
 EOF
 }
 
@@ -243,14 +268,24 @@ coach_build_status_prompt() {
     local context_scope="${8:-global}"
 
     cat <<EOF
-Produce a concise mid-day recenter coaching brief for a user managing brain fog and fatigue.
-Use declared focus and non-fork GitHub activity as the primary evidence of whether the spear is moving.
-Treat GitHub projects and recent commit/push activity as the single source of truth for blindspots, enhancement ideas, and project opportunities.
+Produce a concise mid-day recenter coaching brief for a user managing brain fog and fatigue. Validate their ADHD exploration style.
+Use declared focus and non-fork GitHub activity as the primary evidence of whether the spear is moving, while accepting that natural deviation is valid.
+Treat GitHub projects and recent commit/push activity as a map of their interests. Do not frame other repos as chores that "need attention."
 Keep journals and todos out of coaching; they remain local notes for later querying.
 Bias toward one immediate action that can be started right now.
+If today's commits show sustained single-repo activity over many hours, add a body-check nudge: "You've been deep in [repo] — check in with your body (numbness, vision, heat, hunger, hydration)." Hyperfocus with MS can silently burn spoons.
 
 Coach mode for today:
 ${coach_mode:-LOCKED}
+
+Coach mode semantics:
+- LOCKED: primary energy stays on declared focus; side-quest ideas get noted in a parking lot for later.
+- FLOW: follow your energy, but check in before switching repos. If a new thread is compelling, name it and timebox it before diving in.
+- OVERRIDE: allow one bounded exploration block, then return to locked plan.
+- RECOVERY: aggressive simplicity. Enforce resting constraints, strip down tasks to 1-2 bare minimums, no high-cognitive-load planning.
+
+Mode check:
+- If digest metrics suggest a different mode than what was declared, recommend a switch in the Mode suggestion output section. Signals: spoon budget <= 4 or fog >= 7 → suggest RECOVERY; late-night commits + low spoons → suggest RECOVERY; high dir_switches + scattered repos → suggest LOCKED; strong single-repo momentum → suggest FLOW. Only suggest if the evidence is clear; otherwise affirm the current mode.
 
 Today's focus:
 ${focus_context:-"(no focus set)"}
@@ -275,7 +310,7 @@ ${context_scope:-global}
 
 Output format (strict, no extra sections):
 Briefing Summary:
-- 3-4 bullets covering: current GitHub lane, drift risk, best immediate opening, and one project/blindspot insight. Synthesize across inputs; do not restate any single input section verbatim.
+- 3-4 bullets covering: current GitHub lane, exploration patterns, best immediate opening, and one project/blindspot insight. Synthesize across inputs; do not restate any single input section verbatim.
 GitHub blindspots/opportunities (1-10):
 1. First concise, GitHub-grounded blindspot or enhancement opportunity.
 2. Second concise, GitHub-grounded blindspot or enhancement opportunity.
@@ -293,16 +328,23 @@ Do Next (ordered 1-3):
 1. First 10-15 minute action that can be started immediately.
 2. Second action that stays inside the same repo/focus lane.
 3. Done condition for this recenter block.
-Operating insight (working + drift risk):
-- One line naming what is working and what could derail the next block.
-Anti-tinker rule:
+Operating insight (momentum + exploration):
+- One line naming what is working and what could derail the next block, without calling natural exploration a "distraction."
+Scope anchor:
 - One explicit repo-switching or scope-switching boundary.
 Health lens:
-- One short pacing note that respects energy/fog/spoons if the digest supports it.
+- One short pacing note that respects energy/fog/spoons if the digest supports it. Always include a specific timer command:
+  - LOCKED/FLOW mode: "Run: pomo" (25-min focus block with notification)
+  - RECOVERY mode: "Run: tbreak 10" (gentle 10-min break timer)
+  - If active_timer shows 2+ hours: "Run: tbreak 5" NOW — body check is overdue
+  - For body-check reminders: "Run: remind '+45m' 'Body check: stretch, hydrate, check numbness/vision/heat'"
+  - Never just say "set a timer" — give the exact command. ADHD time blindness means it won't happen otherwise.
 Signal confidence:
 - HIGH, MEDIUM, or LOW based on how much GitHub and digest evidence was available.
 Evidence check:
 - One line naming exact repo/commit/metric cues used.
+Mode suggestion:
+- If digest signals suggest a different mode, say "Consider switching to [MODE] because [reason]." If the current mode fits, say "Current mode looks right" and briefly say why.
 
 Constraints:
 - Total 280-520 words.
@@ -315,6 +357,7 @@ Constraints:
 - If Context scope is global, synthesize across the visible repo set and name the most likely lane.
 - The GitHub blindspot/opportunity section must contain exactly 10 numbered lines.
 - At least half of the 10 lines must mention a real repo name from today's commits or recent pushes when repo names are available.
+- RECOVERY mode override: If coach mode is RECOVERY, collapse the output to reduce decision fatigue. Use only 3 blindspots (not 10), only 1 Do Next action (not 3), drop the Scope anchor section entirely, and keep total output under 250 words. One clear action, nothing else.
 EOF
 }
 
@@ -1021,7 +1064,7 @@ EOF
     anti_tinker_line="- Do not leave ${project_context} until Step 3 is complete or you explicitly decide to change the repo-local lane."
 
     scoped_response=$(_coach_replace_or_insert_text_section "$response" "Do Next" "Do Next (ordered 1-3):" "Operating insight:" "$do_next_lines")
-    _coach_replace_or_insert_text_section "$scoped_response" "Anti-tinker rule" "Anti-tinker rule:" "Health lens:" "$anti_tinker_line"
+    _coach_replace_or_insert_text_section "$scoped_response" "Scope anchor" "Scope anchor:" "Health lens:" "$anti_tinker_line"
 }
 
 coach_status_fallback_output() {
@@ -1183,9 +1226,9 @@ Do Next (ordered 1-3):
 1. ${step_one}
 2. ${step_two}
 3. ${step_three}
-Operating insight (working + drift risk):
-- Working: ${working_signal}. Drift risk: ${drift_risk}.
-Anti-tinker rule:
+Operating insight (momentum + exploration):
+- Working: ${working_signal}. Exploration pattern: ${drift_risk}.
+Scope anchor:
 - ${anti_tinker_rule}
 Health lens:
 - ${health_lens}
@@ -1356,9 +1399,9 @@ Do Next (ordered 1-3):
 1. ${step_one}
 2. ${step_two}
 3. ${step_three}
-Operating insight (working + drift risk):
-- Working: ${working_signal}. Drift risk: ${drift_risk}; ${reason_phrase}, so keep the next move explicit and evidence-backed.
-Anti-tinker rule:
+Operating insight (momentum + exploration):
+- Working: ${working_signal}. Exploration pattern: ${drift_risk}; ${reason_phrase}, so keep the next move explicit and evidence-backed.
+Scope anchor:
 - ${anti_tinker_rule}
 Health lens:
 - Use short blocks with a break; pause if energy drops under ${COACH_LOW_ENERGY_THRESHOLD} or fog rises above ${COACH_HIGH_FOG_THRESHOLD}.
@@ -1504,16 +1547,16 @@ Blindspots to sleep on (1-10):
 ${blindspots_to_sleep_on:-1. Non-fork GitHub evidence is sparse, so the first blindspot to sleep on is how to create one visible commit early tomorrow.}
 What worked:
 - ${what_worked}
-Where drift happened:
+Off-script momentum:
 - ${where_drift}; AI reflection was ${reason_label}, so keep the diagnosis conservative.
-Likely trigger:
+What pulled you in:
 - ${likely_trigger}
 Pattern watch:
 - ${pattern_watch}
 Tomorrow lock:
 - First move: ${tomorrow_first_move}
 - Done condition: ${tomorrow_done_condition}
-- Anti-tinker boundary: ${tomorrow_boundary}
+- Scope anchor boundary: ${tomorrow_boundary}
 Health lens:
 - Keep work in short blocks with recovery breaks and stop if energy/fog thresholds are crossed.
 Signal confidence:

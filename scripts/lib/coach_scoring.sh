@@ -254,6 +254,7 @@ coach_startday_response_is_grounded() {
     local response="$1"
     local focus="$2"
     local github_context="${3:-}"
+    local mode="${4:-}"
     local context=""
     local action_anchor_context=""
     local evidence_lines=""
@@ -300,17 +301,29 @@ coach_startday_response_is_grounded() {
         fi
     done <<< "$evidence_lines"
 
-    if ! printf '%s\n' "$response" | grep -q '^Do Next (ordered 1-3):[[:space:]]*$'; then
-        _coach_set_grounding_failure "missing required 'Do Next (ordered 1-3)' heading"
-        return 1
+    if [[ "$mode" == "RECOVERY" ]]; then
+        if ! printf '%s\n' "$response" | grep -qE '^Do Next[^:]*:[[:space:]]*$'; then
+            _coach_set_grounding_failure "missing required 'Do Next' heading"
+            return 1
+        fi
+        do_next_lines=$(printf '%s\n' "$response" | awk '
+            BEGIN { in_do_next = 0 }
+            /^Do Next[^:]*:[[:space:]]*$/ { in_do_next = 1; next }
+            in_do_next && /^[[:space:]]*[1-3]\.[[:space:]]+/ { print; next }
+            in_do_next && /^[[:space:]]*[A-Za-z][^:]*:[[:space:]]*$/ { in_do_next = 0 }
+        ')
+    else
+        if ! printf '%s\n' "$response" | grep -q '^Do Next (ordered 1-3):[[:space:]]*$'; then
+            _coach_set_grounding_failure "missing required 'Do Next (ordered 1-3)' heading"
+            return 1
+        fi
+        do_next_lines=$(printf '%s\n' "$response" | awk '
+            BEGIN { in_do_next = 0 }
+            /^Do Next \(ordered 1-3\):[[:space:]]*$/ { in_do_next = 1; next }
+            in_do_next && /^[[:space:]]*[1-3]\.[[:space:]]+/ { print; next }
+            in_do_next && /^[[:space:]]*[A-Za-z][^:]*:[[:space:]]*$/ { in_do_next = 0 }
+        ')
     fi
-
-    do_next_lines=$(printf '%s\n' "$response" | awk '
-        BEGIN { in_do_next = 0 }
-        /^Do Next \(ordered 1-3\):[[:space:]]*$/ { in_do_next = 1; next }
-        in_do_next && /^[[:space:]]*[1-3]\.[[:space:]]+/ { print; next }
-        in_do_next && /^[[:space:]]*[A-Za-z][^:]*:[[:space:]]*$/ { in_do_next = 0 }
-    ')
 
     while IFS= read -r line; do
         [[ -z "$line" ]] && continue
@@ -330,8 +343,10 @@ coach_startday_response_is_grounded() {
         fi
     done <<< "$do_next_lines"
 
-    if [[ "$count" -lt 3 ]]; then
-        _coach_set_grounding_failure "missing grounded 3-step action plan"
+    local min_do_next=3
+    [[ "$mode" == "RECOVERY" ]] && min_do_next=1
+    if [[ "$count" -lt "$min_do_next" ]]; then
+        _coach_set_grounding_failure "missing grounded action plan (need $min_do_next)"
         return 1
     fi
     if ! _coach_line_has_context_overlap "$first_line" "$action_anchor_context"; then
@@ -345,6 +360,7 @@ coach_goodevening_response_is_grounded() {
     local response="$1"
     local focus="$2"
     local github_context="${3:-}"
+    local mode="${4:-}"
     local context=""
     local evidence_lines=""
     local tomorrow_lock_lines=""
@@ -361,8 +377,8 @@ coach_goodevening_response_is_grounded() {
         /^Reflection Summary:[[:space:]]*$/ { section = "summary"; next }
         /^Blindspots to sleep on \(1-10\):[[:space:]]*$/ { section = "blindspots"; next }
         /^What worked:[[:space:]]*$/ { section = "worked"; next }
-        /^Where drift happened:[[:space:]]*$/ { section = "drift"; next }
-        /^Likely trigger:[[:space:]]*$/ { section = "trigger"; next }
+        /^Off-script momentum:[[:space:]]*$/ { section = "drift"; next }
+        /^What pulled you in:[[:space:]]*$/ { section = "trigger"; next }
         /^Pattern watch:[[:space:]]*$/ { section = "pattern"; next }
         /^Tomorrow lock:[[:space:]]*$/ { section = "tomorrow"; next }
         /^Health lens:[[:space:]]*$/ { section = "health"; next }
@@ -416,21 +432,41 @@ coach_goodevening_response_is_grounded() {
         return 1
     fi
 
-    if printf '%s\n' "$response" | grep -q '^Blindspots to sleep on (1-10):[[:space:]]*$'; then
-        blindspot_lines=$(printf '%s\n' "$response" | awk '
-            BEGIN { section = 0 }
-            /^Blindspots to sleep on \(1-10\):[[:space:]]*$/ { section = 1; next }
-            section && /^[[:space:]]*[0-9]+\.[[:space:]]+/ { print; next }
-            section && /^[[:space:]]*[A-Za-z][^:]*:[[:space:]]*$/ { section = 0 }
-        ')
-        count=0
-        while IFS= read -r line; do
-            [[ -z "$line" ]] && continue
-            count=$((count + 1))
-        done <<< "$blindspot_lines"
-        if [[ "$count" -ne 10 ]]; then
-            _coach_set_grounding_failure "blindspots section must contain 10 items"
-            return 1
+    if [[ "$mode" == "RECOVERY" ]]; then
+        if printf '%s\n' "$response" | grep -qE '^Blindspots[^:]*:[[:space:]]*$'; then
+            blindspot_lines=$(printf '%s\n' "$response" | awk '
+                BEGIN { section = 0 }
+                /^Blindspots[^:]*:[[:space:]]*$/ { section = 1; next }
+                section && /^[[:space:]]*[0-9]+\.[[:space:]]+/ { print; next }
+                section && /^[[:space:]]*[A-Za-z][^:]*:[[:space:]]*$/ { section = 0 }
+            ')
+            count=0
+            while IFS= read -r line; do
+                [[ -z "$line" ]] && continue
+                count=$((count + 1))
+            done <<< "$blindspot_lines"
+            if [[ "$count" -lt 1 ]]; then
+                _coach_set_grounding_failure "blindspots section must contain at least 1 item"
+                return 1
+            fi
+        fi
+    else
+        if printf '%s\n' "$response" | grep -q '^Blindspots to sleep on (1-10):[[:space:]]*$'; then
+            blindspot_lines=$(printf '%s\n' "$response" | awk '
+                BEGIN { section = 0 }
+                /^Blindspots to sleep on \(1-10\):[[:space:]]*$/ { section = 1; next }
+                section && /^[[:space:]]*[0-9]+\.[[:space:]]+/ { print; next }
+                section && /^[[:space:]]*[A-Za-z][^:]*:[[:space:]]*$/ { section = 0 }
+            ')
+            count=0
+            while IFS= read -r line; do
+                [[ -z "$line" ]] && continue
+                count=$((count + 1))
+            done <<< "$blindspot_lines"
+            if [[ "$count" -ne 10 ]]; then
+                _coach_set_grounding_failure "blindspots section must contain 10 items"
+                return 1
+            fi
         fi
     fi
 

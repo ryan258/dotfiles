@@ -98,7 +98,7 @@ dhp-chain market brand content -- "AI tools for developers"
 Use the AI to write a specification, then use it to write the code:
 
 ```bash
-spec "startday coaching schema for anti-tinker enforcement"
+spec "startday coaching schema for scope anchor enforcement"
 tech "Implement the accepted spec in scripts/startday.sh with tests"
 ```
 

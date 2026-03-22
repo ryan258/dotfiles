@@ -1116,6 +1116,30 @@ coach_build_behavior_digest() {
         drift_risks+=("data quality flags detected")
     fi
 
+    # Active timer check — detect long-running hyperfocus sessions
+    local active_timer_status="none"
+    local active_timer_duration_min=0
+    if command -v get_active_timer >/dev/null 2>&1 || type get_active_timer >/dev/null 2>&1; then
+        local _active_task_id
+        _active_task_id=$(get_active_timer 2>/dev/null || true)
+        if [[ -n "$_active_task_id" ]] && [[ -f "${TIME_LOG:-}" ]]; then
+            local _last_start
+            _last_start=$(grep "^START|${_active_task_id}" "$TIME_LOG" 2>/dev/null | tail -n 1 | cut -d'|' -f4)
+            if [[ -n "$_last_start" ]]; then
+                local _start_epoch _now_epoch
+                _start_epoch=$(timestamp_to_epoch "$_last_start" 2>/dev/null || echo 0)
+                _now_epoch=$(date +%s)
+                if [[ "$_start_epoch" -gt 0 ]]; then
+                    active_timer_duration_min=$(( (_now_epoch - _start_epoch) / 60 ))
+                    active_timer_status="running|${_active_task_id}|${active_timer_duration_min}min"
+                    if [[ "$active_timer_duration_min" -ge 120 ]]; then
+                        drift_risks+=("active timer running for ${active_timer_duration_min}min on task ${_active_task_id} — possible hyperfocus session, body check recommended")
+                    fi
+                fi
+            fi
+        fi
+    fi
+
     echo "Behavior digest (structured):"
     echo "Tactical window: ${tactical_days}d ending $anchor_date"
     echo "  open_tasks=$(_coach_extract_value "$tactical" "open_tasks"), stale_tasks=$stale_tasks, completed_tasks=$completed_tasks, journal_entries=$(_coach_extract_value "$tactical" "journal_entries")"
@@ -1128,6 +1152,7 @@ coach_build_behavior_digest() {
     echo "  top_directories=$(_coach_extract_value "$pattern" "top_directories")"
     echo "  top_dispatchers=$(_coach_extract_value "$pattern" "top_dispatchers")"
     echo "  focus_git_status=${focus_git_status:-N/A}, primary_repo=${focus_git_primary_repo:-N/A}, primary_repo_share=${focus_git_primary_repo_share:-N/A}, commit_coherence=${focus_git_commit_coherence:-N/A}, active_repos=${focus_git_repo_count:-0}"
+    echo "  active_timer=${active_timer_status}"
     echo "  focus_git_reason=${focus_git_reason:-N/A}"
     echo "  focus_coherence_secondary=${focus_coherence_pct:-N/A}% (${focus_coherence_detail:-N/A})"
     echo "Working signals:"

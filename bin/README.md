@@ -257,6 +257,31 @@ echo "Ground this morning plan in focus plus yesterday's commits." | dhp-coach.s
 
 ---
 
+### `coach-chat.py` (Interactive Coach Chat)
+
+**Purpose:** Multi-turn conversation handler for post-briefing interactive sessions
+
+**Architecture:** Python script managing OpenRouter API calls with JSON conversation history. Invoked by `scripts/lib/coach_chat.sh` — not called directly by users.
+
+**Commands:**
+
+- `coach-chat.py init <history_file> <system_prompt_file> [<briefing_file>]` — Create conversation with system prompt and optional initial briefing
+- `coach-chat.py turn <history_file> <user_message>` — Append user message, call API, print response
+
+**Environment:**
+
+- `OPENROUTER_API_KEY` — Required
+- `AI_COACH_MODEL` — Model override
+- `AI_COACH_CHAT_TEMPERATURE` — Chat temperature (default: 0.4)
+
+**Notes:**
+
+- Each turn reads/writes a JSON history file so the bash wrapper stays stateless.
+- Integrated into `startday`, `status`, and `goodevening` via `coach_chat.sh`.
+- Disable with `AI_COACH_CHAT_ENABLED=false`.
+
+---
+
 ### `dhp-brand.sh` (Brand Builder)
 
 **Purpose:** Brand positioning, voice/tone development, competitive analysis

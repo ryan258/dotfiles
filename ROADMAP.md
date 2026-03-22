@@ -12,7 +12,7 @@ _Last updated: March 20, 2026 (v2.2.0 — Cyborg Lab agent, AI coaching system, 
 ## 1. Priority Snapshot
 
 - **Shipped (v2.2.0 — March 2026):**
-  - **AI Coaching System:** 5-module behavioral analytics engine (metrics, prompts, scoring, ops, facade) with hallucination detection, evidence grounding, configurable drift thresholds, and coaching modes (LOCKED/OVERRIDE/RECOVERY)
+  - **AI Coaching System:** 5-module behavioral analytics engine (metrics, prompts, scoring, ops, facade) with hallucination detection, evidence grounding, configurable drift thresholds, and coaching modes (LOCKED/FLOW/OVERRIDE/RECOVERY)
   - **Cyborg Lab Agent:** 4,900-line Python agent for interactive content ingestion — scans repos, builds content maps, generates Hugo blog drafts, supports session persistence and resume
   - **Morphling Convergence:** Universal adaptive dispatcher + Cyborg autopilot integration — Morphling pre-analyzes repos, Cyborg documents them, `--build` mode scaffolds projects from ideas
   - **Autopilot Mode:** Brain-fog-day shortcuts (`ap`, `apy`, `apb`, `apby`, `apc`) that run full pipelines with one command and accessible A-E choice prompts
@@ -67,7 +67,7 @@ Task IDs: `R` Reliability, `C` Config, `O` Observability, `W` Workflow, `B` Blog
 - [x] **K2 · Focus coherence scoring** — Analyzes git commit patterns for project drift (configurable thresholds)
 - [x] **K3 · Energy trajectory** — Detects afternoon slumps and energy trends from health data
 - [x] **K4 · Evidence grounding** — Validates AI responses against actual data; rejects invented repos, tasks, or journal entries
-- [x] **K5 · Coaching modes** — LOCKED (stay on focus), OVERRIDE (user-directed change), RECOVERY (low-energy adaptation)
+- [x] **K5 · Coaching modes** — LOCKED (stay on focus), FLOW (follow energy with check-ins), OVERRIDE (user-directed change), RECOVERY (low-energy adaptation)
 - [x] **K6 · Suggestion adherence** — Tracks follow-through rates on coach suggestions over time
 - [x] **K7 · Late-night commit detection** — Flags commits after 10pm as potential overwork signals
 - [x] **K8 · Configurable thresholds** — 13+ tunable parameters via `.env` (drift, energy, fog, focus)
@@ -182,7 +182,7 @@ Task IDs: `R` Reliability, `C` Config, `O` Observability, `W` Workflow, `B` Blog
 
 **Daily Workflows:** Morning routine with AI coaching briefing and spoon initialization (`startday.sh`), evening routine with reflection and project safety scan (`goodevening.sh`), mid-day context recovery dashboard with repo-local coaching (`status.sh`), task management with spoon and time tracking (`todo.sh`), journaling with AI analysis (`journal.sh`), focus anchoring with history, health tracking, medication management.
 
-**AI Coaching:** 5-module behavioral analytics engine. Collects tactical (7-day) and pattern (30-day) metrics from tasks, journal, spoons, health, and git activity. Builds structured behavior digests. Constructs grounded coaching prompts for morning briefings, evening reflections, and status queries. Validates AI responses against actual data — rejects hallucinated repos, tasks, and journal entries. Supports coaching modes (LOCKED/OVERRIDE/RECOVERY) and configurable thresholds.
+**AI Coaching:** 5-module behavioral analytics engine. Collects tactical (7-day) and pattern (30-day) metrics from tasks, journal, spoons, health, and git activity. Builds structured behavior digests. Constructs grounded coaching prompts for morning briefings, evening reflections, and status queries. Validates AI responses against actual data — rejects hallucinated repos, tasks, and journal entries. Supports coaching modes (LOCKED/FLOW/OVERRIDE/RECOVERY) and configurable thresholds.
 
 **Cyborg Lab Agent:** Interactive content ingestion from any source repo to Hugo blog. Scans repos, builds AI-powered content maps, generates near-publishable drafts with proper frontmatter and cross-linking. Supports autopilot mode for brain-fog days, session persistence and resume, GitNexus knowledge graph integration, duplicate detection, and code improvement suggestions.
 

@@ -28,12 +28,14 @@ Canonical architecture and policy live in `../CLAUDE.md`.
 
 - `scripts/lib/coach_ops.sh` validates coaching runtime dependencies.
 - `scripts/lib/coach_metrics.sh`, `scripts/lib/coach_prompts.sh`, and `scripts/lib/coach_scoring.sh` provide metrics, prompt construction, timeout-guarded AI calls, mode persistence, and append-only coaching logs.
+- `scripts/lib/coach_chat.sh` provides an interactive post-briefing REPL. After any coaching briefing, users can chat with the coach, ask follow-ups, and use slash commands (`/j` journal, `/t` todo, `/f` focus, `/q` quit). On by default; disable with `AI_COACH_CHAT_ENABLED=false`.
 - Daily coaching now resolves `dhp-coach.sh` first, a single-call OpenRouter dispatcher that avoids the slower AI-Staff-HQ swarm path used by `dhp-strategy.sh`.
 - Coaching model selection comes from root `dotfiles/.env` via `AI_COACH_MODEL`; changing `ai-staff-hq/.env` does not change `startday` or `goodevening`.
 - `AI_COACH_EVIDENCE_CHECK_ENABLED=true` keeps the morning coach on strict focus+Git evidence; set it to `false` if you want to see raw AI output even when the model invents unsupported specifics.
 - The same `AI_COACH_EVIDENCE_CHECK_ENABLED` flag now controls the evening validator too; when disabled, `goodevening` accepts raw AI reflection without warning noise.
 - `status.sh --coach` now uses the same direct `dhp-coach.sh` path for an on-demand mid-day recenter brief. When you run it from inside a git repo, the coach narrows its prompt/fallback to that repo's context; outside a repo it keeps the global multi-repo view. Set `AI_STATUS_ENABLED=true` if you want that section on every `status` run, or tune `AI_STATUS_TEMPERATURE` separately from the morning briefing.
 - `config.sh` now reloads the current root `.env` per process/path instead of trusting inherited `_DOTFILES_ENV_LOADED` markers from older shell state, so coach timeout/model changes take effect reliably.
+- Coach modes: LOCKED (stay focused), FLOW (follow energy with check-ins), OVERRIDE (bounded exploration), RECOVERY (minimal output for low-energy days). The coach auto-suggests mode switches based on digest metrics.
 - Drift and health thresholds (`COACH_*_THRESHOLD`) are defined in `config.sh` and overridable via `.env`.
 - `startday.sh` and `goodevening.sh` now treat daily focus plus non-fork GitHub activity as the only coaching evidence; journal and todo data stay local for later querying but do not steer the coach.
 - `startday.sh` now asks for, and fallback now generates, a 10-item GitHub blindspot/opportunity scan grounded in recent repos and commit-message patterns, so even failed AI briefings still comment on actual project momentum instead of only generic focus-lock advice.

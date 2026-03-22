@@ -1,6 +1,42 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** March 17, 2026
+**Last Updated:** March 21, 2026
+
+## Version 2.2.37 (March 21, 2026) - Neurodivergent-Friendly Coach Overhaul + Interactive Chat
+
+**Status:** ✅ Production Ready
+
+### Tone Overhaul
+
+- Coaching prompts reframed for MS+ADHD: exploration is validated, not shamed.
+- `Operating insight (working + drift risk)` → `Operating insight (momentum + exploration)` across all three prompts.
+- `Anti-tinker rule` → `Scope anchor` — neutral framing instead of policing language.
+- `Where drift happened` → `Off-script momentum` — celebrates exploration.
+- `Likely trigger` → `What pulled you in` — curiosity-framed.
+- "Blindspots" now framed as optional side-quests, not overdue chores.
+- Late-night commits flagged as hyperfocus signal, not drift risk.
+
+### New Features
+
+- **FLOW coach mode**: New mode between LOCKED and OVERRIDE — "follow your energy, but check in before switching repos." Added to all three prompts.
+- **Interactive coach chat**: After startday, status, and goodevening briefings, users enter an interactive conversation with the coach. Supports `/j` (journal), `/t` (todo), `/f` (focus update), `/q` (quit), `/help`. On by default; disable with `AI_COACH_CHAT_ENABLED=false`.
+- **Auto-suggest coach mode**: All three prompts now analyze digest metrics and recommend mode switches (e.g., low spoons → RECOVERY, strong single-lane → FLOW).
+- **Hyperfocus body-check**: Status and goodevening prompts flag long single-repo sessions with MS-specific body signal checks (numbness, vision, heat, hunger, hydration).
+- **Time blindness support**: Health lens now outputs specific timer commands (`pomo`, `tbreak`, `remind`) instead of generic "set a timer" advice.
+- **RECOVERY mode collapse**: In RECOVERY mode, output is collapsed to reduce decision fatigue — 3 blindspots (not 10), 1 Do Next (not 3), shorter word limits.
+- **Active timer detection**: Behavior digest now checks `time_tracker.sh` for timers running 2+ hours and flags them as hyperfocus body-check triggers.
+- **LOCKED mode softened**: Description changed to "primary energy stays on declared focus; side-quest ideas get noted in a parking lot for later."
+
+### New Files
+
+- `bin/coach-chat.py` — Python multi-turn OpenRouter chat handler with JSON conversation history.
+- `scripts/lib/coach_chat.sh` — Bash interactive REPL wrapper with slash commands for journal, todo, and focus updates.
+
+### Tests
+
+- All 88 coach-related tests updated and passing.
+- Test assertions updated to match new section headers.
+- `test_status.sh`: Added `AI_STATUS_ENABLED=""` to test harness env.
 
 ## Version 2.2.36 (March 17, 2026) - Cyborg Autopilot + Morphling Build Mode
 

@@ -81,9 +81,9 @@ Do Next (ordered 1-3):
 1. Capture the next concrete logo move in dotfiles and start it now.
 2. Keep the same repo open for one more short block.
 3. Done when one focused block lands.
-Operating insight (working + drift risk):
+Operating insight (momentum + exploration):
 - Working: focus is explicit. Drift risk: repo switching.
-Anti-tinker rule:
+Scope anchor:
 - No repo switch until the block lands.
 Health lens:
 - Use one short block and then reassess.
@@ -107,6 +107,7 @@ _run_status() {
         DATA_DIR="$DATA_DIR" \
         DOTFILES_DIR="$DOTFILES_DIR" \
         PROJECTS_DIR="$PROJECTS_DIR" \
+        AI_STATUS_ENABLED="" \
         "$@" \
         bash "$DOTFILES_DIR/scripts/status.sh" < /dev/null
 }
@@ -373,9 +374,9 @@ Do Next:
 1. Commit one tiny change in dotfiles.
 2. Switch to ai-ethics-comparator and inspect the PDF module.
 3. Done when both repos are open.
-Operating insight (working + drift risk):
+Operating insight (momentum + exploration):
 - Working: dotfiles is active. Drift risk: switching.
-Anti-tinker rule:
+Scope anchor:
 - Stay in dotfiles until the tiny change lands, then switch to ai-ethics-comparator.
 Health lens:
 - Keep the block short.
@@ -436,10 +437,10 @@ cat <<'OUT'
 2. Switch back to dotfiles later if needed.
 3. Done when both repos are open.
 
-**Operating insight (working + drift risk):**
+**Operating insight (momentum + exploration):**
 - Working: dotfiles is active. Drift risk: switching.
 
-**Anti-tinker rule:**
+**Scope anchor:**
 - Stay in ai-ethics-comparator until the sequence is complete.
 
 **Health lens:**
@@ -488,9 +489,9 @@ Do Next (ordered 1-3):
 1. Capture the next concrete dotfiles move and start it now.
 2. Keep the same repo open for one more short block.
 3. Done when one focused block lands.
-Operating insight (working + drift risk):
+Operating insight (momentum + exploration):
 - Working: focus is explicit. Drift risk: repo switching.
-Anti-tinker rule:
+Scope anchor:
 - No repo switch until the block lands.
 Health lens:
 - Use one short block and then reassess.

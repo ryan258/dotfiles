@@ -56,13 +56,13 @@ teardown() {
     [[ "$output" == *"GitHub blindspots/opportunities (1-10):"* ]]
     [[ "$output" == *"North Star:"* ]]
     [[ "$output" == *"Do Next (ordered 1-3):"* ]]
-    [[ "$output" == *"Anti-tinker rule:"* ]]
+    [[ "$output" == *"Scope anchor:"* ]]
     [[ "$output" == *"Health lens:"* ]]
     [[ "$output" == *"Signal confidence:"* ]]
     [[ "$output" == *"Evidence check:"* ]]
     [[ "$output" == *"non-fork GitHub activity as the primary evidence of the spear"* ]]
-    [[ "$output" == *"single source of truth for project insight"* ]]
-    [[ "$output" == *"10 blindspots or enhancement opportunities"* ]]
+    [[ "$output" == *"map of their interests"* ]]
+    [[ "$output" == *"10 blindspots, side-quests, or enhancement opportunities"* ]]
     [[ "$output" == *"The GitHub blindspot/opportunity section must contain exactly 10 numbered lines."* ]]
     [[ "$output" == *"Keep journals and todos out of coaching"* ]]
     [[ "$output" == *"do not invent one. Step 1 should capture or choose the next concrete move"* ]]
@@ -103,8 +103,8 @@ teardown() {
     [[ "$output" == *"Reflection Summary:"* ]]
     [[ "$output" == *"Blindspots to sleep on (1-10):"* ]]
     [[ "$output" == *"What worked:"* ]]
-    [[ "$output" == *"Where drift happened:"* ]]
-    [[ "$output" == *"Likely trigger:"* ]]
+    [[ "$output" == *"Off-script momentum:"* ]]
+    [[ "$output" == *"What pulled you in:"* ]]
     [[ "$output" == *"Pattern watch:"* ]]
     [[ "$output" == *"Tomorrow lock:"* ]]
     [[ "$output" == *"Health lens:"* ]]
@@ -156,8 +156,8 @@ teardown() {
     [[ "$output" == *"GitHub blindspots/opportunities (1-10):"* ]]
     [[ "$output" == *"North Star:"* ]]
     [[ "$output" == *"Do Next (ordered 1-3):"* ]]
-    [[ "$output" == *"Operating insight (working + drift risk):"* ]]
-    [[ "$output" == *"Anti-tinker rule:"* ]]
+    [[ "$output" == *"Operating insight (momentum + exploration):"* ]]
+    [[ "$output" == *"Scope anchor:"* ]]
     [[ "$output" == *"Health lens:"* ]]
     [[ "$output" == *"Signal confidence:"* ]]
     [[ "$output" == *"Evidence check:"* ]]
@@ -172,7 +172,7 @@ teardown() {
     [[ "$output" != *"Vectorize logo"* ]]
 }
 
-@test "startday fallback LOCKED mode sets no-side-quest anti-tinker rule" {
+@test "startday fallback LOCKED mode sets no-side-quest scope anchor" {
     run bash -c "$SOURCE_PREFIX; coach_startday_fallback_output 'focus' 'LOCKED' 'timeout'"
 
     [ "$status" -eq 0 ]
@@ -281,8 +281,8 @@ teardown() {
     [[ "$output" == *"Reflection Summary:"* ]]
     [[ "$output" == *"Blindspots to sleep on (1-10):"* ]]
     [[ "$output" == *"What worked:"* ]]
-    [[ "$output" == *"Where drift happened:"* ]]
-    [[ "$output" == *"Likely trigger:"* ]]
+    [[ "$output" == *"Off-script momentum:"* ]]
+    [[ "$output" == *"What pulled you in:"* ]]
     [[ "$output" == *"Tomorrow lock:"* ]]
     [[ "$output" == *"Health lens:"* ]]
     [[ "$output" == *"Pattern watch:"* ]]
@@ -371,7 +371,7 @@ teardown() {
 
 @test "coach_sanitize_goodevening_blindspots inserts a cleaned blindspot section before What worked" {
     run bash -c "$SOURCE_PREFIX; coach_sanitize_goodevening_blindspots \
-        \$'Reflection Summary:\n- note\nWhat worked:\n- Focus stayed mostly inside one lane.\nTomorrow lock:\n- First move: resume the repo lane.\n- Done condition: ship one visible next step.\n- Anti-tinker boundary: no side quests before the first block lands.' \
+        \$'Reflection Summary:\n- note\nWhat worked:\n- Focus stayed mostly inside one lane.\nTomorrow lock:\n- First move: resume the repo lane.\n- Done condition: ship one visible next step.\n- Scope anchor boundary: no side quests before the first block lands.' \
         'Making and polishing content for ryanleej.com' \
         \$'Pattern window: 30d ending $DAY_MINUS1\n  focus_git_status=diffuse, primary_repo=ai-ethics-comparator, primary_repo_share=57, commit_coherence=16, active_repos=5\n  focus_git_reason=1/6 commit cues match focus; activity spans 5 repos' \
         \$'  • ai-ethics-comparator: feat: implement model fingerprinting\n  • youtube-face-blur: feat: rewrite thumbnail blurring flow'"

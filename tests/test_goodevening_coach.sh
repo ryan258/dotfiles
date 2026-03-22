@@ -59,14 +59,14 @@ Reflection Summary:
 - Closed the day with one clear repo lane.
 What worked:
 - Focus stayed mostly inside the declared repo lane.
-Where drift happened:
+Off-script momentum:
 - Switched contexts before closing the primary task.
-Likely trigger:
+What pulled you in:
 - Open-ended tooling exploration after commit work.
 Tomorrow lock:
 - First move: start with one locked task.
 - Done condition: ship one visible next step.
-- Anti-tinker boundary: stop side quests until the done condition.
+- Scope anchor boundary: stop side quests until the done condition.
 Health lens:
 - Work in two bounded blocks with a break.
 Evidence used:
@@ -180,7 +180,7 @@ PY
     [[ "$args" == *"--temperature"* ]]
 
     [[ "$output" == *"What worked:"* ]]
-    [[ "$output" == *"Where drift happened:"* ]]
+    [[ "$output" == *"Off-script momentum:"* ]]
     [[ "$output" == *"Tomorrow lock:"* ]]
 
     # Signal metadata line includes confidence and reason summary
@@ -214,8 +214,8 @@ EOF
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"What worked:"* ]]
-    [[ "$output" == *"Where drift happened:"* ]]
-    [[ "$output" == *"Likely trigger:"* ]]
+    [[ "$output" == *"Off-script momentum:"* ]]
+    [[ "$output" == *"What pulled you in:"* ]]
     [[ "$output" == *"Tomorrow lock:"* ]]
     [[ "$output" == *"Evidence used:"* ]]
     [[ "$output" == *"Deterministic fallback (timeout)"* ]]
@@ -232,14 +232,14 @@ Reflection Summary:
 - Retry delivered output.
 What worked:
 - Retry delivered output.
-Where drift happened:
+Off-script momentum:
 - Context switching.
-Likely trigger:
+What pulled you in:
 - Open loops.
 Tomorrow lock:
 - First move: resume one repo lane.
 - Done condition: ship one visible next step.
-- Anti-tinker boundary: no side quests before the first block lands.
+- Scope anchor boundary: no side quests before the first block lands.
 Health lens:
 - Pace blocks.
 Evidence used:
@@ -277,14 +277,14 @@ Reflection Summary:
 - note
 What worked:
 - Task completion trend is improving and journal capture remained active.
-Where drift happened:
+Off-script momentum:
 - Drift note.
-Likely trigger:
+What pulled you in:
 - fog.
 Tomorrow lock:
 - First move: resume one repo lane.
 - Done condition: ship one visible next step.
-- Anti-tinker boundary: no side quests before the first block lands.
+- Scope anchor boundary: no side quests before the first block lands.
 Health lens:
 - pace blocks.
 Evidence used:
@@ -322,14 +322,14 @@ Reflection Summary:
 - note
 What worked:
 - Task completion trend is improving and journal capture remained active.
-Where drift happened:
+Off-script momentum:
 - Drift note.
-Likely trigger:
+What pulled you in:
 - fog.
 Tomorrow lock:
 - First move: resume one repo lane.
 - Done condition: ship one visible next step.
-- Anti-tinker boundary: no side quests before the first block lands.
+- Scope anchor boundary: no side quests before the first block lands.
 Health lens:
 - pace blocks.
 Evidence used:
@@ -377,14 +377,14 @@ Blindspots to sleep on (1-10):
 9. Keep the repo lane visible to future you.
 What worked:
 - Focus stayed mostly inside the declared repo lane.
-Where drift happened:
+Off-script momentum:
 - Switched contexts before closing the primary task.
-Likely trigger:
+What pulled you in:
 - Open-ended tooling exploration after commit work.
 Tomorrow lock:
 - First move: start with one locked task.
 - Done condition: ship one visible next step.
-- Anti-tinker boundary: stop side quests until the done condition.
+- Scope anchor boundary: stop side quests until the done condition.
 Health lens:
 - Work in two bounded blocks with a break.
 Evidence used:

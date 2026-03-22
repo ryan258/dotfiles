@@ -36,7 +36,7 @@ goodevening
 
 ## Data Contracts
 
-- `coach_mode.txt`: `YYYY-MM-DD|LOCKED|source` or `YYYY-MM-DD|OVERRIDE|source`
+- `coach_mode.txt`: `YYYY-MM-DD|LOCKED|FLOW|OVERRIDE|RECOVERY|source` (one mode per day)
 - `coach_log.txt`: `TYPE|TIMESTAMP|DATE|MODE|FOCUS|METRICS|OUTPUT`
 - `coach_adherence.txt`: `YYYY-MM-DD|high` or `YYYY-MM-DD|low` (rolling AI suggestion follow-through)
 - Core daily files:

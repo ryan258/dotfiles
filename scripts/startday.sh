@@ -55,6 +55,9 @@ if [ -f "$SCRIPT_DIR/lib/coaching.sh" ]; then
 else
     die "coaching facade not found at $SCRIPT_DIR/lib/coaching.sh" "$EXIT_FILE_NOT_FOUND"
 fi
+if [ -f "$SCRIPT_DIR/lib/coach_chat.sh" ]; then
+    source "$SCRIPT_DIR/lib/coach_chat.sh"
+fi
 
 mkdir -p "$DATA_DIR"
 CURRENT_DAY_FILE="$DATA_DIR/current_day"
@@ -378,6 +381,7 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
         CACHED_BRIEFING="${CACHED_BRIEFING//\\n/$'\n'}"
         echo "$CACHED_BRIEFING" | sed 's/^/  /'
         echo "  (Signal: CACHED - briefing from earlier today)"
+        _COACH_CHAT_BRIEFING="$CACHED_BRIEFING"
     else
         # Generate new briefing
         # Gather context
@@ -453,7 +457,7 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
                     BRIEFING="Unable to generate AI briefing at this time."
                 fi
             elif [ -z "$BRIEFING_REASON" ] && [ "${AI_COACH_EVIDENCE_CHECK_ENABLED:-true}" = "true" ] && command -v coaching_startday_response_is_grounded >/dev/null 2>&1; then
-                if ! coaching_startday_response_is_grounded "$BRIEFING" "${FOCUS_CONTEXT:-"(no focus set)"}" "$(printf '%s\n%s\n' "${YESTERDAY_COMMITS:-}" "${RECENT_PUSHES:-}")"; then
+                if ! coaching_startday_response_is_grounded "$BRIEFING" "${FOCUS_CONTEXT:-"(no focus set)"}" "$(printf '%s\n%s\n' "${YESTERDAY_COMMITS:-}" "${RECENT_PUSHES:-}")" "$COACH_MODE"; then
                     if command -v coach_grounding_failure_message >/dev/null 2>&1; then
                         BRIEFING_REASON_DETAIL=$(coach_grounding_failure_message)
                     elif [[ -n "${COACH_GROUNDING_FAILURE_REASON:-}" ]]; then
@@ -489,6 +493,7 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
         BRIEFING_ESCAPED="${BRIEFING//$'\n'/\\n}"
         printf '%s|%s\n' "$TODAY" "$BRIEFING_ESCAPED" > "$BRIEFING_CACHE"
         echo "$BRIEFING" | sed 's/^/  /'
+        _COACH_CHAT_BRIEFING="$BRIEFING"
 
         # Signal metadata: summarize confidence and why evidence is sparse.
         _sd_present=0
@@ -537,6 +542,11 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
             coaching_append_log "STARTDAY" "$TODAY" "$COACH_MODE" "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_METRICS_PAYLOAD" "$BRIEFING" || true
         fi
     fi
+fi
+
+# Interactive coach chat (on by default; disable with AI_COACH_CHAT_ENABLED=false)
+if [[ -n "${_COACH_CHAT_BRIEFING:-}" ]] && type coach_start_chat >/dev/null 2>&1; then
+    coach_start_chat "$_COACH_CHAT_BRIEFING" "startday"
 fi
 
 echo ""

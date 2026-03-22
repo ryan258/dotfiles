@@ -122,7 +122,7 @@ EOF
     [[ "$output" == *"dir_usage_malformed=1"* ]]
 }
 
-@test "coach_build_behavior_digest classifies working signals and drift risks" {
+@test "coach_build_behavior_digest classifies working signals and exploration patterns" {
     cat > "$DATA_DIR/todo.txt" <<EOF
 $OLD_DAY_1|stale 1
 $OLD_DAY_2|stale 2
@@ -321,31 +321,31 @@ EOF
 }
 
 @test "coach_startday_response_is_grounded rejects ungrounded scope expansion" {
-    run bash -c "$COACH_SOURCE_PREFIX; coach_startday_response_is_grounded \$'North Star:\n- Test\nDo Next (ordered 1-3):\n1. Capture the next concrete move for Set up AI coach for the AI Briefings.\n2. Create a folder named Coach and scaffold an endpoint.\n3. Verify endpoint output.\nOperating insight (working + drift risk):\n- note' 'Set up AI coach for the AI Briefings' \$'  • dotfiles: feat: tighten startday fallback\n  • ai-ethics-comparator: docs: add report notes'"
+    run bash -c "$COACH_SOURCE_PREFIX; coach_startday_response_is_grounded \$'North Star:\n- Test\nDo Next (ordered 1-3):\n1. Capture the next concrete move for Set up AI coach for the AI Briefings.\n2. Create a folder named Coach and scaffold an endpoint.\n3. Verify endpoint output.\nOperating insight (momentum + exploration):\n- note' 'Set up AI coach for the AI Briefings' \$'  • dotfiles: feat: tighten startday fallback\n  • ai-ethics-comparator: docs: add report notes'"
 
     [ "$status" -ne 0 ]
 }
 
 @test "coach_startday_response_is_grounded rejects invented content deliverables" {
-    run bash -c "$COACH_SOURCE_PREFIX; coach_startday_response_is_grounded \$'North Star:\n- Publish the polished homepage copy.\nDo Next (ordered 1-3):\n1. Open the homepage draft and write the missing paragraph.\n2. Publish the update live.\n3. Mark it done.\nOperating insight (working + drift risk):\n- note' 'Making and polishing content for ryanleej.com' ''"
+    run bash -c "$COACH_SOURCE_PREFIX; coach_startday_response_is_grounded \$'North Star:\n- Publish the polished homepage copy.\nDo Next (ordered 1-3):\n1. Open the homepage draft and write the missing paragraph.\n2. Publish the update live.\n3. Mark it done.\nOperating insight (momentum + exploration):\n- note' 'Making and polishing content for ryanleej.com' ''"
 
     [ "$status" -ne 0 ]
 }
 
 @test "coach_startday_response_is_grounded rejects invented journal evidence when journal context is empty" {
-    run bash -c "$COACH_SOURCE_PREFIX; coach_startday_response_is_grounded \$'Briefing Summary:\n- Recent journal note shows homepage progress.\nNorth Star:\n- Keep the content moving.\nDo Next (ordered 1-3):\n1. Capture the next concrete move for Making and polishing content for ryanleej.com.\n2. Spend 10 minutes starting it.\n3. Stop after one short block and log the result.\nOperating insight (working + drift risk):\n- note\nEvidence check:\n- Uses focus text and journal note.' 'Making and polishing content for ryanleej.com' ''"
+    run bash -c "$COACH_SOURCE_PREFIX; coach_startday_response_is_grounded \$'Briefing Summary:\n- Recent journal note shows homepage progress.\nNorth Star:\n- Keep the content moving.\nDo Next (ordered 1-3):\n1. Capture the next concrete move for Making and polishing content for ryanleej.com.\n2. Spend 10 minutes starting it.\n3. Stop after one short block and log the result.\nOperating insight (momentum + exploration):\n- note\nEvidence check:\n- Uses focus text and journal note.' 'Making and polishing content for ryanleej.com' ''"
 
     [ "$status" -ne 0 ]
 }
 
 @test "coach_startday_response_is_grounded rejects invented task evidence" {
-    run bash -c "$COACH_SOURCE_PREFIX; coach_startday_response_is_grounded \$'Briefing Summary:\n- Top task momentum is strong.\nNorth Star:\n- Keep the content moving.\nDo Next (ordered 1-3):\n1. Open the todo list and pick the top task.\n2. Spend 10 minutes starting it.\n3. Stop after one short block.\nOperating insight (working + drift risk):\n- note\nEvidence check:\n- Uses top task order and focus text.' 'Making and polishing content for ryanleej.com' ''"
+    run bash -c "$COACH_SOURCE_PREFIX; coach_startday_response_is_grounded \$'Briefing Summary:\n- Top task momentum is strong.\nNorth Star:\n- Keep the content moving.\nDo Next (ordered 1-3):\n1. Open the todo list and pick the top task.\n2. Spend 10 minutes starting it.\n3. Stop after one short block.\nOperating insight (momentum + exploration):\n- note\nEvidence check:\n- Uses top task order and focus text.' 'Making and polishing content for ryanleej.com' ''"
 
     [ "$status" -ne 0 ]
 }
 
 @test "coach_startday_response_is_grounded exposes offending line detail" {
-    run bash -c "$COACH_SOURCE_PREFIX; coach_startday_response_is_grounded \$'North Star:\n- Publish the polished homepage copy.\nDo Next (ordered 1-3):\n1. Open the homepage draft and write the missing paragraph.\n2. Publish the update live.\n3. Mark it done.\nOperating insight (working + drift risk):\n- note' 'Making and polishing content for ryanleej.com' ''; rc=\$?; coach_grounding_failure_message; exit \$rc"
+    run bash -c "$COACH_SOURCE_PREFIX; coach_startday_response_is_grounded \$'North Star:\n- Publish the polished homepage copy.\nDo Next (ordered 1-3):\n1. Open the homepage draft and write the missing paragraph.\n2. Publish the update live.\n3. Mark it done.\nOperating insight (momentum + exploration):\n- note' 'Making and polishing content for ryanleej.com' ''; rc=\$?; coach_grounding_failure_message; exit \$rc"
 
     [ "$status" -ne 0 ]
     [[ "$output" == *"invented repo/page/publish detail; line=\"publish the polished homepage copy.\""* ]]
@@ -359,13 +359,13 @@ EOF
 }
 
 @test "coach_goodevening_response_is_grounded rejects invented journal evidence" {
-    run bash -c "$COACH_SOURCE_PREFIX; coach_goodevening_response_is_grounded \$'Reflection Summary:\n- note\nWhat worked:\n- Journal capture remained active and strong.\nWhere drift happened:\n- Drift note.\nLikely trigger:\n- fog.\nPattern watch:\n- not enough data for pattern detection.\nTomorrow lock:\n- First move: capture the next move.\n- Done condition: ship one small step.\n- Anti-tinker boundary: no side quests.\nHealth lens:\n- pace blocks.\nEvidence used:\n- focus text only.' 'Making and polishing content for ryanleej.com' ''"
+    run bash -c "$COACH_SOURCE_PREFIX; coach_goodevening_response_is_grounded \$'Reflection Summary:\n- note\nWhat worked:\n- Journal capture remained active and strong.\nOff-script momentum:\n- Drift note.\nWhat pulled you in:\n- fog.\nPattern watch:\n- not enough data for pattern detection.\nTomorrow lock:\n- First move: capture the next move.\n- Done condition: ship one small step.\n- Scope anchor boundary: no side quests.\nHealth lens:\n- pace blocks.\nEvidence used:\n- focus text only.' 'Making and polishing content for ryanleej.com' ''"
 
     [ "$status" -ne 0 ]
 }
 
 @test "coach_goodevening_response_is_grounded exposes offending line detail" {
-    run bash -c "$COACH_SOURCE_PREFIX; coach_goodevening_response_is_grounded \$'Reflection Summary:\n- note\nWhat worked:\n- Task completion trend is improving.\nWhere drift happened:\n- Drift note.\nLikely trigger:\n- fog.\nPattern watch:\n- not enough data for pattern detection.\nTomorrow lock:\n- First move: capture the next move.\n- Done condition: ship one small step.\n- Anti-tinker boundary: no side quests.\nHealth lens:\n- pace blocks.\nEvidence used:\n- focus text only.' 'Making and polishing content for ryanleej.com' ''; rc=\$?; coach_grounding_failure_message; exit \$rc"
+    run bash -c "$COACH_SOURCE_PREFIX; coach_goodevening_response_is_grounded \$'Reflection Summary:\n- note\nWhat worked:\n- Task completion trend is improving.\nOff-script momentum:\n- Drift note.\nWhat pulled you in:\n- fog.\nPattern watch:\n- not enough data for pattern detection.\nTomorrow lock:\n- First move: capture the next move.\n- Done condition: ship one small step.\n- Scope anchor boundary: no side quests.\nHealth lens:\n- pace blocks.\nEvidence used:\n- focus text only.' 'Making and polishing content for ryanleej.com' ''; rc=\$?; coach_grounding_failure_message; exit \$rc"
 
     [ "$status" -ne 0 ]
     [[ "$output" == *"invented task evidence; line=\"task completion trend is improving.\""* ]]

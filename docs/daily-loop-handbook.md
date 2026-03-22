@@ -24,12 +24,14 @@ startday
 - `Briefing Summary` (Narrative)
 - `North Star`
 - `Do Next` (ordered 1-3)
-- `Operating Insight` (working + drift risk)
-- `Anti-tinker Rule`
-- `Health Lens`
+- `Operating Insight` (momentum + exploration)
+- `Scope Anchor`
+- `Health Lens` (includes specific timer commands: `pomo`, `tbreak`, `remind`)
 - `Signal Confidence` (HIGH / MEDIUM / LOW)
 - `Evidence Check`
+- `Mode Suggestion` (recommends LOCKED/FLOW/OVERRIDE/RECOVERY based on digest)
 - `(Signal: ...)` metadata line with confidence plus explicit missing/sparse source reasons
+- Interactive coach chat follows the briefing (type `/q` to skip)
 
 ### Refresh Modes
 
@@ -138,20 +140,22 @@ Tasks and journal entries remain useful, but they are secondary evidence rather 
 
 - `Reflection Summary` (Narrative)
 - `What Worked`
-- `Where Drift Happened`
-- `Likely Trigger`
+- `Off-script Momentum`
+- `What Pulled You In`
 - `Pattern Watch` (multi-day recurring patterns)
 - `Tomorrow Lock`
-- `Health Lens`
+- `Health Lens` (includes specific timer commands for tomorrow)
 - `Signal Confidence` (HIGH / MEDIUM / LOW)
 - `Evidence Used`
+- `Tomorrow Mode Suggestion` (recommends a mode for the next day)
 - `(Signal: ...)` metadata line with confidence plus explicit missing/sparse source reasons
+- Interactive coach chat follows the reflection (type `/q` to skip)
 
 **Your `Tomorrow Lock` should always include:**
 
 - Your first move for tomorrow.
 - The "done" condition.
-- The anti-tinker boundary.
+- The scope anchor boundary.
 
 ### End of Day Checklist
 

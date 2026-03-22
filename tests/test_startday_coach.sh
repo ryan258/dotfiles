@@ -47,9 +47,9 @@ Do Next (ordered 1-3):
 1. Capture the next concrete move for Ship the logo.
 2. Start it in one short block.
 3. Done when one concrete move is started.
-Anti-tinker rule:
+Scope anchor:
 - No side quests before done condition.
-Operating insight (working + drift risk):
+Operating insight (momentum + exploration):
 - Working: recent delivery. Drift: context switching.
 Health lens:
 - Use two 45-minute blocks with a break.
@@ -118,13 +118,13 @@ teardown() {
     [[ "$prompt" == *"Coach mode for today:"* ]]
     [[ "$prompt" == *"Behavior digest:"* ]]
     [[ "$prompt" == *"Health lens:"* ]]
-    [[ "$prompt" == *"Anti-tinker rule:"* ]]
+    [[ "$prompt" == *"Scope anchor:"* ]]
     [[ "$prompt" == *"non-fork GitHub activity as the primary evidence of the spear"* ]]
     [[ "$args" == *"--temperature"* ]]
 
     [[ "$output" == *"North Star:"* ]]
     [[ "$output" == *"Do Next (ordered 1-3):"* ]]
-    [[ "$output" == *"Anti-tinker rule:"* ]]
+    [[ "$output" == *"Scope anchor:"* ]]
 
     # Signal metadata line includes confidence and reason summary
     [[ "$output" == *"(Signal:"*" - "*")"* ]]
@@ -159,7 +159,7 @@ EOF
     [[ "$output" == *"Do Next (ordered 1-3):"* ]]
     [[ "$output" == *"Capture the first concrete move for today's focus (Ship the logo)"* ]]
     [[ "$output" != *"Vectorize logo"* ]]
-    [[ "$output" == *"Operating insight (working + drift risk):"* ]]
+    [[ "$output" == *"Operating insight (momentum + exploration):"* ]]
     [[ "$output" == *"Evidence check:"* ]]
     [[ "$output" == *"Deterministic fallback (timeout)"* ]]
 }
@@ -176,9 +176,9 @@ Do Next (ordered 1-3):
 1. Start with Vectorize logo.
 2. Execute second action.
 3. Done condition captured.
-Operating insight (working + drift risk):
+Operating insight (momentum + exploration):
 - Working and drift cues.
-Anti-tinker rule:
+Scope anchor:
 - Hold scope.
 Health lens:
 - Pace work.
@@ -217,9 +217,9 @@ Do Next (ordered 1-3):
 1. Open todo list and align focus.
 2. Create a folder named Coach and scaffold an endpoint.
 3. Verify the endpoint response.
-Operating insight (working + drift risk):
+Operating insight (momentum + exploration):
 - Working and drift cues.
-Anti-tinker rule:
+Scope anchor:
 - Avoid side quests.
 Health lens:
 - Pace work.
@@ -299,9 +299,9 @@ Do Next:
 1. Open the homepage draft and write the missing paragraph.
 2. Publish the update live.
 3. Mark it done.
-Operating insight (working + drift risk):
+Operating insight (momentum + exploration):
 - Working and drift cues.
-Anti-tinker rule:
+Scope anchor:
 - Avoid side quests.
 Health lens:
 - Pace work.
@@ -349,9 +349,9 @@ Do Next (ordered 1-3):
 1. Capture the next concrete move for Ship the logo.
 2. Start it in one short block.
 3. Done when one concrete move is started.
-Anti-tinker rule:
+Scope anchor:
 - No side quests before done condition.
-Operating insight (working + drift risk):
+Operating insight (momentum + exploration):
 - Working: recent delivery. Drift: context switching.
 Health lens:
 - Use two 45-minute blocks with a break.

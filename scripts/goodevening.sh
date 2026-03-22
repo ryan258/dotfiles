@@ -54,6 +54,9 @@ if [ -f "$SCRIPT_DIR/lib/coaching.sh" ]; then
 else
     die "coaching facade not found at $SCRIPT_DIR/lib/coaching.sh" "$EXIT_FILE_NOT_FOUND"
 fi
+if [ -f "$SCRIPT_DIR/lib/coach_chat.sh" ]; then
+    source "$SCRIPT_DIR/lib/coach_chat.sh"
+fi
 
 mkdir -p "$DATA_DIR"
 
@@ -599,7 +602,7 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
             REFLECTION="Unable to generate AI reflection at this time."
         fi
     elif [ -z "$REFLECTION_REASON" ] && [ "${AI_COACH_EVIDENCE_CHECK_ENABLED:-true}" = "true" ] && command -v coaching_goodevening_response_is_grounded >/dev/null 2>&1; then
-        if ! coaching_goodevening_response_is_grounded "$REFLECTION" "${FOCUS_CONTEXT:-"(no focus set)"}" "$(printf '%s\n%s\n' "${TODAY_COMMITS:-}" "${RECENT_PUSHES:-}")"; then
+        if ! coaching_goodevening_response_is_grounded "$REFLECTION" "${FOCUS_CONTEXT:-"(no focus set)"}" "$(printf '%s\n%s\n' "${TODAY_COMMITS:-}" "${RECENT_PUSHES:-}")" "$COACH_MODE"; then
             if command -v coach_grounding_failure_message >/dev/null 2>&1; then
                 REFLECTION_REASON_DETAIL=$(coach_grounding_failure_message)
             elif [[ -n "${COACH_GROUNDING_FAILURE_REASON:-}" ]]; then
@@ -626,6 +629,7 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     fi
 
     echo "$REFLECTION" | sed 's/^/  /'
+    _COACH_CHAT_BRIEFING="$REFLECTION"
 
     # Signal metadata: summarize confidence and why evidence is sparse.
     _ge_present=0
@@ -679,6 +683,11 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
         COACH_METRICS_PAYLOAD="tactical:$(printf '%s' "$COACH_TACTICAL_METRICS" | tr '\n' ';') pattern:$(printf '%s' "$COACH_PATTERN_METRICS" | tr '\n' ';') quality:$(printf '%s' "$COACH_DATA_QUALITY_FLAGS" | tr '\n' ';')"
         coaching_append_log "GOODEVENING" "$TODAY" "$COACH_MODE" "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_METRICS_PAYLOAD" "$REFLECTION" || true
     fi
+fi
+
+# Interactive coach chat
+if [[ -n "${_COACH_CHAT_BRIEFING:-}" ]] && type coach_start_chat >/dev/null 2>&1; then
+    coach_start_chat "$_COACH_CHAT_BRIEFING" "goodevening"
 fi
 
 echo ""
