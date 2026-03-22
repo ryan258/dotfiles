@@ -250,6 +250,30 @@ _coach_line_has_ungrounded_scope_expansion() {
     return 1
 }
 
+_coach_validate_evidence_line() {
+    local line="$1"
+    local context="$2"
+    local check_journal="${3:-true}"
+
+    if [[ "$line" == repo* ]] && ! _coach_line_has_context_overlap "$line" "$context"; then
+        _coach_set_grounding_failure "invented repo evidence" "$(_coach_failure_detail_from_line "$line")"
+        return 1
+    fi
+    if _coach_line_has_ungrounded_scope_expansion "$line" "$context"; then
+        _coach_set_grounding_failure "invented repo/page/publish detail" "$(_coach_failure_detail_from_line "$line")"
+        return 1
+    fi
+    if [[ "$check_journal" == "true" ]] && [[ "$line" == *"journal"* || "$line" == *"journaling"* ]]; then
+        _coach_set_grounding_failure "invented journal evidence" "$(_coach_failure_detail_from_line "$line")"
+        return 1
+    fi
+    if [[ "$line" == *"todo"* || "$line" == *"top task"* || "$line" == *"completed task"* || "$line" == *"task completion"* ]]; then
+        _coach_set_grounding_failure "invented task evidence" "$(_coach_failure_detail_from_line "$line")"
+        return 1
+    fi
+    return 0
+}
+
 coach_startday_response_is_grounded() {
     local response="$1"
     local focus="$2"
@@ -287,18 +311,7 @@ coach_startday_response_is_grounded() {
         [[ -z "$line" ]] && continue
         line=$(printf '%s' "$line" | sed -E 's/^[[:space:]]*-[[:space:]]+//; s/^[[:space:]]*[1-3]\.[[:space:]]+//')
         line=$(printf '%s' "$line" | tr '[:upper:]' '[:lower:]')
-        if _coach_line_has_ungrounded_scope_expansion "$line" "$context"; then
-            _coach_set_grounding_failure "invented repo/page/publish detail" "$(_coach_failure_detail_from_line "$line")"
-            return 1
-        fi
-        if [[ "$line" == *"journal"* || "$line" == *"journaling"* ]]; then
-            _coach_set_grounding_failure "invented journal evidence" "$(_coach_failure_detail_from_line "$line")"
-            return 1
-        fi
-        if [[ "$line" == *"todo"* || "$line" == *"top task"* || "$line" == *"completed task"* ]]; then
-            _coach_set_grounding_failure "invented task evidence" "$(_coach_failure_detail_from_line "$line")"
-            return 1
-        fi
+        _coach_validate_evidence_line "$line" "$context" "true" || return 1
     done <<< "$evidence_lines"
 
     if [[ "$mode" == "RECOVERY" ]]; then
@@ -330,14 +343,7 @@ coach_startday_response_is_grounded() {
         count=$((count + 1))
         line=$(printf '%s' "$line" | sed -E 's/^[[:space:]]*[1-3]\.[[:space:]]+//')
         line=$(printf '%s' "$line" | tr '[:upper:]' '[:lower:]')
-        if _coach_line_has_ungrounded_scope_expansion "$line" "$context"; then
-            _coach_set_grounding_failure "invented repo/page/publish detail" "$(_coach_failure_detail_from_line "$line")"
-            return 1
-        fi
-        if [[ "$line" == *"todo"* || "$line" == *"top task"* || "$line" == *"completed task"* ]]; then
-            _coach_set_grounding_failure "invented task evidence" "$(_coach_failure_detail_from_line "$line")"
-            return 1
-        fi
+        _coach_validate_evidence_line "$line" "$context" "false" || return 1
         if [[ "$count" -eq 1 ]]; then
             first_line="$line"
         fi
@@ -393,22 +399,7 @@ coach_goodevening_response_is_grounded() {
         [[ -z "$line" ]] && continue
         line=$(printf '%s' "$line" | sed -E 's/^[[:space:]]*-[[:space:]]+//; s/^[[:space:]]*[0-9]+\.[[:space:]]+//')
         line=$(printf '%s' "$line" | tr '[:upper:]' '[:lower:]')
-        if [[ "$line" == repo* ]] && ! _coach_line_has_context_overlap "$line" "$context"; then
-            _coach_set_grounding_failure "invented repo evidence" "$(_coach_failure_detail_from_line "$line")"
-            return 1
-        fi
-        if _coach_line_has_ungrounded_scope_expansion "$line" "$context"; then
-            _coach_set_grounding_failure "invented repo/page/publish detail" "$(_coach_failure_detail_from_line "$line")"
-            return 1
-        fi
-        if [[ "$line" == *"journal"* || "$line" == *"journaling"* ]]; then
-            _coach_set_grounding_failure "invented journal evidence" "$(_coach_failure_detail_from_line "$line")"
-            return 1
-        fi
-        if [[ "$line" == *"todo"* || "$line" == *"top task"* || "$line" == *"completed task"* || "$line" == *"task completion"* ]]; then
-            _coach_set_grounding_failure "invented task evidence" "$(_coach_failure_detail_from_line "$line")"
-            return 1
-        fi
+        _coach_validate_evidence_line "$line" "$context" "true" || return 1
     done <<< "$evidence_lines"
 
     if ! printf '%s\n' "$response" | grep -q '^Tomorrow lock:[[:space:]]*$'; then

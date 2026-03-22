@@ -337,9 +337,7 @@ list_user_events() {
 }
 
 # Lists commits for a specific date (YYYY-MM-DD) by querying the Commits API.
-# Lists commits for a specific date (YYYY-MM-DD) using a hybrid approach:
-# 1. Events API tells us which repos/branches were pushed on the target date
-# 2. Commits API fetches the actual commit details for those branches
+# Lists commits for a specific date (YYYY-MM-DD) natively via GraphQL.
 list_commits_for_date() {
     local target_date="$1"
     if [ -z "$target_date" ]; then
@@ -359,58 +357,90 @@ list_commits_for_date() {
     fi
     local utc_start
     local utc_end
-    local utc_start_epoch
-    local utc_end_epoch
     utc_start=$(echo "$window_data" | sed -n '1p')
     utc_end=$(echo "$window_data" | sed -n '2p')
-    utc_start_epoch=$(echo "$window_data" | sed -n '3p')
-    utc_end_epoch=$(echo "$window_data" | sed -n '4p')
 
-    # Get PushEvents to find which repos/branches were pushed on target date
-    local events_json
-    events_json=$(list_user_events 2>/dev/null) || return 1
-
-    # Extract unique repo/branch pairs from PushEvents on the local day window.
-    local repo_branches
-    repo_branches=$(echo "$events_json" | jq -r --argjson start "$utc_start_epoch" --argjson end "$utc_end_epoch" '
-        [.[] | select(.type == "PushEvent" and ((try (.created_at | fromdateiso8601) catch 0) >= $start) and ((try (.created_at | fromdateiso8601) catch 0) < $end))] |
-        .[] | (.repo.name | split("/")[1]) + ":" + ((.payload.ref // "refs/heads/HEAD") | split("/")[-1])
-    ' 2>/dev/null | sort -u)
-
-    [ -z "$repo_branches" ] && return 0
-
+    # Optional exclude filtering
     local allowed_repos=""
     if [ "${GITHUB_EXCLUDE_FORKS:-false}" = "true" ] || [ -n "${GITHUB_EXCLUDE_REPOS:-}" ]; then
         allowed_repos=$(_allowed_repo_names || true)
     fi
 
-    local all_commits=""
+    local query='query {
+      user(login: "'"$USERNAME"'") {
+        repositories(first: 30, orderBy: {field: PUSHED_AT, direction: DESC}) {
+          nodes {
+            name
+            defaultBranchRef {
+              target {
+                ... on Commit {
+                  history(since: "'"$utc_start"'", until: "'"$utc_end"'") {
+                    nodes {
+                      oid
+                      messageHeadline
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }'
 
-    # For each repo/branch, query the Commits API
-    while IFS=: read -r repo_name branch; do
-        [ -z "$repo_name" ] && continue
-        [ -z "$branch" ] && branch="HEAD"
+    local tmp_payload
+    local tmp_response
+    tmp_payload=$(mktemp -t "gh_gql_req.XXXXXX")
+    tmp_response=$(mktemp -t "gh_gql_res.XXXXXX")
+    
+    # shellcheck disable=SC2064
+    trap "rm -f '$tmp_payload' '$tmp_response'" RETURN
+
+    # Build the JSON payload safely
+    jq -n --arg q "$query" '{query: $q}' > "$tmp_payload"
+
+    if ! curl -fsS -L \
+         --connect-timeout "$GITHUB_CONNECT_TIMEOUT" \
+         --max-time "$GITHUB_REQUEST_TIMEOUT" \
+         -H "Authorization: bearer $TOKEN" \
+         -H "Content-Type: application/json" \
+         -X POST -d "@$tmp_payload" \
+         "https://api.github.com/graphql" -o "$tmp_response" 2>/dev/null; then
+        echo "Error: Failed to reach GitHub GraphQL API" >&2
+        return 1
+    fi
+
+    local raw_commits
+    raw_commits=$(jq -r '
+        try (
+            .data.user.repositories.nodes[] | 
+            select(.defaultBranchRef != null) | 
+            .name as $repo | 
+            .defaultBranchRef.target.history.nodes[]? | 
+            "\($repo)|\(.oid[0:7])|\(.messageHeadline | gsub("\\|"; "/"))"
+        ) catch empty
+    ' "$tmp_response" 2>/dev/null || true)
+
+    if [ -z "$raw_commits" ]; then
+        return 0
+    fi
+
+    local final_commits=""
+    while IFS= read -r line; do
+        [ -z "$line" ] && continue
+        local repo_name
+        repo_name="${line%%|*}"
+        
+        # Apply repo exclusions if active
         if [ -n "$allowed_repos" ] && ! printf '%s\n' "$allowed_repos" | grep -Fxq "$repo_name"; then
             continue
         fi
+        
+        final_commits+="${line}"$'\n'
+    done <<< "$raw_commits"
 
-        local commits_json
-        commits_json=$(_github_api_call "/repos/$USERNAME/$repo_name/commits?sha=$branch&author=$USERNAME&since=${utc_start}&until=${utc_end}&per_page=20" 2>/dev/null) || continue
-
-        local parsed_commits
-        parsed_commits=$(echo "$commits_json" | jq -r --arg repo "$repo_name" '
-            if type == "array" then
-                .[] | ($repo) + "|" + (.sha[:7]) + "|" + (.commit.message | split("\n")[0] | gsub("\\|"; "/"))
-            else empty end
-        ' 2>/dev/null || true)
-
-        if [ -n "$parsed_commits" ]; then
-            all_commits+="${parsed_commits}"$'\n'
-        fi
-    done <<< "$repo_branches"
-
-    if [ -n "$all_commits" ]; then
-        printf "%s" "$all_commits" | awk 'NF' | sort -u
+    if [ -n "$final_commits" ]; then
+        printf "%s" "$final_commits" | awk 'NF' | sort -u
     fi
 }
 

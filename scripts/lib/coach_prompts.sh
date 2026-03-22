@@ -136,7 +136,8 @@ Constraints:
 - Keep language operational and specific; avoid generic motivation.
 - If signal is missing, say so briefly instead of inventing details.
 - Do Next must be grounded in today's focus and listed GitHub activity.
-- Do not use todo items, completed tasks, or journal notes as evidence or action anchors.
+- Do not use completed tasks or journal notes as evidence or action anchors.
+- Do not claim the user worked on "Recent GitHub pushes" today or yesterday. Repos pushed 2+ days ago are background context indicating their general interests, not yesterday's momentum.
 - If the focus is broad and does not name a concrete asset, page, file, or deliverable, do not invent one. Step 1 should capture or choose the next concrete move before execution begins.
 - Do not invent new repositories, modules, endpoints, files, APIs, or projects unless those exact items appear in today's focus or provided GitHub activity.
 - Do not invent page names, paragraphs, homepage sections, drafts, or publication status unless those exact items appear in today's focus or provided GitHub activity.
@@ -250,6 +251,7 @@ Constraints:
 - If data is sparse, say so briefly instead of inventing details.
 - Make the main verdict about whether the spear moved, stalled, or diffused based on focus plus Git evidence.
 - Do not use completed tasks or journal notes as evidence or explanation.
+- Do not claim the user worked on "Recent GitHub pushes" today. Only "Today's commits" and "Today's focus" constitute today's evidence.
 - Prefer commit/repo evidence over local notes when they conflict.
 - The blindspot section must contain exactly 10 numbered lines.
 - At least half of the 10 lines must mention a real repo name from today's commits or recent pushes when repo names are available.
@@ -352,6 +354,7 @@ Constraints:
 - If signal is missing, say so briefly instead of inventing details.
 - Do Next must be grounded in today's focus, today's commits, recent pushes, and current project context when present.
 - Do not use journal notes, todo items, completed tasks, or vague productivity language as evidence.
+- Do not claim the user worked on "Recent GitHub pushes" today. Only "Today's commits" and "Today's focus" constitute today's evidence.
 - Do not invent new repositories, modules, pages, endpoints, or publish states unless those exact items appear in the provided GitHub activity or focus text.
 - If Context scope is repo-local, keep repo commentary, blindspots, and actions inside Current project context; do not widen back out to other repos.
 - If Context scope is global, synthesize across the visible repo set and name the most likely lane.
