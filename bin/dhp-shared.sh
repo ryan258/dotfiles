@@ -68,8 +68,8 @@ dhp_parse_flags() {
                 shift
                 ;;
             --temperature)
-                if [[ -z "${2:-}" || "${2:-}" == --* ]]; then
-                    echo "Error: --temperature requires a numeric value." >&2
+                if [[ -z "${2:-}" || "${2:-}" == --* || ! "$2" =~ ^[0-9]*\.?[0-9]+$ ]]; then
+                    echo "Error: --temperature requires a numeric value, got '${2:-}'." >&2
                     return 1
                 fi
                 PARAM_TEMPERATURE="$2"
@@ -100,7 +100,7 @@ dhp_parse_flags() {
 
 # Human-readable list used by UX/help paths.
 dhp_available_dispatchers() {
-    printf '%s\n' "tech, creative, content, strategy, brand, market, stoic, research, narrative, copy"
+    printf '%s\n' "tech, creative, content, strategy, brand, market, stoic, research, narrative, copy, finance"
 }
 
 # Resolve dispatcher aliases to canonical script names.
@@ -118,6 +118,7 @@ dhp_dispatcher_script_name() {
         research|dhp-research|dhp-research.sh) echo "dhp-research.sh" ;;
         narrative|dhp-narrative|dhp-narrative.sh) echo "dhp-narrative.sh" ;;
         copy|dhp-copy|dhp-copy.sh) echo "dhp-copy.sh" ;;
+        finance|dhp-finance|dhp-finance.sh) echo "dhp-finance.sh" ;;
         *) return 1 ;;
     esac
 }

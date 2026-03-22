@@ -424,7 +424,8 @@ if [ -d "$PROJECTS_DIR" ]; then
     fi
 
     job_count=0
-    tmp_results=$(mktemp -d)
+    tmp_results=$(mktemp -d) || die "Failed to create temp directory" "1"
+    trap "rm -rf '$tmp_results'" EXIT
     while IFS= read -r gitdir; do
         (
             proj_dir=$(dirname "$gitdir")
@@ -450,7 +451,6 @@ if [ -d "$PROJECTS_DIR" ]; then
             cat "$issue_file"
         fi
     done
-    rm -rf "$tmp_results"
 
     if [ "$found_issues" = false ]; then
         echo "  ✅ All projects clean (no uncommitted changes, stale branches, or unpushed commits)"

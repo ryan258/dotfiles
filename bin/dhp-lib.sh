@@ -28,7 +28,7 @@ fi
 
 # _api_cooldown: Enforces a delay between API calls.
 _api_cooldown() {
-    local cooldown="${API_COOLDOWN_SECONDS:-0}"
+    local cooldown="${API_COOLDOWN_SECONDS:-1}"
     if [ "$cooldown" -gt 0 ]; then
         sleep "$cooldown"
     fi

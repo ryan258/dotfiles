@@ -540,7 +540,7 @@ alias stoic="$DOTFILES_ALIAS_ROOT/bin/dhp-stoic.sh"
 alias research="$DOTFILES_ALIAS_ROOT/bin/dhp-research.sh"
 alias narrative="$DOTFILES_ALIAS_ROOT/bin/dhp-narrative.sh"
 alias aicopy="$DOTFILES_ALIAS_ROOT/bin/dhp-copy.sh"             # 'aicopy' not 'copy' (copy = pbcopy)
-alias morphling="$DOTFILES_ALIAS_ROOT/bin/morphling.sh"          # Shape-shifting multi-persona dispatcher
+alias morphling="$DOTFILES_ALIAS_ROOT/bin/dhp-morphling.sh"      # Shape-shifting multi-persona dispatcher
 alias finance="$DOTFILES_ALIAS_ROOT/bin/dhp-finance.sh"
 alias memory="$DOTFILES_ALIAS_ROOT/bin/dhp-memory.sh"
 alias memory-search="$DOTFILES_ALIAS_ROOT/bin/dhp-memory-search.sh"
