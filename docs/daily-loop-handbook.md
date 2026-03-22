@@ -1,66 +1,48 @@
-# Daily Loop Handbook
+# Your Daily Routine Guide
 
-This guide walks you through the core daily usage of your dotfiles system. It combines the structured instructions from the "Happy Path" with the quick-reference elements from your daily cheat sheet. Follow this loop to maintain context, focus, and energy throughout your day.
+This guide shows you exactly how to use your computer system every single day. It helps you stay completely on track, save your brain energy, and remember what is important. Follow this circle from morning to night.
 
 ---
 
-## 🌅 Morning Flow (Low-Friction Start)
+## 🌅 The Morning Routine (Super Easy Start)
 
-**Command:**
-
+**Type this command:**
 ```bash
 startday
 ```
 
-`startday` sets the tone for your day and runs automatically on the first terminal open of the day. It walks you through:
+When you first open your computer, type `startday`. Here is what it does for you:
+- **Focus Check:** You type out the exact one thing you want to focus on today.
+- **Energy Budget:** You tell the computer exactly how tired you are.
+- **Memory Review:** The computer pulls up your old diary notes and tasks from yesterday.
+- **AI Coach:** Your smart AI coach reads everything and builds a daily plan for you.
 
-- **Focus Check:** Reviewing or setting your daily intention.
-- **Spoon Budget:** Acknowledging your starting energy capacity.
-- **Context Recovery:** Surfacing yesterday's journal, commits, and stale tasks.
-- **AI Briefing:** Providing a structured, deterministic coaching plan grounded primarily in your declared focus and non-fork GitHub momentum.
+### What Your Coach Tells You
+The morning AI coaching plan includes:
+- A short story of where you are standing right now.
+- Your "North Star" (the big important goal).
+- The exact top 3 steps you need to take next.
+- The computer uses real facts to prove its advice.
+- It suggests a "Working Mode" (like LOCKED or FLOW) based on your energy.
 
-### Morning Coaching Schema
+### Fast Morning Chores
 
-- `Briefing Summary` (Narrative)
-- `North Star`
-- `Do Next` (ordered 1-3)
-- `Operating Insight` (momentum + exploration)
-- `Scope Anchor`
-- `Health Lens` (includes specific timer commands: `pomo`, `tbreak`, `remind`)
-- `Signal Confidence` (HIGH / MEDIUM / LOW)
-- `Evidence Check`
-- `Mode Suggestion` (recommends LOCKED/FLOW/OVERRIDE/RECOVERY based on digest)
-- `(Signal: ...)` metadata line with confidence plus explicit missing/sparse source reasons
-- Interactive coach chat follows the briefing (type `/q` to skip)
-
-### Refresh Modes
-
-If you need to recalculate your briefing:
-
-```bash
-startday refresh                   # Clears AI briefing cache only
-startday refresh --clear-github-cache # Clears AI + GitHub caches
-```
-
-### Essential Morning Tasks
-
-| Command                      | What It Does                                  |
-| ---------------------------- | --------------------------------------------- |
-| `focus set "my thing today"` | Set your daily intention                      |
-| `spoons init 10`             | Start the daily energy budget                 |
-| `health check`               | Check if you are OK to work (circuit breaker) |
-| `todo top`                   | View only the top 3 tasks                     |
-| `g suggest`                  | AI suggests where you should work today       |
-| `gcal agenda 7`              | View your week's calendar                     |
+| Command | What It Does |
+| --- | --- |
+| `focus set "my thing today"` | Tell the computer your main goal |
+| `spoons init 10` | Start your daily energy tracker (10 is the max) |
+| `health check` | Check if you are too sick to work |
+| `todo top` | Show only your top 3 tasks |
+| `g suggest` | Let the AI guess what you should do next |
+| `gcal agenda 7` | Show your week's calendar |
 
 ---
 
-## ☀️ During-Day Flow (Stay On Rails)
+## ☀️ The Afternoon Routine (Staying on Track)
 
-When you're working, use a tight loop to avoid distraction and maintain momentum.
+While you work, repeat this small circle over and over. It keeps you focused!
 
-**Core Loop:**
-
+**The Working Circle:**
 ```bash
 todo top
 status
@@ -69,110 +51,54 @@ health energy 6
 health fog 4
 ```
 
-### The Cadence
+### The Rules of Working
+1. **Before you switch tasks:** Always write one single sentence in your diary (`journal add "thought"`).
+2. **If your brain fog gets worse:** Make your work blocks much shorter.
+3. **If you start getting distracted:** Go back to your "North Star" goal from your morning briefing.
 
-1. **Before switching tasks:** Log one sentence in your journal (`ja "thought"`).
-2. **If fog rises or energy drops:** Shorten your current work block and re-check `todo top`.
-3. **If you catch yourself tinkering:** Return to the `North Star` from `startday` and only do step 1.
+### Managing Your Tasks
 
-### Task Management
+| Command | What It Does |
+| --- | --- |
+| `todo add "clean desk"` | Add a new chore |
+| `todo rm 1` | Delete task number 1 forever |
+| `todo done 1` | Check off task number 1 as completely finished |
+| `todo bump 5` | Move task 5 all the way to the top of the list |
+| `idea add "build a robot"` | Save a cool idea for much later |
+| `todo debug 2` | Ask the AI to help you figure out task 2 |
 
-| Command                       | What It Does                                 |
-| ----------------------------- | -------------------------------------------- |
-| `todo add "task description"` | Add a task                                   |
-| `todo rm 1`                   | Delete task 1 (without saving it to history) |
-| `todo done 1`                 | Mark task 1 complete                         |
-| `todo bump 5`                 | Move task 5 to the top of your list          |
-| `idea add "idea description"` | Capture a new aspirational idea              |
-| `idea to-todo 1`              | Promote idea 1 to the todo list              |
-| `todo to-idea 1`              | Demote task 1 back to the idea list          |
-| `t-start 1` / `t-stop`        | Start/stop a timer for task 1                |
-| `todo debug 2`                | Get AI help with task 2                      |
-
-### Emergency Reset (When You Feel Lost)
-
-If you feel scattered or overwhelmed, run:
-
+### Emergency Brain-Fog Reset
+If you feel totally confused, scattered, or stuck, type this:
 ```bash
 status
 todo top
 focus show
 ```
-
-**Then do only ONE thing:**
-
-- Run one 10-15 minute block on your top task.
-- Add one journal line when you finish it.
-
-**If the fog is too heavy for regular work**, switch to autopilot content creation instead — AI does the work, you just confirm at the end:
-
-```bash
-apb "your idea here"
-```
-
-See the [Autopilot Happy Path](autopilot-happy-path.md) for the full brain-fog cheat sheet.
+Then, work on your ONE top task for just 10 minutes and stop.
 
 ---
 
-## 🌙 Evening Closeout (Preserve Context for Tomorrow)
+## 🌙 The Evening Routine (Closing the Shop)
 
-When you are done for the day, protect tomorrow's mental energy by closing out properly.
+When you are completely done working for the day, wrap things up. This saves your brain power for tomorrow morning!
 
-**Command:**
-
+**Type this command:**
 ```bash
 goodevening
 ```
 
-_(Or `goodevening 2026-01-20` to close out a specific past date)._
+The `goodevening` tool saves everything you did today. It lists your biggest wins, runs a safety backup of your files, and gives you an evening reflection from your AI coach.
 
-`goodevening` preserves today's outcomes, summarizes wins, checks project safety, validates data files, runs a system backup, and generates an AI reflection.
-
-Both morning and evening coaching now judge the day primarily through:
-
-- your declared daily focus
-- non-fork GitHub activity
-- health and energy context
-
-Tasks and journal entries remain useful, but they are secondary evidence rather than the main verdict source.
-
-### Evening Coaching Schema
-
-- `Reflection Summary` (Narrative)
-- `What Worked`
-- `Off-script Momentum`
-- `What Pulled You In`
-- `Pattern Watch` (multi-day recurring patterns)
-- `Tomorrow Lock`
-- `Health Lens` (includes specific timer commands for tomorrow)
-- `Signal Confidence` (HIGH / MEDIUM / LOW)
-- `Evidence Used`
-- `Tomorrow Mode Suggestion` (recommends a mode for the next day)
-- `(Signal: ...)` metadata line with confidence plus explicit missing/sparse source reasons
-- Interactive coach chat follows the reflection (type `/q` to skip)
-
-**Your `Tomorrow Lock` should always include:**
-
-- Your first move for tomorrow.
-- The "done" condition.
-- The scope anchor boundary.
+### Evening AI Coaching
+The evening feedback letter includes:
+- A story about everything you accomplished today.
+- What went well and what you got stuck on.
+- A lock for tomorrow (what you promise to do first thing in the morning).
 
 ### End of Day Checklist
-
 ```bash
-focus done             # Mark today's focus complete and archive it
-goodevening            # Receive your coaching reflection & backup data
-todo clear             # Clean up completed tasks
-gcal agenda 1          # Preview tomorrow's schedule
+focus done             # Check off today's main goal
+goodevening            # Get your coaching reflection and backup files
+todo clear             # Clean out all finished chores
+gcal agenda 1          # Look at tomorrow's schedule
 ```
-
----
-
-## 🔍 Additional Check-Ins
-
-| Command              | What It Does                                        |
-| -------------------- | --------------------------------------------------- |
-| `status`             | Mid-day context reset: focus, coach mode, spoon depletion forecast, spear alignment, location, tasks |
-| `weekreview`         | Generate a retrospective summary of the last 7 days |
-| `context.sh capture` | Snapshot the current context                        |
-| `context.sh list`    | List saved context snapshots                        |

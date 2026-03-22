@@ -1,94 +1,78 @@
-# Dotfiles: Brain-Fog-Friendly CLI System
+# Welcome to the Dotfiles Helper
 
-A shell-first productivity operating system for daily execution, energy-aware pacing, AI coaching, and automated content generation. Built for a developer with MS — designed to reduce cognitive load and keep things moving when brain fog is high.
+This is a set of tools you run on your computer. It helps you get through your workday even when your brain feels foggy. It was made for someone with MS (multiple sclerosis), which can make it hard to think or remember things. These tools do the hard work for you.
 
 ## What It Does
 
-- Runs a daily execution loop (`startday` -> `status` -> `goodevening`) with AI coaching and deterministic fallbacks
-- Tracks tasks, journal, health, and spoon-budget signals in plain text files
-- Provides 13 AI dispatchers (`tech`, `strategy`, `content`, `morphling`, etc.) via OpenRouter API
-- Generates grounded AI coaching that validates responses against actual data (rejects hallucinations)
-- Automates content generation from source repos via the Cyborg Lab agent
-- Offers brain-fog autopilot mode (`ap`, `apb`) — one command, AI does the rest
+- Automatically runs your daily routine: `startday`, `status`, and `goodevening`. A smart AI coach talks to you at each step.
+- Saves your tasks, your diary, your health, and your energy safely in your folders.
+- Gives you 13 AI helpers (like a Tech Expert or a Creative Writer) who can do work for you instantly.
+- Checks the AI's answers to make sure it doesn't make things up!
+- A special robot (Cyborg Lab) can automatically turn your code folders into full blog posts.
+- **Autopilot Mode:** If you type `ap`, the computer will just do the chores for you while you rest.
 
-## Architecture at a Glance
+## How It's Built
 
-```text
-Terminal (zsh)
-  -> aliases + functions (zsh/aliases.zsh — ~200 aliases)
-  -> 66 CLI scripts (scripts/*.sh)
-  -> 21 shared libraries (scripts/lib/*.sh)
-  -> 13 AI dispatchers + orchestration (bin/dhp-*.sh)
-  -> Cyborg Lab agent (bin/cyborg + scripts/cyborg_agent.py)
-  -> Brain/knowledge base (brain/ — ChromaDB vector store)
-  -> data (~/. config/dotfiles-data/ — pipe-delimited flat files)
-```
+The computer runs scripts (small lists of instructions) when you type a command. 
+- The AI helpers are stored in `bin/`.
+- The instructions for the tools are in `scripts/`.
+- Your saved data is kept safe in `~/.config/dotfiles-data/`.
 
-## Source of Truth
+## The Rule Books
 
-- Canonical architecture/behavior contract: `CLAUDE.md`
-- Scope guardrails: `GUARDRAILS.md`
-- Feature roadmap: `ROADMAP.md`
+- For the master rules on how everything works, read: `CLAUDE.md`
+- For rules about folders, read: `GUARDRAILS.md`
+- For the plan of what we will build next, read: `ROADMAP.md`
 
-All other docs are derived views and must align to `CLAUDE.md`.
+## How to Install It
 
-## Install Quickstart
-
+Open your terminal and type these lines, hitting Enter after each one:
 ```bash
 git clone https://github.com/ryan258/dotfiles.git "$HOME/dotfiles"
 cd "$HOME/dotfiles"
 ./bootstrap.sh
 dotfiles-check
 ```
+The `bootstrap.sh` script will install everything you need and make sure the computer knows where to find your new tools.
 
-`bootstrap.sh` installs baseline dependencies (`jq`, `curl`, `gawk`), creates the data directory at `~/.config/dotfiles-data`, and sets shell startup paths for this repo.
+## What You Need First
 
-## Prerequisites
+- An Apple Mac or a Linux computer.
+- Python 3 (a coding language usually already on your computer).
+- To make the AI helpers work, you must save an OpenRouter AI password (called an API key) in your `.env` file!
 
-- macOS or Linux with Bash
-- `python3` available (used for Cyborg agent, date/time helpers, and coaching timeout handling)
-- Homebrew if using `bootstrap.sh` on macOS
-- Optional: OpenRouter API key for AI dispatchers and coaching
-- Optional: `uv` for Morphling and ai-staff-hq integration
-
-## Quick Start
+## Fast Commands to Try
 
 ```bash
-# Daily loop
-startday                          # Morning briefing + AI coaching
-status                            # Mid-day context recovery
-goodevening                       # Evening reflection + backup
+# Your Daily Routine
+startday                          # Morning briefing with your AI coach
+status                            # Mid-day check-in
+goodevening                       # Evening reflection
 
-# Task management
-todo add "Fix the login bug"      # Add a task
-todo top                          # Show top priority
-focus set "Ship the API"          # Set daily focus
+# Saving Your Work
+todo add "Fix the login bug"      # Add a chore to your list
+todo top                          # Show the most important chore
+focus set "Ship the API"          # Tell the computer what you are focused on
 
-# AI dispatchers
-tech "Why is this function slow?" # Technical analysis
-strategy "Should I refactor?"     # Strategic advice
-morphling "Analyze this repo"     # Universal adaptive specialist
+# Your AI Helpers
+tech "Why is this crashing?"      # Ask the expert to fix your code
+strategy "Should I redesign?"     # Ask the boss for advice
+morphling "Look at my folder"     # Ask the magic helper anything
 
-# Autopilot (brain-fog days)
-ap                                # Auto-document current repo
-apb "a CLI energy tracker"        # Build + document from idea
+# Autopilot (for brain-fog days)
+ap                                # Automatic help with one button
 ```
 
-## Key Docs
+## Where to Read More
 
-- `docs/README.md` - Documentation index and 5-minute orientation
-- `docs/daily-loop-handbook.md` - Morning, during-day, and evening workflows
-- `docs/ai-handbook.md` - AI dispatcher usage and patterns
-- `docs/autopilot-happy-path.md` - Low-energy automation cheat sheet
-- `docs/general-reference-handbook.md` - Full system reference
-- `TROUBLESHOOTING.md` - Common failure modes + fixes
-- `CHANGELOG.md` - Release history
-- `ROADMAP.md` - Feature roadmap and project status
+- `docs/README.md` - Start here for a fast 5-minute tour!
+- `docs/daily-loop-handbook.md` - Steps for your morning, noon, and evening.
+- `docs/ai-handbook.md` - Exactly how to talk to your AI helpers.
+- `TROUBLESHOOTING.md` - How to fix common problems.
+- `CHANGELOG.md` - A list of everything we have updated.
 
-## Tests
-
+## Testing
+If you ever want to check if the tools are broken, type this to run 37 automatic tests:
 ```bash
 bats tests/*.sh
 ```
-
-37 test files covering coaching, dispatchers, cyborg, correlation, context, spoons, time tracking, and syntax validation.

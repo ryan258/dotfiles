@@ -1,10 +1,10 @@
 # General Reference Handbook
 
-This handbook serves as your comprehensive guide to the underlying architecture, specialized non-AI workflows, MS-friendly accessibility features, and system best practices.
+This handbook is your full guide. It covers how the system is built, special workflows, MS-friendly features, and tips for best results.
 
 ## 🏛️ System Overview
 
-This is a derived architecture view. Canonical contracts live in `../CLAUDE.md`.
+This is a simple view of the system. The full rules live in `../CLAUDE.md`.
 
 ## Architecture
 
@@ -38,7 +38,7 @@ goodevening
 
 - `coach_mode.txt`: `YYYY-MM-DD|LOCKED|FLOW|OVERRIDE|RECOVERY|source` (one mode per day)
 - `coach_log.txt`: `TYPE|TIMESTAMP|DATE|MODE|FOCUS|METRICS|OUTPUT`
-- `coach_adherence.txt`: `YYYY-MM-DD|high` or `YYYY-MM-DD|low` (rolling AI suggestion follow-through)
+- `coach_adherence.txt`: `YYYY-MM-DD|high` or `YYYY-MM-DD|low` (tracks how well you follow AI tips)
 - Core daily files:
   - `todo.txt`
   - `todo_done.txt`
@@ -49,14 +49,14 @@ goodevening
 
 ## Reliability Rules
 
-- Coaching calls are timeout-bounded.
-- Timeout/error/missing dispatcher returns deterministic structured output.
-- User input is sanitized before persistence.
-- Paths are validated before file writes.
+- Coaching calls have a time limit.
+- If a call times out or fails, the system gives you a basic plan instead.
+- User input is cleaned before saving.
+- File paths are checked before writing.
 
 ## 🤖 Cyborg Lab Agent
 
-The Cyborg Lab agent (`bin/cyborg` + `scripts/cyborg_agent.py`) is a ~4,900-line Python interactive agent for content ingestion. It scans a source repo, proposes a content graph for the Hugo blog, stages near-publishable drafts, and only writes to `my-ms-ai-blog` on explicit apply.
+The Cyborg Lab agent (`bin/cyborg` + `scripts/cyborg_agent.py`) is a ~4,900-line Python tool. It scans a code project, plans blog posts, writes drafts, and only saves to `my-ms-ai-blog` when you say so.
 
 ### Key Commands
 
@@ -69,19 +69,19 @@ cyborg resume             # Resume a previous session
 
 ### Features
 
-- GitNexus integration for codebase analysis
-- Token caching and draft loop optimization
-- Accessible A/B/C/D/E short-choice prompts
-- Session state persistence for resume capability
-- OpenRouter API integration with configurable models
+- GitNexus integration for code analysis
+- Token caching and draft loop speed-ups
+- Easy A/B/C/D/E choice prompts
+- Session saving so you can pick up later
+- OpenRouter API with configurable models (the AI service this tool uses)
 
-See [`bin/cyborg-readme.md`](../bin/cyborg-readme.md) for full documentation.
+See [`bin/cyborg-readme.md`](../bin/cyborg-readme.md) for full details.
 
 ---
 
 ## 🚀 Autopilot Mode (Brain-Fog Days)
 
-When energy is too low for interactive work, autopilot mode runs the full Morphling + Cyborg pipeline with minimal interaction.
+When your energy is too low for hands-on work, autopilot runs the full pipeline with very little input from you.
 
 ### Aliases
 
@@ -95,18 +95,18 @@ When energy is too low for interactive work, autopilot mode runs the full Morphl
 
 ### How It Works
 
-1. **Morphling pre-analysis** scans the repo and generates a project overview
-2. **Cyborg agent** uses that analysis to propose a content graph
-3. Drafts are staged for review (or auto-applied with `-y` flag)
-4. Only writes to the blog repo on explicit apply
+1. **Morphling pre-analysis** scans the repo and creates a project overview.
+2. **Cyborg agent** uses that overview to plan blog posts.
+3. Drafts wait for your review (or get auto-applied with `-y`).
+4. Nothing is written to the blog repo until you approve it.
 
-See [`docs/autopilot-happy-path.md`](autopilot-happy-path.md) for the cheat sheet and [`bin/autopilot-readme.md`](../bin/autopilot-readme.md) for the convergence architecture.
+See [`docs/autopilot-happy-path.md`](autopilot-happy-path.md) for the cheat sheet and [`bin/autopilot-readme.md`](../bin/autopilot-readme.md) for how the pieces fit together.
 
 ---
 
 ## 🧠 Brain / Knowledge Base
 
-The `brain/` directory contains a ChromaDB vector database for cross-project memory and knowledge retrieval.
+The `brain/` folder holds a ChromaDB vector database. Think of it as a long-term memory that works across all your projects.
 
 ### Commands
 
@@ -117,30 +117,30 @@ memory-search "energy tracking"          # Search stored memories
 
 ### Integration
 
-- Used by dispatchers via `dhp-memory.sh` and `dhp-memory-search.sh`
+- Used by dispatchers through `dhp-memory.sh` and `dhp-memory-search.sh`
 - Stores insights, decisions, and context across projects
-- See [`brain/HANDBOOK.md`](../brain/HANDBOOK.md) for usage details
+- See [`brain/HANDBOOK.md`](../brain/HANDBOOK.md) for more details
 
 ---
 
 ## 🧠 MS-Friendly Features & Accessibility
 
-This system was built with MS challenges in mind: brain fog, fatigue, energy fluctuations, and the need for maximum efficiency on low-energy days.
+This system was built for MS challenges: brain fog, fatigue, energy swings, and the need to get things done on low-energy days.
 
 ---
 
 #### TL;DR
 
-- Use `startday`, `status`, and `goodevening` for low-effort context recovery.
-- Track energy with `health` and `spoons` to avoid overextending.
-- Use `todo top` and `focus` to keep scope small.
+- Use `startday`, `status`, and `goodevening` for easy context recovery.
+- Track energy with `health` and `spoons` to avoid overdoing it.
+- Use `todo top` and `focus` to keep your task list small.
 
 #### 🧠 Brain Fog Protection
 
 #### Minimal Keystrokes
 
-**Problem:** Remembering complex commands is hard on foggy days.
-**Solution:** Everything is aliased to 2-5 characters.
+**Problem:** Remembering long commands is hard on foggy days.
+**Solution:** Everything has a short alias (2-5 characters).
 
 Examples:
 
@@ -149,13 +149,13 @@ Examples:
 - `ll` instead of `ls -lah`
 - `..` instead of `cd ..`
 
-**200+ aliases** mean you rarely need to remember full paths or commands.
+**200+ aliases** mean you almost never type full paths or commands.
 
 ---
 
 #### Auto-Completion & Suggestions
 
-**Problem:** Can't remember where you were working or what's next.
+**Problem:** You forgot where you were working or what to do next.
 **Solution:** The system remembers for you.
 
 ```bash
@@ -165,19 +165,19 @@ startday               # Morning briefing with yesterday's context
 status                 # "Where am I and what am I doing?"
 ```
 
-**How it works:** Every `cd` is logged. Smart scoring: `visits / (days_since + 1)` surfaces what's relevant.
+**How it works:** Every `cd` is logged. Smart scoring (`visits / (days_since + 1)`) shows what matters most.
 
 ---
 
 #### Visual Clarity
 
-**Problem:** Walls of text are overwhelming.
-**Solution:** Clean, scannable output.
+**Problem:** Walls of text are hard to read.
+**Solution:** Clean, easy-to-scan output.
 
 - Tables for structured data
 - Color coding (git status, priorities)
 - Top N filtering (`todo top` shows 3, not 47)
-- Emoji indicators (when helpful, not excessive)
+- Emoji indicators (when helpful, not too many)
 - Clear section headers
 
 ---
@@ -209,14 +209,14 @@ health energy 7        # Quick 1-10 rating
 health dashboard       # 30-day trends with emoji indicators
 ```
 
-**The system correlates:**
+**The system connects the dots between:**
 
 - Energy levels
 - Task completion
 - Git commits
 - Symptoms
 
-**Why this matters:** You'll see patterns like "Tuesdays are usually low" or "I'm more productive after logging energy."
+**Why this matters:** You will see patterns like "Tuesdays are usually low" or "I get more done after logging energy."
 
 ---
 
@@ -229,14 +229,14 @@ health list            # See recent symptoms
 health summary         # 30-day overview
 ```
 
-**Why this matters:** You can spot triggers, track medication effectiveness, prepare for doctor appointments.
+**Why this matters:** You can spot triggers, track how well meds work, and prepare for doctor visits.
 
 ---
 
 #### Brain Fog Tracking & Circuit Breaker
 
 **Problem:** Pushing through fog makes everything worse.
-**Solution:** Track fog separately and let the system tell you when to stop.
+**Solution:** Track fog and let the system tell you when to stop.
 
 ```bash
 health fog 3           # Light fog (1-10 scale)
@@ -248,11 +248,11 @@ health check
 
 **Circuit breaker rules:**
 
-- **Energy ≤ 3** → 🛑 "STOP high-cognitive tasks. Rest or Low Energy Menu."
-- **Fog ≥ 6** → 🛑 "EXTEND deadlines by 24h. Admin/rote work only."
+- **Energy ≤ 3** → 🛑 "STOP hard thinking tasks. Rest or Low Energy Menu."
+- **Fog ≥ 6** → 🛑 "PUSH deadlines by 24h. Simple tasks only."
 - **Otherwise** → ✅ "SYSTEM OPERATIONAL"
 
-**Why this matters:** You don't have to judge whether you should keep working. The system decides based on objective data you logged.
+**Why this matters:** You do not have to decide if you should keep working. The system decides based on the data you logged.
 
 ---
 
@@ -278,7 +278,7 @@ meds remind "Medication" "08:00"
 
 #### Break Reminders
 
-**Problem:** Hyper-focus until you crash.
+**Problem:** You hyper-focus until you crash.
 **Solution:** Automated breaks.
 
 ```bash
@@ -287,26 +287,26 @@ pomo                   # 25-minute work session
 remind +1h "Stretch"   # Custom reminders
 ```
 
-You'll get macOS notifications when time's up.
+You will get macOS notifications when time is up.
 
 ---
 
 #### Daily Routines That Run Themselves
 
-**Problem:** Remembering to do self-care is hard.
-**Solution:** Automation.
+**Problem:** Remembering self-care is hard.
+**Solution:** Automation handles it.
 
 **Morning (`startday`):**
 
-- Runs **once per day automatically** when you open terminal
+- Runs **once per day** when you open your terminal
 - Shows health reminders
 - Suggests where to focus
-- No decision fatigue
+- No decisions needed
 
 **Evening (`goodevening`):**
 
-- Run manually when you're done for the day
-- Celebrates wins (dopamine hit!)
+- Run it when you are done for the day
+- Celebrates wins (feels good!)
 - Validates and backs up data
 - Project safety checks
 
@@ -316,8 +316,8 @@ You'll get macOS notifications when time's up.
 
 #### AI Analysis of Your Data
 
-**Problem:** You can't see patterns when you're in them.
-**Solution:** AI analyzes your journal, tasks, and health.
+**Problem:** You can't see patterns when you are in them.
+**Solution:** AI reads your journal, tasks, and health data.
 
 ```bash
 journal analyze        # 7-day insights
@@ -329,8 +329,8 @@ health summary         # Energy trends and correlations
 **Example insights:**
 
 - "You write most on Tuesday mornings"
-- "Fatigue mentions increased after starting new medication"
-- "Your energy is highest 2 days after completing tasks"
+- "Fatigue mentions went up after starting new medication"
+- "Your energy is highest 2 days after finishing tasks"
 
 ---
 
@@ -347,13 +347,13 @@ weekreview --file      # Export to Markdown
 scripts/setup_weekly_review.sh
 ```
 
-For cron/launchd entrypoints that must avoid macOS `/bin/bash` 3.2, route the job through:
+For cron/launchd jobs that need to skip the old macOS `/bin/bash` 3.2, route the job through:
 
 ```bash
 scripts/run_with_modern_bash.sh scripts/week_in_review.sh --file
 ```
 
-**Why this matters:** Memory issues mean you forget accomplishments. The review reminds you of your progress.
+**Why this matters:** Memory issues mean you forget what you did. The review shows you your progress.
 
 ---
 
@@ -369,9 +369,9 @@ focus history          # Review past completions
 focus clear            # Clear without archiving
 ```
 
-**Displayed prominently in `startday`.**
+**Shown in `startday` output.**
 
-**Why this matters:** When you're scattered, one clear intention anchors you. History tracking helps you see what you actually accomplish over time.
+**Why this matters:** When you feel scattered, one clear goal keeps you on track. History shows what you really get done over time.
 
 ---
 
@@ -382,7 +382,7 @@ todo top               # Top 3 tasks only
 todo top 5             # Top 5
 ```
 
-**Why this matters:** Seeing 30 tasks is paralyzing. Seeing 3 is actionable.
+**Why this matters:** Seeing 30 tasks is overwhelming. Seeing 3 is doable.
 
 ---
 
@@ -392,7 +392,7 @@ todo top 5             # Top 5
 startday               # Shows tasks >7 days old
 ```
 
-**Why this matters:** Tasks that sit too long are probably wrong. The system surfaces them for review.
+**Why this matters:** Old tasks are probably wrong. The system brings them up for review.
 
 ---
 
@@ -400,22 +400,22 @@ startday               # Shows tasks >7 days old
 
 #### Delegate to AI
 
-**Problem:** Some tasks require more energy than you have.
-**Solution:** AI specialists do the heavy lifting.
+**Problem:** Some tasks need more energy than you have.
+**Solution:** AI helpers do the heavy lifting.
 
 ```bash
 todo debug 3           # AI analyzes task 3
 todo delegate 5 tech   # Send task 5 to tech AI
 ```
 
-**All 13 AI dispatchers are free-tier.** Use them without guilt.
+**All 13 AI dispatchers are free-tier.** Use them without worry.
 
 ---
 
 #### Context-Aware AI
 
-**Problem:** Providing context is exhausting.
-**Solution:** AI pulls context automatically.
+**Problem:** Giving context is tiring.
+**Solution:** AI pulls context on its own.
 
 ```bash
 content "blog topic" --context        # Includes recent journal + todos
@@ -437,7 +437,7 @@ content "blog topic" --full-context   # Includes git status + README
 ai-suggest
 ```
 
-**Analyzes:**
+**It looks at:**
 
 - Current directory
 - Git status
@@ -446,9 +446,9 @@ ai-suggest
 - Time of day
 - Health/meds signals
 
-**Returns:** Recommended AI specialists and actions.
+**Returns:** Recommended AI helpers and actions.
 
-**Example:** "You're in a blog directory with uncommitted changes. Try `content` to draft a post or `tech` to debug the build issue."
+**Example:** "You are in a blog directory with uncommitted changes. Try `content` to draft a post or `tech` to debug the build issue."
 
 ---
 
@@ -470,7 +470,7 @@ backup-data
 
 **Location:** `~/Backups/dotfiles_data/` (timestamped)
 
-**What's backed up:**
+**What gets backed up:**
 
 - `todo.txt`, `todo_done.txt`
 - `journal.txt`
@@ -487,9 +487,9 @@ backup-data
 todo commit
 ```
 
-**What it does:** Commits `todo.txt` to git with timestamp.
+**What it does:** Commits `todo.txt` to git with a timestamp.
 
-**Why this matters:** Version control for your tasks. Never lose a todo.
+**Why this matters:** Version control for your tasks. You never lose a todo.
 
 ---
 
@@ -499,7 +499,7 @@ todo commit
 data-validate
 ```
 
-**Runs automatically in `goodevening`.** Checks data integrity before backup.
+**Runs on its own in `goodevening`.** It checks data is correct before backing up.
 
 ---
 
@@ -512,19 +512,19 @@ stoic "I'm frustrated with my limitations today"
 stoic "How do I handle unpredictability?"
 ```
 
-**What it does:** Stoic-philosophy-based coaching for perspective and resilience.
+**What it does:** Gives you coaching based on Stoic philosophy for perspective and strength.
 
 **When to use:**
 
 - Frustrated with symptoms
-- Overwhelmed by uncertainty
-- Need reframing
+- Feeling overwhelmed
+- Need a fresh way to look at things
 
 ---
 
 #### Encouraging Feedback
 
-**Every task completion:**
+**Every task you complete:**
 
 ```
 ✅ Task completed! Keep up the great work!
@@ -532,7 +532,7 @@ stoic "How do I handle unpredictability?"
 ✅ Awesome progress!
 ```
 
-**Randomized positive reinforcement.** Small dopamine hits matter.
+**Random positive messages.** Small wins add up.
 
 ---
 
@@ -544,11 +544,11 @@ goodevening
 
 **Shows:**
 
-- Completed tasks today
+- Tasks you finished today
 - Journal entries today
 - "You're doing great!" messages
 
-**Why this matters:** MS can make you feel unproductive. Celebrating small wins counters that.
+**Why this matters:** MS can make you feel unproductive. Celebrating small wins fights that feeling.
 
 ---
 
@@ -596,10 +596,10 @@ blog ideas && blog generate "Title" -p guide && blog status
 Everything is command-line. No:
 
 - Clicking through menus
-- Visual focus/hand-eye coordination
+- Visual focus/hand-eye work
 - Mouse precision
 
-**Why this matters:** Fine motor control can be affected by MS. Keyboard is faster and more reliable.
+**Why this matters:** Fine motor control can be affected by MS. The keyboard is faster and more reliable.
 
 ---
 
@@ -611,15 +611,15 @@ Everything is command-line. No:
 dotfiles-check
 ```
 
-**Validates:**
+**Checks:**
 
-- All scripts present
-- Dependencies installed
-- Data directories created
-- GitHub token set
-- AI dispatchers working
+- All scripts are present
+- Dependencies are installed
+- Data directories exist
+- GitHub token is set
+- AI dispatchers are working
 
-**Output:** ✅ or ❌ for each component.
+**Output:** ✅ or ❌ for each part.
 
 ---
 
@@ -630,7 +630,7 @@ my-progress            # Recent commits in current repo
 projects               # GitHub repos worked on recently
 ```
 
-**Why this matters:** You've done more than you remember.
+**Why this matters:** You have done more than you remember.
 
 ---
 
@@ -645,7 +645,7 @@ AI_BRIEFING_ENABLED=true       # Morning AI briefing
 AI_REFLECTION_ENABLED=true     # Evening AI reflection
 ```
 
-**Default:** Both disabled (opt-in, not opt-out).
+**Default:** Both are off (you opt in, not out).
 
 ---
 
@@ -731,13 +731,13 @@ health check
 #         Recommendation: Rest, active recovery, or Low Energy Menu items.
 ```
 
-**What you do:** Accept it. No strategic work today. Maybe light admin, maybe just rest. The system gave you permission to stop.
+**What you do:** Accept it. No hard work today. Maybe light admin, maybe just rest. The system gave you permission to stop.
 
 ---
 
 #### Scenario 3: Medication Brain
 
-**Just took meds that make you fuzzy. Need to capture thoughts before they're gone.**
+**You just took meds that make you fuzzy. You need to capture thoughts before they vanish.**
 
 ```bash
 dump                   # Opens editor
@@ -754,7 +754,7 @@ journal search "idea"  # Find that thought
 
 #### Scenario 4: Doctor Appointment Prep
 
-**Neurology appointment tomorrow. Need to summarize symptoms.**
+**Neurology appointment tomorrow. You need to sum up your symptoms.**
 
 ```bash
 health list 30         # Last 30 days
@@ -770,7 +770,7 @@ health export appointments.txt
 
 #### Scenario 5: Good Energy Day
 
-**Rare high-energy day. Maximize output.**
+**Rare high-energy day. Make the most of it.**
 
 ```bash
 health energy 9        # Track the good day
@@ -803,11 +803,11 @@ weekreview             # Optional: see the bigger picture
 ✅ You will have low-energy days
 ✅ You will forget things
 ✅ You will need encouragement
-✅ Your energy is unpredictable
+✅ Your energy is hard to predict
 
 #### The System Provides:
 
-✅ Minimal cognitive load
+✅ Low thinking effort
 ✅ Maximum automation
 ✅ Forgiving recovery
 ✅ Pattern recognition
@@ -899,19 +899,19 @@ ai-suggest             # What should I do next?
 
 ## ✅ Best Practices & Workflows
 
-This guide covers proven strategies for maximizing productivity, maintaining data hygiene, and building sustainable workflows with your AI-augmented dotfiles system.
+This guide covers proven ways to get more done, keep your data clean, and build lasting habits with your AI-powered dotfiles system.
 
 #### TL;DR
 
-- Use `startday` and `goodevening` to bookend your day.
+- Use `startday` and `goodevening` to start and end your day.
 - Keep data clean with `data_validate --format` and backups.
-- Use `ai-suggest` to pick the right dispatcher when stuck.
+- Use `ai-suggest` to pick the right AI helper when stuck.
 
-> **Quick note on dispatchers:** Use the single-word aliases (they invoke the `dhp-*` scripts directly) for minimal typing. When you need a unified entry point or want to reference squads from `squads.json`, use `dispatch <squad> "brief"`. All scripts have been refactored for improved robustness and maintainability.
+> **Quick note on dispatchers:** Use the single-word aliases (they run the `dhp-*` scripts directly) for less typing. When you need a single entry point or want to use squads from `squads.json`, use `dispatch <squad> "brief"`. All scripts have been updated for better reliability.
 >
-> **Security Note:** For detailed information on security practices, how to report vulnerabilities, and credential management, please refer to our [Security Policy](../../SECURITY.md).
+> **Security Note:** For details on security, how to report problems, and key management, see our [Security Policy](../../SECURITY.md).
 
-**Last Updated:** March 20, 2026
+**Last Updated:** March 21, 2026
 
 ---
 
@@ -937,7 +937,7 @@ This guide covers proven strategies for maximizing productivity, maintaining dat
 
 #### Day 1-2: Core Loop Only
 
-**Focus on the essential cycle:**
+**Focus on the basics:**
 
 ✅ **DO:**
 
@@ -989,7 +989,7 @@ g dotfiles
 - Try to optimize bookmarks yet
 - Set up complex on-enter hooks
 
-**Goal:** Reduce mental overhead of remembering paths.
+**Goal:** Stop wasting brain power remembering paths.
 
 ---
 
@@ -1011,9 +1011,9 @@ echo "challenge" | stoic       # For mindset
 
 - Try to learn all 13 dispatchers at once
 - Set up complex chaining workflows
-- Integrate AI into every workflow immediately
+- Add AI to every workflow right away
 
-**Goal:** Find 2-3 AI features that provide immediate value.
+**Goal:** Find 2-3 AI features that help you right now.
 
 ---
 
@@ -1022,15 +1022,15 @@ echo "challenge" | stoic       # For mindset
 ✅ **DO:**
 
 - Add one new feature per week
-- Notice friction points and address them
-- Build on what's working
-- Ask `ai-suggest` when uncertain
+- Notice what slows you down and fix it
+- Build on what works
+- Ask `ai-suggest` when unsure
 
 ❌ **DON'T:**
 
-- Abandon the core loop (startday, journal, todo, goodevening)
-- Optimize prematurely
-- Create complexity without clear benefit
+- Drop the core loop (startday, journal, todo, goodevening)
+- Optimize too early
+- Add complexity without clear benefit
 
 ---
 
@@ -1055,21 +1055,21 @@ next
 todo top 3
 ```
 
-⏱️ **Time investment:** 2-5 minutes
+⏱️ **Time:** 2-5 minutes
 🎯 **Payoff:** Clear direction for the day
 
 ❌ **DON'T:**
 
 - Skip reading the startday output
 - Set vague focuses like "be productive"
-- Try to plan every minute of your day
+- Try to plan every minute
 - Check email before running startday
 
 ---
 
 #### Midday (The Check-In)
 
-**Best Practice: Course-correct when you lose focus**
+**Best Practice: Get back on track when you lose focus**
 
 ✅ **DO:**
 
@@ -1083,20 +1083,20 @@ next                # What's my top priority?
 g suggest           # Where should I be?
 ```
 
-⏱️ **Time investment:** 1-2 minutes
-🎯 **Payoff:** Get back on track quickly
+⏱️ **Time:** 1-2 minutes
+🎯 **Payoff:** Get back on track fast
 
 ❌ **DON'T:**
 
 - Only check status when things go wrong
 - Ignore the warning signs (confusion, paralysis)
-- Power through without reassessing
+- Power through without checking in
 
 ---
 
 #### Evening (The Close)
 
-**Best Practice: Celebrate wins and create tomorrow's breadcrumbs**
+**Best Practice: Celebrate wins and leave breadcrumbs for tomorrow**
 
 ✅ **DO:**
 
@@ -1112,18 +1112,18 @@ focus set "Review and merge the PR"
 journal "Shipped the feature. Felt good. Tomorrow: reviews."
 ```
 
-⏱️ **Time investment:** 3-5 minutes
+⏱️ **Time:** 3-5 minutes
 🎯 **Payoff:** Closure + tomorrow's starting point
 
 ❌ **DON'T:**
 
 - Skip goodevening (breaks the backup chain)
-- Beat yourself up for incomplete tasks
-- Set overly ambitious focuses for tomorrow
+- Beat yourself up for unfinished tasks
+- Set overly big goals for tomorrow
 
 ---
 
-#### Weekly (The Synthesis)
+#### Weekly (The Big Picture)
 
 **Best Practice: Look back to plan forward**
 
@@ -1143,8 +1143,8 @@ journal analyze     # Last 7 days insights
 # - What needs to change?
 ```
 
-⏱️ **Time investment:** 15-30 minutes
-🎯 **Payoff:** Strategic insights, pattern recognition
+⏱️ **Time:** 15-30 minutes
+🎯 **Payoff:** Big-picture insights, pattern finding
 
 💡 **Pro Tip:** Schedule this with `setup_weekly_review` for Sunday evenings.
 
@@ -1171,17 +1171,17 @@ todo done <num>              # Or delete manually from file
 
 **Signs of a healthy todo list:**
 
-- Most tasks < 7 days old
-- Top 3 priorities are actually your priorities
+- Most tasks are less than 7 days old
+- Top 3 items are truly your priorities
 - You complete 3-5 tasks per day on average
 
 ❌ **DON'T:**
 
-- Let tasks age indefinitely (causes guilt)
-- Keep aspirational tasks that demotivate you
+- Let tasks sit forever (this causes guilt)
+- Keep wish-list tasks that drag you down
 - Use todo as a "someday/maybe" list
 
-**Fix:** Create a separate `ideas.txt` for aspirational items using `idea add "your idea"`. You can promote it later using `idea to-todo <num>`, or demote an aging task using `todo to-idea <num>`.
+**Fix:** Make a separate `ideas.txt` for wish-list items using `idea add "your idea"`. You can move it to todo later using `idea to-todo <num>`, or move an old task to ideas using `todo to-idea <num>`.
 
 ---
 
@@ -1203,15 +1203,15 @@ journal search "Sarah"
 
 - [ ] Include project names
 - [ ] Include people's names
-- [ ] Include technical terms (searchable later)
+- [ ] Include technical terms (for searching later)
 - [ ] Date-stamp important decisions
 - [ ] Use `dump` for long-form thoughts
 
 ❌ **DON'T:**
 
 - Use only pronouns ("worked on it", "met with them")
-- Rely on memory instead of search
-- Let journal entries stay vague
+- Trust your memory instead of searching
+- Keep journal entries vague
 
 ---
 
@@ -1232,7 +1232,7 @@ g list
 
 **Signs of healthy bookmarks:**
 
-- All bookmarks point to existing directories
+- All bookmarks point to real directories
 - You use 80% of them regularly
 - No duplicates or near-duplicates
 
@@ -1254,10 +1254,10 @@ head ~/.config/dotfiles-data/todo.txt
 head ~/.config/dotfiles-data/journal.txt
 ```
 
-**Automated safety:**
+**Built-in safety:**
 
-- `goodevening` validates data before backup
-- System refuses to backup corrupted files
+- `goodevening` checks data before backing up
+- System refuses to back up broken files
 - Central logging tracks all automated actions
 
 ---
@@ -1280,9 +1280,9 @@ ai-suggest
 
 **Why this works:**
 
-- Analyzes git status, todos, journal, time of day
-- Suggests relevant dispatchers
-- Reduces decision fatigue
+- Looks at git status, todos, journal, time of day
+- Suggests the right AI helpers
+- Cuts down decision fatigue
 
 ---
 
@@ -1301,7 +1301,7 @@ ai-suggest
 - 📖 Develop story structure → `narrative`
 - ✍️ Write marketing copy → `aicopy`
 - 🎨 Position brand → `brand`
-- 📚 Synthesize research → `research`
+- 📚 Pull together research → `research`
 
 **Complex projects → `dhp-project`**
 **Multiple steps → `dhp-chain`**
@@ -1327,21 +1327,21 @@ content --full-context "Advanced productivity guide"
 - Creating content for an existing blog/project
 - Working on related tasks
 - Building on previous work
-- Need to avoid duplication
+- Need to avoid repeating yourself
 
 **When to skip context:**
 
 - One-off creative projects
-- Completely new topics
-- Speed is priority over awareness
+- Brand new topics
+- Speed matters more than awareness
 
 ---
 
 #### Streaming for Long-Running Tasks
 
-**Best Practice: Use `--stream` for real-time feedback**
+**Best Practice: Use `--stream` for real-time output**
 
-All dispatchers support the `--stream` flag for real-time output as the AI generates responses.
+All dispatchers support the `--stream` flag. It shows the AI response as it is written.
 
 ✅ **Use streaming for:**
 
@@ -1364,11 +1364,11 @@ cat large-codebase.py | tech --stream
 
 **When to use streaming:**
 
-- Tasks expected to take >10 seconds
-- Long-form content generation (guides, stories, reports)
-- Complex analysis (strategic insights, market research)
-- Interactive exploration and ideation
-- When you want to see progress in real-time
+- Tasks that will take more than 10 seconds
+- Long-form writing (guides, stories, reports)
+- Complex analysis (strategy, market research)
+- Exploring ideas interactively
+- When you want to see progress as it happens
 
 ❌ **Skip streaming for:**
 
@@ -1419,14 +1419,14 @@ content --stream "Analysis for review only"
 ✅ **DO:**
 
 ```bash
-# Chain when output of one enhances input to next
+# Chain when one output feeds the next
 dhp-chain creative narrative aicopy -- "story idea"
 
 # Market research → positioning → content
 dhp-chain market brand content -- "AI tools for developers"
 ```
 
-**Good chaining combinations:**
+**Good chaining combos:**
 
 - `creative → narrative` (concept → structure)
 - `market → brand` (research → positioning)
@@ -1436,8 +1436,8 @@ dhp-chain market brand content -- "AI tools for developers"
 ❌ **DON'T:**
 
 - Chain unrelated dispatchers
-- Chain more than 3-4 (diminishing returns)
-- Chain when single dispatcher would suffice
+- Chain more than 3-4 (less return each time)
+- Chain when one dispatcher would be enough
 
 ---
 
@@ -1458,9 +1458,9 @@ content "Guide topic" > ~/Documents/Outlines/guide-outline.md
 
 **Why save:**
 
-- Reference later without re-running (saves API costs)
+- Look back later without re-running (saves API costs)
 - Build a knowledge base
-- Track thinking over time
+- Track your thinking over time
 
 ---
 
@@ -1487,9 +1487,9 @@ next                # Just see #1
 **Priority signals:**
 
 - `Critical:` → Must do today
-- `Review:` → Depends on someone else
+- `Review:` → Waiting on someone else
 - `Research:` → Can move if needed
-- No prefix → Standard priority
+- No prefix → Normal priority
 
 ---
 
@@ -1512,12 +1512,12 @@ todo commit 3
 
 - Feature work tied to a task
 - Bug fixes from todo list
-- Clear 1:1 task-to-code mapping
+- Clear 1:1 task-to-code match
 
 **When NOT to use:**
 
-- Multiple commits per task needed
-- Task not code-related
+- You need multiple commits per task
+- Task is not code-related
 - Experimental work
 
 ---
@@ -1539,9 +1539,9 @@ todo delegate 5 content
 
 **Delegation guidelines:**
 
-- Delegate when stuck, not as first resort
-- Review AI output, don't blindly accept
-- Use as thought partner, not replacement
+- Delegate when stuck, not as a first step
+- Review AI output. Do not accept it blindly.
+- Use AI as a thinking partner, not a replacement
 
 ---
 
@@ -1557,7 +1557,7 @@ journal "Good conversation with Alex about API design"
 j "Feeling focused today"
 ```
 
-**Level 2: Contextual Notes** (15% of entries)
+**Level 2: Detailed Notes** (15% of entries)
 
 ```bash
 journal "Debugging the auth flow. Issue is in token refresh logic. Need to check Redis expiration."
@@ -1576,7 +1576,7 @@ dump
 
 - Low barrier to entry (quick captures)
 - Rich searchable context when needed
-- Deep thinking reserved for important moments
+- Deep thinking saved for big moments
 
 ---
 
@@ -1601,7 +1601,7 @@ journal search "Sarah" | grep "planning"
 
 - Use full names (not "them")
 - Include project names
-- Use consistent terminology
+- Use the same terms each time
 - Tag important entries (`[DECISION]`, `[LEARNING]`)
 
 ---
@@ -1623,7 +1623,7 @@ howto git-rebase-workflow
 **What belongs in how-to:**
 
 - Multi-step procedures
-- Things you google repeatedly
+- Things you google over and over
 - Gotchas and edge cases
 - Configuration steps
 
@@ -1639,7 +1639,7 @@ howto git-rebase-workflow
 
 #### The 5-Bookmark Rule
 
-**Best Practice: Bookmark only frequently used locations**
+**Best Practice: Bookmark only places you go often**
 
 ✅ **DO:**
 
@@ -1677,9 +1677,9 @@ g suggest
 
 **Why this works:**
 
-- No manual maintenance
+- No manual upkeep
 - Adapts to changing patterns
-- Surfaces forgotten projects
+- Brings up forgotten projects
 
 ---
 
@@ -1699,15 +1699,15 @@ g myapp
 
 **Good uses for on-enter hooks:**
 
-- Activate virtual environments
-- Source project-specific aliases
-- Display project-specific reminders
+- Turn on virtual environments
+- Load project-specific aliases
+- Show project-specific reminders
 
 ❌ **DON'T:**
 
 - Use for long-running commands
 - Create complex multi-line hooks
-- Duplicate what's in your shell config
+- Repeat what is in your shell config
 
 ---
 
@@ -1715,7 +1715,7 @@ g myapp
 
 #### The Correlation Pattern
 
-**Best Practice: Track consistently to find patterns**
+**Best Practice: Track regularly to find patterns**
 
 ✅ **DO:**
 
@@ -1736,11 +1736,11 @@ journal search "brain fog"
 
 **Patterns to watch for:**
 
-- Energy levels vs. tasks completed
+- Energy levels vs. tasks finished
 - Symptoms vs. time of day
-- Sleep quality vs. next-day productivity
+- Sleep quality vs. next-day output
 
-💡 **New in v2.1.0:** Run `correlate run health.txt todo_done.txt` options to statistically verify these patterns, or check the automated `daily-report` for insights.
+💡 **New in v2.1.0:** Run `correlate run health.txt todo_done.txt` to check these patterns with math, or look at the `daily-report` for insights.
 
 ---
 
@@ -1848,7 +1848,7 @@ Write → Search → Discover patterns → Write better
 
 #### Pitfall 4: Over-Booking with AI
 
-**Symptom:** Calling AI for every little thing, or waiting for complete responses when streaming would give faster feedback
+**Symptom:** Calling AI for every little thing, or waiting for full answers when streaming would be faster
 
 ✅ **Fix:**
 
@@ -1873,13 +1873,13 @@ ai-suggest
 # - Content you'll review as it generates
 ```
 
-**AI is a power tool, not a replacement for thinking. Streaming is for efficiency, not every query.**
+**AI is a power tool, not a replacement for thinking. Streaming is for speed, not every query.**
 
 ---
 
 #### Pitfall 5: Ignoring System Warnings
 
-**Symptom:** Skipping validation errors or not noticing API errors
+**Symptom:** Skipping errors or not noticing API failures
 
 ✅ **Fix:**
 
@@ -1902,7 +1902,7 @@ grep OPENROUTER_API_KEY ~/dotfiles/.env
 dotfiles_check
 ```
 
-**Note:** As of November 8, 2025, all dispatchers detect and report API errors clearly. No more silent failures!
+**Note:** As of November 8, 2025, all dispatchers catch and report API errors clearly. No more silent failures!
 
 ---
 
@@ -1910,7 +1910,7 @@ dotfiles_check
 
 #### Workflow Stacking
 
-**Combine features for compound benefits**
+**Combine features for bigger results**
 
 ✅ **Example: Content Creation Stack**
 
@@ -1983,8 +1983,8 @@ focus set "Complete Redis integration"
 **Why this works:**
 
 - Leaves breadcrumbs
-- Restores context quickly
-- Maintains momentum
+- Restores context fast
+- Keeps momentum going
 
 ---
 
@@ -1994,16 +1994,16 @@ focus set "Complete Redis integration"
 
 ✅ **Customize when:**
 
-- You've used the default for 2+ weeks
-- You have a clear, repeated friction point
-- You know exactly what you want different
-- The change will save time/reduce cognitive load
+- You have used the default for 2+ weeks
+- You hit the same friction point over and over
+- You know exactly what you want to change
+- The change will save time or brain power
 
 ❌ **Don't customize when:**
 
-- You're still learning the system
+- You are still learning the system
 - "Just to see if I can"
-- Without understanding the default behavior
+- Without understanding how the default works
 - To add complexity without clear benefit
 
 ---
@@ -2036,17 +2036,17 @@ git merge custom/my-feature
 
 **Safe customizations:**
 
-- New aliases for your frequent commands
+- New aliases for commands you type often
 - Custom on-enter hooks for projects
-- Additional how-to templates
+- Extra how-to templates
 - Project-specific g bookmarks
 
 **Advanced customizations:**
 
 - New dispatcher scripts (follow template in bin/README.md)
-- Enhanced validation in dotfiles_check
+- Better validation in dotfiles_check
 - Custom weekly review sections
-- Integration with other tools
+- Links to other tools
 
 ---
 
@@ -2054,7 +2054,7 @@ git merge custom/my-feature
 
 #### The 3-2-1 Rule
 
-**3 copies, 2 different media, 1 offsite**
+**3 copies, 2 different types of storage, 1 offsite**
 
 ✅ **DO:**
 
@@ -2074,7 +2074,7 @@ git merge custom/my-feature
 
 #### What to Backup
 
-**Critical (automatic via goodevening):**
+**Critical (done by goodevening):**
 
 - `journal.txt`
 - `todo.txt` & `todo_done.txt`
@@ -2084,10 +2084,10 @@ git merge custom/my-feature
 
 **Nice to have (manual):**
 
-- Your customizations in `~/dotfiles/`
+- Your changes in `~/dotfiles/`
 - Weekly review markdowns
 - How-to wiki entries
-- AI output files you saved
+- Saved AI output files
 
 ---
 
@@ -2113,15 +2113,15 @@ journal search "test"
 
 **Why test:**
 
-- Backups are worthless if they don't restore
-- Identifies missing backup items
-- Builds confidence in the system
+- Backups are worthless if they do not restore
+- Find missing backup items early
+- Build confidence in the system
 
 ---
 
 #### Quick Wins Checklist
 
-**After reading this guide, implement these first:**
+**After reading this guide, do these first:**
 
 #### Week 1
 
@@ -2133,7 +2133,7 @@ journal search "test"
 
 #### Week 2
 
-- [ ] Create 3-5 `g save` bookmarks for frequent locations
+- [ ] Create 3-5 `g save` bookmarks for places you visit often
 - [ ] Try `ai-suggest` when unsure what to do
 - [ ] Use `next` instead of `todo list` when overwhelmed
 - [ ] Run `journal search` to find something from last week
@@ -2150,7 +2150,7 @@ journal search "test"
 - [ ] Set up automated weekly review with `setup_weekly_review`
 - [ ] Create one how-to guide with `howto add`
 - [ ] Try `todo commit` for git workflow
-- [ ] Experiment with context injection: `content --context`
+- [ ] Try context injection: `content --context`
 
 #### Ongoing
 
@@ -2165,7 +2165,7 @@ journal search "test"
 
 #### 1. **Consistency Over Perfection**
 
-Better to use the basic loop daily than to build the perfect system you never use.
+Using the basic loop every day beats building a perfect system you never use.
 
 ```bash
 # This beats any perfect system:
@@ -2188,7 +2188,7 @@ journal "worked on X with Y, learned Z"
 
 #### 3. **Automate the Routine, Decide on the Exception**
 
-Let the system handle daily patterns. Save your energy for important decisions.
+Let the system handle daily patterns. Save your energy for important choices.
 
 ```bash
 # Automatic:
@@ -2253,13 +2253,13 @@ systemlog | grep "feature-name"
 
 ---
 
-**Remember:** This system exists to reduce cognitive load, not create it. Use what helps, ignore what doesn't, customize when you're ready.
+**Remember:** This system exists to save brain power, not use it up. Use what helps, ignore what doesn't, and customize when you are ready.
 
 Start simple. Build habits. Let the system grow with you.
 
 ## 📋 Clipboard Power Moves
 
-macOS ships with `pbcopy` and `pbpaste`, two tiny commands that turn the system clipboard into a first-class shell tool. Combined with pipes and redirects, they let you capture command output, pre-process snippets, and paste them back anywhere without touching the mouse.
+macOS comes with `pbcopy` and `pbpaste`. These two small commands turn your clipboard into a shell tool. With pipes and redirects, you can grab command output, clean up text, and paste it anywhere without touching the mouse.
 
 #### TL;DR
 
@@ -2270,15 +2270,15 @@ macOS ships with `pbcopy` and `pbpaste`, two tiny commands that turn the system 
 #### Essentials
 
 - **Copy anything:** `echo "Hello" | pbcopy` or `pbcopy < path/to/file`
-- **Paste in scripts:** `pbpaste` prints the clipboard to stdout, so you can redirect or pipe it (`pbpaste > notes.txt`, `pbpaste | jq '.'`).
-- **Stay in the shell:** Every example below avoids manual copy/paste steps—perfect for low-energy days.
+- **Paste in scripts:** `pbpaste` prints the clipboard to stdout. You can redirect or pipe it (`pbpaste > notes.txt`, `pbpaste | jq '.'`).
+- **Stay in the shell:** Every example below avoids manual copy/paste. Great for low-energy days.
 
 #### Capture Output Fast
 
 | Goal                           | Command                                                                    |
 | ------------------------------ | -------------------------------------------------------------------------- |
 | Copy command output            | `ls -al \| pbcopy`                                                         |
-| Copy the last command’s output | `!! \| pbcopy` (requires the output to still be in history, use with care) |
+| Copy the last command's output | `!! \| pbcopy` (requires the output to still be in history, use with care) |
 | Copy a JSON response           | `curl https://api.example.com \| pbcopy`                                   |
 | Copy git diff for review       | `git diff \| pbcopy`                                                       |
 | Copy formatted date            | `date '+%Y-%m-%d' \| pbcopy`                                               |
@@ -2287,7 +2287,7 @@ Tip: pair with aliases like `copy` or `copyfile` that already wrap `pbcopy`.
 
 #### Transform Before Copying
 
-Pipes let you massage output _before_ it hits the clipboard:
+Pipes let you clean up output _before_ it hits the clipboard:
 
 ```bash
 rg "TODO" -n src | sort | pbcopy
@@ -2309,7 +2309,7 @@ pbpaste | jq '.summary'                        # inspect a copied JSON blob
 
 #### Saved Snippet Toolbox (`clip`)
 
-The repo ships with a `clip` helper that stores clipboard snippets in `~/.config/dotfiles-data/clipboard_history.txt`:
+The repo includes a `clip` helper. It stores clipboard snippets in `~/.config/dotfiles-data/clipboard_history.txt`:
 
 ```bash
 clip save standup    # Save the current clipboard as "standup"
@@ -2319,12 +2319,12 @@ clip load standup    # Restore the snippet to your clipboard
 
 - Entries are stored as pipe-delimited lines: `YYYY-MM-DD HH:MM:SS|name|content`.
 - Multi-line content is stored with `\n` escapes.
-- `clip peek` gives you a quick look at whatever is currently sitting in the clipboard.
+- `clip peek` gives you a quick look at what is in the clipboard right now.
 - `clip load <name>` returns exit code `3` when the clip name does not exist.
 
 #### Real-World Workflows
 
-#### Save a Command’s Output and Share It
+#### Save a Command's Output and Share It
 
 ```bash
 rg "search term" src | pbcopy          # copy the interesting lines
@@ -2368,7 +2368,7 @@ rm /tmp/clipboard.$$
 
 #### Round-Trip Macros
 
-Create reusable helpers to round-trip clipboard content through a formatter or sanitizer:
+Create reusable helpers to send clipboard content through a formatter or cleaner:
 
 ```bash
 function clipfmt() {
@@ -2386,10 +2386,10 @@ clipfmt prettier --parser markdown
 
 #### Troubleshooting
 
-- `pbcopy` reads until EOF—remember to press `Ctrl+D` when typing interactively.
-- Large blobs (> few MB) can bloat the clipboard; clear with `pbcopy < /dev/null`.
-- If `clip load <name>` says `not found`, run `clip list` to verify the saved name.
-- Remote shells (e.g., SSH) do not have access to your local clipboard; use tools like `pbcopy` via `ssh -t` or rely on `tmux` copy modes instead.
+- `pbcopy` reads until EOF. Remember to press `Ctrl+D` when typing by hand.
+- Large blobs (> few MB) can bloat the clipboard. Clear with `pbcopy < /dev/null`.
+- If `clip load <name>` says `not found`, run `clip list` to check the saved name.
+- Remote shells (SSH) cannot reach your local clipboard. Use tools like `pbcopy` via `ssh -t` or rely on `tmux` copy modes instead.
 
 ---
 
@@ -2402,16 +2402,16 @@ clipfmt prettier --parser markdown
 
 ---
 
-Stay in flow by letting the clipboard handle the shuffling—your hands stay on the keyboard, and your brain stays focused.
+Stay in flow by letting the clipboard do the shuffling. Your hands stay on the keyboard and your brain stays focused.
 
 ## 🔬 Falsification-First Insight Module
 
-This module adds a hypothesis workflow focused on disproof-before-belief:
+This module adds a hypothesis workflow (a way to test ideas). It focuses on trying to disprove ideas before believing them:
 
-1. Create a hypothesis.
-2. Plan and run a disconfirming test.
-3. Add evidence with provenance.
-4. Produce a verdict with hard support gates.
+1. Create a hypothesis (a guess you want to test).
+2. Plan and run a test that tries to prove it wrong.
+3. Add evidence and note where it came from.
+4. Produce a verdict (final answer) with strict support gates (rules that must pass).
 
 #### Command
 
@@ -2445,25 +2445,25 @@ insight.sh weekly --low-spoons
 
 All files live in `~/.config/dotfiles-data/`:
 
-- `insight_hypotheses.txt`  
+- `insight_hypotheses.txt`
   `ID|CREATED_AT|DOMAIN|CLAIM|STATUS|PRIOR_CONFIDENCE|NOVELTY|NEXT_TEST|BEST_COUNTERARGUMENT|COUNTERARGUMENT_RESPONSE`
-- `insight_tests.txt`  
+- `insight_tests.txt`
   `TEST_ID|HYP_ID|CREATED_AT|TYPE|PREDICTION|FAIL_CRITERION|STATUS|RESULT`
-- `insight_evidence.txt`  
+- `insight_evidence.txt`
   `EVID_ID|HYP_ID|TIMESTAMP|DIRECTION|STRENGTH|SOURCE|PROVENANCE|NOTE`
-- `insight_verdicts.txt`  
+- `insight_verdicts.txt`
   `HYP_ID|TIMESTAMP|VERDICT|CONFIDENCE|WHY|COUNTEREVIDENCE_SUMMARY`
 
 #### Support Gates
 
 A hypothesis cannot end as `SUPPORTED` unless all gates pass:
 
-1. At least one disconfirming test was attempted.
-2. At least two independent evidence sources are logged.
-3. Best counterargument and response are both present.
-4. Verdict confidence changed from the prior confidence.
+1. At least one test that tried to disprove it was run.
+2. At least two separate evidence sources are logged.
+3. The best counterargument and your response to it are both present.
+4. The verdict confidence changed from the starting confidence.
 
-If any gate fails, a requested `SUPPORTED` verdict is downgraded to `INCONCLUSIVE`.
+If any gate fails, a `SUPPORTED` verdict gets downgraded to `INCONCLUSIVE`.
 
 ---
 
@@ -2471,7 +2471,7 @@ If any gate fails, a requested `SUPPORTED` verdict is downgraded to `INCONCLUSIV
 
 ## 📦 Installation & Bootstrap Guide
 
-To install this dotfiles system on a new macOS machine, follow these exact steps. The repo includes a `bootstrap.sh` script that handles dependency installation, directory creation, and path mapping automatically.
+To install this dotfiles system on a new macOS machine, follow these steps. The repo includes a `bootstrap.sh` script that handles setup for you.
 
 ### 1. Clone the Repository
 
@@ -2482,7 +2482,7 @@ cd ~/dotfiles
 
 ### 2. Initialize the AI Submodule
 
-If you plan to use the `dhp-*` AI dispatchers, you must initialize the `ai-staff-hq` submodule:
+If you plan to use the `dhp-*` AI dispatchers, you must set up the `ai-staff-hq` submodule:
 
 ```bash
 git submodule update --init --recursive
@@ -2490,7 +2490,7 @@ git submodule update --init --recursive
 
 ### 3. Run Bootstrap
 
-The bootstrap script will safely install Homebrew, `jq`, `gawk`, and `curl`, create the `~/.config/dotfiles-data` directory, initialize all empty data files, and inject the proper `PATH` into `~/.zshenv`.
+The bootstrap script will safely install Homebrew, `jq`, `gawk`, and `curl`. It creates the `~/.config/dotfiles-data` directory, sets up all empty data files, and adds the right `PATH` to `~/.zshenv`.
 
 ```bash
 ./bootstrap.sh
@@ -2499,14 +2499,14 @@ The bootstrap script will safely install Homebrew, `jq`, `gawk`, and `curl`, cre
 
 ### 4. Configure Environment Variables
 
-You must configure your API keys and directory paths before using the system.
+You must set your API keys and directory paths before using the system.
 
 ```bash
 cp .env.example .env
 nano .env
 ```
 
-Ensure you set your `OPENROUTER_API_KEY`!
+Make sure you set your `OPENROUTER_API_KEY`!
 
 ### 5. Finalize Installation
 
@@ -2517,13 +2517,13 @@ source ~/.zshrc
 dotfiles-check
 ```
 
-If `dotfiles-check` returns all green checkmarks, you are fully installed.
+If `dotfiles-check` shows all green checkmarks, you are fully installed.
 
 ---
 
 ## 💾 Data Schemas & Formats Reference
 
-All personal data in this system is strictly stored in local, plaintext files under `~/.config/dotfiles-data/`. If you ever need to manually read, grep, or script against your data, use the following schema definitions. **Always use the pipe (`|`) character as the delimiter.**
+All personal data is stored in local, plain text files under `~/.config/dotfiles-data/`. If you ever need to read, search, or script against your data, use these format definitions. **Always use the pipe (`|`) character as the separator.**
 
 | File                  | Schema Format                                   | Example                                     |
 | --------------------- | ----------------------------------------------- | ------------------------------------------- |
@@ -2538,21 +2538,21 @@ All personal data in this system is strictly stored in local, plaintext files un
 
 ## 👨‍💻 Developer & Testing Standards
 
-If you intend to modify the core scripts or write your own, you **must** adhere strictly to the rules laid out in `CLAUDE.md` and `GEMINI.md`. This system is designed for high reliability to prevent cascading failures on low-energy days.
+If you want to change the core scripts or write your own, you **must** follow the rules in `CLAUDE.md` and `GEMINI.md`. This system is built for high reliability so things do not break on low-energy days.
 
 ### Executed Scripts vs. Sourced Libraries
 
-There are two strict classes of bash files in this codebase:
+There are two strict types of bash files in this codebase:
 
 1. **Executed Scripts (`scripts/*.sh`, `bin/dhp-*.sh`)**:
-   These are standalone programs. They **must** start with `#!/usr/bin/env bash` and **must** include `set -euo pipefail` to catch errors immediately. Use `exit` to terminate.
+   These are standalone programs. They **must** start with `#!/usr/bin/env bash` and **must** include `set -euo pipefail` to catch errors right away. Use `exit` to stop them.
 
 2. **Sourced Libraries (`scripts/lib/*.sh`, `zsh/aliases.zsh`)**:
-   These files load into other shells. They **must never** use `set -euo pipefail` because an error here will kill the parent shell or interactive terminal. They must use double-source guards (e.g. `if [[ -n "${_FILENAME_LOADED:-}" ]]; then return 0; fi`) and use `return` instead of `exit`.
+   These files load into other shells. They **must never** use `set -euo pipefail` because an error here will kill the parent shell or your terminal. They must use double-source guards (e.g. `if [[ -n "${_FILENAME_LOADED:-}" ]]; then return 0; fi`) and use `return` instead of `exit`.
 
 ### Input Sanitization
 
-Never run `eval` on user input. All input must be sanitized before writing to `~/.config/dotfiles-data/`:
+Never run `eval` on user input. All input must be cleaned before writing to `~/.config/dotfiles-data/`:
 
 ```bash
 clean_input=$(sanitize_input "$user_input")
@@ -2561,7 +2561,7 @@ echo "$clean_input" >> "$TODO_FILE"
 
 ### Testing (Bats)
 
-All shell extensions must be tested using `bats-core`. Tests live in `tests/test_*.sh`. To run the test suite:
+All shell additions must be tested using `bats-core`. Tests live in `tests/test_*.sh`. To run the test suite:
 
 ```bash
 bats tests/*.sh
@@ -2571,7 +2571,7 @@ bats tests/*.sh
 
 ## 🔤 Comprehensive Aliases Reference
 
-The following aliases are parsed directly from `zsh/aliases.zsh` to give you an exhaustive list of all commands available in your terminal.
+These aliases come from `zsh/aliases.zsh`. This is a full list of all commands you can use in your terminal.
 
 | Alias | Target Command | Description |
 | ----- | -------------- | ----------- |
@@ -2918,7 +2918,7 @@ The following aliases are parsed directly from `zsh/aliases.zsh` to give you an 
 
 ## 📜 Comprehensive Scripts Reference
 
-The following are detailed usage instructions, descriptions, and examples extracted directly from the source code of the scripts in `~/dotfiles/scripts/`.
+Below are detailed usage instructions, descriptions, and examples pulled from the source code of scripts in `~/dotfiles/scripts/`.
 
 ### `ai_suggest.sh`
 
@@ -2977,7 +2977,7 @@ Usage: archive_manager.sh {create|extract|list}
 
 ### `blog.sh`
 
-**Description:** blog.sh - Tools for managing the blog content workflow. Modularized refactor
+**Description:** blog.sh - Tools for managing blog content. Modularized refactor.
 
 **Usage & Examples:**
 
@@ -3282,7 +3282,7 @@ Usage: focus set \
 
 ### `g.sh`
 
-**Description:** g.sh - Consolidated navigation and state management script IMPORTANT: This script is SOURCED, not executed. Must use 'return' not 'exit' to avoid killing the parent shell
+**Description:** g.sh - Navigation and state management script. IMPORTANT: This script is SOURCED, not executed. Must use 'return' not 'exit' to avoid killing the parent shell.
 
 **Usage & Examples:**
 
@@ -3297,7 +3297,7 @@ Usage: g save <bookmark_name> [-a app1,app2] [on-enter-command]
 
 ### `gcal.sh`
 
-**Description:** gcal.sh - Pure Bash Google Calendar Client Uses OAuth 2.0 Device Flow to authenticate without a browser callback or Python. Dependencies: curl, jq
+**Description:** gcal.sh - Pure Bash Google Calendar Client. Uses OAuth 2.0 Device Flow to log in without a browser callback or Python. Dependencies: curl, jq
 
 **Usage & Examples:**
 
@@ -3314,7 +3314,7 @@ Usage: calendar add \
 
 ### `generate_report.sh`
 
-**Description:** scripts/generate_report.sh Generates daily/weekly summaries and correlations
+**Description:** scripts/generate_report.sh - Generates daily/weekly summaries and correlations
 
 ### `gh-projects.sh`
 
@@ -3330,7 +3330,7 @@ Usage: projects {forgotten|recall <name>}
 
 ### `github_helper.sh`
 
-**Description:** github_helper.sh - Functions for interacting with the GitHub API
+**Description:** github_helper.sh - Functions for talking to the GitHub API
 
 **Usage & Examples:**
 
@@ -3438,7 +3438,7 @@ Usage: howto search <term>
 
 ### `insight.sh`
 
-**Description:** insight.sh - Falsification-first hypothesis workflow Create hypotheses, plan disconfirming tests, collect evidence, and produce verdicts with gate checks that prioritize disproof over belief. Usage: insight.sh <command> [options] Commands: new <claim> Create a new hypothesis test-plan <hyp_id> Add a disconfirming test plan test-result <test_id> Mark a test as attempted/completed evidence add <hyp_id> Add evidence for a hypothesis verdict <hyp_id> Generate/store a verdict with gate checks weekly [--low-spoons] Weekly KPI summary
+**Description:** insight.sh - Falsification-first hypothesis workflow. Create hypotheses, plan tests that try to disprove them, collect evidence, and produce verdicts with gate checks that favor disproof over belief. Usage: insight.sh <command> [options] Commands: new <claim> Create a new hypothesis test-plan <hyp_id> Add a disconfirming test plan test-result <test_id> Mark a test as attempted/completed evidence add <hyp_id> Add evidence for a hypothesis verdict <hyp_id> Generate/store a verdict with gate checks weekly [--low-spoons] Weekly KPI summary
 
 **Usage & Examples:**
 
@@ -3499,7 +3499,7 @@ Usage: logs.sh search <term>
 
 ### `media_converter.sh`
 
-**Description:** media_converter.sh - Media file conversion utilities for macOS
+**Description:** media_converter.sh - Media file conversion tools for macOS
 
 **Usage & Examples:**
 
@@ -3556,7 +3556,7 @@ Example: meds refill \
 
 ### `migrate_data.sh`
 
-**Description:** migrate_data.sh - Migrate dotfiles data files to pipe-delimited canonical formats
+**Description:** migrate_data.sh - Move dotfiles data files to pipe-delimited formats
 
 ### `mkproject_py.sh`
 
@@ -3653,7 +3653,7 @@ Example: schedule.sh \
 
 ### `spec_helper.sh`
 
-**Description:** Spec helper for structured dispatcher inputs NOTE: SOURCED file. Do NOT use set -euo pipefail.
+**Description:** Spec helper for structured dispatcher inputs. NOTE: SOURCED file. Do NOT use set -euo pipefail.
 
 **Usage & Examples:**
 
@@ -3663,7 +3663,7 @@ Usage: spec <dispatcher>
 
 ### `spoon_manager.sh`
 
-**Description:** scripts/spoon_manager.sh CLI Wrapper for Spoon Theory budget tracking Log Format (spoons.txt): BUDGET|YYYY-MM-DD|count SPEND|YYYY-MM-DD|HH:MM|count|activity|remaining
+**Description:** scripts/spoon_manager.sh CLI Wrapper for Spoon Theory budget tracking. Log Format (spoons.txt): BUDGET|YYYY-MM-DD|count SPEND|YYYY-MM-DD|HH:MM|count|activity|remaining
 
 **Usage & Examples:**
 
@@ -3720,7 +3720,7 @@ Usage: $(basename
 
 ### `status.sh`
 
-**Description:** status.sh - Provides a mid-day context recovery dashboard with coaching awareness.
+**Description:** status.sh - Mid-day context recovery dashboard with coaching awareness.
 
 Shows focus, coach mode, spoon budget with depletion prediction, and focus alignment score.
 
@@ -3757,8 +3757,8 @@ Shows focus, coach mode, spoon budget with depletion prediction, and focus align
 
 **Notes:**
 
-- Runs as a single active timer (prevents overlapping break notifications).
-- Use `take_a_break.sh --status` to check if a timer is active.
+- Runs as a single active timer (stops overlapping break notifications).
+- Use `take_a_break.sh --status` to check if a timer is running.
 - Use `take_a_break.sh --stop` to cancel the active timer.
 
 **Usage & Examples:**
@@ -3772,7 +3772,7 @@ take_a_break.sh --stop
 
 ### `text_processor.sh`
 
-**Description:** text_processor.sh - Text file processing utilities
+**Description:** text_processor.sh - Text file processing tools
 
 **Usage & Examples:**
 
@@ -3811,7 +3811,7 @@ Usage: text_processor.sh {count|search|replace|clean}
 
 ### `time_tracker.sh`
 
-**Description:** scripts/time_tracker.sh CLI Wrapper for time tracking functionality Log Format (time_tracking.txt): START|task_id|description|timestamp (YYYY-MM-DD HH:MM:SS) STOP|task_id|timestamp (YYYY-MM-DD HH:MM:SS)
+**Description:** scripts/time_tracker.sh CLI Wrapper for time tracking. Log Format (time_tracking.txt): START|task_id|description|timestamp (YYYY-MM-DD HH:MM:SS) STOP|task_id|timestamp (YYYY-MM-DD HH:MM:SS)
 
 **Usage & Examples:**
 
@@ -3848,7 +3848,7 @@ Usage: unpacker.sh <filename>
 
 ### `validate_env.sh`
 
-**Description:** validate_env.sh - Validates essential environment variables and configurations
+**Description:** validate_env.sh - Checks that key environment variables are set correctly
 
 **Usage & Examples:**
 
@@ -3882,7 +3882,7 @@ Usage: unpacker.sh <filename>
 
 ### `weather.sh`
 
-**Description:** It uses the website wttr.in, which is designed for terminals. Usage: ./weather.sh [city] Example: ./weather.sh "New York"
+**Description:** Shows the weather using wttr.in, a website made for terminals. Usage: ./weather.sh [city] Example: ./weather.sh "New York"
 
 ### `week_in_review.sh`
 

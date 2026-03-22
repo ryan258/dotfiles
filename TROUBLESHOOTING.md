@@ -1,108 +1,60 @@
-# Troubleshooting Guide
+# How to Fix Problems (Troubleshooting)
 
-This document provides solutions to common issues encountered when setting up and using the `dotfiles` project.
+If a tool is broken or giving you an error, this guide will help you fix it easily!
 
-## General Issues
+## 1. "Command Not Found" or "Permission Denied"
 
-### Scripts not found or not executable
+**The Problem:** You type a word like `todo` or `startday` and the computer says it doesn't know what that means.
+**The Fix:**
+1. You probably need to set up the tools again. Open your terminal and type:
+   ```bash
+   cd ~/dotfiles
+   ./bootstrap.sh
+   ```
+2. Close your terminal window and open a new one. Try the tool again!
 
-**Problem:** You run a command like `todo` or `g` and get "command not found" or "permission denied".
+## 2. The AI Helpers Say "OPENROUTER_API_KEY is not set"
 
-**Solution:**
-1.  **Ensure `bootstrap.sh` was run:** The `bootstrap.sh` script sets up your `PATH` and makes scripts executable. Run it again:
-    ```bash
-    cd ~/dotfiles
-    ./bootstrap.sh
-    ```
-2.  **Restart your shell:** After running `bootstrap.sh`, close and reopen your terminal, or run `source ~/.zshrc`.
-3.  **Check `PATH`:** Verify that `~/dotfiles/scripts` and `~/dotfiles/bin` are in your `PATH`. You can check with:
-    ```bash
-    echo $PATH
-    ```
-    If they are missing, ensure `~/.zshenv` contains the correct `export PATH` lines and is being sourced.
-4.  **Check permissions:** Ensure the scripts are executable:
-    ```bash
-    chmod +x ~/dotfiles/scripts/*.sh ~/dotfiles/bin/*.sh
-    ```
+**The Problem:** The AI tools (like `tech` or `content`) are refusing to work because they are missing their password (API Key).
+**The Fix:**
+1. You need to create a hidden file to hold your password. Type this:
+   ```bash
+   cp ~/dotfiles/.env.example ~/dotfiles/.env
+   ```
+2. Open that new `.env` file and type your password where it says `OPENROUTER_API_KEY="your-password-here"`.
+3. Close your terminal, open a new one, and try again!
 
-### `source` command warnings (SC1090, SC1091) from ShellCheck
+## 3. GitHub Says "Token Not Found"
 
-**Problem:** When running `shellcheck`, you see warnings like `SC1090` or `SC1091` about not being able to follow sourced files (e.g., `.env`, `dhp-shared.sh`).
+**The Problem:** The tools cannot connect to your GitHub account to read your code.
+**The Fix:**
+Create a file called `~/.github_token` on your computer. Paste your secret GitHub password (Token) inside it and save. 
 
-**Solution:** These are often informational warnings in the context of dotfiles where files are sourced dynamically or are not meant to be standalone. You can generally ignore them. If you want to suppress them for specific lines, you can add ` # shellcheck disable=SC1090` to the end of the line.
+## 4. `startday` Says "Unable to fetch GitHub activity"
 
-## AI Dispatcher Issues
+**The Problem:** Your morning or evening summary says it can't find what you did on GitHub today.
+**The Fix:**
+1. Try forcing the computer to refresh by typing:
+   ```bash
+   startday refresh --clear-github-cache
+   ```
+2. Make sure your GitHub name is spelled correctly in your `.env` file!
+3. If your internet is broken, it won't be able to connect either. Make sure you are online.
 
-### `OPENROUTER_API_KEY is not set` error
+## 5. ShellCheck Gives You Warnings (SC1090)
 
-**Problem:** When running an AI dispatcher (e.g., `tech`, `content`), you get an error that `OPENROUTER_API_KEY` is not set.
+**The Problem:** If you run a tool that checks your code, it might complain about "ShellCheck Warnings." 
+**The Fix:** You can ignore this! This just means the tool doesn't understand how our special files connect. It isn't actually an error.
 
-**Solution:**
-1.  **Create `.env` file:** Copy `.env.example` to `.env` in your `~/dotfiles` directory:
-    ```bash
-    cp ~/dotfiles/.env.example ~/dotfiles/.env
-    ```
-2.  **Add API Key:** Edit `~/dotfiles/.env` and add your OpenRouter API key:
-    ```
-    OPENROUTER_API_KEY="sk-your-api-key-here"
-    ```
-3.  **Restart your shell:** Close and reopen your terminal, or run `source ~/.zshrc`.
+## 6. Apple Mac Users: `osascript` Errors
 
-### `GitHub token not found` or `insecure permissions` error
+**The Problem:** You get a red error that says something about `osascript`.
+**The Fix:** That specific tool only works on Apple Mac computers. If you are using Linux, that tool will not work.
 
-**Problem:** When running `github_helper.sh` or related scripts, you get an error about the GitHub token.
+## Still Broken? Tell Us!
 
-**Solution:**
-1.  **Create token file:** Create a file at `~/.github_token` and paste your GitHub Personal Access Token into it.
-2.  **Set permissions:** Ensure the file has secure permissions (read/write for owner only):
-    ```bash
-    chmod 600 ~/.github_token
-    ```
-    The `bootstrap.sh` script should do this automatically if the file exists.
-
-### `startday` / `goodevening` shows GitHub fetch unavailable
-
-**Problem:** The GitHub sections show `(Unable to fetch GitHub activity. Check your token or network.)` or `(Unable to fetch commit activity. Check your token or network.)`.
-
-**Solution:**
-1.  **Run a refresh with diagnostics enabled:**
-    ```bash
-    GITHUB_DEBUG=true startday refresh
-    ```
-    If you intentionally need a cold GitHub refresh, run:
-    ```bash
-    startday refresh --clear-github-cache
-    ```
-2.  **Confirm username/token are set in `.env`:**
-    ```bash
-    GITHUB_USERNAME="your-github-login"
-    # Either set GITHUB_TOKEN or keep ~/.github_token populated
-    ```
-3.  **Note on fallback behavior:** Public GitHub endpoints now fall back to unauthenticated requests (for `/users/<name>/repos` and `/users/<name>/events`) before showing failure, so invalid/expired tokens are less disruptive for public activity views.
-4.  **Check raw network reachability:**
-    ```bash
-    curl -fsS -L --connect-timeout 5 --max-time 20 'https://api.github.com/users/<your-user>/repos?per_page=1'
-    ```
-    If this fails with `curl: (7) Failed to connect`, the issue is network/path/firewall related rather than token parsing in the script.
-
-## macOS Specific Issues
-
-### `date` command errors (`-v` flag not working)
-
-**Problem:** Earlier versions relied on the macOS-only `date -v` flag for relative time math. Modern scripts now route through `scripts/lib/date_utils.sh`, which prefers `python3` and falls back to BSD/GNU `date` when available. If the helper cannot find any compatible tool, you'll still see errors.
-
-**Solution:** Ensure `python3` is installed (macOS and most Linux distros include it). If you prefer not to use Python, install GNU coreutils (`brew install coreutils` on macOS, or your distro package on Linux) so `gdate` is available as a fallback.
-
-### `osascript` errors
-
-**Problem:** Scripts using `osascript` for notifications or other macOS integrations fail.
-
-**Solution:** Ensure you are running on macOS. `osascript` is a macOS-specific tool.
-
-## Reporting Bugs
-
-If you encounter a bug not covered here, please open an issue on the [GitHub repository](https://github.com/ryan258/dotfiles/issues). Please include:
-*   The command you ran.
-*   The full error message.
-*   Your operating system and shell version (`uname -a`, `zsh --version`).
-*   Steps to reproduce the issue.
+If none of this helped, please go to our [GitHub Page](https://github.com/ryan258/dotfiles/issues) and click "New Issue" to tell us!
+Please be sure to include:
+- Exactly what you typed into the computer.
+- The red error message the computer printed out.
+- What kind of computer you are using (Mac or Linux).

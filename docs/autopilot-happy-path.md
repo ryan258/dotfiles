@@ -1,167 +1,106 @@
-# Autopilot Happy Path
+# Autopilot Easy Mode
 
-Brain fog? Can't type much? This page is your cheat sheet.
+Brain fog? Too tired to type? This page is for you!
 
-One command. AI does the rest. You say yes or no at the end.
+One command does everything. The AI does all the hard work. You just type `A` or `B` when it finishes.
 
 ---
 
-## Pick Your Lane
+## Which Code Are You Working On?
 
-### I have a repo I want to document
-
+### 1. I am already in the folder I want to work on
 ```bash
 ap
 ```
+Run this inside your folder. That is all you need to type!
 
-Run this inside the repo. Done.
-
-### I have a repo somewhere else
-
+### 2. I want the AI to look at a different folder
 ```bash
 ap --repo ~/Projects/my-thing
 ```
 
-### I just have an idea
-
+### 3. I just have an idea for a new project
 ```bash
-apb "what the project does, in plain english"
+apb "explain your cool idea here in normal English"
 ```
+The Morphling AI helper will build the project. The Cyborg chatbot will write about it. You just say yes once at the very end.
 
-Morphling builds it. Cyborg documents it. You confirm once.
-
-### I don't even want to confirm
-
+### 4. Just do everything and absolutely do not wake me up
 ```bash
 apby "your idea here"
 ```
 
 ---
 
-## What Happens
+## What Actually Happens Behind the Scenes
 
-You don't need to remember this. Just know it's working.
+You do not need to memorize this. Just know it works!
 
-```
-your idea
+```text
+Your Idea
    |
    v
-Morphling builds the project    (--build only)
+The AI builds the code for you
    |
    v
-Morphling analyzes the repo     (automatic)
+The AI reads through the files it just built
    |
    v
-Cyborg scans it
+The AI plans out a blog article about the code
    |
    v
-Cyborg maps out blog pages
+The AI writes the whole blog draft
    |
    v
-Cyborg drafts everything
+The computer shows you a summary
    |
    v
-You see a summary
-   |
-   v
-A. Apply everything             <-- pick a letter
-B. Drafts only
-C. Links only
+A. Apply everything       <-- Just type a letter!
+B. Keep exactly as a draft
+C. Only save the links
 D. Save for later
-E. Review interactively
+E. Look through it slowly
 ```
 
 ---
 
-## Real Examples
+## Real Examples to Copy and Paste
 
-Copy-paste any of these.
-
-**Document the repo you're standing in:**
-
+**Write an article about the folder you are in right now:**
 ```bash
 ap
 ```
 
-**Document a specific project:**
-
+**Write an article about a different project:**
 ```bash
 ap --repo ~/Projects/rockit
 ```
 
-**Turn an idea into a project + blog content:**
-
+**Turn a small idea into a real project and write a blog post about it:**
 ```bash
-apb "CLI that picks recipes based on energy level"
+apb "A tool that picks what I should eat based on my energy"
 ```
 
-**Fully hands-off, no confirmation:**
-
+**Let it run entirely on its own with no stopping:**
 ```bash
 apy
 ```
 
-**Idea, build, document, apply, no stops:**
-
-```bash
-apby "terminal habit tracker with weekly review"
-```
-
-**Add focus notes to guide the content:**
-
-```bash
-ap --repo ~/Projects/foo "focus on the setup path and CLI usage"
-```
-
-**Include a draft you already wrote:**
-
-```bash
-ap --repo ~/Projects/foo --file notes/draft.md
-```
-
 ---
 
-## If Something Goes Wrong
+## If Something Breaks
 
-Session is always saved. Pick up where you left off:
-
+Your computer always saves your spot perfectly. If the computer crashes or you close the window, type this to pick up right where you left off:
 ```bash
 apc
 ```
 
-That's it. It reopens your most recent session so you can review or continue.
-
 ---
 
-## Low-Energy Day Checklist
+## The Low-Energy Day Cheat Sheet
 
-1. Open terminal
-2. `ap` or `apb "your idea"`
-3. Wait
-4. Press A, B, C, D, or E
-5. Close terminal
-
----
-
-## Quick Reference Card
-
-| What you want | Short | Full |
-|--------------|-------|------|
-| Document current repo | `ap` | `cyborg auto` |
-| Document + auto-apply | `apy` | `cyborg auto --yes` |
-| Document another repo | `ap --repo PATH` | `cyborg auto --repo PATH` |
-| Build from idea | `apb "idea"` | `cyborg auto --build "idea"` |
-| Build + auto-apply | `apby "idea"` | `cyborg auto --build --yes "idea"` |
-| Resume a session | `apc` | `cyborg resume` |
-| Skip Morphling analysis | `ap --no-morphling` | |
-| Build into custom folder | `apb --projects-dir ~/Labs "idea"` | |
-| Add focus notes | `ap "your notes"` | |
-| Include a draft file | `ap --file path/to/draft.md` | |
-
----
-
-## Deeper Docs (When You Have Energy)
-
-- [Autopilot full guide](../bin/autopilot-readme.md) — all flags, flow diagrams, env vars
-- [Cyborg full guide](../bin/cyborg-readme.md) — interactive commands, session lifecycle
-- [Dispatchers overview](../bin/README.md) — all AI tools including Morphling
+1. Open your terminal screen.
+2. Type `ap` or `apb "your idea"`.
+3. Wait for the AI to finish.
+4. Press A, B, C, D, or E.
+5. Close the terminal and rest!

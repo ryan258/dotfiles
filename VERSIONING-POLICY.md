@@ -1,33 +1,27 @@
-# Versioning Policy
+# How We Number Our Updates
 
-This document outlines the versioning strategy for the "My MS & AI Journey" blog and related content.
+This page explains how we name the different versions of the blog and these computer tools.
 
-## Version Format
+## The Version Numbers
 
-We use [Semantic Versioning](https://semver.org/) (SemVer) `MAJOR.MINOR.PATCH`.
+We use a system with three numbers, like **1.2.3**. 
+Each number means something different:
 
-- **MAJOR**: Significant changes to the site structure, theme, or content strategy (e.g., "Pivot to video", "New Hugo theme").
-- **MINOR**: New feature additions, new content sections, or significant operational improvements (e.g., "Added 'Spoon Theory' section", "Implemented automated social posting").
-- **PATCH**: Routine content updates, typo fixes, or minor script adjustments (e.g., "Weekly blog post", "Fixed typo in about page").
+- **The First Number (Big Changes):** We change this number (like going from 1.0.0 to 2.0.0) when we completely change how the site looks or add massive new tools (like adding Video Support).
+- **The Middle Number (Small Features):** We change this number (like going from 1.2.0 to 1.3.0) when we add a cool new button or a new AI helper that wasn't there before.
+- **The Last Number (Bug Fixes):** We change this number (like going from 1.2.3 to 1.2.4) when we just fix a typo or fix a broken link. No new features, just cleaning up!
 
-## Workflow
+## The Work Steps
 
-1.  **Check Current Version**: Use `blog version` to see the current tagged version.
-2.  **Make Changes**: Write content, update scripts, etc.
-3.  **Bump Version**: Upon completion of a unit of work (e.g., publishing a post), use `blog version bump <level>`.
-    - This will create a git tag (e.g., `v1.2.3`).
-    - It will verify a clean git state before proceeding.
-    - It will log the version bump to your daily journal.
+When you want to save your work, follow these steps:
+1. **Check Your Version:** Type `blog version` to see what number we are currently on.
+2. **Do Your Work:** Write your article or fix your code.
+3. **Change the Number:** When you are completely done, type `blog version bump patch` (or `minor`, or `major`). 
+   - The computer will save your work, bump the number up, and officially log what you did into your daily diary!
 
-## Tagging
+## Fast Commands
 
-Git tags are the source of truth for versions.
-Format: `vX.Y.Z`
-
-## Automation
-
-The `blog.sh` script automates this process:
-
-- `blog version bump patch` -> `v1.0.1`
-- `blog version bump minor` -> `v1.1.0`
-- `blog version bump major` -> `v2.0.0`
+There is a built-in helper that does the math for you:
+- `blog version bump patch` -> updates `1.0.0` to `1.0.1`
+- `blog version bump minor` -> updates `1.1.0` to `1.2.0`
+- `blog version bump major` -> updates `1.5.0` to `2.0.0`

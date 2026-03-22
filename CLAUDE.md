@@ -24,10 +24,12 @@ To prevent drift and contradictions:
 2. Derived-view docs:
 
 - `README.md`
-- `docs/start-here.md`
-- `docs/system-overview.md`
-- `docs/happy-path.md`
-- `docs/ai-quick-reference.md`
+- `docs/README.md`
+- `docs/daily-loop-handbook.md`
+- `docs/ai-handbook.md`
+- `docs/autopilot-happy-path.md`
+- `docs/general-reference-handbook.md`
+- `docs/ROADMAP-ENERGY.md`
 - `scripts/README.md`
 - `scripts/README_aliases.md`
 - `phases.md`

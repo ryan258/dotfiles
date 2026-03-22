@@ -1,7 +1,7 @@
 # scripts/ Overview
 
-Derived operational guide for `scripts/`.
-Canonical architecture and policy live in `../CLAUDE.md`.
+This is a quick guide for the `scripts/` folder.
+The full rules live in `../CLAUDE.md`.
 
 ## Daily Commands
 
@@ -14,43 +14,43 @@ Canonical architecture and policy live in `../CLAUDE.md`.
 - `health.sh`
 - `focus.sh`
 
-## Library Contracts
+## Library Rules
 
-- Libraries in `scripts/lib/*.sh` are sourced and must not set strict mode.
-- Executed scripts use `#!/usr/bin/env bash` + `set -euo pipefail`.
-- Root `dotfiles` scripts should avoid Bash 4-only features unless the runtime requirement is explicit.
-- If a script or library must use Bash 4+ features, it should fail fast with a clear message. Current known requirement: time tracking/reporting paths use associative arrays, so `scripts/lib/time_tracking.sh` and `scripts/generate_report.sh` require Bash 4+.
-- On macOS, make sure `/usr/bin/env bash` resolves to a newer Bash when using those paths; `/bin/bash` is still 3.2.
-- For launchd/cron/non-interactive entrypoints, use `scripts/run_with_modern_bash.sh <script> ...` to force a modern Bash before the target script starts.
-- Data writes require sanitized input and validated paths.
+- Libraries live in `scripts/lib/*.sh`. They are sourced (loaded), not run directly. They must not set strict mode.
+- Scripts you run directly use `#!/usr/bin/env bash` and `set -euo pipefail`.
+- Root `dotfiles` scripts should not use Bash 4-only features unless clearly needed.
+- If a script needs Bash 4+, it should fail fast with a clear message. Right now, time tracking uses special arrays (called "associative arrays"). So `scripts/lib/time_tracking.sh` and `scripts/generate_report.sh` need Bash 4+.
+- On macOS, `/bin/bash` is old (version 3.2). Make sure `/usr/bin/env bash` points to a newer Bash when running those paths.
+- For scheduled jobs (launchd/cron), use `scripts/run_with_modern_bash.sh <script> ...` to pick a modern Bash before the target script starts.
+- Any script that writes data must clean the input first and check the file path.
 
-## Coaching Runtime
+## Coaching System
 
-- `scripts/lib/coach_ops.sh` validates coaching runtime dependencies.
-- `scripts/lib/coach_metrics.sh`, `scripts/lib/coach_prompts.sh`, and `scripts/lib/coach_scoring.sh` provide metrics, prompt construction, timeout-guarded AI calls, mode persistence, and append-only coaching logs.
-- `scripts/lib/coach_chat.sh` provides an interactive post-briefing REPL. After any coaching briefing, users can chat with the coach, ask follow-ups, and use slash commands (`/j` journal, `/t` todo, `/f` focus, `/q` quit). On by default; disable with `AI_COACH_CHAT_ENABLED=false`.
-- Daily coaching now resolves `dhp-coach.sh` first, a single-call OpenRouter dispatcher that avoids the slower AI-Staff-HQ swarm path used by `dhp-strategy.sh`.
-- Coaching model selection comes from root `dotfiles/.env` via `AI_COACH_MODEL`; changing `ai-staff-hq/.env` does not change `startday` or `goodevening`.
-- `AI_COACH_EVIDENCE_CHECK_ENABLED=true` keeps the morning coach on strict focus+Git evidence; set it to `false` if you want to see raw AI output even when the model invents unsupported specifics.
-- The same `AI_COACH_EVIDENCE_CHECK_ENABLED` flag now controls the evening validator too; when disabled, `goodevening` accepts raw AI reflection without warning noise.
-- `status.sh --coach` now uses the same direct `dhp-coach.sh` path for an on-demand mid-day recenter brief. When you run it from inside a git repo, the coach narrows its prompt/fallback to that repo's context; outside a repo it keeps the global multi-repo view. Set `AI_STATUS_ENABLED=true` if you want that section on every `status` run, or tune `AI_STATUS_TEMPERATURE` separately from the morning briefing.
-- `config.sh` now reloads the current root `.env` per process/path instead of trusting inherited `_DOTFILES_ENV_LOADED` markers from older shell state, so coach timeout/model changes take effect reliably.
-- Coach modes: LOCKED (stay focused), FLOW (follow energy with check-ins), OVERRIDE (bounded exploration), RECOVERY (minimal output for low-energy days). The coach auto-suggests mode switches based on digest metrics.
-- Drift and health thresholds (`COACH_*_THRESHOLD`) are defined in `config.sh` and overridable via `.env`.
-- `startday.sh` and `goodevening.sh` now treat daily focus plus non-fork GitHub activity as the only coaching evidence; journal and todo data stay local for later querying but do not steer the coach.
-- `startday.sh` now asks for, and fallback now generates, a 10-item GitHub blindspot/opportunity scan grounded in recent repos and commit-message patterns, so even failed AI briefings still comment on actual project momentum instead of only generic focus-lock advice.
-- `goodevening.sh` now asks for, and fallback now generates, a 10-item `Blindspots to sleep on` scan grounded in recent GitHub evidence so the evening handoff carries real repo-specific opportunities into tomorrow.
-- Even with evidence checking disabled, both flows now scrub obviously bad blindspot items such as raw metric flags or data-quality/debug tokens and replace them with grounded GitHub opportunity lines.
-- `status.sh` shows current coach mode, spoon budget/depletion, focus text, and a Git-backed spear alignment signal in a DAILY CONTEXT section.
-- When the AI status coach is enabled, `status.sh` also renders a GitHub-first recenter section using today's commits, recent pushes, current project context, and the same blindspot scrubber used by the morning coach.
+- `scripts/lib/coach_ops.sh` checks that coaching tools are ready to run.
+- `scripts/lib/coach_metrics.sh`, `scripts/lib/coach_prompts.sh`, and `scripts/lib/coach_scoring.sh` handle numbers, prompt building, timed AI calls, mode saving, and coaching logs.
+- `scripts/lib/coach_chat.sh` gives you a chat after each briefing. You can talk to the coach, ask questions, and use short commands (`/j` journal, `/t` todo, `/f` focus, `/q` quit). It is on by default. Turn it off with `AI_COACH_CHAT_ENABLED=false`.
+- Daily coaching calls `dhp-coach.sh` first. This is a single, fast call to OpenRouter. It skips the slower AI-Staff-HQ swarm path used by `dhp-strategy.sh`.
+- The coaching model is set in root `dotfiles/.env` with `AI_COACH_MODEL`. Changing `ai-staff-hq/.env` does not change `startday` or `goodevening`.
+- `AI_COACH_EVIDENCE_CHECK_ENABLED=true` keeps the morning coach strict about focus and Git proof. Set it to `false` if you want raw AI output, even when the model makes things up.
+- The same `AI_COACH_EVIDENCE_CHECK_ENABLED` flag also controls the evening check. When off, `goodevening` accepts raw AI output without warnings.
+- `status.sh --coach` uses the same fast `dhp-coach.sh` path for a mid-day reset. If you run it inside a git repo, the coach focuses on that repo. Outside a repo, it shows a wider view. Set `AI_STATUS_ENABLED=true` to show this on every `status` run. You can also tune `AI_STATUS_TEMPERATURE` on its own.
+- `config.sh` now reloads the root `.env` each time a process runs. This means coach timeout and model changes take effect right away.
+- Coach modes: LOCKED (stay focused), FLOW (follow energy with check-ins), OVERRIDE (explore with limits), RECOVERY (low output for low-energy days). The coach suggests mode switches based on your numbers.
+- Drift and health limits (`COACH_*_THRESHOLD`) are set in `config.sh`. You can change them in `.env`.
+- `startday.sh` and `goodevening.sh` use daily focus and non-fork GitHub activity as coaching proof. Journal and todo data stay local but do not steer the coach.
+- `startday.sh` now creates a 10-item GitHub scan of blind spots and chances. It looks at recent repos and commit messages. Even if the AI call fails, the fallback still comments on real project work.
+- `goodevening.sh` now creates a 10-item "Blindspots to sleep on" scan using GitHub data. This carries real ideas into tomorrow.
+- Even with the evidence check off, both flows clean out bad scan items like raw flags or debug text. They swap them for real GitHub-based ideas.
+- `status.sh` shows the current coach mode, spoon budget and use, focus text, and a Git-backed alignment signal in a DAILY CONTEXT section.
+- When the AI status coach is on, `status.sh` also shows a GitHub-first reset section. It uses today's commits, recent pushes, project context, and the same scan cleaner as the morning coach.
 
 ## Data Location
 
-All runtime data is under:
+All saved data lives here:
 
 - `~/.config/dotfiles-data/`
 
-Key files include:
+Key files:
 
 - `todo.txt`, `todo_done.txt`
 - `ideas.txt`
