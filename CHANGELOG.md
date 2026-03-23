@@ -1,6 +1,37 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** March 22, 2026
+**Last Updated:** March 23, 2026
+
+## Version 2.2.39 (March 23, 2026) - Manifest-Driven Docs Sync
+
+**Status:** ✅ Production Ready
+
+### New
+
+### N1. Add `cyborg-sync` for non-interactive site documentation updates
+
+Added a new `bin/cyborg-sync` wrapper plus `scripts/cyborg_docs_sync.py`, a manifest-driven worker for keeping Cyborg Lab pages aligned with repo changes without dropping into the interactive `cyborg>` REPL.
+
+What it does:
+
+- Reads a per-repo `.cyborg-docs.toml` manifest
+- Builds a grounded update context from git diff, README, optional notes, existing page copy, and the site archetype
+- Calls OpenRouter for full-page rewrites
+- Enforces archetype-required sections, frontmatter preservation, description normalization, internal-link normalization, and a readability warning threshold
+- Runs configured repo checks and site checks before committing
+- Can create a dedicated site branch and commit the validated updates
+
+Supporting files added:
+
+- `docs/cyborg-docs-sync.md`
+- `scripts/cyborg_scoped_site_check.sh`
+- `templates/cyborg-docs.toml.example`
+- `templates/cyborg-docs-sync.github-action.yml`
+- `tests/test_cyborg_docs_sync.sh`
+
+### N2. Make `morphling` direct by default and keep swarm mode explicit
+
+`bin/morphling.sh` now launches the native `ai-staff-hq/tools/activate.py morphling` path by default, which avoids the slow dispatcher swarm path for normal use. The older dispatcher behavior still exists behind `morphling --swarm`, and `bin/cyborg` now opts into that flag explicitly for repo pre-analysis.
 
 ## Version 2.2.38 (March 22, 2026) - Architectural Consolidation (H1-H8) & Critical Fixes
 

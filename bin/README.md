@@ -26,8 +26,9 @@ This folder holds 13 fast tools (and 4 extra tricks) that give you instant help 
 | `dhp-copy.sh` | `aicopy` | Write ads that sell |
 | `dhp-morphling.sh`| `dhp-morphling` | The magic helper that can do anything |
 | `dhp-finance.sh` | `finance` | Get advice about money and taxes |
+| `cyborg-sync` | `cyborg-sync` | Updates mapped site pages from real repo changes |
 
-**Magic Helper:** Typing `morphling` lets you chat with a magic helper from any folder on your computer!
+**Magic Helper:** Typing `morphling` now opens the direct Morphling session from AI-Staff-HQ. Use `morphling --swarm` when you want the older dispatcher-style context gathering path.
 
 ## ⚙️ Computer and Work (Tech & Copy)
 
@@ -106,6 +107,16 @@ This is a super smart chat robot that helps you write articles for your blog. It
 ```bash
 # Run the robot in the current folder
 cyborg ingest
+```
+
+### The Docs Sync Worker (`cyborg-sync`)
+This is the non-chat path for keeping project docs on your site up to date. It reads a repo manifest, looks at what changed, updates the mapped site pages, and can make a branch and commit after checks pass.
+```bash
+# Show the plan for a repo
+cyborg-sync --repo ~/Projects/alias-scanner plan
+
+# Update the mapped site pages
+cyborg-sync --repo ~/Projects/alias-scanner sync --create-branch --commit
 ```
 
 ## 📝 Filling Out Forms (The `spec` tool)

@@ -1,0 +1,50 @@
+name: Docs Sync
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout project repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout site repo
+        uses: actions/checkout@v4
+        with:
+          repository: ryan258/my-ms-ai-blog
+          token: ${{ secrets.SITE_REPO_TOKEN }}
+          path: my-ms-ai-blog
+
+      - name: Checkout dotfiles tools
+        uses: actions/checkout@v4
+        with:
+          repository: ryan258/dotfiles
+          token: ${{ secrets.SITE_REPO_TOKEN }}
+          path: dotfiles
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Sync mapped pages
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          CYBORG_LAB_DIR: ${{ github.workspace }}/my-ms-ai-blog
+        run: |
+          chmod +x dotfiles/bin/cyborg-sync
+          dotfiles/bin/cyborg-sync \
+            --repo "$GITHUB_WORKSPACE" \
+            --blog-root "$GITHUB_WORKSPACE/my-ms-ai-blog" \
+            --base-ref "${{ github.event.before }}" \
+            --head-ref "${{ github.sha }}" \
+            sync \
+            --create-branch \
+            --commit

@@ -91,18 +91,18 @@ if [[ "${1:-}" == "auto" ]]; then
             _prev="$_arg"
         done
 
-        # Pipe a structured prompt to morphling.sh, which calls the
-        # Morphling dispatcher (dhp-morphling.sh) under the hood.
-        # morphling.sh runs via `uv` and the ai-staff-hq YAML definitions.
-        # We cd into the target repo so Morphling can read its files.
-        # stderr is suppressed to keep the user-facing output clean;
-        # the `|| true` ensures a Morphling failure never aborts the
-        # launcher (pre-analysis is always best-effort).
+        # Pipe a structured prompt to morphling.sh in swarm mode so the
+        # repo pre-analysis keeps the richer dispatcher context gathering.
+        # The default `morphling` path is now direct activate.py, so Cyborg
+        # opts into `--swarm` explicitly here. We cd into the target repo so
+        # Morphling can read its files. stderr is suppressed to keep the
+        # user-facing output clean; the `|| true` ensures a Morphling failure
+        # never aborts the launcher (pre-analysis is always best-effort).
         echo "Morphling is pre-analyzing the repo..." >&2
         _morph_brief=$(
             cd "$_morph_repo" 2>/dev/null || cd "$USER_CWD"
             echo "Analyze this repository for a content writer creating Cyborg Lab blog pages. Identify: key concepts, architecture patterns, notable implementation choices, what makes this project interesting, and what would be most valuable to document. Be concise and structured (bullet points). Do not ask follow-up questions." \
-                | "$SCRIPT_DIR/morphling.sh" 2>/dev/null
+                | "$SCRIPT_DIR/morphling.sh" --swarm 2>/dev/null
         ) || true
 
         # Export the brief so the Python agent can read it from the

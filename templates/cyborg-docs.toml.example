@@ -1,0 +1,32 @@
+version = 1
+blog_root = "~/Projects/cyborg/my-ms-ai-blog"
+base_ref = "origin/main"
+head_ref = "HEAD"
+notes_file = ".cyborg-docs-notes.md"
+site_branch_prefix = "codex/docs-sync"
+
+test_commands = [
+  "go test ./...",
+  "npm test",
+]
+
+site_check_commands = [
+  "bash \"$DOTFILES_DIR/scripts/cyborg_scoped_site_check.sh\" content/projects/example-project.md content/workflows/productivity-systems/example-workflow.md",
+  "bash scripts/validate-links.sh",
+]
+
+[[pages]]
+key = "project-page"
+path = "content/projects/example-project.md"
+type = "project"
+mode = "update"
+draft = false
+
+[[pages]]
+key = "workflow-page"
+path = "content/workflows/productivity-systems/example-workflow.md"
+type = "workflow"
+mode = "update"
+track = "Productivity Systems"
+jtbd = "Do"
+draft = false
