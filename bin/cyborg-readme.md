@@ -38,7 +38,7 @@ cyborg auto --docs-after-code        # continue into map/plan/draft after code
 cyborg auto --no-morphling           # skip Morphling pre-analysis
 ```
 
-`cyborg auto --build` goes one step further: pitch an idea, and Morphling scaffolds the project in `~/Projects/` first, then Cyborg runs the same code-first pass against that new repo. Add `--docs-after-code` if you also want the documentation pipeline in the same run.
+`cyborg auto --build` goes one step further: pitch an idea, Morphling scaffolds the project in `~/Projects/`, runs a **build-verify-fix loop** (installs deps, runs tests, feeds errors back to the AI for fixes, up to 3 rounds), then Cyborg runs the same code-first pass against the verified repo. Add `--docs-after-code` if you also want the documentation pipeline in the same run.
 
 ```bash
 cyborg auto --build "a CLI that tracks daily energy with spoon theory"
@@ -53,7 +53,7 @@ Use `cyborg` when you have one of these starting points:
 - a repo you built and want to decompose into Cyborg Lab content
 - a fact-checked markdown draft that should become repo-linked Cyborg Lab pages
 - a plain idea that needs to be worked into a publishable content plan
-- just an idea — Morphling builds the project, Cyborg improves it first and can document it after (`--build`)
+- just an idea — Morphling builds and verifies the project, Cyborg improves it first and can document it after (`--build`)
 
 The default source-of-truth rule is:
 
@@ -199,7 +199,7 @@ cat brief.md | cyborg auto --stdin-source --repo .
 
 ### 7. Build Mode (Idea to Project to Blog)
 
-`cyborg auto --build` takes just an idea and does everything: Morphling scaffolds a working project in `~/Projects/`, then Cyborg runs the code-first autopilot against it. Requires AI mode (`OPENROUTER_API_KEY`). Add `--docs-after-code` if you also want the documentation pass in that same run.
+`cyborg auto --build` takes just an idea and does everything: Morphling scaffolds a working project in `~/Projects/` and runs a build-verify-fix loop (detects project type, installs deps, runs tests, feeds errors back to the AI for fixes, up to 3 rounds), then Cyborg runs the code-first autopilot against the verified project. Requires AI mode (`OPENROUTER_API_KEY`). Add `--docs-after-code` if you also want the documentation pass in that same run.
 
 ```bash
 cyborg auto --build "a CLI that tracks daily energy with spoon theory"
@@ -753,4 +753,5 @@ What it does not do yet:
 - `scripts/cyborg_agent.py`
 - `tests/test_cyborg.sh`
 - `bin/README.md`
+- `MORPHLING.md` (Morphling architecture deep dive)
 - `scripts/README_aliases.md`

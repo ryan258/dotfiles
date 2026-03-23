@@ -57,6 +57,12 @@ cyborg auto --build --yes "terminal pomodoro timer with MS-friendly breaks"
    git init + commit
         |
         v
+ [build-verify-fix loop]     ← up to 3 rounds
+   detect project type → install deps → run tests
+   if tests fail: send errors to AI → apply fix → retest
+   commit fixes when green
+        |
+        v
  [Cyborg autopilot]
    scan → map → plan → draft all → link patches
         |
@@ -79,6 +85,8 @@ cyborg auto --build --yes "terminal pomodoro timer with MS-friendly breaks"
 
 ## What Morphling Does
 
+Morphling is the only AI-Staff-HQ specialist with tools enabled. In direct mode (`morphling`), it has four tools: `read_file`, `write_file`, `list_directory`, and `run_command`. This makes it a full lead-developer agent that can write code, run tests, see errors, and fix them in a closed loop. See [MORPHLING.md](../MORPHLING.md) for the complete architecture.
+
 ### Pre-analysis mode (default for `cyborg auto`)
 
 When you run `cyborg auto` on an existing repo, the shell launcher pipes a structured prompt to `morphling.sh`. Morphling shapeshifts into a domain expert for that repo and returns a concise brief covering:
@@ -100,7 +108,13 @@ When you pass `--build`, the Python agent calls OpenRouter directly with a Morph
 2. Returns a complete project scaffold as structured JSON
 3. The agent writes the files to `~/Projects/<name>/`
 4. Runs `git init` and commits the initial scaffold
-5. Cyborg then scans and documents the freshly built project
+5. **Runs a build-verify-fix loop** (up to 3 rounds):
+   - Detects project type from marker files (`package.json`, `requirements.txt`, `go.mod`, `Cargo.toml`, `Makefile`)
+   - Installs dependencies and runs tests
+   - If tests fail, sends error output back to the Morphling persona
+   - AI returns corrected files, which are applied and re-tested
+   - Commits fixes as a separate git commit when verification passes
+6. Cyborg then scans and documents the verified, working project
 
 **Requirements:** `OPENROUTER_API_KEY` must be set (AI mode).
 
@@ -184,9 +198,10 @@ Once resumed, you're in full interactive mode with all commands available.
 
 ## Related Files
 
+- [`MORPHLING.md`](../MORPHLING.md) - Morphling architecture deep dive (capabilities, tools, build-verify loop)
 - [`cyborg-readme.md`](./cyborg-readme.md) - Full Cyborg agent reference (interactive commands, session lifecycle, safety model)
 - [`README.md`](./README.md) - All dispatchers including Morphling
-- [`../scripts/cyborg_agent.py`](../scripts/cyborg_agent.py) - Python agent (autopilot + build logic)
+- [`../scripts/cyborg_agent.py`](../scripts/cyborg_agent.py) - Python agent (autopilot + build + verify logic)
 - [`cyborg`](./cyborg) - Shell launcher (Morphling pre-analysis)
 - [`morphling.sh`](./morphling.sh) - Morphling interactive launcher
 - [`dhp-morphling.sh`](./dhp-morphling.sh) - Morphling dispatcher

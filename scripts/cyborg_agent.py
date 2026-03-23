@@ -220,6 +220,48 @@ MORPHLING_BUILD_PROMPT = textwrap.dedent(
     - Every file must contain real, working code — no placeholder comments.
     """
 ).strip()
+
+# Maximum number of build-verify-fix iterations before giving up.
+BUILD_VERIFY_MAX_ROUNDS = 3
+# Timeout for build/test verification commands (longer than normal).
+BUILD_VERIFY_TIMEOUT_SECONDS = 120
+
+# Detect-and-verify rules: (marker_file, install_cmd, test_cmd).
+# First match wins.  Commands are run with shell=True in the project dir.
+_BUILD_VERIFY_RECIPES: list[tuple[str, str | None, str]] = [
+    ("package.json", "npm install --ignore-scripts 2>&1", "npm test 2>&1"),
+    ("requirements.txt", "pip install -q -r requirements.txt 2>&1", "python -m pytest -x 2>&1"),
+    ("setup.py", "pip install -q -e . 2>&1", "python -m pytest -x 2>&1"),
+    ("pyproject.toml", "pip install -q -e . 2>&1", "python -m pytest -x 2>&1"),
+    ("go.mod", None, "go build ./... 2>&1 && go test ./... 2>&1"),
+    ("Cargo.toml", None, "cargo build 2>&1 && cargo test 2>&1"),
+    ("Makefile", None, "make 2>&1"),
+]
+
+# System prompt for the fix-iteration step.
+MORPHLING_FIX_PROMPT = textwrap.dedent(
+    """
+    You are the Morphling — a shapeshifting universal specialist.
+
+    The project you scaffolded failed its verification step.  Fix the
+    failing files and return ONLY a JSON object with the files that
+    changed:
+
+    {
+      "files": {
+        "relative/path/file.py": "complete corrected file contents..."
+      }
+    }
+
+    Rules:
+    - Return the FULL contents of each changed file (not a diff).
+    - Do not change files that are unrelated to the error.
+    - If the fix requires a new file, include it.
+    - Do not remove test files — fix them instead.
+    - Every file must contain real, working code — no placeholder comments.
+    """
+).strip()
+
 # The system prompt sent to the AI model for every request.
 # It tells the model what role it plays and what rules to follow.
 SYSTEM_CONTRACT = textwrap.dedent(
@@ -4413,7 +4455,168 @@ def build_project_from_idea(
 
     print("  Project scaffolded and committed.")
     print()
+
+    # --- Build-verify-fix loop ---
+    # Try to install deps + run tests.  If it fails, feed errors back to
+    # the AI and apply fixes, up to BUILD_VERIFY_MAX_ROUNDS iterations.
+    _verify_and_fix_scaffold(project_dir, idea, ai_client)
+
     return project_dir
+
+
+def _detect_verify_recipe(
+    project_dir: Path,
+) -> tuple[str | None, str] | None:
+    """Return (install_cmd, test_cmd) for the project, or None."""
+    for marker, install_cmd, test_cmd in _BUILD_VERIFY_RECIPES:
+        if (project_dir / marker).exists():
+            return install_cmd, test_cmd
+    return None
+
+
+def _verify_and_fix_scaffold(
+    project_dir: Path,
+    idea: str,
+    ai_client: "OpenRouterClient",
+) -> None:
+    """Run install + tests on a scaffolded project; fix failures with AI.
+
+    Detects the project type from marker files, runs the appropriate
+    build/test commands, and if they fail, sends the error output back
+    to the Morphling persona for a fix.  Repeats up to
+    BUILD_VERIFY_MAX_ROUNDS times.
+    """
+    recipe = _detect_verify_recipe(project_dir)
+    if recipe is None:
+        print("  No recognised build system — skipping verification.")
+        return
+
+    install_cmd, test_cmd = recipe
+    print(f"  Verifying scaffold ({test_cmd.split()[0]})...")
+
+    for attempt in range(1, BUILD_VERIFY_MAX_ROUNDS + 1):
+        # --- Install dependencies (first attempt only) ---
+        if install_cmd and attempt == 1:
+            exit_code, stdout, stderr = run_command_result(
+                ["bash", "-c", install_cmd],
+                cwd=project_dir,
+                timeout=BUILD_VERIFY_TIMEOUT_SECONDS,
+            )
+            if exit_code != 0:
+                error_output = (stderr or stdout)[:4000]
+                print(f"  Install failed (attempt {attempt}/{BUILD_VERIFY_MAX_ROUNDS})")
+                fix_applied = _apply_ai_fix(
+                    project_dir, idea, "install", install_cmd, error_output, ai_client
+                )
+                if not fix_applied:
+                    print("  Could not get a fix from the AI — stopping verification.")
+                    return
+                # Re-run install after fix
+                exit_code, stdout, stderr = run_command_result(
+                    ["bash", "-c", install_cmd],
+                    cwd=project_dir,
+                    timeout=BUILD_VERIFY_TIMEOUT_SECONDS,
+                )
+                if exit_code != 0:
+                    print("  Install still failing after fix — stopping verification.")
+                    return
+
+        # --- Run tests ---
+        exit_code, stdout, stderr = run_command_result(
+            ["bash", "-c", test_cmd],
+            cwd=project_dir,
+            timeout=BUILD_VERIFY_TIMEOUT_SECONDS,
+        )
+
+        if exit_code == 0:
+            label = "first try" if attempt == 1 else f"attempt {attempt}"
+            print(f"  Verification passed ({label}).")
+            # Commit the fixes if we changed anything
+            if attempt > 1:
+                run_command(["git", "add", "."], cwd=project_dir, allow_failure=True)
+                run_command(
+                    ["git", "-c", "user.name=Morphling", "-c", "user.email=morphling@cyborg-lab",
+                     "commit", "-qm", f"fix: pass verification (attempt {attempt})"],
+                    cwd=project_dir,
+                    allow_failure=True,
+                )
+            return
+
+        # --- Tests failed — ask AI for a fix ---
+        error_output = (stderr or stdout)[:4000]
+        print(f"  Tests failed (attempt {attempt}/{BUILD_VERIFY_MAX_ROUNDS})")
+
+        if attempt == BUILD_VERIFY_MAX_ROUNDS:
+            print("  Max fix attempts reached — project may need manual attention.")
+            return
+
+        fix_applied = _apply_ai_fix(
+            project_dir, idea, "test", test_cmd, error_output, ai_client
+        )
+        if not fix_applied:
+            print("  Could not get a fix from the AI — stopping verification.")
+            return
+
+
+def _apply_ai_fix(
+    project_dir: Path,
+    idea: str,
+    phase: str,
+    command: str,
+    error_output: str,
+    ai_client: "OpenRouterClient",
+) -> bool:
+    """Send a failure to the AI and apply the returned file fixes.
+
+    Returns True if at least one file was written, False otherwise.
+    """
+    # Build a snapshot of the current project files so the AI has context.
+    file_snapshot: dict[str, str] = {}
+    for f in sorted(project_dir.rglob("*")):
+        if f.is_file() and ".git" not in f.parts:
+            rel = str(f.relative_to(project_dir))
+            try:
+                content = f.read_text(encoding="utf-8", errors="replace")
+                # Limit per-file size to keep the prompt reasonable.
+                file_snapshot[rel] = content[:6000]
+            except Exception:
+                continue
+
+    user_msg = (
+        f"Project idea: {idea}\n\n"
+        f"Current files:\n{json.dumps(file_snapshot, indent=2)}\n\n"
+        f"The {phase} step failed.\n"
+        f"Command: {command}\n"
+        f"Error output:\n{error_output}"
+    )
+
+    try:
+        fix = ai_client.chat_json(
+            MORPHLING_FIX_PROMPT,
+            user_msg,
+            temperature=0.3,
+        )
+    except Exception as exc:
+        print(f"  AI fix request failed: {exc}")
+        return False
+
+    files: dict[str, str] = fix.get("files", {})
+    if not files:
+        return False
+
+    written = 0
+    for rel_path, contents in files.items():
+        if rel_path.startswith("/") or ".." in rel_path.split("/"):
+            continue
+        file_path = (project_dir / rel_path).resolve()
+        if project_dir.resolve() not in file_path.parents and file_path != project_dir.resolve():
+            continue
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_text(contents, encoding="utf-8")
+        written += 1
+
+    print(f"  Applied AI fix: {written} file(s) updated.")
+    return written > 0
 
 
 # =====================================================================

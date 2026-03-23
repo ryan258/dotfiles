@@ -28,7 +28,7 @@ This folder holds 13 fast tools (and 4 extra tricks) that give you instant help 
 | `dhp-finance.sh` | `finance` | Get advice about money and taxes |
 | `cyborg-sync` | `cyborg-sync` | Updates mapped site pages from real repo changes |
 
-**Magic Helper:** Typing `morphling` now opens the direct Morphling session from AI-Staff-HQ. Use `morphling --swarm` when you want the older dispatcher-style context gathering path.
+**Magic Helper:** Typing `morphling` now opens the direct Morphling session from AI-Staff-HQ with full lead-developer capabilities — it can read, write, and list files, plus run shell commands to install deps, compile, and run tests. Use `morphling --swarm` when you want the older dispatcher-style context gathering path.
 
 ## ⚙️ Computer and Work (Tech & Copy)
 
@@ -107,6 +107,9 @@ This is a super smart chat robot that helps you write articles for your blog. It
 ```bash
 # Run the robot in the current folder
 cyborg ingest
+
+# Build a project from an idea (Morphling scaffolds, verifies, then Cyborg documents)
+cyborg auto --build "CLI that tracks daily energy with spoon theory"
 ```
 
 ### The Docs Sync Worker (`cyborg-sync`)

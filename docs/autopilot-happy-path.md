@@ -23,7 +23,7 @@ ap --repo ~/Projects/my-thing
 ```bash
 apb "explain your cool idea here in normal English"
 ```
-The Morphling AI helper will build the project. The Cyborg chatbot will write about it. You just say yes once at the very end.
+The Morphling AI helper will build the project and make sure it actually works (it runs the tests and fixes any errors). The Cyborg chatbot will write about it. You just say yes once at the very end.
 
 ### 4. Just do everything and absolutely do not wake me up
 ```bash
@@ -43,7 +43,11 @@ Your Idea
 The AI builds the code for you
    |
    v
-The AI reads through the files it just built
+The AI runs the tests to make sure the code works
+(If tests fail, the AI fixes the code and tries again)
+   |
+   v
+The AI reads through the verified project
    |
    v
 The AI plans out a blog article about the code

@@ -252,7 +252,8 @@ dhp_dispatch \
 ### Specialized Standalone Agents
 
 - Repo-specific agents may live directly in `bin/` when they own an interactive workflow that does not fit the shared `dhp-*` dispatcher contract.
-- `bin/cyborg` is the dedicated Cyborg Lab ingest/resume agent. It stages session state under `my-ms-ai-blog/drafts/ingest/`, only writes to the blog repo on explicit apply, and should prefer accessible `A/B/C/D/E` short-choice prompts when it asks the user to choose.
+- `bin/cyborg` is the dedicated Cyborg Lab ingest/resume agent. It stages session state under `my-ms-ai-blog/drafts/ingest/`, only writes to the blog repo on explicit apply, and should prefer accessible `A/B/C/D/E` short-choice prompts when it asks the user to choose. `cyborg auto --build` scaffolds a project via Morphling, runs a build-verify-fix loop (up to 3 rounds), then documents the verified project.
+- `bin/morphling.sh` is the Morphling launcher. Direct mode (`morphling`) runs a LangChain ReAct agent with four tools: `read_file`, `write_file`, `list_directory`, and `run_command`. This gives it closed-loop lead-developer capabilities — write code, run tests, read errors, fix, repeat. Swarm mode (`morphling --swarm`) is one-shot analysis used by `cyborg auto` for pre-analysis briefs. See [`MORPHLING.md`](MORPHLING.md) for the full architecture.
 
 ---
 

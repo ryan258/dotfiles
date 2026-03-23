@@ -19,7 +19,7 @@ You can call any of these helpers just by typing their name!
 - `narrative` - Your plot designer. Thinks of twists for your stories.
 - `aicopy` - Your ad writer. Writes fast, catchy emails.
 - `finance` - Your accountant. Helps with S-Corp limits and taxes.
-- `morphling` - The magic shapeshifter. Can become any expert you need.
+- `morphling` - The magic shapeshifter and lead developer. Can become any expert you need. Can also run commands, install packages, run tests, and fix its own code until it works.
 
 ---
 
