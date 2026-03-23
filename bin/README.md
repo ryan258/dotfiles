@@ -115,7 +115,10 @@ This is the non-chat path for keeping project docs on your site up to date. It r
 # Show the plan for a repo
 cyborg-sync --repo ~/Projects/alias-scanner plan
 
-# Update the mapped site pages
+# Update the mapped site pages on the current branch
+cyborg-sync --repo ~/Projects/alias-scanner sync --commit
+
+# Or use a review branch when you want one
 cyborg-sync --repo ~/Projects/alias-scanner sync --create-branch --commit
 ```
 

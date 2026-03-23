@@ -33,6 +33,10 @@ Supporting files added:
 
 `bin/morphling.sh` now launches the native `ai-staff-hq/tools/activate.py morphling` path by default, which avoids the slow dispatcher swarm path for normal use. The older dispatcher behavior still exists behind `morphling --swarm`, and `bin/cyborg` now opts into that flag explicitly for repo pre-analysis.
 
+### N3. Let `cyborg-sync --commit` stay on the current site branch
+
+`scripts/cyborg_docs_sync.py` no longer creates a new site branch just because `--commit` was passed. The worker now commits on the current branch by default, while `--create-branch` remains the explicit review-branch mode. The docs, template action, and tests were updated to match.
+
 ## Version 2.2.38 (March 22, 2026) - Architectural Consolidation (H1-H8) & Critical Fixes
 
 **Status:** ✅ Production Ready

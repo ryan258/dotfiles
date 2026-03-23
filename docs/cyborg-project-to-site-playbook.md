@@ -7,7 +7,7 @@ This guide is written for the workflow you asked for:
 - build or refine the project locally
 - keep the repo as the source of truth
 - update the site with `cyborg-sync`
-- publish documentation changes on a dedicated site branch
+- publish documentation changes on the current site branch by default
 - keep future updates repeatable and low-friction
 
 If you only remember one rule, remember this:
@@ -59,8 +59,8 @@ It:
 - updates mapped site pages
 - runs repo checks
 - runs site checks
-- creates a site branch
-- commits if checks pass
+- commits on the current branch if checks pass
+- can create a review branch when you ask for it
 
 This is the tool that should carry the long-term load.
 
@@ -206,7 +206,7 @@ cyborg-sync --repo ~/Projects/my-project sync --dry-run
 If the plan looks sane, do the real run:
 
 ```bash
-cyborg-sync --repo ~/Projects/my-project sync --create-branch --commit
+cyborg-sync --repo ~/Projects/my-project sync --commit
 ```
 
 What should happen:
@@ -215,12 +215,11 @@ What should happen:
 - it updates the mapped site pages
 - it runs your repo tests
 - it runs your site checks
-- it creates a site branch in the site repo
-- it commits the generated page updates there
+- it commits the generated page updates on the current site branch
 
 If checks fail, `cyborg-sync` should restore the touched files before exiting.
 
-## Phase 6: Review the Site Branch
+## Phase 6: Review the Site Changes
 
 After a successful run, go to the site repo and inspect:
 
@@ -236,7 +235,7 @@ Typical checks:
 - is the reading level simple enough
 - does it sound like the real repo, not generic AI sludge
 
-If the generated pages are acceptable, push the site branch and merge it by your normal workflow.
+If the generated pages are acceptable, push the current branch.
 
 ## Phase 7: Turn It Into the Repeatable Path
 
@@ -253,15 +252,14 @@ The intended behavior is:
 - check out the site repo
 - check out dotfiles
 - run `cyborg-sync`
-- create a site branch
-- commit the updated pages after checks pass
+- commit the updated pages to the current site branch after checks pass
 
 This makes the future loop simple:
 
 1. work locally
 2. commit code
 3. push to `main`
-4. let the docs sync job update the site branch
+4. let the docs sync job update the current site branch
 
 ## The Everyday Update Loop
 
@@ -298,7 +296,7 @@ The docs-sync workflow should:
 - compare the new commit range
 - update only the mapped pages
 - run checks
-- prepare a site branch with the content changes
+- commit the content changes on the current site branch
 
 ### When the change is bigger than the current mapping
 
@@ -332,7 +330,7 @@ Commit:
 
 - only the content pages `cyborg-sync` updated
 
-Those should usually land on a dedicated site branch created by the worker.
+Those should usually land on the current site branch. Add `--create-branch` only when you want a review branch.
 
 ### Dotfiles Repo
 
@@ -401,10 +399,10 @@ If your brain is cooked, do only this:
 ```bash
 cyborg-sync --repo ~/Projects/my-project plan
 cyborg-sync --repo ~/Projects/my-project sync --dry-run
-cyborg-sync --repo ~/Projects/my-project sync --create-branch --commit
+cyborg-sync --repo ~/Projects/my-project sync --commit
 ```
 
-6. review the site branch
+6. review the site repo changes
 7. push code to `main`
 8. let the GitHub Action handle future syncs
 
@@ -436,7 +434,7 @@ For most new projects, use this order:
 3. define one project page and one workflow page
 4. add manifest + notes
 5. run manual `cyborg-sync`
-6. review the site branch
+6. review the site repo changes
 7. add the GitHub Action
 8. let pushes to `main` drive future site updates
 
@@ -454,7 +452,7 @@ $EDITOR .cyborg-docs.toml
 $EDITOR .cyborg-docs-notes.md
 cyborg-sync --repo ~/Projects/my-project plan
 cyborg-sync --repo ~/Projects/my-project sync --dry-run
-cyborg-sync --repo ~/Projects/my-project sync --create-branch --commit
+cyborg-sync --repo ~/Projects/my-project sync --commit
 ```
 
 ### New Project from an Idea
@@ -466,7 +464,7 @@ cp /Users/ryanjohnson/dotfiles/templates/cyborg-docs.toml.example .cyborg-docs.t
 $EDITOR .cyborg-docs.toml
 $EDITOR .cyborg-docs-notes.md
 cyborg-sync --repo ~/Projects/new-project plan
-cyborg-sync --repo ~/Projects/new-project sync --create-branch --commit
+cyborg-sync --repo ~/Projects/new-project sync --commit
 ```
 
 ## Final Rule

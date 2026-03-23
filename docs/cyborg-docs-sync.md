@@ -45,7 +45,13 @@ Run a dry sync without writing:
 cyborg-sync --repo ~/Projects/alias-scanner sync --dry-run
 ```
 
-Write changes into a dedicated site branch and commit them after checks pass:
+Commit changes on the current site branch after checks pass:
+
+```bash
+cyborg-sync --repo ~/Projects/alias-scanner sync --commit
+```
+
+If you want a review branch instead, add `--create-branch`:
 
 ```bash
 cyborg-sync --repo ~/Projects/alias-scanner sync --create-branch --commit
@@ -89,5 +95,5 @@ That path matches your preference:
 
 - run on push to `main`
 - keep a manifest in each project repo
-- prepare a dedicated site branch
-- commit only after checks pass
+- commit to the current site branch after checks pass
+- add `--create-branch` only when you want a review branch

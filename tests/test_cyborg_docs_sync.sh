@@ -285,3 +285,19 @@ EOF
     run bash -lc "grep -q '^categories:' '$BLOG_DIR/content/workflows/productivity-systems/shell-alias-hygiene-audit.md'"
     [ "$status" -eq 0 ]
 }
+
+@test "cyborg-sync sync --commit stays on the current branch when create-branch is omitted" {
+    run bash -lc "git -C '$BLOG_DIR' branch --show-current"
+    [ "$status" -eq 0 ]
+    starting_branch="$output"
+
+    run bash -lc "env DOTFILES_DIR='$DOTFILES_DIR' '$DOTFILES_DIR/bin/cyborg-sync' --repo '$SOURCE_REPO' --fixture-dir '$FIXTURE_DIR' sync --commit"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" != *"Created site branch:"* ]]
+    [[ "$output" == *"Committed site changes:"* ]]
+
+    run bash -lc "git -C '$BLOG_DIR' branch --show-current"
+    [ "$status" -eq 0 ]
+    [ "$output" = "$starting_branch" ]
+}

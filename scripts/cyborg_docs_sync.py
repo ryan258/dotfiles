@@ -1111,7 +1111,7 @@ def sync_pages(
     branch_name = ""
     original_contents: dict[Path, str | None] = {}
     try:
-        if create_branch or commit:
+        if create_branch:
             branch_name = create_site_branch(manifest.blog_root, manifest.site_branch_prefix, manifest.repo_root.name)
             print(f"Created site branch: {branch_name}")
 
@@ -1163,7 +1163,7 @@ def build_parser() -> argparse.ArgumentParser:
     sync = subparsers.add_parser("sync", help="Generate page updates, run checks, and optionally write them.")
     sync.add_argument("--dry-run", action="store_true", help="Render the update plan and AI summary without writing files.")
     sync.add_argument("--create-branch", action="store_true", help="Create a dedicated site branch before writing files.")
-    sync.add_argument("--commit", action="store_true", help="Commit the site changes after checks pass. Implies --create-branch.")
+    sync.add_argument("--commit", action="store_true", help="Commit the site changes after checks pass on the current branch.")
     sync.add_argument("--confidence-threshold", type=float, default=0.72, help="Skip pages below this confidence score.")
 
     return parser
@@ -1188,7 +1188,7 @@ def main(argv: list[str] | None = None) -> int:
         return sync_pages(
             manifest,
             dry_run=bool(getattr(args, "dry_run", False)),
-            create_branch=bool(getattr(args, "create_branch", False) or getattr(args, "commit", False)),
+            create_branch=bool(getattr(args, "create_branch", False)),
             commit=bool(getattr(args, "commit", False)),
             confidence_threshold=float(getattr(args, "confidence_threshold", 0.72)),
             fixture_dir=fixture_dir,
