@@ -2,6 +2,8 @@
 
 `cyborg-sync` is the non-interactive path for keeping Cyborg Lab pages aligned with real repo changes.
 
+If you want the full end-to-end workflow from new local project to repeatable site updates, read [cyborg-project-to-site-playbook.md](/Users/ryanjohnson/dotfiles/docs/cyborg-project-to-site-playbook.md).
+
 It is built for the workflow you described:
 
 - project repos use a local `.cyborg-docs.toml` manifest
