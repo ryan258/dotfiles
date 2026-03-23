@@ -229,8 +229,12 @@ coach_collect_tactical_metrics() {
     local dir_switches=0
 
     if [[ -f "$todo_file" ]]; then
-        open_tasks=$(awk -F'|' '$1 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/ {count++} END {print count+0}' "$todo_file")
-        stale_tasks=$(awk -F'|' -v cutoff="$stale_cutoff" '$1 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/ && $1 < cutoff {count++} END {print count+0}' "$todo_file")
+        # Ensure file is in new ID|DATE|text format before reading
+        if type ensure_todo_migrated >/dev/null 2>&1; then
+            ensure_todo_migrated
+        fi
+        open_tasks=$(awk -F'|' '$2 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/ {count++} END {print count+0}' "$todo_file")
+        stale_tasks=$(awk -F'|' -v cutoff="$stale_cutoff" '$2 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/ && $2 < cutoff {count++} END {print count+0}' "$todo_file")
     fi
 
     if [[ -f "$done_file" ]]; then

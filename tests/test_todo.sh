@@ -56,7 +56,7 @@ teardown() {
 
   run bash "$BATS_TEST_DIRNAME/../scripts/todo.sh" to-idea 1
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "Moved task 1 to ideas list" ]]
+  [[ "$output" =~ "Moved task #1 to ideas list" ]]
 
   run bash "$BATS_TEST_DIRNAME/../scripts/idea.sh" list
   [ "$status" -eq 0 ]
@@ -88,12 +88,12 @@ teardown() {
 @test "todo to-idea validates numeric input" {
   run bash "$BATS_TEST_DIRNAME/../scripts/todo.sh" to-idea "abc"
   [ "$status" -eq 1 ]
-  [[ "$output" =~ "Invalid task number" ]]
+  [[ "$output" =~ "Invalid task ID" ]]
 }
 
 @test "todo to-idea handles out of range" {
   touch "$TEST_DATA_DIR/.config/dotfiles-data/todo.txt"
   run bash "$BATS_TEST_DIRNAME/../scripts/todo.sh" to-idea 999
   [ "$status" -eq 1 ]
-  [[ "$output" =~ "Task 999 not found" ]]
+  [[ "$output" =~ "Task ID 999 not found" ]]
 }

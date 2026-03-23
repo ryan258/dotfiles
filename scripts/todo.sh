@@ -19,23 +19,65 @@ SPOON_MANAGER="$SCRIPT_DIR/spoon_manager.sh"
 # Ensure data files exist
 touch "$TODO_FILE" "$DONE_FILE"
 
-# Setup cleanup trap provided by common.sh/file_ops.sh usually, but we can add specific ones if needed.
-# common.sh sources file_ops.sh which defines atomic ops with their own traps.
-# Global cleanup for this script? None needed currently as valid temp files are handled by atomic ops.
+#=============================================================================
+# Task ID Infrastructure
+#=============================================================================
+
+# Alias for shared next_todo_id from common.sh
+_next_task_id() { next_todo_id; }
+
+# Alias for shared ensure_todo_migrated from common.sh
+_migrate_todo_if_needed() { ensure_todo_migrated; }
+
+# Resolve a task reference (ID) to a line number.
+# Usage: line_num=$(_resolve_task_ref <id>) || die "not found"
+# Returns the 1-based line number where this ID appears.
+# Returns 1 (failure) if not found — caller must handle the error.
+_resolve_task_ref() {
+    local ref="${1:-}"
+    local line_num
+    line_num=$(awk -F'|' -v id="$ref" '$1 == id { print NR; exit }' "$TODO_FILE")
+
+    if [[ -z "$line_num" ]]; then
+        return 1
+    fi
+    printf '%s' "$line_num"
+}
+
+# Get task text by ID (field 3+). Returns 1 if task not found.
+_get_task_text_by_id() {
+    local ref="$1"
+    local line_num
+    line_num=$(_resolve_task_ref "$ref") || return 1
+    sed -n "${line_num}p" "$TODO_FILE" | cut -d'|' -f3-
+}
+
+# Get full task line by ID. Returns 1 if task not found.
+_get_task_line_by_id() {
+    local ref="$1"
+    local line_num
+    line_num=$(_resolve_task_ref "$ref") || return 1
+    sed -n "${line_num}p" "$TODO_FILE"
+}
 
 #=============================================================================
 # Subcommand Functions
 #=============================================================================
 
+_require_task_id() {
+    local task_id="${1:-}"
+    [[ -n "$task_id" ]] || die "Task ID required" "$EXIT_INVALID_ARGS"
+    validate_numeric "$task_id" "task ID" || die "Invalid task ID '$task_id'" "$EXIT_ERROR"
+    printf '%s' "$task_id"
+}
+
 _require_task_text() {
-    local task_num="$1"
-    validate_numeric "$task_num" "task number" || die "Invalid task number '$task_num'" "$EXIT_ERROR"
+    local task_id
+    task_id=$(_require_task_id "$1")
     local task_text
-    if ! task_text=$(get_todo_text "$task_num"); then
-        die "Unable to read task $task_num" "$EXIT_ERROR"
-    fi
+    task_text=$(_get_task_text_by_id "$task_id") || true
     if [[ -z "$task_text" ]]; then
-        die "Task $task_num not found" "$EXIT_ERROR"
+        die "Task ID $task_id not found" "$EXIT_ERROR"
     fi
     printf '%s' "$task_text"
 }
@@ -49,9 +91,10 @@ cmd_add() {
     fi
 
     task_text=$(sanitize_for_storage "$task_text")
-    
-    # Append to file (simple append is generally safe, or we could use atomic_append if we implemented it)
-    echo "$(date +%Y-%m-%d)|$task_text" >> "$TODO_FILE"
+
+    local task_id
+    task_id=$(_next_task_id)
+    echo "${task_id}|$(date +%Y-%m-%d)|$task_text" >> "$TODO_FILE"
 
     # Encouraging messages
     local messages=(
@@ -59,8 +102,7 @@ cmd_add() {
         "Captured! One less thing to remember."
         "On the list. Let's get it done!"
     )
-    # Fix ANSI color escapes
-    printf "%s ' \033[32m%s \033[0m'\n" "${messages[$((RANDOM % ${#messages[@]}))]}" "$task_text"
+    printf "%s [#%s] ' \033[32m%s \033[0m'\n" "${messages[$((RANDOM % ${#messages[@]}))]}" "$task_id" "$task_text"
 }
 
 cmd_list() {
@@ -69,28 +111,27 @@ cmd_list() {
         echo "No tasks found."
         return
     fi
-    awk -F'|' '{ printf "%-4s %-12s %s\n", NR, $1, $2 }' "$TODO_FILE"
+    awk -F'|' '{ printf "#%-4s %-12s %s\n", $1, $2, $3 }' "$TODO_FILE"
 }
 
 cmd_done() {
-    local task_num="$1"
-    validate_numeric "$task_num" "task number" || die "Invalid task number '$task_num'" "$EXIT_ERROR"
+    local task_id
+    task_id=$(_require_task_id "$1")
+    local line_num
+    line_num=$(_resolve_task_ref "$task_id") || die "Task ID $task_id not found" "$EXIT_ERROR"
 
     local task_line
-    task_line=$(get_todo_line "$task_num") || die "Unable to read task $task_num" "$EXIT_ERROR"
-    [[ -n "$task_line" ]] || die "Task $task_num not found" "$EXIT_ERROR"
-    
-    # Extract text part
-    local task_text
-    task_text=$(echo "$task_line" | cut -d'|' -f2-)
+    task_line=$(sed -n "${line_num}p" "$TODO_FILE")
 
-    # Append to done file (pipe-delimited)
+    # Extract text part (field 3+ in ID|DATE|text format)
+    local task_text
+    task_text=$(echo "$task_line" | cut -d'|' -f3-)
     task_text=$(sanitize_for_storage "$task_text")
     echo "$(date '+%Y-%m-%d %H:%M:%S')|$task_text" >> "$DONE_FILE"
 
     # Remove from todo file atomically
-    atomic_delete_line "$task_num" "$TODO_FILE" || {
-        die "Failed to delete task line $task_num from todo file" "$EXIT_ERROR"
+    atomic_delete_line "$line_num" "$TODO_FILE" || {
+        die "Failed to delete task $task_id from todo file" "$EXIT_ERROR"
     }
 
     local messages=(
@@ -99,105 +140,98 @@ cmd_done() {
         "You're on fire! 🔥"
         "Progress! Keep going!"
     )
-    printf "%s: ' \033[32m%s \033[0m'\n" "${messages[$((RANDOM % ${#messages[@]}))]}" "$task_text"
+    printf "%s: [#%s] ' \033[32m%s \033[0m'\n" "${messages[$((RANDOM % ${#messages[@]}))]}" "$task_id" "$task_text"
 }
 
 cmd_rm() {
-    local task_num="$1"
-    validate_numeric "$task_num" "task number" || die "Invalid task number '$task_num'" "$EXIT_ERROR"
-
-    local task_line
-    task_line=$(get_todo_line "$task_num") || die "Unable to read task $task_num" "$EXIT_ERROR"
-    [[ -n "$task_line" ]] || die "Task $task_num not found" "$EXIT_ERROR"
+    local task_id
+    task_id=$(_require_task_id "$1")
+    local line_num
+    line_num=$(_resolve_task_ref "$task_id") || die "Task ID $task_id not found" "$EXIT_ERROR"
 
     # Remove from todo file atomically
-    atomic_delete_line "$task_num" "$TODO_FILE" || {
-        die "Failed to delete task line $task_num from todo file" "$EXIT_ERROR"
+    atomic_delete_line "$line_num" "$TODO_FILE" || {
+        die "Failed to delete task $task_id from todo file" "$EXIT_ERROR"
     }
 
-    echo "Task $task_num removed permanently."
+    echo "Task #$task_id removed permanently."
 }
 
 cmd_clear() {
     if [[ -s "$TODO_FILE" ]]; then
-        # Move all to done
+        # Move all to done (extract text from field 3+)
         while IFS= read -r line; do
             if [[ -n "$line" ]]; then
-                task_text=$(echo "$line" | cut -d'|' -f2-)
+                task_text=$(echo "$line" | cut -d'|' -f3-)
                 task_text=$(sanitize_for_storage "$task_text")
                 echo "$(date '+%Y-%m-%d %H:%M:%S')|$task_text" >> "$DONE_FILE"
             fi
         done < "$TODO_FILE"
     fi
-    
+
     # Atomic clear (write empty string)
     atomic_write "" "$TODO_FILE" || die "Failed to clear todo file" "$EXIT_ERROR"
     echo "All tasks cleared."
 }
 
 cmd_bump() {
-    local task_num="$1"
-    validate_numeric "$task_num" "task number" || die "Invalid task number '$task_num'" "$EXIT_ERROR"
+    local task_id
+    task_id=$(_require_task_id "$1")
+    local line_num
+    line_num=$(_resolve_task_ref "$task_id") || die "Task ID $task_id not found" "$EXIT_ERROR"
 
     local task_line
-    task_line=$(get_todo_line "$task_num") || die "Unable to read task $task_num" "$EXIT_ERROR"
-    [[ -n "$task_line" ]] || die "Task $task_num not found" "$EXIT_ERROR"
+    task_line=$(sed -n "${line_num}p" "$TODO_FILE")
 
     # Delete then prepend
-    atomic_delete_line "$task_num" "$TODO_FILE" || die "Failed to remove task $task_num before bump" "$EXIT_ERROR"
-    atomic_prepend "$task_line" "$TODO_FILE" || die "Failed to bump task $task_num to top" "$EXIT_ERROR"
+    atomic_delete_line "$line_num" "$TODO_FILE" || die "Failed to remove task $task_id before bump" "$EXIT_ERROR"
+    atomic_prepend "$task_line" "$TODO_FILE" || die "Failed to bump task $task_id to top" "$EXIT_ERROR"
 
-    echo "Bumped task $task_num to top."
+    echo "Bumped task #$task_id to top."
 }
 
 cmd_to_idea() {
-    local task_num="${1:-}"
-    [[ -n "$task_num" ]] || die "Usage: $(basename "$0") to-idea <number>" "$EXIT_INVALID_ARGS"
-    validate_numeric "$task_num" "task number" || die "Invalid task number '$task_num'" "$EXIT_ERROR"
+    local task_id="${1:-}"
+    [[ -n "$task_id" ]] || die "Usage: $(basename "$0") to-idea <id>" "$EXIT_INVALID_ARGS"
+    task_id=$(_require_task_id "$task_id")
+    local line_num
+    line_num=$(_resolve_task_ref "$task_id") || die "Task ID $task_id not found" "$EXIT_ERROR"
 
-    local task_line
-    task_line=$(get_todo_line "$task_num") || die "Unable to read task $task_num" "$EXIT_ERROR"
-    [[ -n "$task_line" ]] || die "Task $task_num not found" "$EXIT_ERROR"
-
-    # Extract text part
     local task_text
-    task_text=$(echo "$task_line" | cut -d'|' -f2-)
+    task_text=$(sed -n "${line_num}p" "$TODO_FILE" | cut -d'|' -f3-)
 
     # Append to idea file
     task_text=$(sanitize_for_storage "$task_text")
     echo "$(date +%Y-%m-%d)|$task_text" >> "$IDEA_FILE"
 
     # Remove from todo file atomically
-    atomic_delete_line "$task_num" "$TODO_FILE" || {
-        die "Failed to delete task line $task_num from todo file" "$EXIT_ERROR"
+    atomic_delete_line "$line_num" "$TODO_FILE" || {
+        die "Failed to delete task $task_id from todo file" "$EXIT_ERROR"
     }
 
-    echo "Moved task $task_num to ideas list: $task_text"
+    echo "Moved task #$task_id to ideas list: $task_text"
 }
 
 cmd_top() {
     local count="${1:-3}"
     validate_numeric "$count" "count" || count=3
-    
+
     echo "--- Top $count Tasks ---"
     if [[ ! -s "$TODO_FILE" ]]; then
         return
     fi
-    head -n "$count" "$TODO_FILE" | awk -F'|' '{ printf "%-4s %-12s %s\n", NR, $1, $2 }'
+    head -n "$count" "$TODO_FILE" | awk -F'|' '{ printf "#%-4s %-12s %s\n", $1, $2, $3 }'
 }
 
 cmd_commit() {
-    local task_num="$1"
+    local task_id
+    task_id=$(_require_task_id "$1")
     shift
     local msg="$*"
 
-    validate_numeric "$task_num" "task number" || die "Invalid task number '$task_num'" "$EXIT_ERROR"
-
-    local task_line
-    task_line=$(get_todo_line "$task_num") || die "Unable to read task $task_num" "$EXIT_ERROR"
-    [[ -n "$task_line" ]] || die "Task $task_num not found" "$EXIT_ERROR"
     local task_text
-    task_text=$(echo "$task_line" | cut -d'|' -f2-)
+    task_text=$(_get_task_text_by_id "$task_id") || true
+    [[ -n "$task_text" ]] || die "Task ID $task_id not found" "$EXIT_ERROR"
 
     if [[ -z "$msg" ]]; then
         msg="Done: $task_text"
@@ -208,7 +242,7 @@ cmd_commit() {
     git commit -m "$msg"
 
     # Mark as done
-    cmd_done "$task_num"
+    cmd_done "$task_id"
     echo "Completed and committed: $task_text"
 }
 
@@ -236,9 +270,11 @@ cmd_undo() {
     local task_text_to_restore
     task_text_to_restore=$(echo "$last_done_task" | cut -d'|' -f2-)
 
-    # Add back to todo
-    echo "$(date +%Y-%m-%d)|$task_text_to_restore" >> "$TODO_FILE"
-    echo "Restored task: $task_text_to_restore"
+    # Add back to todo with a new ID
+    local restored_id
+    restored_id=$(_next_task_id)
+    echo "${restored_id}|$(date +%Y-%m-%d)|$task_text_to_restore" >> "$TODO_FILE"
+    echo "Restored task [#$restored_id]: $task_text_to_restore"
 }
 
 # Wrapper for time_tracker.sh
@@ -253,11 +289,13 @@ cmd_time_wrapper() {
 }
 
 cmd_start() {
-    local task_num="$1"
+    local task_id
+    task_id=$(_require_task_id "$1")
     local task_text
-    task_text=$(_require_task_text "$task_num")
-    
-    cmd_time_wrapper "start" "$task_num" "$task_text"
+    task_text=$(_get_task_text_by_id "$task_id") || true
+    [[ -n "$task_text" ]] || die "Task ID $task_id not found" "$EXIT_ERROR"
+
+    cmd_time_wrapper "start" "$task_id" "$task_text"
 }
 
 cmd_stop() {
@@ -265,24 +303,27 @@ cmd_stop() {
 }
 
 cmd_time() {
-    local task_num="$1"
-    validate_numeric "$task_num" "task number" || die "Invalid task number '$task_num'" "$EXIT_ERROR"
-    cmd_time_wrapper "check" "$task_num"
+    local task_id
+    task_id=$(_require_task_id "$1")
+    _resolve_task_ref "$task_id" >/dev/null || die "Task ID $task_id not found" "$EXIT_ERROR"
+    cmd_time_wrapper "check" "$task_id"
 }
 
 cmd_spend() {
-    local task_num="$1"
+    local task_id
+    task_id=$(_require_task_id "$1")
     local count="$2"
-    
+
     validate_numeric "$count" "spoon count" || die "Invalid spoon count '$count'" "$EXIT_ERROR"
-    
+
     local task_text
-    task_text=$(_require_task_text "$task_num")
-    
+    task_text=$(_get_task_text_by_id "$task_id") || true
+    [[ -n "$task_text" ]] || die "Task ID $task_id not found" "$EXIT_ERROR"
+
     if [[ ! -x "$SPOON_MANAGER" ]]; then
         die "Spoon manager not found at $SPOON_MANAGER" "$EXIT_FILE_NOT_FOUND"
     fi
-    
+
     "$SPOON_MANAGER" spend "$count" "$task_text"
 }
 
@@ -299,13 +340,15 @@ cmd_up() {
 }
 
 cmd_debug() {
-    local task_num="${1:-}"
-    [[ -z "$task_num" ]] && die "Usage: $(basename "$0") debug <number>" "$EXIT_INVALID_ARGS"
-    
+    local task_id="${1:-}"
+    [[ -z "$task_id" ]] && die "Usage: $(basename "$0") debug <id>" "$EXIT_INVALID_ARGS"
+    task_id=$(_require_task_id "$task_id")
+
     local task_text
-    task_text=$(_require_task_text "$task_num")
-    
-    echo "🤖 Debugging task #$task_num with AI Staff..."
+    task_text=$(_get_task_text_by_id "$task_id") || true
+    [[ -n "$task_text" ]] || die "Task ID $task_id not found" "$EXIT_ERROR"
+
+    echo "🤖 Debugging task #$task_id with AI Staff..."
     echo "Task: $task_text"
     echo "---"
     echo ""
@@ -333,16 +376,18 @@ cmd_debug() {
 }
 
 cmd_delegate() {
-    local task_num="${1:-}"
+    local task_id="${1:-}"
     local dispatcher="${2:-}"
-    
-    [[ -z "$task_num" ]] && die "Usage: $(basename "$0") delegate <number> <type>" "$EXIT_INVALID_ARGS"
+
+    [[ -z "$task_id" ]] && die "Usage: $(basename "$0") delegate <id> <type>" "$EXIT_INVALID_ARGS"
     [[ -z "$dispatcher" ]] && die "Dispatcher required (tech|creative|content)" "$EXIT_ERROR"
+    task_id=$(_require_task_id "$task_id")
 
     local task_text
-    task_text=$(_require_task_text "$task_num")
+    task_text=$(_get_task_text_by_id "$task_id") || true
+    [[ -n "$task_text" ]] || die "Task ID $task_id not found" "$EXIT_ERROR"
 
-    echo "🤖 Delegating task #$task_num to AI Staff ($dispatcher dispatcher)..."
+    echo "🤖 Delegating task #$task_id to AI Staff ($dispatcher dispatcher)..."
     echo "Task: $task_text"
     echo "---"
     echo ""
@@ -371,7 +416,7 @@ cmd_delegate() {
     echo ""
     echo "✅ Task delegated successfully"
     echo "Review the AI's output above, then mark complete when done:"
-    echo "  $(basename "$0") done $task_num"
+    echo "  $(basename "$0") done $task_id"
 }
 
 #=============================================================================
@@ -385,33 +430,36 @@ Usage: $(basename "$0") <command> [args]
 Task Management:
   add <text>                  Add a new task
   list                        Show all current tasks
-  done <#task>                Mark a task as complete
-  rm <#task>                  Remove a task properly (no archive)
+  done <id>                   Mark a task as complete
+  rm <id>                     Remove a task permanently (no archive)
   clear                       Clear all tasks
   undo                        Restore the most recently completed task
   up                          Open todo file in editor
-  to-idea <#task>             Move a task back to the ideas list
+  to-idea <id>                Move a task to the ideas list
 
 Prioritization:
-  bump <#task>                Move a task to the top of the list
+  bump <id>                   Move a task to the top of the list
   top [count]                 Show the top N tasks (default: 3)
 
 Git Integration:
-  commit <#task> [msg]        Commit and mark a task as done
+  commit <id> [msg]           Commit and mark a task as done
 
 Time & Energy:
-  start <#task>               Start timer for task
+  start <id>                  Start timer for task
   stop                        Stop active timer
-  time <#task>                Show total time for task
-  spend <#task> <count>       Spend spoons on a task
+  time <id>                   Show total time for task
+  spend <id> <count>          Spend spoons on a task
 
 AI-Powered:
-  debug <#task>               Debug a task using AI technical specialist
-  delegate <#task> <type>     Delegate task to AI (tech|creative|content)
+  debug <id>                  Debug a task using AI technical specialist
+  delegate <id> <type>        Delegate task to AI (tech|creative|content)
 EOF
 }
 
 main() {
+    # Auto-migrate old format (DATE|text) to new format (ID|DATE|text)
+    _migrate_todo_if_needed
+
     local cmd="${1:-list}"
     if [[ "$cmd" != "list" ]]; then
         shift || true

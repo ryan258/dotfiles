@@ -180,7 +180,13 @@ _coach_chat_add_todo() {
         task=$(sanitize_input "$task")
     fi
 
-    echo "${today}|${task}" >> "$todo_file"
+    local task_id
+    if type next_todo_id >/dev/null 2>&1; then
+        task_id=$(next_todo_id)
+    else
+        task_id=$(date '+%s')
+    fi
+    echo "${task_id}|${today}|${task}" >> "$todo_file"
     echo "Added todo: $task" >&2
 }
 

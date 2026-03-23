@@ -65,8 +65,8 @@ teardown() {
 
 @test "coach_collect_tactical_metrics extracts tactical window metrics" {
     cat > "$DATA_DIR/todo.txt" <<EOF
-$OLD_DAY_1|old stale task
-$DAY_MINUS1|active task
+1|$OLD_DAY_1|old stale task
+2|$DAY_MINUS1|active task
 EOF
     cat > "$DATA_DIR/todo_done.txt" <<EOF
 $DAY_MINUS1 10:00:00|done one
@@ -124,11 +124,11 @@ EOF
 
 @test "coach_build_behavior_digest classifies working signals and exploration patterns" {
     cat > "$DATA_DIR/todo.txt" <<EOF
-$OLD_DAY_1|stale 1
-$OLD_DAY_2|stale 2
-$OLD_DAY_3|stale 3
-$OLD_DAY_4|stale 4
-$OLD_DAY_5|stale 5
+1|$OLD_DAY_1|stale 1
+2|$OLD_DAY_2|stale 2
+3|$OLD_DAY_3|stale 3
+4|$OLD_DAY_4|stale 4
+5|$OLD_DAY_5|stale 5
 EOF
     cat > "$DATA_DIR/todo_done.txt" <<EOF
 $ANCHOR_DAY 10:00:00|recent completion

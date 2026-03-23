@@ -21,10 +21,11 @@ echo "Good $part, $(whoami)."
 # Optional quick context (silent if tools missing)
 command -v weather.sh >/dev/null 2>&1 && weather.sh || true
 TODO_FILE="${TODO_FILE:?TODO_FILE is not set by config.sh}"
+ensure_todo_migrated
 if [ -s "$TODO_FILE" ]; then
   echo
   echo "Top tasks:"
-  nl -w2 -s'. ' "$TODO_FILE" | sed -n '1,5p'
+  head -5 "$TODO_FILE" | awk -F'|' '{ printf "#%-3s %s\n", $1, $3 }'
 fi
 echo
 echo 'Tip: add a note → journal.sh "Started: <thing>"'

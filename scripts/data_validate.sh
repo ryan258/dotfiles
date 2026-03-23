@@ -142,7 +142,7 @@ validate_format() {
 
 if [ "$FORMAT_CHECK" = true ]; then
   echo "Validating data file formats..."
-  validate_format "$TODO_FILE" '^[0-9]{4}-[0-9]{2}-[0-9]{2}\\|.+$' "todo.txt"
+  validate_format "$TODO_FILE" '^[0-9]+\\|[0-9]{4}-[0-9]{2}-[0-9]{2}\\|.+$' "todo.txt"
   validate_format "$DONE_FILE" '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}\\|.+$' "todo_done.txt"
   validate_format "$JOURNAL_FILE" '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}\\|.+$' "journal.txt"
   validate_format "$HEALTH_FILE" '^[^|]+\\|[0-9]{4}-[0-9]{2}-[0-9]{2}([[:space:]]+[0-9]{2}:[0-9]{2}(:[0-9]{2})?)?\\|.*$' "health.txt"

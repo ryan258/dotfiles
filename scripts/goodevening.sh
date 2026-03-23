@@ -24,10 +24,74 @@ if [ -f "$BLOG_SCRIPT" ] && [ -n "$BLOG_STATUS_DIR" ] && [ -d "$BLOG_STATUS_DIR"
 fi
 
 
-# 1. Determine "Today"
-# If startday has not run, goodevening falls back to the system date
-# (or previous day before 04:00 in interactive sessions).
-# Usage: goodevening.sh [--refresh|-r] [YYYY-MM-DD]
+# Determine the session date from startday marker, override, or system clock.
+# Usage: determine_session_date [--force-current] [date_override]
+# Prints the resolved YYYY-MM-DD date to stdout.
+determine_session_date() {
+    local force_current="${1:-false}"
+    local date_override="${2:-}"
+    local current_day_file="$DATA_DIR/current_day"
+
+    # Explicit override takes priority
+    if [ -n "$date_override" ]; then
+        if ! validate_date_ymd "$date_override" "override date" >/dev/null 2>&1; then
+            die "Invalid date override '$date_override' (expected YYYY-MM-DD)." "$EXIT_INVALID_ARGS"
+        fi
+        echo "📅 Overriding date to: $date_override" >&2
+        printf '%s' "$date_override"
+        return 0
+    fi
+
+    # Refresh flag: use system date
+    if [ "$force_current" = true ]; then
+        log_info "goodevening.sh: refresh requested; using system date $(date_today)"
+        date_today
+        return 0
+    fi
+
+    # Read startday marker if available
+    if [ -f "$current_day_file" ]; then
+        local marker_date
+        marker_date=$(cat "$current_day_file")
+
+        if ! validate_date_ymd "$marker_date" "current_day marker" >/dev/null 2>&1; then
+            log_warn "goodevening.sh: invalid current_day marker; using system date $(date_today)"
+            date_today
+            return 0
+        fi
+
+        # Check for stale marker (> 24 hours old)
+        local marker_mtime marker_age_seconds now_epoch
+        marker_mtime=$(file_mtime_epoch "$current_day_file" 2>/dev/null || echo "0")
+        now_epoch=$(date_epoch_now)
+        marker_age_seconds=0
+        if validate_numeric "$marker_mtime" "marker mtime epoch" >/dev/null 2>&1 && [ "$marker_mtime" -gt 0 ] && [ "$now_epoch" -ge "$marker_mtime" ]; then
+            marker_age_seconds=$((now_epoch - marker_mtime))
+        fi
+
+        if [ "$marker_age_seconds" -gt 86400 ]; then
+            log_warn "goodevening.sh: stale current_day marker ($marker_age_seconds seconds old); using system date $(date_today)"
+            date_today
+            return 0
+        fi
+
+        printf '%s' "$marker_date"
+        return 0
+    fi
+
+    # No marker: before 04:00 in interactive sessions, use previous day
+    local current_hour_num
+    current_hour_num=$((10#$(date_hour_24)))
+    if [ -t 0 ] && [ "$current_hour_num" -lt 4 ]; then
+        log_warn "goodevening.sh: startday marker missing before 04:00; using previous day"
+        date_shift_days -1 "%Y-%m-%d"
+    else
+        log_warn "goodevening.sh: startday marker missing; using system date $(date_today)"
+        date_today
+    fi
+}
+
+# 1. Parse arguments and determine session date
 FORCE_CURRENT_DAY=false
 DATE_OVERRIDE=""
 
@@ -42,48 +106,7 @@ for arg in "$@"; do
     esac
 done
 
-if [ -n "$DATE_OVERRIDE" ]; then
-    TODAY="$DATE_OVERRIDE"
-    if ! validate_date_ymd "$TODAY" "override date" >/dev/null 2>&1; then
-        die "Invalid date override '$TODAY' (expected YYYY-MM-DD)." "$EXIT_INVALID_ARGS"
-    fi
-    echo "📅 Overriding date to: $TODAY"
-else
-    CURRENT_DAY_FILE="$DATA_DIR/current_day"
-
-    if [ "$FORCE_CURRENT_DAY" = true ]; then
-        TODAY=$(date_today)
-        log_info "goodevening.sh: refresh requested; using system date $TODAY"
-    elif [ -f "$CURRENT_DAY_FILE" ]; then
-        TODAY=$(cat "$CURRENT_DAY_FILE")
-        if ! validate_date_ymd "$TODAY" "current_day marker" >/dev/null 2>&1; then
-            TODAY=$(date_today)
-            log_warn "goodevening.sh: invalid current_day marker; using system date $TODAY"
-        else
-            marker_mtime_epoch=$(file_mtime_epoch "$CURRENT_DAY_FILE" 2>/dev/null || echo "0")
-            now_epoch=$(date_epoch_now)
-            marker_age_seconds=0
-            if validate_numeric "$marker_mtime_epoch" "marker mtime epoch" >/dev/null 2>&1 && [ "$marker_mtime_epoch" -gt 0 ] && [ "$now_epoch" -ge "$marker_mtime_epoch" ]; then
-                marker_age_seconds=$((now_epoch - marker_mtime_epoch))
-            fi
-
-            if [ "$marker_age_seconds" -gt 86400 ]; then
-                TODAY=$(date_today)
-                log_warn "goodevening.sh: stale current_day marker ($marker_age_seconds seconds old); using system date $TODAY"
-            fi
-        fi
-    else
-        current_hour="$(date_hour_24)"
-        current_hour_num=$((10#$current_hour))
-        if [ -t 0 ] && [ "$current_hour_num" -lt 4 ]; then
-            TODAY=$(date_shift_days -1 "%Y-%m-%d")
-            log_warn "goodevening.sh: startday marker missing before 04:00; using previous day $TODAY"
-        else
-            TODAY=$(date_today)
-            log_warn "goodevening.sh: startday marker missing; using system date $TODAY"
-        fi
-    fi
-fi
+TODAY=$(determine_session_date "$FORCE_CURRENT_DAY" "$DATE_OVERRIDE")
 
 echo "=== Evening Close-Out for $TODAY — $(date_now '%Y-%m-%d %H:%M') ==="
 
@@ -101,7 +124,7 @@ echo ""
 echo "✅ COMPLETED TODAY:"
 COMPLETED_TASKS=""
 if [ -f "$TODO_DONE_FILE" ]; then
-    COMPLETED_TASKS=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {print}' "$TODO_DONE_FILE")
+    COMPLETED_TASKS=$(filter_entries_by_date "$TODO_DONE_FILE" "$TODAY")
     if [ -n "$COMPLETED_TASKS" ]; then
         echo "$COMPLETED_TASKS" | sed 's/^/  • /'
     else
@@ -114,7 +137,7 @@ echo ""
 echo "📝 TODAY'S JOURNAL:"
 if [ -f "$JOURNAL_FILE" ]; then
     # TODAY is valid
-    TODAY_JOURNAL_ENTRIES_TEXT=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {print}' "$JOURNAL_FILE")
+    TODAY_JOURNAL_ENTRIES_TEXT=$(filter_entries_by_date "$JOURNAL_FILE" "$TODAY")
     if [ -n "$TODAY_JOURNAL_ENTRIES_TEXT" ]; then
         echo "$TODAY_JOURNAL_ENTRIES_TEXT" | sed 's/^/  • /'
     else
@@ -200,10 +223,10 @@ TASKS_COMPLETED=0
 JOURNAL_ENTRY_COUNT=0
 _GE_COMMIT_COUNT=0
 if [ -f "$TODO_DONE_FILE" ]; then
-    TASKS_COMPLETED=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {count++} END {print count+0}' "$TODO_DONE_FILE")
+    TASKS_COMPLETED=$(count_entries_by_date "$TODO_DONE_FILE" "$TODAY")
 fi
 if [ -f "$JOURNAL_FILE" ]; then
-    JOURNAL_ENTRY_COUNT=$(awk -F'|' -v today="$TODAY" '$1 ~ "^"today {count++} END {print count+0}' "$JOURNAL_FILE")
+    JOURNAL_ENTRY_COUNT=$(count_entries_by_date "$JOURNAL_FILE" "$TODAY")
 fi
 # Count commits across repos as a win signal
 if command -v git >/dev/null 2>&1; then

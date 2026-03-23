@@ -125,19 +125,32 @@ get_todo_line() {
     sed -n "${task_num}p" "$todo_file"
 }
 
-# Get task text (without metadata) by number
+# Get task text (without metadata) by line number.
+# Format: ID|DATE|text — returns field 3+
 # Usage: get_todo_text 5
 get_todo_text() {
     local task_num="$1"
     local line
 
     line=$(get_todo_line "$task_num") || return 1
-    echo "$line" | cut -d'|' -f2-
+    echo "$line" | cut -d'|' -f3-
 }
 
-# Get task priority by number
-# Usage: get_todo_priority 5
-get_todo_priority() {
+# Get task date by line number.
+# Format: ID|DATE|text — returns field 2 (date)
+# Usage: get_todo_date 5
+get_todo_date() {
+    local task_num="$1"
+    local line
+
+    line=$(get_todo_line "$task_num") || return 1
+    echo "$line" | cut -d'|' -f2
+}
+
+# Get task ID by line number.
+# Format: ID|DATE|text — returns field 1 (ID)
+# Usage: get_todo_id 5
+get_todo_id() {
     local task_num="$1"
     local line
 
@@ -159,6 +172,74 @@ count_todos() {
         wc -l < "$todo_file" | tr -d ' '
     else
         echo "0"
+    fi
+}
+
+#=============================================================================
+# Todo Format Migration (ID|DATE|text)
+#=============================================================================
+
+# Get the next sequential task ID and increment the counter.
+# Requires: $TODO_ID_FILE (from config.sh)
+# Usage: id=$(next_todo_id)
+next_todo_id() {
+    local id_file="${TODO_ID_FILE:-}"
+    if [[ -z "$id_file" ]]; then
+        echo "Error: TODO_ID_FILE is not set. Source config.sh first." >&2
+        return 1
+    fi
+    local next_id=1
+    if [[ -f "$id_file" ]]; then
+        next_id=$(cat "$id_file" 2>/dev/null || echo "1")
+        validate_numeric "$next_id" "task ID counter" >/dev/null 2>&1 || next_id=1
+    fi
+    echo "$((next_id + 1))" > "$id_file"
+    printf '%s' "$next_id"
+}
+
+# Auto-migrate old format (DATE|text) to new format (ID|DATE|text).
+# Handles mixed files: only rows whose first field is a date get an ID prepended.
+# Rows that already start with a numeric ID are passed through unchanged.
+# Requires: $TODO_FILE, $TODO_ID_FILE (from config.sh)
+# Usage: ensure_todo_migrated
+ensure_todo_migrated() {
+    local todo_file="${TODO_FILE:-}"
+    [[ -n "$todo_file" ]] || return 0
+    [[ -s "$todo_file" ]] || return 0
+
+    # Quick check: if no row starts with a date, nothing to migrate
+    if ! grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}\|' "$todo_file"; then
+        return 0
+    fi
+
+    local migrated=""
+    local changed=false
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        local first_field
+        first_field="${line%%|*}"
+        if [[ "$first_field" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            # Legacy row: prepend a new ID
+            local id
+            id=$(next_todo_id)
+            migrated="${migrated}${id}|${line}"$'\n'
+            changed=true
+        else
+            # Already has an ID (or unknown format) — keep as-is
+            migrated="${migrated}${line}"$'\n'
+        fi
+    done < "$todo_file"
+
+    if [[ "$changed" == "true" ]]; then
+        migrated="${migrated%$'\n'}"
+        if type atomic_write >/dev/null 2>&1; then
+            atomic_write "$migrated" "$todo_file" || {
+                echo "Error: Failed to migrate todo file to ID format" >&2
+                return 1
+            }
+        else
+            printf '%s\n' "$migrated" > "$todo_file"
+        fi
     fi
 }
 

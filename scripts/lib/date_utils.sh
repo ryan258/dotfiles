@@ -348,3 +348,38 @@ PY
         date -u -d "@$epoch" "+%Y-%m-%dT%H:%M:%SZ"
     fi
 }
+
+# Filter pipe-delimited entries by date from a file or stdin.
+# Usage: filter_entries_by_date <file_or_-> <date> [field_num] [mode]
+#   file_or_-  - path to pipe-delimited data file, or "-" for stdin
+#   date       - YYYY-MM-DD date string to match against
+#   field_num  - which pipe-delimited field contains the date (default: 1)
+#   mode       - "exact" matches date prefix, "since" matches >= date (default: "exact")
+filter_entries_by_date() {
+    local file="${1:--}"
+    local target_date="$2"
+    local field="${3:-1}"
+    local mode="${4:-exact}"
+
+    if [[ "$file" != "-" ]]; then
+        [[ -f "$file" && -s "$file" ]] || return 0
+    fi
+
+    local awk_expr
+    case "$mode" in
+        since) awk_expr='substr($f, 1, 10) >= date' ;;
+        *)     awk_expr='substr($f, 1, 10) == date' ;;
+    esac
+
+    if [[ "$file" == "-" ]]; then
+        awk -F'|' -v date="$target_date" -v f="$field" "$awk_expr" </dev/stdin
+    else
+        awk -F'|' -v date="$target_date" -v f="$field" "$awk_expr" "$file"
+    fi
+}
+
+# Count pipe-delimited entries by date from a file.
+# Usage: count_entries_by_date <file> <date> [field_num] [mode]
+count_entries_by_date() {
+    filter_entries_by_date "$@" | wc -l | tr -d ' '
+}

@@ -42,10 +42,9 @@ _log_api_call() {
     local prompt_tokens="${3:-0}"
     local completion_tokens="${4:-0}"
     
-    # Simple cost estimation (placeholder rates per 1M tokens)
-    # Default to $0.50 input / $1.50 output if unknown
-    local rate_input=0.50
-    local rate_output=1.50
+    # Cost estimation per 1M tokens — rates from config.sh (API_COST_INPUT / API_COST_OUTPUT)
+    local rate_input="${API_COST_INPUT:-0.50}"
+    local rate_output="${API_COST_OUTPUT:-1.50}"
     
     # Adjust rates for known free models.
     # Prefer shared config helper when available.
@@ -150,9 +149,11 @@ call_openrouter_stream() {
     local model="$1"
     local prompt="$2"
     local dispatcher_name="${3:-unknown}"
-    # For streaming, tokens are not easily available until the stream ends.
-    # A more advanced implementation would parse stream events for token usage.
-    _log_api_call "$dispatcher_name" "$model" "0" "0" # Log with 0 tokens for now
+    # KNOWN LIMITATION: Streaming mode logs 0 tokens because OpenRouter SSE deltas
+    # do not include cumulative usage counts. The final stream event may contain a
+    # "usage" field, but parsing it would require buffering the entire stream.
+    # Token counts and cost estimates for streamed calls are therefore inaccurate.
+    _log_api_call "$dispatcher_name" "$model" "0" "0"
 
     local json_payload
     json_payload=$(_build_json_payload "$model" "$prompt" "true")

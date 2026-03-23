@@ -109,9 +109,11 @@ cmd_to_todo() {
     local idea_text
     idea_text=$(echo "$idea_line" | cut -d'|' -f2-)
 
-    # Append to todo file
+    # Append to todo file in ID|DATE|text format
     idea_text=$(sanitize_for_storage "$idea_text")
-    echo "$(date +%Y-%m-%d)|$idea_text" >> "$TODO_FILE"
+    local task_id
+    task_id=$(next_todo_id)
+    echo "${task_id}|$(date +%Y-%m-%d)|$idea_text" >> "$TODO_FILE"
 
     # Remove from idea file atomically
     atomic_delete_line "$idea_num" "$IDEA_FILE" || {

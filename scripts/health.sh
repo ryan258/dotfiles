@@ -6,6 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 require_lib "date_utils.sh"
 require_lib "config.sh"
+require_lib "health_ops.sh"
 
 HEALTH_FILE="${HEALTH_FILE:?HEALTH_FILE is not set by config.sh}"
 CACHE_DIR="${HEALTH_CACHE_DIR:?HEALTH_CACHE_DIR is not set by config.sh}"
@@ -26,21 +27,6 @@ cleanup() {
 trap cleanup EXIT
 
 # --- Helper Functions ---
-get_file_mtime() {
-    local file="$1"
-    if command -v stat >/dev/null 2>&1; then
-        if stat -f %m "$file" >/dev/null 2>&1; then
-            stat -f %m "$file"
-        else
-            stat -c %Y "$file"
-        fi
-    else
-        python3 - "$file" <<'PY'
-import os, sys
-print(int(os.path.getmtime(sys.argv[1])))
-PY
-    fi
-}
 
 correlate_tasks() {
     local recent_data="$1"
@@ -93,7 +79,7 @@ generate_commit_cache() {
     if [ -f "$cache_file" ]; then
         local now
         now=$(date_epoch_now)
-        local mtime=$(get_file_mtime "$cache_file")
+        local mtime=$(file_mtime_epoch "$cache_file")
         local age=$((now - mtime))
         if [ "$age" -lt "$COMMITS_CACHE_TTL" ]; then
             return 0 # Cache is valid
@@ -289,13 +275,17 @@ cmd_summary() {
         echo "No health data tracked."
         exit 0
     fi
-    local today=$(date '+%Y-%m-%d')
-    local today_energy=$(grep "^ENERGY|$today" "$HEALTH_FILE" 2>/dev/null | tail -1 | cut -d'|' -f3)
+    local summary
+    summary=$(health_ops_get_daily_summary "$(date_today)")
+    local today_energy
+    today_energy=$(echo "$summary" | grep '^energy=' | cut -d'=' -f2)
+    local symptom_count
+    symptom_count=$(echo "$summary" | grep '^symptom_count=' | cut -d'=' -f2)
+
     if [ -n "$today_energy" ]; then
         echo "Energy: $today_energy/10"
     fi
-    local symptom_count=$(grep -c "^SYMPTOM|$today" "$HEALTH_FILE" 2>/dev/null || echo "0")
-    if [ "$symptom_count" -gt 0 ]; then
+    if [ "$symptom_count" -gt 0 ] 2>/dev/null; then
         echo "Symptoms logged today: $symptom_count"
     fi
 }
@@ -379,7 +369,7 @@ cmd_dashboard() {
 
     # Filter relevant data once
     local recent_data
-    recent_data=$(grep -E "^(ENERGY|SYMPTOM)" "$HEALTH_FILE" | awk -F'|' -v cutoff="$cutoff_date" '$2 >= cutoff' || true)
+    recent_data=$(grep -E "^(ENERGY|SYMPTOM)" "$HEALTH_FILE" | filter_entries_by_date "-" "$cutoff_date" 2 "since" || true)
 
     # 1. Average Energy Level
     _dashboard_energy "$recent_data"
@@ -477,9 +467,12 @@ cmd_check() {
     local last_energy=$(grep "^ENERGY|" "$HEALTH_FILE" 2>/dev/null | tail -1 | cut -d'|' -f3)
     local last_fog=$(grep "^FOG|" "$HEALTH_FILE" 2>/dev/null | tail -1 | cut -d'|' -f3)
     
+    local energy_threshold="${COACH_LOW_ENERGY_THRESHOLD:-4}"
+    local fog_threshold="${COACH_HIGH_FOG_THRESHOLD:-6}"
+
     # Check Energy (Low Energy Rule)
     if [ -n "$last_energy" ]; then
-        if [ "$last_energy" -le 3 ]; then
+        if [ "$last_energy" -le "$energy_threshold" ]; then
             echo "🛑 CIRCUIT BREAKER TRIPPED: Low Energy ($last_energy/10)"
             echo "   Action: STOP high-cognitive tasks."
             echo "   Recommendation: Rest, active recovery, or Low Energy Menu items."
@@ -489,7 +482,7 @@ cmd_check() {
 
     # Check Fog (High Fog Rule)
     if [ -n "$last_fog" ]; then
-        if [ "$last_fog" -ge 6 ]; then
+        if [ "$last_fog" -ge "$fog_threshold" ]; then
              echo "🛑 CIRCUIT BREAKER TRIPPED: High Brain Fog ($last_fog/10)"
              echo "   Action: EXTEND deadlines by 24h."
              echo "   Recommendation: No strategic decisions. Admin/Rote work only."

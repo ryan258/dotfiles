@@ -26,6 +26,33 @@ _health_parse_timestamp() {
     echo "${epoch:-0}"
 }
 
+# Get daily health metrics as structured pipe-delimited data.
+# Usage: health_ops_get_daily_summary [date]
+# Output format (one line per field, key=value):
+#   energy=<1-10 or empty>
+#   fog=<1-10 or empty>
+#   symptom_count=<N>
+#   symptoms=<comma-separated list or empty>
+# Returns 0 even if no data (fields will be empty).
+health_ops_get_daily_summary() {
+    local target_date="${1:-$(date_today)}"
+    local health_file="${HEALTH_FILE:-}"
+
+    local energy="" fog="" symptom_count=0 symptoms=""
+
+    if [[ -n "$health_file" && -f "$health_file" && -s "$health_file" ]]; then
+        energy=$(grep "^ENERGY|$target_date" "$health_file" 2>/dev/null | tail -1 | cut -d'|' -f3)
+        fog=$(grep "^FOG|$target_date" "$health_file" 2>/dev/null | tail -1 | cut -d'|' -f3)
+        symptom_count=$(grep -c "^SYMPTOM|$target_date" "$health_file" 2>/dev/null || echo "0")
+        symptoms=$(grep "^SYMPTOM|$target_date" "$health_file" 2>/dev/null | cut -d'|' -f3 | paste -sd',' - || true)
+    fi
+
+    printf 'energy=%s\n' "$energy"
+    printf 'fog=%s\n' "$fog"
+    printf 'symptom_count=%s\n' "$symptom_count"
+    printf 'symptoms=%s\n' "$symptoms"
+}
+
 # Display health summary (Appointments, Energy, Symptoms)
 # Usage: show_health_summary
 show_health_summary() {
@@ -74,20 +101,20 @@ show_health_summary() {
         done
     fi
 
-    # 2. Energy
-    if grep -q "^ENERGY|$today_str" "$health_file" 2>/dev/null; then
+    # 2. Energy & Symptoms via structured summary
+    local _summary _energy _symptom_count
+    _summary=$(health_ops_get_daily_summary "$today_str")
+    _energy=$(echo "$_summary" | grep '^energy=' | cut -d'=' -f2)
+    _symptom_count=$(echo "$_summary" | grep '^symptom_count=' | cut -d'=' -f2)
+
+    if [[ -n "$_energy" ]]; then
         has_data=true
-        local today_energy
-        today_energy=$(grep "^ENERGY|$today_str" "$health_file" | tail -1 | cut -d'|' -f3)
-        echo "  Energy level: $today_energy/10"
+        echo "  Energy level: $_energy/10"
     fi
 
-    # 3. Symptoms
-    if grep -q "^SYMPTOM|$today_str" "$health_file" 2>/dev/null; then
+    if [[ "$_symptom_count" -gt 0 ]] 2>/dev/null; then
         has_data=true
-        local symptom_count
-        symptom_count=$(grep -c "^SYMPTOM|$today_str" "$health_file")
-        echo "  Symptoms logged today: $symptom_count (run 'health list' to see)"
+        echo "  Symptoms logged today: $_symptom_count (run 'health list' to see)"
     fi
 
     if [ "$has_data" = "false" ]; then

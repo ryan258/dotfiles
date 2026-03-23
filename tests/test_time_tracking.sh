@@ -76,5 +76,5 @@ teardown() {
 @test "todo.sh fails start if task not found" {
     run "$TEST_DIR/scripts/todo.sh" start 99
     [ "$status" -eq 1 ]
-    [[ "$output" =~ "Error: Task 99 not found" ]]
+    [[ "$output" =~ "Task ID 99 not found" ]]
 }

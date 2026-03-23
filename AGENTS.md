@@ -410,7 +410,7 @@ _Refer to `CLAUDE.md` for canonical root-project guidance and `GUARDRAILS.md` fo
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **dotfiles** (1134 symbols, 2445 relationships, 69 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **dotfiles** (1139 symbols, 2451 relationships, 69 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

@@ -37,7 +37,7 @@ _journal_ai_analysis() {
     local cutoff_date
     cutoff_date=$(date_shift_days "-$days" "%Y-%m-%d")
     local recent_entries
-    recent_entries=$(awk -F'|' -v cutoff="$cutoff_date" 'NF>=2 { if (substr($1,1,10) >= cutoff) print }' "$JOURNAL_FILE")
+    recent_entries=$(filter_entries_by_date "$JOURNAL_FILE" "$cutoff_date" 1 "since")
 
     if [ -z "$recent_entries" ]; then
         echo "No journal entries found in the last $days days."

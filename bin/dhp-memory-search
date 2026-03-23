@@ -1,6 +1,1 @@
-#!/usr/bin/env bash
-# dhp-memory-search (compat wrapper): prefer bin/dhp-memory-search.sh
-set -euo pipefail
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec "$SCRIPT_DIR/dhp-memory-search.sh" "$@"
+dhp-memory-search.sh

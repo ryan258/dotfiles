@@ -47,14 +47,16 @@ _extract_github_error() {
     printf "%s" "$line"
 }
 
-# Get recent GitHub activity (pushes in the last 7 days)
-# Usage: get_recent_github_activity [days]
-get_recent_github_activity() {
+# Get recent GitHub activity as structured pipe-delimited data.
+# Usage: get_recent_github_activity_structured [days]
+# Output format: repo_name|days_ago|pushed_at_iso
+# Returns one line per repo pushed within the window.
+get_recent_github_activity_structured() {
     local days="${1:-7}"
     local _github_ops_lib_dir
     _github_ops_lib_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     local helper_script="${_github_ops_lib_dir}/../github_helper.sh"
-    
+
     if [ ! -f "$helper_script" ]; then
         return 0
     fi
@@ -64,12 +66,11 @@ get_recent_github_activity() {
         return 1
     fi
     if ! command -v timestamp_to_epoch >/dev/null 2>&1 || ! command -v date_epoch_now >/dev/null 2>&1; then
-        _github_ops_debug "date_utils helpers are not loaded; source scripts/lib/date_utils.sh before github_ops.sh."
+        _github_ops_debug "date_utils helpers are not loaded."
         return 1
     fi
 
-    local github_repos
-    local err_file
+    local github_repos err_file
     err_file=$(mktemp -t "github-helper.XXXXXX") && chmod 600 "$err_file"
     if ! github_repos=$("$helper_script" list_repos 2> "$err_file"); then
         [ -s "$err_file" ] && _log_github_helper_error "$err_file"
@@ -80,56 +81,59 @@ get_recent_github_activity() {
 
     local repo_lines
     repo_lines=$(echo "$github_repos" | jq -r '.[] | "\(.pushed_at) \(.name)"')
-    
-    local recent_pushes=""
-    
+    local now
+    now=$(date_epoch_now)
+
     while read -r line; do
         [ -z "$line" ] && continue
-        
-        local pushed_at_str
+        local pushed_at_str repo_name pushed_at_epoch diff_days
         pushed_at_str=$(echo "$line" | awk '{print $1}')
-        
-        local repo_name
         repo_name=$(echo "$line" | awk '{$1=""; print $0}' | xargs)
-        
-        local pushed_at_epoch
         pushed_at_epoch=$(timestamp_to_epoch "$pushed_at_str")
-        if [ "$pushed_at_epoch" -le 0 ]; then
-            continue
-        fi
-        
-        local now
-        now=$(date_epoch_now)
-        local diff_days=$(( (now - pushed_at_epoch) / 86400 ))
-        
+        [ "$pushed_at_epoch" -le 0 ] && continue
+        diff_days=$(( (now - pushed_at_epoch) / 86400 ))
         if [ "$diff_days" -le "$days" ]; then
-            local day_text
-            if [ "$diff_days" -eq 0 ]; then
-                day_text="today"
-            elif [ "$diff_days" -eq 1 ]; then
-                day_text="yesterday"
-            else
-                day_text="$diff_days days ago"
-            fi
-            
-            echo "  • $repo_name (pushed $day_text)"
+            printf '%s|%s|%s\n' "$repo_name" "$diff_days" "$pushed_at_str"
         else
-            # Since repos are sorted by push date (usually), we can break early
             break
         fi
     done <<< "$repo_lines"
 }
 
-# Get commit activity for a specific date (YYYY-MM-DD)
-# Usage: get_commit_activity_for_date "2026-02-03"
-get_commit_activity_for_date() {
+# Get recent GitHub activity (pushes in the last 7 days) — formatted for display.
+# Usage: get_recent_github_activity [days]
+# Wraps get_recent_github_activity_structured with human-readable formatting.
+get_recent_github_activity() {
+    local days="${1:-7}"
+    local structured
+    structured=$(get_recent_github_activity_structured "$days") || return $?
+
+    [[ -z "$structured" ]] && return 0
+
+    while IFS='|' read -r repo_name diff_days _pushed_at; do
+        [[ -z "$repo_name" ]] && continue
+        local day_text
+        if [ "$diff_days" -eq 0 ]; then
+            day_text="today"
+        elif [ "$diff_days" -eq 1 ]; then
+            day_text="yesterday"
+        else
+            day_text="$diff_days days ago"
+        fi
+        echo "  • $repo_name (pushed $day_text)"
+    done <<< "$structured"
+}
+
+# Get commit activity for a specific date as structured pipe-delimited data.
+# Usage: get_commit_activity_for_date_structured "2026-02-03"
+# Output format: repo|sha|message (one line per commit)
+get_commit_activity_for_date_structured() {
     local target_date="$1"
     local _github_ops_lib_dir
     _github_ops_lib_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     local helper_script="${_github_ops_lib_dir}/../github_helper.sh"
 
     if [ -z "$target_date" ]; then
-        echo "  (No date provided)"
         return 1
     fi
 
@@ -143,8 +147,7 @@ get_commit_activity_for_date() {
         return 1
     fi
 
-    local commits
-    local err_file
+    local commits err_file
     err_file=$(mktemp -t "github-commits.XXXXXX") && chmod 600 "$err_file"
     if ! commits=$("$helper_script" list_commits_for_date "$target_date" 2> "$err_file"); then
         [ -s "$err_file" ] && _log_github_helper_error "$err_file"
@@ -152,6 +155,16 @@ get_commit_activity_for_date() {
         return 1
     fi
     rm -f "$err_file"
+
+    [[ -n "$commits" ]] && printf '%s\n' "$commits"
+}
+
+# Get commit activity for a specific date (YYYY-MM-DD) — formatted for display.
+# Usage: get_commit_activity_for_date "2026-02-03"
+get_commit_activity_for_date() {
+    local target_date="$1"
+    local commits
+    commits=$(get_commit_activity_for_date_structured "$target_date") || return $?
 
     if [ -z "$commits" ]; then
         echo "  (No commits for $target_date)"

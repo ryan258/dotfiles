@@ -295,11 +295,12 @@ fi
 
 # --- STALE TASKS (older than 7 days) ---
 STALE_TODO_FILE="$TODO_FILE"
+ensure_todo_migrated
 echo ""
 echo "⏰ STALE TASKS:"
 if [ -f "$STALE_TODO_FILE" ] && [ -s "$STALE_TODO_FILE" ]; then
     CUTOFF_DATE=$(date_shift_days "-${STALE_TASK_DAYS}" "%Y-%m-%d")
-    awk -F'|' -v cutoff="$CUTOFF_DATE" '$1 < cutoff { printf "  • %s (from %s)\n", $2, $1 }' "$STALE_TODO_FILE"
+    awk -F'|' -v cutoff="$CUTOFF_DATE" '$2 < cutoff { printf "  • %s (from %s)\n", $3, $2 }' "$STALE_TODO_FILE"
 fi
 
 # --- TODAY'S TASKS ---
