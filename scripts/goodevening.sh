@@ -513,7 +513,6 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     REFLECTION_REASON="ai-error"
     REFLECTION_REASON_DETAIL=""
 
-    local _ge_git_combined
     _ge_git_combined=$(printf '%s\n%s\n' "${TODAY_COMMITS:-}" "${RECENT_PUSHES:-}")
     
     if command -v coaching_generate_response >/dev/null 2>&1; then

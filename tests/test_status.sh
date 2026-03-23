@@ -24,7 +24,7 @@ setup() {
     mkdir -p "$DATA_DIR" "$DOTFILES_DIR/scripts/lib" "$DOTFILES_DIR/bin" "$PROJECTS_DIR"
 
     # Copy core libraries
-    for lib in common.sh config.sh date_utils.sh file_ops.sh spoon_budget.sh health_ops.sh github_ops.sh coach_metrics.sh coach_prompts.sh coach_scoring.sh coaching.sh; do
+    for lib in common.sh config.sh date_utils.sh file_ops.sh spoon_budget.sh health_ops.sh github_ops.sh coach_ops.sh coach_metrics.sh coach_prompts.sh coach_scoring.sh coaching.sh loader.sh; do
         if [ -f "$BATS_TEST_DIRNAME/../scripts/lib/$lib" ]; then
             cp "$BATS_TEST_DIRNAME/../scripts/lib/$lib" "$DOTFILES_DIR/scripts/lib/$lib"
         fi
@@ -87,8 +87,6 @@ Scope anchor:
 - No repo switch until the block lands.
 Health lens:
 - Use one short block and then reassess.
-Evidence check:
-- focus text + commit repos + recent pushes.
 OUT
 STUB
     chmod +x "$DOTFILES_DIR/bin/dhp-coach.sh"
@@ -254,7 +252,6 @@ EOF
         DOTFILES_DIR="$DOTFILES_DIR" \
         PROJECTS_DIR="$PROJECTS_DIR" \
         GITHUB_COMMITS_FIXTURE="$DATA_DIR/github_commits.txt" \
-        AI_COACH_EVIDENCE_CHECK_ENABLED=true \
         bash "$DOTFILES_DIR/scripts/status.sh" --coach < /dev/null
 
     [ "$status" -eq 0 ]
@@ -281,7 +278,6 @@ EOF
         DOTFILES_DIR="$DOTFILES_DIR" \
         PROJECTS_DIR="$PROJECTS_DIR" \
         GITHUB_COMMITS_FIXTURE="$DATA_DIR/github_commits.txt" \
-        AI_COACH_EVIDENCE_CHECK_ENABLED=true \
         bash "$DOTFILES_DIR/scripts/status.sh" --coach < /dev/null
 
     [ "$status" -eq 0 ]
@@ -307,7 +303,6 @@ EOF
         DOTFILES_DIR="$DOTFILES_DIR" \
         PROJECTS_DIR="$PROJECTS_DIR" \
         GITHUB_COMMITS_FIXTURE="$DATA_DIR/github_commits.txt" \
-        AI_COACH_EVIDENCE_CHECK_ENABLED=true \
         bash "$DOTFILES_DIR/scripts/status.sh" --coach < /dev/null
 
     [ "$status" -eq 0 ]
@@ -335,7 +330,6 @@ EOF
         DOTFILES_DIR="$DOTFILES_DIR" \
         PROJECTS_DIR="$PROJECTS_DIR" \
         GITHUB_COMMITS_FIXTURE="$DATA_DIR/github_commits.txt" \
-        AI_COACH_EVIDENCE_CHECK_ENABLED=true \
         bash "$DOTFILES_DIR/scripts/status.sh" --coach < /dev/null
 
     [ "$status" -eq 0 ]
@@ -345,7 +339,7 @@ EOF
     [[ "$prompt" == *"• other-repo: ship unrelated feature (def5678)"* ]]
 }
 
-@test "status.sh --coach keeps Do Next inside the current repo in repo-local mode" {
+@test "status.sh --coach preserves raw AI output in repo-local mode" {
     local repo_dir="$PROJECTS_DIR/dotfiles"
 
     echo "logo" > "$DATA_DIR/daily_focus.txt"
@@ -380,8 +374,6 @@ Scope anchor:
 - Stay in dotfiles until the tiny change lands, then switch to ai-ethics-comparator.
 Health lens:
 - Keep the block short.
-Evidence check:
-- focus + repo context.
 OUT
 STUB
     chmod +x "$DOTFILES_DIR/bin/dhp-coach.sh"
@@ -393,83 +385,15 @@ STUB
         DATA_DIR="$DATA_DIR" \
         DOTFILES_DIR="$DOTFILES_DIR" \
         PROJECTS_DIR="$PROJECTS_DIR" \
-        AI_COACH_EVIDENCE_CHECK_ENABLED=false \
         bash "$DOTFILES_DIR/scripts/status.sh" --coach < /dev/null
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"Do Next (ordered 1-3):"* ]]
-    [[ "$output" == *"Pick one concrete next move inside dotfiles"* ]]
-    [[ "$output" == *"Keep the same dotfiles repo open for one more short block before switching lanes."* ]]
-    [[ "$output" == *"Do not leave dotfiles until Step 3 is complete"* ]]
-    [[ "$output" != *"Switch to ai-ethics-comparator"* ]]
+    [[ "$output" == *"Do Next:"* ]]
+    [[ "$output" == *"Commit one tiny change in dotfiles."* ]]
+    [[ "$output" == *"Switch to ai-ethics-comparator and inspect the PDF module."* ]]
 }
 
-@test "status.sh --coach rewrites bold markdown sections cleanly in repo-local mode" {
-    local repo_dir="$PROJECTS_DIR/dotfiles"
-
-    echo "logo" > "$DATA_DIR/daily_focus.txt"
-    make_test_repo "$repo_dir"
-    cat > "$DOTFILES_DIR/bin/dhp-coach.sh" <<'STUB'
-#!/usr/bin/env bash
-set -euo pipefail
-cat > /dev/null
-cat <<'OUT'
-**Briefing Summary:**
-- Current GitHub lane is dotfiles, but declared focus is elsewhere.
-
-**GitHub blindspots/opportunities (1-10):**
-1. dotfiles could use one polish pass.
-2. dotfiles could use one demo.
-3. dotfiles could use one README pass.
-4. dotfiles could use one cleanup.
-5. dotfiles could use one setup fix.
-6. dotfiles could use one automation pass.
-7. dotfiles could use one changelog note.
-8. dotfiles could use one helper extraction.
-9. dotfiles could use one walkthrough.
-10. dotfiles could use one test pass.
-
-**North Star:**
-- Bridge the focus gap.
-
-**Do Next (ordered 1-3):**
-1. Open ai-ethics-comparator and start the PDF work.
-2. Switch back to dotfiles later if needed.
-3. Done when both repos are open.
-
-**Operating insight (momentum + exploration):**
-- Working: dotfiles is active. Drift risk: switching.
-
-**Scope anchor:**
-- Stay in ai-ethics-comparator until the sequence is complete.
-
-**Health lens:**
-- Keep the block short.
-
-**Evidence check:**
-- focus + repo context.
-OUT
-STUB
-    chmod +x "$DOTFILES_DIR/bin/dhp-coach.sh"
-
-    cd "$repo_dir"
-    run env \
-        PATH="$DOTFILES_DIR/bin:$PATH" \
-        HOME="$HOME" \
-        DATA_DIR="$DATA_DIR" \
-        DOTFILES_DIR="$DOTFILES_DIR" \
-        PROJECTS_DIR="$PROJECTS_DIR" \
-        AI_COACH_EVIDENCE_CHECK_ENABLED=false \
-        bash "$DOTFILES_DIR/scripts/status.sh" --coach < /dev/null
-
-    [ "$status" -eq 0 ]
-    [ "$(printf '%s\n' "$output" | grep -c "Do Next (ordered 1-3):")" -eq 1 ]
-    [ "$(printf '%s\n' "$output" | grep -c "GitHub blindspots/opportunities (1-10):")" -eq 1 ]
-    [[ "$output" == *"Pick one concrete next move inside dotfiles"* ]]
-    [[ "$output" != *"Open ai-ethics-comparator and start the PDF work."* ]]
-}
-
-@test "status.sh --coach cleans noisy blindspots when evidence check is disabled" {
+@test "status.sh --coach preserves raw blindspots when the dispatcher returns output" {
     echo "logo" > "$DATA_DIR/daily_focus.txt"
     cat > "$DOTFILES_DIR/bin/dhp-coach.sh" <<'STUB'
 #!/usr/bin/env bash
@@ -495,8 +419,6 @@ Scope anchor:
 - No repo switch until the block lands.
 Health lens:
 - Use one short block and then reassess.
-Evidence check:
-- focus text + commit repos + recent pushes.
 OUT
 STUB
     chmod +x "$DOTFILES_DIR/bin/dhp-coach.sh"
@@ -511,15 +433,13 @@ EOF
         DOTFILES_DIR="$DOTFILES_DIR" \
         PROJECTS_DIR="$PROJECTS_DIR" \
         GITHUB_COMMITS_FIXTURE="$DATA_DIR/github_commits.txt" \
-        AI_COACH_EVIDENCE_CHECK_ENABLED=false \
         bash "$DOTFILES_DIR/scripts/status.sh" --coach < /dev/null
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"GitHub blindspots/opportunities (1-10):"* ]]
-    [[ "$output" == *"Repo dotfiles likely wants one visible polish pass before new feature work."* ]]
-    [[ "$output" != *"dir_usage_malformed=162"* ]]
-    [[ "$output" != *"focus_git_status=diffuse proves"* ]]
-    [[ "$output" != *"commit context (0)"* ]]
+    [[ "$output" == *"dir_usage_malformed=162 means the system is unstable."* ]]
+    [[ "$output" == *"focus_git_status=diffuse proves the spear is broken."* ]]
+    [[ "$output" == *"commit context (0) means we cannot verify local work."* ]]
 }
 
 @test "status.sh --coach uses deterministic fallback when no dispatcher is available" {
@@ -536,12 +456,10 @@ EOF
         DOTFILES_DIR="$DOTFILES_DIR" \
         PROJECTS_DIR="$PROJECTS_DIR" \
         GITHUB_COMMITS_FIXTURE="$DATA_DIR/github_commits.txt" \
-        AI_COACH_EVIDENCE_CHECK_ENABLED=true \
         bash "$DOTFILES_DIR/scripts/status.sh" --coach < /dev/null
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"AI status coach was dispatcher missing; using deterministic fallback structure."* ]]
-    [[ "$output" == *"Deterministic fallback (dispatcher missing)"* ]]
 }
 
 # ─── Journal section ─────────────────────────────────────────────────────

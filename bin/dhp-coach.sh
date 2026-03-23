@@ -27,7 +27,8 @@ if [ -z "${PIPED_CONTENT:-}" ]; then
     exit 1
 fi
 
-export PARAM_TEMPERATURE="${PARAM_TEMPERATURE:-${AI_BRIEFING_TEMPERATURE:-0.25}}"
+MODEL_FINAL="${COACH_MODEL:-nvidia/nemotron-3-nano-30b-a3b:free}"
+TEMPERATURE_FINAL="${PARAM_TEMPERATURE:-${AI_BRIEFING_TEMPERATURE:-0.25}}"
 
 COACH_SYSTEM_BRIEF="You are a fast, grounded daily coaching specialist.
 
@@ -35,19 +36,58 @@ Rules:
 - Answer in one pass with no swarm planning or task decomposition.
 - Follow the schema requested by the prompt exactly.
 - Reuse the exact section headings requested by the prompt.
-- Ground every action in the evidence supplied by the prompt.
+- Use the provided context directly and keep the response concrete.
 - Do not invent task completions, publish events, commit counts, or dates that are not explicitly present.
 - Do not invent page names, homepage sections, paragraph states, file paths, or draft status unless explicitly present.
-- If evidence is thin, say so plainly instead of inventing work.
+- If context is thin, say so plainly instead of inventing work.
 - Keep the response concise, operational, and specific.
 - Do not mention internal tooling, dispatchers, or model selection."
 
-dhp_dispatch \
-    "Coach" \
-    "strategy" \
-    "$HOME/Documents/AI_Staff_HQ_Outputs/Strategy/Coach" \
-    "COACH_MODEL" \
-    "DHP_COACH_OUTPUT_DIR" \
-    "$COACH_SYSTEM_BRIEF" \
-    "$PARAM_TEMPERATURE" \
-    "$@"
+ENHANCED_BRIEF="$COACH_SYSTEM_BRIEF
+
+INPUT:
+$PIPED_CONTENT"
+
+OUTPUT_DIR_FINAL=""
+OUTPUT_FILE=""
+if [ "${AI_COACH_SAVE_OUTPUTS:-false}" = "true" ] || [ -n "${DHP_COACH_OUTPUT_DIR:-}" ]; then
+    OUTPUT_DIR_FINAL=$(default_output_dir "$HOME/Documents/AI_Staff_HQ_Outputs/Strategy/Coach" "DHP_COACH_OUTPUT_DIR")
+    mkdir -p "$OUTPUT_DIR_FINAL"
+    OUTPUT_FILE="$OUTPUT_DIR_FINAL/$(slugify "$PIPED_CONTENT").md"
+fi
+
+echo "AI coach: querying $MODEL_FINAL..." >&2
+START_TS=$(date +%s)
+
+if [ "$USE_STREAMING" = "true" ]; then
+    if [ -n "$OUTPUT_FILE" ]; then
+        if DHP_TEMPERATURE="$TEMPERATURE_FINAL" call_openrouter "$MODEL_FINAL" "$ENHANCED_BRIEF" "--stream" "dhp-coach" | tee "$OUTPUT_FILE"; then
+            :
+        else
+            echo "AI coach: request failed." >&2
+            exit 1
+        fi
+    else
+        if DHP_TEMPERATURE="$TEMPERATURE_FINAL" call_openrouter "$MODEL_FINAL" "$ENHANCED_BRIEF" "--stream" "dhp-coach"; then
+            :
+        else
+            echo "AI coach: request failed." >&2
+            exit 1
+        fi
+    fi
+else
+    RESPONSE=""
+    if RESPONSE=$(DHP_TEMPERATURE="$TEMPERATURE_FINAL" call_openrouter_sync "$MODEL_FINAL" "$ENHANCED_BRIEF" "dhp-coach"); then
+        if [ -n "$OUTPUT_FILE" ]; then
+            printf '%s\n' "$RESPONSE" | tee "$OUTPUT_FILE"
+        else
+            printf '%s\n' "$RESPONSE"
+        fi
+    else
+        echo "AI coach: request failed." >&2
+        exit 1
+    fi
+fi
+
+ELAPSED=$(( $(date +%s) - START_TS ))
+echo "AI coach: response received in ${ELAPSED}s." >&2

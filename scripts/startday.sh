@@ -357,7 +357,6 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
             COACH_BEHAVIOR_DIGEST=$(coaching_build_behavior_digest "$TODAY" "$COACH_TACTICAL_DAYS" "$COACH_PATTERN_DAYS" "${RECENT_PUSHES:-}" "${YESTERDAY_COMMITS:-}" 2>/dev/null || echo "(behavior digest unavailable)")
         fi
 
-        local _sd_git_combined
         _sd_git_combined=$(printf '%s\n%s\n' "${YESTERDAY_COMMITS:-}" "${RECENT_PUSHES:-}")
 
         if command -v coaching_build_startday_prompt >/dev/null 2>&1; then

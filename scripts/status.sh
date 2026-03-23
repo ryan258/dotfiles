@@ -6,6 +6,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/loader.sh" || exit 1
 
+FOCUS_FILE="${FOCUS_FILE:?FOCUS_FILE is not set by config.sh}"
+JOURNAL_FILE="${JOURNAL_FILE:?JOURNAL_FILE is not set by config.sh}"
+TODO_FILE="${TODO_FILE:?TODO_FILE is not set by config.sh}"
+PROJECTS_DIR="${PROJECTS_DIR:-$HOME/Projects}"
+
 _status_extract_repo_name_from_line() {
     local raw_line="$1"
     local cleaned=""

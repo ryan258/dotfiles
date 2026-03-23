@@ -31,16 +31,14 @@ The full rules live in `../CLAUDE.md`.
 - `scripts/lib/coach_chat.sh` gives you a chat after each briefing. You can talk to the coach, ask questions, and use short commands (`/j` journal, `/t` todo, `/f` focus, `/q` quit). It is on by default. Turn it off with `AI_COACH_CHAT_ENABLED=false`.
 - Daily coaching calls `dhp-coach.sh` first. This is a single, fast call to OpenRouter. It skips the slower AI-Staff-HQ swarm path used by `dhp-strategy.sh`.
 - The coaching model is set in root `dotfiles/.env` with `AI_COACH_MODEL`. Changing `ai-staff-hq/.env` does not change `startday` or `goodevening`.
-- `AI_COACH_EVIDENCE_CHECK_ENABLED=true` keeps the morning coach strict about focus and Git proof. Set it to `false` if you want raw AI output, even when the model makes things up.
-- The same `AI_COACH_EVIDENCE_CHECK_ENABLED` flag also controls the evening check. When off, `goodevening` accepts raw AI output without warnings.
 - `status.sh --coach` uses the same fast `dhp-coach.sh` path for a mid-day reset. If you run it inside a git repo, the coach focuses on that repo. Outside a repo, it shows a wider view. Set `AI_STATUS_ENABLED=true` to show this on every `status` run. You can also tune `AI_STATUS_TEMPERATURE` on its own.
 - `config.sh` now reloads the root `.env` each time a process runs. This means coach timeout and model changes take effect right away.
 - Coach modes: LOCKED (stay focused), FLOW (follow energy with check-ins), OVERRIDE (explore with limits), RECOVERY (low output for low-energy days). The coach suggests mode switches based on your numbers.
 - Drift and health limits (`COACH_*_THRESHOLD`) are set in `config.sh`. You can change them in `.env`.
-- `startday.sh` and `goodevening.sh` use daily focus and non-fork GitHub activity as coaching proof. Journal and todo data stay local but do not steer the coach.
+- `startday.sh` and `goodevening.sh` use daily focus and non-fork GitHub activity as coaching context. Journal and todo data stay local but do not steer the coach.
 - `startday.sh` now creates a 10-item GitHub scan of blind spots and chances. It looks at recent repos and commit messages. Even if the AI call fails, the fallback still comments on real project work.
 - `goodevening.sh` now creates a 10-item "Blindspots to sleep on" scan using GitHub data. This carries real ideas into tomorrow.
-- Even with the evidence check off, both flows clean out bad scan items like raw flags or debug text. They swap them for real GitHub-based ideas.
+- If the AI returns output, the coaching flows now show it raw. Deterministic fallback text only appears when the dispatcher times out, errors, or is unavailable.
 - `status.sh` shows the current coach mode, spoon budget and use, focus text, and a Git-backed alignment signal in a DAILY CONTEXT section.
 - When the AI status coach is on, `status.sh` also shows a GitHub-first reset section. It uses today's commits, recent pushes, project context, and the same scan cleaner as the morning coach.
 

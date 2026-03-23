@@ -77,8 +77,8 @@ Delivered:
   - `coach_mode.txt` (`LOCKED`/`FLOW`/`OVERRIDE`/`RECOVERY`)
   - `coach_log.txt` (append-only coaching records)
 - Strict schema contracts:
-  - startday: `North Star`, `Do Next`, `Operating insight (momentum + exploration)`, `Scope anchor`, `Health lens`, `Evidence check`, `Mode suggestion`
-  - goodevening: `What worked`, `Off-script momentum`, `What pulled you in`, `Tomorrow lock`, `Health lens`, `Evidence used`, `Tomorrow mode suggestion`
+  - startday: `North Star`, `Do Next`, `Operating insight (momentum + exploration)`, `Scope anchor`, `Health lens`, `Mode suggestion`
+  - goodevening: `What worked`, `Off-script momentum`, `What pulled you in`, `Tomorrow lock`, `Health lens`, `Tomorrow mode suggestion`
 - Interactive coach chat (`/j`, `/t`, `/f`, `/q`) after each briefing
 
 Primary artifacts:

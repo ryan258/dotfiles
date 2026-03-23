@@ -1,6 +1,6 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** March 21, 2026
+**Last Updated:** March 22, 2026
 
 ## Version 2.2.38 (March 22, 2026) - Architectural Consolidation (H1-H8) & Critical Fixes
 
@@ -63,7 +63,7 @@ Two separate files exist for what should be a single dispatcher. The aliasing st
 ### High Priority — Architecture & DRY
 
 ### H1. Extract AI Briefing Logic
-Extracted AI briefing generation logic from `startday.sh`, `goodevening.sh`, and `status.sh` into a shared `coaching_generate_response()` handler in `coaching.sh`. This removed ~478 lines of duplication and centralized the prompt building, API caching, validation, and fallback mechanisms.
+Extracted AI briefing generation logic from `startday.sh`, `goodevening.sh`, and `status.sh` into a shared `coaching_generate_response()` handler in `coaching.sh`. This removed ~478 lines of duplication and centralized the prompt building, API timeout handling, and deterministic fallbacks.
 
 ### H2. Create Library Loader to Eliminate Sourcing Boilerplate
 Created `scripts/lib/loader.sh` to centralize imports. Replaced 50+ lines of individual library loading boilerplate and error checking across major top-level scripts with a simple `load_dotfiles_libs` call.
@@ -75,7 +75,10 @@ Consolidated the `analyze`, `mood`, and `themes` logic in `journal.sh` via a new
 Reduced repetitive verification duplication in `todo.sh` by introducing `_require_task_text()`, saving validation steps across `debug`, `spend`, `time`, `start`, and `delegate` commands.
 
 ### H5. dhp-coach.sh Reimplements Shared Framework
-Refactored `bin/dhp-coach.sh` to leverage the shared `dhp_dispatch` framework directly. This eliminates a custom 80-line API implementation loop while preserving the correct OpenRouter hit semantics and parameters.
+Kept `bin/dhp-coach.sh` on the lightweight direct OpenRouter path so the daily coach flows stay fast and avoid the heavier swarm path.
+
+### H9. Remove Coach Evidence Enforcement
+Removed coach response grounding, post-generation blindspot cleanup, and explicit evidence sections from the coach schema. `startday`, `goodevening`, and `status --coach` now return raw AI output whenever the dispatcher succeeds, while keeping deterministic fallback text for timeout/error/no-dispatcher cases.
 
 ### H6. dhp-content.sh Duplicates Flag Parsing
 Refactored `bin/dhp-content.sh` to intercept unique flags (`--context`, `--persona`) and then delegate all standard flag parsing to the shared `dhp_parse_flags()` framework.
@@ -208,13 +211,8 @@ Cleaned up environment variable precedence in `bin/dhp-shared.sh` by eliminating
 - **Coaching now ignores stale inherited `.env` markers from parent shells**:
   - `scripts/lib/config.sh` now reloads the current root `.env` per process/path instead of trusting an exported `_DOTFILES_ENV_LOADED` flag from an older shell state.
   - this fixes cases where `startday` kept using stale coach timeout/retry/model values after `.env` edits.
-- **Morning briefing grounding rejects unsupported summary/journal claims more aggressively**:
+- **Coach scoring now aligns retry defaults with config**:
   - `scripts/lib/coach_scoring.sh` now aligns its retry default with `config.sh` (`false`) instead of silently retrying when unset.
-  - `coach_startday_response_is_grounded` now inspects `Briefing Summary`, `North Star`, `Do Next`, and `Evidence check`, and rejects invented journal/task evidence because those local notes are no longer part of coaching context.
-  - added `AI_COACH_EVIDENCE_CHECK_ENABLED` so you can intentionally accept raw AI output instead of forcing fallback when the model overreaches.
-  - rejection output now includes a concrete offending-line detail instead of only a category label, and fallback briefings surface that detail when evidence check fails.
-  - user-facing fallback copy now labels `ungrounded-actions` as `AI briefing failed evidence check` instead of exposing the internal reason code.
-  - when the AI overreaches, `startday` now salvages the fallback from explicit recent commit repos instead of dropping straight to a fully generic script.
 - **Startday fallback now surfaces GitHub blindspots and enhancement opportunities**:
   - `scripts/lib/coach_prompts.sh` now treats GitHub projects and commit activity as the single source of truth for project insight in the morning prompt.
   - startday prompt now asks for a dedicated `GitHub blindspots/opportunities (1-10)` section instead of a single blindspot bullet.
@@ -227,14 +225,12 @@ Cleaned up environment variable precedence in `bin/dhp-shared.sh` by eliminating
 - **`startday` deterministic fallback is now focus-first when tasks are empty**:
   - `scripts/lib/coach_prompts.sh` no longer falls back to the placeholder "the first listed top task" when `todo.sh top 3` returns only headers.
   - fallback briefings now cite `focus_git_status`, primary repo, commit coherence, and active repo count when the behavior digest includes them.
-  - `scripts/startday.sh` now passes the behavior digest into fallback generation for timeout, dispatcher-missing, and ungrounded-action paths.
+  - `scripts/startday.sh` now passes the behavior digest into fallback generation for timeout and dispatcher-missing paths.
 - **`goodevening` tomorrow lock now uses the same spear model**:
   - `scripts/lib/coach_prompts.sh` now builds fallback reflections and tomorrow-lock handoffs from declared focus plus focus-vs-Git evidence instead of the generic "top task aligned to focus" wording.
   - `scripts/goodevening.sh` now passes the behavior digest into fallback reflection generation so `tomorrow_launchpad` carries repo drift/alignment evidence into the next morning.
   - goodevening prompt and fallback now include a `Blindspots to sleep on (1-10)` section built from recent GitHub evidence.
-  - added a lighter `coach_goodevening_response_is_grounded` path that rejects invented journal/task evidence and malformed tomorrow-lock output only when `AI_COACH_EVIDENCE_CHECK_ENABLED=true`.
-  - when the evidence check flag is `false`, `goodevening` now accepts raw AI reflection silently instead of validating just to complain.
-  - accepted blindspot sections in both flows now get a non-blocking cleanup pass that strips raw metric/debug noise such as `dir_usage_malformed`, `commit_context`, or `focus_git_status=...` and backfills grounded GitHub opportunity lines.
+  - blindspot sections in both flows now get a non-blocking cleanup pass that strips raw metric/debug noise such as `dir_usage_malformed`, `commit_context`, or `focus_git_status=...` and backfills grounded GitHub opportunity lines.
 - **Time tracking now fails clearly on macOS Bash 3.2 paths**:
   - `scripts/lib/time_tracking.sh` now reports a clear Bash 4+ requirement for associative-array code paths instead of surfacing raw `declare -A` errors.
   - `scripts/goodevening.sh` degrades cleanly in the time-tracking section when invoked under an older Bash.

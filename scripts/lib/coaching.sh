@@ -71,21 +71,6 @@ coaching_strategy_dispatcher_name() {
     coach_strategy_dispatcher_name "$@"
 }
 
-coaching_startday_response_is_grounded() {
-    _coaching_require_fn "coach_startday_response_is_grounded" || return 1
-    coach_startday_response_is_grounded "$@"
-}
-
-coaching_goodevening_response_is_grounded() {
-    _coaching_require_fn "coach_goodevening_response_is_grounded" || return 1
-    coach_goodevening_response_is_grounded "$@"
-}
-
-coaching_status_response_is_grounded() {
-    _coaching_require_fn "coach_status_response_is_grounded" || return 1
-    coach_status_response_is_grounded "$@"
-}
-
 coaching_startday_fallback_output() {
     _coaching_require_fn "coach_startday_fallback_output" || return 1
     coach_startday_fallback_output "$@"
@@ -101,31 +86,18 @@ coaching_status_fallback_output() {
     coach_status_fallback_output "$@"
 }
 
-coaching_sanitize_startday_blindspots() {
-    _coaching_require_fn "coach_sanitize_startday_blindspots" || return 1
-    coach_sanitize_startday_blindspots "$@"
-}
-
-coaching_sanitize_goodevening_blindspots() {
-    _coaching_require_fn "coach_sanitize_goodevening_blindspots" || return 1
-    coach_sanitize_goodevening_blindspots "$@"
-}
-
-coaching_sanitize_status_repo_scope() {
-    _coaching_require_fn "coach_sanitize_status_repo_scope" || return 1
-    coach_sanitize_status_repo_scope "$@"
-}
-
 coaching_append_log() {
     _coaching_require_fn "coach_append_log" || return 1
     coach_append_log "$@"
 }
 
-# Core execution pipeline for the personalized AI coach
+# Core execution pipeline for the personalized AI coach.
+# If the AI returns output, pass it through untouched. Only synthesize
+# deterministic fallback text when the dispatcher times out or fails.
 # Parameters:
 #   $1 - prompt: The constructed system + user prompt for the dispatcher
 #   $2 - temperature: The temperature for the LLM call
-#   $3 - focus_context: Declared daily focus used for grounding the response
+#   $3 - focus_context: Declared daily focus used for coach context
 #   $4 - mode: Current coach mode (LOCKED, FLOW, etc)
 #   $5 - git_commits: Recent GitHub activity/evidence
 #   $6 - behavior_digest: The generated user behavior + health metrics digest
@@ -147,7 +119,6 @@ coaching_generate_response() {
 
     local result=""
     local reason=""
-    local reason_detail=""
     local exit_code=0
     
     local dispatcher=""
@@ -188,57 +159,11 @@ coaching_generate_response() {
         if [ "$type" = "startday" ] && command -v coaching_startday_fallback_output >/dev/null 2>&1; then
             result=$(coaching_startday_fallback_output "${focus_context:-"(no focus set)"}" "$mode" "$reason" "$behavior_digest" "${git_commits}")
         elif [ "$type" = "goodevening" ] && command -v coaching_goodevening_fallback_output >/dev/null 2>&1; then
-            result=$(coaching_goodevening_fallback_output "${focus_context:-"(no focus set)"}" "$mode" "$reason" "$behavior_digest" "${git_commits}" "${reason_detail:-}")
+            result=$(coaching_goodevening_fallback_output "${focus_context:-"(no focus set)"}" "$mode" "$reason" "$behavior_digest" "${git_commits}")
         elif [ "$type" = "status" ] && command -v coaching_status_fallback_output >/dev/null 2>&1; then
-            result=$(coaching_status_fallback_output "${focus_context:-"(no focus set)"}" "$mode" "$reason" "$behavior_digest" "$git_commits" "$current_dir" "$project_context" "${reason_detail:-}" "$context_scope")
+            result=$(coaching_status_fallback_output "${focus_context:-"(no focus set)"}" "$mode" "$reason" "$behavior_digest" "$git_commits" "$current_dir" "$project_context" "$context_scope")
         else
             result="Unable to generate AI output at this time."
-        fi
-    elif [ -z "$reason" ] && [ "${AI_COACH_EVIDENCE_CHECK_ENABLED:-true}" = "true" ]; then
-        local grounded=true
-        if [ "$type" = "startday" ] && command -v coaching_startday_response_is_grounded >/dev/null 2>&1; then
-            coaching_startday_response_is_grounded "$result" "${focus_context:-"(no focus set)"}" "$git_commits" "$mode" || grounded=false
-        elif [ "$type" = "goodevening" ] && command -v coaching_goodevening_response_is_grounded >/dev/null 2>&1; then
-            coaching_goodevening_response_is_grounded "$result" "${focus_context:-"(no focus set)"}" "$git_commits" "$mode" || grounded=false
-        elif [ "$type" = "status" ] && command -v coaching_status_response_is_grounded >/dev/null 2>&1; then
-            coaching_status_response_is_grounded "$result" "${focus_context:-"(no focus set)"}" "$git_commits" "$mode" || grounded=false
-        fi
-
-        if [ "$grounded" = "false" ]; then
-            if command -v coach_grounding_failure_message >/dev/null 2>&1; then
-                reason_detail=$(coach_grounding_failure_message)
-            elif [[ -n "${COACH_GROUNDING_FAILURE_REASON:-}" ]]; then
-                reason_detail="${COACH_GROUNDING_FAILURE_REASON:-}"
-            fi
-            reason="ungrounded-${type}"
-            if [[ -n "${reason_detail:-}" ]]; then
-                printf 'AI coach: rejected response (%s).\n' "$reason_detail" >&2
-            else
-                echo "AI coach: rejected response (ungrounded-${type})." >&2
-            fi
-
-            # Fallbacks again
-            if [ "$type" = "startday" ] && command -v coaching_startday_fallback_output >/dev/null 2>&1; then
-                result=$(coaching_startday_fallback_output "${focus_context:-"(no focus set)"}" "$mode" "$reason" "$behavior_digest" "${git_commits}" "${reason_detail:-}")
-            elif [ "$type" = "goodevening" ] && command -v coaching_goodevening_fallback_output >/dev/null 2>&1; then
-                result=$(coaching_goodevening_fallback_output "${focus_context:-"(no focus set)"}" "$mode" "$reason" "$behavior_digest" "${git_commits}" "${reason_detail:-}")
-            elif [ "$type" = "status" ] && command -v coaching_status_fallback_output >/dev/null 2>&1; then
-                result=$(coaching_status_fallback_output "${focus_context:-"(no focus set)"}" "$mode" "$reason" "$behavior_digest" "$git_commits" "$current_dir" "$project_context" "${reason_detail:-}" "$context_scope")
-            fi
-        fi
-    fi
-
-    # Blindspot Sanitization
-    if [ "$type" = "startday" ] && command -v coaching_sanitize_startday_blindspots >/dev/null 2>&1; then
-        result=$(coaching_sanitize_startday_blindspots "$result" "${focus_context:-"(no focus set)"}" "$behavior_digest" "$git_commits")
-    elif [ "$type" = "goodevening" ] && command -v coaching_sanitize_goodevening_blindspots >/dev/null 2>&1; then
-        result=$(coaching_sanitize_goodevening_blindspots "$result" "${focus_context:-"(no focus set)"}" "$behavior_digest" "$git_commits")
-    elif [ "$type" = "status" ]; then
-        if command -v coaching_sanitize_status_repo_scope >/dev/null 2>&1; then
-            result=$(coaching_sanitize_status_repo_scope "$result" "${focus_context:-"(no focus set)"}" "$project_context" "$context_scope")
-        fi
-        if command -v coaching_sanitize_startday_blindspots >/dev/null 2>&1; then
-            result=$(coaching_sanitize_startday_blindspots "$result" "${focus_context:-"(no focus set)"}" "$behavior_digest" "$git_commits")
         fi
     fi
 

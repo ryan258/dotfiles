@@ -58,9 +58,7 @@ teardown() {
     [[ "$output" == *"Do Next (ordered 1-3):"* ]]
     [[ "$output" == *"Scope anchor:"* ]]
     [[ "$output" == *"Health lens:"* ]]
-    [[ "$output" == *"Signal confidence:"* ]]
-    [[ "$output" == *"Evidence check:"* ]]
-    [[ "$output" == *"non-fork GitHub activity as the primary evidence of the spear"* ]]
+    [[ "$output" == *"non-fork GitHub activity as the primary signal for the spear"* ]]
     [[ "$output" == *"map of their interests"* ]]
     [[ "$output" == *"10 blindspots, side-quests, or enhancement opportunities"* ]]
     [[ "$output" == *"The GitHub blindspot/opportunity section must contain exactly 10 numbered lines."* ]]
@@ -108,9 +106,7 @@ teardown() {
     [[ "$output" == *"Pattern watch:"* ]]
     [[ "$output" == *"Tomorrow lock:"* ]]
     [[ "$output" == *"Health lens:"* ]]
-    [[ "$output" == *"Signal confidence:"* ]]
-    [[ "$output" == *"Evidence used:"* ]]
-    [[ "$output" == *"declared focus and non-fork GitHub evidence"* ]]
+    [[ "$output" == *"declared focus and non-fork GitHub activity"* ]]
     [[ "$output" == *"Keep journals and todos out of the coaching verdict"* ]]
     [[ "$output" == *"The blindspot section must contain exactly 10 numbered lines."* ]]
 }
@@ -159,8 +155,6 @@ teardown() {
     [[ "$output" == *"Operating insight (momentum + exploration):"* ]]
     [[ "$output" == *"Scope anchor:"* ]]
     [[ "$output" == *"Health lens:"* ]]
-    [[ "$output" == *"Signal confidence:"* ]]
-    [[ "$output" == *"Evidence check:"* ]]
 }
 
 @test "startday fallback stays focus-first even when todos exist elsewhere" {
@@ -209,49 +203,38 @@ teardown() {
     [[ "$output" == *"above 6"* ]]
 }
 
-@test "startday fallback includes reason in signal confidence" {
+@test "startday fallback includes the failure reason in the summary" {
     run bash -c "$SOURCE_PREFIX; coach_startday_fallback_output 'focus' 'LOCKED' 'error'"
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"LOW (AI error"* ]]
+    [[ "$output" == *"AI coaching was error; using deterministic fallback structure."* ]]
 }
 
 @test "startday fallback uses focus and Git only" {
     run bash -c "$SOURCE_PREFIX; coach_startday_fallback_output \
-        'Making and polishing content for ryanleej.com' 'LOCKED' 'ungrounded-actions'"
+        'Making and polishing content for ryanleej.com' 'LOCKED' 'timeout'"
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"AI briefing failed evidence check"* ]]
-    [[ "$output" == *"Fallback is grounded in today's focus and recent GitHub activity only."* ]]
+    [[ "$output" == *"timeout"* ]]
+    [[ "$output" == *"Fallback is based on today's focus and recent GitHub activity only."* ]]
     [[ "$output" == *"GitHub blindspots/opportunities (1-10):"* ]]
     [[ "$output" == *"Capture the first concrete move for today's focus (Making and polishing content for ryanleej.com)"* ]]
     [[ "$output" != *"top task"* ]]
 }
 
-@test "startday fallback surfaces evidence-check detail when provided" {
-    run bash -c "$SOURCE_PREFIX; coach_startday_fallback_output \
-        'Making and polishing content for ryanleej.com' 'LOCKED' 'ungrounded-actions' '' '' 'invented repo/page/publish detail; line=\"publish the polished homepage copy.\"'"
-
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Evidence-check detail: invented repo/page/publish detail; line=\"publish the polished homepage copy.\"."* ]]
-}
-
 @test "startday fallback cites focus Git drift when digest reports diffuse activity" {
     run bash -c "$SOURCE_PREFIX; coach_startday_fallback_output \
-        'Making and polishing content for ryanleej.com' 'LOCKED' 'ungrounded-actions' \
+        'Making and polishing content for ryanleej.com' 'LOCKED' 'timeout' \
         \$'Pattern window: 30d ending $DAY_MINUS1\n  focus_git_status=diffuse, primary_repo=ai-ethics-comparator, primary_repo_share=57, commit_coherence=0, active_repos=5\n  focus_git_reason=0/6 commit cues match focus; activity spans 5 repos'"
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"Deterministic fallback (AI briefing failed evidence check)"* ]]
     [[ "$output" == *"Recent non-fork GitHub activity is diffuse"* ]]
     [[ "$output" == *"activity spans 5 repos"* ]]
-    [[ "$output" == *"focus_git_status=diffuse"* ]]
-    [[ "$output" == *"primary_repo=ai-ethics-comparator"* ]]
 }
 
-@test "startday fallback comments on recent commit repos when AI evidence check fails" {
+@test "startday fallback comments on recent commit repos when dispatcher times out" {
     run bash -c "$SOURCE_PREFIX; coach_startday_fallback_output \
-        'Making and polishing content for ryanleej.com' 'LOCKED' 'ungrounded-actions' \
+        'Making and polishing content for ryanleej.com' 'LOCKED' 'timeout' \
         \$'Pattern window: 30d ending $DAY_MINUS1\n  focus_git_status=diffuse, primary_repo=ai-ethics-comparator, primary_repo_share=57, commit_coherence=16, active_repos=5\n  focus_git_reason=1/6 commit cues match focus; activity spans 5 repos' \
         \$'  • ai-ethics-comparator: Add experiments and counterfactuals\n  • youtube-face-blur: Rewrite thumbnail blurring flow'"
 
@@ -262,14 +245,13 @@ teardown() {
 
 @test "startday fallback surfaces GitHub blindspot opportunity from feature-heavy commits" {
     run bash -c "$SOURCE_PREFIX; coach_startday_fallback_output \
-        'Making and polishing content for ryanleej.com' 'LOCKED' 'ungrounded-actions' \
+        'Making and polishing content for ryanleej.com' 'LOCKED' 'timeout' \
         \$'Pattern window: 30d ending $DAY_MINUS1\n  focus_git_status=diffuse, primary_repo=ai-ethics-comparator, primary_repo_share=57, commit_coherence=16, active_repos=5\n  focus_git_reason=1/6 commit cues match focus; activity spans 5 repos' \
         \$'  • ai-ethics-comparator: feat: implement model fingerprinting\n  • youtube-face-blur: feat: rewrite thumbnail blurring flow'"
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"1. Recent work is feature-heavy across ai-ethics-comparator and youtube-face-blur; turn one shipped change into a write-up, changelog, or demo angle instead of starting from a blank page."* ]]
     [[ "$output" == *"10. Repo ai-ethics-comparator is a candidate for a README or changelog pass tied directly to the newest change."* ]]
-    [[ "$output" == *"github_opportunity_scan"* ]]
 }
 
 # ─── coach_goodevening_fallback_output ────────────────────────────────────
@@ -286,8 +268,6 @@ teardown() {
     [[ "$output" == *"Tomorrow lock:"* ]]
     [[ "$output" == *"Health lens:"* ]]
     [[ "$output" == *"Pattern watch:"* ]]
-    [[ "$output" == *"Signal confidence:"* ]]
-    [[ "$output" == *"Evidence used:"* ]]
 }
 
 @test "goodevening fallback LOCKED mode sets no-side-quest boundary" {
@@ -311,11 +291,11 @@ teardown() {
     [[ "$output" == *"Aggressive simplicity"* ]]
 }
 
-@test "goodevening fallback includes reason in signal confidence" {
+@test "goodevening fallback includes the failure reason in the summary" {
     run bash -c "$SOURCE_PREFIX; coach_goodevening_fallback_output 'focus' 'LOCKED' 'dispatcher-missing'"
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"LOW (AI dispatcher missing"* ]]
+    [[ "$output" == *"AI reflection was dispatcher missing; using deterministic fallback structure."* ]]
 }
 
 @test "goodevening fallback uses focus-first tomorrow lock instead of top-task placeholder" {
@@ -335,12 +315,11 @@ teardown() {
     [ "$status" -eq 0 ]
     [[ "$output" == *"Recent non-fork GitHub activity was diffuse"* ]]
     [[ "$output" == *"activity spans 5 repos"* ]]
-    [[ "$output" == *"focus_git_status=diffuse"* ]]
 }
 
 @test "goodevening fallback surfaces blindspots to sleep on from commit context" {
     run bash -c "$SOURCE_PREFIX; coach_goodevening_fallback_output \
-        'Making and polishing content for ryanleej.com' 'LOCKED' 'ungrounded-reflection' \
+        'Making and polishing content for ryanleej.com' 'LOCKED' 'timeout' \
         \$'Pattern window: 30d ending $DAY_MINUS1\n  focus_git_status=diffuse, primary_repo=ai-ethics-comparator, primary_repo_share=57, commit_coherence=16, active_repos=5\n  focus_git_reason=1/6 commit cues match focus; activity spans 5 repos' \
         \$'  • ai-ethics-comparator: feat: implement model fingerprinting\n  • youtube-face-blur: feat: rewrite thumbnail blurring flow'"
 
@@ -348,37 +327,4 @@ teardown() {
     [[ "$output" == *"Blindspots to sleep on (1-10):"* ]]
     [[ "$output" == *"1. Recent work is feature-heavy across ai-ethics-comparator and youtube-face-blur; turn one shipped change into a write-up, changelog, or demo angle instead of starting from a blank page."* ]]
     [[ "$output" == *"9. Repo youtube-face-blur likely wants a short demo, screenshot, or walkthrough so the newest capability is legible without code-reading."* ]]
-    [[ "$output" == *"github_opportunity_scan"* ]]
-}
-
-@test "coach_sanitize_startday_blindspots removes noisy blindspot lines and backfills grounded GitHub ideas" {
-    run bash -c "$SOURCE_PREFIX; coach_sanitize_startday_blindspots \
-        \$'Briefing Summary:\n- note\nGitHub blindspots/opportunities (1-10):\n1. dir_usage_malformed=162 means your system is broken.\n2. focus_git_status=diffuse proves the spear is broken.\n3. commit_context is missing so there is nothing to learn.\n4. High brain fog score suggests a mismatch between cognitive load and capacity.\n5. Low suggestion adherence rate implies planned interventions are being ignored.\n6. Keep the repo lane visible to future you.\nNorth Star:\n- Ship one visible move.' \
-        'Making and polishing content for ryanleej.com' \
-        \$'Pattern window: 30d ending $DAY_MINUS1\n  focus_git_status=diffuse, primary_repo=ai-ethics-comparator, primary_repo_share=57, commit_coherence=16, active_repos=5\n  focus_git_reason=1/6 commit cues match focus; activity spans 5 repos' \
-        \$'  • ai-ethics-comparator: feat: implement model fingerprinting\n  • youtube-face-blur: feat: rewrite thumbnail blurring flow'"
-
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"GitHub blindspots/opportunities (1-10):"* ]]
-    [[ "$output" == *"1. Keep the repo lane visible to future you."* ]]
-    [[ "$output" == *"Recent work is feature-heavy across ai-ethics-comparator and youtube-face-blur"* ]]
-    [[ "$output" != *"dir_usage_malformed"* ]]
-    [[ "$output" != *"focus_git_status=diffuse proves"* ]]
-    [[ "$output" != *"commit_context is missing"* ]]
-    [[ "$output" != *"High brain fog score"* ]]
-    [[ "$output" != *"Low suggestion adherence rate"* ]]
-}
-
-@test "coach_sanitize_goodevening_blindspots inserts a cleaned blindspot section before What worked" {
-    run bash -c "$SOURCE_PREFIX; coach_sanitize_goodevening_blindspots \
-        \$'Reflection Summary:\n- note\nWhat worked:\n- Focus stayed mostly inside one lane.\nTomorrow lock:\n- First move: resume the repo lane.\n- Done condition: ship one visible next step.\n- Scope anchor boundary: no side quests before the first block lands.' \
-        'Making and polishing content for ryanleej.com' \
-        \$'Pattern window: 30d ending $DAY_MINUS1\n  focus_git_status=diffuse, primary_repo=ai-ethics-comparator, primary_repo_share=57, commit_coherence=16, active_repos=5\n  focus_git_reason=1/6 commit cues match focus; activity spans 5 repos' \
-        \$'  • ai-ethics-comparator: feat: implement model fingerprinting\n  • youtube-face-blur: feat: rewrite thumbnail blurring flow'"
-
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Blindspots to sleep on (1-10):"* ]]
-    [[ "$output" == *"Recent work is feature-heavy across ai-ethics-comparator and youtube-face-blur"* ]]
-    [[ "$output" == *$'Blindspots to sleep on (1-10):\n1. Recent work is feature-heavy'* ]]
-    [[ "$output" == *$'10. Repo ai-ethics-comparator is a candidate for a README or changelog pass tied directly to the newest change.\nWhat worked:'* ]]
 }

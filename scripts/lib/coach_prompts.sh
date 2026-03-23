@@ -14,15 +14,6 @@ readonly _COACH_PROMPTS_LOADED=true
 _coach_reason_label() {
     local reason="${1:-unavailable}"
     case "$reason" in
-        ungrounded-actions)
-            printf '%s\n' "AI briefing failed evidence check"
-            ;;
-        ungrounded-status)
-            printf '%s\n' "AI status coach failed evidence check"
-            ;;
-        ungrounded-reflection)
-            printf '%s\n' "AI reflection failed evidence check"
-            ;;
         dispatcher-missing)
             printf '%s\n' "dispatcher missing"
             ;;
@@ -47,7 +38,7 @@ coach_build_startday_prompt() {
 Produce a high-signal morning execution guide for a user with brain fog.
 Prioritize clarity, momentum, and health-aware pacing. Empathize with and validate their natural ADHD-driven exploration.
 Use the provided behavior digest as ground truth for what is working. DO NOT shame "drift"—treat deviation as natural exploration of what they are drawn to.
-Treat the declared focus and non-fork GitHub activity as the primary evidence of the spear, but firmly accept that working on other projects is valid.
+Treat the declared focus and non-fork GitHub activity as the primary signal for the spear, but firmly accept that working on other projects is valid.
 Treat GitHub projects and recent commit activity as a map of their interests. Do NOT frame other repos as "neglected" or treat them as chores that "need attention."
 Keep journals and todos out of coaching; they remain local notes, not planning input.
 
@@ -89,7 +80,7 @@ Mode check:
 Action-source rules:
 - Use Today's focus as the PRIMARY source for Do Next actions.
 - Use yesterday commits and recent pushes to infer likely repo continuity, blindspots, and adjacent enhancement opportunities, but do not invent new work from them.
-- Do not use journals or todos for action selection, evidence checks, or momentum claims.
+- Do not use journals or todos for action selection or momentum claims.
 - Use recent repo names and commit-message patterns to surface 10 blindspots, side-quests, or enhancement opportunities. Frame these purely as optional explorations they might enjoy, NOT as overdue chores.
 
 Output format (strict, no extra sections):
@@ -123,10 +114,6 @@ Health lens:
   - RECOVERY mode gentle pacing: suggest "Run: tbreak 10" (short break timer)
   - If active_timer in the digest shows 2+ hours: urgently suggest "Run: tbreak 5" NOW for an immediate body check
 - ADHD time blindness means internal clocks are unreliable — always include a concrete command, never just say "set a timer."
-Signal confidence:
-- HIGH, MEDIUM, or LOW based on how much evidence was available. If LOW, name which data sources (commits, health, digest) were absent.
-Evidence check:
-- One line naming exact commit/repo/metric cues used.
 Mode suggestion:
 - If digest signals suggest a different mode, say "Consider switching to [MODE] because [reason]." If the current mode fits, say "Current mode looks right" and briefly say why.
 
@@ -136,16 +123,15 @@ Constraints:
 - Keep language operational and specific; avoid generic motivation.
 - If signal is missing, say so briefly instead of inventing details.
 - Do Next must be grounded in today's focus and listed GitHub activity.
-- Do not use completed tasks or journal notes as evidence or action anchors.
+- Do not use completed tasks or journal notes as action anchors.
 - Do not claim the user worked on "Recent GitHub pushes" today or yesterday. Repos pushed 2+ days ago are background context indicating their general interests, not yesterday's momentum.
 - If the focus is broad and does not name a concrete asset, page, file, or deliverable, do not invent one. Step 1 should capture or choose the next concrete move before execution begins.
 - Do not invent new repositories, modules, endpoints, files, APIs, or projects unless those exact items appear in today's focus or provided GitHub activity.
 - Do not invent page names, paragraphs, homepage sections, drafts, or publication status unless those exact items appear in today's focus or provided GitHub activity.
 - Data-quality flags (e.g., dir_usage_malformed, malformed lines) are diagnostic metadata for system health, not actionable risks for the user. Do not surface them as top risks or action items.
-- Evidence check must only cite cues that are explicitly present in the provided context.
 - Do not mention journal evidence, journal momentum, todo completion, or journaling habits.
 - Do Next must not reference commit hashes.
-- If the behavior digest includes focus_git_status, primary_repo, or commit_coherence, use those as the primary grounding cues for working vs drift.
+- If the behavior digest includes focus_git_status, primary_repo, or commit_coherence, use those as the primary cues for working vs drift.
 - Any blindspot, enhancement opportunity, or project idea must stay adjacent to actual repo names and commit patterns present in the provided GitHub activity.
 - The GitHub blindspot/opportunity section must contain exactly 10 numbered lines.
 - At least half of the 10 lines must mention a real repo name from the provided GitHub activity when repo names are available.
@@ -166,10 +152,10 @@ coach_build_goodevening_prompt() {
 
     cat <<EOF
 Produce a reflective daily coaching summary for a user managing brain fog and fatigue.
-Use the behavior digest and today's evidence to identify what worked, where natural deviation (drift) happened, and how to lock tomorrow.
+Use the behavior digest and today's signals to identify what worked, where natural deviation (drift) happened, and how to lock tomorrow.
 Validate ADHD-driven exploration. Never shame the user for deviating to work on what they were drawn to.
 Always include health/energy context.
-Judge the day primarily against the declared focus and non-fork GitHub evidence, but accept changing paths as valid.
+Judge the day primarily against the declared focus and non-fork GitHub activity, but accept changing paths as valid.
 If today's commits show a long unbroken stretch in one repo (4+ hours of commits without switching), flag it as a hyperfocus session and ask whether the user remembered to eat, hydrate, move, and check body signals (numbness, vision, heat). Hyperfocus with MS burns spoons invisibly.
 Keep journals and todos out of the coaching verdict; they remain local notes for later querying.
 
@@ -222,11 +208,11 @@ Blindspots to sleep on (1-10):
 9. Ninth concise blindspot/opportunity.
 10. Tenth concise blindspot/opportunity.
 What worked:
-- 1-2 lines anchored to concrete evidence.
+- 1-2 lines anchored to concrete signals from the day.
 Off-script momentum:
 - 1-2 lines observing unexpected exploration, side-quests, or off-script momentum. Frame this neutrally without calling it a "distraction".
 What pulled you in:
-- One probable reason this direction was compelling, based on evidence.
+- One probable reason this direction was compelling, based on the visible signals.
 Pattern watch:
 - One line noting any recurring pattern visible across recent days (e.g., "third consecutive day with context-switching drift after 2pm"). Only include if behavior digest supports it; otherwise say "not enough data for pattern detection."
 Tomorrow lock:
@@ -237,10 +223,6 @@ Health lens:
   - For gentle recovery days: "Pace with: tbreak 10" (10-min break timer)
   - If today showed hyperfocus sessions: "Set a body-check alarm: remind '+90m' 'Body check: stretch, hydrate, check numbness/vision/heat'"
 - Always give a concrete command — ADHD time blindness means "set a timer" alone won't happen.
-Signal confidence:
-- HIGH, MEDIUM, or LOW based on how much evidence was available. If LOW, name which data sources (commits, health, digest) were absent.
-Evidence used:
-- One line naming exact commit/repo/metrics cues used.
 Tomorrow mode suggestion:
 - Recommend a coach mode for tomorrow based on today's energy trajectory and patterns (e.g., "Tomorrow try FLOW — your energy was strong and single-lane today"). Frame as a suggestion.
 
@@ -249,9 +231,9 @@ Constraints:
 - Reflective summary tone, operationally useful.
 - No markdown headers, bold text, separators, or concluding paragraph.
 - If data is sparse, say so briefly instead of inventing details.
-- Make the main verdict about whether the spear moved, stalled, or diffused based on focus plus Git evidence.
-- Do not use completed tasks or journal notes as evidence or explanation.
-- Do not claim the user worked on "Recent GitHub pushes" today. Only "Today's commits" and "Today's focus" constitute today's evidence.
+- Make the main verdict about whether the spear moved, stalled, or diffused based on focus plus GitHub activity.
+- Do not use completed tasks or journal notes as explanation.
+- Do not claim the user worked on "Recent GitHub pushes" today. Only "Today's commits" and "Today's focus" count as today's context.
 - Prefer commit/repo evidence over local notes when they conflict.
 - The blindspot section must contain exactly 10 numbered lines.
 - At least half of the 10 lines must mention a real repo name from today's commits or recent pushes when repo names are available.
@@ -271,7 +253,7 @@ coach_build_status_prompt() {
 
     cat <<EOF
 Produce a concise mid-day recenter coaching brief for a user managing brain fog and fatigue. Validate their ADHD exploration style.
-Use declared focus and non-fork GitHub activity as the primary evidence of whether the spear is moving, while accepting that natural deviation is valid.
+Use declared focus and non-fork GitHub activity as the primary signal for whether the spear is moving, while accepting that natural deviation is valid.
 Treat GitHub projects and recent commit/push activity as a map of their interests. Do not frame other repos as chores that "need attention."
 Keep journals and todos out of coaching; they remain local notes for later querying.
 Bias toward one immediate action that can be started right now.
@@ -341,10 +323,6 @@ Health lens:
   - If active_timer shows 2+ hours: "Run: tbreak 5" NOW — body check is overdue
   - For body-check reminders: "Run: remind '+45m' 'Body check: stretch, hydrate, check numbness/vision/heat'"
   - Never just say "set a timer" — give the exact command. ADHD time blindness means it won't happen otherwise.
-Signal confidence:
-- HIGH, MEDIUM, or LOW based on how much GitHub and digest evidence was available.
-Evidence check:
-- One line naming exact repo/commit/metric cues used.
 Mode suggestion:
 - If digest signals suggest a different mode, say "Consider switching to [MODE] because [reason]." If the current mode fits, say "Current mode looks right" and briefly say why.
 
@@ -354,7 +332,7 @@ Constraints:
 - If signal is missing, say so briefly instead of inventing details.
 - Do Next must be grounded in today's focus, today's commits, recent pushes, and current project context when present.
 - Do not use journal notes, todo items, completed tasks, or vague productivity language as evidence.
-- Do not claim the user worked on "Recent GitHub pushes" today. Only "Today's commits" and "Today's focus" constitute today's evidence.
+- Do not claim the user worked on "Recent GitHub pushes" today. Only "Today's commits" and "Today's focus" count as today's context.
 - Do not invent new repositories, modules, pages, endpoints, or publish states unless those exact items appear in the provided GitHub activity or focus text.
 - If Context scope is repo-local, keep repo commentary, blindspots, and actions inside Current project context; do not widen back out to other repos.
 - If Context scope is global, synthesize across the visible repo set and name the most likely lane.
@@ -976,100 +954,6 @@ _coach_replace_or_insert_text_section() {
     unset -f _coach_print_text_replacement
 }
 
-coach_sanitize_startday_blindspots() {
-    local response="$1"
-    local focus="$2"
-    local behavior_digest="${3:-}"
-    local commit_context="${4:-}"
-    local focus_git_status=""
-    local primary_repo=""
-    local primary_repo_share=""
-    local commit_coherence=""
-    local active_repos=""
-    local focus_git_reason=""
-    local repo_summary=""
-    local grounded_scan=""
-    local existing_lines=""
-    local cleaned_lines=""
-
-    if [[ -n "$behavior_digest" ]]; then
-        focus_git_status=$(_coach_digest_inline_value "$behavior_digest" "focus_git_status")
-        primary_repo=$(_coach_digest_inline_value "$behavior_digest" "primary_repo")
-        primary_repo_share=$(_coach_digest_inline_value "$behavior_digest" "primary_repo_share")
-        commit_coherence=$(_coach_digest_inline_value "$behavior_digest" "commit_coherence")
-        active_repos=$(_coach_digest_inline_value "$behavior_digest" "active_repos")
-        focus_git_reason=$(_coach_digest_line_value "$behavior_digest" "focus_git_reason")
-    fi
-    repo_summary=$(_coach_commit_repo_summary "$commit_context")
-    grounded_scan=$(_coach_github_blindspot_scan "$focus" "$commit_context" "$focus_git_status" "$primary_repo" "$primary_repo_share" "$commit_coherence" "$active_repos" "$focus_git_reason" "$repo_summary")
-    existing_lines=$(_coach_extract_numbered_section_lines "$response" "GitHub blindspots/opportunities")
-    cleaned_lines=$(_coach_clean_blindspot_section "$existing_lines" "$grounded_scan" 10)
-    _coach_replace_or_insert_numbered_section "$response" "GitHub blindspots/opportunities" "GitHub blindspots/opportunities (1-10):" "North Star:" "$cleaned_lines"
-}
-
-coach_sanitize_goodevening_blindspots() {
-    local response="$1"
-    local focus="$2"
-    local behavior_digest="${3:-}"
-    local commit_context="${4:-}"
-    local focus_git_status=""
-    local primary_repo=""
-    local primary_repo_share=""
-    local commit_coherence=""
-    local active_repos=""
-    local focus_git_reason=""
-    local repo_summary=""
-    local grounded_scan=""
-    local existing_lines=""
-    local cleaned_lines=""
-
-    if [[ -n "$behavior_digest" ]]; then
-        focus_git_status=$(_coach_digest_inline_value "$behavior_digest" "focus_git_status")
-        primary_repo=$(_coach_digest_inline_value "$behavior_digest" "primary_repo")
-        primary_repo_share=$(_coach_digest_inline_value "$behavior_digest" "primary_repo_share")
-        commit_coherence=$(_coach_digest_inline_value "$behavior_digest" "commit_coherence")
-        active_repos=$(_coach_digest_inline_value "$behavior_digest" "active_repos")
-        focus_git_reason=$(_coach_digest_line_value "$behavior_digest" "focus_git_reason")
-    fi
-    repo_summary=$(_coach_commit_repo_summary "$commit_context")
-    grounded_scan=$(_coach_github_blindspot_scan "$focus" "$commit_context" "$focus_git_status" "$primary_repo" "$primary_repo_share" "$commit_coherence" "$active_repos" "$focus_git_reason" "$repo_summary")
-    existing_lines=$(_coach_extract_numbered_section_lines "$response" "Blindspots to sleep on")
-    cleaned_lines=$(_coach_clean_blindspot_section "$existing_lines" "$grounded_scan" 10)
-    _coach_replace_or_insert_numbered_section "$response" "Blindspots to sleep on" "Blindspots to sleep on (1-10):" "What worked:" "$cleaned_lines"
-}
-
-coach_sanitize_status_repo_scope() {
-    local response="$1"
-    local focus="$2"
-    local project_context="$3"
-    local context_scope="${4:-global}"
-    local focus_label=""
-    local do_next_lines=""
-    local anti_tinker_line=""
-    local scoped_response=""
-
-    if [[ "$context_scope" != "repo-local" ]]; then
-        printf '%s\n' "$response"
-        return 0
-    fi
-    if [[ -z "$project_context" || "$project_context" == "(no project context)" ]]; then
-        printf '%s\n' "$response"
-        return 0
-    fi
-
-    focus_label="${focus:-current work}"
-    do_next_lines=$(cat <<EOF
-1. Pick one concrete next move inside ${project_context} that advances ${focus_label}, then start it now.
-2. Keep the same ${project_context} repo open for one more short block before switching lanes.
-3. Done when one focused block lands in ${project_context} and the next move is still obvious.
-EOF
-)
-    anti_tinker_line="- Do not leave ${project_context} until Step 3 is complete or you explicitly decide to change the repo-local lane."
-
-    scoped_response=$(_coach_replace_or_insert_text_section "$response" "Do Next" "Do Next (ordered 1-3):" "Operating insight:" "$do_next_lines")
-    _coach_replace_or_insert_text_section "$scoped_response" "Scope anchor" "Scope anchor:" "Health lens:" "$anti_tinker_line"
-}
-
 coach_status_fallback_output() {
     local focus="$1"
     local mode="$2"
@@ -1078,8 +962,7 @@ coach_status_fallback_output() {
     local git_context="${5:-}"
     local current_dir="${6:-}"
     local project_context="${7:-}"
-    local reason_detail="${8:-}"
-    local context_scope="${9:-global}"
+    local context_scope="${8:-global}"
     local reason_label=""
     local focus_label=""
     local mode_upper=""
@@ -1103,9 +986,7 @@ coach_status_fallback_output() {
     local anti_tinker_rule="No repo switch until Step 3 is complete."
     local health_lens="Use one short block, then reassess energy and fog before broadening scope."
     local evidence_sources="focus"
-    local signal_confidence="LOW"
     local reason_line=""
-    local reason_detail_line=""
     local working_signal_cap=""
 
     focus_label="${focus:-"(no focus set)"}"
@@ -1197,18 +1078,8 @@ EOF
     fi
     step_three="Done condition: one focused block lands in the chosen lane and the next move is still obvious without opening a new repo."
 
-    if [[ "$behavior_digest" != "(behavior digest unavailable)" && -n "$behavior_digest" ]]; then
-        signal_confidence="MEDIUM"
-        if [[ -n "$repo_summary" || -n "$focus_git_reason" ]]; then
-            signal_confidence="HIGH"
-        fi
-    fi
-
     if [[ "$reason" != "unavailable" && "$reason" != "" ]]; then
         reason_line="- AI status coach was ${reason_label}; using deterministic fallback structure."
-    fi
-    if [[ -n "$reason_detail" ]]; then
-        reason_detail_line="- Fallback detail: ${reason_detail}."
     fi
     working_signal_cap=$(printf '%s' "$working_signal" | awk '{ if (length($0) > 0) { printf "%s%s", toupper(substr($0, 1, 1)), substr($0, 2) } }')
 
@@ -1220,7 +1091,6 @@ ${reason_line}
 ${repo_local_scope_line}
 ${summary_project_line}
 - ${github_opportunity_line:-GitHub blindspot opportunity: keep the next move anchored to a real repo lane instead of abstract planning.}
-${reason_detail_line}
 GitHub blindspots/opportunities (1-10):
 ${blindspot_scan}
 North Star:
@@ -1235,10 +1105,6 @@ Scope anchor:
 - ${anti_tinker_rule}
 Health lens:
 - ${health_lens}
-Signal confidence:
-- ${signal_confidence} (fallback uses focus, today's GitHub activity, current project context, and behavior digest when available).
-Evidence check:
-- Deterministic fallback (${reason_label}) using ${evidence_sources}, context_scope=${context_scope:-global}, current_dir=${current_dir:-"(unknown)"}, current_project=${current_project_label}.
 EOF
 }
 
@@ -1248,14 +1114,12 @@ coach_startday_fallback_output() {
     local reason="${3:-unavailable}"
     local behavior_digest="${4:-}"
     local commit_context="${5:-}"
-    local reason_detail="${6:-}"
     local reason_label=""
     local reason_phrase=""
     local mode_upper=""
     local anti_tinker_rule=""
     local briefing_scope_line=""
     local briefing_reason_line=""
-    local briefing_reason_detail_line=""
     local step_one=""
     local step_two=""
     local step_three=""
@@ -1291,7 +1155,7 @@ coach_startday_fallback_output() {
         anti_tinker_rule="No side-quest work until Step 3 is complete and logged."
     fi
 
-    briefing_scope_line="Fallback is grounded in today's focus and recent GitHub activity only."
+    briefing_scope_line="Fallback is based on today's focus and recent GitHub activity only."
     step_one="Capture the first concrete move for today's focus (${focus_label}), then spend 10-15 minutes starting it."
     step_two="If the next move is still vague after that block, write one explicit same-focus task before touching another repo or side quest."
     step_three="Done condition: one short focus block is completed and the next concrete move is captured."
@@ -1310,22 +1174,7 @@ coach_startday_fallback_output() {
         fi
     fi
 
-    if [[ "$reason" == "ungrounded-actions" ]]; then
-        reason_phrase="$reason_label"
-        if [[ -n "$commit_repo_summary" ]]; then
-            briefing_reason_line="${reason_label}; salvaging the plan from explicit focus and Git evidence."
-            fallback_kind="Salvaged fallback"
-        else
-            briefing_reason_line="${reason_label}; using deterministic fallback structure."
-        fi
-        if [[ -n "$reason_detail" ]]; then
-            briefing_reason_detail_line="Evidence-check detail: ${reason_detail}."
-        else
-            briefing_reason_detail_line="Evidence-check detail: no additional failure detail was captured."
-        fi
-    else
-        briefing_reason_line="AI coaching was ${reason_label}; using deterministic fallback structure."
-    fi
+    briefing_reason_line="AI coaching was ${reason_label}; using deterministic fallback structure."
 
     if [[ -n "$behavior_digest" ]]; then
         focus_git_status=$(_coach_digest_inline_value "$behavior_digest" "focus_git_status")
@@ -1368,8 +1217,8 @@ coach_startday_fallback_output() {
             ;;
         no-git-evidence)
             working_signal="focus is declared"
-            drift_risk="recent non-fork GitHub evidence is thin, so spear movement is still unproven"
-            git_summary="No recent non-fork GitHub evidence was available to confirm spear movement."
+            drift_risk="recent non-fork GitHub activity is thin, so spear movement is still unproven"
+            git_summary="No recent non-fork GitHub activity was available to confirm spear movement."
             evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}"
             ;;
         git-unavailable)
@@ -1390,9 +1239,8 @@ coach_startday_fallback_output() {
 Briefing Summary:
 - Coach mode: ${mode_upper}. Focus: ${focus:-"(no focus set)"}.
 - ${briefing_reason_line}
-${briefing_reason_detail_line:+- ${briefing_reason_detail_line}}
 - ${briefing_scope_line}
-- ${commit_summary_line:-No commit-level repo summary was available for fallback grounding.}
+- ${commit_summary_line:-No commit-level repo summary was available for fallback context.}
 - ${git_summary}
 GitHub blindspots/opportunities (1-10):
 ${github_blindspot_scan:-1. GitHub opportunity scan did not find grounded opportunities beyond the current focus-vs-activity drift.}
@@ -1403,15 +1251,11 @@ Do Next (ordered 1-3):
 2. ${step_two}
 3. ${step_three}
 Operating insight (momentum + exploration):
-- Working: ${working_signal}. Exploration pattern: ${drift_risk}; ${reason_phrase}, so keep the next move explicit and evidence-backed.
+- Working: ${working_signal}. Exploration pattern: ${drift_risk}; ${reason_phrase}, so keep the next move explicit.
 Scope anchor:
 - ${anti_tinker_rule}
 Health lens:
 - Use short blocks with a break; pause if energy drops under ${COACH_LOW_ENERGY_THRESHOLD} or fog rises above ${COACH_HIGH_FOG_THRESHOLD}.
-Signal confidence:
-- LOW (${reason_phrase}; fallback uses ${evidence_sources}, mode, and behavioral digest metrics as available).
-Evidence check:
-- ${fallback_kind} (${reason_label}) using ${evidence_sources}, mode, and behavioral digest metrics.
 EOF
 }
 
@@ -1421,7 +1265,6 @@ coach_goodevening_fallback_output() {
     local reason="${3:-unavailable}"
     local behavior_digest="${4:-}"
     local commit_context="${5:-}"
-    local reason_detail="${6:-}"
     local mode_upper=""
     local tomorrow_boundary=""
     local focus_label="$focus"
@@ -1440,7 +1283,6 @@ coach_goodevening_fallback_output() {
     local pattern_watch="not enough data for pattern detection (fallback mode)."
     local evidence_sources="focus"
     local reason_label=""
-    local reason_detail_line=""
     local commit_repo_summary=""
     local blindspots_to_sleep_on=""
 
@@ -1500,7 +1342,7 @@ coach_goodevening_fallback_output() {
             ;;
         diffuse)
             git_summary="Recent non-fork GitHub activity was diffuse: ${focus_git_reason:-focus-vs-Git signal shows drift}."
-            what_worked="you still closed the day with a declared focus and enough evidence to see the drift clearly."
+            what_worked="you still closed the day with a declared focus and enough signal to see the drift clearly."
             where_drift="${focus_git_reason:-recent GitHub activity diffused away from the declared focus}"
             likely_trigger="multiple active repos without a hard spear lock."
             tomorrow_first_move="write the first concrete move for ${focus_label} before opening any repo or task that does not directly serve it."
@@ -1508,9 +1350,9 @@ coach_goodevening_fallback_output() {
             evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}, primary_repo=${primary_repo:-N/A}, commit_coherence=${commit_coherence:-N/A}, active_repos=${active_repos:-N/A}"
             ;;
         no-git-evidence)
-            git_summary="No recent non-fork GitHub evidence was available to confirm spear movement."
+            git_summary="No recent non-fork GitHub activity was available to confirm spear movement."
             what_worked="the day still ended with a declared focus and captured context for tomorrow."
-            where_drift="recent non-fork GitHub evidence was too thin to prove whether the spear moved"
+            where_drift="recent non-fork GitHub activity was too thin to prove whether the spear moved"
             likely_trigger="work stayed too implicit to evaluate cleanly."
             tomorrow_first_move="define one explicit move for ${focus_label} and start it early enough to produce evidence."
             evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}"
@@ -1528,13 +1370,6 @@ coach_goodevening_fallback_output() {
     if [[ -n "$commit_repo_summary" ]]; then
         evidence_sources="${evidence_sources}, recent_commit_repos=${commit_repo_summary}"
     fi
-    if [[ "$reason" == "ungrounded-reflection" ]]; then
-        if [[ -n "$reason_detail" ]]; then
-            reason_detail_line="Evidence-check detail: ${reason_detail}."
-        else
-            reason_detail_line="Evidence-check detail: no additional failure detail was captured."
-        fi
-    fi
     blindspots_to_sleep_on=$(_coach_github_blindspot_scan "$focus_label" "$commit_context" "$focus_git_status" "$primary_repo" "$primary_repo_share" "$commit_coherence" "$active_repos" "$focus_git_reason" "$commit_repo_summary")
     if [[ -n "$blindspots_to_sleep_on" ]]; then
         evidence_sources="${evidence_sources}, github_opportunity_scan"
@@ -1544,7 +1379,6 @@ coach_goodevening_fallback_output() {
 Reflection Summary:
 - Coach mode: ${mode_upper}. Focus: ${focus_label}.
 - AI reflection was ${reason_label}; using deterministic fallback structure.
-${reason_detail_line:+- ${reason_detail_line}}
 - ${git_summary}
 Blindspots to sleep on (1-10):
 ${blindspots_to_sleep_on:-1. Non-fork GitHub evidence is sparse, so the first blindspot to sleep on is how to create one visible commit early tomorrow.}
@@ -1562,9 +1396,5 @@ Tomorrow lock:
 - Scope anchor boundary: ${tomorrow_boundary}
 Health lens:
 - Keep work in short blocks with recovery breaks and stop if energy/fog thresholds are crossed.
-Signal confidence:
-- LOW (AI ${reason_label}; fallback uses ${evidence_sources}, mode, and behavioral digest metrics as available).
-Evidence used:
-- Deterministic fallback (${reason_label}) using ${evidence_sources}, mode, and behavioral digest metrics.
 EOF
 }
