@@ -641,6 +641,26 @@ apby() {
     "$DOTFILES_ALIAS_ROOT/bin/cyborg" auto --build --yes "$@"
 }
 
+# Build + publish to ecosystem registry
+# Usage: apbp "a CLI that scores menus by accessibility"
+apbp() {
+    if [[ -z "$1" ]]; then
+        echo 'Usage: apbp "your idea here"' >&2
+        return 1
+    fi
+    "$DOTFILES_ALIAS_ROOT/bin/cyborg" auto --build --publish "$@"
+}
+
+# Build + publish + auto-confirm (no prompts)
+# Usage: apbpy "terminal pomodoro timer"
+apbpy() {
+    if [[ -z "$1" ]]; then
+        echo 'Usage: apbpy "your idea here"' >&2
+        return 1
+    fi
+    "$DOTFILES_ALIAS_ROOT/bin/cyborg" auto --build --publish --yes "$@"
+}
+
 # Resume the last autopilot or cyborg session
 alias apc="$DOTFILES_ALIAS_ROOT/bin/cyborg resume"
 

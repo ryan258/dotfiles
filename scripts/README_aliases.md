@@ -30,6 +30,8 @@ The full rules live in `../CLAUDE.md`.
 - `apy` -- Auto-document and auto-confirm all prompts
 - `apb "idea"` -- Build a project from an idea, then document it
 - `apby "idea"` -- Build, document, and auto-confirm
+- `apbp "idea"` -- Build, publish, and document
+- `apbpy "idea"` -- Build, publish, document, and auto-confirm
 - `apc` -- Pick up where you left off in a past session
 
 ## Navigation + Utility

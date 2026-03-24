@@ -8,7 +8,7 @@ This is a set of tools you run on your computer. It helps you get through your w
 - Saves your tasks, your diary, your health, and your energy safely in your folders.
 - Gives you 13 AI helpers (like a Tech Expert or a Creative Writer) who can do work for you instantly.
 - Checks the AI's answers to make sure it doesn't make things up!
-- A special robot (Cyborg Lab) can automatically turn your code folders into full blog posts.
+- A special robot (Cyborg Lab) can automatically turn your code folders into full blog posts, or build a project from an idea and optionally publish it first.
 - **Autopilot Mode:** If you type `ap`, the computer will just do the chores for you while you rest.
 
 ## How It's Built
@@ -61,6 +61,8 @@ morphling "Look at my folder"     # Ask the magic helper anything
 
 # Autopilot (for brain-fog days)
 ap                                # Automatic help with one button
+apb "idea"                        # Build + verify + document a new project
+apbp "idea"                       # Build + publish + document a new project
 ```
 
 ## Where to Read More

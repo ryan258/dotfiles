@@ -36,6 +36,8 @@ setup() {
     # Copy the real agent code into the sandbox so tests run against it.
     cp "$BATS_TEST_DIRNAME/../bin/cyborg" "$DOTFILES_DIR/bin/cyborg"
     cp "$BATS_TEST_DIRNAME/../scripts/cyborg_agent.py" "$DOTFILES_DIR/scripts/cyborg_agent.py"
+    cp "$BATS_TEST_DIRNAME/../scripts/cyborg_build.py" "$DOTFILES_DIR/scripts/cyborg_build.py"
+    cp "$BATS_TEST_DIRNAME/../scripts/cyborg_support.py" "$DOTFILES_DIR/scripts/cyborg_support.py"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/config.sh" "$DOTFILES_DIR/scripts/lib/config.sh"
     chmod +x "$DOTFILES_DIR/bin/cyborg" "$DOTFILES_DIR/scripts/cyborg_agent.py"
 
@@ -640,10 +642,359 @@ teardown() {
     mkdir -p "$broken_dotfiles/bin" "$broken_dotfiles/scripts"
     cp "$BATS_TEST_DIRNAME/../bin/cyborg" "$broken_dotfiles/bin/cyborg"
     cp "$BATS_TEST_DIRNAME/../scripts/cyborg_agent.py" "$broken_dotfiles/scripts/cyborg_agent.py"
+    cp "$BATS_TEST_DIRNAME/../scripts/cyborg_build.py" "$broken_dotfiles/scripts/cyborg_build.py"
+    cp "$BATS_TEST_DIRNAME/../scripts/cyborg_support.py" "$broken_dotfiles/scripts/cyborg_support.py"
     chmod +x "$broken_dotfiles/bin/cyborg" "$broken_dotfiles/scripts/cyborg_agent.py"
 
     run env DOTFILES_DIR="$broken_dotfiles" "$broken_dotfiles/bin/cyborg" ingest
 
     [ "$status" -eq 1 ]
     [[ "$output" == *"required config library is missing"* ]]
+}
+
+# ---- Publish flag (--publish) ----
+
+# Test: _detect_publish_recipe returns the correct recipe for each marker file.
+@test "publish: _detect_publish_recipe matches marker files correctly" {
+    run python3 -c "
+import sys; sys.path.insert(0, '$BATS_TEST_DIRNAME/../scripts')
+from pathlib import Path
+import tempfile, os
+
+with tempfile.TemporaryDirectory() as d:
+    p = Path(d)
+    # No marker file → None
+    from cyborg_agent import _detect_publish_recipe
+    assert _detect_publish_recipe(p) is None, 'empty dir should return None'
+
+    # package.json → npm recipe
+    (p / 'package.json').write_text('{}')
+    recipe = _detect_publish_recipe(p)
+    assert recipe is not None
+    assert recipe[0] == 'package.json', f'expected package.json, got {recipe[0]}'
+
+    # pyproject.toml wins when package.json is removed
+    (p / 'package.json').unlink()
+    (p / 'pyproject.toml').write_text('[project]')
+    recipe = _detect_publish_recipe(p)
+    assert recipe[0] == 'pyproject.toml', f'expected pyproject.toml, got {recipe[0]}'
+
+    # Cargo.toml
+    (p / 'pyproject.toml').unlink()
+    (p / 'Cargo.toml').write_text('[package]')
+    recipe = _detect_publish_recipe(p)
+    assert recipe[0] == 'Cargo.toml', f'expected Cargo.toml, got {recipe[0]}'
+
+    # go.mod
+    (p / 'Cargo.toml').unlink()
+    (p / 'go.mod').write_text('module example')
+    recipe = _detect_publish_recipe(p)
+    assert recipe[0] == 'go.mod', f'expected go.mod, got {recipe[0]}'
+
+print('all ecosystem detections passed')
+"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"all ecosystem detections passed"* ]]
+}
+
+# Test: _validate_publish_prereqs reports missing env vars.
+@test "publish: _validate_publish_prereqs catches missing env vars" {
+    run python3 -c "
+import sys, os; sys.path.insert(0, '$BATS_TEST_DIRNAME/../scripts')
+from cyborg_agent import _validate_publish_prereqs
+
+# npm recipe with NPM_TOKEN not set.
+os.environ.pop('NPM_TOKEN', None)
+recipe = ('package.json', ['npm'], ['NPM_TOKEN'], [], 'npm publish 2>&1')
+errors = _validate_publish_prereqs(recipe)
+assert any('NPM_TOKEN' in e for e in errors), f'expected NPM_TOKEN error, got {errors}'
+
+# With NPM_TOKEN set, the env var error should disappear.
+os.environ['NPM_TOKEN'] = 'test-token'
+errors = _validate_publish_prereqs(recipe)
+env_errors = [e for e in errors if 'NPM_TOKEN' in e]
+assert len(env_errors) == 0, f'unexpected NPM_TOKEN error: {errors}'
+
+print('prereq validation passed')
+"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"prereq validation passed"* ]]
+}
+
+# Test: _validate_publish_prereqs reports a missing Python build module.
+@test "publish: _validate_publish_prereqs catches missing build module" {
+    run python3 -c "
+import sys, unittest.mock; sys.path.insert(0, '$BATS_TEST_DIRNAME/../scripts')
+import cyborg_build
+from cyborg_agent import _validate_publish_prereqs
+
+recipe = ('pyproject.toml', ['python3'], [], ['python3 -m build 2>&1'], 'twine upload dist/* 2>&1')
+with unittest.mock.patch.object(cyborg_build.importlib.util, 'find_spec', return_value=None):
+    errors = _validate_publish_prereqs(recipe)
+    assert any('build' in e for e in errors), f'expected build error, got {errors}'
+
+print('build module validation passed')
+"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"build module validation passed"* ]]
+}
+
+# Test: _setup_npm_auth writes a temp config without clobbering project .npmrc.
+@test "publish: _setup_npm_auth creates temp auth config and preserves project .npmrc" {
+    run python3 -c "
+import sys, os; sys.path.insert(0, '$BATS_TEST_DIRNAME/../scripts')
+from pathlib import Path
+import tempfile
+from cyborg_agent import _setup_npm_auth
+
+with tempfile.TemporaryDirectory() as d:
+    p = Path(d)
+    project_npmrc = p / '.npmrc'
+    project_npmrc.write_text('registry=https://registry.npmjs.org/\n', encoding='utf-8')
+
+    # Without NPM_TOKEN, returns None.
+    os.environ.pop('NPM_TOKEN', None)
+    result = _setup_npm_auth(p)
+    assert result is None, 'should return None without token'
+
+    # With NPM_TOKEN, creates a temp auth config instead of overwriting .npmrc.
+    os.environ['NPM_TOKEN'] = 'tok_abc123'
+    npmrc = _setup_npm_auth(p)
+    assert npmrc is not None, 'should return path'
+    assert npmrc.exists(), 'temp auth config should exist'
+    assert npmrc != project_npmrc, 'should not overwrite project .npmrc'
+    content = npmrc.read_text()
+    assert '//registry.npmjs.org/:_authToken=tok_abc123' in content, f'wrong content: {content}'
+    assert project_npmrc.read_text() == 'registry=https://registry.npmjs.org/\n', 'project .npmrc should be unchanged'
+
+    # Simulate cleanup like _publish_project does.
+    npmrc.unlink()
+    assert not npmrc.exists(), 'temp auth config should be cleaned up'
+    assert project_npmrc.exists(), 'project .npmrc should remain after cleanup'
+
+print('npm auth setup passed')
+"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"npm auth setup passed"* ]]
+}
+
+# Test: _commit_metadata_changes only commits publish metadata files.
+@test "publish: _commit_metadata_changes is a no-op when nothing changed" {
+    run python3 -c "
+import sys, os; sys.path.insert(0, '$BATS_TEST_DIRNAME/../scripts')
+from pathlib import Path
+import tempfile, subprocess
+from cyborg_agent import _commit_metadata_changes
+
+with tempfile.TemporaryDirectory() as d:
+    p = Path(d)
+    # Initialize a git repo with one metadata file.
+    subprocess.run(['git', 'init', '-q'], cwd=p, check=True)
+    subprocess.run(['git', 'config', 'user.name', 'Test'], cwd=p, check=True)
+    subprocess.run(['git', 'config', 'user.email', 'test@test'], cwd=p, check=True)
+    (p / 'package.json').write_text('{}\\n')
+    subprocess.run(['git', 'add', 'package.json'], cwd=p, check=True)
+    subprocess.run(['git', 'commit', '-qm', 'init'], cwd=p, check=True)
+
+    # No changes → should return False and not create a new commit.
+    initial_log = subprocess.run(['git', 'log', '--oneline'], cwd=p, capture_output=True, text=True).stdout
+    result = _commit_metadata_changes(p)
+    assert result == False, f'expected False, got {result}'
+    final_log = subprocess.run(['git', 'log', '--oneline'], cwd=p, capture_output=True, text=True).stdout
+    assert initial_log == final_log, 'no extra commit should exist'
+
+    # Metadata change plus generated artifacts → only metadata should be committed.
+    (p / 'package.json').write_text('{\"name\":\"demo\",\"description\":\"updated\"}\\n')
+    (p / 'node_modules' / 'leftpad').mkdir(parents=True)
+    (p / 'node_modules' / 'leftpad' / 'index.js').write_text('module.exports = 1\\n')
+    result = _commit_metadata_changes(p)
+    assert result == True, f'expected True, got {result}'
+    final_log = subprocess.run(['git', 'log', '--oneline'], cwd=p, capture_output=True, text=True).stdout
+    assert len(final_log.strip().split(chr(10))) == 2, f'expected 2 commits: {final_log}'
+    show = subprocess.run(['git', 'show', '--name-only', '--pretty=format:', 'HEAD'], cwd=p, capture_output=True, text=True, check=True).stdout
+    assert 'package.json' in show, f'package.json should be committed: {show}'
+    assert 'node_modules' not in show, f'build artifacts should stay out of the commit: {show}'
+    status = subprocess.run(['git', 'status', '--short'], cwd=p, capture_output=True, text=True, check=True).stdout
+    assert 'node_modules' in status, f'artifacts should remain untracked: {status}'
+
+print('commit metadata changes passed')
+"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"commit metadata changes passed"* ]]
+}
+
+# Test: --publish without --build gives a friendly error.
+@test "publish: --publish requires --build" {
+    run bash -lc "env DOTFILES_DIR='$DOTFILES_DIR' CYBORG_LAB_DIR='$BLOG_DIR' '$DOTFILES_DIR/bin/cyborg' auto --publish 'a test project'"
+
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"--publish requires --build."* ]]
+}
+
+# Test: --publish with --build still requires AI mode.
+@test "publish: --publish with --build requires AI mode" {
+    run bash -lc "env DOTFILES_DIR='$DOTFILES_DIR' CYBORG_LAB_DIR='$BLOG_DIR' CYBORG_DISABLE_AI=true '$DOTFILES_DIR/bin/cyborg' auto --build --publish 'a test project'"
+
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"--build requires AI mode"* ]]
+}
+
+# Test: _publish_project returns False for unrecognised ecosystem.
+@test "publish: _publish_project returns False when no marker file exists" {
+    run python3 -c "
+import sys, os; sys.path.insert(0, '$BATS_TEST_DIRNAME/../scripts')
+from pathlib import Path
+import tempfile
+
+# Provide a stub ai_client so we can call the function.
+class FakeAI:
+    enabled = False
+    def chat_json(self, *a, **kw):
+        return {}
+
+from cyborg_agent import _publish_project
+
+with tempfile.TemporaryDirectory() as d:
+    p = Path(d)
+    result = _publish_project(p, 'test', 'A test', 'idea', FakeAI(), assume_yes=True)
+    assert result == False, f'expected False for empty dir, got {result}'
+
+print('no marker returns False')
+"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"no marker returns False"* ]]
+}
+
+# ---- Market validation (--no-validate) ----
+
+# Test: _format_validation_report produces correct labels for each verdict.
+@test "market: _format_validation_report labels green/yellow/red correctly" {
+    run python3 -c "
+import sys; sys.path.insert(0, '$BATS_TEST_DIRNAME/../scripts')
+from cyborg_agent import _format_validation_report
+
+green = _format_validation_report({'verdict': 'green', 'summary': 'Wide open.'})
+assert '[OPEN]' in green, f'green should show [OPEN]: {green}'
+
+yellow = _format_validation_report({
+    'verdict': 'yellow',
+    'summary': 'Some options exist.',
+    'existing_solutions': [{'name': 'foo', 'source': 'github', 'stars_or_downloads': '1k', 'description': 'A foo tool'}],
+    'gap_analysis': 'There is a gap in accessibility.',
+    'differentiation_suggestions': ['Add screen reader support'],
+})
+assert '[CROWDED]' in yellow, f'yellow should show [CROWDED]: {yellow}'
+assert 'foo' in yellow, 'should list existing solutions'
+assert 'gap in accessibility' in yellow
+assert 'screen reader' in yellow
+
+red = _format_validation_report({'verdict': 'red', 'summary': 'Saturated.'})
+assert '[SATURATED]' in red, f'red should show [SATURATED]: {red}'
+
+print('all format labels passed')
+"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"all format labels passed"* ]]
+}
+
+# Test: validate_market returns True when search results are empty (graceful).
+@test "market: validate_market proceeds when no search results found" {
+    run python3 -c "
+import sys, os, unittest.mock; sys.path.insert(0, '$BATS_TEST_DIRNAME/../scripts')
+import cyborg_build
+
+class FakeAI:
+    enabled = True
+    def chat_json(self, *a, **kw):
+        return {'verdict': 'green', 'summary': 'Nothing found.'}
+
+# Patch in cyborg_build where validate_market actually resolves the names.
+with unittest.mock.patch.object(cyborg_build, '_search_github', return_value=[]), \
+     unittest.mock.patch.object(cyborg_build, '_search_npm', return_value=[]):
+    result = cyborg_build.validate_market('test idea', FakeAI(), assume_yes=True, interactive=False)
+    assert result == True, f'expected True when no results, got {result}'
+
+print('empty results proceeds')
+"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"empty results proceeds"* ]]
+}
+
+# Test: validate_market proceeds even when AI synthesis fails (graceful degradation).
+@test "market: validate_market proceeds when AI synthesis raises an exception" {
+    run python3 -c "
+import sys, os, unittest.mock; sys.path.insert(0, '$BATS_TEST_DIRNAME/../scripts')
+import cyborg_build
+
+class FailingAI:
+    enabled = True
+    def chat_json(self, *a, **kw):
+        raise RuntimeError('API down')
+
+# Return some search results so we actually reach the AI call.
+fake_results = [{'name': 'test', 'full_name': 'x/test', 'description': 'desc', 'stars': 10, 'url': '', 'updated_at': '', 'language': 'Python'}]
+with unittest.mock.patch.object(cyborg_build, '_search_github', return_value=fake_results), \
+     unittest.mock.patch.object(cyborg_build, '_search_npm', return_value=[]):
+    result = cyborg_build.validate_market('test idea', FailingAI(), assume_yes=True, interactive=False)
+    assert result == True, f'expected True on AI failure, got {result}'
+
+print('ai failure graceful')
+"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"ai failure graceful"* ]]
+}
+
+# Test: validate_market shows red warning but proceeds with --yes.
+@test "market: validate_market warns on red verdict but proceeds with assume_yes" {
+    run python3 -c "
+import sys, os, unittest.mock; sys.path.insert(0, '$BATS_TEST_DIRNAME/../scripts')
+import cyborg_build
+
+class RedAI:
+    enabled = True
+    def chat_json(self, *a, **kw):
+        return {'verdict': 'red', 'summary': 'Market is saturated.', 'existing_solutions': [], 'gap_analysis': '', 'differentiation_suggestions': []}
+
+fake_results = [{'name': 'existing', 'full_name': 'x/existing', 'description': 'Already exists', 'stars': 5000, 'url': '', 'updated_at': '', 'language': 'JS'}]
+with unittest.mock.patch.object(cyborg_build, '_search_github', return_value=fake_results), \
+     unittest.mock.patch.object(cyborg_build, '_search_npm', return_value=[]):
+    result = cyborg_build.validate_market('clipboard manager', RedAI(), assume_yes=True, interactive=False)
+    assert result == True, f'expected True with assume_yes even on red, got {result}'
+
+print('red with yes proceeds')
+"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"red with yes proceeds"* ]]
+}
+
+# Test: --no-validate flag is accepted by the argument parser.
+@test "market: --no-validate flag is accepted by argparser" {
+    run python3 -c "
+import sys; sys.path.insert(0, '$BATS_TEST_DIRNAME/../scripts')
+from cyborg_agent import build_parser
+parser = build_parser()
+args = parser.parse_args(['auto', '--build', '--no-validate', 'test idea'])
+assert args.no_validate == True, f'expected no_validate=True, got {args.no_validate}'
+args2 = parser.parse_args(['auto', '--build', 'test idea'])
+assert args2.no_validate == False, f'expected no_validate=False by default, got {args2.no_validate}'
+print('no-validate flag accepted')
+"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"no-validate flag accepted"* ]]
+}
+
+# Test: --publish flag is accepted by the argument parser.
+@test "market: --publish flag is accepted by argparser" {
+    run python3 -c "
+import sys; sys.path.insert(0, '$BATS_TEST_DIRNAME/../scripts')
+from cyborg_agent import build_parser
+parser = build_parser()
+args = parser.parse_args(['auto', '--build', '--publish', 'test idea'])
+assert args.publish == True, f'expected publish=True, got {args.publish}'
+args2 = parser.parse_args(['auto', '--build', 'test idea'])
+assert args2.publish == False, f'expected publish=False by default, got {args2.publish}'
+print('publish flag accepted')
+"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"publish flag accepted"* ]]
 }

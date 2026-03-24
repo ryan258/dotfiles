@@ -19,11 +19,11 @@ Morphling is the only AI-Staff-HQ specialist with tools enabled. All other speci
 
 Morphling operates through three distinct pathways, each with different capabilities:
 
-| Pathway | Trigger | Can Read | Can Write | Can Execute | Can Iterate |
-|---------|---------|----------|-----------|-------------|-------------|
-| Direct mode | `morphling` | Files | Files | Yes (shell) | Yes (multi-turn) |
-| Swarm mode | `morphling --swarm` | Context dump | No | No | No (one-shot) |
-| Build mode | `cyborg auto --build` | Via AI | Via Python agent | Yes (verify loop) | Yes (up to 3 rounds) |
+| Pathway     | Trigger               | Can Read     | Can Write        | Can Execute       | Can Iterate          |
+| ----------- | --------------------- | ------------ | ---------------- | ----------------- | -------------------- |
+| Direct mode | `morphling`           | Files        | Files            | Yes (shell)       | Yes (multi-turn)     |
+| Swarm mode  | `morphling --swarm`   | Context dump | No               | No                | No (one-shot)        |
+| Build mode  | `cyborg auto --build` | Via AI       | Via Python agent | Yes (verify loop) | Yes (up to 3 rounds) |
 
 ### Direct Mode (Interactive)
 
@@ -39,12 +39,12 @@ Morphling operates through three distinct pathways, each with different capabili
 
 **Tools Available:**
 
-| Tool | Description |
-|------|-------------|
-| `read_file(path)` | Read any file, resolves paths relative to `USER_CWD` |
-| `write_file(path, content)` | Write/create files, auto-creates parent directories |
-| `list_directory(path)` | List files and directories |
-| `run_command(command, working_directory)` | Run a shell command (60s timeout, 10K output limit) |
+| Tool                                      | Description                                          |
+| ----------------------------------------- | ---------------------------------------------------- |
+| `read_file(path)`                         | Read any file, resolves paths relative to `USER_CWD` |
+| `write_file(path, content)`               | Write/create files, auto-creates parent directories  |
+| `list_directory(path)`                    | List files and directories                           |
+| `run_command(command, working_directory)` | Run a shell command (60s timeout, 10K output limit)  |
 
 **Key properties:**
 
@@ -91,14 +91,17 @@ This is a one-shot path with no tools and no persistence. Used by `cyborg auto` 
 **Flow:**
 
 1. Shell launcher (`bin/cyborg`) detects `--build` flag, skips Morphling pre-analysis
-2. Python agent calls `build_project_from_idea()` in `scripts/cyborg_agent.py`
-3. Sends idea to OpenRouter with `MORPHLING_BUILD_PROMPT`
-4. AI returns a JSON scaffold:
+2. Market validation: searches GitHub + npm for existing solutions, AI synthesizes a competitive landscape report, user decides to proceed/revise/cancel (skip with `--no-validate`)
+3. Python agent calls `build_project_from_idea()` in `scripts/cyborg_build.py`
+4. Sends idea to OpenRouter with `MORPHLING_BUILD_PROMPT`
+5. AI returns a JSON scaffold:
 
 ```json
 {
   "name": "project-slug",
   "description": "One-line description",
+  "keywords": ["keyword1", "keyword2", "keyword3"],
+  "license": "MIT",
   "files": {
     "path/file.py": "full file contents...",
     "README.md": "readme contents..."
@@ -106,9 +109,10 @@ This is a one-shot path with no tools and no persistence. Used by `cyborg auto` 
 }
 ```
 
-5. Python agent validates and writes all files to `~/Projects/<name>/`
-6. Initializes git repo and commits scaffold
-7. Passes project path to Cyborg for documentation
+6. Python agent validates and writes all files to `~/Projects/<name>/`
+7. Initializes git repo and commits scaffold
+8. If `--publish`: detects ecosystem, validates prerequisites, creates GitHub repo, publishes to registry
+9. Passes project path to Cyborg for documentation
 
 **Build prompt instructions:**
 
@@ -129,6 +133,35 @@ After the scaffold is written, a **build-verify-fix loop** automatically kicks i
 
 This means `cyborg auto --build` produces verified, working projects — not just scaffolds that might compile.
 
+### Publishing (`--publish` flag)
+
+When `--publish` is added to the build command, the pipeline extends from verified project to installable package:
+
+```bash
+cyborg auto --build --publish "CLI that scores menus by accessibility"
+```
+
+**Supported ecosystems:**
+
+| Marker | Registry | What Happens |
+| --- | --- | --- |
+| `package.json` | npm | `npm publish --access public` |
+| `pyproject.toml` | PyPI | `python3 -m build` + `twine upload dist/*` |
+| `setup.py` | PyPI | `python3 -m build` + `twine upload dist/*` |
+| `Cargo.toml` | crates.io | `cargo publish` |
+| `go.mod` | GitHub Releases | `gh release create v0.1.0` |
+
+**Prerequisites:** Set registry tokens in `.env` (see `.env.example` for details):
+
+- npm: `NPM_TOKEN`
+- PyPI: `TWINE_USERNAME` + `TWINE_PASSWORD`
+- crates.io: `CARGO_REGISTRY_TOKEN`
+- Go: `gh auth login` (uses GitHub CLI auth)
+
+**Safety:** Publish is irreversible. The pipeline confirms before publishing unless `--yes` is passed. If prerequisites are missing, publish is skipped with a clear message — the rest of the pipeline continues normally.
+
+**Aliases:** `apbp` (build+publish) and `apbpy` (build+publish+yes).
+
 ---
 
 ## Where Morphling Fits in the Pipeline
@@ -145,10 +178,10 @@ This means `cyborg auto --build` produces verified, working projects — not jus
 
 **Two convergence paths with Cyborg:**
 
-| Path | Trigger | Flow |
-|------|---------|------|
-| Pre-analysis | `cyborg auto` | Morphling `--swarm` reads repo, brief exported as `CYBORG_MORPHLING_BRIEF`, Cyborg drafts with domain context |
-| Build mode | `cyborg auto --build "idea"` | Morphling scaffolds project, Cyborg scans and documents the fresh repo |
+| Path         | Trigger                      | Flow                                                                                                          |
+| ------------ | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Pre-analysis | `cyborg auto`                | Morphling `--swarm` reads repo, brief exported as `CYBORG_MORPHLING_BRIEF`, Cyborg drafts with domain context |
+| Build mode   | `cyborg auto --build "idea"` | Morphling scaffolds project, Cyborg scans and documents the fresh repo                                        |
 
 Both end with the same A-E choice prompt:
 
@@ -255,49 +288,49 @@ Every push to `main` triggers automatic docs updates, validated and committed to
 
 **Size limits (prevent token explosion):**
 
-| Constant | Value |
-|----------|-------|
-| `MAX_README_CHARS` | 6000 |
-| `MAX_DIFF_CHARS` | 18000 |
-| `MAX_PAGE_CHARS` | 14000 |
-| `MAX_NOTES_CHARS` | 4000 |
+| Constant           | Value |
+| ------------------ | ----- |
+| `MAX_README_CHARS` | 6000  |
+| `MAX_DIFF_CHARS`   | 18000 |
+| `MAX_PAGE_CHARS`   | 14000 |
+| `MAX_NOTES_CHARS`  | 4000  |
 
 **Quality thresholds:**
 
-| Constant | Value |
-|----------|-------|
-| `CONFIDENCE_THRESHOLD` | 0.72 (configurable) |
+| Constant                 | Value                |
+| ------------------------ | -------------------- |
+| `CONFIDENCE_THRESHOLD`   | 0.72 (configurable)  |
 | `READABILITY_WARN_GRADE` | 6.5 (Flesch-Kincaid) |
-| `DESCRIPTION_MIN_CHARS` | 140 |
-| `DESCRIPTION_MAX_CHARS` | 160 |
+| `DESCRIPTION_MIN_CHARS`  | 140                  |
+| `DESCRIPTION_MAX_CHARS`  | 160                  |
 
 **Page types:** project, workflow, artifact, log, reference, stack, protocol
 
 **Command execution (run_command tool):**
 
-| Constant | Value |
-|----------|-------|
-| `_DEFAULT_TIMEOUT_SECONDS` | 60 |
-| `_MAX_OUTPUT_CHARS` | 10000 |
+| Constant                   | Value |
+| -------------------------- | ----- |
+| `_DEFAULT_TIMEOUT_SECONDS` | 60    |
+| `_MAX_OUTPUT_CHARS`        | 10000 |
 
 **Build-verify loop:**
 
-| Constant | Value |
-|----------|-------|
-| `BUILD_VERIFY_MAX_ROUNDS` | 3 |
-| `BUILD_VERIFY_TIMEOUT_SECONDS` | 120 |
+| Constant                       | Value |
+| ------------------------------ | ----- |
+| `BUILD_VERIFY_MAX_ROUNDS`      | 3     |
+| `BUILD_VERIFY_TIMEOUT_SECONDS` | 120   |
 
 Supported project types for auto-verification:
 
-| Marker File | Install Command | Test Command |
-|-------------|----------------|--------------|
-| `package.json` | `npm install` | `npm test` |
-| `requirements.txt` | `pip install -r requirements.txt` | `python -m pytest` |
-| `setup.py` | `pip install -e .` | `python -m pytest` |
-| `pyproject.toml` | `pip install -e .` | `python -m pytest` |
-| `go.mod` | — | `go build ./... && go test ./...` |
-| `Cargo.toml` | — | `cargo build && cargo test` |
-| `Makefile` | — | `make` |
+| Marker File        | Install Command                   | Test Command                      |
+| ------------------ | --------------------------------- | --------------------------------- |
+| `package.json`     | `npm install`                     | `npm test`                        |
+| `requirements.txt` | `pip install -r requirements.txt` | `python -m pytest`                |
+| `setup.py`         | `pip install -e .`                | `python -m pytest`                |
+| `pyproject.toml`   | `pip install -e .`                | `python -m pytest`                |
+| `go.mod`           | —                                 | `go build ./... && go test ./...` |
+| `Cargo.toml`       | —                                 | `cargo build && cargo test`       |
+| `Makefile`         | —                                 | `make`                            |
 
 **API defaults:**
 
@@ -311,25 +344,25 @@ Supported project types for auto-verification:
 
 ### What Morphling Can Do
 
-| Capability | Pathway | How |
-|------------|---------|-----|
-| Take an idea and build a working project | Build mode | Scaffold + verify loop |
-| Run tests and iterate on failures | Direct mode, Build mode | `run_command` tool / verify loop |
-| Install dependencies | Direct mode, Build mode | `run_command` tool / verify loop |
-| Compile and verify code works | Direct mode, Build mode | `run_command` tool / verify loop |
-| Read, write, and explore project files | Direct mode | `read_file`, `write_file`, `list_directory` |
-| Analyze a codebase for documentation | Swarm mode | Context dump + domain-expert brief |
-| Adapt persona to any domain | All modes | YAML-defined shapeshifting |
-| Multi-turn iterative development | Direct mode | ReAct loop with persistent session |
+| Capability                               | Pathway                 | How                                         |
+| ---------------------------------------- | ----------------------- | ------------------------------------------- |
+| Take an idea and build a working project | Build mode              | Scaffold + verify loop                      |
+| Run tests and iterate on failures        | Direct mode, Build mode | `run_command` tool / verify loop            |
+| Install dependencies                     | Direct mode, Build mode | `run_command` tool / verify loop            |
+| Compile and verify code works            | Direct mode, Build mode | `run_command` tool / verify loop            |
+| Read, write, and explore project files   | Direct mode             | `read_file`, `write_file`, `list_directory` |
+| Analyze a codebase for documentation     | Swarm mode              | Context dump + domain-expert brief          |
+| Adapt persona to any domain              | All modes               | YAML-defined shapeshifting                  |
+| Multi-turn iterative development         | Direct mode             | ReAct loop with persistent session          |
 
 ### Current Limitations
 
-| Limitation | Why | Workaround |
-|------------|-----|------------|
-| No git integration in direct mode | No git tool wired | Use `run_command("git ...")` |
-| Build mode capped at 3 fix rounds | Prevents infinite loops | Drop into direct mode to continue |
-| Complex multi-service architectures | JSON scaffold size constraints | Build services individually |
-| No interactive commands (e.g. `vim`) | Subprocess capture mode | Use non-interactive alternatives |
+| Limitation                           | Why                            | Workaround                        |
+| ------------------------------------ | ------------------------------ | --------------------------------- |
+| No git integration in direct mode    | No git tool wired              | Use `run_command("git ...")`      |
+| Build mode capped at 3 fix rounds    | Prevents infinite loops        | Drop into direct mode to continue |
+| Complex multi-service architectures  | JSON scaffold size constraints | Build services individually       |
+| No interactive commands (e.g. `vim`) | Subprocess capture mode        | Use non-interactive alternatives  |
 
 ---
 
@@ -352,7 +385,8 @@ Supported project types for auto-verification:
 
 **Build integration:**
 
-- `scripts/cyborg_agent.py` — `MORPHLING_BUILD_PROMPT`, `MORPHLING_FIX_PROMPT`, `build_project_from_idea()`, `_verify_and_fix_scaffold()`
+- `scripts/cyborg_build.py` — `MORPHLING_BUILD_PROMPT`, `MORPHLING_FIX_PROMPT`, `build_project_from_idea()`, `_verify_and_fix_scaffold()`, `_publish_project()`, `validate_market()`
+- `scripts/cyborg_support.py` — shared helpers (`run_command`, `run_command_result`, `slugify`, `prompt_input`)
 
 **Cyborg integration:**
 
@@ -632,3 +666,134 @@ cyborg auto --build "CLI tool that audits npm dependencies for license complianc
 # Full autopilot with Morphling pre-analysis
 cyborg auto --repo ~/Projects/my-project
 ```
+
+Here's what I see when I look at the
+pipeline end-to-end:
+
+Right now the cycle is: idea → build →
+verify → document → stop.
+
+The project sits in ~/Projects/, the blog
+post sits on your site, and... that's it.
+Here are the gaps:
+
+1. ~~Nobody knows it exists~~ ✅ DONE
+
+~~Morphling builds it. Cyborg documents it.
+But there's no distribution step.~~ The
+`--publish` flag now detects the ecosystem
+(npm, PyPI, crates.io, GitHub Releases)
+and pushes to the right registry after
+build+verify passes. Includes GitHub repo
+creation, AI metadata enhancement, and
+safety confirmation. Aliases: `apbp`,
+`apbpy`.
+
+2. ~~You're building blind~~ ✅ DONE
+
+~~There's no market validation before the
+build step.~~ Market validation now runs
+automatically with `--build`. Searches
+GitHub and npm, AI synthesizes a
+competitive landscape report (green/yellow/
+red verdict), user chooses to proceed,
+revise, or cancel. Skip with
+`--no-validate`.
+
+3. Projects never evolve
+
+Build mode is fire-and-forget. After the
+initial scaffold + verify, there's no way
+to say "now add feature X." What about
+`cyborg auto --iterate --repo ~/Projects/my-tool` that reads open GitHub
+issues or a local backlog file and
+implements the next feature with the same
+build-verify-fix loop? Your projects would
+grow incrementally instead of being
+frozen at MVP.
+
+4. No CI/CD comes with the project
+
+Morphling writes code, tests, and README —
+but no GitHub Actions workflow. Every
+project should ship with a
+`.github/workflows/ci.yml` that runs tests
+on push and a release workflow that tags
+and publishes. The build prompt could
+generate these as part of the scaffold.
+
+5. No demo artifact
+
+A blog post is great. A working demo is
+better. What if the build step also
+generated a GIF or screenshot of the tool
+in action? For CLIs, that's a terminal
+recording (asciinema or vhs). For web
+apps, a screenshot. That asset goes
+straight into the blog post and the
+README. People click on projects with
+visuals.
+
+6. No portfolio dashboard
+
+You're building lots of projects. There's
+no single view. Imagine a morphling status
+command that scans ~/Projects/, checks
+which ones have passing tests, which ones
+have docs, which ones are published, and
+shows a table. Or better: a generated
+portfolio page on your blog that
+auto-updates via cyborg-sync.
+
+7. The projects don't talk to each other
+
+Each build is isolated. But the real power
+move is composition — a CLI that produces
+data, a service that consumes it, a
+dashboard that visualizes it. A `--compose`
+mode that takes a system description and
+scaffolds multiple linked projects would
+let you build product ecosystems, not just
+tools.
+
+8. No revenue wiring
+
+If the tagline is "for fun and profit,"
+where's the profit? The scaffold could
+include Stripe integration for paid CLIs,
+a license key checker for premium
+features, or a sponsorware model where the
+repo starts private and goes public at a
+funding goal. Even just generating a
+FUNDING.yml and a "sponsor this project"
+section in the README would be a start.
+
+9. Cost visibility
+
+Each cyborg auto --build burns API tokens.
+You have no idea if an idea cost $0.03 or
+$3.00 to prototype. A cost tracker that
+logs token usage per build and shows
+cumulative spend would tell you which
+ideas are cheap to test and which are
+expensive.
+
+10. The feedback flywheel
+
+After publishing, there's no loop back.
+What if cyborg-sync could read GitHub
+stars, issues, and download counts, and
+feed that into the next iteration? "This
+project has 47 stars and 3 open issues —
+here's what users want next." That turns a
+one-shot build into a living product.
+
+---
+
+The biggest single unlock is probably #1 +
+#4 together — adding --publish plus
+auto-generated CI/CD. That turns the
+pipeline from "idea → local project" into
+"idea → installable tool that tests and
+releases itself." Everything else
+compounds on top of that.

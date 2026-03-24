@@ -43,6 +43,7 @@ Good use:
 - one-off drafting
 - resume-and-review editorial loops
 - `cyborg auto --build` when you want idea -> project scaffolding
+- `cyborg auto --build --publish` when you want idea -> scaffold -> registry publish -> docs
 
 Bad use:
 
@@ -98,6 +99,9 @@ Start with either:
 
 - a new repo you created yourself
 - `cyborg auto --build "idea text"` if you want a project scaffold from an idea
+- `cyborg auto --build --publish "idea text"` if you also want the verified package published after the scaffold passes
+
+By default, build mode now runs a quick market validation step against GitHub and npm before the scaffold starts. Use `--no-validate` when you already know the space and want to skip that check.
 
 If you want help shaping the concept first:
 
@@ -459,6 +463,8 @@ cyborg-sync --repo ~/Projects/my-project sync --commit
 
 ```bash
 cyborg auto --build "a project idea" --projects-dir ~/Projects
+# or:
+cyborg auto --build --publish "a project idea" --projects-dir ~/Projects
 cd ~/Projects/new-project
 cp /Users/ryanjohnson/dotfiles/templates/cyborg-docs.toml.example .cyborg-docs.toml
 $EDITOR .cyborg-docs.toml

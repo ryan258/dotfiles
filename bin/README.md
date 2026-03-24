@@ -103,13 +103,16 @@ dhp-chain market brand -- "AI tools for writers"
 ```
 
 ### The Cyborg Lab (`cyborg`)
-This is a super smart chat robot that helps you write articles for your blog. It can read your folders, run health checks, and build drafts step-by-step.
+This is a super smart chat robot that helps you write articles for your blog. It can read your folders, run health checks, build projects from ideas, check the market first, and optionally publish the verified package before it writes the docs.
 ```bash
 # Run the robot in the current folder
 cyborg ingest
 
 # Build a project from an idea (Morphling scaffolds, verifies, then Cyborg documents)
 cyborg auto --build "CLI that tracks daily energy with spoon theory"
+
+# Build, publish, then document
+cyborg auto --build --publish "CLI that scores menus by accessibility"
 ```
 
 ### The Docs Sync Worker (`cyborg-sync`)

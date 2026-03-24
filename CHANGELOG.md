@@ -2,6 +2,65 @@
 
 **Last Updated:** March 23, 2026
 
+## Version 2.2.41 (March 23, 2026) - Market Validation
+
+**Status:** ✅ Production Ready
+
+### New
+
+### N1. Add pre-build market validation to `cyborg auto --build`
+
+Before Morphling scaffolds a project, automatically search GitHub and npm for
+existing solutions.  AI synthesizes a competitive landscape report with a
+green/yellow/red verdict, gap analysis, and differentiation suggestions.
+
+Features:
+
+- GitHub repository search (authenticated if GITHUB_TOKEN is available)
+- npm registry search
+- AI-powered competitive analysis with actionable recommendations
+- A/B/C user prompt: proceed, revise idea, or cancel
+- On by default with `--build`, skip with `--no-validate`
+- `--yes` logs the report but proceeds automatically
+- Graceful degradation: API or AI failures never block the build
+
+### Refactor
+
+- Extracted build pipeline into `scripts/cyborg_build.py` (scaffold, verify, publish, market validation)
+- Extracted shared helpers into `scripts/cyborg_support.py` (run_command, slugify, prompt_input)
+- `scripts/cyborg_agent.py` re-exports all public symbols for backward compatibility
+
+---
+
+## Version 2.2.40 (March 23, 2026) - Publish to Registry
+
+**Status:** ✅ Production Ready
+
+### New
+
+### N1. Add `--publish` flag to `cyborg auto --build`
+
+Closes the loop from idea to installable tool.  After Morphling scaffolds and
+verifies a project, `--publish` detects the ecosystem and pushes to the right
+registry:
+
+- **npm** (`package.json`) — `npm publish --access public`
+- **PyPI** (`pyproject.toml` / `setup.py`) — `python3 -m build` + `twine upload`
+- **crates.io** (`Cargo.toml`) — `cargo publish`
+- **GitHub Releases** (`go.mod`) — `gh release create` with version tag
+
+Features:
+
+- Automatic GitHub repo creation via `gh repo create` when no remote exists
+- AI-enhanced package metadata (keywords, description) before publish
+- Safety confirmation prompt (bypass with `--yes`)
+- Prerequisite validation (tools + registry tokens) with clear error messages
+- Graceful failure — publish problems warn but never crash the pipeline
+- New aliases: `apbp` (build+publish) and `apbpy` (build+publish+yes)
+- Registry token documentation added to `.env.example`
+
+---
+
 ## Version 2.2.39 (March 23, 2026) - Manifest-Driven Docs Sync
 
 **Status:** ✅ Production Ready

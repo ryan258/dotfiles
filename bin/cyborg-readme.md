@@ -38,10 +38,11 @@ cyborg auto --docs-after-code        # continue into map/plan/draft after code
 cyborg auto --no-morphling           # skip Morphling pre-analysis
 ```
 
-`cyborg auto --build` goes one step further: pitch an idea, Morphling scaffolds the project in `~/Projects/`, runs a **build-verify-fix loop** (installs deps, runs tests, feeds errors back to the AI for fixes, up to 3 rounds), then Cyborg runs the same code-first pass against the verified repo. Add `--docs-after-code` if you also want the documentation pipeline in the same run.
+`cyborg auto --build` goes one step further: pitch an idea, run a market validation pass against GitHub and npm, let Morphling scaffold the project in `~/Projects/`, run a **build-verify-fix loop** (installs deps, runs tests, feeds errors back to the AI for fixes, up to 3 rounds), and then let Cyborg run the same code-first pass against the verified repo. Use `--no-validate` when you want to skip the market check. Add `--publish` when you want Cyborg to publish the verified project to npm, PyPI, crates.io, or GitHub Releases before the documentation pass. Add `--docs-after-code` if you also want the documentation pipeline in the same run.
 
 ```bash
 cyborg auto --build "a CLI that tracks daily energy with spoon theory"
+cyborg auto --build --publish "CLI that scores menus by accessibility"
 cyborg auto --build --yes "terminal pomodoro timer with MS-friendly breaks"
 cyborg auto --build --projects-dir ~/Labs "rust grep alternative"
 ```
@@ -199,10 +200,11 @@ cat brief.md | cyborg auto --stdin-source --repo .
 
 ### 7. Build Mode (Idea to Project to Blog)
 
-`cyborg auto --build` takes just an idea and does everything: Morphling scaffolds a working project in `~/Projects/` and runs a build-verify-fix loop (detects project type, installs deps, runs tests, feeds errors back to the AI for fixes, up to 3 rounds), then Cyborg runs the code-first autopilot against the verified project. Requires AI mode (`OPENROUTER_API_KEY`). Add `--docs-after-code` if you also want the documentation pass in that same run.
+`cyborg auto --build` takes just an idea and does everything: it validates the market by searching GitHub and npm, Morphling scaffolds a working project in `~/Projects/`, runs a build-verify-fix loop (detects project type, installs deps, runs tests, feeds errors back to the AI for fixes, up to 3 rounds), and then Cyborg runs the code-first autopilot against the verified project. Requires AI mode (`OPENROUTER_API_KEY`). Add `--no-validate` if you want to skip the market check. Add `--publish` if you want the verified package published before the docs pass. Add `--docs-after-code` if you also want the documentation pass in that same run.
 
 ```bash
 cyborg auto --build "a CLI that tracks daily energy with spoon theory"
+cyborg auto --build --publish "CLI that scores menus by accessibility"
 cyborg auto --build --projects-dir ~/Labs "terminal habit tracker"
 cyborg auto --build --yes "rust CLI for batch image resizing"
 ```
@@ -751,6 +753,8 @@ What it does not do yet:
 
 - `bin/cyborg`
 - `scripts/cyborg_agent.py`
+- `scripts/cyborg_build.py`
+- `scripts/cyborg_support.py`
 - `tests/test_cyborg.sh`
 - `bin/README.md`
 - `MORPHLING.md` (Morphling architecture deep dive)

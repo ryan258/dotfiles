@@ -16,7 +16,6 @@ import os
 import re
 import shutil
 import shlex
-import subprocess
 import sys
 import textwrap
 import urllib.error
@@ -26,6 +25,26 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, List, Optional, Tuple
+
+from cyborg_build import (
+    _commit_metadata_changes,
+    _detect_publish_recipe,
+    _format_validation_report,
+    _publish_project,
+    _search_github,
+    _search_npm,
+    _setup_npm_auth,
+    _validate_publish_prereqs,
+    build_project_from_idea,
+    validate_market,
+)
+from cyborg_support import (
+    DEFAULT_COMMAND_TIMEOUT_SECONDS,
+    prompt_input,
+    run_command,
+    run_command_result,
+    slugify,
+)
 
 # readline gives us arrow-key history in the interactive prompt.
 # It is optional; some systems do not ship it.
@@ -181,86 +200,9 @@ MODEL_FALLBACK = "nvidia/nemotron-3-super-120b-a12b:free"
 # shell launcher checks for --build and sets _skip_morphling=true).
 # ---------------------------------------------------------------------------
 
-# Default directory where `--build` scaffolds new projects.
-# Overridable with `--projects-dir`.
-DEFAULT_PROJECTS_DIR = Path.home() / "Projects"
-
-# System prompt for the Morphling build step (path 2 above).
-# Instructs the AI to shapeshift into a senior engineer and return a
-# complete project as a single JSON object.  The JSON shape is strict:
-# { "name": slug, "description": string, "files": { path: contents } }.
-# build_project_from_idea() parses this and writes the files to disk.
-MORPHLING_BUILD_PROMPT = textwrap.dedent(
-    """
-    You are the Morphling — a shapeshifting universal specialist.
-
-    SHAPESHIFT into the ideal senior engineer for this project idea.
-    Generate a complete, working project scaffold returned as a single
-    JSON object.
-
-    Return JSON with exactly this shape:
-    {
-      "name": "project-name-slug",
-      "description": "One-line description of the project",
-      "files": {
-        "relative/path/file.py": "full file contents...",
-        "README.md": "readme contents..."
-      }
-    }
-
-    Rules:
-    - The "name" must be a lowercase slug (letters, numbers, hyphens only).
-    - The project must be functional and runnable.
-    - Include a README.md with a summary and basic setup/usage instructions.
-    - Include basic tests or a test placeholder when the language supports it.
-    - Keep it focused: minimum viable project, not over-engineered.
-    - Use the most appropriate language, framework, and tools for the idea.
-    - File paths are relative to the project root (no leading slash).
-    - Do NOT include binary files, images, or lock files.
-    - Every file must contain real, working code — no placeholder comments.
-    """
-).strip()
-
-# Maximum number of build-verify-fix iterations before giving up.
-BUILD_VERIFY_MAX_ROUNDS = 3
-# Timeout for build/test verification commands (longer than normal).
-BUILD_VERIFY_TIMEOUT_SECONDS = 120
-
-# Detect-and-verify rules: (marker_file, install_cmd, test_cmd).
-# First match wins.  Commands are run with shell=True in the project dir.
-_BUILD_VERIFY_RECIPES: list[tuple[str, str | None, str]] = [
-    ("package.json", "npm install --ignore-scripts 2>&1", "npm test 2>&1"),
-    ("requirements.txt", "pip install -q -r requirements.txt 2>&1", "python -m pytest -x 2>&1"),
-    ("setup.py", "pip install -q -e . 2>&1", "python -m pytest -x 2>&1"),
-    ("pyproject.toml", "pip install -q -e . 2>&1", "python -m pytest -x 2>&1"),
-    ("go.mod", None, "go build ./... 2>&1 && go test ./... 2>&1"),
-    ("Cargo.toml", None, "cargo build 2>&1 && cargo test 2>&1"),
-    ("Makefile", None, "make 2>&1"),
-]
-
-# System prompt for the fix-iteration step.
-MORPHLING_FIX_PROMPT = textwrap.dedent(
-    """
-    You are the Morphling — a shapeshifting universal specialist.
-
-    The project you scaffolded failed its verification step.  Fix the
-    failing files and return ONLY a JSON object with the files that
-    changed:
-
-    {
-      "files": {
-        "relative/path/file.py": "complete corrected file contents..."
-      }
-    }
-
-    Rules:
-    - Return the FULL contents of each changed file (not a diff).
-    - Do not change files that are unrelated to the error.
-    - If the fix requires a new file, include it.
-    - Do not remove test files — fix them instead.
-    - Every file must contain real, working code — no placeholder comments.
-    """
-).strip()
+# Build/market/publish prompt contracts and helpers live in
+# `scripts/cyborg_build.py` so the agent entrypoint stays focused on
+# session state and interactive workflow orchestration.
 
 # The system prompt sent to the AI model for every request.
 # It tells the model what role it plays and what rules to follow.
@@ -381,14 +323,6 @@ def canonical_home_path(path_value: Any) -> Path:
     raise ValueError(f"Path outside home directory: {path}")
 
 
-def slugify(text: str, max_words: int = 8, max_len: int = 60) -> str:
-    """Turn any text into a short, URL-safe slug like 'my-cool-project'."""
-    normalized = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
-    words = [word for word in normalized.split("-") if word]
-    slug = "-".join(words[:max_words]) if words else "untitled"
-    return slug[:max_len].strip("-") or "untitled"
-
-
 def title_from_slug(slug: str) -> str:
     """Turn a slug back into a nice title: 'my-project' -> 'My Project'."""
     return " ".join(word.capitalize() for word in slug.replace("_", "-").split("-") if word) or "Untitled"
@@ -405,63 +339,6 @@ def short_preview(text: str, limit: int = 180) -> str:
     if len(collapsed) <= limit:
         return collapsed
     return f"{collapsed[: limit - 3].rstrip()}..."
-
-
-def run_command(
-    argv: list[str],
-    *,
-    cwd: Optional[Path] = None,
-    allow_failure: bool = False,
-    timeout: int = DEFAULT_COMMAND_TIMEOUT_SECONDS,
-) -> str:
-    """Run a shell command and return its stdout as a string.
-
-    If the command fails and allow_failure is False, raise an error.
-    If the command takes too long, treat it the same as a failure.
-    """
-    try:
-        result = subprocess.run(
-            argv,
-            cwd=str(cwd) if cwd else None,
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=timeout,
-        )
-    except subprocess.TimeoutExpired as exc:
-        if allow_failure:
-            return ""
-        raise RuntimeError(f"Command timed out after {timeout}s: {' '.join(argv)}") from exc
-    if result.returncode != 0 and not allow_failure:
-        stderr = result.stderr.strip() or result.stdout.strip()
-        raise RuntimeError(stderr or f"Command failed: {' '.join(argv)}")
-    return (result.stdout or "").strip()
-
-
-def run_command_result(
-    argv: list[str],
-    *,
-    cwd: Optional[Path] = None,
-    timeout: int = DEFAULT_COMMAND_TIMEOUT_SECONDS,
-) -> tuple[int, str, str]:
-    """Run a shell command and return (exit_code, stdout, stderr).
-
-    Unlike run_command(), this never raises on failure -- it just
-    returns the exit code so the caller can decide what to do.
-    """
-    try:
-        result = subprocess.run(
-            argv,
-            cwd=str(cwd) if cwd else None,
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=timeout,
-        )
-    except subprocess.TimeoutExpired:
-        # Exit code 124 is the same code the `timeout` command uses.
-        return 124, "", f"Command timed out after {timeout}s: {' '.join(argv)}"
-    return result.returncode, (result.stdout or "").strip(), (result.stderr or "").strip()
 
 
 def format_bytes(num_bytes: int) -> str:
@@ -615,14 +492,6 @@ def normalize_description(text: str) -> str:
             trimmed = trimmed.rsplit(" ", 1)[0]
         cleaned = f"{trimmed}..."
     return cleaned
-
-
-def prompt_input(prompt: str) -> str:
-    """Show a prompt and read one line.  Return '' on end-of-input."""
-    try:
-        return input(prompt)
-    except EOFError:
-        return ""
 
 
 def extract_letter_choices(text: str) -> dict[str, str]:
@@ -4339,287 +4208,6 @@ def parse_command(raw: str) -> tuple[str, list[str]]:
 
 
 # =====================================================================
-# Project scaffolding (Morphling build step)
-# =====================================================================
-# This is convergence path 2: the Python-side Morphling build.
-# Called when the user runs `cyborg auto --build "idea"`.
-#
-# Flow:
-#   main() validates flags → build_project_from_idea() →
-#     AI returns JSON scaffold → write files → git init + commit →
-#     return project path → main() feeds it to run_autopilot()
-#
-# The resulting directory becomes the --repo for the Cyborg session,
-# so the normal scan → map → plan → draft pipeline documents the
-# freshly-built project as if it were any other repo.
-# =====================================================================
-
-
-def build_project_from_idea(
-    idea: str,
-    ai_client: OpenRouterClient,
-    *,
-    projects_dir: Optional[Path] = None,
-) -> Path:
-    """Use the Morphling persona to scaffold a new project from an idea.
-
-    Calls the AI with ``MORPHLING_BUILD_PROMPT`` to generate a project
-    structure as JSON, writes the files into ``~/Projects/<name>/``,
-    initialises a git repo, and returns the project path.
-
-    Args:
-        idea:         Plain-text project description from the user.
-        ai_client:    Configured OpenRouter client (must be enabled).
-        projects_dir: Override for the parent directory.  Defaults to
-                      ``DEFAULT_PROJECTS_DIR`` (~/Projects).
-
-    Returns:
-        Path to the newly-created and git-committed project directory.
-
-    Raises:
-        RuntimeError: If the AI returns an empty scaffold or the API
-                      call itself fails (handled by ``_request``).
-    """
-    # Resolve the target parent directory, creating it if needed.
-    target_root = projects_dir or DEFAULT_PROJECTS_DIR
-    target_root.mkdir(parents=True, exist_ok=True)
-
-    print("Morphling is building your project...")
-
-    # Temperature 0.5 gives the model room to make creative tech-stack
-    # choices while still producing coherent, structured JSON output.
-    scaffold = ai_client.chat_json(
-        MORPHLING_BUILD_PROMPT,
-        f"Build a project from this idea:\n\n{idea}",
-        temperature=0.5,
-    )
-
-    # Extract the three required fields from the AI's JSON response.
-    # "name" is slugified to produce a safe directory name; "files" is
-    # the dict of { relative_path: file_contents } that we write to disk.
-    name = slugify(scaffold.get("name") or "untitled-project", max_words=6, max_len=40)
-    description = scaffold.get("description", idea)
-    files: dict[str, str] = scaffold.get("files", {})
-
-    if not files:
-        raise RuntimeError("Morphling returned an empty project scaffold (no files).")
-
-    # Pick the project directory.  If a directory with this name already
-    # exists (e.g. from a previous build), append a random suffix so we
-    # never clobber the user's existing work.
-    project_dir = target_root / name
-    if project_dir.exists():
-        suffix = uuid.uuid4().hex[:6]
-        project_dir = target_root / f"{name}-{suffix}"
-
-    print(f"  Project: {project_dir}")
-    print(f"  Description: {description}")
-    print(f"  Files: {len(files)}")
-
-    # --- Write scaffold files with path-safety validation ---
-    # The AI controls the file paths in the "files" dict, so we must
-    # guard against path traversal.  Two checks:
-    #   1. Reject obviously bad patterns (absolute paths, ".." segments).
-    #   2. Resolve the final path and confirm it's still under project_dir.
-    # Skipped files are logged as a warning rather than silently dropped.
-    skipped: list[str] = []
-    for rel_path, contents in files.items():
-        if rel_path.startswith("/") or ".." in rel_path.split("/"):
-            skipped.append(rel_path)
-            continue
-        file_path = (project_dir / rel_path).resolve()
-        if project_dir.resolve() not in file_path.parents and file_path != project_dir.resolve():
-            skipped.append(rel_path)
-            continue
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        file_path.write_text(contents, encoding="utf-8")
-
-    if skipped:
-        print(f"  Warning: skipped {len(skipped)} file(s) with unsafe paths: {', '.join(skipped)}")
-
-    # --- Git init ---
-    # Cyborg's scan_repo() expects a git repo to extract commit history,
-    # file lists, and diff context.  We create a minimal repo with a
-    # single commit attributed to "Morphling" so it's clearly machine-
-    # generated.  allow_failure=True on each step so a git problem
-    # doesn't block the entire autopilot pipeline — Cyborg can still
-    # scan a non-git directory, just with less context.
-    run_command(["git", "init", "-q"], cwd=project_dir, allow_failure=True)
-    run_command(["git", "add", "."], cwd=project_dir, allow_failure=True)
-    run_command(
-        ["git", "-c", "user.name=Morphling", "-c", "user.email=morphling@cyborg-lab",
-         "commit", "-qm", f"Initial scaffold: {description}"],
-        cwd=project_dir,
-        allow_failure=True,
-    )
-
-    print("  Project scaffolded and committed.")
-    print()
-
-    # --- Build-verify-fix loop ---
-    # Try to install deps + run tests.  If it fails, feed errors back to
-    # the AI and apply fixes, up to BUILD_VERIFY_MAX_ROUNDS iterations.
-    _verify_and_fix_scaffold(project_dir, idea, ai_client)
-
-    return project_dir
-
-
-def _detect_verify_recipe(
-    project_dir: Path,
-) -> tuple[str | None, str] | None:
-    """Return (install_cmd, test_cmd) for the project, or None."""
-    for marker, install_cmd, test_cmd in _BUILD_VERIFY_RECIPES:
-        if (project_dir / marker).exists():
-            return install_cmd, test_cmd
-    return None
-
-
-def _verify_and_fix_scaffold(
-    project_dir: Path,
-    idea: str,
-    ai_client: "OpenRouterClient",
-) -> None:
-    """Run install + tests on a scaffolded project; fix failures with AI.
-
-    Detects the project type from marker files, runs the appropriate
-    build/test commands, and if they fail, sends the error output back
-    to the Morphling persona for a fix.  Repeats up to
-    BUILD_VERIFY_MAX_ROUNDS times.
-    """
-    recipe = _detect_verify_recipe(project_dir)
-    if recipe is None:
-        print("  No recognised build system — skipping verification.")
-        return
-
-    install_cmd, test_cmd = recipe
-    print(f"  Verifying scaffold ({test_cmd.split()[0]})...")
-
-    for attempt in range(1, BUILD_VERIFY_MAX_ROUNDS + 1):
-        # --- Install dependencies (first attempt only) ---
-        if install_cmd and attempt == 1:
-            exit_code, stdout, stderr = run_command_result(
-                ["bash", "-c", install_cmd],
-                cwd=project_dir,
-                timeout=BUILD_VERIFY_TIMEOUT_SECONDS,
-            )
-            if exit_code != 0:
-                error_output = (stderr or stdout)[:4000]
-                print(f"  Install failed (attempt {attempt}/{BUILD_VERIFY_MAX_ROUNDS})")
-                fix_applied = _apply_ai_fix(
-                    project_dir, idea, "install", install_cmd, error_output, ai_client
-                )
-                if not fix_applied:
-                    print("  Could not get a fix from the AI — stopping verification.")
-                    return
-                # Re-run install after fix
-                exit_code, stdout, stderr = run_command_result(
-                    ["bash", "-c", install_cmd],
-                    cwd=project_dir,
-                    timeout=BUILD_VERIFY_TIMEOUT_SECONDS,
-                )
-                if exit_code != 0:
-                    print("  Install still failing after fix — stopping verification.")
-                    return
-
-        # --- Run tests ---
-        exit_code, stdout, stderr = run_command_result(
-            ["bash", "-c", test_cmd],
-            cwd=project_dir,
-            timeout=BUILD_VERIFY_TIMEOUT_SECONDS,
-        )
-
-        if exit_code == 0:
-            label = "first try" if attempt == 1 else f"attempt {attempt}"
-            print(f"  Verification passed ({label}).")
-            # Commit the fixes if we changed anything
-            if attempt > 1:
-                run_command(["git", "add", "."], cwd=project_dir, allow_failure=True)
-                run_command(
-                    ["git", "-c", "user.name=Morphling", "-c", "user.email=morphling@cyborg-lab",
-                     "commit", "-qm", f"fix: pass verification (attempt {attempt})"],
-                    cwd=project_dir,
-                    allow_failure=True,
-                )
-            return
-
-        # --- Tests failed — ask AI for a fix ---
-        error_output = (stderr or stdout)[:4000]
-        print(f"  Tests failed (attempt {attempt}/{BUILD_VERIFY_MAX_ROUNDS})")
-
-        if attempt == BUILD_VERIFY_MAX_ROUNDS:
-            print("  Max fix attempts reached — project may need manual attention.")
-            return
-
-        fix_applied = _apply_ai_fix(
-            project_dir, idea, "test", test_cmd, error_output, ai_client
-        )
-        if not fix_applied:
-            print("  Could not get a fix from the AI — stopping verification.")
-            return
-
-
-def _apply_ai_fix(
-    project_dir: Path,
-    idea: str,
-    phase: str,
-    command: str,
-    error_output: str,
-    ai_client: "OpenRouterClient",
-) -> bool:
-    """Send a failure to the AI and apply the returned file fixes.
-
-    Returns True if at least one file was written, False otherwise.
-    """
-    # Build a snapshot of the current project files so the AI has context.
-    file_snapshot: dict[str, str] = {}
-    for f in sorted(project_dir.rglob("*")):
-        if f.is_file() and ".git" not in f.parts:
-            rel = str(f.relative_to(project_dir))
-            try:
-                content = f.read_text(encoding="utf-8", errors="replace")
-                # Limit per-file size to keep the prompt reasonable.
-                file_snapshot[rel] = content[:6000]
-            except Exception:
-                continue
-
-    user_msg = (
-        f"Project idea: {idea}\n\n"
-        f"Current files:\n{json.dumps(file_snapshot, indent=2)}\n\n"
-        f"The {phase} step failed.\n"
-        f"Command: {command}\n"
-        f"Error output:\n{error_output}"
-    )
-
-    try:
-        fix = ai_client.chat_json(
-            MORPHLING_FIX_PROMPT,
-            user_msg,
-            temperature=0.3,
-        )
-    except Exception as exc:
-        print(f"  AI fix request failed: {exc}")
-        return False
-
-    files: dict[str, str] = fix.get("files", {})
-    if not files:
-        return False
-
-    written = 0
-    for rel_path, contents in files.items():
-        if rel_path.startswith("/") or ".." in rel_path.split("/"):
-            continue
-        file_path = (project_dir / rel_path).resolve()
-        if project_dir.resolve() not in file_path.parents and file_path != project_dir.resolve():
-            continue
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        file_path.write_text(contents, encoding="utf-8")
-        written += 1
-
-    print(f"  Applied AI fix: {written} file(s) updated.")
-    return written > 0
-
-
-# =====================================================================
 # Interactive command loop (REPL)
 # =====================================================================
 
@@ -5018,6 +4606,8 @@ def build_parser() -> argparse.ArgumentParser:
     auto.add_argument("--docs-after-code", action="store_true", help="Continue into the documentation pipeline after the code-first stage")
     auto.add_argument("--no-morphling", action="store_true", help="Skip Morphling pre-analysis even if available")
     auto.add_argument("--build", action="store_true", help="Morphling builds the project from your idea first, then Cyborg runs the code-first pass")
+    auto.add_argument("--publish", action="store_true", help="Publish to ecosystem registry after build+verify (npm, PyPI, crates.io, GitHub Releases)")
+    auto.add_argument("--no-validate", action="store_true", help="Skip market validation search before building")
     auto.add_argument("--projects-dir", help="Where to create the project (default: ~/Projects)")
     auto.add_argument("idea", nargs="*", help="Plain-text idea or focus notes")
 
@@ -5055,6 +4645,9 @@ def main(argv: Optional[List[str]] = None) -> int:
             # Starting a brand-new session (interactive or autopilot).
             source_text = " ".join(args.idea).strip()
 
+            if args.command == "auto" and getattr(args, "publish", False) and not getattr(args, "build", False):
+                raise ValueError("--publish requires --build.")
+
             # --- Morphling build step (convergence path 2) ---
             # When --build is used, Morphling scaffolds a new project
             # *before* the Cyborg session is created.  The resulting
@@ -5079,11 +4672,24 @@ def main(argv: Optional[List[str]] = None) -> int:
                     raise ValueError("--build requires an idea (positional text) or --repo.")
                 if not ai_client.enabled:
                     raise ValueError("--build requires AI mode (set OPENROUTER_API_KEY).")
+                # --- Market validation (on by default, skip with --no-validate) ---
+                if not getattr(args, "no_validate", False):
+                    proceed = validate_market(
+                        source_text,
+                        ai_client,
+                        assume_yes=getattr(args, "yes", False),
+                        interactive=interactive,
+                    )
+                    if not proceed:
+                        return 0  # Clean exit — user chose not to build
                 projects_dir = Path(args.projects_dir) if getattr(args, "projects_dir", None) else None
                 built_path = build_project_from_idea(
                     source_text or "project from repo context",
                     ai_client,
                     projects_dir=projects_dir,
+                    publish=getattr(args, "publish", False),
+                    assume_yes=getattr(args, "yes", False),
+                    interactive=interactive,
                 )
                 # Overwrite the repo arg so the session targets the
                 # freshly scaffolded directory instead of cwd.

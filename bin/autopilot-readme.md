@@ -18,8 +18,11 @@ cyborg auto --repo ~/Projects/rockit
 # Pitch an idea — Morphling builds the project, Cyborg documents it
 cyborg auto --build "a CLI that tracks daily energy with spoon theory"
 
-# Skip the final confirmation too
-cyborg auto --build --yes "terminal pomodoro timer with MS-friendly breaks"
+# Build and publish to the right registry (npm, PyPI, crates.io, GitHub)
+cyborg auto --build --publish "terminal pomodoro timer with MS-friendly breaks"
+
+# Skip all confirmations (build + publish + apply docs)
+cyborg auto --build --publish --yes "tool that audits deps for license compliance"
 ```
 
 ## How It Works
@@ -51,6 +54,12 @@ cyborg auto --build --yes "terminal pomodoro timer with MS-friendly breaks"
  you type one command + your idea
         |
         v
+ [market validation]         ← searches GitHub + npm, AI analysis
+   green/yellow/red verdict
+   A. proceed  B. revise  C. cancel
+   (skip with --no-validate, auto with --yes)
+        |
+        v
  [Morphling builds project]  ← scaffolds files in ~/Projects/<name>/
    picks language, framework, structure
    writes working code + README + tests
@@ -61,6 +70,13 @@ cyborg auto --build --yes "terminal pomodoro timer with MS-friendly breaks"
    detect project type → install deps → run tests
    if tests fail: send errors to AI → apply fix → retest
    commit fixes when green
+        |
+        v
+ [publish to registry]       ← only with --publish flag
+   detect ecosystem → validate tokens/tools
+   confirm (unless --yes) → create GitHub repo
+   AI-enhance metadata → publish to npm/PyPI/crates.io/GitHub
+   tag v0.1.0
         |
         v
  [Cyborg autopilot]
@@ -77,6 +93,8 @@ cyborg auto --build --yes "terminal pomodoro timer with MS-friendly breaks"
 | `--repo PATH` | Scan this repo instead of the current directory |
 | `--file PATH` | Include a markdown file as supporting material |
 | `--build` | Morphling scaffolds the project from your idea first |
+| `--publish` | Publish to ecosystem registry after build+verify (npm, PyPI, crates.io, GitHub) |
+| `--no-validate` | Skip the pre-build market validation search |
 | `--projects-dir PATH` | Where to create the project (default: `~/Projects`) |
 | `--yes` | Skip the final confirmation and apply immediately |
 | `--no-morphling` | Skip the Morphling pre-analysis step |
@@ -114,9 +132,10 @@ When you pass `--build`, the Python agent calls OpenRouter directly with a Morph
    - If tests fail, sends error output back to the Morphling persona
    - AI returns corrected files, which are applied and re-tested
    - Commits fixes as a separate git commit when verification passes
-6. Cyborg then scans and documents the verified, working project
+6. If `--publish`: creates a GitHub repo, enhances package metadata via AI, and publishes to the right registry
+7. Cyborg then scans and documents the verified, working project
 
-**Requirements:** `OPENROUTER_API_KEY` must be set (AI mode).
+**Requirements:** `OPENROUTER_API_KEY` must be set (AI mode). For `--publish`, registry tokens must be configured (see `.env.example`).
 
 ## What Cyborg Does in Autopilot
 
@@ -201,7 +220,9 @@ Once resumed, you're in full interactive mode with all commands available.
 - [`MORPHLING.md`](../MORPHLING.md) - Morphling architecture deep dive (capabilities, tools, build-verify loop)
 - [`cyborg-readme.md`](./cyborg-readme.md) - Full Cyborg agent reference (interactive commands, session lifecycle, safety model)
 - [`README.md`](./README.md) - All dispatchers including Morphling
-- [`../scripts/cyborg_agent.py`](../scripts/cyborg_agent.py) - Python agent (autopilot + build + verify logic)
+- [`../scripts/cyborg_agent.py`](../scripts/cyborg_agent.py) - Python agent (session state + interactive workflow orchestration)
+- [`../scripts/cyborg_build.py`](../scripts/cyborg_build.py) - Build pipeline (scaffold + verify + publish + market validation)
+- [`../scripts/cyborg_support.py`](../scripts/cyborg_support.py) - Shared helpers (run_command, slugify, prompt_input)
 - [`cyborg`](./cyborg) - Shell launcher (Morphling pre-analysis)
 - [`morphling.sh`](./morphling.sh) - Morphling interactive launcher
 - [`dhp-morphling.sh`](./dhp-morphling.sh) - Morphling dispatcher

@@ -23,12 +23,19 @@ ap --repo ~/Projects/my-thing
 ```bash
 apb "explain your cool idea here in normal English"
 ```
-The Morphling AI helper will build the project and make sure it actually works (it runs the tests and fixes any errors). The Cyborg chatbot will write about it. You just say yes once at the very end.
+The Morphling AI helper will check the market first, build the project, and make sure it actually works (it runs the tests and fixes any errors). The Cyborg chatbot will write about it. You just say yes once at the very end.
 
 ### 4. Just do everything and absolutely do not wake me up
 ```bash
 apby "your idea here"
 ```
+
+### 5. Build it and publish it too
+```bash
+apbp "your idea here"
+apbpy "your idea here"
+```
+Use `apbp` when you want the verified project pushed to npm, PyPI, crates.io, or GitHub Releases after the build passes. Use `apbpy` when you also want to skip the build, publish, and final apply prompts.
 
 ---
 
@@ -40,11 +47,17 @@ You do not need to memorize this. Just know it works!
 Your Idea
    |
    v
+The AI checks GitHub and npm to see if the idea already exists
+   |
+   v
 The AI builds the code for you
    |
    v
 The AI runs the tests to make sure the code works
 (If tests fail, the AI fixes the code and tries again)
+   |
+   v
+The AI can publish the project too if you used `apbp` or `apbpy`
    |
    v
 The AI reads through the verified project
@@ -87,7 +100,12 @@ apb "A tool that picks what I should eat based on my energy"
 
 **Let it run entirely on its own with no stopping:**
 ```bash
-apy
+apby "A tool that picks what I should eat based on my energy"
+```
+
+**Build, publish, and keep moving:**
+```bash
+apbp "CLI that scores menus by accessibility"
 ```
 
 ---
@@ -104,7 +122,7 @@ apc
 ## The Low-Energy Day Cheat Sheet
 
 1. Open your terminal screen.
-2. Type `ap` or `apb "your idea"`.
+2. Type `ap`, `apb "your idea"`, or `apbp "your idea"`.
 3. Wait for the AI to finish.
 4. Press A, B, C, D, or E.
 5. Close the terminal and rest!

@@ -14,7 +14,7 @@ Terminal (zsh)
   -> 66 CLI scripts (scripts/*.sh)
   -> 21 shared libraries (scripts/lib/*.sh)
   -> 13 AI dispatchers + orchestration (bin/dhp-*.sh)
-  -> Cyborg Lab agent (bin/cyborg + scripts/cyborg_agent.py)
+  -> Cyborg Lab agent (bin/cyborg + scripts/cyborg_agent.py + scripts/cyborg_build.py + scripts/cyborg_support.py)
   -> Brain/knowledge base (brain/ — ChromaDB vector store)
   -> data (~/.config/dotfiles-data/ — pipe-delimited flat files)
 ```
@@ -56,7 +56,7 @@ goodevening
 
 ## 🤖 Cyborg Lab Agent
 
-The Cyborg Lab agent (`bin/cyborg` + `scripts/cyborg_agent.py`) is a ~4,900-line Python tool. It scans a code project, plans blog posts, writes drafts, and only saves to `my-ms-ai-blog` when you say so.
+The Cyborg Lab agent (`bin/cyborg`) now uses three Python modules: `scripts/cyborg_agent.py` for session orchestration, `scripts/cyborg_build.py` for scaffold/verify/publish helpers, and `scripts/cyborg_support.py` for shared shell/input helpers. Together they scan code projects, build new ones from ideas, plan blog posts, write drafts, and only save to `my-ms-ai-blog` when you say so.
 
 ### Key Commands
 
@@ -64,12 +64,15 @@ The Cyborg Lab agent (`bin/cyborg` + `scripts/cyborg_agent.py`) is a ~4,900-line
 cyborg                    # Interactive REPL mode
 cyborg auto               # Full pipeline hands-free (low-energy sessions)
 cyborg auto --build       # Morphling scaffolding + Cyborg documentation convergence
+cyborg auto --build --publish   # Build, verify, publish, then document
 cyborg resume             # Resume a previous session
 ```
 
 ### Features
 
 - GitNexus integration for code analysis
+- Market validation before `cyborg auto --build` (skip with `--no-validate`)
+- Optional registry publishing for build mode (`--publish`)
 - Token caching and draft loop speed-ups
 - Easy A/B/C/D/E choice prompts
 - Session saving so you can pick up later
@@ -91,6 +94,8 @@ When your energy is too low for hands-on work, autopilot runs the full pipeline 
 | `apy` | Auto-document, auto-confirm all prompts |
 | `apb "idea"` | Build + document a project from an idea |
 | `apby "idea"` | Build + document, auto-confirm |
+| `apbp "idea"` | Build + publish + document |
+| `apbpy "idea"` | Build + publish + document, auto-confirm |
 | `apc` | Continue/resume a previous autopilot session |
 
 ### How It Works
