@@ -38,6 +38,8 @@ The full rules live in `../CLAUDE.md`.
 - `startday.sh` and `goodevening.sh` use daily focus and non-fork GitHub activity as coaching context. Journal and todo data stay local but do not steer the coach.
 - `startday.sh` now creates a 10-item GitHub scan of blind spots and chances. It looks at recent repos and commit messages. Even if the AI call fails, the fallback still comments on real project work.
 - `goodevening.sh` now creates a 10-item "Blindspots to sleep on" scan using GitHub data. This carries real ideas into tomorrow.
+- `goodevening.sh` now summarizes repo safety findings after a capped number of project details. Tune the scan and visible detail counts with `GOODEVENING_PROJECT_SCAN_LIMIT`, `GOODEVENING_PROJECT_SCAN_JOBS`, and `GOODEVENING_PROJECT_ISSUE_DETAIL_LIMIT`.
+- Blog status now groups `drafts/ingest/<session>` markdown artifacts into review sessions instead of printing every generated artifact path. Tune the visible review list with `BLOG_STATUS_REVIEW_DETAIL_LIMIT`.
 - If the AI returns output, the coaching flows now show it raw. Deterministic fallback text only appears when the dispatcher times out, errors, or is unavailable.
 - `status.sh` shows the current coach mode, spoon budget and use, focus text, and a Git-backed alignment signal in a DAILY CONTEXT section.
 - When the AI status coach is on, `status.sh` also shows a GitHub-first reset section. It uses today's commits, recent pushes, project context, and the same scan cleaner as the morning coach.

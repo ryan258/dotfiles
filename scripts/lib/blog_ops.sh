@@ -7,6 +7,77 @@ if [[ -n "${_BLOG_OPS_LOADED:-}" ]]; then
 fi
 readonly _BLOG_OPS_LOADED=true
 
+blog_print_review_summary() {
+    local detail_limit="${BLOG_STATUS_REVIEW_DETAIL_LIMIT:-5}"
+    local review_item_count=0
+    local artifact_count=0
+    local shown_count=0
+    local hidden_count=0
+    local review_items=""
+
+    if ! [[ "$detail_limit" =~ ^[0-9]+$ ]] || [ "$detail_limit" -lt 1 ]; then
+        detail_limit=5
+    fi
+
+    if [ ! -d "$DRAFTS_DIR" ]; then
+        echo "  • Drafts awaiting review: 0"
+        return 0
+    fi
+
+    artifact_count=$(find "$DRAFTS_DIR" -type f -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
+
+    if [ -d "$DRAFTS_DIR/ingest" ]; then
+        while IFS= read -r session_dir; do
+            local artifact_label
+            local session_artifact_count
+            local rel
+
+            [ -z "$session_dir" ] && continue
+            session_artifact_count=$(find "$session_dir" -type f -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
+            if [ "$session_artifact_count" -lt 1 ]; then
+                continue
+            fi
+
+            rel=${session_dir#"$DRAFTS_DIR"/}
+            artifact_label="artifacts"
+            if [ "$session_artifact_count" -eq 1 ]; then
+                artifact_label="artifact"
+            fi
+            review_items="${review_items}${rel} (${session_artifact_count} ${artifact_label})"$'\n'
+            review_item_count=$((review_item_count + 1))
+        done < <(find "$DRAFTS_DIR/ingest" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort -r)
+    fi
+
+    while IFS= read -r draft; do
+        local rel
+
+        [ -z "$draft" ] && continue
+        rel=${draft#"$DRAFTS_DIR"/}
+        review_items="${review_items}${rel}"$'\n'
+        review_item_count=$((review_item_count + 1))
+    done < <(find "$DRAFTS_DIR" -type f -name "*.md" ! -path "$DRAFTS_DIR/ingest/*" 2>/dev/null | sort -r)
+
+    if [ "$review_item_count" -eq 0 ]; then
+        echo "  • Drafts awaiting review: 0"
+        return 0
+    fi
+
+    echo "  • Drafts awaiting review: $review_item_count item(s) across $artifact_count markdown artifact(s)"
+
+    while IFS= read -r item; do
+        [ -z "$item" ] && continue
+        if [ "$shown_count" -lt "$detail_limit" ]; then
+            echo "    - $item"
+        fi
+        shown_count=$((shown_count + 1))
+    done <<< "$review_items"
+
+    hidden_count=$((review_item_count - detail_limit))
+    if [ "$hidden_count" -gt 0 ]; then
+        echo "    - $hidden_count more review item(s) not shown"
+    fi
+}
+
 # --- Subcommand: status ---
 status() {
     echo "📝 BLOG STATUS (ryanleej.com):"
@@ -22,25 +93,7 @@ status() {
     echo "  • Total posts: $TOTAL_POSTS"
     echo "  • Posts needing content: $STUB_COUNT"
 
-    if [ -d "$DRAFTS_DIR" ]; then
-        draft_count=0
-        drafts_list=""
-        while IFS= read -r draft; do
-            drafts_list="${drafts_list}${draft}"$'\n'
-            draft_count=$((draft_count + 1))
-        done < <(find "$DRAFTS_DIR" -type f -name "*.md" 2>/dev/null | sort)
-
-        if [ "$draft_count" -gt 0 ]; then
-            echo "  • Drafts awaiting review ($draft_count):"
-            while IFS= read -r draft; do
-                [ -z "$draft" ] && continue
-                rel=${draft#"$DRAFTS_DIR"/}
-                echo "    - $rel"
-            done <<< "$drafts_list"
-        else
-            echo "  • Drafts awaiting review: 0"
-        fi
-    fi
+    blog_print_review_summary
 
     if [ -d "$BLOG_DIR/.git" ]; then
         LAST_UPDATE=$(cd "$BLOG_DIR" && git log -1 --format="%ad" --date=short)

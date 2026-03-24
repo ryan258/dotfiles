@@ -1,6 +1,115 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** March 23, 2026
+**Last Updated:** March 24, 2026
+
+## Version 2.2.49 (March 24, 2026) - OpenRouter Hard Timeout
+
+**Status:** ✅ Production Ready
+
+### Fixed
+
+- `scripts/cyborg_agent.py` now enforces a hard wall-clock timeout around OpenRouter requests so stalled streamed responses fail fast instead of hanging `cyborg auto --build`.
+- Added focused regression coverage for stalled AI requests to ensure `chat_json()` times out promptly.
+- Updated `bin/autopilot-readme.md` to document the new hard-timeout behavior in the build/fix loop.
+
+---
+
+## Version 2.2.48 (March 24, 2026) - Browser Extension Verification
+
+**Status:** ✅ Production Ready
+
+### Fixed
+
+- `scripts/cyborg_build.py` now recognizes `manifest.json` browser-extension projects as a verifiable build target instead of skipping them as an unknown build system.
+- Added extension verification that checks required manifest fields, validates referenced files, and runs `node --check` across extension JavaScript files when Node is available.
+- Added focused regression coverage for extension recipe detection and manifest-based verification.
+- Updated `bin/autopilot-readme.md` to document the new browser-extension verification path.
+
+---
+
+## Version 2.2.47 (March 24, 2026) - Safer Market Search Diagnostics
+
+**Status:** ✅ Production Ready
+
+### Fixed
+
+- `scripts/cyborg_build.py` market validation now reads GitHub tokens from `GITHUB_TOKEN`, `GH_TOKEN`, `~/.github_token`, or `~/.config/dotfiles-data/github_token`, matching the rest of the dotfiles GitHub tooling.
+- GitHub and npm search failures now produce source-specific auth/network/HTTP notes instead of the generic `APIs may be unreachable` fallback, while keeping token values out of terminal output.
+- Added focused regression coverage for GitHub token-file fallback and the new market-search status messaging.
+- Updated `bin/autopilot-readme.md` to document the token sources and clearer market-search diagnostics.
+
+---
+
+## Version 2.2.46 (March 24, 2026) - Preserve Verified Build State
+
+**Status:** ✅ Production Ready
+
+### Fixed
+
+- `scripts/cyborg_agent.py` no longer auto-applies staged follow-up source-repo improvements at the end of `cyborg auto --build --yes`. Verified scaffolds now remain at their passing commit unless you explicitly apply later suggestions.
+- Added focused regression coverage that ensures build-mode autopilot keeps those post-build code suggestions staged instead of mutating the generated repo after verification.
+- Updated `bin/autopilot-readme.md` to document that `--build --yes` preserves the verified repo state by default.
+
+---
+
+## Version 2.2.45 (March 24, 2026) - Scaffold Contract Hardening
+
+**Status:** ✅ Production Ready
+
+### Fixed
+
+- `scripts/cyborg_build.py` now pushes Morphling to use verified third-party APIs, isolate uncertain integrations behind local adapters, and keep CLI/test semantics aligned instead of guessing package entry points.
+- The scaffold/test-fix prompts now also reject live-network or placeholder "expected to fail" tests, pushing Morphling toward deterministic mocked verification of intended behavior.
+- Python test-fix requests now inspect installed modules mentioned in missing-attribute failures and attach their public attrs/submodules to the AI prompt, which helps Morphling recover from bad SDK assumptions like `axe_core_python.get_page_analysis`.
+- Scaffold generation now retries empty or otherwise unusable Morphling file maps before aborting the build, which makes transient bad JSON responses recoverable.
+- Added focused BATS regression coverage for the new scaffold/test-fix prompt guardrails and the Python module-surface debug context.
+- Updated `bin/autopilot-readme.md` to document the stricter scaffold contract and Python module-surface introspection during verification.
+
+---
+
+## Version 2.2.44 (March 24, 2026) - Cyborg Build Loop Hardening
+
+**Status:** ✅ Production Ready
+
+### Fixed
+
+- `scripts/cyborg_build.py` now creates a disposable virtualenv for Python project verification, which avoids Homebrew's externally-managed interpreter error during `cyborg auto --build`.
+- Python verification now installs `requirements-dev.txt` when present before running pytest, so generated scaffolds with separated test dependencies can still complete verification.
+- Install failures in the Morphling verify loop now consume the full retry budget instead of stopping after a single failed AI patch.
+- Morphling now gets phase-specific build prompts: scaffold generation rejects invented dependencies, and install-failure fixes prioritize manifests/build config before unrelated source files.
+- The scaffold writer now normalizes obvious swapped file-path/content pairs from malformed Morphling JSON instead of crashing with `File name too long`.
+- `OpenRouterClient.chat_json()` now recovers fenced or embedded JSON objects, and the Morphling scaffold request now asks for a larger response budget so project JSON is less likely to truncate.
+- AI fix prompts now exclude `node_modules`, lockfiles, virtualenvs, and other generated directories so post-install fixes stay inside the model context window.
+- Added focused BATS regression coverage for Python verify recipes, install-fix prompting, and multi-round install retries.
+
+---
+
+## Version 2.2.43 (March 24, 2026) - Cyborg Session Workspace Move
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- `scripts/cyborg_agent.py` now stores new Cyborg session artifacts under `~/Projects/cyborg-work/ingest/<blog-name>/` by default instead of inside the live site repo.
+- Added `CYBORG_WORK_DIR` support so the Cyborg session workspace can be redirected without changing the blog root.
+- `cyborg resume` now searches both the new workspace and the legacy `drafts/ingest/` path so existing saved sessions still reopen cleanly.
+- Updated the Cyborg integration tests and docs to reflect the new session-storage contract.
+
+---
+
+## Version 2.2.42 (March 23, 2026) - Quieter Evening Reports
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- `scripts/goodevening.sh` now summarizes repo safety findings with a capped detail list instead of dumping every flagged project in the scan window.
+- `scripts/goodevening.sh` now preserves deterministic scan order and uses unique temp result names so duplicate project basenames do not overwrite each other.
+- `scripts/lib/blog_ops.sh` now groups `drafts/ingest/<session>` markdown artifacts into review sessions, which keeps `startday` and `goodevening` blog status output readable.
+- Added `GOODEVENING_PROJECT_ISSUE_DETAIL_LIMIT` and `BLOG_STATUS_REVIEW_DETAIL_LIMIT` defaults in config and `.env.example`.
+- Added BATS coverage for grouped blog review output and capped goodevening project-safety output.
+
+---
 
 ## Version 2.2.41 (March 23, 2026) - Market Validation
 

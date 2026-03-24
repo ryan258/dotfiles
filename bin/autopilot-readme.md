@@ -124,16 +124,23 @@ When you pass `--build`, the Python agent calls OpenRouter directly with a Morph
 
 1. Picks the best language, framework, and tooling for your idea
 2. Returns a complete project scaffold as structured JSON
-3. The agent writes the files to `~/Projects/<name>/`
+3. Retries empty or unusable scaffold responses before giving up, then writes the files to `~/Projects/<name>/`
 4. Runs `git init` and commits the initial scaffold
-5. **Runs a build-verify-fix loop** (up to 3 rounds):
-   - Detects project type from marker files (`package.json`, `requirements.txt`, `go.mod`, `Cargo.toml`, `Makefile`)
-   - Installs dependencies and runs tests
-   - If tests fail, sends error output back to the Morphling persona
+5. Before building, market validation searches GitHub and npm using `GITHUB_TOKEN` / `GH_TOKEN` or the standard GitHub token files (`~/.github_token`, then `~/.config/dotfiles-data/github_token`) and now prints source-specific auth/network errors instead of a single generic API warning
+6. **Runs a build-verify-fix loop** (up to 3 rounds):
+   - Detects project type from marker files (`package.json`, `manifest.json`, `requirements.txt`, `go.mod`, `Cargo.toml`, `Makefile`)
+   - For Python projects, creates a disposable virtualenv, installs dependencies there, and includes `requirements-dev.txt` when present
+   - For browser extensions with `manifest.json` but no package manifest, validates the manifest, checks referenced files, and syntax-checks JavaScript with `node --check` when Node is available
+   - The scaffold prompt now forces verified dependency APIs, explicit option semantics, and local adapter seams when third-party integrations are uncertain
+   - The scaffold prompt also forces deterministic offline tests instead of live-network or "expected to fail" placeholders
+   - If install fails, Morphling fixes manifests/build config first and retries until the round budget is exhausted
+   - If tests fail, sends error output back to the Morphling persona and, for Python missing-attribute errors, includes the verified installed module surface from the temp virtualenv
+   - OpenRouter scaffold/fix requests now fail on a hard wall-clock timeout instead of hanging indefinitely on a stalled response stream
    - AI returns corrected files, which are applied and re-tested
    - Commits fixes as a separate git commit when verification passes
-6. If `--publish`: creates a GitHub repo, enhances package metadata via AI, and publishes to the right registry
-7. Cyborg then scans and documents the verified, working project
+   - In `--build --yes` mode, any later Cyborg improvement suggestions stay staged instead of being auto-applied, so the generated repo remains at the verified build unless you explicitly apply follow-up edits
+7. If `--publish`: creates a GitHub repo, enhances package metadata via AI, and publishes to the right registry
+8. Cyborg then scans and documents the verified, working project
 
 **Requirements:** `OPENROUTER_API_KEY` must be set (AI mode). For `--publish`, registry tokens must be configured (see `.env.example`).
 

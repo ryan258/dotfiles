@@ -469,7 +469,10 @@ With AI enabled, `cyborg` responds conversationally and tries to steer the next 
 
 Every session lives under:
 
-`my-ms-ai-blog/drafts/ingest/<session-id>/`
+`~/Projects/cyborg-work/ingest/<blog-name>/<session-id>/`
+
+Override the workspace root with `CYBORG_WORK_DIR`. Older sessions that still
+live under `my-ms-ai-blog/drafts/ingest/` remain resumable.
 
 The session folder can contain:
 

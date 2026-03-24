@@ -391,18 +391,25 @@ if [ -d "$PROJECTS_DIR" ]; then
     if ! [[ "$_ge_scan_jobs" =~ ^[0-9]+$ ]] || [ "$_ge_scan_jobs" -lt 1 ]; then
         _ge_scan_jobs=8
     fi
+    _ge_issue_detail_limit="${GOODEVENING_PROJECT_ISSUE_DETAIL_LIMIT:-8}"
+    if ! [[ "$_ge_issue_detail_limit" =~ ^[0-9]+$ ]] || [ "$_ge_issue_detail_limit" -lt 1 ]; then
+        _ge_issue_detail_limit=8
+    fi
 
     job_count=0
+    scanned_projects=0
     tmp_results=$(mktemp -d) || die "Failed to create temp directory" "1"
     trap "rm -rf '$tmp_results'" EXIT
     while IFS= read -r gitdir; do
+        scanned_projects=$((scanned_projects + 1))
         (
             proj_dir=$(dirname "$gitdir")
             proj_name=$(basename "$proj_dir")
-            if project_has_safety_issue "$proj_dir" "$proj_name" > "$tmp_results/$proj_name"; then
-                mv "$tmp_results/$proj_name" "$tmp_results/${proj_name}.issue"
+            result_prefix=$(printf "%03d_%s" "$scanned_projects" "$proj_name")
+            if project_has_safety_issue "$proj_dir" "$proj_name" > "$tmp_results/$result_prefix"; then
+                mv "$tmp_results/$result_prefix" "$tmp_results/${result_prefix}.issue"
             else
-                rm -f "$tmp_results/$proj_name"
+                rm -f "$tmp_results/$result_prefix"
             fi
         ) &
         job_count=$((job_count + 1))
@@ -410,16 +417,29 @@ if [ -d "$PROJECTS_DIR" ]; then
             wait
             job_count=0
         fi
-    done < <(find "$PROJECTS_DIR" -maxdepth 2 -type d -name ".git" | head -n "$_ge_scan_limit")
+    done < <(find "$PROJECTS_DIR" -maxdepth 2 -type d -name ".git" 2>/dev/null | sort | head -n "$_ge_scan_limit")
 
     wait
 
-    for issue_file in "$tmp_results"/*.issue; do
-        if [ -f "$issue_file" ]; then
-            found_issues=true
+    issue_count=$(find "$tmp_results" -type f -name "*.issue" 2>/dev/null | wc -l | tr -d ' ')
+    shown_issue_count=0
+    if [ "$issue_count" -gt 0 ]; then
+        found_issues=true
+        echo "  • $issue_count project(s) with safety issues across $scanned_projects scanned repo(s)"
+        while IFS= read -r issue_file; do
+            [ -z "$issue_file" ] && continue
+            if [ "$shown_issue_count" -ge "$_ge_issue_detail_limit" ]; then
+                break
+            fi
             cat "$issue_file"
+            shown_issue_count=$((shown_issue_count + 1))
+        done < <(find "$tmp_results" -type f -name "*.issue" 2>/dev/null | sort)
+
+        hidden_issue_count=$((issue_count - shown_issue_count))
+        if [ "$hidden_issue_count" -gt 0 ]; then
+            echo "  • $hidden_issue_count more project(s) not shown"
         fi
-    done
+    fi
 
     if [ "$found_issues" = false ]; then
         echo "  ✅ All projects clean (no uncommitted changes, stale branches, or unpushed commits)"

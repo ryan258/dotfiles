@@ -18,6 +18,7 @@ import shutil
 import shlex
 import sys
 import textwrap
+import threading
 import urllib.error
 import urllib.request
 import uuid
@@ -62,6 +63,8 @@ SESSION_VERSION = 2
 MAX_CHAT_HISTORY = 8
 # Where we send AI requests (OpenRouter acts as a model gateway).
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+# Hard wall-clock limit for a single OpenRouter request.
+OPENROUTER_TIMEOUT_SECONDS = 120
 # How long shell commands are allowed to run before we stop them.
 DEFAULT_COMMAND_TIMEOUT_SECONDS = 30
 # GitNexus analyze can be slow on big repos, so it gets extra time.
@@ -80,6 +83,8 @@ KNOWN_BLOG_PATHS = (
     Path.home() / "Projects" / "cyborg" / "my-ms-ai-blog",
     Path.home() / "Projects" / "cyborg-lab",
 )
+# Default workspace for resumable Cyborg session artifacts.
+DEFAULT_CYBORG_WORK_DIR = Path.home() / "Projects" / "cyborg-work"
 # If a folder contains one of these files, it is probably a project.
 PROJECT_FILE_MARKERS = {
     "pyproject.toml",
@@ -1071,6 +1076,27 @@ class OpenRouterClient:
             or MODEL_FALLBACK
         ).strip()
         self.disabled = os.environ.get("CYBORG_DISABLE_AI", "").lower() in {"1", "true", "yes"}
+        try:
+            configured_timeout = int(os.environ.get("OPENROUTER_TIMEOUT_SECONDS", str(OPENROUTER_TIMEOUT_SECONDS)))
+        except ValueError:
+            configured_timeout = OPENROUTER_TIMEOUT_SECONDS
+        self.timeout_seconds = max(5, configured_timeout)
+
+    def _perform_request(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Perform one blocking HTTP request to OpenRouter."""
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            OPENROUTER_URL,
+            data=data,
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://ryanleej.com",
+                "X-Title": "Cyborg Lab Ingest Agent",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=self.timeout_seconds) as response:
+            return json.loads(response.read().decode("utf-8"))
 
     @property
     def enabled(self) -> bool:
@@ -1084,20 +1110,30 @@ class OpenRouterClient:
         API returns an error payload (missing ``choices`` key) or an HTTP
         error status.
         """
-        data = json.dumps(payload).encode("utf-8")
-        req = urllib.request.Request(
-            OPENROUTER_URL,
-            data=data,
-            headers={
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-                "HTTP-Referer": "https://ryanleej.com",
-                "X-Title": "Cyborg Lab Ingest Agent",
-            },
-        )
+        result: dict[str, Any] | None = None
+        error: BaseException | None = None
+        done = threading.Event()
+
+        def worker() -> None:
+            nonlocal result, error
+            try:
+                result = self._perform_request(payload)
+            except BaseException as exc:  # pragma: no cover - surfaced through caller-visible branches
+                error = exc
+            finally:
+                done.set()
+
+        thread = threading.Thread(target=worker, daemon=True, name="openrouter-request")
+        thread.start()
+
+        if not done.wait(timeout=self.timeout_seconds):
+            raise RuntimeError(f"AI request timed out after {self.timeout_seconds} seconds")
+
         try:
-            with urllib.request.urlopen(req, timeout=120) as response:
-                result = json.loads(response.read().decode("utf-8"))
+            if error is not None:
+                raise error
+            if result is None:
+                raise RuntimeError("AI request failed: empty response")
         except urllib.error.HTTPError as exc:
             try:
                 body = json.loads(exc.read().decode("utf-8"))
@@ -1105,6 +1141,10 @@ class OpenRouterClient:
             except Exception:
                 msg = f"HTTP {exc.code}"
             raise RuntimeError(f"AI request failed ({exc.code}): {msg}") from exc
+        except urllib.error.URLError as exc:
+            raise RuntimeError(f"AI request failed: {exc.reason}") from exc
+        except TimeoutError as exc:  # pragma: no cover - depends on network implementation
+            raise RuntimeError(f"AI request timed out after {self.timeout_seconds} seconds") from exc
         # OpenRouter sometimes returns 200 with an error payload.
         if "choices" not in result:
             error_info = result.get("error", {})
@@ -1116,6 +1156,40 @@ class OpenRouterClient:
     def _with_cache_control(message: dict[str, Any]) -> dict[str, Any]:
         """Return a copy of *message* with ``cache_control`` attached."""
         return {**message, "cache_control": {"type": "ephemeral"}}
+
+    @staticmethod
+    def _parse_json_content(content: str) -> dict[str, Any]:
+        """Parse JSON from direct, fenced, or embedded model output."""
+        stripped = content.strip()
+        candidates: list[str] = [stripped]
+
+        fenced = re.search(r"```(?:json)?\s*(\{.*\})\s*```", stripped, flags=re.DOTALL | re.IGNORECASE)
+        if fenced:
+            candidates.append(fenced.group(1).strip())
+
+        start = stripped.find("{")
+        end = stripped.rfind("}")
+        if start != -1 and end != -1 and end > start:
+            candidates.append(stripped[start : end + 1].strip())
+
+        seen: set[str] = set()
+        last_exc: json.JSONDecodeError | None = None
+        for candidate in candidates:
+            if not candidate or candidate in seen:
+                continue
+            seen.add(candidate)
+            try:
+                payload = json.loads(candidate)
+            except json.JSONDecodeError as exc:
+                last_exc = exc
+                continue
+            if not isinstance(payload, dict):
+                raise RuntimeError("AI returned JSON that was not an object.")
+            return payload
+
+        if last_exc is not None:
+            raise last_exc
+        raise json.JSONDecodeError("No JSON object found", stripped or content, 0)
 
     def chat_text(
         self,
@@ -1171,17 +1245,12 @@ class OpenRouterClient:
         }
         if max_tokens is not None:
             payload["max_tokens"] = max_tokens
-        try:
-            response = self._request(payload)
-        except urllib.error.URLError as exc:
-            raise RuntimeError(f"AI request failed: {exc.reason}") from exc
-        except TimeoutError as exc:  # pragma: no cover - depends on network
-            raise RuntimeError("AI request timed out") from exc
+        response = self._request(payload)
         content = str(response["choices"][0]["message"]["content"]).strip()
         try:
-            return json.loads(content)
+            return self._parse_json_content(content)
         except json.JSONDecodeError as exc:
-            raise RuntimeError(f"AI returned non-JSON content: {short_preview(content, 240)}") from exc
+            raise RuntimeError(f"AI returned non-JSON content ({exc.msg}): {short_preview(content, 240)}") from exc
 
     def chat_json_messages(
         self,
@@ -1204,17 +1273,12 @@ class OpenRouterClient:
         }
         if max_tokens is not None:
             payload["max_tokens"] = max_tokens
-        try:
-            response = self._request(payload)
-        except urllib.error.URLError as exc:
-            raise RuntimeError(f"AI request failed: {exc.reason}") from exc
-        except TimeoutError as exc:  # pragma: no cover - depends on network
-            raise RuntimeError("AI request timed out") from exc
+        response = self._request(payload)
         content = str(response["choices"][0]["message"]["content"]).strip()
         try:
-            return json.loads(content)
+            return self._parse_json_content(content)
         except json.JSONDecodeError as exc:
-            raise RuntimeError(f"AI returned non-JSON content: {short_preview(content, 240)}") from exc
+            raise RuntimeError(f"AI returned non-JSON content ({exc.msg}): {short_preview(content, 240)}") from exc
 
 
 class CyborgAgent:
@@ -1537,6 +1601,7 @@ class CyborgAgent:
             f"- Updated: {self.state.updated_at}",
             f"- Repo: {self.state.repo_path or '(none)'}",
             f"- Blog root: {self.state.blog_root}",
+            f"- Session workspace: {self.state.session_dir}",
             "",
             "## Conversation",
             "",
@@ -4052,6 +4117,52 @@ def resolve_blog_root(explicit: Optional[str], *, interactive: bool) -> Path:
     raise ValueError("Unable to resolve Cyborg Lab root. Set CYBORG_LAB_DIR or pass --blog-root.")
 
 
+def resolve_cyborg_work_root() -> Path:
+    """Return the root folder where Cyborg keeps resumable session artifacts."""
+    configured = os.environ.get("CYBORG_WORK_DIR", "").strip()
+    if configured:
+        return canonical_home_path(configured)
+    return canonical_home_path(str(DEFAULT_CYBORG_WORK_DIR))
+
+
+def session_namespace_for_blog(blog_root: Path) -> str:
+    """Create a stable per-blog folder name inside the shared work root."""
+    namespace = slugify(blog_root.name, max_words=4, max_len=32)
+    return namespace or "blog"
+
+
+def primary_session_root(blog_root: Path) -> Path:
+    """Return the preferred session root outside the live blog repo."""
+    return resolve_cyborg_work_root() / "ingest" / session_namespace_for_blog(blog_root)
+
+
+def legacy_session_root(blog_root: Path) -> Path:
+    """Return the historical in-repo session root kept for compatibility."""
+    return blog_root / "drafts" / "ingest"
+
+
+def session_roots_for_blog(blog_root: Path) -> list[Path]:
+    """List the preferred and legacy session roots for a given blog repo."""
+    roots: list[Path] = []
+    seen: set[str] = set()
+    for candidate in (primary_session_root(blog_root), legacy_session_root(blog_root)):
+        key = str(candidate)
+        if key in seen:
+            continue
+        roots.append(candidate)
+        seen.add(key)
+    return roots
+
+
+def resolve_saved_session_dir(blog_root: Path, session_id: str) -> Optional[Path]:
+    """Find a saved session by ID across both the new and legacy roots."""
+    for session_root in session_roots_for_blog(blog_root):
+        candidate = session_root / session_id
+        if (candidate / "session.json").exists():
+            return candidate
+    return None
+
+
 def resolve_repo_path(explicit: Optional[str], cwd: Path) -> Optional[Path]:
     """Figure out which source repo the user wants to ingest.
 
@@ -4113,7 +4224,7 @@ def create_session(
     """Build a fresh SessionState for a new ingest session."""
     seed = repo_path.name if repo_path else extract_first_heading(article_text or source_text) or "cyborg-session"
     session_id = make_session_id(seed)
-    session_dir = blog_root / "drafts" / "ingest" / session_id
+    session_dir = primary_session_root(blog_root) / session_id
     repo_remote = ""
     if repo_path:
         repo_remote = run_command(["git", "remote", "get-url", "origin"], cwd=repo_path, allow_failure=True)
@@ -4136,10 +4247,14 @@ def create_session(
 
 def list_sessions(blog_root: Path) -> list[Path]:
     """Return saved session folders sorted newest-first."""
-    session_root = blog_root / "drafts" / "ingest"
-    if not session_root.exists():
-        return []
-    return sorted((path for path in session_root.iterdir() if path.is_dir()), key=lambda path: path.name, reverse=True)
+    sessions_by_id: dict[str, Path] = {}
+    for session_root in session_roots_for_blog(blog_root):
+        if not session_root.exists():
+            continue
+        candidates = sorted((path for path in session_root.iterdir() if path.is_dir()), key=lambda path: path.name, reverse=True)
+        for path in candidates:
+            sessions_by_id.setdefault(path.name, path)
+    return sorted(sessions_by_id.values(), key=lambda path: path.name, reverse=True)
 
 
 def load_session(blog_root: Path, session_id: Optional[str], *, interactive: bool) -> SessionState:
@@ -4152,7 +4267,9 @@ def load_session(blog_root: Path, session_id: Optional[str], *, interactive: boo
     if not sessions:
         raise ValueError("No saved Cyborg sessions were found.")
     if session_id:
-        session_dir = blog_root / "drafts" / "ingest" / session_id
+        session_dir = resolve_saved_session_dir(blog_root, session_id)
+        if session_dir is None:
+            session_dir = primary_session_root(blog_root) / session_id
     elif interactive:
         print("Saved sessions:")
         preview_sessions = sessions[:4]
@@ -4179,14 +4296,18 @@ def load_session(blog_root: Path, session_id: Optional[str], *, interactive: boo
                     raise ValueError(f"Resume choice must be between 1 and {len(sessions)}.")
                 session_dir = sessions[choice - 1]
             else:
-                session_dir = blog_root / "drafts" / "ingest" / custom
+                session_dir = resolve_saved_session_dir(blog_root, custom)
+                if session_dir is None:
+                    session_dir = primary_session_root(blog_root) / custom
         elif answer.isdigit():
             choice = int(answer)
             if choice < 1 or choice > len(sessions):
                 raise ValueError(f"Resume choice must be between 1 and {len(sessions)}.")
             session_dir = sessions[choice - 1]
         elif answer:
-            session_dir = blog_root / "drafts" / "ingest" / answer
+            session_dir = resolve_saved_session_dir(blog_root, answer)
+            if session_dir is None:
+                session_dir = primary_session_root(blog_root) / answer
         else:
             raise ValueError("Resume selection cancelled.")
     else:
@@ -4212,13 +4333,21 @@ def parse_command(raw: str) -> tuple[str, list[str]]:
 # =====================================================================
 
 
-def run_autopilot(agent: CyborgAgent, *, assume_yes: bool = False, docs_after_code: bool = False) -> int:
+def run_autopilot(
+    agent: CyborgAgent,
+    *,
+    assume_yes: bool = False,
+    docs_after_code: bool = False,
+    build_mode: bool = False,
+) -> int:
     """Run the full Cyborg pipeline hands-free.
 
     Default behavior is code-first: scan → improve → patch-code, then
     stop so source-repo changes can be reviewed or applied before any
     documentation pass. When ``docs_after_code`` is True, the normal
-    docs pipeline continues after the code phase.
+    docs pipeline continues after the code phase. In ``build_mode``,
+    verified scaffolds stay untouched unless follow-up repo edits are
+    applied explicitly.
     """
     docs_after_code = docs_after_code or os.environ.get("CYBORG_DOCS_AFTER_CODE", "").lower() in {"1", "true", "yes"}
     print(f"Cyborg autopilot session: {agent.state.session_id}")
@@ -4332,6 +4461,13 @@ def run_autopilot(agent: CyborgAgent, *, assume_yes: bool = False, docs_after_co
         print()
 
         if assume_yes:
+            if build_mode:
+                agent.assistant_say(
+                    "Verified build complete. Leaving staged source-repo edits "
+                    "unapplied so the generated repo stays in its verified state. "
+                    "Use `/apply code --yes` later if you want those follow-up changes."
+                )
+                return 0
             agent.apply_changes("code", assume_yes=True)
             agent.assistant_say("Source-repo edits applied. Re-run `cyborg auto --docs-after-code ...` after the new scan if you want documentation.")
             return 0
@@ -4715,6 +4851,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                     agent,
                     assume_yes=getattr(args, "yes", False),
                     docs_after_code=getattr(args, "docs_after_code", False),
+                    build_mode=getattr(args, "build", False),
                 )
             return run_repl(agent)
 

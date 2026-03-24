@@ -16,6 +16,8 @@ setup() {
     # Paths to the sandbox copies of the project pieces.
     export DOTFILES_DIR="$TEST_DIR/dotfiles"
     export BLOG_DIR="$TEST_DIR/my-ms-ai-blog"
+    export CYBORG_WORK_DIR="$TEST_DIR/cyborg-work"
+    export SESSION_ROOT="$CYBORG_WORK_DIR/ingest/$(basename "$BLOG_DIR")"
     export SOURCE_REPO="$TEST_DIR/source-repo"
     # Repo name with special characters to test safe string handling.
     export SPECIAL_REPO="$TEST_DIR/rockit++[1]"
@@ -28,7 +30,7 @@ setup() {
 
     # Create all the folders the agent expects to find.
     mkdir -p "$DOTFILES_DIR/bin" "$DOTFILES_DIR/scripts" "$DOTFILES_DIR/scripts/lib" "$DOTFILES_DIR/zsh" "$FAKE_BIN"
-    mkdir -p "$BLOG_DIR/content/log" "$BLOG_DIR/content/projects" "$BLOG_DIR/content/workflows" "$BLOG_DIR/content/artifacts" "$BLOG_DIR/content/reference" "$BLOG_DIR/drafts/ingest"
+    mkdir -p "$BLOG_DIR/content/log" "$BLOG_DIR/content/projects" "$BLOG_DIR/content/workflows" "$BLOG_DIR/content/artifacts" "$BLOG_DIR/content/reference" "$BLOG_DIR/drafts" "$SESSION_ROOT"
     mkdir -p "$SOURCE_REPO" "$SPECIAL_REPO" "$GIT_SOURCE_REPO"
     # Start with an empty log file.
     : > "$FAKE_GITNEXUS_LOG"
@@ -149,9 +151,13 @@ EOF
     # This stands in for the real "npx gitnexus" CLI.
     # It writes to a log so tests can check which commands were called,
     # and it returns canned responses that look like real GitNexus output.
-    cat > "$FAKE_BIN/npx" <<'EOF'
+cat > "$FAKE_BIN/npx" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
+
+while [[ "${1:-}" == --* ]]; do
+    shift || true
+done
 
 # We only pretend to be gitnexus; reject anything else.
 if [[ "${1:-}" != "gitnexus" ]]; then
@@ -197,11 +203,13 @@ case "$command_name" in
     analyze)
         # Create a fake index with some stats the agent can read.
         mkdir -p "$repo_root/.gitnexus"
+        mkdir -p "$repo_root/.gitnexus/lbug"
+        indexed_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
         cat > "$meta_path" <<JSON
 {
   "repoPath": "$repo_root",
   "lastCommit": "$current_commit",
-  "indexedAt": "2026-03-16T15:00:00.000Z",
+  "indexedAt": "$indexed_at",
   "stats": {
     "files": 2,
     "nodes": 9,
@@ -300,7 +308,7 @@ teardown() {
     [[ "$output" == *"## Phases"* ]]
 
     # Exactly one session folder should have been created.
-    session_count=$(find "$BLOG_DIR/drafts/ingest" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
+    session_count=$(find "$SESSION_ROOT" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
     [ "$session_count" -eq 1 ]
 }
 
@@ -333,7 +341,7 @@ teardown() {
     [ "$status" -eq 0 ]
 
     # Find the session ID that was just created.
-    session_id=$(basename "$(find "$BLOG_DIR/drafts/ingest" -mindepth 1 -maxdepth 1 -type d | head -n 1)")
+    session_id=$(basename "$(find "$SESSION_ROOT" -mindepth 1 -maxdepth 1 -type d | head -n 1)")
     [ -n "$session_id" ]
 
     # Resume that session and check that /status shows the right ID.
@@ -341,6 +349,28 @@ teardown() {
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"Session: $session_id"* ]]
+}
+
+@test "cyborg resume can still load legacy sessions stored under the blog repo" {
+    legacy_session_id="20260324-legacy-session-ab12cd"
+    legacy_session_dir="$BLOG_DIR/drafts/ingest/$legacy_session_id"
+    mkdir -p "$legacy_session_dir"
+    cat > "$legacy_session_dir/session.json" <<EOF
+{
+  "session_id": "$legacy_session_id",
+  "version": 2,
+  "created_at": "2026-03-24T00:00:00Z",
+  "updated_at": "2026-03-24T00:00:00Z",
+  "blog_root": "$BLOG_DIR",
+  "session_dir": "$legacy_session_dir",
+  "cwd": "$SOURCE_REPO"
+}
+EOF
+
+    run bash -lc "printf '/status\n/quit\n' | env DOTFILES_DIR='$DOTFILES_DIR' CYBORG_LAB_DIR='$BLOG_DIR' CYBORG_DISABLE_AI=true '$DOTFILES_DIR/bin/cyborg' resume '$legacy_session_id'"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Session: $legacy_session_id"* ]]
 }
 
 # ---- GitNexus approval gate ----
@@ -404,7 +434,7 @@ teardown() {
     run bash -lc "cd '$GIT_SOURCE_REPO' && printf '/gitnexus enhance\n/quit\n' | env PATH='$FAKE_BIN:$PATH' DOTFILES_DIR='$DOTFILES_DIR' CYBORG_LAB_DIR='$BLOG_DIR' CYBORG_DISABLE_AI=true '$DOTFILES_DIR/bin/cyborg' ingest 'capture the initial workflow'"
     [ "$status" -eq 0 ]
 
-    session_id=$(basename "$(find "$BLOG_DIR/drafts/ingest" -mindepth 1 -maxdepth 1 -type d | head -n 1)")
+    session_id=$(basename "$(find "$SESSION_ROOT" -mindepth 1 -maxdepth 1 -type d | head -n 1)")
     [ -n "$session_id" ]
 
     # Make a real git commit so the agent sees the repo has changed.
@@ -431,7 +461,7 @@ teardown() {
     run bash -lc "cd '$GIT_SOURCE_REPO' && printf '/gitnexus enhance\n/quit\n' | env PATH='$FAKE_BIN:$PATH' DOTFILES_DIR='$DOTFILES_DIR' CYBORG_LAB_DIR='$BLOG_DIR' CYBORG_DISABLE_AI=true '$DOTFILES_DIR/bin/cyborg' ingest 'capture the initial workflow'"
     [ "$status" -eq 0 ]
 
-    session_id=$(basename "$(find "$BLOG_DIR/drafts/ingest" -mindepth 1 -maxdepth 1 -type d | head -n 1)")
+    session_id=$(basename "$(find "$SESSION_ROOT" -mindepth 1 -maxdepth 1 -type d | head -n 1)")
     [ -n "$session_id" ]
 
     (
@@ -455,7 +485,7 @@ teardown() {
     run bash -lc "cd '$GIT_SOURCE_REPO' && printf '/gitnexus enhance\n/map\n/plan\n/draft workflow-main\n/quit\n' | env PATH='$FAKE_BIN:$PATH' DOTFILES_DIR='$DOTFILES_DIR' CYBORG_LAB_DIR='$BLOG_DIR' CYBORG_DISABLE_AI=true '$DOTFILES_DIR/bin/cyborg' ingest 'capture a draft before resume'"
     [ "$status" -eq 0 ]
 
-    session_id=$(basename "$(find "$BLOG_DIR/drafts/ingest" -mindepth 1 -maxdepth 1 -type d | head -n 1)")
+    session_id=$(basename "$(find "$SESSION_ROOT" -mindepth 1 -maxdepth 1 -type d | head -n 1)")
     [ -n "$session_id" ]
 
     # Push a new commit so the index goes stale.
@@ -482,7 +512,7 @@ teardown() {
     run bash -lc "cd '$GIT_SOURCE_REPO' && printf '/gitnexus enhance\n/quit\n' | env PATH='$FAKE_BIN:$PATH' DOTFILES_DIR='$DOTFILES_DIR' CYBORG_LAB_DIR='$BLOG_DIR' CYBORG_DISABLE_AI=true '$DOTFILES_DIR/bin/cyborg' ingest 'capture the initial workflow'"
     [ "$status" -eq 0 ]
 
-    session_id=$(basename "$(find "$BLOG_DIR/drafts/ingest" -mindepth 1 -maxdepth 1 -type d | head -n 1)")
+    session_id=$(basename "$(find "$SESSION_ROOT" -mindepth 1 -maxdepth 1 -type d | head -n 1)")
     [ -n "$session_id" ]
 
     (
@@ -507,7 +537,7 @@ teardown() {
     run bash -lc "cd '$GIT_SOURCE_REPO' && printf '/gitnexus enhance\n/map\n/plan\n/draft log-main\n/quit\n' | env PATH='$FAKE_BIN:$PATH' DOTFILES_DIR='$DOTFILES_DIR' CYBORG_LAB_DIR='$BLOG_DIR' CYBORG_DISABLE_AI=true '$DOTFILES_DIR/bin/cyborg' ingest 'capture the original narrative log'"
     [ "$status" -eq 0 ]
 
-    session_id=$(basename "$(find "$BLOG_DIR/drafts/ingest" -mindepth 1 -maxdepth 1 -type d | head -n 1)")
+    session_id=$(basename "$(find "$SESSION_ROOT" -mindepth 1 -maxdepth 1 -type d | head -n 1)")
     [ -n "$session_id" ]
 
     (
@@ -520,7 +550,7 @@ teardown() {
     run bash -lc "printf '/gitnexus refresh\n/map\n/rewrite 1 iteration-log\n/quit\n' | env PATH='$FAKE_BIN:$PATH' DOTFILES_DIR='$DOTFILES_DIR' CYBORG_LAB_DIR='$BLOG_DIR' CYBORG_DISABLE_AI=true '$DOTFILES_DIR/bin/cyborg' resume '$session_id'"
 
     [ "$status" -eq 0 ]
-    session_json="$BLOG_DIR/drafts/ingest/$session_id/session.json"
+    session_json="$SESSION_ROOT/$session_id/session.json"
     # The original log item should still be in the JSON.
     run grep -n '"key": "log-main"' "$session_json"
     [ "$status" -eq 0 ]

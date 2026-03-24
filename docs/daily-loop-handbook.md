@@ -87,7 +87,7 @@ When you are completely done working for the day, wrap things up. This saves you
 goodevening
 ```
 
-The `goodevening` tool saves everything you did today. It lists your biggest wins, runs a safety backup of your files, and gives you an evening reflection from your AI coach.
+The `goodevening` tool saves everything you did today. It lists your biggest wins, runs a safety backup of your files, and gives you an evening reflection from your AI coach. Its repo-safety and blog-draft sections stay summarized so you still get the warning signal without a giant wall of file paths.
 
 ### Evening AI Coaching
 The evening feedback letter includes:

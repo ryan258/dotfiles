@@ -5,10 +5,16 @@ from __future__ import annotations
 
 import json
 import os
+import pkgutil
 import re
+import socket
+import shlex
 import shutil
+import tempfile
 import textwrap
 import importlib.util
+import sys
+import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
@@ -54,23 +60,87 @@ MORPHLING_BUILD_PROMPT = textwrap.dedent(
     - Every file must contain real, working code — no placeholder comments.
     - Include "keywords" (3-8 terms for registry discoverability).
     - Include "license" (default to "MIT" unless the idea implies otherwise).
+    - Only use real, published dependencies from the default package registry for the chosen ecosystem.
+    - Do not invent package names, package versions, or unsupported SDK bindings.
+    - Prefer standard-library or mainstream dependencies when they can solve the task cleanly.
+    - Only call third-party APIs whose public entry points you can name concretely from the package's documented or inspectable surface.
+    - If a third-party integration is uncertain, isolate it behind a small internal adapter so the rest of the app and tests do not depend on guessed SDK symbols.
+    - Define option and parameter semantics explicitly, and keep CLI help text, docstrings, implementation, and tests consistent.
+    - Prefer tests that exercise your own code seams instead of mocking third-party package internals directly.
+    - Tests must be deterministic and offline: mock network, browser, and filesystem side effects instead of depending on live external services.
+    - Do not write placeholder tests that merely assert "expected to fail" for unfinished features; either implement the feature or write a focused mocked test for the intended behavior.
     """
 ).strip()
 
 BUILD_VERIFY_MAX_ROUNDS = 3
 BUILD_VERIFY_TIMEOUT_SECONDS = 120
+BUILD_SCAFFOLD_MAX_ATTEMPTS = 3
 
-_BUILD_VERIFY_RECIPES: list[tuple[str, str | None, str]] = [
-    ("package.json", "npm install --ignore-scripts 2>&1", "npm test 2>&1"),
-    ("requirements.txt", "pip install -q -r requirements.txt 2>&1", "python -m pytest -x 2>&1"),
-    ("setup.py", "pip install -q -e . 2>&1", "python -m pytest -x 2>&1"),
-    ("pyproject.toml", "pip install -q -e . 2>&1", "python -m pytest -x 2>&1"),
-    ("go.mod", None, "go build ./... 2>&1 && go test ./... 2>&1"),
-    ("Cargo.toml", None, "cargo build 2>&1 && cargo test 2>&1"),
-    ("Makefile", None, "make 2>&1"),
+
+def _quote_python_bin(python_bin: str | Path | None = None) -> str:
+    """Return a shell-safe Python executable path."""
+    return shlex.quote(str(python_bin or sys.executable or "python3"))
+
+
+def _python_requirements_install_cmd(python_bin: str | Path | None = None) -> str:
+    """Install runtime deps, plus dev deps when a separate file exists."""
+    quoted_python = _quote_python_bin(python_bin)
+    return (
+        f"{quoted_python} -m pip install -q --upgrade pip"
+        f" && {quoted_python} -m pip install -q -r requirements.txt"
+        f" && if [ -f requirements-dev.txt ]; then {quoted_python} -m pip install -q -r requirements-dev.txt; fi"
+    )
+
+
+def _python_editable_install_cmd(python_bin: str | Path | None = None) -> str:
+    """Install editable Python projects and optional dev requirements."""
+    quoted_python = _quote_python_bin(python_bin)
+    return (
+        f"{quoted_python} -m pip install -q --upgrade pip"
+        f" && {quoted_python} -m pip install -q -e ."
+        f" && if [ -f requirements-dev.txt ]; then {quoted_python} -m pip install -q -r requirements-dev.txt; fi"
+    )
+
+
+def _python_pytest_cmd(python_bin: str | Path | None = None) -> str:
+    """Run pytest with the same Python interpreter used for install."""
+    return f"{_quote_python_bin(python_bin)} -m pytest -x"
+
+_BUILD_VERIFY_RECIPES: list[tuple[str, str, str | None, str]] = [
+    ("package.json", "node", "npm install --ignore-scripts", "npm test"),
+    ("manifest.json", "extension", None, "extension verification"),
+    ("requirements.txt", "python", _python_requirements_install_cmd(), _python_pytest_cmd()),
+    ("setup.py", "python", _python_editable_install_cmd(), _python_pytest_cmd()),
+    ("pyproject.toml", "python", _python_editable_install_cmd(), _python_pytest_cmd()),
+    ("go.mod", "go", None, "go build ./... && go test ./..."),
+    ("Cargo.toml", "cargo", None, "cargo build && cargo test"),
+    ("Makefile", "make", None, "make"),
 ]
 
 PUBLISH_TIMEOUT_SECONDS = 300
+FIX_SNAPSHOT_MAX_FILE_CHARS = 6000
+FIX_SNAPSHOT_MAX_TOTAL_CHARS = 120000
+
+_FIX_SNAPSHOT_EXCLUDED_DIRS = {
+    ".git",
+    ".gitnexus",
+    ".venv",
+    ".venv-codex",
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    "target",
+}
+
+_FIX_SNAPSHOT_EXCLUDED_FILES = {
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+}
 
 _PUBLISH_RECIPES: list[tuple[str, list[str], list[str], list[str], str]] = [
     (
@@ -128,11 +198,37 @@ MORPHLING_METADATA_PROMPT = textwrap.dedent(
     """
 ).strip()
 
-MORPHLING_FIX_PROMPT = textwrap.dedent(
+MORPHLING_INSTALL_FIX_PROMPT = textwrap.dedent(
     """
     You are the Morphling — a shapeshifting universal specialist.
 
-    The project you scaffolded failed its verification step.  Fix the
+    The project you scaffolded failed during dependency installation or
+    build setup. Fix the failing files and return ONLY a JSON object
+    with the files that changed:
+
+    {
+      "files": {
+        "relative/path/file.py": "complete corrected file contents..."
+      }
+    }
+
+    Rules:
+    - Return the FULL contents of each changed file (not a diff).
+    - Prioritize dependency manifests and build config first: requirements.txt, requirements-dev.txt, pyproject.toml, setup.py, package.json, Cargo.toml, go.mod, Makefile.
+    - Do not invent package names, package versions, or unsupported SDK bindings.
+    - Do not change application source files unless the install error explicitly requires it.
+    - If a package or version does not exist, replace it with a real published dependency or remove it and simplify the implementation.
+    - Do not change files that are unrelated to the install failure.
+    - If the fix requires a new file, include it.
+    - Every file must contain real, working code — no placeholder comments.
+    """
+).strip()
+
+MORPHLING_TEST_FIX_PROMPT = textwrap.dedent(
+    """
+    You are the Morphling — a shapeshifting universal specialist.
+
+    The project you scaffolded failed its verification tests. Fix the
     failing files and return ONLY a JSON object with the files that
     changed:
 
@@ -144,15 +240,24 @@ MORPHLING_FIX_PROMPT = textwrap.dedent(
 
     Rules:
     - Return the FULL contents of each changed file (not a diff).
-    - Do not change files that are unrelated to the error.
+    - Do not change files that are unrelated to the test failure.
     - If the fix requires a new file, include it.
     - Do not remove test files — fix them instead.
+    - Read the failing tests carefully and align the implementation to the contract they describe before guessing.
+    - If code and tests disagree on semantics, make the contract explicit and keep CLI help text, docstrings, implementation, and tests consistent.
+    - Do not keep tests coupled to guessed third-party symbols. Switch to a verified public API or add a small local adapter/helper seam inside the project and patch that instead.
+    - If a dependency exists but the referenced symbol does not, use the verified installed module surface from the project instead of guessing.
+    - Replace placeholder "expected to fail" assertions and live-network tests with deterministic mocked tests that verify the intended success or error behavior.
     - Every file must contain real, working code — no placeholder comments.
     """
 ).strip()
 
 MARKET_SEARCH_TIMEOUT_SECONDS = 10
 MARKET_SEARCH_RESULTS_PER_SOURCE = 5
+DEFAULT_DATA_DIR = Path.home() / ".config" / "dotfiles-data"
+DEFAULT_GITHUB_TOKEN_FILE = Path.home() / ".github_token"
+
+_MARKET_SEARCH_NOTES: dict[str, str] = {}
 
 MARKET_VALIDATION_PROMPT = textwrap.dedent(
     """
@@ -191,6 +296,7 @@ MARKET_VALIDATION_PROMPT = textwrap.dedent(
 
 def _search_github(query: str) -> list[dict[str, Any]]:
     """Search GitHub repositories for existing solutions."""
+    _MARKET_SEARCH_NOTES.pop("github", None)
     encoded = urllib.parse.quote_plus(query)
     url = (
         f"https://api.github.com/search/repositories"
@@ -204,13 +310,14 @@ def _search_github(query: str) -> list[dict[str, Any]]:
             "User-Agent": "Cyborg-Lab-Agent/1.0",
         },
     )
-    gh_token = os.environ.get("GITHUB_TOKEN", "") or os.environ.get("GH_TOKEN", "")
+    gh_token = _load_github_token()
     if gh_token.strip():
         req.add_header("Authorization", f"token {gh_token.strip()}")
     try:
         with urllib.request.urlopen(req, timeout=MARKET_SEARCH_TIMEOUT_SECONDS) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-    except Exception:
+    except Exception as exc:
+        _MARKET_SEARCH_NOTES["github"] = _format_market_search_error("github", exc)
         return []
     results: list[dict[str, Any]] = []
     for item in data.get("items", [])[:MARKET_SEARCH_RESULTS_PER_SOURCE]:
@@ -230,6 +337,7 @@ def _search_github(query: str) -> list[dict[str, Any]]:
 
 def _search_npm(query: str) -> list[dict[str, Any]]:
     """Search npm registry for existing packages."""
+    _MARKET_SEARCH_NOTES.pop("npm", None)
     encoded = urllib.parse.quote_plus(query)
     url = (
         f"https://registry.npmjs.org/-/v1/search"
@@ -239,7 +347,8 @@ def _search_npm(query: str) -> list[dict[str, Any]]:
     try:
         with urllib.request.urlopen(req, timeout=MARKET_SEARCH_TIMEOUT_SECONDS) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-    except Exception:
+    except Exception as exc:
+        _MARKET_SEARCH_NOTES["npm"] = _format_market_search_error("npm", exc)
         return []
     results: list[dict[str, Any]] = []
     for obj in data.get("objects", [])[:MARKET_SEARCH_RESULTS_PER_SOURCE]:
@@ -255,6 +364,76 @@ def _search_npm(query: str) -> list[dict[str, Any]]:
             }
         )
     return results
+
+
+def _github_token_candidate_paths() -> list[Path]:
+    """Return the token file paths used by GitHub-related tooling."""
+    data_dir = Path(os.environ.get("DATA_DIR", str(DEFAULT_DATA_DIR))).expanduser()
+    candidates = [
+        os.environ.get("GITHUB_TOKEN_FILE", "").strip(),
+        os.environ.get("GITHUB_TOKEN_FALLBACK", "").strip(),
+        str(DEFAULT_GITHUB_TOKEN_FILE),
+        str(data_dir / "github_token"),
+    ]
+    seen: set[Path] = set()
+    paths: list[Path] = []
+    for raw in candidates:
+        if not raw:
+            continue
+        path = Path(raw).expanduser()
+        if path in seen:
+            continue
+        seen.add(path)
+        paths.append(path)
+    return paths
+
+
+def _load_github_token() -> str:
+    """Load a GitHub token from env vars or the standard token files."""
+    for key in ("GITHUB_TOKEN", "GH_TOKEN"):
+        value = os.environ.get(key, "").strip()
+        if value:
+            return value
+
+    for token_path in _github_token_candidate_paths():
+        try:
+            if not token_path.is_file():
+                continue
+            token = token_path.read_text(encoding="utf-8").strip()
+        except OSError:
+            continue
+        if token:
+            return token
+    return ""
+
+
+def _format_market_search_error(source: str, exc: Exception) -> str:
+    """Summarize market-search failures without leaking secrets."""
+    label = "GitHub" if source == "github" else "npm"
+
+    if isinstance(exc, urllib.error.HTTPError):
+        if source == "github" and exc.code == 401:
+            return (
+                f"{label} search failed: authentication rejected. "
+                "Check GITHUB_TOKEN, GH_TOKEN, or the configured token file."
+            )
+        if source == "github" and exc.code == 403:
+            return f"{label} search failed: rate limited or forbidden."
+        return f"{label} search failed: HTTP {exc.code}."
+
+    if isinstance(exc, urllib.error.URLError):
+        reason = exc.reason
+        if isinstance(reason, socket.timeout):
+            return f"{label} search failed: request timed out."
+        return f"{label} search failed: network unavailable."
+
+    if isinstance(exc, TimeoutError):
+        return f"{label} search failed: request timed out."
+
+    if isinstance(exc, json.JSONDecodeError):
+        return f"{label} search failed: invalid API response."
+
+    return f"{label} search failed: {type(exc).__name__}."
 
 
 def _format_validation_report(report: dict[str, Any]) -> str:
@@ -305,13 +484,24 @@ def validate_market(
 ) -> bool:
     """Search for existing solutions and present a competitive landscape report."""
     print("  Searching for existing solutions...")
+    _MARKET_SEARCH_NOTES.clear()
 
     github_results = _search_github(idea)
     npm_results = _search_npm(idea)
+    search_notes = [
+        _MARKET_SEARCH_NOTES[source]
+        for source in ("github", "npm")
+        if _MARKET_SEARCH_NOTES.get(source)
+    ]
+    for note in search_notes:
+        print(f"  Note: {note}")
 
     total = len(github_results) + len(npm_results)
     if total == 0:
-        print("  No search results found (APIs may be unreachable). Proceeding with build.")
+        if search_notes:
+            print("  No search results found from the available sources. Proceeding with build.")
+        else:
+            print("  No matching GitHub repositories or npm packages found. Proceeding with build.")
         return True
 
     search_data = json.dumps({"github": github_results, "npm": npm_results}, indent=2)
@@ -372,18 +562,49 @@ def build_project_from_idea(
     target_root.mkdir(parents=True, exist_ok=True)
 
     print("Morphling is building your project...")
-    scaffold = ai_client.chat_json(
-        MORPHLING_BUILD_PROMPT,
-        f"Build a project from this idea:\n\n{idea}",
-        temperature=0.5,
-    )
+    scaffold: dict[str, Any] = {}
+    description = idea
+    raw_files: Any = {}
+    files: dict[str, str] = {}
+    normalized_entries = 0
+    malformed_entries = 0
+    build_request = f"Build a project from this idea:\n\n{idea}"
+    scaffold_issue = "Morphling returned an unusable scaffold."
+
+    for attempt in range(1, BUILD_SCAFFOLD_MAX_ATTEMPTS + 1):
+        scaffold = ai_client.chat_json(
+            MORPHLING_BUILD_PROMPT,
+            build_request,
+            temperature=0.5,
+            max_tokens=16000,
+        )
+
+        description = scaffold.get("description", idea)
+        raw_files = scaffold.get("files", {})
+        files, normalized_entries, malformed_entries = _normalize_scaffold_files(raw_files)
+
+        if raw_files and files:
+            break
+
+        if not raw_files:
+            scaffold_issue = "Morphling returned an empty project scaffold (no files)."
+        else:
+            scaffold_issue = "Morphling returned a scaffold, but none of the file mappings were usable."
+
+        print(
+            f"  Scaffold unusable (attempt {attempt}/{BUILD_SCAFFOLD_MAX_ATTEMPTS}): "
+            f"{scaffold_issue}"
+        )
+        if attempt == BUILD_SCAFFOLD_MAX_ATTEMPTS:
+            raise RuntimeError(scaffold_issue)
+        build_request = (
+            f"Build a project from this idea:\n\n{idea}\n\n"
+            f"The previous scaffold was unusable: {scaffold_issue}\n"
+            "Retry and return a complete JSON object with a non-empty files map "
+            "using safe relative file paths."
+        )
 
     name = slugify(scaffold.get("name") or "untitled-project", max_words=6, max_len=40)
-    description = scaffold.get("description", idea)
-    files: dict[str, str] = scaffold.get("files", {})
-
-    if not files:
-        raise RuntimeError("Morphling returned an empty project scaffold (no files).")
 
     project_dir = target_root / name
     if project_dir.exists():
@@ -393,10 +614,14 @@ def build_project_from_idea(
     print(f"  Project: {project_dir}")
     print(f"  Description: {description}")
     print(f"  Files: {len(files)}")
+    if normalized_entries:
+        print(f"  Warning: normalized {normalized_entries} malformed file mapping(s) from the scaffold response.")
+    if malformed_entries:
+        print(f"  Warning: skipped {malformed_entries} malformed file mapping(s) from the scaffold response.")
 
     skipped: list[str] = []
     for rel_path, contents in files.items():
-        if rel_path.startswith("/") or ".." in rel_path.split("/"):
+        if not _is_safe_relative_path(rel_path):
             skipped.append(rel_path)
             continue
         file_path = (project_dir / rel_path).resolve()
@@ -436,12 +661,227 @@ def build_project_from_idea(
     return project_dir
 
 
-def _detect_verify_recipe(project_dir: Path) -> tuple[str | None, str] | None:
-    """Return (install_cmd, test_cmd) for the project, or None."""
-    for marker, install_cmd, test_cmd in _BUILD_VERIFY_RECIPES:
+def _detect_verify_recipe(project_dir: Path) -> tuple[str, str | None, str] | None:
+    """Return (label, install_cmd, test_cmd) for the project, or None."""
+    for marker, label, install_cmd, test_cmd in _BUILD_VERIFY_RECIPES:
         if (project_dir / marker).exists():
-            return install_cmd, test_cmd
+            return label, install_cmd, test_cmd
     return None
+
+
+def _is_safe_relative_path(value: str) -> bool:
+    """Return True when value looks like a safe, normal relative file path."""
+    if not isinstance(value, str):
+        return False
+    candidate = value.strip()
+    if not candidate or candidate.startswith("/") or "\\" in candidate:
+        return False
+    if any(ch in candidate for ch in ("\n", "\r", "\x00")):
+        return False
+    if len(candidate) > 240:
+        return False
+    path = Path(candidate)
+    if path.is_absolute():
+        return False
+    if any(part in {"", ".", ".."} for part in path.parts):
+        return False
+    return True
+
+
+def _normalize_scaffold_files(raw_files: Any) -> tuple[dict[str, str], int, int]:
+    """Normalize scaffold file mappings and recover simple swapped path/content pairs."""
+    if not isinstance(raw_files, dict):
+        return {}, 0, 0
+
+    normalized: dict[str, str] = {}
+    swapped_entries = 0
+    malformed_entries = 0
+
+    for raw_path, raw_contents in raw_files.items():
+        if not isinstance(raw_path, str) or not isinstance(raw_contents, str):
+            malformed_entries += 1
+            continue
+
+        rel_path = raw_path.strip()
+        contents = raw_contents
+        if not _is_safe_relative_path(rel_path) and _is_safe_relative_path(raw_contents):
+            rel_path = raw_contents.strip()
+            contents = raw_path
+            swapped_entries += 1
+
+        if not _is_safe_relative_path(rel_path):
+            malformed_entries += 1
+            continue
+
+        normalized[rel_path] = contents
+
+    return normalized, swapped_entries, malformed_entries
+
+
+def _prepare_python_verify_commands(
+    project_dir: Path,
+) -> tuple[tempfile.TemporaryDirectory[str], str, str] | None:
+    """Create an isolated venv and return install/test commands bound to it."""
+    verify_env = tempfile.TemporaryDirectory(prefix="cyborg-verify-")
+    venv_dir = Path(verify_env.name)
+    exit_code, stdout, stderr = run_command_result(
+        [sys.executable, "-m", "venv", str(venv_dir)],
+        cwd=project_dir,
+        timeout=BUILD_VERIFY_TIMEOUT_SECONDS,
+    )
+    if exit_code != 0:
+        verify_env.cleanup()
+        error_output = (stderr or stdout)[:500]
+        print(f"  Could not create isolated Python env: {error_output}")
+        return None
+
+    venv_python = venv_dir / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    if not venv_python.exists():
+        verify_env.cleanup()
+        print("  Could not locate Python inside the isolated verification env.")
+        return None
+
+    install_cmd = (
+        _python_requirements_install_cmd(venv_python)
+        if (project_dir / "requirements.txt").exists()
+        else _python_editable_install_cmd(venv_python)
+    )
+    test_cmd = _python_pytest_cmd(venv_python)
+    return verify_env, install_cmd, test_cmd
+
+
+def _normalize_extension_path(value: str) -> str:
+    """Normalize extension-root-relative paths for existence checks."""
+    cleaned = value.strip().split("?", 1)[0].split("#", 1)[0].strip()
+    return cleaned.lstrip("/")
+
+
+def _collect_extension_manifest_paths(manifest: dict[str, Any]) -> set[str]:
+    """Collect project-relative files referenced from a browser extension manifest."""
+    paths: set[str] = set()
+
+    def add_path(raw_value: Any) -> None:
+        if not isinstance(raw_value, str):
+            return
+        normalized = _normalize_extension_path(raw_value)
+        if not normalized or normalized.startswith(("http://", "https://", "//", "data:")):
+            return
+        paths.add(normalized)
+
+    background = manifest.get("background")
+    if isinstance(background, dict):
+        add_path(background.get("service_worker"))
+        for script in background.get("scripts", []) or []:
+            add_path(script)
+
+    for script_group in manifest.get("content_scripts", []) or []:
+        if not isinstance(script_group, dict):
+            continue
+        for script in script_group.get("js", []) or []:
+            add_path(script)
+        for stylesheet in script_group.get("css", []) or []:
+            add_path(stylesheet)
+
+    for key in ("action", "browser_action", "page_action"):
+        action = manifest.get(key)
+        if isinstance(action, dict):
+            add_path(action.get("default_popup"))
+
+    add_path(manifest.get("options_page"))
+    options_ui = manifest.get("options_ui")
+    if isinstance(options_ui, dict):
+        add_path(options_ui.get("page"))
+    side_panel = manifest.get("side_panel")
+    if isinstance(side_panel, dict):
+        add_path(side_panel.get("default_path"))
+    add_path(manifest.get("devtools_page"))
+
+    icons = manifest.get("icons")
+    if isinstance(icons, dict):
+        for icon_path in icons.values():
+            add_path(icon_path)
+
+    overrides = manifest.get("chrome_url_overrides")
+    if isinstance(overrides, dict):
+        for override_path in overrides.values():
+            add_path(override_path)
+
+    for entry in manifest.get("web_accessible_resources", []) or []:
+        if isinstance(entry, dict):
+            for resource in entry.get("resources", []) or []:
+                add_path(resource)
+        else:
+            add_path(entry)
+
+    return paths
+
+
+def _collect_extension_script_files(project_dir: Path) -> list[Path]:
+    """Return JavaScript files that should be syntax-checked for an extension repo."""
+    script_files: list[Path] = []
+    for candidate in sorted(project_dir.rglob("*"), key=lambda path: str(path)):
+        if not candidate.is_file():
+            continue
+        rel_path = candidate.relative_to(project_dir)
+        if any(part in _FIX_SNAPSHOT_EXCLUDED_DIRS for part in rel_path.parts):
+            continue
+        if candidate.suffix.lower() in {".js", ".mjs", ".cjs"}:
+            script_files.append(candidate)
+    return script_files
+
+
+def _verify_extension_project(project_dir: Path) -> tuple[int, str, str]:
+    """Validate a browser extension manifest and syntax-check its scripts."""
+    manifest_path = project_dir / "manifest.json"
+    if not manifest_path.exists():
+        return 1, "", "manifest.json is missing."
+
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return 1, "", f"manifest.json is not valid JSON: {exc}"
+
+    if not isinstance(manifest, dict):
+        return 1, "", "manifest.json must contain a JSON object."
+
+    errors: list[str] = []
+    for field in ("manifest_version", "name", "version"):
+        if manifest.get(field) in (None, ""):
+            errors.append(f"manifest.json is missing required field '{field}'.")
+
+    manifest_version = manifest.get("manifest_version")
+    if manifest_version not in {2, 3}:
+        errors.append("manifest.json manifest_version must be 2 or 3.")
+
+    for rel_path in sorted(_collect_extension_manifest_paths(manifest)):
+        if any(char in rel_path for char in "*?["):
+            matches = list(project_dir.glob(rel_path))
+            if not matches:
+                errors.append(f"manifest.json references missing resource pattern '{rel_path}'.")
+            continue
+        if not (project_dir / rel_path).exists():
+            errors.append(f"manifest.json references missing file '{rel_path}'.")
+
+    node_bin = shutil.which("node")
+    if node_bin:
+        for script_path in _collect_extension_script_files(project_dir):
+            exit_code, stdout, stderr = run_command_result(
+                [node_bin, "--check", str(script_path)],
+                cwd=project_dir,
+                timeout=BUILD_VERIFY_TIMEOUT_SECONDS,
+            )
+            if exit_code != 0:
+                output = (stderr or stdout).strip()[:500]
+                rel_path = script_path.relative_to(project_dir)
+                errors.append(f"JavaScript syntax check failed for {rel_path}: {output}")
+
+    if errors:
+        return 1, "", "\n".join(errors)
+
+    summary = "Extension verification checks passed."
+    if not node_bin:
+        summary += " Node not available; skipped JavaScript syntax checks."
+    return 0, summary, ""
 
 
 def _verify_and_fix_scaffold(
@@ -455,75 +895,184 @@ def _verify_and_fix_scaffold(
         print("  No recognised build system — skipping verification.")
         return
 
-    install_cmd, test_cmd = recipe
-    print(f"  Verifying scaffold ({test_cmd.split()[0]})...")
+    label, install_cmd, test_cmd = recipe
+    verify_env: tempfile.TemporaryDirectory[str] | None = None
+    if label == "python":
+        prepared = _prepare_python_verify_commands(project_dir)
+        if prepared is None:
+            return
+        verify_env, install_cmd, test_cmd = prepared
 
-    for attempt in range(1, BUILD_VERIFY_MAX_ROUNDS + 1):
-        if install_cmd and attempt == 1:
-            exit_code, stdout, stderr = run_command_result(
-                ["bash", "-c", install_cmd],
-                cwd=project_dir,
-                timeout=BUILD_VERIFY_TIMEOUT_SECONDS,
-            )
-            if exit_code != 0:
-                error_output = (stderr or stdout)[:4000]
-                print(f"  Install failed (attempt {attempt}/{BUILD_VERIFY_MAX_ROUNDS})")
-                fix_applied = _apply_ai_fix(
-                    project_dir,
-                    idea,
-                    "install",
-                    install_cmd,
-                    error_output,
-                    ai_client,
-                )
-                if not fix_applied:
-                    print("  Could not get a fix from the AI — stopping verification.")
-                    return
+    print(f"  Verifying scaffold ({label})...")
+
+    try:
+        for attempt in range(1, BUILD_VERIFY_MAX_ROUNDS + 1):
+            if install_cmd:
                 exit_code, stdout, stderr = run_command_result(
                     ["bash", "-c", install_cmd],
                     cwd=project_dir,
                     timeout=BUILD_VERIFY_TIMEOUT_SECONDS,
                 )
                 if exit_code != 0:
-                    print("  Install still failing after fix — stopping verification.")
-                    return
+                    error_output = (stderr or stdout)[:4000]
+                    print(f"  Install failed (attempt {attempt}/{BUILD_VERIFY_MAX_ROUNDS})")
+                    if attempt == BUILD_VERIFY_MAX_ROUNDS:
+                        print("  Max fix attempts reached during install — project may need manual attention.")
+                        return
+                    fix_applied = _apply_ai_fix(
+                        project_dir,
+                        idea,
+                        "install",
+                        install_cmd,
+                        error_output,
+                        ai_client,
+                    )
+                    if not fix_applied:
+                        print("  Could not get a fix from the AI — stopping verification.")
+                        return
+                    continue
 
-        exit_code, stdout, stderr = run_command_result(
-            ["bash", "-c", test_cmd],
-            cwd=project_dir,
-            timeout=BUILD_VERIFY_TIMEOUT_SECONDS,
-        )
-
-        if exit_code == 0:
-            label = "first try" if attempt == 1 else f"attempt {attempt}"
-            print(f"  Verification passed ({label}).")
-            if attempt > 1:
-                run_command(["git", "add", "."], cwd=project_dir, allow_failure=True)
-                run_command(
-                    ["git", "-c", "user.name=Morphling", "-c", "user.email=morphling@cyborg-lab", "commit", "-qm", f"fix: pass verification (attempt {attempt})"],
+            if label == "extension":
+                exit_code, stdout, stderr = _verify_extension_project(project_dir)
+            else:
+                exit_code, stdout, stderr = run_command_result(
+                    ["bash", "-c", test_cmd],
                     cwd=project_dir,
-                    allow_failure=True,
+                    timeout=BUILD_VERIFY_TIMEOUT_SECONDS,
                 )
-            return
 
-        error_output = (stderr or stdout)[:4000]
-        print(f"  Tests failed (attempt {attempt}/{BUILD_VERIFY_MAX_ROUNDS})")
+            if exit_code == 0:
+                label = "first try" if attempt == 1 else f"attempt {attempt}"
+                print(f"  Verification passed ({label}).")
+                if attempt > 1:
+                    run_command(["git", "add", "."], cwd=project_dir, allow_failure=True)
+                    run_command(
+                        ["git", "-c", "user.name=Morphling", "-c", "user.email=morphling@cyborg-lab", "commit", "-qm", f"fix: pass verification (attempt {attempt})"],
+                        cwd=project_dir,
+                        allow_failure=True,
+                    )
+                return
 
-        if attempt == BUILD_VERIFY_MAX_ROUNDS:
-            print("  Max fix attempts reached — project may need manual attention.")
-            return
+            error_output = (stderr or stdout)[:4000]
+            print(f"  Tests failed (attempt {attempt}/{BUILD_VERIFY_MAX_ROUNDS})")
 
-        fix_applied = _apply_ai_fix(
-            project_dir,
-            idea,
-            "test",
-            test_cmd,
-            error_output,
-            ai_client,
+            if attempt == BUILD_VERIFY_MAX_ROUNDS:
+                print("  Max fix attempts reached — project may need manual attention.")
+                return
+
+            fix_applied = _apply_ai_fix(
+                project_dir,
+                idea,
+                "test",
+                test_cmd,
+                error_output,
+                ai_client,
+            )
+            if not fix_applied:
+                print("  Could not get a fix from the AI — stopping verification.")
+                return
+    finally:
+        if verify_env is not None:
+            verify_env.cleanup()
+
+
+_MISSING_PYTHON_ATTR_PATTERNS = (
+    re.compile(r"<module ['\"]([A-Za-z0-9_\\.]+)['\"][^>]*> does not have the attribute ['\"][A-Za-z0-9_]+['\"]"),
+    re.compile(r"module ['\"]([A-Za-z0-9_\\.]+)['\"] has no attribute ['\"][A-Za-z0-9_]+['\"]"),
+)
+
+
+def _extract_python_bin_from_command(command: str) -> str | None:
+    """Extract the Python executable from a shell command when possible."""
+    try:
+        argv = shlex.split(command)
+    except ValueError:
+        return None
+
+    if not argv:
+        return None
+
+    candidate = Path(argv[0]).name.lower()
+    if candidate.startswith("python"):
+        return argv[0]
+    return None
+
+
+def _extract_missing_python_modules(error_output: str) -> list[str]:
+    """Find Python modules mentioned in missing-attribute errors."""
+    modules: set[str] = set()
+    for pattern in _MISSING_PYTHON_ATTR_PATTERNS:
+        for match in pattern.findall(error_output):
+            if match:
+                modules.add(match)
+    return sorted(modules)[:3]
+
+
+def _collect_python_module_surfaces(
+    project_dir: Path,
+    command: str,
+    error_output: str,
+) -> dict[str, Any]:
+    """Inspect installed Python modules when a test failure references missing attrs."""
+    python_bin = _extract_python_bin_from_command(command)
+    if python_bin is None:
+        return {}
+
+    module_names = _extract_missing_python_modules(error_output)
+    if not module_names:
+        return {}
+
+    inspection_script = textwrap.dedent(
+        """
+        import importlib
+        import json
+        import pkgutil
+        import sys
+
+        module_name = sys.argv[1]
+        try:
+            module = importlib.import_module(module_name)
+        except Exception as exc:
+            print(json.dumps({"module": module_name, "error": str(exc)}))
+            raise SystemExit(0)
+
+        attrs = [name for name in dir(module) if not name.startswith("_")][:80]
+        submodules = []
+        module_path = getattr(module, "__path__", None)
+        if module_path:
+            submodules = sorted(item.name for item in pkgutil.iter_modules(module_path))[:40]
+
+        print(
+            json.dumps(
+                {
+                    "module": module_name,
+                    "attrs": attrs,
+                    "submodules": submodules,
+                }
+            )
         )
-        if not fix_applied:
-            print("  Could not get a fix from the AI — stopping verification.")
-            return
+        """
+    ).strip()
+
+    surfaces: dict[str, Any] = {}
+    for module_name in module_names:
+        exit_code, stdout, stderr = run_command_result(
+            [python_bin, "-c", inspection_script, module_name],
+            cwd=project_dir,
+            timeout=20,
+        )
+        payload = (stdout or stderr).strip()
+        if not payload:
+            continue
+        try:
+            surfaces[module_name] = json.loads(payload)
+        except json.JSONDecodeError:
+            surfaces[module_name] = {
+                "module": module_name,
+                "raw": payload[:500],
+                "exit_code": exit_code,
+            }
+    return surfaces
 
 
 def _apply_ai_fix(
@@ -536,14 +1085,27 @@ def _apply_ai_fix(
 ) -> bool:
     """Send a failure to the AI and apply the returned file fixes."""
     file_snapshot: dict[str, str] = {}
-    for file_path in sorted(project_dir.rglob("*")):
-        if file_path.is_file() and ".git" not in file_path.parts:
-            rel = str(file_path.relative_to(project_dir))
-            try:
-                content = file_path.read_text(encoding="utf-8", errors="replace")
-                file_snapshot[rel] = content[:6000]
-            except Exception:
-                continue
+    snapshot_chars = 0
+    for file_path in sorted(project_dir.rglob("*"), key=lambda path: str(path)):
+        if not file_path.is_file():
+            continue
+        rel_path = file_path.relative_to(project_dir)
+        if any(part in _FIX_SNAPSHOT_EXCLUDED_DIRS for part in rel_path.parts):
+            continue
+        if rel_path.name in _FIX_SNAPSHOT_EXCLUDED_FILES:
+            continue
+        try:
+            content = file_path.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            continue
+
+        trimmed = content[:FIX_SNAPSHOT_MAX_FILE_CHARS]
+        projected_size = snapshot_chars + len(str(rel_path)) + len(trimmed)
+        if projected_size > FIX_SNAPSHOT_MAX_TOTAL_CHARS and file_snapshot:
+            break
+
+        file_snapshot[str(rel_path)] = trimmed
+        snapshot_chars = projected_size
 
     user_msg = (
         f"Project idea: {idea}\n\n"
@@ -552,10 +1114,39 @@ def _apply_ai_fix(
         f"Command: {command}\n"
         f"Error output:\n{error_output}"
     )
+    if phase == "install":
+        priority_files = [
+            rel
+            for rel in file_snapshot
+            if Path(rel).name
+            in {
+                "requirements.txt",
+                "requirements-dev.txt",
+                "pyproject.toml",
+                "setup.py",
+                "package.json",
+                "Cargo.toml",
+                "go.mod",
+                "Makefile",
+                "README.md",
+            }
+        ]
+        if priority_files:
+            user_msg += (
+                "\n\nPriority files for install fixes:\n"
+                f"{json.dumps(priority_files, indent=2)}"
+            )
+    elif phase == "test":
+        module_surfaces = _collect_python_module_surfaces(project_dir, command, error_output)
+        if module_surfaces:
+            user_msg += (
+                "\n\nVerified installed Python module surfaces:\n"
+                f"{json.dumps(module_surfaces, indent=2)}"
+            )
 
     try:
         fix = ai_client.chat_json(
-            MORPHLING_FIX_PROMPT,
+            MORPHLING_INSTALL_FIX_PROMPT if phase == "install" else MORPHLING_TEST_FIX_PROMPT,
             user_msg,
             temperature=0.3,
         )

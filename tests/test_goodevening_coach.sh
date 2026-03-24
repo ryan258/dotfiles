@@ -314,3 +314,34 @@ EOF
     [[ "$output" == *"focus_git_status=diffuse proves the spear is broken."* ]]
     [[ "$output" == *"commit_context data is absent so the pattern is unknowable."* ]]
 }
+
+@test "goodevening summarizes project safety findings with a detail cap" {
+    local repo
+
+    for repo in alpha beta gamma; do
+        mkdir -p "$PROJECTS_DIR/$repo"
+        git -C "$PROJECTS_DIR/$repo" init >/dev/null 2>&1
+        cat > "$PROJECTS_DIR/$repo/README.md" <<EOF
+$repo
+EOF
+        git -C "$PROJECTS_DIR/$repo" add README.md >/dev/null 2>&1
+        git -C "$PROJECTS_DIR/$repo" -c user.name=Test -c user.email=test@example.com commit -m "init" >/dev/null 2>&1
+        printf '%s\n' "dirty $repo" >> "$PROJECTS_DIR/$repo/README.md"
+    done
+
+    run env \
+        PATH="$DOTFILES_DIR/bin:$PATH" \
+        HOME="$HOME" \
+        DATA_DIR="$DATA_DIR" \
+        DOTFILES_DIR="$DOTFILES_DIR" \
+        PROJECTS_DIR="$PROJECTS_DIR" \
+        AI_REFLECTION_ENABLED=false \
+        GOODEVENING_PROJECT_SCAN_LIMIT=10 \
+        GOODEVENING_PROJECT_ISSUE_DETAIL_LIMIT=1 \
+        bash -c "$DOTFILES_DIR/scripts/goodevening.sh --refresh $TEST_DAY < /dev/null"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"🚀 PROJECT SAFETY CHECK:"* ]]
+    [[ "$output" == *"3 project(s) with safety issues across 3 scanned repo(s)"* ]]
+    [[ "$output" == *"2 more project(s) not shown"* ]]
+}
