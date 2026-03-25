@@ -1200,6 +1200,1206 @@ Then bring the winning ideas back into this repo:
 
 ---
 
+## 100 Super-Impactful `npx` Tool Ideas for `cyborg auto`
+
+These work best as zero-friction utilities: tools someone can run instantly with `npx` before deciding whether they deserve a permanent install. The sweet spot is high leverage, fast feedback, and obvious value on first run.
+
+### Accessibility, UX, and Frontend Quality
+
+1. `"npx tool that audits a website for keyboard traps, missing labels, focus issues, and contrast failures with plain-language fixes"`
+2. `"npx tool that screenshots every interactive state of a page and flags accessibility regressions between runs"`
+3. `"npx tool that rewrites complex web copy into fifth-grade reading level previews for accessibility review"`
+4. `"npx tool that simulates reduced vision, motion sensitivity, and zoomed layouts across a site and reports breakpoints"`
+5. `"npx tool that finds inaccessible form flows and prints a prioritized repair plan for frontend teams"`
+6. `"npx tool that checks design tokens for contrast-safe combinations before they land in production"`
+7. `"npx tool that crawls a docs site and scores every page for heading structure, landmarks, and link clarity"`
+8. `"npx tool that validates dark mode and light mode accessibility side by side with screenshot diffs"`
+9. `"npx tool that scans React apps for common ARIA misuse and suggests safer component patterns"`
+10. `"npx tool that generates a browser-test matrix for accessible interactions like tab order, skip links, and modal escape"`
+
+### Developer Productivity and Codebase Intelligence
+
+11. `"npx tool that maps a repo into a readable architecture brief with modules, risks, hotspots, and likely owners"`
+12. `"npx tool that turns a bug report into a failing test scaffold based on stack traces and touched files"`
+13. `"npx tool that explains why a build is slow by timing each step and ranking bottlenecks"`
+14. `"npx tool that compares two git refs and summarizes the behavior changes in product language"`
+15. `"npx tool that builds a dependency risk report showing stale packages, abandoned maintainers, and blast radius"`
+16. `"npx tool that generates a first-pass onboarding guide for a repo from scripts, package files, and docs"`
+17. `"npx tool that detects duplicate utilities and overlapping scripts across a monorepo"`
+18. `"npx tool that turns a directory tree into a clean markdown walkthrough for new contributors"`
+19. `"npx tool that finds silent failure paths in Node CLIs and suggests where error handling is too weak"`
+20. `"npx tool that traces environment-variable usage and shows which ones are missing docs or validation"`
+
+### Documentation, Writing, and Knowledge Capture
+
+21. `"npx tool that scans code changes and proposes exactly which docs need updating"`
+22. `"npx tool that converts terminal sessions into concise step-by-step tutorials"`
+23. `"npx tool that rewrites changelogs into human-friendly release notes grouped by user impact"`
+24. `"npx tool that finds contradictions across markdown files in a repo and shows likely source-of-truth conflicts"`
+25. `"npx tool that generates README starter sections from actual runnable scripts and commands"`
+26. `"npx tool that turns issue threads into decision logs with context, tradeoffs, and final outcome"`
+27. `"npx tool that summarizes a folder of markdown notes into principles, open questions, and next steps"`
+28. `"npx tool that scores docs for scannability, reading level, and actionability"`
+29. `"npx tool that extracts all examples from a codebase and checks whether they still compile or run"`
+30. `"npx tool that turns messy meeting notes into a clean action list with owners and deadlines"`
+
+### Security, Privacy, and Trust
+
+31. `"npx tool that scans prompts, logs, configs, and docs for likely secret leaks before publish"`
+32. `"npx tool that analyzes a repo for dangerous shell command patterns and unsafe path handling"`
+33. `"npx tool that produces a plain-English threat model from routes, auth flows, and sensitive data paths"`
+34. `"npx tool that checks npm packages for suspicious postinstall behavior and risky script chains"`
+35. `"npx tool that audits browser extensions for excessive permissions and data-exfiltration risk"`
+36. `"npx tool that finds places where user input reaches file system or shell calls without validation"`
+37. `"npx tool that scores AI features for prompt injection risk and unsafe tool-call exposure"`
+38. `"npx tool that diffs privacy policies and highlights newly expanded data collection"`
+39. `"npx tool that monitors dependency upgrades for license changes that create business risk"`
+40. `"npx tool that generates a security review checklist tailored to the current repo type"`
+
+### Data, APIs, and Automation
+
+41. `"npx tool that turns any OpenAPI spec into a human-readable test plan and starter checks"`
+42. `"npx tool that compares two API responses and explains breaking changes semantically, not just structurally"`
+43. `"npx tool that cleans CSV files by fixing headers, formats, empties, and type drift with a preview step"`
+44. `"npx tool that converts webhook payload samples into typed schemas and example fixtures"`
+45. `"npx tool that watches a folder of exports and builds a daily anomaly report automatically"`
+46. `"npx tool that inspects JSONL datasets for duplicates, label drift, missing fields, and suspicious outliers"`
+47. `"npx tool that transforms a pile of curl commands into a documented, reusable API collection"`
+48. `"npx tool that generates cron-safe operational checklists from a script directory"`
+49. `"npx tool that validates migrations, seed scripts, and rollback assumptions before deploy"`
+50. `"npx tool that turns a manual spreadsheet workflow into a first-pass CLI automation plan"`
+
+### AI, Prompts, and Model Operations
+
+51. `"npx tool that compares the same prompt across multiple models and ranks output quality by task rubric"`
+52. `"npx tool that estimates LLM cost, latency, and token load before you run a batch job"`
+53. `"npx tool that turns scattered prompt files into a versioned prompt registry with tests"`
+54. `"npx tool that checks AI-generated JSON outputs against schema expectations and failure examples"`
+55. `"npx tool that builds small eval suites from real support tickets, docs tasks, or code review samples"`
+56. `"npx tool that detects repeated hallucination patterns in saved AI outputs and clusters them by cause"`
+57. `"npx tool that trims irrelevant context from prompts and shows the token savings"`
+58. `"npx tool that converts a successful chat workflow into a reusable CLI recipe with prompts and checks"`
+59. `"npx tool that replays model outputs after a prompt change and highlights regressions"`
+60. `"npx tool that suggests when a task should use a cheaper model, a stronger model, or no model at all"`
+
+### Ops, CI, and Release Workflows
+
+61. `"npx tool that audits a GitHub Actions setup for wasted minutes, missing caches, and fragile steps"`
+62. `"npx tool that turns a project into a release-readiness report covering tests, docs, screenshots, and packaging"`
+63. `"npx tool that simulates a deploy checklist locally and flags where rollback steps are missing"`
+64. `"npx tool that summarizes failed CI runs into one short diagnosis with the most likely fix paths"`
+65. `"npx tool that compares staging and production config footprints for risky drift"`
+66. `"npx tool that detects dead scripts in package json, CI configs, and docs references"`
+67. `"npx tool that generates smoke tests for the highest-risk user flows in a web app"`
+68. `"npx tool that validates release artifacts before publish and catches missing files or bad metadata"`
+69. `"npx tool that checks whether a CLI or web project still installs cleanly from scratch on a fresh machine"`
+70. `"npx tool that builds an operational dashboard from logs, recent failures, and open incidents"`
+
+### Personal Productivity and Everyday Utilities
+
+71. `"npx tool that turns a chaotic downloads folder into a reviewable organize-or-delete plan"`
+72. `"npx tool that scans a calendar export and highlights overload days, context-switch clusters, and fake-free time"`
+73. `"npx tool that turns voice memo transcripts into clean notes, todos, and follow-up questions"`
+74. `"npx tool that compares recurring subscriptions from statement exports and flags price creep"`
+75. `"npx tool that generates a plain-language weekly review from journal, tasks, and calendar data"`
+76. `"npx tool that converts bookmarks into themed reading lists with duplicates and dead links removed"`
+77. `"npx tool that turns a local notes folder into a searchable personal knowledge index with summaries"`
+78. `"npx tool that identifies repetitive desktop tasks and suggests which should become shell aliases or scripts"`
+79. `"npx tool that rewrites dense emails into a short version with action items only"`
+80. `"npx tool that builds a low-friction household ops dashboard from bills, deadlines, and shared tasks"`
+
+### Education, Research, and Analysis
+
+81. `"npx tool that turns a research paper PDF into an annotated summary with methods, limits, and takeaways"`
+82. `"npx tool that clusters a folder of articles by theme and outputs a briefing memo"`
+83. `"npx tool that converts textbook chapters into flashcards, quiz questions, and a study outline"`
+84. `"npx tool that summarizes survey responses into themes, quotes, and likely action items"`
+85. `"npx tool that turns a transcript into chapter markers, summary bullets, and glossary terms"`
+86. `"npx tool that compares two policy documents and explains what changed for real users"`
+87. `"npx tool that extracts all claims from an article and labels which need citation checks"`
+88. `"npx tool that builds a literature-review starter from a folder of paper abstracts"`
+89. `"npx tool that converts code examples into a step-by-step teaching sequence"`
+90. `"npx tool that turns a course folder into a weekly study plan with deadlines and review spacing"`
+
+### Media, Creators, and Publishing
+
+91. `"npx tool that turns a blog post into thread, newsletter, short-video, and LinkedIn variants"`
+92. `"npx tool that audits a website's metadata, social previews, and structured data before launch"`
+93. `"npx tool that converts transcripts into cleaned show notes and chapter timestamps"`
+94. `"npx tool that generates accessible alt text suggestions for a folder of social images"`
+95. `"npx tool that finds stale screenshots in docs and tells you which ones need replacement"`
+96. `"npx tool that creates a launch checklist for indie products across docs, support, pricing, and analytics"`
+97. `"npx tool that turns commit history into a public build-in-public narrative"`
+98. `"npx tool that checks a content folder for broken embeds, dead external links, and missing descriptions"`
+99. `"npx tool that creates product demo scripts from README files and feature lists"`
+100. `"npx tool that scans your own tool ideas, ranks them by first-run wow factor, and drafts the best one to build next"`
+
+### How to Use This List
+
+The best `npx` tools do something valuable in under a minute and without setup pain. Start there:
+
+```bash
+cyborg auto --build "npx tool that scans code changes and proposes exactly which docs need updating"
+```
+
+Then tighten the loop:
+
+- Keep the first version single-purpose and instantly runnable.
+- Use `morphling` direct mode to refine CLI UX, output format, and edge-case handling after the first scaffold.
+- Let Cyborg document the install-free use case and the exact moment the tool becomes worth keeping.
+
+---
+
+## 100 Super-Impactful Adobe Plugin Ideas for `cyborg auto`
+
+These work best when they remove painful repetitive work inside real creative workflows. The highest-leverage plugins save hours, reduce errors, improve accessibility, or turn hidden process knowledge into one-click actions.
+
+### Photoshop, Imaging, and Visual Cleanup
+
+1. `"Adobe Photoshop plugin that auto-generates accessible alt text and caption suggestions for selected images"`
+2. `"Adobe Photoshop plugin that detects low-contrast text overlays and suggests WCAG-safer design alternatives"`
+3. `"Adobe Photoshop plugin that converts messy layer stacks into clean named groups with audit warnings"`
+4. `"Adobe Photoshop plugin that batch-prepares social crops while preserving focal subjects intelligently"`
+5. `"Adobe Photoshop plugin that finds likely retouch inconsistencies across a photo series and flags them for review"`
+6. `"Adobe Photoshop plugin that creates plain-language edit summaries for every exported asset"`
+7. `"Adobe Photoshop plugin that compares two PSD versions and highlights what visually changed"`
+8. `"Adobe Photoshop plugin that generates brand-safe thumbnail variants from one hero image"`
+9. `"Adobe Photoshop plugin that checks text legibility across light and dark backgrounds before export"`
+10. `"Adobe Photoshop plugin that turns a mockup into export-ready asset sets for web, mobile, and print"`
+
+### Illustrator, Vector Systems, and Brand Consistency
+
+11. `"Adobe Illustrator plugin that checks logo packs for spacing, color, and export consistency"`
+12. `"Adobe Illustrator plugin that turns a messy icon sheet into a normalized icon system with naming rules"`
+13. `"Adobe Illustrator plugin that detects nearly identical vectors and recommends deduping opportunities"`
+14. `"Adobe Illustrator plugin that generates accessible color-pairing previews for brand palettes"`
+15. `"Adobe Illustrator plugin that converts hand-built charts into clean reusable data-viz components"`
+16. `"Adobe Illustrator plugin that batch-builds marketing size variants from a single design frame"`
+17. `"Adobe Illustrator plugin that audits stroke, corner, and scale consistency across illustration libraries"`
+18. `"Adobe Illustrator plugin that exports SVGs with safer naming, optimization, and accessibility metadata"`
+19. `"Adobe Illustrator plugin that turns style-guide files into developer-ready asset packages"`
+20. `"Adobe Illustrator plugin that detects off-grid vector elements and snaps them into a cleaner system"`
+
+### InDesign, Editorial, and Document Production
+
+21. `"Adobe InDesign plugin that rewrites dense layouts into easier-reading accessibility-first versions"`
+22. `"Adobe InDesign plugin that audits heading hierarchy, reading order, and export readiness before PDF generation"`
+23. `"Adobe InDesign plugin that turns a publication issue into reusable article templates automatically"`
+24. `"Adobe InDesign plugin that flags inconsistent styles, spacing, and typography across long documents"`
+25. `"Adobe InDesign plugin that converts editorial comments into structured revision tasks"`
+26. `"Adobe InDesign plugin that generates large-print variants of documents with preserved design intent"`
+27. `"Adobe InDesign plugin that checks whether callouts, captions, and references still match linked content"`
+28. `"Adobe InDesign plugin that produces plain-language summaries of brochures, reports, or handbooks"`
+29. `"Adobe InDesign plugin that batch-builds multilingual layout variants with overflow warnings"`
+30. `"Adobe InDesign plugin that prepares tagged PDF exports with stronger accessibility defaults"`
+
+### Acrobat, PDF Workflows, and Accessibility Repair
+
+31. `"Adobe Acrobat plugin that scans PDFs for heading, tag, table, and reading-order failures with repair suggestions"`
+32. `"Adobe Acrobat plugin that converts inaccessible forms into simpler guided completion experiences"`
+33. `"Adobe Acrobat plugin that rewrites legal or medical PDFs into plain-language companion summaries"`
+34. `"Adobe Acrobat plugin that detects scanned-image PDFs and recommends OCR and cleanup steps automatically"`
+35. `"Adobe Acrobat plugin that audits hyperlinks, bookmarks, and navigation structure in long documents"`
+36. `"Adobe Acrobat plugin that generates remediation reports agencies can send back to document vendors"`
+37. `"Adobe Acrobat plugin that finds repeated accessibility issues across a PDF batch and groups them by cause"`
+38. `"Adobe Acrobat plugin that compares two PDFs and explains the meaningful content differences"`
+39. `"Adobe Acrobat plugin that turns form-heavy PDFs into checklist-based assistive overlays"`
+40. `"Adobe Acrobat plugin that creates executive summaries for long reports directly inside the review workflow"`
+
+### Premiere Pro, Video Editing, and Post-Production
+
+41. `"Adobe Premiere Pro plugin that turns rough transcripts into first-pass selects, chapters, and highlight markers"`
+42. `"Adobe Premiere Pro plugin that flags jumpy pacing, long silences, and repetitive filler in interview edits"`
+43. `"Adobe Premiere Pro plugin that generates caption quality checks for spelling, timing, and speaker clarity"`
+44. `"Adobe Premiere Pro plugin that builds social cutdown versions from a long edit using hook and retention heuristics"`
+45. `"Adobe Premiere Pro plugin that creates plain-language version notes after each export"`
+46. `"Adobe Premiere Pro plugin that compares multiple cuts and shows where pacing or structure diverges"`
+47. `"Adobe Premiere Pro plugin that detects missing b-roll support in talking-head sequences"`
+48. `"Adobe Premiere Pro plugin that turns producer notes into timeline markers and prioritized revision lists"`
+49. `"Adobe Premiere Pro plugin that checks safe areas, text legibility, and subtitle visibility across devices"`
+50. `"Adobe Premiere Pro plugin that generates client review summaries from edit history and comment threads"`
+
+### After Effects, Motion Systems, and Animation Workflows
+
+51. `"Adobe After Effects plugin that converts static storyboards into first-pass motion timing blocks"`
+52. `"Adobe After Effects plugin that audits easing, durations, and motion consistency across a template pack"`
+53. `"Adobe After Effects plugin that flags motion likely to trigger vestibular discomfort and suggests reduced-motion variants"`
+54. `"Adobe After Effects plugin that turns repetitive animation setups into reusable scene recipes"`
+55. `"Adobe After Effects plugin that builds caption-safe lower thirds with contrast and safe-zone checks"`
+56. `"Adobe After Effects plugin that compares animation versions and summarizes timing and composition changes"`
+57. `"Adobe After Effects plugin that generates storyboard summaries and asset checklists from a comp"`
+58. `"Adobe After Effects plugin that batch-adjusts templates for multiple aspect ratios without manual cleanup"`
+59. `"Adobe After Effects plugin that finds heavy comps causing render pain and recommends optimization targets"`
+60. `"Adobe After Effects plugin that auto-documents animation systems for handoff to editors and designers"`
+
+### Audition, Audio Cleanup, and Spoken Content
+
+61. `"Adobe Audition plugin that detects filler words, long pauses, and repeated phrases for podcast cleanup"`
+62. `"Adobe Audition plugin that builds transcript-linked edit suggestions for interviews and voiceovers"`
+63. `"Adobe Audition plugin that flags loudness inconsistency across an episode or ad series"`
+64. `"Adobe Audition plugin that creates plain-language summaries of recorded meetings, interviews, or reviews"`
+65. `"Adobe Audition plugin that detects crosstalk-heavy sections and marks likely cleanup zones"`
+66. `"Adobe Audition plugin that compares two audio masters and explains the practical difference"`
+67. `"Adobe Audition plugin that turns a raw recording folder into a production checklist with missing-piece warnings"`
+68. `"Adobe Audition plugin that prepares accessible transcript packages alongside final audio exports"`
+69. `"Adobe Audition plugin that clusters recurring verbal mistakes so hosts can tighten future scripts"`
+70. `"Adobe Audition plugin that suggests chapter markers and key moments from long-form audio"`
+
+### Lightroom, Asset Libraries, and Photo Operations
+
+71. `"Adobe Lightroom plugin that groups large shoots into probable story arcs, selects, and deliverable sets"`
+72. `"Adobe Lightroom plugin that finds inconsistent edits across a client gallery and suggests normalization"`
+73. `"Adobe Lightroom plugin that detects duplicate near-matches and helps cut bloated review sets faster"`
+74. `"Adobe Lightroom plugin that generates gallery descriptions and alt text at export time"`
+75. `"Adobe Lightroom plugin that builds client-proofing packages with clearer naming and review instructions"`
+76. `"Adobe Lightroom plugin that compares editing styles across photographers and extracts reusable preset logic"`
+77. `"Adobe Lightroom plugin that detects underexposed accessibility-risk images where key content is hard to see"`
+78. `"Adobe Lightroom plugin that turns a shoot into social, print, and archive export sets automatically"`
+79. `"Adobe Lightroom plugin that flags likely missed selects based on composition, focus, and face presence"`
+80. `"Adobe Lightroom plugin that produces post-shoot summaries with delivery status and remaining tasks"`
+
+### Collaboration, Review, and Creative Operations
+
+81. `"Adobe Creative Cloud plugin that turns comment threads into structured revision queues across apps"`
+82. `"Adobe Creative Cloud plugin that compares current assets against brand guidelines and flags drift"`
+83. `"Adobe Creative Cloud plugin that creates handoff packets for developers, editors, or clients with only what they need"`
+84. `"Adobe Creative Cloud plugin that generates plain-language review summaries after each client feedback round"`
+85. `"Adobe Creative Cloud plugin that tracks where projects stall and identifies the most expensive review bottlenecks"`
+86. `"Adobe Creative Cloud plugin that converts asset folders into searchable catalogs with usage notes and status"`
+87. `"Adobe Creative Cloud plugin that turns creative briefs into production checklists tailored to the current app"`
+88. `"Adobe Creative Cloud plugin that detects duplicate exports, stale deliverables, and naming chaos before handoff"`
+89. `"Adobe Creative Cloud plugin that builds accessibility review passes directly into normal export workflows"`
+90. `"Adobe Creative Cloud plugin that creates one-click client-friendly previews from working files without manual prep"`
+
+### Accessibility, Compliance, and Public-Good Workflows
+
+91. `"Adobe plugin that checks every export for accessibility metadata, captions, tags, and documentation before release"`
+92. `"Adobe plugin that builds alternate accessible deliverables like large-print, reduced-motion, and transcript-first versions"`
+93. `"Adobe plugin that explains accessibility failures in plain language for designers instead of standards jargon"`
+94. `"Adobe plugin that turns healthcare, government, or education materials into easier-reading companion assets"`
+95. `"Adobe plugin that detects visual designs likely to overload users with cognitive fatigue and suggests calmer variants"`
+96. `"Adobe plugin that creates remediation task lists for inaccessible PDFs, videos, and social graphics in one place"`
+97. `"Adobe plugin that checks whether captions, on-screen text, and document summaries all agree semantically"`
+98. `"Adobe plugin that generates accessibility statements for finished deliverables based on actual checks run"`
+99. `"Adobe plugin that helps agencies prove compliance readiness with export reports and artifact histories"`
+100. `"Adobe plugin that scans a creative workflow, finds the most painful repetitive step, and drafts the best plugin to build next"`
+
+### How to Use This List
+
+The best Adobe plugins sit right inside an expensive repeated workflow and make the pain disappear:
+
+```bash
+cyborg auto --build "Adobe Acrobat plugin that scans PDFs for heading, tag, table, and reading-order failures with repair suggestions"
+```
+
+Then tighten the wedge:
+
+- Start with one app and one painful workflow before expanding across Creative Cloud.
+- Use `morphling` direct mode to refine plugin UI, panel flow, and export behavior after the first scaffold.
+- Let Cyborg document the time saved, errors prevented, and accessibility gains so the value is obvious fast.
+
+---
+
+## 100 Super-Impactful Shell Script Ideas for `cyborg auto`
+
+These work best when the value is immediate, local, and boring in the best way. Great shell scripts eliminate repeat friction, make risky workflows safer, and turn scattered manual steps into one dependable command.
+
+### Files, Backups, and Local Hygiene
+
+1. `"shell script that audits a folder tree and finds duplicate files, near-duplicates, and obvious cleanup candidates"`
+2. `"shell script that snapshots critical config files before risky changes and keeps a simple rollback history"`
+3. `"shell script that organizes a messy downloads folder into review, archive, and trash candidates with previews"`
+4. `"shell script that finds giant forgotten files consuming disk space and explains the safest cleanup order"`
+5. `"shell script that verifies backup folders are actually restorable instead of just present"`
+6. `"shell script that syncs a project directory to a dated archive location with diff summaries"`
+7. `"shell script that detects filename chaos and batch-renames files into a safer convention with dry-run output"`
+8. `"shell script that checks whether important local documents exist in more than one location"`
+9. `"shell script that repairs common permissions issues across a working directory without overcorrecting"`
+10. `"shell script that generates a plain-language storage report for the whole machine"`
+
+### Git, Repo Safety, and Engineering Workflow
+
+11. `"shell script that summarizes what changed in a repo today in plain English"`
+12. `"shell script that blocks commits when docs changed but tests or changelog updates are missing"`
+13. `"shell script that scans a repo for dead scripts, stale references, and likely abandoned files"`
+14. `"shell script that creates a safe pre-merge checkpoint and rollback plan before pulling or rebasing"`
+15. `"shell script that generates a project handoff packet from git status, recent commits, and open TODO markers"`
+16. `"shell script that checks whether a repo still boots from scratch on a clean local environment"`
+17. `"shell script that finds copy-pasted snippets across shell scripts and suggests shared library extraction"`
+18. `"shell script that turns recent git history into weekly release notes grouped by user impact"`
+19. `"shell script that detects risky shell patterns like unchecked paths, eval, and unsafe globs"`
+20. `"shell script that compares two branches and produces a workflow-level risk summary before merge"`
+
+### System Health, Maintenance, and Diagnostics
+
+21. `"shell script that runs a personal machine health check for disk, memory, battery, backups, and update drift"`
+22. `"shell script that detects slow shell startup causes and ranks the worst offenders"`
+23. `"shell script that checks whether cron jobs, launch agents, or background processes are silently failing"`
+24. `"shell script that audits login items and background daemons for unnecessary resource drain"`
+25. `"shell script that runs a network sanity check and explains whether the problem is DNS, local routing, or upstream"`
+26. `"shell script that watches free disk space and predicts when a machine will hit pain thresholds"`
+27. `"shell script that captures a support bundle of recent logs, environment info, and system state for debugging"`
+28. `"shell script that detects when a laptop is thermally stressed and suggests a lower-load mode"`
+29. `"shell script that validates important CLI dependencies and prints exact install guidance for missing ones"`
+30. `"shell script that compares current machine settings against a known-good baseline and flags drift"`
+
+### Personal Productivity and Daily Operations
+
+31. `"shell script that builds a morning briefing from calendar, tasks, weather, and unfinished work"`
+32. `"shell script that turns an end-of-day brain dump into tomorrow tasks, calendar prep, and notes"`
+33. `"shell script that estimates today's realistic workload based on energy level and time blocks"`
+34. `"shell script that finds open loops across notes, reminders, downloads, and desktop clutter"`
+35. `"shell script that turns scattered task files into one prioritized next-actions view"`
+36. `"shell script that creates a weekly review packet from journal, calendar, and todo history"`
+37. `"shell script that detects overbooked days and suggests what to move before the crash happens"`
+38. `"shell script that turns repetitive morning admin into one guided checklist command"`
+39. `"shell script that helps shut down work cleanly by listing unfinished contexts and handoff notes"`
+40. `"shell script that converts plain text notes into a searchable personal index with freshness scoring"`
+
+### Data Cleanup, CSVs, and Local Reporting
+
+41. `"shell script that cleans ugly CSV files by normalizing headers, delimiters, and blank-row chaos"`
+42. `"shell script that compares two exports and highlights meaningful changes rather than raw row noise"`
+43. `"shell script that scans a directory of reports and builds one consolidated summary table"`
+44. `"shell script that validates incoming data files against expected columns before downstream scripts run"`
+45. `"shell script that detects duplicate records across CSV exports using fuzzy matching on key fields"`
+46. `"shell script that turns a monthly statements folder into a categorized spending summary"`
+47. `"shell script that watches for new export files and triggers local cleanup plus notification"`
+48. `"shell script that converts mixed-format dates across files into one consistent format safely"`
+49. `"shell script that generates anomaly alerts when counts, totals, or categories change unexpectedly"`
+50. `"shell script that turns a pile of raw text logs into a grep-friendly structured summary"`
+
+### AI, Prompts, and Local Automation Glue
+
+51. `"shell script that routes a prompt to the cheapest appropriate AI model based on task type"`
+52. `"shell script that compares outputs from multiple AI models side by side for one prompt"`
+53. `"shell script that strips sensitive context from prompts before they leave the local machine"`
+54. `"shell script that turns a terminal workflow into a reusable AI-assisted recipe with input prompts"`
+55. `"shell script that records token, cost, and latency metrics for every local AI command"`
+56. `"shell script that builds context packets from recent files, git diff, and notes before invoking an AI tool"`
+57. `"shell script that evaluates saved AI outputs against simple rubrics and flags low-quality runs"`
+58. `"shell script that turns recurring prompt sequences into parameterized commands with safer defaults"`
+59. `"shell script that replays a prompt history after a model change and highlights regressions"`
+60. `"shell script that decides when a task should skip AI entirely and stay a normal shell workflow"`
+
+### Web, APIs, and Remote Checks
+
+61. `"shell script that checks a list of URLs for uptime, TLS health, redirects, and obvious content failures"`
+62. `"shell script that hits an API endpoint set and turns raw responses into a human-readable readiness report"`
+63. `"shell script that compares staging and production responses and flags meaningful behavior drift"`
+64. `"shell script that audits sitemap, robots, and metadata basics for a website in one pass"`
+65. `"shell script that watches a pricing page or changelog and alerts when important text changes"`
+66. `"shell script that validates webhook payload samples against expected schema rules locally"`
+67. `"shell script that turns a curl collection into a documented smoke-test suite"`
+68. `"shell script that checks whether local services and ports match what a project expects before launch"`
+69. `"shell script that probes a site for broken internal links and summarizes the highest-impact failures"`
+70. `"shell script that measures a web app's first-response latency over time from the command line"`
+
+### Media, Notes, and Content Workflows
+
+71. `"shell script that turns a folder of audio transcripts into summaries, action items, and chapter markers"`
+72. `"shell script that batch-prepares images for blog publishing with sane sizes, names, and alt-text placeholders"`
+73. `"shell script that converts markdown notes into a static mini-site for easier browsing"`
+74. `"shell script that finds stale screenshots referenced in docs and flags likely replacements needed"`
+75. `"shell script that turns a meeting notes folder into a dated decision log"`
+76. `"shell script that creates a podcast or video show-notes draft from transcript text"`
+77. `"shell script that checks a content folder for broken embeds, dead links, and missing descriptions"`
+78. `"shell script that generates a publishing checklist from a post draft and attached assets"`
+79. `"shell script that builds a gallery index from image folders with captions and dimensions"`
+80. `"shell script that extracts reusable snippets from old notes and groups them by topic"`
+
+### Security, Privacy, and Trustworthy Defaults
+
+81. `"shell script that scans local configs, docs, and logs for likely secrets before backup or publish"`
+82. `"shell script that audits shell aliases and scripts for commands that are more dangerous than they look"`
+83. `"shell script that checks SSH config, keys, and agent state for common security mistakes"`
+84. `"shell script that identifies world-readable files that probably should not be public"`
+85. `"shell script that verifies local encrypted backups are current and decryptable"`
+86. `"shell script that inventories third-party CLIs on a machine and highlights trust or update concerns"`
+87. `"shell script that finds shell history entries likely to contain secrets and helps redact them safely"`
+88. `"shell script that checks whether a workstation is exposing local dev services more broadly than intended"`
+89. `"shell script that creates a plain-English privacy review of a project's data-handling scripts"`
+90. `"shell script that enforces safer file-path validation patterns across a shell codebase"`
+
+### Accessibility, Cognitive Load, and Human-Friendly CLI Design
+
+91. `"shell script that rewrites noisy command outputs into calmer plain-language summaries"`
+92. `"shell script that turns a complex multi-step CLI into a guided A B C D choice flow"`
+93. `"shell script that explains common shell errors in simple language with next-step suggestions"`
+94. `"shell script that adds readability scoring to generated text outputs from local workflows"`
+95. `"shell script that detects when a command is about to produce overwhelming output and offers a summarized mode"`
+96. `"shell script that builds fatigue-friendly daily status digests from several noisy commands"`
+97. `"shell script that standardizes help text across a folder of scripts into one consistent format"`
+98. `"shell script that creates screen-reader-friendlier summaries of logs and command results"`
+99. `"shell script that watches a workflow for repeated friction points and proposes simplifications"`
+100. `"shell script that scans this section, finds the most leveraged low-risk idea, and drafts the first implementation plan"`
+
+### How to Use This List
+
+The best shell scripts save you from repeating the same annoying or risky thing tomorrow:
+
+```bash
+cyborg auto --build "shell script that runs a personal machine health check for disk, memory, battery, backups, and update drift"
+```
+
+Then keep it tight:
+
+- Start with one command that solves one repeated pain point.
+- Use `morphling` direct mode to harden error handling, input validation, and help text after the first scaffold.
+- Let Cyborg document the exact workflow the script replaces so the value is obvious immediately.
+
+---
+
+## 100 Super-Impactful Social Media Manager, Optimizer, and Auto-Poster Ideas for `cyborg auto`
+
+These work best when they remove daily content chaos: deciding what to post, adapting one idea across channels, keeping a brand consistent, publishing at the right time, and learning what actually worked instead of guessing.
+
+### Planning, Strategy, and Content Calendar Systems
+
+1. `"social media planner that turns a business goal into a weekly cross-platform posting calendar with content angles"`
+2. `"content calendar optimizer that balances launches, education, personality, proof, and community posts automatically"`
+3. `"social strategy tool that scans a brand's existing content and identifies the biggest topic gaps"`
+4. `"campaign planner that turns one product launch into a 30-day pre-launch, launch, and follow-up sequence"`
+5. `"niche signal tracker that watches a market and suggests timely post ideas before competitors pile in"`
+6. `"posting cadence optimizer that recommends how often each platform should be used based on actual content supply"`
+7. `"creator roadmap manager that maps long-form content into weeks of short-form social outputs"`
+8. `"content priority engine that decides which ideas should become threads, reels, carousels, or newsletters first"`
+9. `"evergreen post planner that rotates proven posts back into the schedule without sounding repetitive"`
+10. `"social ops dashboard that shows what is planned, blocked, overdue, and underperforming in one view"`
+
+### Writing, Hooks, and Copy Generation
+
+11. `"auto poster that takes one raw idea and writes platform-specific posts for X, LinkedIn, Instagram, TikTok, and Threads"`
+12. `"hook generator that creates stronger first lines based on curiosity, authority, urgency, or empathy"`
+13. `"caption optimizer that rewrites boring post copy into clearer, punchier, more readable versions"`
+14. `"thread writer that turns a blog post or transcript into a clean multi-post thread with momentum"`
+15. `"LinkedIn post builder that converts a rough note into a professional but human post with structured pacing"`
+16. `"brand voice enforcer that rewrites social copy to match a defined tone without flattening personality"`
+17. `"plain-language rewrite tool that makes posts easier to understand for broader audiences"`
+18. `"CTA optimizer that suggests stronger calls to action based on the real goal of a post"`
+19. `"comment-to-content tool that turns repeated audience questions into polished social posts"`
+20. `"story bank builder that stores anecdotes, wins, lessons, and micro-observations for future posting"`
+
+### Repurposing, Content Multiplication, and Asset Reuse
+
+21. `"repurposing engine that turns one YouTube video into clips, quotes, threads, captions, and newsletter blurbs"`
+22. `"podcast-to-social pipeline that extracts moments, pull quotes, hooks, and visual card ideas from transcripts"`
+23. `"carousel generator that converts an article into a slide-by-slide social narrative with headline options"`
+24. `"quote card builder that finds the strongest lines in long-form content and prepares visual post concepts"`
+25. `"content splitter that breaks one broad topic into ten narrower posts with distinct angles"`
+26. `"archive miner that scans old posts and identifies which ones deserve refreshes, updates, or sequels"`
+27. `"webinar repurposer that turns event recordings into weeks of educational social content"`
+28. `"case study slicer that converts one client story into proof posts, lessons, objections, and before-after moments"`
+29. `"newsletter-to-social adapter that transforms an email issue into a week's worth of platform-native posts"`
+30. `"longform-to-shortform workflow that converts essays into concise posts without losing the original insight"`
+
+### Scheduling, Auto-Posting, and Publishing Operations
+
+31. `"auto-post scheduler that chooses the best publish time per platform based on historical engagement"`
+32. `"queue manager that fills content gaps automatically when the calendar has weak spots"`
+33. `"approval-aware auto poster that drafts, routes for review, and publishes only approved posts"`
+34. `"multi-account publisher that posts one campaign across brands while preserving account-specific tone"`
+35. `"timezone-smart scheduler that staggers posts for global audiences without manual duplication"`
+36. `"fallback poster that publishes evergreen backup content when a planned post misses approval"`
+37. `"campaign burst publisher that coordinates multi-platform posting around launches in a controlled sequence"`
+38. `"first-comment autoposter that adds links, hashtags, or resources in platform-specific ways after publish"`
+39. `"post window balancer that prevents accidental clustering of too many posts on the same day"`
+40. `"safety checker that blocks auto-publishing when the copy still has placeholders, broken links, or risky claims"`
+
+### Analytics, Attribution, and Performance Learning
+
+41. `"social analytics explainer that turns raw engagement metrics into plain-language lessons and next actions"`
+42. `"post performance classifier that explains whether a post won because of topic, format, timing, or hook"`
+43. `"funnel mapper that connects social posts to clicks, signups, leads, and sales instead of vanity metrics alone"`
+44. `"underperforming content detector that spots patterns in posts that consistently flop"`
+45. `"win repeater that identifies what to reuse from high-performing posts without copying them directly"`
+46. `"headline experiment tracker that compares which hooks actually improved reach and engagement"`
+47. `"platform fit analyzer that shows which topics work best on which networks for a specific brand"`
+48. `"content ROI dashboard that ranks posts by effort spent versus meaningful business result"`
+49. `"trend decay tracker that shows when a content theme is losing strength and should be retired"`
+50. `"weekly social review generator that summarizes what happened, why it happened, and what to do next"`
+
+### Audience, Community, and Relationship Management
+
+51. `"community manager tool that clusters comments and DMs into questions, praise, objections, and support issues"`
+52. `"reply assistant that drafts context-aware responses without sounding robotic or overpolished"`
+53. `"engagement prioritizer that surfaces the highest-value comments and messages to answer first"`
+54. `"lead signal detector that spots buying intent inside comments, replies, and inbound DMs"`
+55. `"community health dashboard that shows tone shift, recurring questions, and rising friction inside audience conversations"`
+56. `"relationship memory system that remembers prior interactions with creators, leads, and supporters"`
+57. `"FAQ miner that turns recurring audience questions into future content and canned response drafts"`
+58. `"inbox triage tool that routes collaboration, support, spam, and sales conversations automatically"`
+59. `"sentiment drift detector that notices when audience reaction to a brand starts changing"`
+60. `"comment-summary tool that gives creators one fast read on what people actually cared about in a post"`
+
+### Creative Production, Design, and Visual Packaging
+
+61. `"social design brief generator that turns copy into carousel, reel, or quote-card creative directions"`
+62. `"thumbnail and cover text optimizer that tests multiple hook framings before design work begins"`
+63. `"brand asset manager for social teams that picks the right templates, colors, and logos per campaign"`
+64. `"short-video outline builder that turns a post idea into hook, beats, captions, and CTA structure"`
+65. `"visual consistency checker that audits social graphics for typography, contrast, and layout drift"`
+66. `"UGC workflow manager that organizes creator assets, usage rights, deadlines, and post readiness"`
+67. `"B-roll suggestion engine that recommends supporting visuals for talking-head video scripts"`
+68. `"carousel pacing checker that flags slides with too much text or weak transitions"`
+69. `"social proof packager that turns reviews, testimonials, and outcomes into post-ready visual assets"`
+70. `"video clip picker that finds the most likely high-retention moments from long recordings"`
+
+### Accessibility, Inclusivity, and Safer Publishing
+
+71. `"social accessibility checker that reviews posts for alt text, caption quality, contrast, and jargon overload"`
+72. `"caption cleanup tool that fixes auto-generated subtitles before they go public"`
+73. `"plain-language post checker that flags copy likely to confuse or exclude broader audiences"`
+74. `"inclusive language optimizer that spots phrasing likely to alienate, stereotype, or confuse readers"`
+75. `"reduced-motion variant planner that suggests calmer alternatives for fast animated social content"`
+76. `"alt-text writer that creates platform-ready image descriptions with optional human edits"`
+77. `"readability monitor that scores every scheduled post for clarity and scanning ease"`
+78. `"sensitive-topic guardrail that warns when a post about health, identity, grief, or politics needs extra review"`
+79. `"multi-format accessibility exporter that creates transcript-first, caption-first, and image-description-friendly versions of campaigns"`
+80. `"social compliance helper that checks disclosures, sponsorship language, and regulated-industry wording before publish"`
+
+### Teams, Agencies, and Multi-Brand Operations
+
+81. `"agency content command center that manages calendars, approvals, and analytics across many clients"`
+82. `"multi-brand voice router that adapts one campaign idea into distinct client voices automatically"`
+83. `"revision bottleneck detector that shows where social workflows keep stalling inside a team"`
+84. `"client approval summarizer that turns scattered feedback into one clean change list"`
+85. `"handoff generator that creates post packages for copywriters, designers, editors, and approvers"`
+86. `"capacity planner that estimates whether a team can actually fulfill the next month's content plan"`
+87. `"SOP builder that turns repeated social workflows into internal playbooks and checklists"`
+88. `"brief-to-calendar translator that converts a client brief into deliverables, dates, and platform mix"`
+89. `"brand risk checker that prevents the wrong assets, claims, or tone from crossing client boundaries"`
+90. `"performance rollup that compares client accounts without flattening away platform-specific context"`
+
+### Growth, Experiments, and Opportunity Discovery
+
+91. `"content experiment runner that cycles through hooks, formats, and posting windows systematically"`
+92. `"trend relevance filter that separates useful trend opportunities from noise that will dilute the brand"`
+93. `"competitor watcher that summarizes what nearby brands are pushing without encouraging lazy copying"`
+94. `"growth idea generator that proposes new series, recurring formats, and audience hooks from past wins"`
+95. `"shareability predictor that scores a draft post for likely save, send, and repost behavior"`
+96. `"creator-collab matcher that identifies likely partners based on audience overlap and tone fit"`
+97. `"virality postmortem tool that explains why a breakout post spread and what is actually reusable"`
+98. `"offer-angle tester that tries different positioning frames for the same product or service"`
+99. `"social moat finder that identifies the topics and styles competitors are not covering well"`
+100. `"meta-social manager that reads this section, picks the highest-leverage product wedge, and drafts the first implementation plan"`
+
+### How to Use This List
+
+The best social tools remove one repeated decision or publishing bottleneck first, not all of marketing at once:
+
+```bash
+cyborg auto --build "auto-post scheduler that chooses the best publish time per platform based on historical engagement"
+```
+
+Then narrow the wedge:
+
+- Start with one platform, one workflow, and one measurable pain point.
+- Use `morphling` direct mode to refine queue logic, approval flow, and analytics interpretation after the first scaffold.
+- Let Cyborg document the exact time saved, consistency gained, or revenue signal improved so the value is obvious fast.
+
+---
+
+## 100 Super-Impactful Content Generation Ideas for `cyborg auto`
+
+These work best when they turn hard-to-start content work into reliable production systems. The highest-leverage ideas do not just write faster. They help decide what to make, shape it for the right audience, and keep quality, clarity, and reuse high.
+
+### Blog Posts, Articles, and Long-Form Publishing
+
+1. `"content engine that turns a rough idea into a full blog outline, draft, title options, and distribution plan"`
+2. `"technical article generator that reads a code repo and writes a useful walkthrough instead of generic fluff"`
+3. `"thought-leadership writer that turns founder notes into structured essays with stronger arguments"`
+4. `"SEO content builder that creates search-focused articles without stuffing keywords or flattening tone"`
+5. `"case-study generator that turns messy project notes into before-after-impact stories"`
+6. `"comparison article tool that builds fair side-by-side explainers for products, tools, or workflows"`
+7. `"op-ed drafter that turns a strong opinion into a tighter, more defensible article"`
+8. `"FAQ-to-article converter that expands recurring customer questions into educational posts"`
+9. `"series planner that turns one big topic into a sequence of linked articles with escalating depth"`
+10. `"update-post generator that converts release notes or changelogs into readable narrative announcements"`
+
+### Newsletters, Email Content, and Audience Nurture
+
+11. `"newsletter generator that turns a week of notes, links, and ideas into one polished issue"`
+12. `"email sequence builder that turns one offer into welcome, nurture, objection, and conversion emails"`
+13. `"digest creator that summarizes a topic area into a weekly or daily briefing with signal over noise"`
+14. `"launch-email writer that creates pre-launch, launch-day, and follow-up sequences from one brief"`
+15. `"audience-specific email adapter that rewrites one message for customers, prospects, partners, and investors"`
+16. `"newsletter tone optimizer that tightens pacing, clarity, and personality without sounding synthetic"`
+17. `"open-loop generator that creates stronger email transitions and curiosity without becoming manipulative"`
+18. `"link-roundup builder that turns saved bookmarks into a curated issue with commentary"`
+19. `"plain-language email rewrite tool that makes dense updates easier to scan and act on"`
+20. `"re-engagement campaign writer that drafts emails for dormant subscribers based on past behavior"`
+
+### Social, Short-Form, and Channel Adaptation
+
+21. `"repurposing engine that turns one article into threads, posts, captions, and short-form scripts"`
+22. `"platform adapter that rewrites a single idea for LinkedIn, X, Instagram, Threads, and TikTok"`
+23. `"hook lab that generates multiple opening angles for the same core message"`
+24. `"carousel-content writer that turns one idea into slide-by-slide short-form teaching content"`
+25. `"short-post sequencer that splits one big argument into a week of connected social content"`
+26. `"comment-to-post generator that turns audience replies into fresh content angles"`
+27. `"evergreen content refresher that updates old posts with newer examples and cleaner framing"`
+28. `"social proof writer that turns reviews, testimonials, and case notes into post-ready assets"`
+29. `"micro-story generator that converts tiny observations into concise posts with stronger resonance"`
+30. `"cross-platform content calendar builder that allocates one content source across multiple channels"`
+
+### Video Scripts, Audio Scripts, and Spoken Content
+
+31. `"YouTube script writer that turns a topic into hook, sections, retention beats, and CTA"`
+32. `"podcast outline generator that creates a clear episode arc from rough talking points"`
+33. `"short-video script builder that turns one idea into 30-second, 60-second, and 90-second variants"`
+34. `"webinar script drafter that turns an educational topic into a paced teaching presentation"`
+35. `"voiceover script writer that adapts blog content into something people can actually listen to"`
+36. `"interview prep generator that builds question lists and segment structure for guest episodes"`
+37. `"clip finder and packaging tool that turns transcripts into reusable promo snippets"`
+38. `"show-notes writer that converts transcripts into summaries, chapters, and key takeaways"`
+39. `"course lecture script builder that turns notes into spoken teaching content with examples"`
+40. `"audio-drama or narrative script formatter that turns prose into performance-ready dialogue and stage direction"`
+
+### Research, Briefings, and Synthesis Content
+
+41. `"research synthesis engine that turns a folder of sources into a readable briefing memo"`
+42. `"trend brief generator that scans a niche and writes an executive summary of what matters now"`
+43. `"market map writer that explains a category, key players, gaps, and opportunities in one document"`
+44. `"competitor teardown generator that turns product analysis into publishable content"`
+45. `"citation-first explainer that drafts educational content only from supplied sources and flags uncertainty"`
+46. `"policy summary writer that turns complex legislation or regulations into practical guidance"`
+47. `"literature review drafter that organizes academic sources into themes, tensions, and open questions"`
+48. `"evidence pack builder that turns raw notes, quotes, and links into argument-ready content"`
+49. `"research-to-content adapter that converts analyst notes into blog posts, decks, and social snippets"`
+50. `"plain-English explainer that makes a dense technical or medical topic understandable to non-experts"`
+
+### Sales, Marketing, and Conversion Content
+
+51. `"landing-page copy generator that turns a product brief into headline, proof, objections, and CTA sections"`
+52. `"offer-page writer that creates stronger positioning for consulting, coaching, SaaS, or productized services"`
+53. `"sales enablement content builder that turns product notes into objection handling and customer-facing assets"`
+54. `"product demo script writer that structures a walkthrough around pain, value, and proof"`
+55. `"use-case content generator that creates audience-specific examples for different buyer types"`
+56. `"testimonial packager that turns raw praise into quotes, mini-stories, and credibility blocks"`
+57. `"problem-agitation-solution writer that generates sharper direct-response content from a product idea"`
+58. `"lead magnet creator that turns expertise into checklists, guides, worksheets, and email opt-ins"`
+59. `"onboarding content writer that turns setup steps into clearer welcome flows and first-success guidance"`
+60. `"pricing-page optimizer that rewrites confusing packaging and value explanation into cleaner copy"`
+
+### Education, Docs, and Knowledge Transfer
+
+61. `"tutorial generator that turns working code or a repeatable workflow into step-by-step lessons"`
+62. `"docs writer that converts source files and command outputs into human-readable setup guides"`
+63. `"concept explainer that introduces a complex idea at multiple reading levels"`
+64. `"internal SOP generator that turns repeated team behavior into reusable checklists and docs"`
+65. `"course module planner that breaks a skill area into sequenced lessons, examples, and exercises"`
+66. `"interactive workshop outline builder that turns expertise into a teachable session agenda"`
+67. `"FAQ system builder that expands support tickets into durable help-center content"`
+68. `"glossary generator that extracts domain terms and writes clear definitions from source material"`
+69. `"migration guide writer that turns breaking changes into user-facing upgrade instructions"`
+70. `"knowledge-base refiner that rewrites stale docs into shorter, clearer, more actionable guidance"`
+
+### Personalization, Localization, and Audience Fit
+
+71. `"audience-fit adapter that rewrites the same content for beginners, practitioners, executives, or buyers"`
+72. `"industry-specific content transformer that adapts a general article into sector-specific variants"`
+73. `"region-aware localization writer that adjusts examples, phrasing, and assumptions for different markets"`
+74. `"tone dialer that shifts the same content between formal, friendly, bold, calm, or technical voices"`
+75. `"persona-specific nurture writer that changes framing based on the reader's likely motivation and objections"`
+76. `"reading-level adapter that rewrites content for accessibility, education, or general-public use"`
+77. `"translation-aware content generator that writes easier-to-localize source material before translation even starts"`
+78. `"role-based brief writer that converts one announcement into versions for users, managers, developers, and press"`
+79. `"customer-stage adapter that rewrites content for awareness, consideration, decision, and retention stages"`
+80. `"message consistency checker that makes sure all audience variants preserve the same core claim"`
+
+### Content Operations, Libraries, and Reuse Systems
+
+81. `"content inventory builder that catalogs what exists, what is stale, and what can be repurposed"`
+82. `"idea backlog manager that stores fragments, outlines, drafts, and reusable examples in one searchable system"`
+83. `"content deduper that finds articles, posts, and notes saying the same thing in slightly different ways"`
+84. `"asset linking engine that connects one source idea to every derivative post, email, clip, and page"`
+85. `"editorial workflow manager that moves content from idea to brief to draft to review to publish"`
+86. `"content freshness checker that flags when supporting examples, screenshots, or facts are outdated"`
+87. `"story mining tool that turns journals, call notes, and project updates into future content seeds"`
+88. `"quote and snippet library builder that extracts reusable lines from long-form writing"`
+89. `"content scorecard that rates drafts for clarity, distinctiveness, usefulness, and effort to produce"`
+90. `"publishing readiness checker that blocks release when links, formatting, examples, or citations are weak"`
+
+### Accessibility, Trust, and Quality Control
+
+91. `"readability checker that scores drafts for scanning ease and plain-language clarity"`
+92. `"accessibility pass that generates alt text, transcripts, summaries, and simpler variants from a content package"`
+93. `"fact-risk detector that flags claims likely to need stronger sourcing or human review"`
+94. `"tone and trust auditor that catches hype, vagueness, hedging, and unsupported certainty"`
+95. `"sensitive-topic reviewer that adds extra caution for health, finance, grief, disability, or legal content"`
+96. `"consistency checker that finds contradictions across one campaign or content set"`
+97. `"human-sounding editor that removes repetitive AI tics and flattening patterns from drafts"`
+98. `"style-guide enforcer that checks whether content matches a brand's actual rules and examples"`
+99. `"clarity-first revision engine that suggests the highest-leverage cuts, rewrites, and structure fixes"`
+100. `"meta-content generator that reads this section, picks the highest-leverage content product wedge, and drafts the first implementation plan"`
+
+### How to Use This List
+
+The best content-generation tools remove one painful bottleneck first: deciding, structuring, adapting, or polishing:
+
+```bash
+cyborg auto --build "technical article generator that reads a code repo and writes a useful walkthrough instead of generic fluff"
+```
+
+Then narrow the wedge:
+
+- Start with one content format, one audience, and one repeated workflow.
+- Use `morphling` direct mode to refine tone, structure, quality checks, and output packaging after the first scaffold.
+- Let Cyborg document the exact time saved, reuse unlocked, or quality gain created by the system.
+
+---
+
+## 100 Super-Impactful Flash Fiction Story Generation Tool Ideas for `cyborg auto`
+
+These work best when they do more than spit out random prompts. The high-leverage tools help writers find sharper premises, stronger endings, stranger constraints, better revisions, and more publishable flash stories without killing the spark.
+
+### Prompt Engines, Seeds, and Story Starters
+
+1. `"flash fiction premise generator that creates story seeds with conflict, image, mood, and hidden pressure"`
+2. `"story spark engine that turns one noun or phrase into ten wildly different flash-fiction directions"`
+3. `"opening-line generator that writes first sentences with real narrative pull instead of generic scene setup"`
+4. `"micro-premise combiner that fuses two unrelated ideas into a sharper speculative or literary flash concept"`
+5. `"what-if machine for flash fiction that keeps escalating an ordinary situation into something uncanny or devastating"`
+6. `"mood-first story starter that begins with emotional atmosphere and grows the plot around it"`
+7. `"title-to-story generator that treats an invented title as the seed for a whole flash piece"`
+8. `"image-prompt fiction tool that turns one photo into multiple possible flash narratives with different tones"`
+9. `"object-centered story generator that builds a flash fiction premise around one ordinary object with unusual stakes"`
+10. `"news-to-fiction adapter that transforms a real headline into an ethical speculative or literary flash premise"`
+
+### Character, Voice, and Emotional Pressure
+
+11. `"flash fiction character generator that creates someone vivid enough to feel real in under 1000 words"`
+12. `"voice shifter that rewrites the same flash story through radically different narrators"`
+13. `"desire-versus-fear engine that generates characters defined by one urgent want and one costly dread"`
+14. `"relationship tension builder that creates emotionally loaded dynamics for very short stories"`
+15. `"confession-mode story generator that writes premises built around what a narrator cannot quite admit"`
+16. `"voice consistency checker for flash fiction that catches slips in tone, diction, and worldview"`
+17. `"subtext engine that turns direct exposition into more charged implication and restraint"`
+18. `"character contradiction generator that gives a flash protagonist one beautiful and one destabilizing trait"`
+19. `"interior monologue compressor that makes thought-heavy fiction feel tight rather than bloated"`
+20. `"emotional escalation planner that maps how a flash story should intensify sentence by sentence"`
+
+### Constraint-Based and Experimental Forms
+
+21. `"constraint generator that creates unusual limits for flash stories like one room, one hour, one lie, one object"`
+22. `"word-budget planner that helps a writer decide what a 100-word, 300-word, or 1000-word story can actually hold"`
+23. `"second-person story lab that generates flash premises specifically designed for you-form narration"`
+24. `"epistolary flash builder that creates stories told through texts, notes, emails, or forms"`
+25. `"single-sentence story engine that explores compression without losing movement or surprise"`
+26. `"monologue-only flash generator that builds stories using one uninterrupted voice"`
+27. `"constraint remix tool that rewrites a draft under stricter formal limits to uncover stranger versions"`
+28. `"genre-mash prompt system that forces literary, horror, surreal, romance, and sci-fi modes to collide productively"`
+29. `"found-document fiction generator that creates stories from fake receipts, warnings, manuals, or reports"`
+30. `"flash form explorer that recommends the best structure for a premise before drafting starts"`
+
+### Twists, Endings, and Resonance
+
+31. `"ending generator for flash fiction that offers surprise endings, inevitable endings, and haunted endings"`
+32. `"twist quality checker that spots when a surprise is cheap instead of earned"`
+33. `"last-line engine that generates sharper closing sentences with image, ache, or reversal"`
+34. `"reveal planner that helps writers decide what to hide and when to let it surface"`
+35. `"aftershock analyzer that scores whether a flash ending lingers after the final line"`
+36. `"double-meaning ending tool that builds final lines carrying two emotional truths at once"`
+37. `"quiet ending generator for literary flash that avoids overexplaining the final beat"`
+38. `"horror-flash payoff builder that sharpens dread, implication, and escalation in the ending"`
+39. `"ending comparison tool that shows how different final moves change the entire story"`
+40. `"title-ending resonance checker that tests whether the title transforms after the last line"`
+
+### Revision, Compression, and Editorial Strength
+
+41. `"flash fiction revision engine that cuts flab while preserving strangeness, rhythm, and emotional force"`
+42. `"sentence heatmap that marks which lines are carrying story energy and which are dead weight"`
+43. `"compression assistant that helps a 1500-word draft become a 700-word flash without collapsing"`
+44. `"specificity booster that replaces vague nouns, gestures, and images with sharper choices"`
+45. `"overexplanation detector that flags where the story stops trusting the reader"`
+46. `"cliche and imitation filter that spots familiar phrasing and worn-out story moves"`
+47. `"line-level rhythm tool that improves cadence, variation, and sentence pressure in short fiction"`
+48. `"scene necessity checker that asks whether every beat in a flash story earns its tiny space"`
+49. `"draft comparer that shows what was gained or lost between two revision passes"`
+50. `"editorial pass sequencer that guides writers through structural, sentence, and final polish revisions in order"`
+
+### Imagery, Symbol, and Weirdness
+
+51. `"image engine that generates recurring symbolic objects or images for ultra-short fiction"`
+52. `"metaphor sharpener that makes figurative language stranger, cleaner, and more story-specific"`
+53. `"weirdness dial that gradually makes a draft more surreal without destroying coherence"`
+54. `"ordinary-to-ominous transformer that gives everyday settings a subtle sense of wrongness"`
+55. `"symbol load checker that warns when a flash story is leaning too hard on one symbol"`
+56. `"dream logic generator that creates coherent-but-strange event chains for surreal flash"`
+57. `"body-detail prompt tool that anchors emotion in precise physical sensation"`
+58. `"setting charge builder that makes place do emotional and narrative work in very few lines"`
+59. `"motif tracker that ensures repeated images evolve instead of merely recur"`
+60. `"strangeness recommender that proposes one unforgettable detail likely to make a story stick"`
+
+### Workshop, Feedback, and Teaching
+
+61. `"flash workshop summarizer that turns reader comments into the most useful revision priorities"`
+62. `"peer-critique helper that teaches workshop readers to comment on effect instead of vague preference"`
+63. `"teaching prompt generator that creates classroom-ready flash exercises by craft focus"`
+64. `"story diagnosis tool that tells a writer whether a draft's main problem is clarity, tension, voice, or ending"`
+65. `"comparative workshop view that shows how multiple readers reacted to the same line or ending"`
+66. `"revision assignment generator that turns workshop notes into concrete next steps"`
+67. `"student anthology helper that organizes prompts, drafts, feedback, and final selections"`
+68. `"craft lens switcher that lets writers read a story through voice, image, tension, pacing, or compression lenses"`
+69. `"feedback temperature checker that softens critique into something still honest but more usable"`
+70. `"flash lesson planner that builds mini-curricula around endings, image, compression, and surprise"`
+
+### Publishing, Submission, and Career Support
+
+71. `"submission matcher that recommends flash-fiction journals based on a story's style, length, and strangeness"`
+72. `"cover-letter generator for literary submissions that stays clean and not embarrassing"`
+73. `"simultaneous submission tracker built specifically for flash pieces and lit mags"`
+74. `"journal research digest that summarizes aesthetic fit, length rules, and editor preferences"`
+75. `"story packet builder that prepares a polished submission file set from a draft folder"`
+76. `"rejection reuse assistant that helps writers decide where a bounced story should go next"`
+77. `"publication calendar planner that spaces submissions without losing track of outstanding work"`
+78. `"portfolio shaper that groups published and unpublished flash into coherent themed collections"`
+79. `"contest-fit analyzer that checks whether a story matches the vibe and constraints of a prize"`
+80. `"author bio generator for literary writers that avoids sounding stiff, fake, or overinflated"`
+
+### Accessibility, Translation, and Reader Reach
+
+81. `"plain-language companion generator that creates easy-read versions of flash stories without flattening them completely"`
+82. `"readability checker for flash fiction that flags where complexity becomes accidental confusion"`
+83. `"alt-format story exporter that prepares flash for audio, screen-reader-friendly, and large-text presentation"`
+84. `"translation-aware draft helper that warns when syntax or idiom may become impossible to carry across languages"`
+85. `"audio adaptation tool that rewrites flash fiction for spoken performance and podcast reading"`
+86. `"captioned story video generator that turns a flash piece into a readable short video format"`
+87. `"inclusive-language checker that spots default assumptions or harmful shorthand in a draft"`
+88. `"multi-reading-level adapter that experiments with how a story changes for different audiences"`
+89. `"dyslexia-friendly formatting exporter for flash fiction chapbooks and online publication"`
+90. `"story clarity pass that distinguishes deliberate ambiguity from mere confusion"`
+
+### Story Systems, Collections, and Meta-Tools
+
+91. `"flash fiction series builder that turns one story world or character into a sequence of related micros"`
+92. `"thematic collection planner that helps writers shape a chapbook or themed set from loose stories"`
+93. `"story universe tracker that manages recurring motifs, timelines, voices, and contradictions across many flash pieces"`
+94. `"draft-mining engine that finds abandoned fragments worth reviving from old notes"`
+95. `"prompt memory system that remembers which kinds of prompts a writer actually turns into finished work"`
+96. `"habit-forming flash generator that produces daily prompts tuned to a writer's preferred genres and constraints"`
+97. `"story recombiner that fuses two unfinished flash drafts into one stronger piece"`
+98. `"reader response archive that tracks which stories got remembered, quoted, or emotionally hit hardest"`
+99. `"anthology sequencing tool that decides the best order for a set of flash stories"`
+100. `"meta-flash-fiction builder that reads this section, picks the highest-leverage tool wedge, and drafts the first implementation plan"`
+
+### How to Use This List
+
+The best flash-fiction tools do one thing really well: spark, sharpen, compress, or finish a story:
+
+```bash
+cyborg auto --build "flash fiction revision engine that cuts flab while preserving strangeness, rhythm, and emotional force"
+```
+
+Then narrow the wedge:
+
+- Start with one stage of the writing process, not the entire writing life.
+- Use `morphling` direct mode to refine prompt quality, literary taste, and revision logic after the first scaffold.
+- Let Cyborg document the exact craft bottleneck the tool removes so the value is obvious to writers fast.
+
+---
+
+## 100 Super-Impactful Project Orchestration Tool Ideas for `cyborg auto`
+
+These are the coordination layer for many of the other ideas in this document. Instead of generating one app, they manage fleets of apps, content systems, accessibility tools, shell workflows, creative plugins, and publishing pipelines so the whole portfolio compounds instead of fragmenting.
+
+### Portfolio and Multi-Project Command Systems
+
+1. `"project command center that shows health, momentum, blockers, and next actions across every cyborg-built project"`
+2. `"idea-to-portfolio orchestrator that turns a backlog of raw ideas into ranked experiments, builds, and follow-up loops"`
+3. `"project lifecycle manager that tracks every prototype from spark to build to publish to maintenance"`
+4. `"cross-project dependency graph that shows which generated tools rely on the same APIs, prompts, or data sources"`
+5. `"portfolio prioritizer that ranks projects by pain solved, traction signal, maintenance burden, and build effort"`
+6. `"multi-project risk scanner that warns when several tools share one fragile dependency or workflow"`
+7. `"prototype salvage orchestrator that rescues abandoned builds and recombines them into stronger products"`
+8. `"opportunity allocator that decides whether the next best move is build, iterate, publish, market, or archive"`
+9. `"project status narrator that converts repo state and metrics into a weekly executive summary"`
+10. `"meta-portfolio builder that reads all prior project ideas and drafts the most strategic next three bets"`
+
+### Content and Publishing Pipeline Orchestration
+
+11. `"content factory orchestrator that coordinates research, outlining, drafting, editing, design, and publishing as one system"`
+12. `"repo-to-content pipeline manager that turns code changes into docs, blog posts, newsletters, and social assets automatically"`
+13. `"idea cascade orchestrator that takes one source idea and fans it out into article, email, thread, carousel, and video script"`
+14. `"editorial workflow control plane that routes drafts through writing, review, revision, accessibility pass, and publish"`
+15. `"content backlog conductor that scores ideas by freshness, demand, reuse potential, and time to publish"`
+16. `"research-to-publishing orchestrator that coordinates source gathering, citation checks, writing, and packaging"`
+17. `"multi-format release manager that makes sure a content campaign ships consistently across every channel"`
+18. `"content freshness scheduler that revisits older posts, docs, and assets when supporting facts change"`
+19. `"writer-designer-handoff orchestrator that keeps briefs, copy, assets, and approvals synchronized"`
+20. `"content compounding engine that maps which published pieces should generate derivative pieces next"`
+
+### Social Media and Audience Operations Orchestration
+
+21. `"social campaign orchestrator that coordinates one message across LinkedIn, X, Instagram, Threads, TikTok, and email"`
+22. `"launch-week autopilot that sequences teaser posts, launch posts, follow-ups, and proof posts automatically"`
+23. `"community-response orchestrator that routes comments, DMs, FAQs, and objections into content and reply queues"`
+24. `"social-to-content feedback loop that turns audience reactions into updated messaging and future posts"`
+25. `"multi-brand social operations manager that keeps different brand voices, calendars, and approvals from colliding"`
+26. `"engagement triage control room that decides what to reply to, what to turn into content, and what to ignore"`
+27. `"cross-channel timing orchestrator that avoids stepping on your own reach across networks"`
+28. `"campaign learning engine that compares platform performance and automatically adjusts the next cycle"`
+29. `"creator collaboration coordinator that tracks assets, deadlines, approvals, and posting windows across partners"`
+30. `"social-growth conductor that links social experiments to downstream email growth, leads, and product interest"`
+
+### Accessibility and Inclusive Delivery Orchestration
+
+31. `"accessibility release manager that ensures content, apps, PDFs, and media all get alt text, captions, plain-language summaries, and QA"`
+32. `"cross-product accessibility dashboard that tracks unresolved issues across browser extensions, docs, plugins, and websites"`
+33. `"remediation workflow orchestrator that routes accessibility findings into fix queues by severity and asset type"`
+34. `"inclusive publishing pipeline that generates transcript-first, caption-first, plain-language, and reduced-motion versions of every release"`
+35. `"accessibility regression coordinator that compares new outputs across all projects and flags repeated failures"`
+36. `"public-sector compliance orchestrator that manages accessible exports for healthcare, education, and government deliverables"`
+37. `"end-user barrier collector that gathers complaints from comments, support, and audits into one prioritized backlog"`
+38. `"accessibility proof system that builds audit trails and remediation reports for agencies or clients"`
+39. `"cross-media readability engine that checks whether docs, captions, emails, and posts all remain comprehensible"`
+40. `"disability-centered workflow orchestrator that adapts project pace and output expectations around real human capacity limits"`
+
+### Creative Production and Adobe Workflow Orchestration
+
+41. `"creative pipeline orchestrator that moves work from brief to design to motion to export to publish without asset chaos"`
+42. `"Adobe handoff manager that keeps Photoshop, Illustrator, InDesign, Premiere, and After Effects outputs aligned"`
+43. `"asset lineage tracker that shows how one design source produced every crop, cutdown, export, and derivative"`
+44. `"campaign creative coordinator that ensures copy, visuals, subtitles, and callouts stay semantically consistent"`
+45. `"review bottleneck monitor that finds where client approvals keep stalling creative throughput"`
+46. `"export assurance orchestrator that checks dimensions, naming, contrast, subtitles, metadata, and packaging before release"`
+47. `"cross-app template manager that syncs brand systems across Adobe tools and downstream publishing tools"`
+48. `"creative reuse engine that suggests when an older asset should become a new variation instead of starting from scratch"`
+49. `"media localization orchestrator that coordinates alternate formats, translations, and re-exports across deliverables"`
+50. `"creative operations cockpit that shows current briefs, active assets, pending reviews, and delivery risk in one place"`
+
+### Shell, Dotfiles, and Local Workflow Orchestration
+
+51. `"personal ops orchestrator that coordinates startday, goodevening, status, journal, todo, health, and automations in one control loop"`
+52. `"shell workflow conductor that turns several useful scripts into one guided multi-step operational flow"`
+53. `"dotfiles feature rollout manager that tracks which experiments are active, paused, reverted, or ready to graduate"`
+54. `"automation dependency planner that shows which recurring tasks rely on which scripts, env vars, and data files"`
+55. `"machine state orchestrator that decides which maintenance, backup, and cleanup jobs should run today"`
+56. `"energy-aware command router that chooses lighter workflows on high-fatigue days and fuller workflows on stronger days"`
+57. `"local context packager that assembles the right notes, repo state, and task lists before any major command runs"`
+58. `"dotfiles observability layer that records where personal workflows are slow, noisy, or abandoned"`
+59. `"personal operating dashboard that translates many script outputs into one calm overview"`
+60. `"workflow simplifier that finds repeated command chains and proposes new orchestrating wrapper scripts"`
+
+### AI Agents, Build Pipelines, and Toolchain Coordination
+
+61. `"agent orchestra that assigns research, build, verify, docs, and publish work to different specialized flows"`
+62. `"build-iterate-publish conductor that turns a one-shot project scaffold into a long-term shipping loop"`
+63. `"prompt-to-product pipeline manager that tracks which ideas became experiments, builds, launches, or archives"`
+64. `"model routing orchestrator that chooses which AI model handles research, writing, coding, review, or summarization"`
+65. `"verification chain manager that ensures every generated project hits tests, accessibility checks, packaging, and docs before publish"`
+66. `"agent memory coordinator that shares only the right context between build, docs, marketing, and support flows"`
+67. `"tool-call governance layer that decides which automations may execute commands, publish content, or touch live systems"`
+68. `"cost-aware orchestration engine that balances token spend, human time, and expected project upside"`
+69. `"failure recovery coordinator that detects where an AI pipeline broke and resumes from the right step instead of restarting"`
+70. `"multi-stage release orchestrator that sequences build, verify, market validation, publish, docs, and growth tracking"`
+
+### Research, Insight, and Opportunity Coordination
+
+71. `"opportunity radar that links market signals, customer complaints, and content gaps to the most promising build ideas"`
+72. `"research ingestion orchestrator that turns articles, transcripts, notes, and support logs into structured project insights"`
+73. `"competitor intelligence coordinator that watches adjacent tools and routes insights into roadmap, content, and positioning"`
+74. `"voice-of-customer fusion engine that unifies comments, support issues, reviews, and calls into one signal layer"`
+75. `"experiment planner that chooses which hypotheses deserve a build, which deserve content, and which deserve more research"`
+76. `"trend-to-product mapper that spots where a niche conversation could become a tool, plugin, script, or content system"`
+77. `"evidence dashboard that tracks whether an idea is gaining proof from usage, revenue, engagement, or response quality"`
+78. `"research replay system that preserves why ideas were accepted, rejected, or postponed"`
+79. `"insight-to-execution router that turns research findings into specific build, marketing, or documentation tasks"`
+80. `"market adjacency explorer that suggests nearby products to build once one idea family starts working"`
+
+### Writing, Story, and Narrative System Orchestration
+
+81. `"story studio orchestrator that coordinates prompts, drafting, revision, workshop feedback, and submission for flash fiction"`
+82. `"creative-universe manager that tracks motifs, characters, settings, and continuity across many short pieces"`
+83. `"narrative repurposer that turns fiction fragments into audio scripts, newsletter teasers, and anthology descriptions"`
+84. `"writer workflow conductor that decides whether today's best move is drafting, revising, reading, submitting, or resting"`
+85. `"workshop-to-revision coordinator that converts comments into prioritized craft changes without losing artistic intent"`
+86. `"anthology builder that sequences flash stories, cover copy, bios, and submission packets into one pipeline"`
+87. `"constraint-cycle engine that schedules different writing constraints to keep a story practice alive without repetition"`
+88. `"story archive intelligence layer that remembers which prompts, endings, and styles produced finished work"`
+89. `"voice portfolio mapper that shows how a writer's styles differ across genres and where new experiments might fit"`
+90. `"creative output dashboard that balances productivity metrics with quality, delight, and artistic surprise"`
+
+### Distribution, Launch, and Compounding Systems
+
+91. `"launch operating system that coordinates build, content, social, docs, demos, and outreach around one product release"`
+92. `"cross-sell orchestrator that links related tools so one working project feeds discovery for the next"`
+93. `"demo-and-proof pipeline that turns shipped projects into screenshots, clips, case studies, and testimonials"`
+94. `"audience compounding engine that makes each build feed the mailing list, social presence, and searchable content library"`
+95. `"maintenance scheduler that decides which shipped tools need polish, which need marketing, and which should be retired"`
+96. `"customer onboarding orchestrator that coordinates docs, videos, FAQs, and support responses after launch"`
+97. `"portfolio narrative builder that arranges many projects into one coherent public story instead of random artifacts"`
+98. `"retention loop coordinator that ties feature updates, content updates, and community touchpoints together"`
+99. `"ecosystem builder that turns many standalone ideas into one interoperable family of tools"`
+100. `"meta-orchestrator that reads the other idea sections in this document, picks the most synergistic cluster, and drafts the first orchestration product to build"`
+
+### How to Use This List
+
+The best orchestration tools remove fragmentation first. They do not try to automate everything. They make many good ideas work together:
+
+```bash
+cyborg auto --build "project command center that shows health, momentum, blockers, and next actions across every cyborg-built project"
+```
+
+Then narrow the wedge:
+
+- Start with one cluster of related ideas, not the whole portfolio at once.
+- Use `morphling` direct mode to refine state models, workflow edges, and failure recovery after the first scaffold.
+- Let Cyborg document which other idea families this orchestrator unlocks so the compounding value is obvious.
+
+---
+
+## 100 Super-Impactful Ideas You're Not Thinking to Ask For Yet for `cyborg auto`
+
+These are the ideas people usually forget until the first exciting prototype starts breaking, drifting, getting ignored, or multiplying into chaos. They are the invisible leverage layer: observability, maintenance, clarity, memory, recovery, packaging, governance, and compounding systems.
+
+### Invisible Infrastructure and Observability
+
+1. `"unified health dashboard that shows what every generated tool, script, plugin, and content pipeline is actually doing right now"`
+2. `"workflow latency tracker that shows which steps in a build or publishing pipeline are silently wasting the most time"`
+3. `"failure heatmap that clusters where projects most often break across build, test, publish, and usage stages"`
+4. `"state snapshot system that captures the exact context around a bad run so failures become reproducible"`
+5. `"portfolio telemetry layer that records which generated tools are actually being used versus merely existing"`
+6. `"cross-project log summarizer that turns scattered debug output into one plain-language incident view"`
+7. `"silent-drift detector that notices when outputs are degrading even though nothing is obviously failing"`
+8. `"bottleneck explainer that identifies the one constraint most limiting a whole project family"`
+9. `"operational pulse report that converts raw metrics into a weekly narrative of what is healthy, fragile, or abandoned"`
+10. `"workflow observability starter kit that any new cyborg-built project can inherit on day one"`
+
+### Reliability, Recovery, and Safety Nets
+
+11. `"failure-recovery orchestrator that resumes broken pipelines from the right checkpoint instead of starting over"`
+12. `"safe-mode fallback layer that keeps essential features working when AI calls, APIs, or external services fail"`
+13. `"rollback planner that prepares a clean undo path before risky project or content changes go live"`
+14. `"release canary system that exposes new behavior to a tiny safe slice before wider rollout"`
+15. `"degraded-mode UX generator that decides how a tool should behave when one subsystem is down"`
+16. `"dependency fragility scanner that shows which shared tools could break ten other projects at once"`
+17. `"human-escalation detector that knows when automation should stop and ask for a real decision"`
+18. `"output quarantine system that catches low-confidence or contradictory results before they publish"`
+19. `"resilience rehearsal tool that simulates broken APIs, failed tests, missing tokens, and bad inputs"`
+20. `"incident playbook generator that creates recovery checklists from actual failure patterns in the portfolio"`
+
+### Memory, Context, and Knowledge Retention
+
+21. `"decision memory system that records why projects were started, changed, paused, or killed"`
+22. `"idea lineage tracker that shows how one prompt turned into many products, assets, or workflows"`
+23. `"context handoff engine that prepares the minimum useful brief when work moves from one tool or agent to another"`
+24. `"why-this-exists layer that forces every project to keep a short mission statement attached to it"`
+25. `"portfolio memory graph that connects related prompts, repos, docs, customers, and experiments"`
+26. `"abandoned-idea archive that preserves useful fragments from projects that should not continue"`
+27. `"lessons-learned engine that turns failures and surprises into reusable future guardrails"`
+28. `"meeting-to-memory pipeline that converts project conversations into durable decisions and action context"`
+29. `"reference retrieval system that finds the most relevant prior build when a new idea is suspiciously similar"`
+30. `"knowledge freshness checker that flags when old assumptions are still steering new work"`
+
+### Evaluation, Quality, and Truthfulness
+
+31. `"output evaluation harness that scores generated code, content, and assets against project-specific rubrics"`
+32. `"regression watcher that notices when the latest version is polished but actually less useful"`
+33. `"fact-risk analyzer that identifies which generated claims deserve source verification before public use"`
+34. `"helpfulness scorer that measures whether a tool solved the user's real job, not just produced output"`
+35. `"quality threshold manager that blocks release when minimum standards are not met across code, docs, and UX"`
+36. `"before-and-after comparator that shows whether a revision improved clarity, speed, accessibility, or trust"`
+37. `"false-confidence detector that spots outputs that sound authoritative but rest on weak evidence"`
+38. `"usability probe builder that creates tiny tests to see whether a workflow is actually understandable"`
+39. `"taste memory system that learns which outputs were judged excellent versus merely acceptable"`
+40. `"evaluation packager that turns review criteria into reusable checks for future project families"`
+
+### Packaging, Positioning, and Distribution
+
+41. `"default packaging generator that turns any useful prototype into a cleaner installable or shareable artifact"`
+42. `"positioning brief builder that explains what a new tool is, who it is for, and why it matters"`
+43. `"demo-path orchestrator that creates the fastest believable path from first click to wow moment"`
+44. `"proof pack generator that turns usage, testimonials, screenshots, and outcomes into launch assets"`
+45. `"first-impression optimizer that checks whether onboarding, README, site copy, and screenshots tell the same story"`
+46. `"distribution decision engine that chooses whether a project should be an npx tool, shell script, plugin, app, or service"`
+47. `"pricing readiness checker that warns when a product is being monetized before its value is legible"`
+48. `"launch surface mapper that identifies every place a project should appear after release"`
+49. `"offer-stack builder that groups related projects into bundles, suites, or service layers"`
+50. `"discoverability enhancer that suggests naming, metadata, and explanation upgrades so a good tool can actually be found"`
+
+### Maintenance, Upgrades, and Sunsetting
+
+51. `"maintenance scheduler that decides which shipped projects need polish, docs, marketing, or retirement"`
+52. `"version-drift monitor that tracks when dependencies, APIs, or platforms are making a tool stale"`
+53. `"sunset planner that archives a project gracefully instead of letting it rot confusingly"`
+54. `"upgrade impact forecaster that predicts which projects will need work when a shared stack changes"`
+55. `"changelog intelligence layer that turns maintenance activity into clear user-facing communication"`
+56. `"staleness detector that notices when content, screenshots, packaging, or assumptions no longer match reality"`
+57. `"maintenance ROI scorer that decides whether a project deserves iteration, freeze, or shutdown"`
+58. `"customer-preserving migration helper that moves users from an old tool to a newer one without confusion"`
+59. `"platform change watcher that alerts when app stores, Adobe APIs, npm policies, or social platforms shift under you"`
+60. `"rot prevention system that creates small recurring chores before neglect becomes expensive"`
+
+### Human Factors, Clarity, and Cognitive Load
+
+61. `"clarity-first interface layer that rewrites tool output so people know what happened, why, and what to do next"`
+62. `"decision compression engine that converts complex branching workflows into short-choice guided steps"`
+63. `"stress-aware output mode that softens overload without hiding real risk"`
+64. `"onboarding confusion detector that spots where new users get lost in setup or first run"`
+65. `"error translation layer that turns stack traces and shell failures into plain-language next actions"`
+66. `"workflow overwhelm meter that predicts when a multi-step process has become too cognitively expensive"`
+67. `"attention budgeting system that limits how many active projects, alerts, or prompts demand focus at once"`
+68. `"readability normalizer that ensures docs, emails, alerts, and dashboards are all actually scannable"`
+69. `"handoff simplifier that makes one person or one future-self able to resume work without rereading everything"`
+70. `"fatigue-adaptive orchestration layer that changes depth, pace, and verbosity based on current human capacity"`
+
+### Integration, Ecosystem, and Compounding Loops
+
+71. `"ecosystem mapper that shows how separate tools could become one stronger interconnected family"`
+72. `"shared-auth and shared-config layer that removes redundant setup across many generated products"`
+73. `"cross-tool trigger engine that lets activity in one project intelligently wake another"`
+74. `"portfolio API standardizer that gives many cyborg-built projects compatible interfaces by default"`
+75. `"asset reuse coordinator that identifies when content, code, prompts, or visuals from one project should feed another"`
+76. `"cross-selling workflow that turns one successful product into discovery for adjacent products automatically"`
+77. `"suite coherence checker that ensures related tools feel like one ecosystem instead of ten random experiments"`
+78. `"workflow bridge builder that generates adapters between shell scripts, npx tools, plugins, docs, and dashboards"`
+79. `"compounding roadmap planner that orders projects so each one strengthens the next"`
+80. `"ecosystem lockstep monitor that shows when a change in one project should trigger synchronized updates elsewhere"`
+
+### Market Learning, Customer Truth, and Feedback Loops
+
+81. `"signal aggregator that unifies comments, support requests, analytics, and user interviews into one decision layer"`
+82. `"post-launch truth engine that compares what you believed a project would do against what users actually did"`
+83. `"customer pain miner that extracts recurring friction from reviews, replies, and behavior logs"`
+84. `"feature request triage system that separates loud requests from genuinely leveraged ones"`
+85. `"retention explainer that identifies why people try a tool once and never return"`
+86. `"value proof tracker that records which outcomes users cared about enough to mention or share"`
+87. `"postmortem generator that explains why a project failed to gain traction without hand-wavy excuses"`
+88. `"adjacent demand detector that notices when users keep asking for the next related thing"`
+89. `"support-to-roadmap router that turns help friction into product improvements or docs fixes"`
+90. `"expectation gap analyzer that compares marketing promises to lived user experience"`
+
+### Strategic Meta-Tools and Founder Leverage
+
+91. `"meta-idea router that decides whether a new opportunity should become content, software, automation, or not be built at all"`
+92. `"build-versus-buy calculator that stops you from generating products that should simply be integrated"`
+93. `"personal leverage dashboard that shows where your time, energy, and AI budget are compounding best"`
+94. `"blind-spot detector that identifies missing systems around your strongest products"`
+95. `"second-order effects engine that predicts what a successful project will force you to build next"`
+96. `"constraint-aware roadmap tool that plans differently under low energy, low time, or low cash conditions"`
+97. `"anti-novelty governor that pushes back when a shiny new idea is less valuable than maintaining a working one"`
+98. `"strategic coherence checker that asks whether a new project strengthens or dilutes the overall direction"`
+99. `"founder memory brief that reminds you what mattered, what worked, and what to ignore before you start building today"`
+100. `"meta-leverage builder that reads the other idea sections in this document, identifies what is still missing around them, and drafts the next invisible system you should build first"`
+
+### How to Use This List
+
+The best “you were not thinking to ask for this” tools are the ones that stop future chaos before it arrives:
+
+```bash
+cyborg auto --build "unified health dashboard that shows what every generated tool, script, plugin, and content pipeline is actually doing right now"
+```
+
+Then narrow the wedge:
+
+- Start with one invisible bottleneck that is already creating drag.
+- Use `morphling` direct mode to refine observability, state handling, and recovery logic after the first scaffold.
+- Let Cyborg document why this missing layer matters, because these systems are usually valuable before they are emotionally exciting.
+
+---
+
 ## Quick Reference
 
 ```bash
