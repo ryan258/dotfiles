@@ -645,6 +645,561 @@ Morphling builds it. The verify loop tests it. Cyborg documents it. Your blog gr
 
 ---
 
+## 50 Billion-Dollar Ideas for `cyborg auto`
+
+These are not tiny utilities. They are category-creating wedges: products you could prototype with `cyborg auto --build`, validate quickly, then compound into real businesses.
+
+### AI Infrastructure and Agent Ops
+
+1. `"platform that watches every AI workflow in a company and explains where the money, latency, and failures come from"`
+2. `"agent operations dashboard that replays every tool call, decision, and error across autonomous AI workers"`
+3. `"prompt firewall that blocks sensitive data leaks, jailbreaks, and unsafe outputs before they reach production users"`
+4. `"evaluation platform that tests AI features against real customer scenarios before every deployment"`
+5. `"AI budget optimizer that routes every request to the cheapest model that still meets quality thresholds"`
+6. `"policy engine that applies legal, security, and brand rules to every model response in real time"`
+7. `"team knowledge graph that connects docs, tickets, repos, and chats into one retrieval layer for internal AI agents"`
+8. `"tooling framework that turns any SaaS API into a governed, observable action layer for enterprise agents"`
+9. `"incident response copilot that reads logs, traces, and runbooks and suggests the next production fix"`
+10. `"AI change review system that compares behavior before and after model upgrades and flags regressions"`
+
+### Healthcare, Accessibility, and Care
+
+11. `"care coordination platform that turns fragmented patient notes into one plain-language action plan for families and clinicians"`
+12. `"accessibility observability platform that continuously monitors websites and apps for regressions that hurt disabled users"`
+13. `"medication adherence system that adapts reminders to energy, cognition, and symptom patterns instead of fixed schedules"`
+14. `"clinical paperwork assistant that rewrites forms, summaries, and care instructions into fifth-grade reading level language"`
+15. `"fatigue forecasting app that predicts low-capacity windows from wearable, calendar, weather, and symptom data"`
+16. `"home care dashboard that helps adult children coordinate tasks, meds, appointments, and status updates for aging parents"`
+17. `"insurance appeal generator that assembles medical evidence and drafts stronger reimbursement appeals automatically"`
+18. `"hospital discharge translator that converts discharge packets into step-by-step checklists with risk warnings"`
+19. `"chronic illness operations system that combines spoon budgeting, work pacing, symptom tracking, and care planning"`
+20. `"accessibility testing cloud that records screen reader, keyboard, contrast, and cognitive-load issues across product releases"`
+
+### Developer Platforms and Software Delivery
+
+21. `"codebase intelligence platform that maps every dependency, workflow, owner, and risk surface across engineering teams"`
+22. `"release readiness system that blocks deploys when docs, tests, migrations, or rollback plans are incomplete"`
+23. `"bug reproduction engine that turns vague support tickets into isolated failing tests developers can run locally"`
+24. `"legacy modernization copilot that reads a monolith, proposes safe extraction plans, and scaffolds the first services"`
+25. `"customer-facing changelog platform that converts commits and pull requests into readable release updates automatically"`
+26. `"security review workspace that finds dangerous code paths and explains real exploit scenarios in plain English"`
+27. `"test gap analyzer that shows exactly which business-critical behaviors are still unverified in a codebase"`
+28. `"internal developer portal that auto-generates service docs, runbooks, API references, and onboarding guides from source"`
+29. `"migration simulator that previews the impact of framework, runtime, or dependency upgrades before teams attempt them"`
+30. `"engineering memory system that captures architecture decisions, incident learnings, and tribal knowledge as a searchable graph"`
+
+### Workflow, Knowledge, and Enterprise Productivity
+
+31. `"company operating system that turns meetings, tickets, docs, and calendars into one shared execution layer"`
+32. `"decision log platform that records why teams chose something, who approved it, and what assumptions must still be tested"`
+33. `"inbox triage agent that reads email, Slack, and support queues and routes work with confidence scoring"`
+34. `"manager dashboard that turns team signals into plain-language summaries of risk, morale, velocity, and blockers"`
+35. `"meeting-to-execution pipeline that converts transcripts directly into owners, deadlines, and follow-up workflows"`
+36. `"document lifecycle tracker that shows which SOPs, policies, and playbooks are drifting away from reality"`
+37. `"personal knowledge assistant that turns your notes, highlights, bookmarks, and voice memos into reusable systems"`
+38. `"workflow composer that lets non-technical operators build reliable multi-step automations with guardrails and audit trails"`
+39. `"research synthesis platform that scans a field, clusters the evidence, and produces executive briefings with citations"`
+40. `"procurement intelligence tool that compares vendors across pricing, compliance, lock-in risk, and migration cost"`
+
+### Commerce, Media, and Market Intelligence
+
+41. `"competitive intelligence platform that watches product launches, pricing pages, changelogs, and customer sentiment across a market"`
+42. `"creator operating system that turns one idea into blog posts, videos, newsletters, social clips, and analytics automatically"`
+43. `"e-commerce experimentation engine that generates, launches, and scores merchandising tests without a full growth team"`
+44. `"pricing intelligence system that monitors competitors and recommends when to raise, lower, bundle, or reposition offers"`
+45. `"customer voice analyzer that turns reviews, calls, chats, and support tickets into product strategy signals"`
+46. `"B2B sales prep engine that builds account briefs, objection maps, and personalized demos before each call"`
+47. `"micro-SaaS foundry that continuously validates niches, builds tools, and ranks them by traction, margin, and support burden"`
+48. `"trust layer for marketplaces that detects fraud, low-quality listings, and reputation gaming before transactions happen"`
+49. `"local business AI stack that gives small companies enterprise-grade scheduling, marketing, CRM, and reporting in one product"`
+50. `"market map generator that finds boring high-margin software categories with weak incumbents and suggests the fastest wedge"`
+
+### How to Use This List
+
+Pick the wedge, not the final empire. Start with the smallest sharp edge that proves demand:
+
+```bash
+cyborg auto --build "agent operations dashboard that replays every tool call, decision, and error across autonomous AI workers"
+```
+
+Then iterate toward the platform:
+
+- Add `--publish` when the wedge is ready to ship.
+- Use direct `morphling` mode to deepen the product after the first scaffold.
+- Let Cyborg document each iteration so the public narrative compounds with the code.
+
+---
+
+## 50 Trillion-Dollar Ideas for `cyborg auto`
+
+These are not single tools. They are wedge products for markets so large they can turn into operating systems, infrastructure layers, or category-defining platforms.
+
+### Climate, Infrastructure, and Cities
+
+1. `"city resilience operating system that predicts flooding, heat risk, grid strain, and emergency response bottlenecks in one dashboard"`
+2. `"energy orchestration platform that coordinates home batteries, EVs, solar, and utility pricing in real time"`
+3. `"water network intelligence system that detects leaks, contamination risk, and maintenance priorities across entire municipalities"`
+4. `"climate retrofit planner that tells every building owner the cheapest path to lower energy use and higher resilience"`
+5. `"disaster logistics platform that matches shelters, volunteers, medical supplies, and transport capacity during regional crises"`
+6. `"industrial efficiency engine that finds waste across power, materials, labor, and downtime in manufacturing operations"`
+7. `"farm resilience platform that combines weather, soil, water, market pricing, and pest signals into one action layer"`
+8. `"construction permitting accelerator that translates local regulations into step-by-step plans for builders and homeowners"`
+9. `"global supply chain risk graph that shows where shortages, sanctions, weather, or conflict will break production next"`
+10. `"waste-to-resource marketplace that turns surplus materials, scrap, and idle equipment into searchable supply"`
+
+### Health, Care, and Human Capability
+
+11. `"longitudinal health memory system that turns years of records, tests, wearables, and symptoms into one usable timeline"`
+12. `"care navigation platform that tells patients exactly what to do next across referrals, insurance, meds, labs, and follow-up"`
+13. `"rare disease research engine that clusters case reports, studies, and patient experiences into actionable treatment hypotheses"`
+14. `"clinical trial matching network that continuously links patients to relevant studies as their conditions change"`
+15. `"workplace accommodation operating system that helps companies personalize support for disability, fatigue, pain, and cognition"`
+16. `"rehabilitation companion that adapts therapy plans daily based on pain, mobility, adherence, and progress signals"`
+17. `"aging-in-place coordination platform that helps families manage meds, tasks, safety risks, and home services for older adults"`
+18. `"medical paperwork simplifier that rewrites forms, discharge packets, and benefit letters into plain-language checklists"`
+19. `"population health prediction layer that helps clinics identify who needs intervention before a crisis hits"`
+20. `"universal accessibility overlay platform that helps software teams ship better keyboard, screen reader, contrast, and cognitive UX"`
+
+### Knowledge, Work, and Organization Design
+
+21. `"company operating graph that connects goals, meetings, tickets, docs, owners, risks, and decisions in one execution model"`
+22. `"decision intelligence system that records why choices were made, what assumptions matter, and when they need revalidation"`
+23. `"meeting-to-execution engine that turns every conversation into tasks, owners, timelines, blockers, and follow-up automation"`
+24. `"enterprise memory layer that captures tribal knowledge from chat, repos, docs, support, and onboarding flows"`
+25. `"regulation-to-workflow compiler that turns legal and policy requirements into step-by-step operational checklists"`
+26. `"manager copilot that summarizes team health, delivery risk, morale, and staffing gaps from real operating signals"`
+27. `"research synthesis platform that continuously scans an industry and produces executive briefings with citations"`
+28. `"procurement intelligence network that compares vendors on price, security, lock-in risk, implementation cost, and reliability"`
+29. `"skills-to-work marketplace that maps what people actually know and routes them to the highest-value work automatically"`
+30. `"global grant and funding engine that matches startups, nonprofits, and researchers to opportunities they can actually win"`
+
+### Software, AI, and Developer Infrastructure
+
+31. `"agent operations platform that monitors every autonomous workflow for cost, quality, latency, failure modes, and governance drift"`
+32. `"software change simulator that predicts what will break before teams merge major architectural, dependency, or runtime changes"`
+33. `"bug reproduction engine that turns messy support tickets into isolated failing tests developers can run locally"`
+34. `"internal developer operating system that auto-generates service docs, runbooks, architecture maps, and onboarding paths"`
+35. `"evaluation cloud for AI features that runs product-specific scenarios before every model, prompt, or toolchain change"`
+36. `"security reasoning workspace that explains exploit chains, remediation paths, and blast radius in language teams can act on"`
+37. `"API-to-agent platform that converts any SaaS product into a safe, observable action layer for enterprise automation"`
+38. `"migration factory that helps companies peel capabilities out of monoliths without losing test coverage or operational context"`
+39. `"enterprise prompt firewall that blocks data leaks, policy violations, hallucination patterns, and unsafe tool calls"`
+40. `"codebase intelligence graph that maps owners, workflows, risk surfaces, customer impact, and hidden dependency chains"`
+
+### Markets, Commerce, and Economic Coordination
+
+41. `"small business operating system that gives local companies enterprise-grade CRM, scheduling, finance, marketing, and analytics"`
+42. `"pricing intelligence network that shows when to raise, lower, bundle, or reposition offers based on live market signals"`
+43. `"customer voice engine that turns reviews, calls, chats, and support tickets into product roadmap decisions"`
+44. `"trust layer for marketplaces that scores fraud risk, reputation gaming, delivery quality, and dispute patterns before transactions"`
+45. `"micro-SaaS foundry that continuously validates niches, ships products, ranks them by traction, and reallocates effort automatically"`
+46. `"B2B sales preparation engine that builds account briefs, objection maps, tailored demos, and next-step plans before every call"`
+47. `"local services marketplace infrastructure that helps fragmented industries coordinate availability, quality, routing, and payment"`
+48. `"real-estate modernization planner that tells owners which upgrades create the most value, resilience, and regulatory compliance"`
+49. `"global competitive intelligence layer that watches products, pricing pages, changelogs, hiring, and customer sentiment across a market"`
+50. `"market map generator that identifies boring, high-margin software categories with weak incumbents and the fastest entry wedge"`
+
+### How to Use This List
+
+Treat each one like a platform thesis with a tiny starting point:
+
+```bash
+cyborg auto --build "agent operations platform that monitors every autonomous workflow for cost, quality, latency, failure modes, and governance drift"
+```
+
+Then keep narrowing:
+
+- Build the smallest painful workflow first.
+- Use `morphling` direct mode to deepen the wedge after the initial scaffold.
+- Let Cyborg document each version so the product narrative compounds while the codebase grows.
+
+---
+
+## 50 Quintillion-Dollar Ideas for `cyborg auto`
+
+These are civilization-scale ideas disguised as build prompts. The real move is not to build the whole empire at once. It is to ship the first useful control surface, data layer, or decision engine that becomes unavoidable.
+
+### Civilization Infrastructure and Resource Coordination
+
+1. `"planetary infrastructure graph that models ports, grids, roads, rail, water, and telecom as one living system"`
+2. `"global energy routing layer that coordinates generation, storage, demand response, and cross-border power markets"`
+3. `"freshwater intelligence network that predicts drought, contamination, demand spikes, and infrastructure failure before crises hit"`
+4. `"materials flow operating system that tracks extraction, recycling, substitution, and industrial reuse across economies"`
+5. `"resilience planner for governments that stress-tests cities against heat, flood, fire, migration, and grid instability"`
+6. `"construction productivity platform that compresses planning, permitting, procurement, and scheduling into one execution graph"`
+7. `"global food logistics optimizer that reduces spoilage and reroutes surplus to the highest-need regions in real time"`
+8. `"carbon operations layer that verifies emissions, offsets, retrofits, and capital allocation across supply chains"`
+9. `"disaster recovery command system that matches damage reports, crews, inventory, funding, and rebuild priorities after major events"`
+10. `"industrial autonomy platform that coordinates factories, warehouses, fleets, and maintenance as one adaptive network"`
+
+### Human Health, Capability, and Longevity
+
+11. `"continuous health memory system that turns every record, scan, lab, wearable, and symptom into one patient intelligence layer"`
+12. `"preventive care engine that predicts which interventions will reduce future disease burden for each population"`
+13. `"drug discovery coordination platform that links literature, trials, molecular hypotheses, and manufacturing constraints"`
+14. `"care labor operating system that helps health systems deploy clinicians, aides, facilities, and remote care capacity optimally"`
+15. `"global rehabilitation platform that personalizes recovery plans from injury, stroke, surgery, and chronic illness"`
+16. `"universal disability support stack that coordinates benefits, accommodations, transport, care plans, and assistive technology"`
+17. `"mental health navigation layer that routes people to the right modality, provider, intensity, and follow-up rhythm"`
+18. `"clinical language simplifier that rewrites every medical instruction, form, and discharge packet into usable plain language"`
+19. `"aging infrastructure planner that helps societies redesign housing, transport, care, and work for older populations"`
+20. `"longevity operations platform that turns prevention, diagnostics, habit design, and risk monitoring into one lifelong system"`
+
+### Knowledge, Governance, and Institutional Intelligence
+
+21. `"government operating graph that links budgets, laws, agencies, procurement, outcomes, and public trust in one model"`
+22. `"regulation compiler that converts policy text into executable workflows, checklists, audits, and reporting systems"`
+23. `"collective decision platform that shows what a society knows, what it assumes, and where uncertainty still dominates"`
+24. `"public evidence engine that clusters research, testimony, economic impact, and stakeholder tradeoffs around major decisions"`
+25. `"institutional memory layer that prevents governments and large organizations from forgetting what already failed or worked"`
+26. `"treaty coordination system that models geopolitical commitments, incentives, and compliance across nations"`
+27. `"civic participation platform that translates complex issues into local tradeoffs citizens can actually understand"`
+28. `"grant and public funding optimizer that routes capital to the highest-leverage interventions with transparent scoring"`
+29. `"bureaucracy simplification engine that rewrites public forms, services, and eligibility flows into fewer steps"`
+30. `"trust infrastructure for institutions that continuously measures clarity, delivery quality, responsiveness, and legitimacy"`
+
+### Software, AI, and Autonomous Systems
+
+31. `"agent economy operating system that coordinates millions of software agents with budgets, permissions, quality controls, and audit trails"`
+32. `"global software dependency risk map that shows which components quietly underpin entire industries"`
+33. `"machine reasoning observability platform that explains why autonomous systems made each decision and what alternatives existed"`
+34. `"enterprise adaptation layer that lets organizations rewire workflows instantly when laws, markets, or models change"`
+35. `"AI safety operations cloud that tests frontier systems against misuse, deception, drift, and unintended power-seeking behavior"`
+36. `"codebase-to-company graph that maps software changes directly to revenue, customer pain, legal exposure, and operational risk"`
+37. `"autonomous research engine that reads entire scientific fields and proposes the next highest-value experiments"`
+38. `"robot fleet coordination layer that treats warehouses, hospitals, factories, farms, and cities as one automation surface"`
+39. `"knowledge compression engine that distills massive domains into teachable systems without losing critical nuance"`
+40. `"personal agent runtime that gives every human a trusted software staff with memory, tools, goals, and guardrails"`
+
+### Planetary Markets, Expansion, and New Coordination Layers
+
+41. `"global market sensing layer that watches pricing, labor, trade, demand, conflict, climate, and logistics in one live map"`
+42. `"capital allocation engine that helps investors and governments direct money toward the highest real-world leverage"`
+43. `"small business infrastructure cloud that gives every local operator enterprise-grade finance, marketing, staffing, and analytics"`
+44. `"talent mobility platform that matches human capability, training pathways, visas, remote work, and regional demand globally"`
+45. `"real-world simulation layer that lets cities, firms, and nations rehearse policy or investment decisions before acting"`
+46. `"planetary commerce trust network that reduces fraud, counterparty risk, and quality uncertainty across borders"`
+47. `"space economy coordination platform that plans launch capacity, orbital assets, lunar logistics, and downstream markets"`
+48. `"abundance planner that identifies where automation, energy, and material innovation can collapse costs for essential goods"`
+49. `"frontier venture foundry that continuously discovers broken markets, launches wedge products, and compounds them into platforms"`
+50. `"civilization dashboard that tracks whether humanity is getting more resilient, capable, healthy, and coordinated over time"`
+
+### How to Use This List
+
+Do not start with the quintillion-dollar story. Start with the narrowest painful workflow that could become its kernel:
+
+```bash
+cyborg auto --build "machine reasoning observability platform that explains why autonomous systems made each decision and what alternatives existed"
+```
+
+Then turn the wedge into infrastructure:
+
+- Ship the smallest control panel first.
+- Use `morphling` direct mode to deepen the data model, automation, and UX after the first scaffold.
+- Let Cyborg document every iteration so the ambition compounds into a believable product arc.
+
+---
+
+## 100 Super-Impactful Accessibility Chrome Extension Ideas for `cyborg auto`
+
+These are closer to urgent public-good products than novelty hacks. Most of them solve painful, everyday failures in reading, navigation, forms, communication, cognition, and online safety.
+
+### Reading, Vision, and Page Clarity
+
+1. `"Chrome extension that rewrites cluttered webpages into a clean reading mode with preserved headings, landmarks, and alt text"`
+2. `"Chrome extension that lets users click any paragraph and hear it read aloud with sentence highlighting and speed control"`
+3. `"Chrome extension that detects low-contrast text on the current page and offers one-click readable theme overrides"`
+4. `"Chrome extension that enlarges only the important interactive elements on a page without breaking layout"`
+5. `"Chrome extension that converts inaccessible PDFs opened in the browser into clean HTML reading views"`
+6. `"Chrome extension that overlays plain-language summaries above dense news, legal, or medical articles"`
+7. `"Chrome extension that automatically replaces tiny fonts with fatigue-friendly typography tuned for long reading sessions"`
+8. `"Chrome extension that creates a focus mask so only the current paragraph or sentence stays visually emphasized"`
+9. `"Chrome extension that warns when a page hides key content behind hover-only interactions that keyboard and screen-reader users miss"`
+10. `"Chrome extension that generates image descriptions for unlabeled images and lets users rate or improve them"`
+
+### Cognitive Load, Brain Fog, and Comprehension
+
+11. `"Chrome extension that turns long pages into step-by-step summaries with expandable detail levels"`
+12. `"Chrome extension that translates jargon, acronyms, and bureaucratic language into plain English inline"`
+13. `"Chrome extension that breaks long forms into one-question-at-a-time flows for lower cognitive load"`
+14. `"Chrome extension that highlights deadlines, required actions, dates, and consequences inside confusing emails or portals"`
+15. `"Chrome extension that creates a quick 'what matters on this page' briefing before the user reads the full content"`
+16. `"Chrome extension that turns complex comparison tables into simple pros, cons, and differences"`
+17. `"Chrome extension that identifies walls of text and offers an easy-read version with shorter paragraphs and clearer structure"`
+18. `"Chrome extension that adds persistent notes and reminders to any website for users who lose context when switching tabs"`
+19. `"Chrome extension that converts multi-step government or insurance workflows into checklists with progress tracking"`
+20. `"Chrome extension that detects dark patterns and explains what a site is trying to push the user into doing"`
+
+### ADHD, Executive Function, and Attention Support
+
+21. `"Chrome extension that hides distracting sidebars, autoplay areas, and recommendation feeds with one click"`
+22. `"Chrome extension that creates a 'task mode' for the current tab and keeps only the next required action visible"`
+23. `"Chrome extension that detects when a user has too many tabs related to one task and groups them into a guided workflow"`
+24. `"Chrome extension that adds micro-deadlines and visual progress bars to long applications or checkout flows"`
+25. `"Chrome extension that pauses infinite scroll and converts it into clear page chunks to reduce doom-scrolling"`
+26. `"Chrome extension that reads a to-do item from the clipboard and opens only the websites needed to complete it"`
+27. `"Chrome extension that blocks attention traps on selected sites until the user completes a chosen action"`
+28. `"Chrome extension that turns documentation pages into collapsible 'start here / do this / optional details' sections"`
+29. `"Chrome extension that detects when a tab title changes to urgent bait and suppresses manipulative notification language"`
+30. `"Chrome extension that keeps a simple running memory of what the user was doing on each tab before they got interrupted"`
+
+### Dyslexia and Reading Support
+
+31. `"Chrome extension that lets users toggle dyslexia-friendly fonts, spacing, and line lengths site by site"`
+32. `"Chrome extension that highlights one line at a time to reduce visual skipping while reading"`
+33. `"Chrome extension that offers syllable chunking and word breakdowns for difficult text"`
+34. `"Chrome extension that replaces confusable glyphs with more readable alternatives where possible"`
+35. `"Chrome extension that reads selected text aloud while visually tracking the spoken word"`
+36. `"Chrome extension that lets users click unfamiliar words for plain-language definitions without opening a new tab"`
+37. `"Chrome extension that restructures long menus and navigation lists into clearer grouped sections"`
+38. `"Chrome extension that adds reading rulers and custom color overlays for visual stress reduction"`
+39. `"Chrome extension that converts scanned text images on webpages into selectable, readable text"`
+40. `"Chrome extension that rewrites headings and link text when sites use vague labels like 'learn more' or 'click here'"`
+
+### Hearing, Captions, and Communication Access
+
+41. `"Chrome extension that adds better live captions to any browser audio source with speaker separation"`
+42. `"Chrome extension that turns video transcripts into searchable chapter markers for lectures, meetings, and webinars"`
+43. `"Chrome extension that detects unlabeled autoplay video and surfaces transcript-first controls"`
+44. `"Chrome extension that summarizes long meeting recordings into decisions, action items, and unresolved questions"`
+45. `"Chrome extension that converts audio-only customer support systems into live text relay workflows in the browser"`
+46. `"Chrome extension that highlights where a video's captions diverge badly from the spoken content"`
+47. `"Chrome extension that offers simple sign-language-friendly page layouts with less clutter and clearer sequencing"`
+48. `"Chrome extension that lets users pin live transcript panels next to any streaming audio tab"`
+49. `"Chrome extension that extracts key moments from class recordings so users can jump to the relevant explanation"`
+50. `"Chrome extension that turns voice-heavy product demos into text-first walkthroughs with screenshots and steps"`
+
+### Motor Accessibility, Hands-Free Use, and Input Support
+
+51. `"Chrome extension that adds large, customizable click targets to small buttons and links on difficult websites"`
+52. `"Chrome extension that enables dwell-click browsing for users who cannot reliably use standard mouse input"`
+53. `"Chrome extension that creates universal keyboard shortcuts for common actions across inconsistent web apps"`
+54. `"Chrome extension that reduces drag-and-drop interactions into accessible click-to-move alternatives"`
+55. `"Chrome extension that adds voice-command overlays for forms, navigation, and common browser tasks"`
+56. `"Chrome extension that detects short timeout warnings and automatically asks sites for more time when possible"`
+57. `"Chrome extension that reveals hidden controls that normally appear only on hover or precise mouse movement"`
+58. `"Chrome extension that converts complex date pickers into direct text-entry fields with validation help"`
+59. `"Chrome extension that gives users a single sticky action bar for Back, Next, Submit, Save, and Help on confusing sites"`
+60. `"Chrome extension that lets users build custom macros for repetitive browser tasks without scripting"`
+
+### Screen Reader, Keyboard, and Structural Web Access
+
+61. `"Chrome extension that audits the current page's heading order, landmark structure, and form labels in real time"`
+62. `"Chrome extension that inserts missing skip links and keyboard navigation helpers on broken sites"`
+63. `"Chrome extension that exposes the accessible name and role of any focused element with one hotkey"`
+64. `"Chrome extension that warns when focus gets trapped inside modals, menus, or widgets"`
+65. `"Chrome extension that adds a keyboard-first table navigator for large data tables and dashboards"`
+66. `"Chrome extension that turns div-based fake buttons and links into more accessible keyboard-operable controls where safe"`
+67. `"Chrome extension that detects ARIA misuse patterns and offers end-user fixes or developer reports"`
+68. `"Chrome extension that creates a simplified landmarks panel for fast page navigation on noisy websites"`
+69. `"Chrome extension that announces dynamic page changes in a more understandable way for screen-reader users"`
+70. `"Chrome extension that preserves keyboard focus and reading position when sites unexpectedly rerender content"`
+
+### Forms, Portals, Government, and Healthcare Access
+
+71. `"Chrome extension that simplifies appointment booking portals into a cleaner, accessible scheduling flow"`
+72. `"Chrome extension that explains medical portal messages in plain language and highlights what needs action"`
+73. `"Chrome extension that adds save-state recovery to long government forms so users do not lose progress"`
+74. `"Chrome extension that flags inaccessible CAPTCHA flows and offers alternative-access guidance immediately"`
+75. `"Chrome extension that turns insurance claim pages into checklists with required documents, deadlines, and next steps"`
+76. `"Chrome extension that helps users compare healthcare bills and identify likely errors or duplicate charges"`
+77. `"Chrome extension that rewrites unemployment, disability, or benefits portals into smaller guided steps"`
+78. `"Chrome extension that detects when an e-commerce checkout becomes inaccessible and switches to a repair mode"`
+79. `"Chrome extension that explains hidden fees, auto-renewals, and consent checkboxes before purchase or sign-up"`
+80. `"Chrome extension that helps users prepare accommodations request forms with templates and supporting language"`
+
+### Safety, Trust, and Online Self-Advocacy
+
+81. `"Chrome extension that detects scam patterns, manipulative urgency, and fake accessibility statements on websites"`
+82. `"Chrome extension that rates a site's likely accessibility before a user invests time in an application or purchase"`
+83. `"Chrome extension that creates one-click accessibility issue reports users can send to a website owner"`
+84. `"Chrome extension that helps users document access barriers with screenshots, DOM evidence, and reproduction steps"`
+85. `"Chrome extension that warns when a site is likely to trap users in chatbots instead of offering human support"`
+86. `"Chrome extension that identifies inaccessible telehealth flows before an appointment starts and suggests alternatives"`
+87. `"Chrome extension that keeps an accessibility incident log for recurring barriers across school, work, and services"`
+88. `"Chrome extension that helps users compare accommodations policies across employers, schools, and event sites"`
+89. `"Chrome extension that spots misleading cookie banners and makes rejection options equally visible"`
+90. `"Chrome extension that turns terms of service and privacy policies into plain-language risk summaries for disabled users"`
+
+### Work, School, and Everyday Participation
+
+91. `"Chrome extension that turns LMS course pages into accessible weekly study plans with priorities and deadlines"`
+92. `"Chrome extension that reformats discussion boards into easier-to-follow conversation threads with clearer speaker labels"`
+93. `"Chrome extension that extracts action items from workplace portals, HR systems, and benefits dashboards"`
+94. `"Chrome extension that turns job application sites into lower-friction accessible workflows with progress saving"`
+95. `"Chrome extension that rewrites event registration pages with clearer access info, contact points, and logistics"`
+96. `"Chrome extension that helps users compare accessibility details across airline, hotel, and transit booking sites"`
+97. `"Chrome extension that creates a distraction-reduced telework mode across email, chat, calendar, and docs"`
+98. `"Chrome extension that summarizes school parent portals into missing work, deadlines, announcements, and forms"`
+99. `"Chrome extension that converts recipe, shopping, and delivery sites into fatigue-friendly step-by-step flows"`
+100. `"Chrome extension that learns a user's accessibility preferences once and applies them consistently across the web"`
+
+### How to Use This List
+
+Pick one painful workflow and build the smallest useful version first:
+
+```bash
+cyborg auto --build "Chrome extension that highlights deadlines, required actions, dates, and consequences inside confusing emails or portals"
+```
+
+Then deepen it:
+
+- Use `morphling` direct mode to refine content scripts, accessibility settings, and onboarding flow.
+- Keep the first release narrow enough to test with real users quickly.
+- Let Cyborg document the problem, the design choices, and the iteration history as the extension grows.
+
+---
+
+## 100 Super-Impactful Dotfiles Ideas for `cyborg auto`
+
+These are not generic app ideas. They are high-leverage upgrades for this exact dotfiles system: better cognitive support, better automation, better health-aware workflows, and better reliability for daily life under real constraints.
+
+### Daily Loop, Energy, and Pacing
+
+1. `"adaptive startday flow that changes its prompt depth based on sleep, pain, fatigue, and calendar intensity"`
+2. `"spoon-aware daily planner that caps workload automatically and suggests what to defer before overload hits"`
+3. `"brain-fog mode that rewrites every daily script output into shorter, calmer, more structured text"`
+4. `"energy triage command that ranks today's tasks by impact per spoon instead of urgency alone"`
+5. `"recovery-first scheduler that inserts rest blocks when symptom signals and calendar load collide"`
+6. `"shutdown assistant that turns unfinished work into tomorrow-ready checklists before goodevening completes"`
+7. `"bad-day mode that collapses the whole daily system into three essential actions and hides everything else"`
+8. `"friction detector that watches where daily scripts get abandoned and suggests simplifications"`
+9. `"calendar strain analyzer that predicts which meetings are likely to cause cognitive crash afterward"`
+10. `"decision minimizer that converts complex morning planning into A B C D short-choice prompts only"`
+
+### Health, Symptoms, and Spoon Tracking
+
+11. `"symptom correlation engine that links fatigue, pain, weather, sleep, nutrition, and work patterns over time"`
+12. `"medication adherence helper that turns regimen tracking into low-friction check-ins instead of manual logging"`
+13. `"flare early-warning system that spots rising-risk patterns in journal, health, and spoon data"`
+14. `"plain-language health brief generator that summarizes the last week for doctors, caregivers, or future self"`
+15. `"cognitive load tracker that estimates brain-fog severity from task switching, typing pauses, and session breaks"`
+16. `"hydration and food nudger that times reminders around actual work rhythms instead of fixed intervals"`
+17. `"appointment prep script that builds symptom summaries, medication lists, and questions before visits"`
+18. `"post-appointment capture flow that turns messy notes into follow-ups, meds, and next steps"`
+19. `"health data import layer that unifies Fitbit, Apple Health exports, sleep data, and symptom records"`
+20. `"rest quality analyzer that shows which recovery habits actually improve the next day's usable capacity"`
+
+### Task, Journal, and Personal Operations
+
+21. `"task recommender that suggests the best next action based on spoon budget, deadlines, and setup cost"`
+22. `"journal-to-todo extractor that turns freeform entries into optional tasks, reminders, and patterns"`
+23. `"anti-overcommit guard that warns when the todo list exceeds realistic energy capacity for the week"`
+24. `"task decomposition assistant that breaks vague scary work into tiny executable next actions"`
+25. `"stuckness detector that notices repeatedly rescheduled tasks and proposes a different approach"`
+26. `"done-list storyteller that turns completed work into morale-building weekly summaries"`
+27. `"project heatmap that shows which areas of life are consuming attention without producing progress"`
+28. `"morning context packet that merges todos, calendar, last journal entry, and open loops into one briefing"`
+29. `"end-of-day reflection helper that asks smarter questions based on what actually happened today"`
+30. `"task aging report that surfaces important items silently decaying in the background"`
+
+### AI Dispatchers, Prompting, and Routing
+
+31. `"dispatcher router that picks the right specialist model based on task type, cost, and required rigor"`
+32. `"prompt audit tool that shows which templates are causing vague, repetitive, or low-signal responses"`
+33. `"response quality scorer that compares outputs from different dispatchers against project-specific criteria"`
+34. `"cost-aware AI mode that routes low-stakes requests to cheaper models and saves premium models for critical work"`
+35. `"output normalization layer that makes every dispatcher return consistent structure, headings, and action items"`
+36. `"memory-aware dispatcher context builder that pulls only the most relevant notes and recent state for a task"`
+37. `"AI safety checker that blocks prompts likely to leak secrets or overreach beyond available context"`
+38. `"multi-model compare command that runs the same request through several configured models and ranks the outputs"`
+39. `"prompt regression suite that detects when model changes make existing workflows worse"`
+40. `"human-handoff detector that suggests when a task should stop using AI and become a manual decision"`
+
+### Morphling, Cyborg, and Project Generation
+
+41. `"cyborg iterate mode that reads a backlog and ships the next scoped improvement with verify-fix loops"`
+42. `"market-validation memory that remembers which project ideas were already rejected and why"`
+43. `"build cost ledger that records tokens, time, test rounds, and publish outcomes for each generated project"`
+44. `"project portfolio dashboard that shows which cyborg-built projects are healthy, stale, broken, or promising"`
+45. `"compose mode that scaffolds several related tools that share schemas, branding, and docs"`
+46. `"demo artifact generator that records terminal GIFs or screenshots automatically after successful builds"`
+47. `"idea-to-roadmap translator that turns a one-line prompt into an MVP milestone plan before build starts"`
+48. `"publish readiness checker that blocks release when packaging, README, screenshots, or tests are incomplete"`
+49. `"post-build critique pass that asks Morphling to review its own scaffold like a harsh senior engineer"`
+50. `"cyborg salvage mode that rescues half-finished prototypes and turns them into cleaner reusable building blocks"`
+
+### Docs, Knowledge Base, and Blog Sync
+
+51. `"docs freshness scanner that flags guidance drifting away from actual script behavior across the repo"`
+52. `"CLAUDE-to-derived-doc sync assistant that proposes exactly which docs need updates after a behavior change"`
+53. `"brain search tool that ranks notes by current relevance instead of raw keyword match"`
+54. `"knowledge digestion flow that turns long notes into durable principles, checklists, and next actions"`
+55. `"decision log generator that records why major script or automation changes were made"`
+56. `"blog opportunity detector that spots changes in this repo that deserve a public write-up"`
+57. `"reference handbook builder that assembles one plain-language cheat sheet from scattered docs"`
+58. `"session recap tool that turns a day of terminal activity into a useful narrative summary"`
+59. `"cross-doc contradiction checker that finds places where root guidance and derived docs drift apart"`
+60. `"memory pruning assistant that archives stale notes while preserving the small amount of context that still matters"`
+
+### Automation, Scheduling, and Background Agents
+
+61. `"automation simulator that previews what recurring tasks will actually do before they get scheduled"`
+62. `"schedule load balancer that spaces automations so they do not all fire during fragile hours"`
+63. `"automation health dashboard that shows failures, skips, stale runs, and noisy tasks in one place"`
+64. `"context-aware recurring prompts that change based on weekday, weather, sleep, and backlog state"`
+65. `"inbox-opening automation templates for common recurring reviews like finances, health, and project hygiene"`
+66. `"automation deduper that warns when two background tasks are effectively doing the same job"`
+67. `"daily exception digest that summarizes only failed or unusual automation outcomes"`
+68. `"pause-on-overload mode that temporarily disables nonessential recurring tasks on high-fatigue days"`
+69. `"automation impact tracker that shows whether a recurring task is saving time or just generating noise"`
+70. `"follow-the-sun reminder system that schedules different workflows for high-focus, medium-focus, and low-focus windows"`
+
+### Reliability, Guardrails, and Operational Safety
+
+71. `"shell script lint gate that checks for dotfiles-specific guardrail violations before changes land"`
+72. `"path validation test generator that expands coverage for any script touching user-provided paths"`
+73. `"sourced-library contract checker that catches accidental set -euo pipefail or exit usage in libs"`
+74. `"env drift detector that shows which scripts rely on variables missing from env example or docs"`
+75. `"data file integrity scanner that validates delimiter format and repairs common corruption safely"`
+76. `"rollback rehearsal tool that tests whether critical automation can fail without damaging user state"`
+77. `"command dependency census that lists every external tool the repo assumes and how often it matters"`
+78. `"secret exposure watcher that checks logs, docs, and prompts for accidental token leaks"`
+79. `"dangerous change classifier that flags edits likely to break low-energy daily workflows"`
+80. `"safe-mode fallback runner that keeps essential commands working even when optional AI services fail"`
+
+### Accessibility, UX, and Interaction Design
+
+81. `"universal plain-language output mode that rewrites every script result at a fifth-grade reading level"`
+82. `"TTY accessibility layer that improves spacing, color, icons, and prompts for fatigue-friendly terminal use"`
+83. `"voice-first wrappers for the most important daily commands with minimal confirmation burden"`
+84. `"short-choice interaction standardizer that converts complex prompts across the repo into consistent A B C D flows"`
+85. `"screen-reader pass over script outputs that removes decorative noise and clarifies structure"`
+86. `"low-vision theme pack for terminal workflows with contrast-safe defaults and larger text assumptions"`
+87. `"stress-aware copy editor that softens overwhelming output without hiding important facts"`
+88. `"error explainer that translates shell failures into plain-language likely causes and next actions"`
+89. `"single-command help mode that answers 'what should I run next' based on current repo and personal state"`
+90. `"fatigue-adaptive verbosity system that shortens or expands output depending on user capacity signals"`
+
+### Review, Analytics, and Continuous Improvement
+
+91. `"weekly operations review that summarizes what scripts helped, what failed, and what created hidden overhead"`
+92. `"feature adoption tracker that shows which commands are actually used versus which only sound useful"`
+93. `"time-to-value analyzer that measures how long each workflow takes before it becomes helpful"`
+94. `"frustration journal miner that clusters recurring complaints into roadmap opportunities"`
+95. `"test gap finder for bash workflows that matter most on the hardest days"`
+96. `"personal ROI dashboard that estimates which automations save the most energy per week"`
+97. `"change impact digest that explains how recent repo edits affect everyday commands and routines"`
+98. `"confidence score for each workflow that blends test coverage, recent failures, and documentation freshness"`
+99. `"roadmap prioritizer that ranks ideas by user pain reduced, cognitive load saved, and implementation effort"`
+100. `"meta-builder that reads this section, chooses the most leveraged next improvement for dotfiles, and drafts the first implementation plan"`
+
+### How to Use This List
+
+Some of these fit as direct repo changes and some fit as sidecar tools first. Start with the narrowest painful workflow and prove the value quickly:
+
+```bash
+cyborg auto --build "spoon-aware daily planner that caps workload automatically and suggests what to defer before overload hits"
+```
+
+Then bring the winning ideas back into this repo:
+
+- Use `morphling` direct mode inside `/Users/ryanjohnson/dotfiles` to adapt the prototype into the real scripts and docs.
+- Prefer features that reduce cognitive load or failure risk before features that merely add novelty.
+- Let Cyborg document the rationale and workflow impact as each improvement lands.
+
+---
+
 ## Quick Reference
 
 ```bash
