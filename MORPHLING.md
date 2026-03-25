@@ -2400,6 +2400,456 @@ Then narrow the wedge:
 
 ---
 
+## 100 Super-Impactful Information Architecture and Content Strategy Tool Ideas for `cyborg auto`
+
+These work best when they make content systems easier to understand, easier to navigate, and easier to maintain. The leverage is not just better writing. It is better structure, better findability, better reuse, and better decisions about what content should exist at all.
+
+### Content Audits, Inventories, and Structural Discovery
+
+1. `"content inventory builder that crawls a site or folder and creates a structured map of every page, asset, and content type"`
+2. `"information architecture auditor that identifies duplicated sections, dead-end pages, and navigation sprawl"`
+3. `"content overlap detector that finds pages saying nearly the same thing in slightly different ways"`
+4. `"site sprawl visualizer that shows how a content system grew and where it became incoherent"`
+5. `"page purpose classifier that guesses the job each page is trying to do and flags confused hybrids"`
+6. `"content ownership mapper that shows which team, person, or workflow appears to own each content area"`
+7. `"orphaned content finder that surfaces pages with no clear path from navigation or internal links"`
+8. `"content debt scanner that identifies stale, contradictory, or low-value pages across a site"`
+9. `"structural duplication detector that finds repeated templates or repeated content islands across many sections"`
+10. `"site archaeology tool that reconstructs how a knowledge base or docs site evolved over time"`
+
+### Taxonomy, Metadata, and Content Modeling
+
+11. `"taxonomy generator that proposes categories, tags, and labels from a real content corpus instead of brainstorming in a vacuum"`
+12. `"content model builder that turns a messy content ecosystem into reusable content types, fields, and relationships"`
+13. `"metadata consistency checker that finds where tags, categories, and labels are drifting apart semantically"`
+14. `"controlled vocabulary helper that suggests cleaner naming systems for products, topics, audiences, and workflows"`
+15. `"facet design tool that recommends filter structures for large content libraries or product catalogs"`
+16. `"entity extraction engine that identifies recurring concepts, tools, roles, and themes across a content corpus"`
+17. `"label clarity scorer that predicts whether navigation or taxonomy labels are likely to confuse users"`
+18. `"crosswalk generator that maps old taxonomy terms to new content model fields during a redesign"`
+19. `"metadata gap detector that shows which content is impossible to sort, filter, or relate because fields are missing"`
+20. `"content relationship graph that maps which pages, assets, and records should reference each other but currently do not"`
+
+### Navigation, Wayfinding, and Search Experience
+
+21. `"navigation stress tester that simulates how hard it is to reach key tasks from different entry points"`
+22. `"menu simplifier that proposes a clearer top-level navigation based on actual content clusters and user intent"`
+23. `"breadcrumb intelligence tool that checks whether hierarchy paths actually match page meaning"`
+24. `"search intent analyzer that studies search logs and shows what users are failing to find quickly"`
+25. `"zero-results fixer that groups failed searches into missing content, bad labels, and indexing issues"`
+26. `"internal link strategist that recommends stronger cross-links based on content relationships and user journeys"`
+27. `"findability scorer that estimates how many clicks it takes to reach important answers from common entry pages"`
+28. `"task-based navigation mapper that reorganizes content around real user jobs instead of org-chart structure"`
+29. `"search snippet optimizer that rewrites titles and descriptions to make result lists more useful"`
+30. `"wayfinding report generator that explains where a site's navigation is creating hesitation, loops, or abandonment"`
+
+### Governance, Lifecycles, and Content Operations
+
+31. `"content governance engine that tracks who can create, edit, approve, archive, and retire each type of content"`
+32. `"review-cycle planner that schedules content refreshes based on volatility, business risk, and traffic"`
+33. `"staleness threshold manager that decides when a page should warn, refresh, archive, or disappear"`
+34. `"editorial workflow orchestrator that routes content from brief to draft to review to publish to maintenance"`
+35. `"content SLA dashboard that shows which sections are drifting beyond acceptable freshness windows"`
+36. `"policy-aware publishing checker that blocks release when governance rules are incomplete or violated"`
+37. `"governance explainer that turns content standards into usable checklists for writers and editors"`
+38. `"content retirement planner that archives low-value pages gracefully instead of letting them rot"`
+39. `"multi-team governance router that keeps product, support, marketing, and docs from overwriting each other"`
+40. `"operating model designer that helps a team choose centralized, federated, or hybrid content ownership"`
+
+### Migration, Restructuring, and Redesign Support
+
+41. `"migration planner that maps old URLs, templates, and content fields into a cleaner target architecture"`
+42. `"content redesign simulator that previews what a new IA would do to navigation depth and page relationships"`
+43. `"CMS migration assistant that converts legacy content structures into cleaner modern content models"`
+44. `"redirect strategy builder that prepares a safer migration path during site restructuring"`
+45. `"rewrite-or-move classifier that decides whether a page should be updated, merged, split, or killed"`
+46. `"page splitting tool that identifies long catch-all pages that should become several focused pages"`
+47. `"merge candidate detector that finds where several weak pages should become one stronger resource"`
+48. `"migration risk report that shows which high-traffic or high-dependency pages need extra care"`
+49. `"field mapping auditor that catches data loss risks during content-platform migrations"`
+50. `"structure freeze detector that warns when teams are polishing copy inside a broken architecture"`
+
+### Audience Strategy, Personalization, and Journey Mapping
+
+51. `"audience-segmentation mapper that shows which content is serving beginners, experts, buyers, admins, or none clearly"`
+52. `"journey gap finder that identifies where a user path has no clear next page, asset, or answer"`
+53. `"persona-to-content matrix builder that shows which audience needs are overserved and underserved"`
+54. `"role-based content adapter that reorganizes a content system around user jobs instead of internal teams"`
+55. `"funnel-content bridge tool that connects marketing pages, docs, onboarding, and support into one experience"`
+56. `"entry-point analyzer that studies where people arrive and whether the site helps them orient quickly"`
+57. `"decision-stage mapper that classifies content by awareness, evaluation, onboarding, retention, or troubleshooting"`
+58. `"personalization opportunity detector that finds where simple audience-aware routing would reduce confusion"`
+59. `"customer-language extractor that aligns taxonomy and page labels with how real users describe their needs"`
+60. `"journey continuity checker that spots abrupt tone, structure, or terminology shifts across connected pages"`
+
+### Editorial Planning and Content Strategy Systems
+
+61. `"content strategy planner that turns business goals into a prioritized content roadmap with formats and owners"`
+62. `"topic gap engine that compares current coverage against audience needs and competitive space"`
+63. `"pillar-and-cluster builder that organizes topics into durable primary pages and supporting content"`
+64. `"content program designer that balances acquisition, education, retention, trust, and support content"`
+65. `"brief generator that turns a content opportunity into a stronger assignment with purpose, audience, and success criteria"`
+66. `"portfolio balancer that shows when a content operation is overproducing one format and neglecting another"`
+67. `"editorial risk scanner that flags strategy plans built on assumptions rather than evidence"`
+68. `"campaign-to-architecture translator that ensures temporary campaigns do not permanently wreck site structure"`
+69. `"content supply chain mapper that shows where research, writing, review, design, and publication are breaking down"`
+70. `"strategy memory tool that records why a taxonomy, template, or content pillar was chosen in the first place"`
+
+### Accessibility, Clarity, and Comprehension Architecture
+
+71. `"reading-level mapper that shows where a site becomes too dense for general audiences or accessibility goals"`
+72. `"plain-language restructuring tool that improves comprehension by changing structure, not just wording"`
+73. `"heading hierarchy checker that finds pages where structure makes scanning harder than it should be"`
+74. `"cognitive load auditor that spots walls of text, overloaded navigation, and choice paralysis patterns"`
+75. `"accessible summary generator that creates quick-start or plain-language companions for dense pages"`
+76. `"glossary need detector that finds terms users are likely to misunderstand across a content system"`
+77. `"task clarity analyzer that flags pages where the user still does not know what to do next"`
+78. `"content chunking recommender that suggests where long pages should become steps, sections, or linked modules"`
+79. `"screen-reader structure checker that verifies whether IA choices still make sense in assistive-navigation contexts"`
+80. `"comprehension regression detector that shows when revised content became prettier but harder to understand"`
+
+### Measurement, Analytics, and Performance Insight
+
+81. `"content performance explainer that connects traffic, search, exits, and conversions into clearer decisions"`
+82. `"low-value page detector that identifies pages getting attention without helping users move forward"`
+83. `"successful-path analyzer that shows which content sequences actually lead to solved problems or conversions"`
+84. `"content ROI dashboard that compares effort invested with traffic, reuse, support deflection, or business impact"`
+85. `"search-and-support correlation tool that shows where poor content findability is creating human support load"`
+86. `"content experimentation engine that tests alternate page structures, labels, or summaries"`
+87. `"navigation performance tracker that shows whether IA changes improved speed to answer or just shuffled menus"`
+88. `"content confidence meter that blends freshness, quality, traffic, and dependency into one health score"`
+89. `"evidence-to-strategy reporter that turns analytics and qualitative data into prioritized architecture changes"`
+90. `"signal-versus-noise filter that helps teams focus on meaningful content patterns instead of vanity pageviews"`
+
+### Strategic Meta-Tools and Compound Systems
+
+91. `"site operating system that combines IA, governance, analytics, search, and strategy into one control plane"`
+92. `"multi-property content strategist that manages architecture across docs, marketing, help center, and internal knowledge bases"`
+93. `"content ecosystem mapper that shows how blogs, docs, social, email, and support content should reinforce each other"`
+94. `"AI-assisted IA studio that lets teams test multiple content structures before committing to one"`
+95. `"compounding content engine that decides what new pages should exist based on what the current system is missing"`
+96. `"cross-channel terminology guardian that keeps product names, labels, and definitions synchronized everywhere"`
+97. `"content truth layer that ensures every system is drawing from the same canonical facts and definitions"`
+98. `"architecture anti-chaos tool that flags when tactical publishing is eroding strategic coherence"`
+99. `"portfolio-wide content strategy dashboard that helps leaders see where structural problems are blocking growth or clarity"`
+100. `"meta-IA builder that reads the other idea sections in this document, identifies where structure and strategy are missing, and drafts the first high-leverage content system to build"`
+
+### How to Use This List
+
+The best IA and content-strategy tools remove confusion before adding more content:
+
+```bash
+cyborg auto --build "information architecture auditor that identifies duplicated sections, dead-end pages, and navigation sprawl"
+```
+
+Then narrow the wedge:
+
+- Start with one structural pain point like findability, taxonomy drift, or stale content.
+- Use `morphling` direct mode to refine models, scoring logic, and reporting after the first scaffold.
+- Let Cyborg document the exact structural problem the tool is clarifying so the value is obvious fast.
+
+---
+
+## 100 Super-Impactful Web Scraper Tool Ideas for `cyborg auto`
+
+These work best when they do more than fetch HTML. The high-leverage scraper tools extract structured value, detect changes, survive messy sites, respect constraints, and turn raw web noise into something usable.
+
+### Crawl Discovery, Mapping, and Site Intelligence
+
+1. `"web scraper that maps an entire site into a structured content graph with page types, relationships, and depth"`
+2. `"crawl planner that determines the safest and most efficient path through a site before scraping begins"`
+3. `"site-change watcher that detects which sections of a site update most often and prioritizes those paths"`
+4. `"domain reconnaissance scraper that classifies a site's templates, pagination patterns, and likely data sources"`
+5. `"robots-and-sitemap analyzer that turns crawl rules into a practical scraper execution plan"`
+6. `"internal-link cartographer that finds hidden content clusters a normal crawl might miss"`
+7. `"site-sprawl visualizer that shows which pages are canonical, duplicate-like, or low-value for extraction"`
+8. `"crawl budget optimizer that decides which pages to revisit, skip, or archive on repeat runs"`
+9. `"entry-point recommender that identifies the best listing, API, or search pages to start scraping from"`
+10. `"site-structure diff tool that shows when a target site has changed enough to threaten existing scrapers"`
+
+### Structured Data Extraction and Normalization
+
+11. `"schema inference scraper that looks at messy pages and proposes a clean structured output model"`
+12. `"template-aware extractor that learns repeated page layouts and normalizes data across them"`
+13. `"contact and entity extractor that pulls names, roles, emails, phones, and organizations from semi-structured pages"`
+14. `"listing-detail scraper that joins category pages with item detail pages into one normalized dataset"`
+15. `"price and availability extractor that handles inconsistent labels, currencies, and stock language"`
+16. `"job-post scraper that turns scattered listings into structured role, pay, location, and skill records"`
+17. `"event scraper that extracts dates, venues, speakers, links, and descriptions from messy calendars"`
+18. `"table recovery scraper that converts badly formatted HTML tables into usable structured data"`
+19. `"faq and help-center extractor that turns support content into searchable question-answer pairs"`
+20. `"multi-site normalizer that maps several different site schemas into one shared data model"`
+
+### Monitoring, Alerting, and Change Detection
+
+21. `"page diff scraper that detects meaningful content changes instead of just HTML churn"`
+22. `"pricing monitor that watches competitor or supplier pages and alerts on price, package, or feature changes"`
+23. `"policy-change watcher that tracks privacy policies, terms, accessibility statements, or legal pages over time"`
+24. `"inventory shift detector that alerts when products appear, disappear, or go out of stock"`
+25. `"changelog scraper that turns product update pages into structured release alerts"`
+26. `"job-market watcher that tracks hiring pattern changes across selected companies or roles"`
+27. `"public notice monitor that watches government or institutional pages for newly posted updates"`
+28. `"content regression detector that spots when a site quietly removes key information from important pages"`
+29. `"selector drift alarm that notices when extraction still runs but data quality is quietly collapsing"`
+30. `"portfolio watchtower that monitors many scraper targets and summarizes what materially changed today"`
+
+### Commerce, Competitive Intelligence, and Market Research
+
+31. `"competitor feature scraper that extracts pricing tiers, feature tables, and packaging changes across a market"`
+32. `"catalog intelligence scraper that compares product assortments across several stores or marketplaces"`
+33. `"review mining scraper that gathers customer feedback patterns from public product pages"`
+34. `"local business watcher that tracks hours, menus, services, and accessibility info across many listings"`
+35. `"market map scraper that builds a category dataset from directories, listings, and vendor pages"`
+36. `"e-commerce assortment gap detector that shows which products or categories competitors carry and you do not"`
+37. `"founder-and-team scraper that builds startup profile datasets from team, careers, and about pages"`
+38. `"pricing history recorder that builds a longitudinal view of price moves, discounts, and bundle changes"`
+39. `"offer intelligence scraper that compares copy, guarantees, CTAs, and positioning across landing pages"`
+40. `"competitor launch radar that watches blogs, docs, changelogs, social embeds, and press pages for new releases"`
+
+### Research, Public Interest, and Knowledge Gathering
+
+41. `"research corpus scraper that gathers articles, abstracts, and source metadata into one analysis-ready dataset"`
+42. `"grant and funding scraper that compiles opportunities from universities, foundations, and public institutions"`
+43. `"public records scraper that organizes municipal notices, agendas, minutes, and filings into searchable timelines"`
+44. `"clinical-trial watcher that tracks new studies, status changes, and recruiting updates across registries"`
+45. `"education program scraper that compares course offerings, prerequisites, and schedules across institutions"`
+46. `"housing and rent scraper that builds local affordability datasets from public listing sources"`
+47. `"transit update monitor that watches route alerts, schedule changes, and service disruptions across agencies"`
+48. `"legislation and rulemaking scraper that turns proposed rules into structured summaries and timelines"`
+49. `"conference and CFP scraper that gathers speaking deadlines, themes, and submission rules across events"`
+50. `"public-interest change monitor that turns boring institutional updates into actionable alerts for real people"`
+
+### AI-Assisted Extraction, Cleanup, and Summarization
+
+51. `"AI-assisted scraper that uses model reasoning only when selector-based extraction fails or ambiguity is high"`
+52. `"semantic field matcher that maps weird labels on a page to the right structured fields"`
+53. `"scraped-content summarizer that turns raw page captures into short usable briefs"`
+54. `"entity-resolution scraper that merges duplicate organizations, people, or products across messy sources"`
+55. `"quote and evidence extractor that pulls the most important claims from a page with source links"`
+56. `"classification layer that tags scraped pages by intent, audience, risk, or content type"`
+57. `"translation-aware scraper that extracts foreign-language sites into normalized bilingual datasets"`
+58. `"AI-assisted pagination solver that figures out list traversal when sites use unusual navigation patterns"`
+59. `"content block extractor that separates boilerplate, ads, nav, and main content before downstream processing"`
+60. `"source-to-brief pipeline that turns scraped datasets into decision memos, digests, or dashboards automatically"`
+
+### Resilience, Anti-Brittleness, and Scraper Maintenance
+
+61. `"selector self-healing scraper that proposes new extraction paths when markup changes"`
+62. `"scraper test harness that stores fixtures and verifies extraction quality before each deploy"`
+63. `"anti-brittleness toolkit that scores a scraper's dependence on fragile selectors, order, or class names"`
+64. `"template drift monitor that spots when a site adds a new page layout that the scraper does not understand yet"`
+65. `"fallback extraction engine that tries metadata, visible text, JSON-LD, and heuristic parsing in sequence"`
+66. `"rate-aware scheduler that spreads requests safely and predictably across large scrape jobs"`
+67. `"partial-run recovery system that resumes large crawls without duplicating or corrupting work"`
+68. `"bad-data quarantine layer that isolates suspicious records instead of polluting the whole dataset"`
+69. `"change-proof scraper generator that prefers durable anchors like text patterns and structure over brittle CSS hooks"`
+70. `"maintenance cockpit that shows which scrapers are healthy, fragile, stale, or due for redesign"`
+
+### Compliance, Ethics, and Human-Friendly Use
+
+71. `"scraping compliance helper that records robots directives, rate plans, and data handling rules per target"`
+72. `"respectful-crawl scheduler that enforces polite request pacing across different domains automatically"`
+73. `"PII risk detector that flags when a scraper is collecting more personal data than intended"`
+74. `"terms-change monitor that alerts when a site's rules affecting your scraper have changed"`
+75. `"data minimization filter that strips nonessential fields before storage or downstream use"`
+76. `"scraper provenance system that keeps source URLs, timestamps, and extraction logic attached to every record"`
+77. `"explainable scraping report that shows what was collected, why, and from where in plain language"`
+78. `"accessibility-info scraper that specifically extracts hours, ramps, captions, contact methods, and accommodations from public pages"`
+79. `"human-review queue for ambiguous records that should not be trusted automatically"`
+80. `"ethics-first public-interest scraper template that bakes in rate limits, source citation, and audit trails by default"`
+
+### Media, Archive, and Document Capture
+
+81. `"article archiver that captures readable snapshots of important pages before they change or vanish"`
+82. `"PDF and attachment scraper that follows document links and indexes the files into structured collections"`
+83. `"image-and-caption scraper that extracts media assets together with the surrounding explanatory text"`
+84. `"video-metadata scraper that gathers titles, descriptions, chapters, captions, and transcript availability"`
+85. `"docs-site archiver that snapshots reference docs into versioned offline knowledge sets"`
+86. `"newsletter archive scraper that converts past issues into a structured searchable corpus"`
+87. `"forum-thread extractor that preserves discussions as readable, citation-ready records"`
+88. `"knowledge-base downloader that builds a local mirror of a help center for analysis or offline use"`
+89. `"meeting-and-agenda bundle scraper that collects agendas, minutes, appendices, and linked reports together"`
+90. `"web evidence packager that turns many scraped pages into one organized research packet with timestamps"`
+
+### Strategic Meta-Tools and Orchestrators
+
+91. `"scraper idea router that decides whether a target is best handled by scraping, an API, manual import, or no ingestion at all"`
+92. `"cross-source orchestration engine that coordinates many scrapers into one unified dataset and update cadence"`
+93. `"portfolio scraper dashboard that ranks scraper projects by value delivered, fragility, and maintenance cost"`
+94. `"scrape-to-product pipeline that turns recurring scraped datasets into usable apps, reports, or alerts"`
+95. `"source coverage mapper that shows which important web sources in a market are still untracked"`
+96. `"query-to-scraper generator that turns a research question into a candidate source list and scrape plan"`
+97. `"dataset freshness orchestrator that decides which sources need hourly, daily, weekly, or manual refresh cycles"`
+98. `"scraped-signal compounding engine that feeds one scrape's outputs into content, alerts, market research, and product ideas"`
+99. `"web intelligence operating system that combines scraping, normalization, monitoring, summarization, and publishing"`
+100. `"meta-scraper builder that reads the other idea sections in this document, identifies where web data could unlock them, and drafts the first high-leverage scraper system to build"`
+
+### How to Use This List
+
+The best scraper tools do not start with “scrape everything.” They start with one source, one question, and one durable data model:
+
+```bash
+cyborg auto --build "page diff scraper that detects meaningful content changes instead of just HTML churn"
+```
+
+Then narrow the wedge:
+
+- Start with one repeatable source and one clear downstream use.
+- Use `morphling` direct mode to harden selectors, recovery logic, and normalization after the first scaffold.
+- Let Cyborg document what question the scraper answers and why the dataset matters, not just how the crawler works.
+
+---
+
+## 100 Super-Impactful AI-Powered (OpenRouter) Tool Ideas for `cyborg auto`
+
+These work best when OpenRouter is not just a backend checkbox. The real leverage is multi-model routing, specialized strengths, fallback chains, eval loops, and products that get smarter because they can choose the right model for the job instead of forcing one model to do everything badly.
+
+### Research, Analysis, and Decision Support
+
+1. `"OpenRouter-powered research brief generator that scans a topic and produces a decision memo with confidence notes"`
+2. `"AI market analyst that compares products, trends, and pricing shifts and writes strategic summaries"`
+3. `"competitive intelligence tool that watches a niche and explains what actually matters this week"`
+4. `"multi-model research assistant that uses cheap models for scanning and stronger models for synthesis"`
+5. `"meeting note analyzer that turns messy notes into decisions, risks, owners, and next steps"`
+6. `"question-to-brief engine that turns a vague business question into a structured research report"`
+7. `"source comparison tool that finds disagreement across sources and explains where uncertainty is highest"`
+8. `"policy explainer that rewrites dense rules, laws, or institutional guidance into plain-language action steps"`
+9. `"evidence pack builder that collects claims, counterclaims, and supporting citations for a topic"`
+10. `"executive summary engine that creates short and long versions of the same briefing for different readers"`
+
+### Model Routing, Evals, and AI Infrastructure
+
+11. `"OpenRouter routing engine that chooses the best model for coding, writing, summarization, or reasoning automatically"`
+12. `"prompt evaluation harness that compares outputs across several OpenRouter models against a task rubric"`
+13. `"cost-versus-quality optimizer that shows when a cheaper model is good enough and when it is not"`
+14. `"fallback-aware AI client that degrades gracefully across model outages or latency spikes"`
+15. `"hallucination risk detector that compares multiple model outputs before a result is trusted"`
+16. `"task-to-model classifier that learns which model families work best for your specific workloads"`
+17. `"AI regression lab that reruns saved prompts whenever you change models or routing rules"`
+18. `"structured output validator that checks model responses against schemas and retry policies"`
+19. `"OpenRouter budget dashboard that tracks token spend, latency, and win rate by workflow"`
+20. `"model portfolio manager that helps teams standardize which models are allowed for which kinds of work"`
+
+### Writing, Content, and Editorial Systems
+
+21. `"AI article studio that drafts, critiques, rewrites, and packages long-form content with model specialization"`
+22. `"OpenRouter content repurposer that turns one source idea into article, newsletter, thread, and script variants"`
+23. `"editorial assistant that scores clarity, originality, structure, and trust before content ships"`
+24. `"voice-tuning engine that rewrites content into a stable brand voice while preserving nuance"`
+25. `"content gap finder that looks at your existing library and proposes the next best topics to cover"`
+26. `"readability-first copy editor that makes dense writing more accessible without flattening meaning"`
+27. `"AI headline lab that tests multiple title and hook strategies across model families"`
+28. `"newsletter generator that drafts issues from bookmarks, notes, analytics, and past themes"`
+29. `"research-to-article workflow that turns notes and sources into a publishable draft with citations"`
+30. `"content QA pass that flags weak claims, awkward transitions, and repeated AI tics before publish"`
+
+### Coding, Debugging, and Developer Workflow
+
+31. `"OpenRouter coding copilot that chooses different models for architecture, implementation, review, and tests"`
+32. `"bug triage assistant that turns stack traces and user reports into likely root causes and next actions"`
+33. `"repo explainer that reads a codebase and writes a human-friendly architectural overview"`
+34. `"test gap analyzer that identifies risky untested behaviors in a project"`
+35. `"code review summarizer that rewrites technical diff analysis into product and risk language"`
+36. `"migration planner that uses stronger reasoning models to map refactors and cheaper models to execute rote transforms"`
+37. `"developer onboarding assistant that turns a repo into setup guides, runbooks, and common gotchas"`
+38. `"issue-to-implementation planner that turns a ticket into milestones, risks, and estimated change scope"`
+39. `"release note generator that turns commits and pull requests into cleaner user-facing updates"`
+40. `"doc drift detector that compares code changes against docs and suggests exact updates"`
+
+### Support, Customer Experience, and Knowledge Work
+
+41. `"support ticket summarizer that clusters repeated pain points and proposes better docs or product fixes"`
+42. `"OpenRouter support assistant that drafts replies using different models for empathy, diagnosis, and policy accuracy"`
+43. `"FAQ generator that turns resolved support conversations into reusable help content"`
+44. `"customer voice analyzer that extracts recurring objections, praise, and confusion from tickets and calls"`
+45. `"human handoff assistant that summarizes everything a support rep needs before taking over from AI"`
+46. `"onboarding explainer that rewrites setup instructions based on the user's role and likely confusion points"`
+47. `"case escalation scorer that predicts which tickets need a real human fast"`
+48. `"support-to-roadmap pipeline that converts recurring issues into prioritized product and docs changes"`
+49. `"knowledge-base optimizer that rewrites weak help pages based on actual support failure patterns"`
+50. `"conversation memory system that keeps the important context from past customer interactions without the noise"`
+
+### Personal Operations, Accessibility, and Daily Support
+
+51. `"brain-fog assistant that turns overwhelming notes, tasks, and context into three calm next steps"`
+52. `"plain-language explainer for healthcare, benefits, or insurance messages using model routing for risk-sensitive text"`
+53. `"fatigue-aware daily planner that chooses how much detail to show based on current capacity"`
+54. `"symptom-to-summary engine that turns health logs into concise doctor-ready briefs"`
+55. `"decision support tool that helps compare options when the tradeoffs are emotionally or cognitively heavy"`
+56. `"accessibility rewrite system that creates easy-read, caption-first, and plain-language variants of content packages"`
+57. `"meeting recovery assistant that tells you what mattered after you missed or half-processed a conversation"`
+58. `"calendar triage AI that suggests what to keep, move, delegate, or skip on low-capacity days"`
+59. `"executive function helper that breaks ambiguous goals into tiny next actions with low startup friction"`
+60. `"context recovery tool that reminds you what you were doing, why it mattered, and what the next move is"`
+
+### Creative, Media, and Story Systems
+
+61. `"OpenRouter story lab that uses different models for ideation, voice, revision, and ending quality"`
+62. `"flash-fiction generator that creates prompts, drafts, and revision suggestions with style-aware routing"`
+63. `"script doctor that identifies pacing problems, weak turns, and flat dialogue in video or audio scripts"`
+64. `"creative brief translator that turns a vague mood or visual idea into a structured production brief"`
+65. `"clip packaging tool that turns transcripts into titles, cuts, captions, and social descriptions"`
+66. `"storyboard assistant that converts narrative beats into scene-by-scene visual instructions"`
+67. `"creative variation engine that produces several emotionally different versions of the same core concept"`
+68. `"anthology shaper that sequences short pieces into a collection with stronger flow and contrast"`
+69. `"voice-preserving revision tool that tightens prose without sanding off personality"`
+70. `"creative archive miner that finds reusable fragments, ideas, and motifs across old drafts"`
+
+### Business, Sales, and Product Strategy
+
+71. `"AI product strategist that turns a rough idea into ICP, positioning, wedge, risks, and launch sequence"`
+72. `"sales message generator that adapts one product into buyer-specific positioning frames"`
+73. `"objection analysis engine that studies sales calls or support logs and surfaces the real blockers"`
+74. `"offer optimizer that tests multiple framings, price anchors, and guarantee language"`
+75. `"customer interview synthesizer that turns transcripts into jobs, anxieties, and opportunity maps"`
+76. `"product-market-fit watcher that summarizes signs of traction, confusion, churn, or demand expansion"`
+77. `"AI launch assistant that coordinates copy, FAQs, demos, objections, and post-launch follow-up"`
+78. `"pricing explainer that rewrites confusing packaging into clearer value communication"`
+79. `"multi-model sales prep tool that creates account briefs, likely objections, and tailored demos"`
+80. `"product narrative builder that keeps roadmap, positioning, docs, and launch messaging aligned"`
+
+### Agents, Orchestration, and Compound Systems
+
+81. `"OpenRouter agent manager that chooses specialized models for research, coding, writing, QA, and review stages"`
+82. `"workflow orchestrator that chains multiple AI steps with checkpoints, evals, and human approvals"`
+83. `"context router that sends only the right slice of memory and files to each model call"`
+84. `"compound task planner that splits one big job into smaller model-specific subtasks automatically"`
+85. `"AI operations dashboard that shows which multi-step workflows are fast, expensive, brittle, or high-value"`
+86. `"safety policy engine that blocks certain models from high-risk tasks while allowing them on low-risk ones"`
+87. `"cross-model consensus tool that compares reasoning outputs before committing to a high-stakes action"`
+88. `"portfolio orchestrator that uses OpenRouter to coordinate many cyborg-built projects instead of one-off apps"`
+89. `"agent postmortem system that explains where a multi-step AI workflow failed and why"`
+90. `"compound leverage engine that feeds outputs from one AI product directly into several others"`
+
+### Strategic Meta-Tools and New Product Discovery
+
+91. `"AI opportunity radar that watches your usage, ideas, and outputs to suggest the next best product to build"`
+92. `"build-versus-automate advisor that decides whether a problem deserves software, content, or just a smarter workflow"`
+93. `"OpenRouter use-case mapper that identifies where multi-model routing unlocks real advantage over single-model apps"`
+94. `"invisible bottleneck detector that spots where human effort is still dominating otherwise automated pipelines"`
+95. `"portfolio synergy finder that identifies which of your existing tools should be connected into a larger system"`
+96. `"AI capability translator that turns new model releases into concrete product opportunities"`
+97. `"trust architecture planner that decides where human review, citations, or validation are non-negotiable"`
+98. `"meta-eval builder that creates reusable quality tests for a whole family of AI products"`
+99. `"AI moat finder that identifies where workflow design, memory, or domain context matters more than raw model strength"`
+100. `"meta-openrouter builder that reads the other idea sections in this document, identifies where model routing adds the most leverage, and drafts the first high-impact OpenRouter-native product to build"`
+
+### How to Use This List
+
+The best OpenRouter-powered tools do not start with “add AI.” They start with a workflow where model choice, fallback, or specialization creates real leverage:
+
+```bash
+cyborg auto --build "OpenRouter routing engine that chooses the best model for coding, writing, summarization, or reasoning automatically"
+```
+
+Then narrow the wedge:
+
+- Start with one workflow where different model strengths clearly matter.
+- Use `morphling` direct mode to refine routing logic, evals, fallback behavior, and output validation after the first scaffold.
+- Let Cyborg document why OpenRouter is an advantage in this product, not just an implementation detail.
+
+---
+
 ## Quick Reference
 
 ```bash

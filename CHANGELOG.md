@@ -2,6 +2,30 @@
 
 **Last Updated:** March 24, 2026
 
+## Version 2.2.51 (March 24, 2026) - Fitbit API Sync
+
+**Status:** ✅ Production Ready
+
+### New
+
+- Added `scripts/fitbit_sync.sh`, a local-first Fitbit OAuth and sync command that stores tokens privately and writes recent Fitbit API data into the existing normalized metric files under `~/.config/dotfiles-data/fitbit/`.
+- Added focused BATS coverage for auth URL generation, token exchange, and one-day mocked API sync behavior.
+- Updated docs and `.env.example` to show the one-time OAuth setup, recurring sync flow, and the September 2026 Fitbit Web API deprecation note.
+
+---
+
+## Version 2.2.50 (March 24, 2026) - Fitbit CSV Import
+
+**Status:** ✅ Production Ready
+
+### New
+
+- Added `scripts/fitbit_import.sh`, a local-first importer that normalizes Fitbit CSV exports into `~/.config/dotfiles-data/fitbit/*.txt` for `steps`, `sleep_minutes`, `sleep_score`, `resting_heart_rate`, and `hrv`.
+- Added focused BATS coverage for direct Fitbit imports, merge-by-date behavior, and directory auto-import.
+- Updated the health docs to show the intended split: keep `health.sh` for subjective energy/fog logging and use Fitbit imports for objective device trends.
+
+---
+
 ## Version 2.2.49 (March 24, 2026) - OpenRouter Hard Timeout
 
 **Status:** ✅ Production Ready

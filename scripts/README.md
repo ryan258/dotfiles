@@ -14,6 +14,14 @@ The full rules live in `../CLAUDE.md`.
 - `health.sh`
 - `focus.sh`
 
+## Wearable Imports
+
+- `fitbit_import.sh` imports Fitbit CSV exports into normalized daily metric files under `~/.config/dotfiles-data/fitbit/`.
+- `fitbit_sync.sh` performs a one-time Fitbit OAuth setup and then syncs recent Fitbit API data into the same normalized metric files.
+- Keep `health.sh` for subjective signals like energy, fog, and symptoms. Use `fitbit_import.sh` for objective Fitbit metrics like sleep, steps, resting heart rate, and HRV.
+- `fitbit_import.sh auto <dir>` scans a Fitbit export directory, while `fitbit_import.sh latest` shows the newest imported values.
+- `fitbit_sync.sh sync 7` is the lower-friction path once auth is in place. It currently syncs `steps`, `sleep_minutes`, and `resting_heart_rate`.
+
 ## Library Rules
 
 - Libraries live in `scripts/lib/*.sh`. They are sourced (loaded), not run directly. They must not set strict mode.
@@ -56,4 +64,5 @@ Key files:
 - `ideas.txt`
 - `journal.txt`
 - `health.txt`, `spoons.txt`
+- `fitbit/*.txt`
 - `coach_mode.txt`, `coach_log.txt`, `coach_adherence.txt`

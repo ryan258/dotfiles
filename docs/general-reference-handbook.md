@@ -1747,6 +1747,45 @@ journal search "brain fog"
 
 💡 **New in v2.1.0:** Run `correlate run health.txt todo_done.txt` to check these patterns with math, or look at the `daily-report` for insights.
 
+#### Fitbit Imports
+
+If you wear a Fitbit, import the device data as objective signals and keep `health` for how you actually feel.
+
+✅ **DO:**
+
+```bash
+# One-time OAuth setup for API sync
+fitbit_sync.sh auth
+
+# Pull recent Fitbit data into local files
+fitbit_sync.sh sync 7
+
+# Import Fitbit CSV exports into normalized local files
+fitbit_import.sh import steps ~/Downloads/steps.csv
+fitbit_import.sh import sleep_score ~/Downloads/sleep_score.csv
+fitbit_import.sh import resting_heart_rate ~/Downloads/resting_heart_rate.csv
+
+# Or scan an export directory at once
+fitbit_import.sh auto ~/Downloads/Fitbit\ Export
+
+# Review the newest imported values
+fitbit_import.sh latest
+
+# Correlate Fitbit sleep score with your manual energy log
+correlate run ~/.config/dotfiles-data/fitbit/sleep_score.txt ~/.config/dotfiles-data/health.txt 0 1 1 2
+```
+
+**Use this split:**
+
+- `health energy` and `health fog` = subjective reality
+- `fitbit_sync.sh` = lower-friction API pull for steps, sleep minutes, resting HR
+- `fitbit_import.sh` = sleep, steps, resting heart rate, HRV
+- `correlate` = check whether the device signals line up with your crash days or good days
+
+**Caution:**
+
+- Fitbit’s legacy Web API is currently slated for deprecation in September 2026, so the sync path is intentionally a thin adapter that writes the same local files as the CSV importer.
+
 ---
 
 #### Medication Adherence
