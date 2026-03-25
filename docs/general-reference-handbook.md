@@ -63,6 +63,7 @@ The Cyborg Lab agent (`bin/cyborg`) now uses three Python modules: `scripts/cybo
 ```bash
 cyborg                    # Interactive REPL mode
 cyborg auto               # Full pipeline hands-free (low-energy sessions)
+cyborg auto --iterate     # Implement the next GitHub issue or backlog item in an existing repo
 cyborg auto --build       # Morphling scaffolding + Cyborg documentation convergence
 cyborg auto --build --publish   # Build, verify, publish, then document
 cyborg resume             # Resume a previous session
@@ -71,6 +72,7 @@ cyborg resume             # Resume a previous session
 ### Features
 
 - GitNexus integration for code analysis
+- GitHub-issue/backlog-driven iteration for existing repos (`--iterate`, optional `--backlog-file`)
 - Market validation before `cyborg auto --build` (skip with `--no-validate`)
 - Optional registry publishing for build mode (`--publish`)
 - Token caching and draft loop speed-ups

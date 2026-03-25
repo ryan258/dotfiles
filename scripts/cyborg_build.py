@@ -310,7 +310,7 @@ def _search_github(query: str) -> list[dict[str, Any]]:
             "User-Agent": "Cyborg-Lab-Agent/1.0",
         },
     )
-    gh_token = _load_github_token()
+    gh_token = load_github_token()
     if gh_token.strip():
         req.add_header("Authorization", f"token {gh_token.strip()}")
     try:
@@ -388,7 +388,7 @@ def _github_token_candidate_paths() -> list[Path]:
     return paths
 
 
-def _load_github_token() -> str:
+def load_github_token() -> str:
     """Load a GitHub token from env vars or the standard token files."""
     for key in ("GITHUB_TOKEN", "GH_TOKEN"):
         value = os.environ.get(key, "").strip()
@@ -405,6 +405,11 @@ def _load_github_token() -> str:
         if token:
             return token
     return ""
+
+
+def _load_github_token() -> str:
+    """Backward-compatible alias for older internal callers."""
+    return load_github_token()
 
 
 def _format_market_search_error(source: str, exc: Exception) -> str:
@@ -884,29 +889,45 @@ def _verify_extension_project(project_dir: Path) -> tuple[int, str, str]:
     return 0, summary, ""
 
 
-def _verify_and_fix_scaffold(
+def verify_and_fix_project(
     project_dir: Path,
-    idea: str,
+    goal: str,
     ai_client: "OpenRouterClient",
-) -> None:
-    """Run install + tests on a scaffolded project; fix failures with AI."""
+    *,
+    context_label: str = "project",
+    commit_fixes: bool = False,
+) -> dict[str, Any]:
+    """Run install + tests on a project directory; fix failures with AI."""
+    result: dict[str, Any] = {
+        "verified": False,
+        "skipped": False,
+        "recipe": None,
+        "reason": "",
+        "attempts": 0,
+        "ai_fix_rounds": 0,
+    }
     recipe = _detect_verify_recipe(project_dir)
     if recipe is None:
         print("  No recognised build system — skipping verification.")
-        return
+        result["skipped"] = True
+        result["reason"] = "No recognised build system."
+        return result
 
     label, install_cmd, test_cmd = recipe
+    result["recipe"] = label
     verify_env: tempfile.TemporaryDirectory[str] | None = None
     if label == "python":
         prepared = _prepare_python_verify_commands(project_dir)
         if prepared is None:
-            return
+            result["reason"] = "Could not prepare an isolated Python verification environment."
+            return result
         verify_env, install_cmd, test_cmd = prepared
 
-    print(f"  Verifying scaffold ({label})...")
+    print(f"  Verifying {context_label} ({label})...")
 
     try:
         for attempt in range(1, BUILD_VERIFY_MAX_ROUNDS + 1):
+            result["attempts"] = attempt
             if install_cmd:
                 exit_code, stdout, stderr = run_command_result(
                     ["bash", "-c", install_cmd],
@@ -918,10 +939,11 @@ def _verify_and_fix_scaffold(
                     print(f"  Install failed (attempt {attempt}/{BUILD_VERIFY_MAX_ROUNDS})")
                     if attempt == BUILD_VERIFY_MAX_ROUNDS:
                         print("  Max fix attempts reached during install — project may need manual attention.")
-                        return
+                        result["reason"] = "Max fix attempts reached during dependency installation."
+                        return result
                     fix_applied = _apply_ai_fix(
                         project_dir,
-                        idea,
+                        goal,
                         "install",
                         install_cmd,
                         error_output,
@@ -929,7 +951,9 @@ def _verify_and_fix_scaffold(
                     )
                     if not fix_applied:
                         print("  Could not get a fix from the AI — stopping verification.")
-                        return
+                        result["reason"] = "AI could not produce an installation fix."
+                        return result
+                    result["ai_fix_rounds"] = int(result.get("ai_fix_rounds", 0)) + 1
                     continue
 
             if label == "extension":
@@ -942,27 +966,29 @@ def _verify_and_fix_scaffold(
                 )
 
             if exit_code == 0:
-                label = "first try" if attempt == 1 else f"attempt {attempt}"
-                print(f"  Verification passed ({label}).")
-                if attempt > 1:
+                success_label = "first try" if attempt == 1 else f"attempt {attempt}"
+                print(f"  Verification passed ({success_label}).")
+                if attempt > 1 and commit_fixes:
                     run_command(["git", "add", "."], cwd=project_dir, allow_failure=True)
                     run_command(
                         ["git", "-c", "user.name=Morphling", "-c", "user.email=morphling@cyborg-lab", "commit", "-qm", f"fix: pass verification (attempt {attempt})"],
                         cwd=project_dir,
                         allow_failure=True,
                     )
-                return
+                result["verified"] = True
+                return result
 
             error_output = (stderr or stdout)[:4000]
             print(f"  Tests failed (attempt {attempt}/{BUILD_VERIFY_MAX_ROUNDS})")
 
             if attempt == BUILD_VERIFY_MAX_ROUNDS:
                 print("  Max fix attempts reached — project may need manual attention.")
-                return
+                result["reason"] = "Max fix attempts reached during verification."
+                return result
 
             fix_applied = _apply_ai_fix(
                 project_dir,
-                idea,
+                goal,
                 "test",
                 test_cmd,
                 error_output,
@@ -970,10 +996,23 @@ def _verify_and_fix_scaffold(
             )
             if not fix_applied:
                 print("  Could not get a fix from the AI — stopping verification.")
-                return
+                result["reason"] = "AI could not produce a verification fix."
+                return result
+            result["ai_fix_rounds"] = int(result.get("ai_fix_rounds", 0)) + 1
     finally:
         if verify_env is not None:
             verify_env.cleanup()
+
+    return result
+
+
+def _verify_and_fix_scaffold(
+    project_dir: Path,
+    idea: str,
+    ai_client: "OpenRouterClient",
+) -> None:
+    """Run install + tests on a scaffolded project; fix failures with AI."""
+    verify_and_fix_project(project_dir, idea, ai_client, context_label="scaffold", commit_fixes=True)
 
 
 _MISSING_PYTHON_ATTR_PATTERNS = (
@@ -1511,5 +1550,7 @@ __all__ = [
     "_setup_npm_auth",
     "_validate_publish_prereqs",
     "build_project_from_idea",
+    "load_github_token",
     "validate_market",
+    "verify_and_fix_project",
 ]

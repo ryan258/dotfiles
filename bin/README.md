@@ -108,6 +108,9 @@ This is a super smart chat robot that helps you write articles for your blog. It
 # Run the robot in the current folder
 cyborg ingest
 
+# Grow an existing repo from the next issue or backlog item
+cyborg auto --iterate --repo ~/Projects/my-tool
+
 # Build a project from an idea (Morphling scaffolds, verifies, then Cyborg documents)
 cyborg auto --build "CLI that tracks daily energy with spoon theory"
 

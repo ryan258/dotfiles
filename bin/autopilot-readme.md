@@ -15,6 +15,9 @@ cyborg auto
 # Document a specific repo
 cyborg auto --repo ~/Projects/rockit
 
+# Implement the next open issue or backlog item in an existing repo
+cyborg auto --iterate --repo ~/Projects/rockit
+
 # Pitch an idea — Morphling builds the project, Cyborg documents it
 cyborg auto --build "a CLI that tracks daily energy with spoon theory"
 
@@ -46,6 +49,32 @@ cyborg auto --build --publish --yes "tool that audits deps for license complianc
    C. Links only
    D. Save for later
    E. Drop into interactive mode
+```
+
+### With `--iterate` (existing repo growth)
+
+```
+ you type one command + an existing repo
+        |
+        v
+ [task selection]
+   GitHub open issues first
+   fallback: BACKLOG.md / TODO.md / --backlog-file
+        |
+        v
+ [Cyborg code stage]
+   scan → plan one implementation → stage repo edit
+        |
+        v
+ [auto-apply repo change]
+        |
+        v
+ [build-verify-fix loop]
+   detect project type → run checks → AI fix + retest if needed
+        |
+        v
+ [stop after verified code]
+   (continue into docs only with --docs-after-code)
 ```
 
 ### With `--build` (idea only)
@@ -93,6 +122,8 @@ cyborg auto --build --publish --yes "tool that audits deps for license complianc
 | `--repo PATH` | Scan this repo instead of the current directory |
 | `--file PATH` | Include a markdown file as supporting material |
 | `--build` | Morphling scaffolds the project from your idea first |
+| `--iterate` | Implement the next GitHub issue or backlog item in an existing repo |
+| `--backlog-file PATH` | Explicit backlog file to use with `--iterate` |
 | `--publish` | Publish to ecosystem registry after build+verify (npm, PyPI, crates.io, GitHub) |
 | `--no-validate` | Skip the pre-build market validation search |
 | `--projects-dir PATH` | Where to create the project (default: `~/Projects`) |
@@ -105,7 +136,7 @@ cyborg auto --build --publish --yes "tool that audits deps for license complianc
 
 Morphling is the only AI-Staff-HQ specialist with tools enabled. In direct mode (`morphling`), it has four tools: `read_file`, `write_file`, `list_directory`, and `run_command`. This makes it a full lead-developer agent that can write code, run tests, see errors, and fix them in a closed loop. See [MORPHLING.md](../MORPHLING.md) for the complete architecture.
 
-### Pre-analysis mode (default for `cyborg auto`)
+### Pre-analysis mode (default for `cyborg auto`, skipped by `--iterate`)
 
 When you run `cyborg auto` on an existing repo, the shell launcher pipes a structured prompt to `morphling.sh`. Morphling shapeshifts into a domain expert for that repo and returns a concise brief covering:
 
@@ -116,7 +147,7 @@ When you run `cyborg auto` on an existing repo, the shell launcher pipes a struc
 
 This brief gets injected into Cyborg's AI context so drafts are richer and more targeted.
 
-**Requirements:** `uv` installed and `ai-staff-hq/` submodule present. Gracefully skipped if unavailable.
+**Requirements:** `uv` installed and `ai-staff-hq/` submodule present. Gracefully skipped if unavailable, and skipped intentionally when `--iterate` is driving a repo change.
 
 ### Build mode (`--build`)
 
@@ -173,6 +204,13 @@ cyborg auto
 cyborg auto --repo ~/Projects/open-source-thing "focus on the API design"
 ```
 
+### Grow an existing repo from its backlog
+
+```bash
+cyborg auto --iterate --repo ~/Projects/open-source-thing
+cyborg auto --iterate --repo ~/Projects/open-source-thing --backlog-file docs/BACKLOG.md
+```
+
 ### Turn a napkin idea into a project and blog post
 
 ```bash
@@ -215,10 +253,10 @@ Once resumed, you're in full interactive mode with all commands available.
 
 | Variable | Purpose |
 |----------|---------|
-| `OPENROUTER_API_KEY` | Required for AI mode and `--build` |
+| `OPENROUTER_API_KEY` | Required for AI mode, `--build`, and `--iterate` |
 | `CYBORG_MODEL` | Model override (falls back through `CONTENT_MODEL` → `STRATEGY_MODEL`) |
 | `CYBORG_LAB_DIR` | Explicit path to the Cyborg Lab blog repo |
-| `CYBORG_DISABLE_AI` | Set to `true` to force deterministic mode (no `--build`) |
+| `CYBORG_DISABLE_AI` | Set to `true` to force deterministic mode (no `--build` or `--iterate`) |
 | `CYBORG_DISABLE_GITNEXUS` | Set to `true` to skip GitNexus entirely |
 | `CYBORG_MORPHLING_BRIEF` | Auto-set by the shell launcher — contains the Morphling pre-analysis. Not user-configured; injected into the session's AI context by `run_autopilot()` |
 

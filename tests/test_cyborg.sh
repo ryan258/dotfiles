@@ -60,6 +60,15 @@ EOF
 print("hello")
 EOF
 
+    cat > "$SOURCE_REPO/BACKLOG.md" <<'EOF'
+# Backlog
+
+- [ ] Add JSON output mode
+  CLI should support a machine-readable `--json` path for automation.
+
+- [x] Legacy cleanup task
+EOF
+
     # --- Build a repo whose name has special characters ---
     cat > "$SPECIAL_REPO/README.md" <<'EOF'
 # rockit++[1]
@@ -638,6 +647,34 @@ EOF
     [[ "$output" == *"--build requires an idea"* ]]
 }
 
+# Test: 'cyborg auto --iterate' requires AI mode because it stages and
+# verifies real repo edits instead of falling back to deterministic docs mode.
+@test "cyborg auto --iterate requires AI mode" {
+    run bash -lc "env DOTFILES_DIR='$DOTFILES_DIR' CYBORG_LAB_DIR='$BLOG_DIR' CYBORG_DISABLE_AI=true '$DOTFILES_DIR/bin/cyborg' auto --iterate --repo '$SOURCE_REPO'"
+
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"--iterate requires AI mode"* ]]
+}
+
+# Test: iterate mode is only for existing repos, so it cannot be mixed
+# with the scaffold-first build mode.
+@test "cyborg auto --iterate rejects --build" {
+    run bash -lc "env DOTFILES_DIR='$DOTFILES_DIR' CYBORG_LAB_DIR='$BLOG_DIR' OPENROUTER_API_KEY=test-key '$DOTFILES_DIR/bin/cyborg' auto --iterate --build 'a repo idea'"
+
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"--iterate cannot be combined with --build"* ]]
+}
+
+# Test: an explicit missing backlog path should fail cleanly without a
+# Python traceback.
+@test "cyborg auto --iterate reports a friendly error for a missing backlog file" {
+    run bash -lc "env DOTFILES_DIR='$DOTFILES_DIR' CYBORG_LAB_DIR='$BLOG_DIR' OPENROUTER_API_KEY=test-key '$DOTFILES_DIR/bin/cyborg' auto --iterate --repo '$SOURCE_REPO' --backlog-file missing.md"
+
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"Autopilot error during code improvements: Backlog file not found"* ]]
+    [[ "$output" != *"Traceback"* ]]
+}
+
 # Test: 'cyborg auto --no-morphling' skips the Morphling pre-analysis
 # and still completes the full autopilot pipeline.
 @test "cyborg auto --no-morphling skips pre-analysis and completes pipeline" {
@@ -1027,4 +1064,173 @@ print('publish flag accepted')
 "
     [ "$status" -eq 0 ]
     [[ "$output" == *"publish flag accepted"* ]]
+}
+
+# Test: iterate-related CLI flags are accepted by the argument parser.
+@test "iterate: flags are accepted by argparser" {
+    run python3 -c "
+import sys; sys.path.insert(0, '$BATS_TEST_DIRNAME/../scripts')
+from cyborg_agent import build_parser
+parser = build_parser()
+args = parser.parse_args(['auto', '--iterate', '--backlog-file', 'BACKLOG.md', '--repo', '/tmp/repo'])
+assert args.iterate == True, f'expected iterate=True, got {args.iterate}'
+assert args.backlog_file == 'BACKLOG.md', f'expected backlog file, got {args.backlog_file}'
+print('iterate flags accepted')
+"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"iterate flags accepted"* ]]
+}
+
+# Test: explicit backlog selection should pick the first open item and
+# persist it as the active iterate-mode task.
+@test "iterate: explicit backlog file selects the first open backlog item" {
+    run python3 -c "
+import sys; sys.path.insert(0, '$BATS_TEST_DIRNAME/../scripts')
+from pathlib import Path
+from cyborg_agent import CyborgAgent, create_session
+
+class FakeAI:
+    enabled = True
+
+repo = Path('$SOURCE_REPO')
+blog = Path('$BLOG_DIR')
+state = create_session(
+    blog_root=blog,
+    cwd=repo,
+    repo_path=repo,
+    markdown_file=None,
+    source_text='',
+    article_text='',
+)
+agent = CyborgAgent(state, ai_client=FakeAI(), interactive=False)
+task = agent.prepare_iteration_task(backlog_file='BACKLOG.md')
+assert task is not None, 'expected a selected task'
+assert task['source'] == 'backlog_file', task
+assert task['title'] == 'Add JSON output mode', task
+assert agent.state.iteration_task['status'] == 'selected', agent.state.iteration_task
+print('iterate backlog selection passed')
+"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"iterate backlog selection passed"* ]]
+}
+
+# Test: the shared verifier should work for existing repos too, not
+# just scaffolded ones.
+@test "iterate: verify_and_fix_project passes on a make-based repo" {
+    run python3 -c "
+import sys, tempfile; sys.path.insert(0, '$BATS_TEST_DIRNAME/../scripts')
+from pathlib import Path
+from cyborg_build import verify_and_fix_project
+
+class FakeAI:
+    enabled = True
+
+with tempfile.TemporaryDirectory() as d:
+    project = Path(d)
+    (project / 'Makefile').write_text('all:\\n\\t@echo ok\\n', encoding='utf-8')
+    result = verify_and_fix_project(project, 'make target should pass', FakeAI())
+    assert result['verified'] is True, result
+    assert result['recipe'] == 'make', result
+
+print('iterate verify helper passed')
+"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"iterate verify helper passed"* ]]
+}
+
+# Test: iterate autopilot should auto-apply the staged repo edit, run
+# verification, rescan once, and stop before the docs pipeline.
+@test "iterate: run_autopilot applies and verifies the selected task before stopping" {
+    run python3 -c "
+import sys, unittest.mock; sys.path.insert(0, '$BATS_TEST_DIRNAME/../scripts')
+from pathlib import Path
+from cyborg_agent import CyborgAgent, create_session, run_autopilot
+
+class FakeAI:
+    enabled = True
+
+repo = Path('$SOURCE_REPO')
+blog = Path('$BLOG_DIR')
+state = create_session(
+    blog_root=blog,
+    cwd=repo,
+    repo_path=repo,
+    markdown_file=None,
+    source_text='',
+    article_text='',
+)
+agent = CyborgAgent(state, ai_client=FakeAI(), interactive=False)
+calls = []
+
+def prep_context():
+    calls.append('context')
+    agent.state.scan_summary = 'ready'
+
+def prepare_task(backlog_file=None):
+    task = {
+        'source': 'backlog_file',
+        'title': 'Add JSON output mode',
+        'body': 'CLI should support --json.',
+        'source_label': 'Backlog BACKLOG.md:3',
+        'source_url': '',
+        'status': 'selected',
+    }
+    agent.state.iteration_task = task
+    return task
+
+def build_plan():
+    agent.state.code_improvement_plan = {
+        'summary': 'Implement the selected iterate task.',
+        'items': [
+            {
+                'id': 1,
+                'title': 'Add JSON output mode',
+                'priority': 'high',
+                'kind': 'refactor',
+                'why': 'Needed for automation.',
+                'target_files': ['tool.py'],
+                'acceptance': ['JSON output is available.'],
+            }
+        ],
+    }
+
+def stage_plan():
+    agent.state.pending_repo_edits = {
+        'tool.py': {
+            'content': 'print(\"json\")\\n',
+            'reason': 'Add JSON output mode.',
+            'improvement_id': 1,
+            'title': 'Add JSON output mode',
+        }
+    }
+
+def apply_changes(target, assume_yes):
+    calls.append(('apply', target, assume_yes))
+    agent.state.pending_repo_edits = {}
+    agent.state.phase = 'intake'
+
+def rescan():
+    calls.append('scan')
+    agent.state.scan_summary = 'rescanned'
+
+agent.auto_prepare_repo_context = prep_context
+agent.prepare_iteration_task = prepare_task
+agent.build_code_improvement_plan = build_plan
+agent.stage_code_improvement = stage_plan
+agent.apply_changes = apply_changes
+agent.scan_repo = rescan
+agent.build_content_map = lambda: (_ for _ in ()).throw(AssertionError('docs pass should not run'))
+
+with unittest.mock.patch('cyborg_agent.verify_and_fix_project', return_value={'verified': True, 'recipe': 'make', 'reason': ''}) as verify_mock:
+    rc = run_autopilot(agent, iterate_mode=True, backlog_file='BACKLOG.md')
+    assert rc == 0, rc
+    assert verify_mock.called, 'expected verify_and_fix_project to run'
+
+assert ('apply', 'code', True) in calls, calls
+assert 'scan' in calls, calls
+assert agent.state.iteration_task['status'] == 'applied', agent.state.iteration_task
+print('iterate autopilot flow passed')
+"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"iterate autopilot flow passed"* ]]
 }

@@ -1,6 +1,20 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** March 24, 2026
+**Last Updated:** March 25, 2026
+
+## Version 2.2.52 (March 25, 2026) - Cyborg Iterate Mode
+
+**Status:** ✅ Production Ready
+
+### New
+
+- Added `cyborg auto --iterate` for existing repos. It selects the next GitHub issue or backlog item, stages the implementation, auto-applies the repo edit, and runs the existing build-verify-fix loop against that repo before stopping unless `--docs-after-code` is set.
+- Added `--backlog-file` so iterate mode can target an explicit local backlog instead of the default GitHub-issues-first discovery path.
+- Exposed the repo verifier as a reusable helper in `scripts/cyborg_build.py` so build mode and iterate mode share the same verification/fix loop.
+- Added focused BATS coverage for iterate-mode CLI guards, backlog selection, repo verification, and the new autopilot control flow.
+- Updated the Cyborg docs (`CLAUDE.md`, `AGENTS.md`, `bin/cyborg-readme.md`, `bin/autopilot-readme.md`, `bin/README.md`, and the handbook/playbook pages) to document the new incremental-growth path.
+
+---
 
 ## Version 2.2.51 (March 24, 2026) - Fitbit API Sync
 

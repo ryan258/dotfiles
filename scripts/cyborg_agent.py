@@ -31,6 +31,7 @@ from cyborg_build import (
     _commit_metadata_changes,
     _detect_publish_recipe,
     _format_validation_report,
+    load_github_token,
     _publish_project,
     _search_github,
     _search_npm,
@@ -38,6 +39,7 @@ from cyborg_build import (
     _validate_publish_prereqs,
     build_project_from_idea,
     validate_market,
+    verify_and_fix_project,
 )
 from cyborg_support import (
     DEFAULT_COMMAND_TIMEOUT_SECONDS,
@@ -58,7 +60,7 @@ except ImportError:  # pragma: no cover - readline is optional on some systems
 # --- Global constants ---
 
 # Bump this number when the session JSON shape changes.
-SESSION_VERSION = 2
+SESSION_VERSION = 3
 # Keep only the last N exchanges in the AI conversation window.
 MAX_CHAT_HISTORY = 8
 # Where we send AI requests (OpenRouter acts as a model gateway).
@@ -85,6 +87,17 @@ KNOWN_BLOG_PATHS = (
 )
 # Default workspace for resumable Cyborg session artifacts.
 DEFAULT_CYBORG_WORK_DIR = Path.home() / "Projects" / "cyborg-work"
+GITHUB_ISSUE_FETCH_TIMEOUT_SECONDS = 15
+BACKLOG_FILE_CANDIDATES = (
+    ".cyborg/backlog.md",
+    ".cyborg-backlog.md",
+    "BACKLOG.md",
+    "BACKLOG.txt",
+    "TODO.md",
+    "TODO.txt",
+    "ROADMAP.md",
+    "docs/BACKLOG.md",
+)
 # If a folder contains one of these files, it is probably a project.
 PROJECT_FILE_MARKERS = {
     "pyproject.toml",
@@ -587,6 +600,202 @@ def looks_like_project_dir(path: Path) -> bool:
     return has_readme and has_source
 
 
+def parse_github_repo_slug(remote_url: str) -> Optional[tuple[str, str]]:
+    """Extract an owner/repo slug from common GitHub remote URL formats."""
+    cleaned = (remote_url or "").strip()
+    if not cleaned:
+        return None
+
+    patterns = (
+        r"^git@github\.com:(?P<owner>[^/]+)/(?P<repo>[^/]+?)(?:\.git)?$",
+        r"^ssh://git@github\.com/(?P<owner>[^/]+)/(?P<repo>[^/]+?)(?:\.git)?/?$",
+        r"^https?://github\.com/(?P<owner>[^/]+)/(?P<repo>[^/]+?)(?:\.git)?/?$",
+        r"^git://github\.com/(?P<owner>[^/]+)/(?P<repo>[^/]+?)(?:\.git)?/?$",
+    )
+    for pattern in patterns:
+        match = re.match(pattern, cleaned)
+        if match:
+            return match.group("owner"), match.group("repo")
+    return None
+
+
+def fetch_open_github_issues(repo_remote: str) -> tuple[list[dict[str, Any]], Optional[str]]:
+    """Return open GitHub issues for a repo remote, or a note describing why not."""
+    slug = parse_github_repo_slug(repo_remote)
+    if not slug:
+        return [], "Repo remote is not a GitHub origin, so iterate mode skipped GitHub issues."
+
+    owner, repo = slug
+    url = (
+        f"https://api.github.com/repos/{owner}/{repo}/issues"
+        f"?state=open&sort=created&direction=asc&per_page=20"
+    )
+    request = urllib.request.Request(
+        url,
+        headers={
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "Cyborg-Lab-Agent/1.0",
+        },
+    )
+    github_token = load_github_token().strip()
+    if github_token:
+        request.add_header("Authorization", f"token {github_token}")
+
+    try:
+        with urllib.request.urlopen(request, timeout=GITHUB_ISSUE_FETCH_TIMEOUT_SECONDS) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        if exc.code == 401:
+            return [], "GitHub issue fetch failed: authentication rejected."
+        if exc.code == 403:
+            return [], "GitHub issue fetch failed: rate limited or forbidden."
+        if exc.code == 404:
+            return [], "GitHub issue fetch failed: repo not found or issues are unavailable."
+        return [], f"GitHub issue fetch failed: HTTP {exc.code}."
+    except urllib.error.URLError:
+        return [], "GitHub issue fetch failed: network unavailable."
+    except TimeoutError:
+        return [], "GitHub issue fetch failed: request timed out."
+    except json.JSONDecodeError:
+        return [], "GitHub issue fetch failed: response was not valid JSON."
+
+    issues: list[dict[str, Any]] = []
+    if not isinstance(payload, list):
+        return issues, "GitHub issue fetch failed: unexpected response payload."
+
+    for raw_issue in payload:
+        if not isinstance(raw_issue, dict):
+            continue
+        if raw_issue.get("pull_request"):
+            continue
+        title = str(raw_issue.get("title", "")).strip()
+        if not title:
+            continue
+        labels = [
+            str(label.get("name", "")).strip()
+            for label in raw_issue.get("labels", [])
+            if isinstance(label, dict) and str(label.get("name", "")).strip()
+        ]
+        issues.append(
+            {
+                "source": "github_issue",
+                "title": title,
+                "body": str(raw_issue.get("body", "")).strip(),
+                "source_label": f"GitHub issue #{raw_issue.get('number', '?')}",
+                "source_url": str(raw_issue.get("html_url", "")).strip(),
+                "issue_number": int(raw_issue.get("number", 0) or 0),
+                "labels": labels,
+            }
+        )
+    if not issues:
+        return [], "GitHub issues are available, but there are no open issues to iterate on."
+    return issues, None
+
+
+def resolve_backlog_file(repo_root: Path, explicit: Optional[str]) -> Optional[Path]:
+    """Find the backlog file to use for iterate mode."""
+    if explicit:
+        candidate = Path(explicit).expanduser()
+        if not candidate.is_absolute():
+            candidate = resolve_within_root(repo_root, repo_root / candidate, label="source repo")
+        else:
+            candidate = canonical_home_path(str(candidate))
+        if candidate.is_file():
+            return candidate
+        raise ValueError(f"Backlog file not found: {candidate}")
+
+    for rel_path in BACKLOG_FILE_CANDIDATES:
+        candidate = repo_root / rel_path
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def parse_backlog_items(path: Path, *, repo_root: Optional[Path] = None) -> list[dict[str, Any]]:
+    """Parse unchecked tasks from a simple markdown or text backlog file."""
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+
+    rel_path = str(path)
+    if repo_root is not None:
+        try:
+            rel_path = str(path.resolve().relative_to(repo_root.resolve()))
+        except ValueError:
+            rel_path = str(path)
+
+    items: list[dict[str, Any]] = []
+    active: Optional[dict[str, Any]] = None
+    in_code_block = False
+
+    def flush_active() -> None:
+        nonlocal active
+        if not active:
+            return
+        body = "\n".join(active.pop("body_lines", [])).strip()
+        active["body"] = body
+        items.append(active)
+        active = None
+
+    checkbox_pattern = re.compile(r"^(?:[-*+]|\d+\.)?\s*\[\s\]\s+(.+)$")
+    checked_pattern = re.compile(r"^(?:[-*+]|\d+\.)?\s*\[[xX]\]\s+(.+)$")
+    bullet_pattern = re.compile(r"^(?:[-*+]|\d+\.)\s+(.+)$")
+
+    for line_number, raw_line in enumerate(lines, start=1):
+        stripped = raw_line.strip()
+        if stripped.startswith("```"):
+            in_code_block = not in_code_block
+            continue
+        if in_code_block:
+            continue
+        if not stripped:
+            if active and active["body_lines"] and active["body_lines"][-1] != "":
+                active["body_lines"].append("")
+            continue
+        if stripped.startswith("#"):
+            flush_active()
+            continue
+        if checked_pattern.match(stripped):
+            flush_active()
+            continue
+
+        title = ""
+        item_kind = ""
+        match = checkbox_pattern.match(stripped)
+        if match:
+            title = match.group(1).strip()
+            item_kind = "checkbox"
+        else:
+            match = bullet_pattern.match(stripped)
+            if match:
+                title = match.group(1).strip()
+                item_kind = "bullet"
+
+        if title:
+            flush_active()
+            active = {
+                "source": "backlog_file",
+                "title": title,
+                "body_lines": [],
+                "source_label": f"Backlog {rel_path}:{line_number}",
+                "source_url": "",
+                "source_path": str(path),
+                "item_kind": item_kind,
+            }
+            continue
+
+        if active:
+            active["body_lines"].append(stripped)
+
+    flush_active()
+
+    open_checkboxes = [item for item in items if item.get("item_kind") == "checkbox"]
+    if open_checkboxes:
+        return open_checkboxes
+    return items
+
+
 # =====================================================================
 # Blog-awareness parsers (archetypes, shortcodes, content strategy)
 # =====================================================================
@@ -1043,6 +1252,7 @@ class SessionState:
     chat_history: list[dict[str, str]] = field(default_factory=list)   # Rolling AI conversation log
     scan_summary: str = ""               # Markdown summary of the repo scan
     scan_details: dict[str, Any] = field(default_factory=dict)         # Structured scan data
+    iteration_task: dict[str, Any] = field(default_factory=dict)       # Selected iterate-mode task (issue/backlog item)
     duplicate_candidates: list[dict[str, str]] = field(default_factory=list)  # Blog pages that might overlap
     code_improvement_plan: dict[str, Any] = field(default_factory=dict)       # Prioritized source-repo improvement plan
     pending_repo_edits: dict[str, dict[str, Any]] = field(default_factory=dict)  # Staged edits for the source repo
@@ -1677,11 +1887,19 @@ class CyborgAgent:
         map_items = self.state.content_map.get("items", [])
         pending_keys = ", ".join(sorted(self.state.pending_drafts)) or "(none)"
         review_target = self.state.active_review_key or "(none)"
+        iteration_task = self.state.iteration_task if isinstance(self.state.iteration_task, dict) else {}
+        iteration_label = "(none)"
+        if iteration_task and str(iteration_task.get("title", "")).strip():
+            iteration_label = iteration_task.get("source_label") or iteration_task.get("title", "(selected)")
+            status = str(iteration_task.get("status", "")).strip().lower()
+            if status in {"applied", "completed"}:
+                iteration_label = f"{iteration_label} ({status})"
         lines = [
             f"Session: {self.state.session_id}",
             f"Phase: {self.state.phase}",
             f"Repo: {self.state.repo_path or '(none)'}",
             f"Blog root: {self.state.blog_root}",
+            f"Iteration task: {iteration_label}",
             f"Source notes: {len(self.state.intake_notes)} intake, {len(self.state.planning_notes)} planning, {len(self.state.editorial_notes)} editorial",
             f"Code improvements: {len(self.state.code_improvement_plan.get('items', []))}",
             f"Pending repo edits: {len(self.state.pending_repo_edits)}",
@@ -1702,6 +1920,18 @@ class CyborgAgent:
             self.state.code_improvement_plan.get("summary", "No source-repo improvement plan generated."),
             "",
         ]
+        iteration_task = self.state.iteration_task if isinstance(self.state.iteration_task, dict) else {}
+        if iteration_task and str(iteration_task.get("title", "")).strip():
+            lines.extend(["## Iteration Task", ""])
+            lines.append(f"- Source: {iteration_task.get('source_label', '(unknown)')}")
+            lines.append(f"- Title: {iteration_task.get('title', '(untitled)')}")
+            if iteration_task.get("status"):
+                lines.append(f"- Status: {iteration_task['status']}")
+            if iteration_task.get("source_url"):
+                lines.append(f"- Link: {iteration_task['source_url']}")
+            if iteration_task.get("body"):
+                lines.append(f"- Context: {short_preview(str(iteration_task['body']), 320)}")
+            lines.append("")
         items = self.state.code_improvement_plan.get("items", [])
         if items:
             lines.extend(["## Prioritized Improvements", ""])
@@ -2479,6 +2709,114 @@ class CyborgAgent:
         signal = " ".join([self.state.source_text, self.state.article_text, self.state.scan_summary]).lower()
         return any(term in signal for term in ("system prompt", "prompt contract", "instruction template", "persona"))
 
+    def _active_iteration_task(self) -> Optional[dict[str, Any]]:
+        """Return the saved iterate-mode task when this session has one."""
+        task = self.state.iteration_task
+        if (
+            isinstance(task, dict)
+            and str(task.get("title", "")).strip()
+            and str(task.get("status", "selected")).strip().lower() not in {"applied", "completed"}
+        ):
+            return task
+        return None
+
+    def prepare_iteration_task(self, backlog_file: Optional[str] = None) -> Optional[dict[str, Any]]:
+        """Pick the next iterate-mode task from GitHub issues or a backlog file."""
+        repo_root = self._repo_path()
+        if not repo_root:
+            self.assistant_say("Iterate mode requires an active source repo.")
+            return None
+
+        notes: list[str] = []
+        selected: Optional[dict[str, Any]] = None
+
+        if backlog_file:
+            try:
+                backlog_path = resolve_backlog_file(repo_root, backlog_file)
+            except ValueError as exc:
+                raise RuntimeError(str(exc)) from exc
+            backlog_items = parse_backlog_items(backlog_path, repo_root=repo_root)
+            if not backlog_items:
+                self.assistant_say(f"Backlog file `{backlog_path}` does not contain any actionable items.")
+                return None
+            selected = backlog_items[0]
+        else:
+            issues, issue_note = fetch_open_github_issues(self.state.repo_remote or "")
+            if issues:
+                selected = issues[0]
+            elif issue_note:
+                notes.append(issue_note)
+
+            if selected is None:
+                backlog_path = resolve_backlog_file(repo_root, None)
+                if backlog_path is None:
+                    notes.append("No local backlog file was found.")
+                else:
+                    backlog_items = parse_backlog_items(backlog_path, repo_root=repo_root)
+                    if backlog_items:
+                        selected = backlog_items[0]
+                    else:
+                        notes.append(f"Backlog file `{backlog_path}` does not contain any actionable items.")
+
+        if not selected:
+            self.state.iteration_task = {}
+            self.save()
+            message = "Iterate mode could not find a task to implement."
+            if notes:
+                message += "\n" + "\n".join(f"- {note}" for note in notes)
+            self.assistant_say(message)
+            return None
+
+        self.state.iteration_task = selected
+        self.state.iteration_task["status"] = "selected"
+        self.save()
+        lines = [
+            f"Iterate mode selected: {selected['title']}",
+            f"Source: {selected.get('source_label', 'unknown source')}",
+        ]
+        if selected.get("source_url"):
+            lines.append(f"Link: {selected['source_url']}")
+        if selected.get("body"):
+            lines.append(short_preview(str(selected["body"]), 260))
+        if notes:
+            lines.extend(f"Note: {note}" for note in notes[:2])
+        self.assistant_say("\n".join(lines))
+        return selected
+
+    def _suggest_code_targets(self, *, limit: int = 3) -> list[str]:
+        """Return the best current repo files to target for a small improvement."""
+        sample_code = [self._normalize_repo_relative_path(path) for path in self.state.scan_details.get("sample_code", [])]
+        sample_code = [path for path in sample_code if path]
+        graph_files: list[str] = []
+        for entry in self.state.gitnexus_summary.get("process_symbols", [])[:6]:
+            normalized = self._normalize_repo_relative_path(entry.get("filePath"))
+            if normalized and normalized not in graph_files:
+                graph_files.append(normalized)
+        for entry in self.state.gitnexus_summary.get("definitions", [])[:6]:
+            normalized = self._normalize_repo_relative_path(entry.get("filePath"))
+            if normalized and normalized not in graph_files:
+                graph_files.append(normalized)
+        return (graph_files or sample_code)[:limit]
+
+    def _decorate_iteration_plan(self, plan: dict[str, Any], task: dict[str, Any]) -> dict[str, Any]:
+        """Attach iterate-mode metadata to the first improvement item."""
+        items = plan.get("items", [])
+        if not items:
+            return plan
+        item = items[0]
+        item["source"] = task.get("source", "")
+        item["source_label"] = task.get("source_label", "")
+        item["source_url"] = task.get("source_url", "")
+        item["source_title"] = task.get("title", "")
+        item["task_context"] = str(task.get("body", "")).strip()
+        if task.get("labels"):
+            item["labels"] = list(task.get("labels", []))[:8]
+        prefix = f"Iterate mode target: {task.get('source_label', 'task')} - {task.get('title', '').strip()}."
+        summary = str(plan.get("summary", "")).strip()
+        plan["summary"] = f"{prefix} {summary}".strip()
+        plan["items"] = items[:1]
+        return plan
+
     # --- Code improvements ---
 
     def build_code_improvement_plan(self) -> None:
@@ -2494,14 +2832,25 @@ class CyborgAgent:
             if self._gitnexus_decision_pending():
                 return
 
-        if self.ai_client.enabled:
-            try:
-                plan = self._ai_code_improvement_plan()
-            except RuntimeError as exc:
-                self.assistant_say(f"AI improvement planning failed, using deterministic heuristics.\nReason: {exc}")
-                plan = self._heuristic_code_improvement_plan()
+        iteration_task = self._active_iteration_task()
+        if iteration_task:
+            if self.ai_client.enabled:
+                try:
+                    plan = self._ai_iteration_code_improvement_plan(iteration_task)
+                except RuntimeError as exc:
+                    self.assistant_say(f"AI iteration planning failed, using deterministic heuristics.\nReason: {exc}")
+                    plan = self._heuristic_iteration_code_improvement_plan(iteration_task)
+            else:
+                plan = self._heuristic_iteration_code_improvement_plan(iteration_task)
         else:
-            plan = self._heuristic_code_improvement_plan()
+            if self.ai_client.enabled:
+                try:
+                    plan = self._ai_code_improvement_plan()
+                except RuntimeError as exc:
+                    self.assistant_say(f"AI improvement planning failed, using deterministic heuristics.\nReason: {exc}")
+                    plan = self._heuristic_code_improvement_plan()
+            else:
+                plan = self._heuristic_code_improvement_plan()
 
         self.state.code_improvement_plan = plan
         self.state.pending_repo_edits = {}
@@ -2558,6 +2907,56 @@ class CyborgAgent:
             raise RuntimeError("AI returned no usable source-repo improvements.")
         return normalized
 
+    def _ai_iteration_code_improvement_plan(self, task: dict[str, Any]) -> dict[str, Any]:
+        """Ask the AI for a single implementation plan for the selected iterate task."""
+        payload = {
+            "repo_name": self.state.repo_name,
+            "repo_remote": self.state.repo_remote,
+            "repo_scan": self.state.scan_summary,
+            "scan_details": self.state.scan_details,
+            "gitnexus_status": self.state.gitnexus_status,
+            "gitnexus_summary": self.state.gitnexus_summary,
+            "iteration_task": task,
+        }
+        response = self.ai_client.chat_json(
+            CODE_IMPROVEMENT_CONTRACT,
+            textwrap.dedent(
+                f"""
+                Build the next implementation plan for iterate mode.
+                Return JSON with:
+                {{
+                  "summary": "short paragraph",
+                  "items": [
+                    {{
+                      "title": "short implementation title",
+                      "priority": "high|medium|low",
+                      "kind": "bugfix|refactor|test|config|cleanup",
+                      "why": "why this task matters now",
+                      "target_files": ["relative/path.py", "tests/test_x.py"],
+                      "acceptance": ["observable outcome 1", "observable outcome 2"]
+                    }}
+                  ]
+                }}
+
+                Rules:
+                - This is iterate mode: implement the chosen task below, not a generic cleanup.
+                - Return exactly one improvement item.
+                - Name concrete target files that likely need changes.
+                - Prefer the repo's existing verification surfaces when choosing targets.
+
+                Source payload:
+                {json.dumps(payload, indent=2)}
+                """
+            ).strip(),
+            temperature=0.2,
+            cache_system=True,
+            max_tokens=1200,
+        )
+        normalized = self._normalize_code_improvement_plan(response)
+        if not normalized.get("items"):
+            raise RuntimeError("AI returned no usable iterate-mode improvement.")
+        return self._decorate_iteration_plan(normalized, task)
+
     def _heuristic_code_improvement_plan(self) -> dict[str, Any]:
         """Build a small deterministic improvement plan when AI is unavailable."""
         sample_code = [self._normalize_repo_relative_path(path) for path in self.state.scan_details.get("sample_code", [])]
@@ -2566,18 +2965,9 @@ class CyborgAgent:
         manifest_paths = [path for path in manifest_paths if path]
         flow = next(iter(self.state.gitnexus_summary.get("processes", [])), {})
         flow_hint = flow.get("summary", "").strip()
-        graph_files: list[str] = []
-        for entry in self.state.gitnexus_summary.get("process_symbols", [])[:6]:
-            normalized = self._normalize_repo_relative_path(entry.get("filePath"))
-            if normalized and normalized not in graph_files:
-                graph_files.append(normalized)
-        for entry in self.state.gitnexus_summary.get("definitions", [])[:6]:
-            normalized = self._normalize_repo_relative_path(entry.get("filePath"))
-            if normalized and normalized not in graph_files:
-                graph_files.append(normalized)
 
         items: list[dict[str, Any]] = []
-        core_targets = (graph_files or sample_code)[:2]
+        core_targets = self._suggest_code_targets(limit=2) or sample_code[:2]
         if core_targets:
             title = "Harden the core execution flow"
             if flow_hint:
@@ -2652,6 +3042,53 @@ class CyborgAgent:
             "summary": summary,
             "items": items[:3],
         }
+
+    def _heuristic_iteration_code_improvement_plan(self, task: dict[str, Any]) -> dict[str, Any]:
+        """Build a single iterate-mode improvement plan when AI planning fails."""
+        targets = self._suggest_code_targets(limit=3)
+        if not targets:
+            targets = [
+                path
+                for path in (
+                    self._normalize_repo_relative_path(value)
+                    for value in self.state.scan_details.get("sample_code", [])[:3]
+                )
+                if path
+            ]
+        if not targets:
+            return {"summary": "Iterate mode could not find safe source targets for the selected task.", "items": []}
+
+        task_text = " ".join(
+            str(value).strip()
+            for value in [task.get("title", ""), task.get("body", "")]
+            if str(value).strip()
+        ).lower()
+        task_kind = "refactor"
+        if any(term in task_text for term in ("bug", "fix", "error", "crash", "fail")):
+            task_kind = "bugfix"
+        elif any(term in task_text for term in ("test", "coverage", "assert")):
+            task_kind = "test"
+        elif any(term in task_text for term in ("config", "setting", "env", "option")):
+            task_kind = "config"
+
+        plan = {
+            "summary": f"Implement the selected iterate-mode task in the repo's highest-signal path first.",
+            "items": [
+                {
+                    "id": 1,
+                    "title": str(task.get("title", "")).strip() or "Implement the next iteration task",
+                    "priority": "high",
+                    "kind": task_kind,
+                    "why": str(task.get("body", "")).strip() or "Selected from the repo's iterate-mode task source.",
+                    "target_files": targets,
+                    "acceptance": [
+                        "The selected issue or backlog item is implemented in the source repo.",
+                        "The repo's existing verification path still passes after the change.",
+                    ],
+                }
+            ],
+        }
+        return self._decorate_iteration_plan(plan, task)
 
     def _normalize_code_improvement_plan(self, plan: dict[str, Any]) -> dict[str, Any]:
         """Validate and normalize a repo-improvement plan payload."""
@@ -2791,6 +3228,15 @@ class CyborgAgent:
 
                 Chosen improvement:
                 {json.dumps(item, indent=2)}
+
+                Iteration task context:
+                {json.dumps({
+                    "source_label": item.get("source_label", ""),
+                    "source_url": item.get("source_url", ""),
+                    "source_title": item.get("source_title", ""),
+                    "task_context": item.get("task_context", ""),
+                    "labels": item.get("labels", []),
+                }, indent=2)}
 
                 Allowed target files with current contents:
                 {json.dumps(file_payload, indent=2)}
@@ -4339,6 +4785,8 @@ def run_autopilot(
     assume_yes: bool = False,
     docs_after_code: bool = False,
     build_mode: bool = False,
+    iterate_mode: bool = False,
+    backlog_file: Optional[str] = None,
 ) -> int:
     """Run the full Cyborg pipeline hands-free.
 
@@ -4350,6 +4798,8 @@ def run_autopilot(
     applied explicitly.
     """
     docs_after_code = docs_after_code or os.environ.get("CYBORG_DOCS_AFTER_CODE", "").lower() in {"1", "true", "yes"}
+    iterate_applied = False
+    iterate_verify_result: dict[str, Any] = {}
     print(f"Cyborg autopilot session: {agent.state.session_id}")
     print(f"Repo: {agent.state.repo_path or '(none)'}")
     print(f"Blog root: {agent.state.blog_root}")
@@ -4431,14 +4881,62 @@ def run_autopilot(
 
     # --- Phase 2: Code-first repo improvements ---
     def _phase_code_improvements() -> None:
+        nonlocal iterate_applied, iterate_verify_result
         if not agent.state.repo_path:
+            if iterate_mode:
+                raise RuntimeError("Iterate mode requires an active source repo.")
             return
+        if iterate_mode:
+            agent.assistant_say("Autopilot: selecting the next iteration task...")
+            task = agent.prepare_iteration_task(backlog_file=backlog_file)
+            if not task:
+                raise RuntimeError("Iterate mode could not find an open GitHub issue or backlog item to implement.")
         agent.assistant_say("Autopilot: planning source-repo improvements...")
         agent.build_code_improvement_plan()
         if agent.state.code_improvement_plan.get("items"):
             agent.assistant_say("Autopilot: staging the top source-repo improvement...")
             agent.stage_code_improvement()
-            if os.environ.get("CYBORG_AUTO_APPLY_CODE", "").lower() in {"1", "true", "yes"} and agent.state.pending_repo_edits:
+            if iterate_mode:
+                if not agent.state.pending_repo_edits:
+                    raise RuntimeError("Iterate mode did not produce any safe source-repo edits.")
+                task = agent._active_iteration_task() or {}
+                task_goal = "\n\n".join(
+                    part.strip()
+                    for part in [str(task.get("title", "")), str(task.get("body", ""))]
+                    if part.strip()
+                ) or "Iterate mode repo change"
+                agent.assistant_say("Autopilot: applying iterate-mode source-repo edits...")
+                agent.apply_changes("code", assume_yes=True)
+                iterate_applied = True
+                repo_root = agent._repo_path()
+                if not repo_root:
+                    raise RuntimeError("Iterate mode lost the source repo after applying changes.")
+                agent.assistant_say("Autopilot: running the build-verify-fix loop on the updated repo...")
+                iterate_verify_result = verify_and_fix_project(
+                    repo_root,
+                    task_goal,
+                    agent.ai_client,
+                    context_label="repo",
+                )
+                if not iterate_verify_result.get("verified"):
+                    reason = str(iterate_verify_result.get("reason", "")).strip()
+                    raise RuntimeError(
+                        "Iterate mode could not verify the repo changes."
+                        + (f" {reason}" if reason else "")
+                    )
+                if isinstance(agent.state.iteration_task, dict):
+                    agent.state.iteration_task["status"] = "applied"
+                    agent.state.iteration_task["completed_at"] = utc_now()
+                fix_rounds = int(iterate_verify_result.get("ai_fix_rounds", 0) or 0)
+                if fix_rounds > 0:
+                    agent.assistant_say(
+                        f"Autopilot: verification needed {fix_rounds} AI fix round(s). "
+                        "Those follow-up changes stay in your working tree; iterate mode does not auto-commit them."
+                    )
+                agent.state.gitnexus_skip = True
+                agent.assistant_say("Autopilot: rescanning repo after the verified iterate change...")
+                agent.scan_repo()
+            elif os.environ.get("CYBORG_AUTO_APPLY_CODE", "").lower() in {"1", "true", "yes"} and agent.state.pending_repo_edits:
                 agent.assistant_say("Autopilot: applying staged source-repo edits before documentation...")
                 agent.apply_changes("code", assume_yes=True)
                 if agent.state.repo_path:
@@ -4448,6 +4946,28 @@ def run_autopilot(
 
     if not _phase("code improvements", _phase_code_improvements):
         return 1
+
+    if iterate_mode:
+        if not iterate_applied:
+            agent.assistant_say(f"Iterate mode saved the session without changing the repo. Resume with: cyborg resume {agent.state.session_id}")
+            return 0
+        if not docs_after_code:
+            print()
+            print("=" * 60)
+            print("  ITERATE STAGE COMPLETE")
+            print("=" * 60)
+            print()
+            for line in agent.status_lines():
+                print(f"  {line}")
+            print()
+            verification_label = iterate_verify_result.get("recipe") or "repo checks"
+            agent.assistant_say(
+                f"Iterate mode applied the selected task and passed `{verification_label}` verification. "
+                "Repo changes remain in your working tree for review; iterate mode does not auto-commit them. "
+                "Use `--docs-after-code` when you want the documentation pass in the same run."
+            )
+            return 0
+        agent.assistant_say("Iterate mode code stage verified. Continuing into documentation.")
 
     code_edit_count = len(agent.state.pending_repo_edits)
     if code_edit_count and not docs_after_code:
@@ -4733,7 +5253,7 @@ def build_parser() -> argparse.ArgumentParser:
     ingest.add_argument("--stdin-source", action="store_true", help="Treat stdin as supporting source material before starting the session")
     ingest.add_argument("idea", nargs="*", help="Plain-text idea or focus notes")
 
-    auto = subparsers.add_parser("auto", help="Run the code-first autopilot (scan, improve, patch-code, then optionally docs)")
+    auto = subparsers.add_parser("auto", help="Run the code-first autopilot (scan, improve, patch-code, or iterate the next issue/backlog item, then optionally docs)")
     auto.add_argument("--repo", help="Repo or directory to scan")
     auto.add_argument("--file", help="Markdown file to use as supporting material")
     auto.add_argument("--blog-root", help="Path to my-ms-ai-blog")
@@ -4742,6 +5262,8 @@ def build_parser() -> argparse.ArgumentParser:
     auto.add_argument("--docs-after-code", action="store_true", help="Continue into the documentation pipeline after the code-first stage")
     auto.add_argument("--no-morphling", action="store_true", help="Skip Morphling pre-analysis even if available")
     auto.add_argument("--build", action="store_true", help="Morphling builds the project from your idea first, then Cyborg runs the code-first pass")
+    auto.add_argument("--iterate", action="store_true", help="Implement the next GitHub issue or backlog item in an existing repo, then run the repo build-verify-fix loop")
+    auto.add_argument("--backlog-file", help="Explicit backlog file for --iterate (defaults to GitHub issues, then common backlog filenames)")
     auto.add_argument("--publish", action="store_true", help="Publish to ecosystem registry after build+verify (npm, PyPI, crates.io, GitHub Releases)")
     auto.add_argument("--no-validate", action="store_true", help="Skip market validation search before building")
     auto.add_argument("--projects-dir", help="Where to create the project (default: ~/Projects)")
@@ -4783,6 +5305,12 @@ def main(argv: Optional[List[str]] = None) -> int:
 
             if args.command == "auto" and getattr(args, "publish", False) and not getattr(args, "build", False):
                 raise ValueError("--publish requires --build.")
+            if args.command == "auto" and getattr(args, "backlog_file", None) and not getattr(args, "iterate", False):
+                raise ValueError("--backlog-file requires --iterate.")
+            if args.command == "auto" and getattr(args, "iterate", False) and getattr(args, "build", False):
+                raise ValueError("--iterate cannot be combined with --build.")
+            if args.command == "auto" and getattr(args, "iterate", False) and not ai_client.enabled:
+                raise ValueError("--iterate requires AI mode (set OPENROUTER_API_KEY).")
 
             # --- Morphling build step (convergence path 2) ---
             # When --build is used, Morphling scaffolds a new project
@@ -4832,6 +5360,8 @@ def main(argv: Optional[List[str]] = None) -> int:
                 args.repo = str(built_path)
 
             repo_path = resolve_repo_path(args.repo, cwd)
+            if args.command == "auto" and getattr(args, "iterate", False) and not repo_path:
+                raise ValueError("--iterate requires an existing repo. Use --repo or run the command inside a project directory.")
             markdown_file, article_text = read_file_text(args.file)
             stdin_text = read_stdin_text() if args.stdin_source else ""
             if stdin_text:
@@ -4852,6 +5382,8 @@ def main(argv: Optional[List[str]] = None) -> int:
                     assume_yes=getattr(args, "yes", False),
                     docs_after_code=getattr(args, "docs_after_code", False),
                     build_mode=getattr(args, "build", False),
+                    iterate_mode=getattr(args, "iterate", False),
+                    backlog_file=getattr(args, "backlog_file", None),
                 )
             return run_repl(agent)
 

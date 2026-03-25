@@ -30,9 +30,13 @@ It is not a general dispatcher. It is a repo-aware writing workflow that stays f
 
 `cyborg auto` is now code-first. It scans the repo, plans source-repo improvements, stages the top code change, and stops there by default so the repo can be reviewed or updated before documentation drifts ahead. If Morphling is available, it runs a pre-analysis first to enrich that repo understanding. Add `--docs-after-code` when you want the full docs pipeline to continue after the code stage.
 
+`cyborg auto --iterate` is the incremental-growth path for an existing repo. It reads the next open GitHub issue when the repo has a GitHub remote, otherwise falls back to a local backlog file (`BACKLOG.md`, `TODO.md`, `.cyborg/backlog.md`, or `--backlog-file PATH`), stages the implementation, auto-applies it, and runs the same build-verify-fix loop against the live repo before stopping. It skips the doc-oriented Morphling pre-analysis because iterate mode is code-first from start to finish. Requires AI mode (`OPENROUTER_API_KEY`).
+
 ```bash
 cyborg auto                          # current dir, code-first autopilot
 cyborg auto --repo ~/Projects/foo    # specific repo
+cyborg auto --iterate --repo ~/Projects/foo
+cyborg auto --iterate --repo ~/Projects/foo --backlog-file docs/BACKLOG.md
 cyborg auto --yes                    # apply staged code edits and stop
 cyborg auto --docs-after-code        # continue into map/plan/draft after code
 cyborg auto --no-morphling           # skip Morphling pre-analysis
@@ -191,10 +195,14 @@ cyborg ingest "focus on the setup path and the reusable command sheet"
 
 `cyborg auto` accepts the same input sources as `cyborg ingest` (`--repo`, `--file`, `--stdin-source`, plain idea text) but now defaults to a code-first path. It scans the repo, stages the top source-repo improvement, and then stops unless there are no staged repo edits. Use `--docs-after-code` when you want the content-map, publishing-plan, and draft phases in the same run. If Morphling (`uv` + `ai-staff-hq/`) is available, the launcher calls it first for a repo pre-analysis that enriches the repo context. Use `--no-morphling` to skip it, or `--yes` to apply the staged code edits without a final confirmation.
 
+`cyborg auto --iterate` is the variant for “make the repo grow.” It chooses the next implementation task from GitHub issues or a backlog file, applies the repo edit automatically, runs the repo build-verify-fix loop, and then stops unless `--docs-after-code` is also set.
+
 ```bash
 cyborg auto --repo ~/Projects/rockit "focus on the CLI setup path"
 cyborg auto --repo ~/Projects/rockit --yes
 cyborg auto --repo ~/Projects/rockit --docs-after-code
+cyborg auto --iterate --repo ~/Projects/rockit
+cyborg auto --iterate --repo ~/Projects/rockit --backlog-file BACKLOG.md
 cat brief.md | cyborg auto --stdin-source --repo .
 ```
 

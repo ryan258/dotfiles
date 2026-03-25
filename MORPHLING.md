@@ -143,13 +143,13 @@ cyborg auto --build --publish "CLI that scores menus by accessibility"
 
 **Supported ecosystems:**
 
-| Marker | Registry | What Happens |
-| --- | --- | --- |
-| `package.json` | npm | `npm publish --access public` |
-| `pyproject.toml` | PyPI | `python3 -m build` + `twine upload dist/*` |
-| `setup.py` | PyPI | `python3 -m build` + `twine upload dist/*` |
-| `Cargo.toml` | crates.io | `cargo publish` |
-| `go.mod` | GitHub Releases | `gh release create v0.1.0` |
+| Marker           | Registry        | What Happens                               |
+| ---------------- | --------------- | ------------------------------------------ |
+| `package.json`   | npm             | `npm publish --access public`              |
+| `pyproject.toml` | PyPI            | `python3 -m build` + `twine upload dist/*` |
+| `setup.py`       | PyPI            | `python3 -m build` + `twine upload dist/*` |
+| `Cargo.toml`     | crates.io       | `cargo publish`                            |
+| `go.mod`         | GitHub Releases | `gh release create v0.1.0`                 |
 
 **Prerequisites:** Set registry tokens in `.env` (see `.env.example` for details):
 
@@ -627,7 +627,7 @@ Every one of these is a valid `cyborg auto --build` one-liner. Copy, paste, ship
 97. `"writing style analyzer that compares your prose to authors you admire"`
 98. `"dialogue rewriter that adjusts character voice consistency across a manuscript"`
 99. `"worldbuilding database that tracks characters, locations, and timelines"`
-100. `"beat sheet generator that converts a logline into a structured screenplay outline"`
+100.  `"beat sheet generator that converts a logline into a structured screenplay outline"`
 
 ### The Wildcard
 
@@ -1032,7 +1032,7 @@ These are closer to urgent public-good products than novelty hacks. Most of them
 97. `"Chrome extension that creates a distraction-reduced telework mode across email, chat, calendar, and docs"`
 98. `"Chrome extension that summarizes school parent portals into missing work, deadlines, announcements, and forms"`
 99. `"Chrome extension that converts recipe, shopping, and delivery sites into fatigue-friendly step-by-step flows"`
-100. `"Chrome extension that learns a user's accessibility preferences once and applies them consistently across the web"`
+100.  `"Chrome extension that learns a user's accessibility preferences once and applies them consistently across the web"`
 
 ### How to Use This List
 
@@ -1182,7 +1182,7 @@ These are not generic app ideas. They are high-leverage upgrades for this exact 
 97. `"change impact digest that explains how recent repo edits affect everyday commands and routines"`
 98. `"confidence score for each workflow that blends test coverage, recent failures, and documentation freshness"`
 99. `"roadmap prioritizer that ranks ideas by user pain reduced, cognitive load saved, and implementation effort"`
-100. `"meta-builder that reads this section, chooses the most leveraged next improvement for dotfiles, and drafts the first implementation plan"`
+100.  `"meta-builder that reads this section, chooses the most leveraged next improvement for dotfiles, and drafts the first implementation plan"`
 
 ### How to Use This List
 
@@ -1332,7 +1332,7 @@ These work best as zero-friction utilities: tools someone can run instantly with
 97. `"npx tool that turns commit history into a public build-in-public narrative"`
 98. `"npx tool that checks a content folder for broken embeds, dead external links, and missing descriptions"`
 99. `"npx tool that creates product demo scripts from README files and feature lists"`
-100. `"npx tool that scans your own tool ideas, ranks them by first-run wow factor, and drafts the best one to build next"`
+100.  `"npx tool that scans your own tool ideas, ranks them by first-run wow factor, and drafts the best one to build next"`
 
 ### How to Use This List
 
@@ -1482,7 +1482,7 @@ These work best when they remove painful repetitive work inside real creative wo
 97. `"Adobe plugin that checks whether captions, on-screen text, and document summaries all agree semantically"`
 98. `"Adobe plugin that generates accessibility statements for finished deliverables based on actual checks run"`
 99. `"Adobe plugin that helps agencies prove compliance readiness with export reports and artifact histories"`
-100. `"Adobe plugin that scans a creative workflow, finds the most painful repetitive step, and drafts the best plugin to build next"`
+100.  `"Adobe plugin that scans a creative workflow, finds the most painful repetitive step, and drafts the best plugin to build next"`
 
 ### How to Use This List
 
@@ -1632,7 +1632,7 @@ These work best when the value is immediate, local, and boring in the best way. 
 97. `"shell script that standardizes help text across a folder of scripts into one consistent format"`
 98. `"shell script that creates screen-reader-friendlier summaries of logs and command results"`
 99. `"shell script that watches a workflow for repeated friction points and proposes simplifications"`
-100. `"shell script that scans this section, finds the most leveraged low-risk idea, and drafts the first implementation plan"`
+100.  `"shell script that scans this section, finds the most leveraged low-risk idea, and drafts the first implementation plan"`
 
 ### How to Use This List
 
@@ -1782,7 +1782,7 @@ These work best when they remove daily content chaos: deciding what to post, ada
 97. `"virality postmortem tool that explains why a breakout post spread and what is actually reusable"`
 98. `"offer-angle tester that tries different positioning frames for the same product or service"`
 99. `"social moat finder that identifies the topics and styles competitors are not covering well"`
-100. `"meta-social manager that reads this section, picks the highest-leverage product wedge, and drafts the first implementation plan"`
+100.  `"meta-social manager that reads this section, picks the highest-leverage product wedge, and drafts the first implementation plan"`
 
 ### How to Use This List
 
@@ -1932,7 +1932,7 @@ These work best when they turn hard-to-start content work into reliable producti
 97. `"human-sounding editor that removes repetitive AI tics and flattening patterns from drafts"`
 98. `"style-guide enforcer that checks whether content matches a brand's actual rules and examples"`
 99. `"clarity-first revision engine that suggests the highest-leverage cuts, rewrites, and structure fixes"`
-100. `"meta-content generator that reads this section, picks the highest-leverage content product wedge, and drafts the first implementation plan"`
+100.  `"meta-content generator that reads this section, picks the highest-leverage content product wedge, and drafts the first implementation plan"`
 
 ### How to Use This List
 
@@ -2082,7 +2082,7 @@ These work best when they do more than spit out random prompts. The high-leverag
 97. `"story recombiner that fuses two unfinished flash drafts into one stronger piece"`
 98. `"reader response archive that tracks which stories got remembered, quoted, or emotionally hit hardest"`
 99. `"anthology sequencing tool that decides the best order for a set of flash stories"`
-100. `"meta-flash-fiction builder that reads this section, picks the highest-leverage tool wedge, and drafts the first implementation plan"`
+100.  `"meta-flash-fiction builder that reads this section, picks the highest-leverage tool wedge, and drafts the first implementation plan"`
 
 ### How to Use This List
 
@@ -2232,7 +2232,7 @@ These are the coordination layer for many of the other ideas in this document. I
 97. `"portfolio narrative builder that arranges many projects into one coherent public story instead of random artifacts"`
 98. `"retention loop coordinator that ties feature updates, content updates, and community touchpoints together"`
 99. `"ecosystem builder that turns many standalone ideas into one interoperable family of tools"`
-100. `"meta-orchestrator that reads the other idea sections in this document, picks the most synergistic cluster, and drafts the first orchestration product to build"`
+100.  `"meta-orchestrator that reads the other idea sections in this document, picks the most synergistic cluster, and drafts the first orchestration product to build"`
 
 ### How to Use This List
 
@@ -2382,7 +2382,7 @@ These are the ideas people usually forget until the first exciting prototype sta
 97. `"anti-novelty governor that pushes back when a shiny new idea is less valuable than maintaining a working one"`
 98. `"strategic coherence checker that asks whether a new project strengthens or dilutes the overall direction"`
 99. `"founder memory brief that reminds you what mattered, what worked, and what to ignore before you start building today"`
-100. `"meta-leverage builder that reads the other idea sections in this document, identifies what is still missing around them, and drafts the next invisible system you should build first"`
+100.  `"meta-leverage builder that reads the other idea sections in this document, identifies what is still missing around them, and drafts the next invisible system you should build first"`
 
 ### How to Use This List
 
@@ -2532,7 +2532,7 @@ These work best when they make content systems easier to understand, easier to n
 97. `"content truth layer that ensures every system is drawing from the same canonical facts and definitions"`
 98. `"architecture anti-chaos tool that flags when tactical publishing is eroding strategic coherence"`
 99. `"portfolio-wide content strategy dashboard that helps leaders see where structural problems are blocking growth or clarity"`
-100. `"meta-IA builder that reads the other idea sections in this document, identifies where structure and strategy are missing, and drafts the first high-leverage content system to build"`
+100.  `"meta-IA builder that reads the other idea sections in this document, identifies where structure and strategy are missing, and drafts the first high-leverage content system to build"`
 
 ### How to Use This List
 
@@ -2682,7 +2682,7 @@ These work best when they do more than fetch HTML. The high-leverage scraper too
 97. `"dataset freshness orchestrator that decides which sources need hourly, daily, weekly, or manual refresh cycles"`
 98. `"scraped-signal compounding engine that feeds one scrape's outputs into content, alerts, market research, and product ideas"`
 99. `"web intelligence operating system that combines scraping, normalization, monitoring, summarization, and publishing"`
-100. `"meta-scraper builder that reads the other idea sections in this document, identifies where web data could unlock them, and drafts the first high-leverage scraper system to build"`
+100.  `"meta-scraper builder that reads the other idea sections in this document, identifies where web data could unlock them, and drafts the first high-leverage scraper system to build"`
 
 ### How to Use This List
 
@@ -2832,7 +2832,7 @@ These work best when OpenRouter is not just a backend checkbox. The real leverag
 97. `"trust architecture planner that decides where human review, citations, or validation are non-negotiable"`
 98. `"meta-eval builder that creates reusable quality tests for a whole family of AI products"`
 99. `"AI moat finder that identifies where workflow design, memory, or domain context matters more than raw model strength"`
-100. `"meta-openrouter builder that reads the other idea sections in this document, identifies where model routing adds the most leverage, and drafts the first high-impact OpenRouter-native product to build"`
+100.  `"meta-openrouter builder that reads the other idea sections in this document, identifies where model routing adds the most leverage, and drafts the first high-impact OpenRouter-native product to build"`
 
 ### How to Use This List
 
@@ -2905,7 +2905,7 @@ red verdict), user chooses to proceed,
 revise, or cancel. Skip with
 `--no-validate`.
 
-3. Projects never evolve
+3. Projects never evolve ✅ DONE
 
 Build mode is fire-and-forget. After the
 initial scaffold + verify, there's no way

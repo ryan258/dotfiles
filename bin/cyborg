@@ -43,11 +43,11 @@ export CYBORG_MODEL="${CYBORG_MODEL:-$(get_model CONTENT)}"
 #
 # This block handles convergence path 1 (pre-analysis).  Path 2 (--build)
 # is handled entirely inside the Python agent and is mutually exclusive:
-# --build skips pre-analysis because there's no repo to analyze yet.
+# --build/--iterate skip pre-analysis because those flows are code-first.
 #
 # Preconditions for pre-analysis to run:
 #   1. Subcommand is "auto" (not "ingest" or "resume")
-#   2. Neither --no-morphling nor --build is present
+#   2. Neither --no-morphling, --build, nor --iterate is present
 #   3. `uv` is installed (Morphling's dispatcher needs it)
 #   4. ai-staff-hq/ submodule exists (Morphling YAML definitions)
 #
@@ -60,9 +60,10 @@ if [[ "${1:-}" == "auto" ]]; then
     # Check for flags that make pre-analysis irrelevant.
     # --no-morphling: user explicitly opted out.
     # --build: no repo exists yet; Morphling builds it in the Python agent.
+    # --iterate: repo improvement is code-first, so doc pre-analysis is irrelevant.
     _skip_morphling=false
     for _arg in "$@"; do
-        if [[ "$_arg" == "--no-morphling" || "$_arg" == "--build" ]]; then
+        if [[ "$_arg" == "--no-morphling" || "$_arg" == "--build" || "$_arg" == "--iterate" ]]; then
             _skip_morphling=true
             break
         fi

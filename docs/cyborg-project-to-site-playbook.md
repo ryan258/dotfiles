@@ -42,6 +42,7 @@ Good use:
 - exploring what pages a repo might deserve
 - one-off drafting
 - resume-and-review editorial loops
+- `cyborg auto --iterate --repo ~/Projects/my-project` when you want the project repo to keep growing from issues or a backlog before you sync site docs
 - `cyborg auto --build` when you want idea -> project scaffolding
 - `cyborg auto --build --publish` when you want idea -> scaffold -> registry publish -> docs
 
@@ -98,6 +99,7 @@ The dotfiles repo stores:
 Start with either:
 
 - a new repo you created yourself
+- `cyborg auto --iterate --repo ~/Projects/my-project` if the repo already exists and you want Cyborg to implement the next open issue or backlog item before the docs update cycle
 - `cyborg auto --build "idea text"` if you want a project scaffold from an idea
 - `cyborg auto --build --publish "idea text"` if you also want the verified package published after the scaffold passes
 
