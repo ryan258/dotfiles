@@ -11,6 +11,7 @@
 - `scripts/startday.sh`, `scripts/status.sh`, and `scripts/goodevening.sh` now run a best-effort Fitbit sync first when Google Health auth is already present, so the daily summaries and coach flows see fresh wearable data without a manual sync step.
 - `scripts/lib/coach_metrics.sh` now includes the latest Fitbit wearable snapshot in the shared behavior digest, and `scripts/lib/coach_prompts.sh` now explicitly tells the coach to treat those metrics as live health context instead of suggesting Fitbit setup work.
 - The shared coach digest now includes both the latest manual energy/fog reading and the trailing averages, and the prompt templates now tell the AI to treat latest values as current state and averages as background trend.
+- `scripts/status.sh` now asks for manual energy/fog input before building the AI briefing when the coach is enabled in an interactive run, so the same briefing can use the fresh entry instead of waiting for the next run.
 - Added `corr-sleep`, `corr-steps`, `corr-rhr`, and `corr-hrv` aliases for the common Fitbit-vs-health correlations.
 - Updated the scripts README, alias reference, cheatsheet, and general handbook to reflect the auto-sync and correlation shortcut workflow.
 

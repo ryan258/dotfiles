@@ -326,6 +326,7 @@ dhp_dispatch \
 - When Google Health auth is already present, `scripts/startday.sh`, `scripts/status.sh`, and `scripts/goodevening.sh` should do a best-effort Fitbit sync before rendering summaries or coach context.
 - Coach prompts must treat wearable metrics in the behavior digest as live health context and must not suggest Fitbit setup or migration work when those metrics are already present.
 - When both latest manual energy/fog readings and trailing averages are present in the behavior digest, coach prompts should treat the latest values as current state and the averages as recent trend.
+- When `scripts/status.sh` is interactive and the AI coach is enabled, it should offer manual energy/fog logging before building the coach digest so that same-run entries affect the briefing immediately.
 
 ### Specialized Standalone Agents
 

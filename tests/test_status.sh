@@ -266,6 +266,60 @@ EOF
     [[ "$prompt" == *"Wearable guidance:"* ]]
 }
 
+@test "status.sh --coach captures same-run energy and fog before building the coach prompt" {
+    local runner="$TEST_ROOT/run_status_with_tty.sh"
+
+    cat > "$DOTFILES_DIR/scripts/health.sh" <<'STUB'
+#!/usr/bin/env bash
+set -euo pipefail
+
+timestamp="${TEST_HEALTH_TIMESTAMP:-$(date '+%Y-%m-%d %H:%M')}"
+
+case "${1:-}" in
+    energy)
+        printf 'ENERGY|%s|%s\n' "$timestamp" "${2:-}" >> "$DATA_DIR/health.txt"
+        printf 'Logged energy level: %s/10\n' "${2:-}"
+        ;;
+    fog)
+        printf 'FOG|%s|%s\n' "$timestamp" "${2:-}" >> "$DATA_DIR/health.txt"
+        printf 'Logged brain fog level: %s/10\n' "${2:-}"
+        ;;
+esac
+STUB
+    chmod +x "$DOTFILES_DIR/scripts/health.sh"
+
+    cat > "$runner" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+export HOME="$HOME"
+export DATA_DIR="$DATA_DIR"
+export DOTFILES_DIR="$DOTFILES_DIR"
+export PROJECTS_DIR="$PROJECTS_DIR"
+export PATH="$DOTFILES_DIR/bin:\$PATH"
+export AI_COACH_CHAT_ENABLED=false
+export TEST_HEALTH_TIMESTAMP="${TODAY} 13:02"
+/usr/bin/expect <<'EXPECT'
+set timeout 20
+spawn bash \$env(DOTFILES_DIR)/scripts/status.sh --coach
+expect -re {Log Energy/Fog levels\\? \\[y/N\\]: $}
+send -- "y\r"
+expect -re {Energy Level \\(1-10\\): $}
+send -- "7\r"
+expect -re {Brain Fog Level \\(1-10\\): $}
+send -- "3\r"
+expect eof
+EXPECT
+EOF
+    chmod +x "$runner"
+
+    run bash "$runner"
+
+    [ "$status" -eq 0 ]
+    [ -f "$DATA_DIR/status_coach_prompt.txt" ]
+    prompt="$(cat "$DATA_DIR/status_coach_prompt.txt")"
+    [[ "$prompt" == *"latest_energy=7 (${TODAY} 13:02), latest_fog=3 (${TODAY} 13:02)"* ]]
+}
+
 @test "status.sh auto-syncs Fitbit data before rendering when auth exists" {
     cat > "$DOTFILES_DIR/scripts/fitbit_sync.sh" <<'STUB'
 #!/usr/bin/env bash

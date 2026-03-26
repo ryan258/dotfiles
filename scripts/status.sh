@@ -87,6 +87,42 @@ _status_filter_activity_for_repo() {
     fi
 }
 
+_status_prompt_for_health_logging() {
+    local health_script="$1"
+    local log_health=""
+    local energy=""
+    local fog=""
+
+    # This little interview happens before the coach when possible.
+    # That way, the coach reads the newest numbers instead of yesterday's news.
+    if ! [ -t 0 ] || ! [ -x "$health_script" ]; then
+        return 1
+    fi
+
+    echo ""
+    echo -n "🏥 Log Energy/Fog levels? [y/N]: "
+    read -r log_health
+    if [[ "$log_health" =~ ^[yY] ]]; then
+        echo -n "   Energy Level (1-10): "
+        read -r energy
+        if validate_range "$energy" 1 10 "energy level" >/dev/null 2>&1; then
+            "$health_script" energy "$energy" | sed 's/^/   /'
+        elif [ -n "$energy" ]; then
+            echo "   (Skipped: must be 1-10)"
+        fi
+
+        echo -n "   Brain Fog Level (1-10): "
+        read -r fog
+        if validate_range "$fog" 1 10 "brain fog level" >/dev/null 2>&1; then
+            "$health_script" fog "$fog" | sed 's/^/   /'
+        elif [ -n "$fog" ]; then
+            echo "   (Skipped: must be 1-10)"
+        fi
+    fi
+
+    return 0
+}
+
 STATUS_COACH_ENABLED="${AI_STATUS_ENABLED:-false}"
 case "${1:-}" in
     --coach)
@@ -149,6 +185,8 @@ if [[ "$_status_git_repo_focus" == "true" ]] && [[ "${_status_project_context:-}
     _status_context_scope="repo-local"
 fi
 _status_combined_git=$(printf '%s\n%s\n' "${STATUS_COACH_TODAY_COMMITS:-}" "${STATUS_COACH_RECENT_PUSHES:-}")
+HEALTH_SCRIPT="${HEALTH_SCRIPT:-$DOTFILES_DIR/scripts/health.sh}"
+_status_health_prompt_completed=false
 
 # --- Focus ---
 echo ""
@@ -239,6 +277,14 @@ else
     echo "  Mode: ${_status_mode} | Spoons: ${_status_spoons}/${_status_budget} remaining | Focus: ${_status_focus_label}"
 fi
 echo "  Spear alignment: ${_status_alignment}"
+
+# If the coach is about to speak, collect fresh energy and fog first.
+# That lets the same run use the numbers you just typed.
+if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
+    if _status_prompt_for_health_logging "$HEALTH_SCRIPT"; then
+        _status_health_prompt_completed=true
+    fi
+fi
 
 if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
     echo ""
@@ -358,8 +404,6 @@ else
 fi
 
 # --- Health Check (interactive only) ---
-HEALTH_SCRIPT="${HEALTH_SCRIPT:-$DOTFILES_DIR/scripts/health.sh}"
-
 # Show Health Summary
 echo ""
 echo "🏥 HEALTH STATUS:"
@@ -367,27 +411,8 @@ if command -v show_health_summary >/dev/null 2>&1; then
     show_health_summary
 fi
 
-if [ -t 0 ] && [ -x "$HEALTH_SCRIPT" ]; then
-    echo ""
-    echo -n "🏥 Log Energy/Fog levels? [y/N]: "
-    read -r log_health
-    if [[ "$log_health" =~ ^[yY] ]]; then
-        echo -n "   Energy Level (1-10): "
-        read -r energy
-        if validate_range "$energy" 1 10 "energy level" >/dev/null 2>&1; then
-            "$HEALTH_SCRIPT" energy "$energy" | sed 's/^/   /'
-        elif [ -n "$energy" ]; then
-            echo "   (Skipped: must be 1-10)"
-        fi
-
-        echo -n "   Brain Fog Level (1-10): "
-        read -r fog
-        if validate_range "$fog" 1 10 "brain fog level" >/dev/null 2>&1; then
-            "$HEALTH_SCRIPT" fog "$fog" | sed 's/^/   /'
-        elif [ -n "$fog" ]; then
-            echo "   (Skipped: must be 1-10)"
-        fi
-    fi
+if [[ "$_status_health_prompt_completed" != "true" ]]; then
+    _status_prompt_for_health_logging "$HEALTH_SCRIPT" || true
 fi
 
 # --- Tasks ---
