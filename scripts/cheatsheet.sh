@@ -4,6 +4,8 @@ set -euo pipefail
 # --- My Personal Command Cheatsheet ---
 # Add any commands or notes you tend to forget.
 
+DATA_ROOT="${XDG_DATA_HOME:-$HOME/.config}/dotfiles-data"
+
 echo "--- GIT COMMANDS ---"
 echo "  git pull                # Get latest changes"
 echo "  git add .               # Stage all changes"
@@ -112,7 +114,7 @@ echo "  Models: Defaults are set in .env; fallback is moonshotai/kimi-k2:free"
 echo "  Docs: ~/dotfiles/bin/README.md for full dispatcher documentation"
 echo ""
 echo "--- DATA LOCATION ---"
-echo "  All data stored in: ~/.config/dotfiles-data/"
+echo "  All data stored in: $DATA_ROOT/"
 echo "  - journal.txt, todo.txt, todo_done.txt, health.txt"
 echo "  - dir_bookmarks, dir_history, favorite_apps"
 echo "  - fitbit/*.txt (auto-refreshed by startday/status/goodevening when auth exists)"

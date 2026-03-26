@@ -5,9 +5,10 @@
 # Callers should explicitly source config.sh before common.sh during migration
 # so removing this bootstrap later does not change behavior.
 
-if [ -n "${COMMON_SH_LOADED:-}" ]; then
+if [[ -n "${_COMMON_SH_LOADED:-${COMMON_SH_LOADED:-}}" ]]; then
     return 0
 fi
+readonly _COMMON_SH_LOADED=true
 readonly COMMON_SH_LOADED=true
 
 #=============================================================================
@@ -447,6 +448,18 @@ validate_safe_path() {
     printf '%s' "$resolved"
 }
 
+
+# Restore a previously saved trap or clear it.
+# Usage: restore_trap INT "$saved_int_trap"
+restore_trap() {
+    local signal_name="$1"
+    local saved_trap="$2"
+    if [[ -n "$saved_trap" ]]; then
+        eval "$saved_trap"
+    else
+        trap - "$signal_name"
+    fi
+}
 
 # Create temp file with restrictive permissions
 # Usage: temp_file=$(create_temp_file "prefix")

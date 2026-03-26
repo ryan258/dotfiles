@@ -31,20 +31,7 @@ fi
 CMD="${1:-}"
 shift
 
-# Resolve dispatcher aliases via shared mapping.
-if mapped_cmd=$(dhp_dispatcher_script_name "$CMD" 2>/dev/null); then
-  CMD="$mapped_cmd"
-fi
-
-RESOLVED_CMD=$(command -v "$CMD" 2>/dev/null || true)
-
-if [ -z "$RESOLVED_CMD" ]; then
-  if [ -x "$DOTFILES_DIR/bin/$CMD" ]; then
-    RESOLVED_CMD="$DOTFILES_DIR/bin/$CMD"
-  elif [ -x "$DOTFILES_DIR/bin/dhp-$CMD.sh" ]; then
-    RESOLVED_CMD="$DOTFILES_DIR/bin/dhp-$CMD.sh"
-  fi
-fi
+RESOLVED_CMD="$(dhp_resolve_dispatcher_command "$CMD" "$DOTFILES_DIR" 2>/dev/null || true)"
 
 if [ -z "$RESOLVED_CMD" ]; then
   echo "swipe: command not found: $CMD" >&2
@@ -56,6 +43,15 @@ if [ "$LOG_ENABLED" != "true" ]; then
 fi
 
 mkdir -p "$(dirname "$LOG_FILE")"
+
+# Rotate log if it exceeds 1MB
+MAX_LOG_BYTES="${SWIPE_MAX_LOG_BYTES:-1048576}"
+if [ -f "$LOG_FILE" ]; then
+  LOG_SIZE=$(wc -c < "$LOG_FILE" 2>/dev/null || echo 0)
+  if [ "$LOG_SIZE" -gt "$MAX_LOG_BYTES" ]; then
+    mv "$LOG_FILE" "${LOG_FILE%.md}.$(date +%Y%m%d%H%M%S).md"
+  fi
+fi
 
 DISPLAY_CMD="$CMD"
 if [ $# -gt 0 ]; then

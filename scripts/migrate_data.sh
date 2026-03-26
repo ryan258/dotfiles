@@ -391,7 +391,12 @@ normalize_history_file() {
   local total=0
   local invalid=0
 
-  mapfile -t lines < "$src" || true
+  local lines=()
+  local line
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    lines+=("$line")
+  done < "$src"
+
   local count=${#lines[@]}
   [[ $count -eq 0 ]] && finalize_migration "$tmp" "$src" "$label" 0 0 && return 0
 

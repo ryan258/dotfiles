@@ -44,10 +44,9 @@ $FD_OUTPUT
 fi
 
 # PWD
-Current_Dir=$(pwd)
 CONTEXT_BLOCK="${CONTEXT_BLOCK}
 --- WORKING DIRECTORY ---
-$Current_Dir
+$(pwd)
 "
 
 # --- 3. DISPATCH ---

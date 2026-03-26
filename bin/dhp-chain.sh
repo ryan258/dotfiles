@@ -7,6 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 source "$SCRIPT_DIR/dhp-shared.sh"
+source "$DOTFILES_DIR/scripts/lib/common.sh"
 AVAILABLE_DISPATCHERS="$(dhp_available_dispatchers)"
 
 if [ $# -lt 2 ]; then
@@ -34,7 +35,7 @@ Notes:
   - Final output goes to stdout
   - Use '--save <file>' to save final output to a file
 EOF
-    exit 1
+    die "dhp-chain.sh requires at least two dispatchers and an input payload." "$EXIT_INVALID_ARGS"
 fi
 
 # Parse arguments
@@ -53,8 +54,7 @@ while [ $# -gt 0 ]; do
         --save)
             shift
             if [ -z "${1:-}" ]; then
-                echo "Error: --save requires a file path" >&2
-                exit 1
+                die "--save requires a file path." "$EXIT_INVALID_ARGS"
             fi
             SAVE_FILE="$1"
             shift
@@ -71,13 +71,11 @@ while [ $# -gt 0 ]; do
 done
 
 if [ ${#DISPATCHERS[@]} -eq 0 ]; then
-    echo "Error: No dispatchers specified" >&2
-    exit 1
+    die "No dispatchers specified." "$EXIT_INVALID_ARGS"
 fi
 
 if [ -z "$INITIAL_INPUT" ]; then
-    echo "Error: No initial input provided (use -- to separate input)" >&2
-    exit 1
+    die "No initial input provided (use -- to separate input)." "$EXIT_INVALID_ARGS"
 fi
 
 echo "🔗 Dispatcher Chain Starting..." >&2
@@ -98,16 +96,16 @@ for dispatcher in "${DISPATCHERS[@]}"; do
 
     # Resolve dispatcher script via shared mapping.
     if ! DISPATCHER_SCRIPT_NAME="$(dhp_dispatcher_script_name "$dispatcher")"; then
-        echo "Error: Unknown dispatcher '$dispatcher'" >&2
-        echo "Available: $AVAILABLE_DISPATCHERS" >&2
-        exit 1
+        die "Unknown dispatcher '$dispatcher'. Available: $AVAILABLE_DISPATCHERS" "$EXIT_INVALID_ARGS"
     fi
     DISPATCHER_SCRIPT="$DOTFILES_DIR/bin/$DISPATCHER_SCRIPT_NAME"
 
     # Creative and content are called with argument input for compatibility.
     case "$DISPATCHER_SCRIPT_NAME" in
         dhp-creative.sh|dhp-content.sh)
-            CURRENT_OUTPUT=$("$DISPATCHER_SCRIPT" "$CURRENT_OUTPUT" "${COMMON_FLAGS[@]}")
+            if ! CURRENT_OUTPUT=$("$DISPATCHER_SCRIPT" "$CURRENT_OUTPUT" "${COMMON_FLAGS[@]}"); then
+                die "Step $STEP ($dispatcher) failed." "$EXIT_SERVICE_ERROR"
+            fi
             echo "$CURRENT_OUTPUT" >&2
             echo "" >&2
             ((STEP++))
@@ -117,7 +115,9 @@ for dispatcher in "${DISPATCHERS[@]}"; do
 
     # Process through dispatcher (stdin-based)
     # We append common flags like --brain
-    CURRENT_OUTPUT=$(echo "$CURRENT_OUTPUT" | "$DISPATCHER_SCRIPT" "${COMMON_FLAGS[@]}")
+    if ! CURRENT_OUTPUT=$(echo "$CURRENT_OUTPUT" | "$DISPATCHER_SCRIPT" "${COMMON_FLAGS[@]}"); then
+        die "Step $STEP ($dispatcher) failed." "$EXIT_SERVICE_ERROR"
+    fi
 
     # Show intermediate output
     echo "$CURRENT_OUTPUT" >&2

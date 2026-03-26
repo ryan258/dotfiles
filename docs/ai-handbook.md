@@ -1,6 +1,6 @@
 # The AI Helpers Handbook
 
-Your computer comes with a team of 13 very smart AI helpers. They live right in your terminal. This page shows you how to use them to get your work done faster!
+Your computer comes with a team of 12 very smart AI helpers. They live right in your terminal. This page shows you how to use them to get your work done faster!
 
 ---
 
@@ -19,7 +19,7 @@ You can call any of these helpers just by typing their name!
 - `narrative` - Your plot designer. Thinks of twists for your stories.
 - `aicopy` - Your ad writer. Writes fast, catchy emails.
 - `finance` - Your accountant. Helps with S-Corp limits and taxes.
-- `morphling` - The magic shapeshifter and lead developer. Can become any expert you need. Can also run commands, install packages, run tests, and fix its own code until it works.
+- `morphling` - The magic shapeshifter. Can become any expert you need for one-shot analysis. For the full lead-developer mode that can run commands, install packages, run tests, and fix its own code, use `bin/morphling.sh` directly.
 
 ---
 

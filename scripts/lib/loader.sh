@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # scripts/lib/loader.sh - Central library loader
 # NOTE: SOURCED file. Do NOT use set -euo pipefail.
+#
+# Use this loader only for coaching-heavy composite scripts that need the full
+# daily stack preloaded (currently startday.sh, status.sh, and goodevening.sh).
+# Most scripts should source common.sh and then only the specific libraries
+# they need.
 
 if [[ -n "${_LOADER_LOADED:-}" ]]; then
     return 0

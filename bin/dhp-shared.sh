@@ -9,15 +9,17 @@ fi
 readonly _DHP_SHARED_LOADED=true
 
 # Function to set up the environment for DHP scripts
-# Sources config.sh, dhp-lib.sh, and dhp-utils.sh
+# Sources config.sh, common.sh, dhp-lib.sh, and dhp-utils.sh
 dhp_setup_env() {
     local shared_dir
     local config_lib
+    local common_lib
     shared_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$shared_dir/.." && pwd)}"
     AI_STAFF_DIR="$DOTFILES_DIR/ai-staff-hq"
 
     config_lib="$DOTFILES_DIR/scripts/lib/config.sh"
+    common_lib="$DOTFILES_DIR/scripts/lib/common.sh"
     if [ -f "$config_lib" ]; then
         # shellcheck disable=SC1090
         source "$config_lib"
@@ -26,7 +28,14 @@ dhp_setup_env() {
         return 1
     fi
 
-    # Check for API key
+    if [ -f "$common_lib" ]; then
+        # shellcheck disable=SC1090
+        source "$common_lib"
+    else
+        echo "Error: common library not found at $common_lib" >&2
+        return 1
+    fi
+
     # Check for API key (Warning only, as some models might be local/free)
     if [ -z "${OPENROUTER_API_KEY:-}" ]; then
         echo "Warning: OPENROUTER_API_KEY is not set. Swarm may fail if using paid models." >&2
@@ -34,6 +43,7 @@ dhp_setup_env() {
 
     # Source shared libraries
     if [ -f "$DOTFILES_DIR/bin/dhp-lib.sh" ]; then
+        # shellcheck disable=SC1090
         source "$DOTFILES_DIR/bin/dhp-lib.sh"
     else
         echo "Error: Shared library dhp-lib.sh not found" >&2
@@ -41,8 +51,17 @@ dhp_setup_env() {
     fi
 
     if [ -f "$DOTFILES_DIR/bin/dhp-utils.sh" ]; then
+        # shellcheck disable=SC1090
         source "$DOTFILES_DIR/bin/dhp-utils.sh"
     fi
+}
+
+dhp_validate_temperature() {
+    local value="${1:-}"
+    if [[ -z "$value" || ! "$value" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+        return 1
+    fi
+    awk -v temp="$value" 'BEGIN { exit !(temp >= 0 && temp <= 2) }'
 }
 
 # Function to parse common flags like --stream, --verbose
@@ -68,8 +87,8 @@ dhp_parse_flags() {
                 shift
                 ;;
             --temperature)
-                if [[ -z "${2:-}" || "${2:-}" == --* || ! "$2" =~ ^[0-9]*\.?[0-9]+$ ]]; then
-                    echo "Error: --temperature requires a numeric value, got '${2:-}'." >&2
+                if [[ -z "${2:-}" || "${2:-}" == --* ]] || ! dhp_validate_temperature "$2"; then
+                    echo "Error: --temperature requires a numeric value between 0.0 and 2.0, got '${2:-}'." >&2
                     return 1
                 fi
                 PARAM_TEMPERATURE="$2"
@@ -120,8 +139,53 @@ dhp_dispatcher_script_name() {
         copy|dhp-copy|dhp-copy.sh) echo "dhp-copy.sh" ;;
         finance|dhp-finance|dhp-finance.sh) echo "dhp-finance.sh" ;;
         morphling|dhp-morphling|dhp-morphling.sh) echo "dhp-morphling.sh" ;;
+        coach|dhp-coach|dhp-coach.sh) echo "dhp-coach.sh" ;;
+        chain|dhp-chain|dhp-chain.sh) echo "dhp-chain.sh" ;;
+        project|dhp-project|dhp-project.sh) echo "dhp-project.sh" ;;
+        memory|dhp-memory|dhp-memory.sh) echo "dhp-memory.sh" ;;
+        memory-search|dhp-memory-search|dhp-memory-search.sh) echo "dhp-memory-search.sh" ;;
         *) return 1 ;;
     esac
+}
+
+dhp_resolve_dispatcher_command() {
+    local target="${1:-}"
+    local dotfiles_root="${2:-${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}}"
+    local script_name=""
+    local resolved=""
+
+    if [[ -z "$target" ]]; then
+        return 1
+    fi
+
+    if script_name=$(dhp_dispatcher_script_name "$target" 2>/dev/null); then
+        if [ -x "$dotfiles_root/bin/$script_name" ]; then
+            printf '%s\n' "$dotfiles_root/bin/$script_name"
+            return 0
+        fi
+    fi
+
+    if resolved=$(command -v "$target" 2>/dev/null); then
+        printf '%s\n' "$resolved"
+        return 0
+    fi
+
+    if [ -x "$dotfiles_root/bin/$target" ]; then
+        printf '%s\n' "$dotfiles_root/bin/$target"
+        return 0
+    fi
+
+    if [ -x "$dotfiles_root/bin/$target.sh" ]; then
+        printf '%s\n' "$dotfiles_root/bin/$target.sh"
+        return 0
+    fi
+
+    if [ -x "$dotfiles_root/bin/dhp-$target.sh" ]; then
+        printf '%s\n' "$dotfiles_root/bin/dhp-$target.sh"
+        return 0
+    fi
+
+    return 1
 }
 
 
@@ -331,7 +395,7 @@ $PIPED_CONTENT"
     
     # 7. Execute safely using array expansion
     echo "$enhanced_brief" | "${cmd_args[@]}" | tee "$output_file"
-    local exit_code=${PIPESTATUS[1]} # output of python command
+    local exit_code=${PIPESTATUS[1]} # exit code of the swarm command (PIPESTATUS[0]=echo, [1]=cmd, [2]=tee)
     
     if [ "$exit_code" -eq 0 ]; then
         # Unified interactive/auto-save logic
@@ -347,9 +411,11 @@ $PIPED_CONTENT"
 }
 
 export -f dhp_setup_env
+export -f dhp_validate_temperature
 export -f dhp_parse_flags
 export -f dhp_available_dispatchers
 export -f dhp_dispatcher_script_name
+export -f dhp_resolve_dispatcher_command
 export -f dhp_get_input
 export -f slugify
 export -f dhp_save_artifact

@@ -22,9 +22,11 @@ if [ -z "${PIPED_CONTENT:-}" ]; then
 fi
 
 if [ -z "${PIPED_CONTENT:-}" ]; then
-    echo "Usage: echo \"prompt\" | $(basename "$0") [options]" >&2
-    echo "   or: $(basename "$0") \"prompt\" [options]" >&2
-    exit 1
+    cat >&2 <<EOF
+Usage: echo "prompt" | $(basename "$0") [options]
+   or: $(basename "$0") "prompt" [options]
+EOF
+    die "dhp-coach.sh requires a prompt." "$EXIT_INVALID_ARGS"
 fi
 
 MODEL_FINAL="${COACH_MODEL:-nvidia/nemotron-3-nano-30b-a3b:free}"
@@ -64,15 +66,13 @@ if [ "$USE_STREAMING" = "true" ]; then
         if DHP_TEMPERATURE="$TEMPERATURE_FINAL" call_openrouter "$MODEL_FINAL" "$ENHANCED_BRIEF" "--stream" "dhp-coach" | tee "$OUTPUT_FILE"; then
             :
         else
-            echo "AI coach: request failed." >&2
-            exit 1
+            die "AI coach request failed." "$EXIT_SERVICE_ERROR"
         fi
     else
         if DHP_TEMPERATURE="$TEMPERATURE_FINAL" call_openrouter "$MODEL_FINAL" "$ENHANCED_BRIEF" "--stream" "dhp-coach"; then
             :
         else
-            echo "AI coach: request failed." >&2
-            exit 1
+            die "AI coach request failed." "$EXIT_SERVICE_ERROR"
         fi
     fi
 else
@@ -84,8 +84,7 @@ else
             printf '%s\n' "$RESPONSE"
         fi
     else
-        echo "AI coach: request failed." >&2
-        exit 1
+        die "AI coach request failed." "$EXIT_SERVICE_ERROR"
     fi
 fi
 

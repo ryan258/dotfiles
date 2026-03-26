@@ -157,9 +157,13 @@ stubs() {
 # --- Subcommand: random ---
 random_stub() {
     echo "🎲 Opening a random stub..."
-    
-    mapfile -t STUB_FILES < <(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null || true)
-    
+
+    STUB_FILES=()
+    while IFS= read -r stub_file; do
+        [ -z "$stub_file" ] && continue
+        STUB_FILES+=("$stub_file")
+    done < <(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null || true)
+
     if [ ${#STUB_FILES[@]} -eq 0 ]; then
         echo "  (No content stubs to choose from)"
         return
@@ -250,10 +254,11 @@ install_hooks() {
     fi
 
     local hook_file="$BLOG_DIR/.git/hooks/pre-commit"
+    local dotfiles_root="${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
     cat <<'HOOK' > "$hook_file"
 #!/bin/sh
 BLOG_DIR="__BLOG_DIR__"
-DOTFILES_DIR="$HOME/dotfiles"
+DOTFILES_DIR="__DOTFILES_DIR__"
 SCRIPT="$DOTFILES_DIR/scripts/blog.sh"
 
 if [ ! -x "$SCRIPT" ]; then
@@ -269,11 +274,20 @@ HOOK
         return 1
     fi
 
-    # Replace placeholder with actual blog dir path
-    if ! sed -i '' "s|__BLOG_DIR__|$BLOG_DIR|g" "$hook_file" 2>/dev/null; then
-        if ! perl -0pi -e "s|__BLOG_DIR__|$BLOG_DIR|g" "$hook_file" 2>/dev/null; then
-            echo "Warning: Unable to finalize hook template. Please edit $hook_file manually." >&2
-        fi
+    if ! python3 - "$hook_file" "$BLOG_DIR" "$dotfiles_root" <<'PY'
+from pathlib import Path
+import sys
+
+hook_path = Path(sys.argv[1])
+blog_dir = sys.argv[2]
+dotfiles_dir = sys.argv[3]
+content = hook_path.read_text(encoding="utf-8")
+content = content.replace("__BLOG_DIR__", blog_dir)
+content = content.replace("__DOTFILES_DIR__", dotfiles_dir)
+hook_path.write_text(content, encoding="utf-8")
+PY
+    then
+        echo "Warning: Unable to finalize hook template. Please edit $hook_file manually." >&2
     fi
 
     chmod +x "$hook_file"

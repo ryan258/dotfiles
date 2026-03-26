@@ -20,6 +20,7 @@
 # Resolve dotfiles root for aliases that reference scripts by absolute path.
 # Falls back to ~/dotfiles if $DOTFILES_DIR isn't set by config.sh.
 DOTFILES_ALIAS_ROOT="${DOTFILES_DIR:-$HOME/dotfiles}"
+DOTFILES_DATA_ROOT="${XDG_DATA_HOME:-$HOME/.config}/dotfiles-data"
 
 # Ancestor directory traversal — saves repeated "cd .." typing
 alias ..="cd .."
@@ -48,7 +49,7 @@ alias count="ls -1 | wc -l"        # Count of items in current directory
 alias downloads="cd ~/Downloads"
 alias documents="cd ~/Documents"
 alias desktop="cd ~/Desktop"
-alias scripts="cd ~/scripts"
+alias scripts='cd "$DOTFILES_ALIAS_ROOT/scripts"'
 alias home="cd ~"
 alias docs="cd ~/Documents"        # Short form of 'documents'
 alias down="cd ~/Downloads"        # Short form of 'downloads'
@@ -120,13 +121,11 @@ gitnexus() {
 gn() {
   if [[ "$1" == "--audit" ]]; then
     shift
-    /Users/ryanjohnson/Projects/bin/gitnexus_audit.py /Users/ryanjohnson/Projects "$@"
+    "${PROJECTS_DIR:-$HOME/Projects}/bin/gitnexus_audit.py" "${PROJECTS_DIR:-$HOME/Projects}" "$@"
   else
     gitnexus analyze "$@"
   fi
 }
-alias rboot="$HOME/Projects/bin/repo-bootstrap.sh"  # Bootstrap a new repo scaffold
-
 # =============================================================================
 # TEXT EDITING & VIEWING
 # =============================================================================
@@ -227,10 +226,10 @@ alias s-spend="spoon_manager.sh spend"    # Log spending spoons on an activity
 
 # --- Correlation & Reports ---
 alias correlate="correlate.sh"            # Find patterns between health/productivity data
-alias corr-sleep="correlate.sh run ~/.config/dotfiles-data/fitbit/sleep_minutes.txt ~/.config/dotfiles-data/health.txt 0 1 1 2" # Sleep minutes vs energy log
-alias corr-steps="correlate.sh run ~/.config/dotfiles-data/fitbit/steps.txt ~/.config/dotfiles-data/health.txt 0 1 1 2" # Steps vs energy log
-alias corr-rhr="correlate.sh run ~/.config/dotfiles-data/fitbit/resting_heart_rate.txt ~/.config/dotfiles-data/health.txt 0 1 1 2" # Resting HR vs energy log
-alias corr-hrv="correlate.sh run ~/.config/dotfiles-data/fitbit/hrv.txt ~/.config/dotfiles-data/health.txt 0 1 1 2" # HRV vs energy log
+alias corr-sleep='correlate.sh run "$DOTFILES_DATA_ROOT/fitbit/sleep_minutes.txt" "$DOTFILES_DATA_ROOT/health.txt" 0 1 1 2' # Sleep minutes vs energy log
+alias corr-steps='correlate.sh run "$DOTFILES_DATA_ROOT/fitbit/steps.txt" "$DOTFILES_DATA_ROOT/health.txt" 0 1 1 2' # Steps vs energy log
+alias corr-rhr='correlate.sh run "$DOTFILES_DATA_ROOT/fitbit/resting_heart_rate.txt" "$DOTFILES_DATA_ROOT/health.txt" 0 1 1 2' # Resting HR vs energy log
+alias corr-hrv='correlate.sh run "$DOTFILES_DATA_ROOT/fitbit/hrv.txt" "$DOTFILES_DATA_ROOT/health.txt" 0 1 1 2' # HRV vs energy log
 alias daily-report="generate_report.sh daily"  # Generate today's summary report
 alias insight="insight.sh"                # AI-powered insight from recent data
 
@@ -294,7 +293,7 @@ alias organize="file_organizer.sh"        # Auto-organize files by type/date
 # =============================================================================
 
 # Log inspection — reads from the dotfiles unified log
-alias systemlog="tail -n 20 ~/.config/dotfiles-data/system.log"  # Last 20 log lines
+alias systemlog='tail -n 20 "$DOTFILES_DATA_ROOT/system.log"'  # Last 20 log lines
 alias logs="logs.sh"                      # Full log viewer
 alias logtail="logs.sh tail"              # Follow log in real time
 alias logerrors="logs.sh errors"          # Show only error-level entries
@@ -335,6 +334,7 @@ alias did="done.sh"                      # Log a completed activity ('done' is a
 
 # Development shortcuts — common dev tasks behind one command
 alias dev="dev_shortcuts.sh"              # Dev shortcuts menu
+alias devenv="dev_shortcuts.sh env"       # Load project environment variables
 alias server="dev_shortcuts.sh server"    # Start a local dev server
 alias json="dev_shortcuts.sh json"        # JSON formatting/inspection
 # alias env="dev_shortcuts.sh env"        # Disabled — 'env' is a POSIX built-in
@@ -437,12 +437,6 @@ endday() {
     echo "- Update your journal"
     echo "- Plan tomorrow's tasks"
 }
-
-# SSH key management helpers
-alias wk='with-keys'                      # Run a command with SSH keys loaded
-alias wr='with-req --'                    # Run a command with required credentials
-
-
 
 # =============================================================================
 # SETUP INSTRUCTIONS

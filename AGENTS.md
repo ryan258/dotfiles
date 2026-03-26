@@ -133,13 +133,16 @@ my_function() {
 
 ## Core Libraries Reference
 
-| Library           | Purpose                        | Location       |
-| ----------------- | ------------------------------ | -------------- |
-| `common.sh`       | Validation, logging, errors    | `scripts/lib/` |
-| `config.sh`       | Paths, models, feature flags   | `scripts/lib/` |
-| `file_ops.sh`     | Atomic writes, file validation | `scripts/lib/` |
-| `date_utils.sh`   | Cross-platform dates           | `scripts/lib/` |
-| `spoon_budget.sh` | Energy tracking                | `scripts/lib/` |
+| Library           | Purpose                                    | Location       |
+| ----------------- | ------------------------------------------ | -------------- |
+| `common.sh`       | Validation, logging, errors                | `scripts/lib/` |
+| `config.sh`       | Paths, models, feature flags               | `scripts/lib/` |
+| `file_ops.sh`     | Atomic writes, file validation             | `scripts/lib/` |
+| `date_utils.sh`   | Cross-platform dates                       | `scripts/lib/` |
+| `health_ops.sh`   | Shared health + wearable helpers           | `scripts/lib/` |
+| `spoon_budget.sh` | Energy tracking                            | `scripts/lib/` |
+| `blog_common.sh`  | Blog utilities                             | `scripts/lib/` |
+| `coach_chat.sh`   | Interactive post-briefing coach conversation | `scripts/lib/` |
 
 **Sourcing pattern:**
 
@@ -252,8 +255,9 @@ dhp_dispatch \
 ### Specialized Standalone Agents
 
 - Repo-specific agents may live directly in `bin/` when they own an interactive workflow that does not fit the shared `dhp-*` dispatcher contract.
-- `bin/cyborg` is the dedicated Cyborg Lab ingest/resume agent. It stages session state under `~/Projects/cyborg-work` by default (override with `CYBORG_WORK_DIR`), only writes to the blog repo on explicit apply, and should prefer accessible `A/B/C/D/E` short-choice prompts when it asks the user to choose. `cyborg auto --iterate` is the existing-repo growth path: it picks the next GitHub issue or backlog item, applies the repo change, and runs the same build-verify-fix loop before stopping unless `--docs-after-code` is set. `cyborg auto --build` runs market validation, scaffolds a project via Morphling, runs a build-verify-fix loop (up to 3 rounds), and then documents the verified project. Add `--publish` when you want the verified build published before the docs pass.
-- `bin/morphling.sh` is the Morphling launcher. Direct mode (`morphling`) runs a LangChain ReAct agent with four tools: `read_file`, `write_file`, `list_directory`, and `run_command`. This gives it closed-loop lead-developer capabilities — write code, run tests, read errors, fix, repeat. Swarm mode (`morphling --swarm`) is one-shot analysis used by `cyborg auto` for pre-analysis briefs. See [`MORPHLING.md`](MORPHLING.md) for the full architecture.
+- `bin/cyborg` is the Cyborg Lab ingest/resume agent: an interactive session tool that scans a source repo, proposes a Cyborg Lab content graph, stages near-publishable drafts, stores resumable session artifacts under `~/Projects/cyborg-work` by default (override with `CYBORG_WORK_DIR`), only writes to `my-ms-ai-blog` on explicit apply, and should prefer accessible `A/B/C/D/E` short-choice prompts when it asks the user to choose. `cyborg auto` runs the full pipeline hands-free for low-energy sessions; `cyborg auto --iterate` is the existing-repo growth path: it picks the next GitHub issue or backlog item, applies the repo change, and runs the same build-verify-fix loop before stopping unless `--docs-after-code` is set. `cyborg auto --build` runs market validation, scaffolds a project via Morphling, runs the build-verify-fix loop, and then hands the verified repo to Cyborg for documentation. Add `--publish` when you want the verified build pushed to its registry before the docs pass. See [`bin/autopilot-readme.md`](bin/autopilot-readme.md) for the convergence architecture and [`MORPHLING.md`](MORPHLING.md) for Morphling's full capabilities including command execution.
+- `bin/morphling.sh` is the Morphling launcher. Direct mode (`bin/morphling.sh`) runs a LangChain ReAct agent with four tools: `read_file`, `write_file`, `list_directory`, and `run_command` (shell execution with 60s timeout). This gives it closed-loop lead-developer capabilities — write code, run tests, read errors, fix, repeat. The `morphling` shell alias points to swarm mode (`bin/dhp-morphling.sh`), which is one-shot context-rich analysis with no tool access. See [`MORPHLING.md`](MORPHLING.md) for the full architecture.
+- `bin/coach-chat.py` is the multi-turn coach chat handler. It maintains conversation history in a JSON file and calls OpenRouter for follow-up turns. Invoked by `scripts/lib/coach_chat.sh` — not called directly by users. Supports `init` (create history with system prompt + briefing) and `turn` (append message, call API, return response).
 
 ---
 
@@ -412,7 +416,7 @@ _Refer to `CLAUDE.md` for canonical root-project guidance and `GUARDRAILS.md` fo
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **dotfiles** (1139 symbols, 2451 relationships, 69 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **dotfiles** (3901 symbols, 6682 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

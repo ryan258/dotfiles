@@ -69,6 +69,8 @@ def do_turn(history_file, user_message):
     with open(history_file) as f:
         messages = json.load(f)
 
+    # Sanitize user message: strip null bytes and limit length
+    user_message = user_message.replace("\x00", "")[:10000]
     messages.append({"role": "user", "content": user_message})
 
     payload = json.dumps(

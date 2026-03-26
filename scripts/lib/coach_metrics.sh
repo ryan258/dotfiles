@@ -183,6 +183,9 @@ PY
     printf '%s' "$tmp_path"
 }
 
+# _coach_restore_trap: delegates to common.sh restore_trap
+_coach_restore_trap() { restore_trap "$@"; }
+
 coach_collect_tactical_metrics() {
     local anchor_date="$1"
     local days="${2:-7}"
@@ -892,8 +895,13 @@ coach_record_suggestion_adherence() {
     mkdir -p "$adherence_dir" 2>/dev/null || return 0
 
     local tmp_file=""
+    local saved_int_trap=""
+    local saved_term_trap=""
     tmp_file=$(_coach_secure_tmpfile "coach_adherence") || return 0
     : > "$tmp_file"
+    saved_int_trap=$(trap -p INT || true)
+    saved_term_trap=$(trap -p TERM || true)
+    trap 'rm -f "$tmp_file" "${tmp_file}.sorted" 2>/dev/null || true' INT TERM
 
     if [[ -f "$adherence_file" ]]; then
         awk -F'|' -v day="$anchor_date" '
@@ -907,6 +915,8 @@ coach_record_suggestion_adherence() {
     sort -u "$tmp_file" > "${tmp_file}.sorted" 2>/dev/null || cp "$tmp_file" "${tmp_file}.sorted"
     mv "${tmp_file}.sorted" "$adherence_file" 2>/dev/null || true
     rm -f "$tmp_file" "${tmp_file}.sorted" 2>/dev/null || true
+    _coach_restore_trap INT "$saved_int_trap"
+    _coach_restore_trap TERM "$saved_term_trap"
 }
 
 # Compute rolling adherence rate for the feedback loop.

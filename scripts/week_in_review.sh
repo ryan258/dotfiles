@@ -33,8 +33,8 @@ fi
 # --- Configuration ---
 OUTPUT_FILE=""
 if [ "${1:-}" == "--file" ]; then
-  WEEK_NUM=$(date +%V)
-  YEAR=$(date +%Y)
+  WEEK_NUM=$(date_now "%V")
+  YEAR=$(date_now "%Y")
   REVIEWS_DIR="$HOME/Documents/Reviews/Weekly"
   mkdir -p "$REVIEWS_DIR"
   OUTPUT_FILE="$REVIEWS_DIR/$YEAR-W$WEEK_NUM.md"

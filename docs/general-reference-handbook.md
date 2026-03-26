@@ -10,10 +10,10 @@ This is a simple view of the system. The full rules live in `../CLAUDE.md`.
 
 ```text
 Terminal (zsh)
-  -> aliases + functions (zsh/aliases.zsh — ~200 aliases)
-  -> 66 CLI scripts (scripts/*.sh)
-  -> 21 shared libraries (scripts/lib/*.sh)
-  -> 13 AI dispatchers + orchestration (bin/dhp-*.sh)
+  -> aliases + functions (zsh/aliases.zsh)
+  -> CLI scripts (scripts/*.sh)
+  -> shared libraries (scripts/lib/*.sh)
+  -> AI dispatchers + orchestration (bin/dhp-*.sh)
   -> Cyborg Lab agent (bin/cyborg + scripts/cyborg_agent.py + scripts/cyborg_build.py + scripts/cyborg_support.py)
   -> Brain/knowledge base (brain/ — ChromaDB vector store)
   -> data (~/.config/dotfiles-data/ — pipe-delimited flat files)
@@ -914,7 +914,7 @@ This guide covers proven ways to get more done, keep your data clean, and build 
 - Keep data clean with `data_validate --format` and backups.
 - Use `ai-suggest` to pick the right AI helper when stuck.
 
-> **Quick note on dispatchers:** Use the single-word aliases (they run the `dhp-*` scripts directly) for less typing. When you need a single entry point or want to use squads from `squads.json`, use `dispatch <squad> "brief"`. All scripts have been updated for better reliability.
+> **Quick note on dispatchers:** Use the single-word aliases (they run the `dhp-*` scripts directly) for less typing. When you need a single entry point, use `dispatch <dispatcher> "brief"`. All scripts have been updated for better reliability.
 >
 > **Security Note:** For details on security, how to report problems, and key management, see our [Security Policy](../../SECURITY.md).
 
@@ -2656,7 +2656,7 @@ These aliases come from `zsh/aliases.zsh`. This is a full list of all commands y
 | `downloads` | `cd ~/Downloads`              |                                                        |
 | `documents` | `cd ~/Documents`              |                                                        |
 | `desktop`   | `cd ~/Desktop`                |                                                        |
-| `scripts`   | `cd ~/scripts`                |                                                        |
+| `scripts`   | `cd "$DOTFILES_ALIAS_ROOT/scripts"` |                                                  |
 | `home`      | `cd ~`                        |                                                        |
 | `docs`      | `cd ~/Documents`              | Short form of 'documents'                              |
 | `down`      | `cd ~/Downloads`              | Short form of 'downloads'                              |
@@ -2761,7 +2761,7 @@ These aliases come from `zsh/aliases.zsh`. This is a full list of all commands y
 | `tododone`       | `todo.sh done`             | Mark a task as completed                                          |
 | `todoadd`        | `todo.sh add`              | Add a new task                                                    |
 | `journal`        | `journal.sh`               | Journal entry point                                               |
-| `break`          | `take_a_break.sh`          | Flexible break timer (default duration)                           |
+| `tbreak`         | `take_a_break.sh`          | Flexible break timer (default duration)                           |
 | `focus`          | `focus.sh`                 | Focus mode — block distractions                                   |
 | `t-start`        | `todo.sh start`            | Start timing a task                                               |
 | `t-stop`         | `todo.sh stop`             | Stop timing the current task                                      |
@@ -2770,10 +2770,10 @@ These aliases come from `zsh/aliases.zsh`. This is a full list of all commands y
 | `s-check`        | `spoon_manager.sh check`   | How many spoons remain today?                                     |
 | `s-spend`        | `spoon_manager.sh spend`   | Log spending spoons on an activity                                |
 | `correlate`      | `correlate.sh`             | Find patterns between health/productivity data                    |
-| `corr-sleep`     | `correlate.sh run ~/.config/dotfiles-data/fitbit/sleep_minutes.txt ~/.config/dotfiles-data/health.txt 0 1 1 2` | Correlate Fitbit sleep minutes with health logs |
-| `corr-steps`     | `correlate.sh run ~/.config/dotfiles-data/fitbit/steps.txt ~/.config/dotfiles-data/health.txt 0 1 1 2` | Correlate Fitbit steps with health logs |
-| `corr-rhr`       | `correlate.sh run ~/.config/dotfiles-data/fitbit/resting_heart_rate.txt ~/.config/dotfiles-data/health.txt 0 1 1 2` | Correlate Fitbit resting HR with health logs |
-| `corr-hrv`       | `correlate.sh run ~/.config/dotfiles-data/fitbit/hrv.txt ~/.config/dotfiles-data/health.txt 0 1 1 2` | Correlate Fitbit HRV with health logs |
+| `corr-sleep`     | `correlate.sh run "${XDG_DATA_HOME:-$HOME/.config}/dotfiles-data/fitbit/sleep_minutes.txt" "${XDG_DATA_HOME:-$HOME/.config}/dotfiles-data/health.txt" 0 1 1 2` | Correlate Fitbit sleep minutes with health logs |
+| `corr-steps`     | `correlate.sh run "${XDG_DATA_HOME:-$HOME/.config}/dotfiles-data/fitbit/steps.txt" "${XDG_DATA_HOME:-$HOME/.config}/dotfiles-data/health.txt" 0 1 1 2` | Correlate Fitbit steps with health logs |
+| `corr-rhr`       | `correlate.sh run "${XDG_DATA_HOME:-$HOME/.config}/dotfiles-data/fitbit/resting_heart_rate.txt" "${XDG_DATA_HOME:-$HOME/.config}/dotfiles-data/health.txt" 0 1 1 2` | Correlate Fitbit resting HR with health logs |
+| `corr-hrv`       | `correlate.sh run "${XDG_DATA_HOME:-$HOME/.config}/dotfiles-data/fitbit/hrv.txt" "${XDG_DATA_HOME:-$HOME/.config}/dotfiles-data/health.txt" 0 1 1 2` | Correlate Fitbit HRV with health logs |
 | `daily-report`   | `generate_report.sh daily` | Generate today's summary report                                   |
 | `insight`        | `insight.sh`               | AI-powered insight from recent data                               |
 | `health`         | `health.sh`                | Log symptoms, energy, and health events                           |
@@ -2814,7 +2814,7 @@ These aliases come from `zsh/aliases.zsh`. This is a full list of all commands y
 | `openf`        | `open_file.sh`                                  | Open a file with its default macOS app        |
 | `finddupes`    | `duplicate_finder.sh`                           | Find duplicate files by content hash          |
 | `organize`     | `file_organizer.sh`                             | Auto-organize files by type/date              |
-| `systemlog`    | `tail -n 20 ~/.config/dotfiles-data/system.log` | Last 20 log lines                             |
+| `systemlog`    | `tail -n 20 "${XDG_DATA_HOME:-$HOME/.config}/dotfiles-data/system.log"` | Last 20 log lines                             |
 | `logs`         | `logs.sh`                                       | Full log viewer                               |
 | `logtail`      | `logs.sh tail`                                  | Follow log in real time                       |
 | `logerrors`    | `logs.sh errors`                                | Show only error-level entries                 |
@@ -2871,8 +2871,6 @@ These aliases come from `zsh/aliases.zsh`. This is a full list of all commands y
 | `quickbackup` | `backup_project.sh && echo 'Backup complete!'`             | One-command project backup               |
 | `devstart`    | `dev_shortcuts.sh env && codehere`                         | Load env vars, open VS Code              |
 | `gitcheck`    | `my_progress.sh && git status`                             | Contribution stats + working tree        |
-| `wk`          | `with-keys`                                                | Run a command with SSH keys loaded       |
-| `wr`          | `with-req --`                                              | Run a command with required credentials  |
 
 ### SETUP INSTRUCTIONS
 
@@ -2927,7 +2925,7 @@ These aliases come from `zsh/aliases.zsh`. This is a full list of all commands y
 | `research`          | `$DOTFILES_ALIAS_ROOT/bin/dhp-research.sh`       |                                                        |
 | `narrative`         | `$DOTFILES_ALIAS_ROOT/bin/dhp-narrative.sh`      |                                                        |
 | `aicopy`            | `$DOTFILES_ALIAS_ROOT/bin/dhp-copy.sh`           | 'aicopy' not 'copy' (copy = pbcopy)                    |
-| `morphling`         | `$DOTFILES_ALIAS_ROOT/bin/morphling.sh`          | Shape-shifting multi-persona dispatcher                |
+| `morphling`         | `$DOTFILES_ALIAS_ROOT/bin/dhp-morphling.sh`      | Shape-shifting multi-persona dispatcher (swarm mode)   |
 | `finance`           | `$DOTFILES_ALIAS_ROOT/bin/dhp-finance.sh`        |                                                        |
 | `memory`            | `$DOTFILES_ALIAS_ROOT/bin/dhp-memory.sh`         |                                                        |
 | `memory-search`     | `$DOTFILES_ALIAS_ROOT/bin/dhp-memory-search.sh`  |                                                        |

@@ -9,14 +9,13 @@ if [[ -n "${_DHP_LIB_LOADED:-}" ]]; then
 fi
 readonly _DHP_LIB_LOADED=true
 
+# Dependencies:
+# - config.sh must already be sourced by the caller (typically via dhp_setup_env)
+# - common.sh is optional but recommended for shared helpers
+
 # Resolve dotfiles root for shared config
 DHP_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$DHP_LIB_DIR/.." && pwd)}"
-
-if [[ -f "$DOTFILES_DIR/scripts/lib/config.sh" ]]; then
-    # shellcheck disable=SC1090
-    source "$DOTFILES_DIR/scripts/lib/config.sh"
-fi
 
 # --- Configuration ---
 if [[ -z "${DATA_DIR:-}" ]]; then
@@ -31,6 +30,20 @@ _api_cooldown() {
     local cooldown="${API_COOLDOWN_SECONDS:-1}"
     if [ "$cooldown" -gt 0 ]; then
         sleep "$cooldown"
+    fi
+}
+
+# _dhp_lib_restore_trap: delegates to common.sh restore_trap
+_dhp_lib_restore_trap() { restore_trap "$@"; }
+
+_dhp_lib_stream_cleanup() {
+    local fifo_path="${1:-}"
+    local curl_pid="${2:-}"
+    if [[ -n "$curl_pid" ]]; then
+        kill "$curl_pid" 2>/dev/null || true
+    fi
+    if [[ -n "$fifo_path" ]]; then
+        rm -f "$fifo_path" 2>/dev/null || true
     fi
 }
 
@@ -163,8 +176,13 @@ call_openrouter_stream() {
     local stream_status=0
     local curl_status=0
     local fifo
-    fifo=$(mktemp -u)
-    mkfifo "$fifo"
+    local saved_int_trap=""
+    local saved_term_trap=""
+    fifo=$(mktemp -u "${TMPDIR:-/tmp}/dhp-stream.XXXXXX")
+    mkfifo -m 600 "$fifo"
+    saved_int_trap=$(trap -p INT || true)
+    saved_term_trap=$(trap -p TERM || true)
+    trap '_dhp_lib_stream_cleanup "$fifo" "$curl_pid"; stream_status=130' INT TERM
 
     curl -s -N --max-time 300 -X POST "https://openrouter.ai/api/v1/chat/completions" \
         -H "Authorization: Bearer $OPENROUTER_API_KEY" \
@@ -199,6 +217,8 @@ call_openrouter_stream() {
     wait "$curl_pid"
     curl_status=$?
     rm -f "$fifo"
+    _dhp_lib_restore_trap INT "$saved_int_trap"
+    _dhp_lib_restore_trap TERM "$saved_term_trap"
 
     if [ "$stream_status" -ne 0 ]; then
         return "$stream_status"

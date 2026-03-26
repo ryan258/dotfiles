@@ -43,6 +43,7 @@ The full rules live in `../CLAUDE.md`.
 - `status.sh --coach` uses the same fast `dhp-coach.sh` path for a mid-day reset. If you run it inside a git repo, the coach focuses on that repo. Outside a repo, it shows a wider view. Set `AI_STATUS_ENABLED=true` to show this on every `status` run. You can also tune `AI_STATUS_TEMPERATURE` on its own.
 - When the AI status coach is on and `status.sh` is interactive, it asks for energy and fog before building the briefing so the same run can use your fresh manual readings.
 - `config.sh` now reloads the root `.env` each time a process runs. This means coach timeout and model changes take effect right away.
+- Most scripts should source `common.sh` and then only the libraries they need. `loader.sh` is reserved for the coaching-heavy daily flows (`startday.sh`, `status.sh`, and `goodevening.sh`) that intentionally preload the full stack.
 - Coach modes: LOCKED (stay focused), FLOW (follow energy with check-ins), OVERRIDE (explore with limits), RECOVERY (low output for low-energy days). The coach suggests mode switches based on your numbers.
 - Drift and health limits (`COACH_*_THRESHOLD`) are set in `config.sh`. You can change them in `.env`.
 - `startday.sh` and `goodevening.sh` use daily focus and non-fork GitHub activity as coaching context. Journal and todo data stay local but do not steer the coach.
@@ -67,7 +68,7 @@ The full rules live in `../CLAUDE.md`.
 
 All saved data lives here:
 
-- `~/.config/dotfiles-data/`
+- `${XDG_DATA_HOME:-$HOME/.config}/dotfiles-data/`
 
 Key files:
 

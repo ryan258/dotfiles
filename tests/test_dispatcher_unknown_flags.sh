@@ -9,7 +9,8 @@ setup() {
     export HOME="$TEST_ROOT/home"
     export DATA_DIR="$HOME/.config/dotfiles-data"
     export DOTFILES_DIR="$TEST_ROOT/dotfiles"
-    mkdir -p "$DATA_DIR" "$DOTFILES_DIR/bin" "$DOTFILES_DIR/scripts/lib"
+    export PATH="$TEST_ROOT/mock-bin:$PATH"
+    mkdir -p "$DATA_DIR" "$DOTFILES_DIR/bin" "$DOTFILES_DIR/scripts/lib" "$TEST_ROOT/mock-bin"
 
     cp "$BATS_TEST_DIRNAME/../bin/dhp-shared.sh" "$DOTFILES_DIR/bin/dhp-shared.sh"
     cp "$BATS_TEST_DIRNAME/../bin/dhp-tech.sh" "$DOTFILES_DIR/bin/dhp-tech.sh"
@@ -21,6 +22,14 @@ setup() {
     cp "$BATS_TEST_DIRNAME/../scripts/lib/common.sh" "$DOTFILES_DIR/scripts/lib/common.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/file_ops.sh" "$DOTFILES_DIR/scripts/lib/file_ops.sh"
     chmod +x "$DOTFILES_DIR/bin/dhp-tech.sh" "$DOTFILES_DIR/bin/dhp-copy.sh" "$DOTFILES_DIR/bin/dhp-content.sh"
+
+    cat > "$TEST_ROOT/mock-bin/uv" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" > "$DATA_DIR/mock_uv_args.txt"
+cat >/dev/null
+printf 'mock swarm output\n'
+EOF
+    chmod +x "$TEST_ROOT/mock-bin/uv"
 }
 
 teardown() {
@@ -46,4 +55,20 @@ teardown() {
 
     [ "$status" -ne 0 ]
     [[ "$output" == *"Unknown flag: --bogus-flag"* ]]
+}
+
+@test "dhp-content forwards shared flags after custom parsing" {
+    run bash -c "PATH='$PATH' HOME='$HOME' DOTFILES_DIR='$DOTFILES_DIR' DATA_DIR='$DATA_DIR' OPENROUTER_API_KEY='test-key' DHP_CONTENT_OUTPUT_DIR='$DATA_DIR/content-output' bash '$DOTFILES_DIR/bin/dhp-content.sh' --temperature 0.5 'Guide to energy-first planning' 2>&1"
+
+    [ "$status" -eq 0 ]
+    run cat "$DATA_DIR/mock_uv_args.txt"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"--temperature 0.5"* ]]
+}
+
+@test "dhp-shared rejects out-of-range temperature values" {
+    run bash -c "HOME='$HOME' DOTFILES_DIR='$DOTFILES_DIR' DATA_DIR='$DATA_DIR' bash '$DOTFILES_DIR/bin/dhp-tech.sh' --temperature 2.5 'Fix parser issue' 2>&1"
+
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"between 0.0 and 2.0"* ]]
 }

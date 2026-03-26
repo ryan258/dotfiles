@@ -51,7 +51,7 @@ Commands:
   sync [days]
       Pull Fitbit data for the last N days (default: $GOOGLE_HEALTH_DEFAULT_DAYS)
       through the Google Health API and write normalized daily metrics under
-      ~/.config/dotfiles-data/fitbit/.
+      $FITBIT_DATA_DIR/.
 
   status
       Show Fitbit sync auth and sync status.

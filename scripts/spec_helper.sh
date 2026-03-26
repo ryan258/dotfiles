@@ -35,8 +35,21 @@ fi
 
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SPEC_HELPER_DIR/.." && pwd)}"
 
+_spec_helper_cleanup_tmpfile() {
+  local tmp_path="${1:-}"
+  if [[ -n "$tmp_path" ]]; then
+    rm -f "$tmp_path" 2>/dev/null || true
+  fi
+}
+
+# _spec_helper_restore_trap: delegates to common.sh restore_trap
+_spec_helper_restore_trap() { restore_trap "$@"; }
+
 spec_dispatch() {
   local dispatcher="${1}"
+  local interrupted=false
+  local saved_int_trap=""
+  local saved_term_trap=""
 
   # Validate dispatcher
   if [[ -z "$dispatcher" ]]; then
@@ -70,6 +83,9 @@ spec_dispatch() {
   mv "$tmpfile" "${tmpfile}.${dispatcher}-spec.txt"
   tmpfile="${tmpfile}.${dispatcher}-spec.txt"
   cat "$template_file" > "$tmpfile"
+  saved_int_trap=$(trap -p INT || true)
+  saved_term_trap=$(trap -p TERM || true)
+  trap '_spec_helper_cleanup_tmpfile "$tmpfile"; interrupted=true' INT TERM
 
   # Open in user's preferred editor
   if command -v code &> /dev/null && [[ "$EDITOR" == "code" || "$EDITOR" == "code --wait" ]]; then
@@ -78,10 +94,16 @@ spec_dispatch() {
     "${EDITOR:-vim}" "$tmpfile"
   fi
 
+  _spec_helper_restore_trap INT "$saved_int_trap"
+  _spec_helper_restore_trap TERM "$saved_term_trap"
+  if [[ "$interrupted" == "true" ]]; then
+    return 130
+  fi
+
   # Check if user actually wrote something
   if [[ ! -s "$tmpfile" ]]; then
     echo "⚠️  Spec is empty, aborting"
-    rm "$tmpfile"
+    _spec_helper_cleanup_tmpfile "$tmpfile"
     return 1
   fi
 
@@ -98,7 +120,7 @@ spec_dispatch() {
   echo "💾 Spec saved to $spec_archive"
 
   # Cleanup temp file
-  rm "$tmpfile"
+  _spec_helper_cleanup_tmpfile "$tmpfile"
 }
 
 # Export function for use in shell

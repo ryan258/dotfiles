@@ -32,7 +32,7 @@ To prevent drift and contradictions:
 - `docs/ROADMAP-ENERGY.md`
 - `scripts/README.md`
 - `scripts/README_aliases.md`
-- `phases.md`
+- `docs/archive/phases.md`
 
 3. Update workflow when behavior changes:
 
@@ -333,7 +333,7 @@ dhp_dispatch \
 - Not every AI entrypoint needs to be a `dhp-*` dispatcher.
 - Repo-specific agents may live in `bin/` as standalone executables when they own a focused workflow that would be awkward to force through `dhp-shared.sh`.
 - `bin/cyborg` is the Cyborg Lab ingest/resume agent: an interactive session tool that scans a source repo, proposes a Cyborg Lab content graph, stages near-publishable drafts, stores resumable session artifacts under `~/Projects/cyborg-work` by default (override with `CYBORG_WORK_DIR`), only writes to `my-ms-ai-blog` on explicit apply, and should prefer accessible `A/B/C/D/E` short-choice prompts when it asks the user to choose. `cyborg auto` runs the full pipeline hands-free for low-energy sessions; `cyborg auto --iterate` is the incremental-growth path for existing repos, pulling the next GitHub issue or backlog item, auto-applying the repo change, and running the same build-verify-fix loop against that repo before stopping unless `--docs-after-code` is set; `cyborg auto --build` runs market validation, scaffolds a project via Morphling, runs the build-verify-fix loop, and then hands the verified repo to Cyborg for documentation. Add `--publish` when you want the verified build pushed to its registry before the docs pass. See [`bin/autopilot-readme.md`](bin/autopilot-readme.md) for the convergence architecture and [`MORPHLING.md`](MORPHLING.md) for Morphling's full capabilities including command execution.
-- `bin/morphling.sh` is the Morphling launcher. In direct mode it runs as a LangChain ReAct agent with four tools: `read_file`, `write_file`, `list_directory`, and `run_command` (shell execution with 60s timeout). This makes it a lead-developer agent that can write code, run tests, and iterate until things work. `morphling --swarm` uses the older dispatcher path for one-shot context-rich analysis.
+- `bin/morphling.sh` is the Morphling launcher. In direct mode (`bin/morphling.sh`) it runs as a LangChain ReAct agent with four tools: `read_file`, `write_file`, `list_directory`, and `run_command` (shell execution with 60s timeout). This makes it a lead-developer agent that can write code, run tests, and iterate until things work. The `morphling` shell alias points to swarm mode (`bin/dhp-morphling.sh`), the one-shot context-rich analysis path with no tool access.
 - `bin/coach-chat.py` is the multi-turn coach chat handler. It maintains conversation history in a JSON file and calls OpenRouter for follow-up turns. Invoked by `scripts/lib/coach_chat.sh` — not called directly by users. Supports `init` (create history with system prompt + briefing) and `turn` (append message, call API, return response).
 - Standalone agents must still follow root-project rules: strict mode for shell launchers, predictable config loading, explicit path validation, and session state stored in repo-appropriate locations.
 
@@ -744,7 +744,7 @@ _This document should be updated whenever new patterns are established or existi
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **dotfiles** (1139 symbols, 2451 relationships, 69 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **dotfiles** (3901 symbols, 6682 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

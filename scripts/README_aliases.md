@@ -28,7 +28,7 @@ The full rules live in `../CLAUDE.md`.
 - `tech`, `content`, `strategy`, `creative`, `brand`, `market`, `research`, `stoic`, `narrative`, `aicopy`, `finance`
 - `morphling` -- A flexible AI helper (interactive mode via `morphling.sh`)
 - `memory` / `memory-search` -- Save and find things in the knowledge base
-- Single entry point: `dispatch <squad> "brief"`
+- Single entry point: `dispatch <dispatcher> "brief"`
 - Chaining tools: `dhp-chain`, `dhp-project`, `ai-suggest`
 - `cyborg` -- Cyborg Lab agent for scanning repos and writing docs (not a dispatcher)
 
@@ -57,5 +57,5 @@ The full rules live in `../CLAUDE.md`.
 - `grep` is changed on purpose to add color (`ggrep --color=auto` when it exists).
 - `memo` now points straight to `cheatsheet.sh`. The old `memo.sh` wrapper is gone.
 - AI aliases find their scripts through `DOTFILES_ALIAS_ROOT` (falls back to `$HOME/dotfiles`).
-- `corr-sleep`, `corr-steps`, `corr-rhr`, and `corr-hrv` are fixed shortcuts for correlating Fitbit metric files against `~/.config/dotfiles-data/health.txt`.
+- `corr-sleep`, `corr-steps`, `corr-rhr`, and `corr-hrv` resolve their data paths from `${XDG_DATA_HOME:-$HOME/.config}/dotfiles-data`.
 - For the full rules and limits, see `../CLAUDE.md`.

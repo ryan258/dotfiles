@@ -1,33 +1,26 @@
-export NVM_DIR="$HOME/.nvm"
-[ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && . "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
-[ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && . "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
-
-# --- reserved names hardening (runs AFTER aliases load) ---
-unalias env  2>/dev/null; unset -f env  2>/dev/null
-unalias open 2>/dev/null; unset -f open 2>/dev/null
-
-# safe replacements for your helpers
-alias devenv='~/scripts/dev_shortcuts.sh env'
-alias openf='~/scripts/open_file.sh'
-
-# handy wrappers for the keychain tools
-alias wk='with-keys'
-alias wr='with-req --'
 export PATH="$HOME/.composer/vendor/bin:$PATH"
 export PATH="/opt/homebrew/bin:$PATH"
 export PATH="$HOME/.config/composer/vendor/bin:$PATH"
 
 # fnm: fast node manager
-eval "$(fnm env --shell zsh --use-on-cd)"
+if command -v fnm >/dev/null 2>&1; then
+    eval "$(fnm env --shell zsh --use-on-cd)"
+fi
 
 # Editor for spec templates
 export EDITOR="code --wait"
 
 # echo "SUCCESS! Dotfiles are loading."
 source "$ZDOTDIR/aliases.zsh"
+# Fabric-AI integrations (urlpost, ytpack, diffreview, etc.)
+if [ -f "$ZDOTDIR/aliases/fabric-ai.zsh" ]; then
+    source "$ZDOTDIR/aliases/fabric-ai.zsh"
+fi
 
 # Run startday.sh once per day, persistently across reboots
-LAST_RUN_FILE="$HOME/.config/dotfiles-data/.startday_last_run"
+DOTFILES_DATA_ROOT="${XDG_DATA_HOME:-$HOME/.config}/dotfiles-data"
+mkdir -p "$DOTFILES_DATA_ROOT"
+LAST_RUN_FILE="$DOTFILES_DATA_ROOT/.startday_last_run"
 TODAY=$(date +%Y-%m-%d)
 
 # Check if the last run file exists and what date it contains
@@ -45,23 +38,23 @@ if [ "$LAST_RUN_DATE" != "$TODAY" ]; then
 fi
 
 # --- Smart Navigation: Log directory changes for intelligent suggestions ---
-USAGE_LOG="$HOME/.config/dotfiles-data/dir_usage.log"
+USAGE_LOG="$DOTFILES_DATA_ROOT/dir_usage.log"
 
 # Use zsh hook system to avoid conflicts
 autoload -U add-zsh-hook
 __log_directory_change() {
     # Log directory changes for smart navigation suggestions (used by g suggest)
-    # Format: timestamp:directory
-    echo "$(date +%s):$(pwd)" >> "$USAGE_LOG"
+    # Format: timestamp|directory
+    echo "$(date +%s)|$(pwd)" >> "$USAGE_LOG"
 }
 add-zsh-hook chpwd __log_directory_change
 
 # Added by Antigravity
-export PATH="/Users/ryanjohnson/.antigravity/antigravity/bin:$PATH"
+export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
 
 # KVOID Alias (Accessible Mode)
-alias k='cd /Users/ryanjohnson/Projects/production-house_audio-plays--ambient-horror && uv run ./kvoid'
-alias sm="/Users/ryanjohnson/Projects/shadow_mirror/bin/shadow-mirror"
+alias k="cd ${PROJECTS_DIR:-$HOME/Projects}/production-house_audio-plays--ambient-horror && uv run ./kvoid"
+alias sm="${PROJECTS_DIR:-$HOME/Projects}/shadow_mirror/bin/shadow-mirror"
 
 # Glowforge Image Processor
-alias gf='/Users/ryanjohnson/Projects/glowforge-it/gf'
+alias gf="${PROJECTS_DIR:-$HOME/Projects}/glowforge-it/gf"

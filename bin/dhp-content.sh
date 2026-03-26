@@ -43,7 +43,8 @@ USE_CONTEXT=false
 CONTEXT_MODE=""
 PERSONA_NAME=""
 
-declare -a REMAINING_CUSTOM=()
+declare -a FORWARD_ARGS=()
+declare -a POSITIONAL_ARGS=()
 
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -65,23 +66,24 @@ while [[ "$#" -gt 0 ]]; do
             shift 2
             ;;
         *)
-            REMAINING_CUSTOM+=("$1")
+            FORWARD_ARGS+=("$1")
             shift
             ;;
     esac
 done
 
-if [ ${#REMAINING_CUSTOM[@]} -gt 0 ]; then
-    set -- "${REMAINING_CUSTOM[@]}"
+if [ ${#FORWARD_ARGS[@]} -gt 0 ]; then
+    set -- "${FORWARD_ARGS[@]}"
 else
     set --
 fi
 
 dhp_parse_flags "$@"
 
-# Restore args for dhp_get_input
-if [ ${#REMAINING_ARGS[@]} -gt 0 ]; then
-    set -- "${REMAINING_ARGS[@]}"
+# Restore positional args for dhp_get_input
+POSITIONAL_ARGS=("${REMAINING_ARGS[@]}")
+if [ ${#POSITIONAL_ARGS[@]} -gt 0 ]; then
+    set -- "${POSITIONAL_ARGS[@]}"
 else
     set --
 fi
@@ -186,4 +188,4 @@ dhp_dispatch \
     "DHP_CONTENT_OUTPUT_DIR" \
     "$SYSTEM_BRIEF_CONTENT" \
     "" \
-    "$@"
+    "${POSITIONAL_ARGS[@]}"

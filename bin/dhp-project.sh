@@ -1,42 +1,90 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# dhp-project.sh: Multi-Specialist Project Orchestrator
-# Coordinates multiple AI specialists for complex projects
+# dhp-project.sh: Multi-specialist project orchestrator
+# Coordinates multiple AI specialists for complex project briefs.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
-CONFIG_LIB="$DOTFILES_DIR/scripts/lib/config.sh"
+source "$SCRIPT_DIR/dhp-shared.sh"
 
-if [ -f "$CONFIG_LIB" ]; then
-    # shellcheck disable=SC1090
-    source "$CONFIG_LIB"
+dhp_setup_env
+dhp_parse_flags "$@"
+if [ ${#REMAINING_ARGS[@]} -gt 0 ]; then
+    set -- "${REMAINING_ARGS[@]}"
 else
-    echo "Error: configuration library not found at $CONFIG_LIB" >&2
-    exit 1
+    set --
 fi
 
-# Dependency check
-if ! command -v curl &> /dev/null || ! command -v jq &> /dev/null; then
-    echo "Error: curl and jq are required." >&2
-    exit 1
-fi
+validate_dependencies curl jq
+ensure_api_key OPENROUTER_API_KEY
 
-# API key validation
-if [ -z "${OPENROUTER_API_KEY:-}" ]; then
-    echo "Error: OPENROUTER_API_KEY not set in .env" >&2
-    exit 1
-fi
-
-# Get project description
 if [ $# -eq 0 ]; then
-    echo "Usage: $0 \"<project description>\"" >&2
-    echo "" >&2
-    echo "Example: $0 \"Launch new blog series on AI productivity\"" >&2
-    exit 1
+    cat >&2 <<EOF
+Usage: $0 [--brain] [--verbose] [--temperature X] [--stream] "<project description>"
+
+Example:
+  $0 "Launch new blog series on AI productivity"
+EOF
+    die "dhp-project.sh requires a project description." "$EXIT_INVALID_ARGS"
 fi
 
-PROJECT_DESC="$*"
+PROJECT_DESC=$(sanitize_input "$*")
+OUTPUT_DIR_FINAL=$(default_output_dir "$HOME/Documents/AI_Staff_HQ_Outputs/Strategy/Projects" "DHP_PROJECT_OUTPUT_DIR")
+mkdir -p "$OUTPUT_DIR_FINAL"
+PROJECT_SLUG=$(slugify "$PROJECT_DESC")
+PROJECT_OUTPUT_FILE="$OUTPUT_DIR_FINAL/${PROJECT_SLUG}.md"
+
+COMMON_FLAGS=()
+if [ "$USE_VERBOSE" = "true" ]; then
+    COMMON_FLAGS+=(--verbose)
+fi
+if [ "$USE_STREAMING" = "true" ]; then
+    COMMON_FLAGS+=(--stream)
+fi
+if [ "$USE_BRAIN" = "true" ]; then
+    COMMON_FLAGS+=(--brain)
+fi
+if [ -n "$PARAM_TEMPERATURE" ]; then
+    COMMON_FLAGS+=(--temperature "$PARAM_TEMPERATURE")
+fi
+
+PROJECT_TEMP_FILES=()
+_dhp_project_cleanup() {
+    if [ ${#PROJECT_TEMP_FILES[@]} -gt 0 ]; then
+        rm -f "${PROJECT_TEMP_FILES[@]}" 2>/dev/null || true
+    fi
+}
+trap _dhp_project_cleanup INT TERM EXIT
+
+run_phase() {
+    local phase_label="$1"
+    local dispatcher="$2"
+    local prompt="$3"
+    local dispatcher_cmd=""
+    local tmp_file=""
+
+    dispatcher_cmd="$(dhp_resolve_dispatcher_command "$dispatcher" "$DOTFILES_DIR")" || {
+        echo "Error: dispatcher '$dispatcher' is unavailable." >&2
+        return 1
+    }
+
+    tmp_file=$(create_temp_file "dhp-project-phase") || return 1
+    PROJECT_TEMP_FILES+=("$tmp_file")
+
+    echo "$phase_label..." >&2
+    if [ "$USE_STREAMING" = "true" ] || [ "$USE_VERBOSE" = "true" ]; then
+        if ! printf '%s' "$prompt" | "$dispatcher_cmd" "${COMMON_FLAGS[@]}" | tee /dev/stderr > "$tmp_file"; then
+            return 1
+        fi
+    else
+        if ! printf '%s' "$prompt" | "$dispatcher_cmd" "${COMMON_FLAGS[@]}" > "$tmp_file"; then
+            return 1
+        fi
+    fi
+
+    cat "$tmp_file"
+}
 
 echo "========================================" >&2
 echo "Multi-Specialist Project Orchestration" >&2
@@ -44,8 +92,6 @@ echo "========================================" >&2
 echo "Project: $PROJECT_DESC" >&2
 echo "" >&2
 
-# Phase 1: Market Research
-echo "📊 Phase 1: Market Research (Market Analyst)..." >&2
 MARKET_PROMPT="Analyze the market opportunity for: $PROJECT_DESC
 
 Provide:
@@ -55,13 +101,10 @@ Provide:
 - Market trends
 - Success metrics"
 
-MARKET_ANALYSIS=$(echo "$MARKET_PROMPT" | "$DOTFILES_DIR/bin/dhp-market.sh") || {
-    echo "Error: Phase 1 (Market Research) failed." >&2
-    exit 1
+MARKET_ANALYSIS="$(run_phase "📊 Phase 1: Market Research (Market Analyst)" "market" "$MARKET_PROMPT")" || {
+    die "Phase 1 (Market Research) failed." "$EXIT_SERVICE_ERROR"
 }
 
-# Phase 2: Brand Positioning
-echo "🎨 Phase 2: Brand Positioning (Brand Builder)..." >&2
 BRAND_PROMPT="Define brand positioning for: $PROJECT_DESC
 
 Market Context:
@@ -73,13 +116,10 @@ Provide:
 - Differentiation strategy
 - Messaging pillars"
 
-BRAND_STRATEGY=$(echo "$BRAND_PROMPT" | "$DOTFILES_DIR/bin/dhp-brand.sh") || {
-    echo "Error: Phase 2 (Brand Positioning) failed." >&2
-    exit 1
+BRAND_STRATEGY="$(run_phase "🎨 Phase 2: Brand Positioning (Brand Builder)" "brand" "$BRAND_PROMPT")" || {
+    die "Phase 2 (Brand Positioning) failed." "$EXIT_SERVICE_ERROR"
 }
 
-# Phase 3: Strategic Plan
-echo "🎯 Phase 3: Strategic Planning (Chief of Staff)..." >&2
 STRATEGY_PROMPT="Create a strategic plan for: $PROJECT_DESC
 
 Market Analysis:
@@ -95,13 +135,10 @@ Provide:
 - Success metrics
 - Action items prioritized"
 
-STRATEGIC_PLAN=$(echo "$STRATEGY_PROMPT" | "$DOTFILES_DIR/bin/dhp-strategy.sh") || {
-    echo "Error: Phase 3 (Strategic Planning) failed." >&2
-    exit 1
+STRATEGIC_PLAN="$(run_phase "🎯 Phase 3: Strategic Planning (Chief of Staff)" "strategy" "$STRATEGY_PROMPT")" || {
+    die "Phase 3 (Strategic Planning) failed." "$EXIT_SERVICE_ERROR"
 }
 
-# Phase 4: Content Strategy
-echo "📝 Phase 4: Content Strategy (Content Specialist)..." >&2
 CONTENT_PROMPT="Develop content strategy for: $PROJECT_DESC
 
 Strategic Plan:
@@ -116,13 +153,10 @@ Provide:
 - SEO optimization plan
 - Content formats"
 
-CONTENT_STRATEGY=$(echo "$CONTENT_PROMPT" | "$DOTFILES_DIR/bin/dhp-content.sh") || {
-    echo "Error: Phase 4 (Content Strategy) failed." >&2
-    exit 1
+CONTENT_STRATEGY="$(run_phase "📝 Phase 4: Content Strategy (Content Specialist)" "content" "$CONTENT_PROMPT")" || {
+    die "Phase 4 (Content Strategy) failed." "$EXIT_SERVICE_ERROR"
 }
 
-# Phase 5: Marketing Copy
-echo "✍️  Phase 5: Marketing Copy (Copywriter)..." >&2
 COPY_PROMPT="Create promotional copy for: $PROJECT_DESC
 
 Content Strategy:
@@ -137,19 +171,11 @@ Provide:
 - Social media hooks
 - Call-to-action variations"
 
-MARKETING_COPY=$(echo "$COPY_PROMPT" | "$DOTFILES_DIR/bin/dhp-copy.sh") || {
-    echo "Error: Phase 5 (Marketing Copy) failed." >&2
-    exit 1
+MARKETING_COPY="$(run_phase "✍️  Phase 5: Marketing Copy (Copywriter)" "copy" "$COPY_PROMPT")" || {
+    die "Phase 5 (Marketing Copy) failed." "$EXIT_SERVICE_ERROR"
 }
 
-# Generate comprehensive project brief
-echo "" >&2
-echo "✅ Multi-Specialist Orchestration Complete" >&2
-echo "========================================" >&2
-echo "" >&2
-
-# Output comprehensive project brief
-cat <<EOF
+PROJECT_BRIEF="$(cat <<EOF
 # Project Brief: $PROJECT_DESC
 
 **Generated:** $(date '+%Y-%m-%d %H:%M')
@@ -200,7 +226,11 @@ $MARKETING_COPY
 **Note:** This brief was generated through multi-specialist AI orchestration.
 Review and adapt recommendations based on your specific context and constraints.
 EOF
+)"
+
+printf '%s\n' "$PROJECT_BRIEF" | tee "$PROJECT_OUTPUT_FILE"
+dhp_save_artifact "$PROJECT_OUTPUT_FILE" "$PROJECT_SLUG" "project" "dhp,project" "ai-staff-hq" "generation"
 
 echo "" >&2
 echo "SUCCESS: Project brief generated successfully." >&2
-echo "TIP: Redirect output to a file: dhp-project \"...\" > project-brief.md" >&2
+echo "Saved to: $PROJECT_OUTPUT_FILE" >&2

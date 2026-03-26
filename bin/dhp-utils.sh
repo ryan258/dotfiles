@@ -7,11 +7,9 @@ if [[ -n "${_DHP_UTILS_LOADED:-}" ]]; then
 fi
 readonly _DHP_UTILS_LOADED=true
 
-# Try to source common library for shared functions
-DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
-if [[ -f "$DOTFILES_DIR/scripts/lib/common.sh" ]]; then
-    source "$DOTFILES_DIR/scripts/lib/common.sh"
-fi
+# Callers should source common.sh before dhp-utils.sh if they want helpers like
+# require_cmd(). validate_dependencies degrades gracefully when those helpers
+# are unavailable.
 
 # Validate required commands are available
 # Usage: validate_dependencies curl jq python3
@@ -55,15 +53,7 @@ read_dispatcher_input() {
     fi
 }
 
-if ! type validate_path &>/dev/null; then
-    validate_path() {
-        echo "Error: validate_path unavailable (common.sh not loaded)." >&2
-        return 1
-    }
-fi
-
 export -f validate_dependencies
 export -f ensure_api_key
 export -f default_output_dir
 export -f read_dispatcher_input
-export -f validate_path

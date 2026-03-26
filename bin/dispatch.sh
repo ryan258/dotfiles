@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
-DISPATCHER_BIN="$DOTFILES_DIR/bin"
-SQUADS_FILE="${DHP_SQUADS_FILE:-$DOTFILES_DIR/ai-staff-hq/squads.json}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+source "$DOTFILES_DIR/bin/dhp-shared.sh"
 
 print_usage() {
-    echo "Usage: dispatch <squad> [--stream] [--temperature X]" >&2
-    echo "       cat file | dispatch <squad> [flags]" >&2
+    echo "Usage: dispatch <dispatcher> [--stream] [--temperature X]" >&2
+    echo "       cat file | dispatch <dispatcher> [flags]" >&2
     exit 1
 }
 
@@ -18,20 +18,10 @@ fi
 TARGET="${1:-}"
 shift
 
-if [ -x "$DISPATCHER_BIN/dhp-$TARGET.sh" ]; then
-    exec "$DISPATCHER_BIN/dhp-$TARGET.sh" "$@"
+RESOLVED_CMD="$(dhp_resolve_dispatcher_command "$TARGET" "$DOTFILES_DIR" 2>/dev/null || true)"
+if [ -n "$RESOLVED_CMD" ]; then
+    exec "$RESOLVED_CMD" "$@"
 fi
 
-if [ -x "$DISPATCHER_BIN/$TARGET.sh" ]; then
-    exec "$DISPATCHER_BIN/$TARGET.sh" "$@"
-fi
-
-if [ -f "$SQUADS_FILE" ]; then
-    if jq -e --arg name "$TARGET" '.[$name].dispatcher' "$SQUADS_FILE" >/dev/null 2>&1; then
-        dispatcher=$(jq -r --arg name "$TARGET" '.[$name].dispatcher' "$SQUADS_FILE")
-        exec "$DISPATCHER_BIN/$dispatcher" "$@"
-    fi
-fi
-
-echo "dispatch: unknown squad or dispatcher '$TARGET'" >&2
+echo "dispatch: unknown dispatcher '$TARGET'" >&2
 print_usage
