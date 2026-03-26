@@ -52,7 +52,7 @@ Interactive follow-up rules:
     # Create temp workspace
     local _cc_dir
     _cc_dir=$(mktemp -d "${TMPDIR:-/tmp}/coach_chat.XXXXXX") || return 1
-    trap 'rm -rf "$_cc_dir" 2>/dev/null || true' EXIT INT TERM
+    trap 'rm -rf "${_cc_dir:-}" 2>/dev/null || true' EXIT INT TERM
     local _cc_history="$_cc_dir/history.json"
     local _cc_sysprompt="$_cc_dir/system.txt"
     local _cc_briefing="$_cc_dir/briefing.txt"
