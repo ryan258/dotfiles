@@ -227,6 +227,10 @@ alias s-spend="spoon_manager.sh spend"    # Log spending spoons on an activity
 
 # --- Correlation & Reports ---
 alias correlate="correlate.sh"            # Find patterns between health/productivity data
+alias corr-sleep="correlate.sh run ~/.config/dotfiles-data/fitbit/sleep_minutes.txt ~/.config/dotfiles-data/health.txt 0 1 1 2" # Sleep minutes vs energy log
+alias corr-steps="correlate.sh run ~/.config/dotfiles-data/fitbit/steps.txt ~/.config/dotfiles-data/health.txt 0 1 1 2" # Steps vs energy log
+alias corr-rhr="correlate.sh run ~/.config/dotfiles-data/fitbit/resting_heart_rate.txt ~/.config/dotfiles-data/health.txt 0 1 1 2" # Resting HR vs energy log
+alias corr-hrv="correlate.sh run ~/.config/dotfiles-data/fitbit/hrv.txt ~/.config/dotfiles-data/health.txt 0 1 1 2" # HRV vs energy log
 alias daily-report="generate_report.sh daily"  # Generate today's summary report
 alias insight="insight.sh"                # AI-powered insight from recent data
 

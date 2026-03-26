@@ -33,6 +33,7 @@ setup() {
     cp "$BATS_TEST_DIRNAME/../scripts/lib/coaching.sh" "$DOTFILES_DIR/scripts/lib/coaching.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/config.sh" "$DOTFILES_DIR/scripts/lib/config.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/date_utils.sh" "$DOTFILES_DIR/scripts/lib/date_utils.sh"
+    cp "$BATS_TEST_DIRNAME/../scripts/lib/health_ops.sh" "$DOTFILES_DIR/scripts/lib/health_ops.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/common.sh" "$DOTFILES_DIR/scripts/lib/common.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/file_ops.sh" "$DOTFILES_DIR/scripts/lib/file_ops.sh"
     chmod +x "$DOTFILES_DIR/scripts/goodevening.sh"
@@ -171,6 +172,7 @@ PY
 
     [[ "$prompt" == *"Coach mode used today:"* ]]
     [[ "$prompt" == *"Behavior digest:"* ]]
+    [[ "$prompt" == *"Wearable guidance:"* ]]
     [[ "$prompt" == *"Blindspots to sleep on (1-10):"* ]]
     [[ "$prompt" == *"Tomorrow lock:"* ]]
     [[ "$prompt" == *"Health lens:"* ]]
@@ -186,6 +188,30 @@ PY
 
     [ -f "$DATA_DIR/coach_log.txt" ]
     grep -q '^GOODEVENING|' "$DATA_DIR/coach_log.txt"
+}
+
+@test "goodevening auto-syncs Fitbit data before reflection when auth exists" {
+    cat > "$DOTFILES_DIR/scripts/fitbit_sync.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+printf '%s\n' "$*" > "$DATA_DIR/fitbit_sync_args_goodevening.txt"
+EOF
+    chmod +x "$DOTFILES_DIR/scripts/fitbit_sync.sh"
+    printf '%s\n' '{"refresh_token":"test"}' > "$DATA_DIR/google_health_oauth.json"
+
+    run env \
+        PATH="$DOTFILES_DIR/bin:$PATH" \
+        HOME="$HOME" \
+        DATA_DIR="$DATA_DIR" \
+        DOTFILES_DIR="$DOTFILES_DIR" \
+        PROJECTS_DIR="$PROJECTS_DIR" \
+        AI_REFLECTION_ENABLED=false \
+        GOOGLE_HEALTH_DEFAULT_DAYS=14 \
+        bash -c "$DOTFILES_DIR/scripts/goodevening.sh --refresh $TEST_DAY < /dev/null"
+
+    [ "$status" -eq 0 ]
+    [ -f "$DATA_DIR/fitbit_sync_args_goodevening.txt" ]
+    [[ "$(cat "$DATA_DIR/fitbit_sync_args_goodevening.txt")" == "sync 14" ]]
 }
 
 @test "goodevening uses deterministic fallback when strategy call times out" {

@@ -26,9 +26,10 @@ setup() {
     export CONFIG_LIB="$BATS_TEST_DIRNAME/../scripts/lib/config.sh"
     export COMMON_LIB="$BATS_TEST_DIRNAME/../scripts/lib/common.sh"
     export DATE_LIB="$BATS_TEST_DIRNAME/../scripts/lib/date_utils.sh"
+    export HEALTH_LIB="$BATS_TEST_DIRNAME/../scripts/lib/health_ops.sh"
     export METRICS_LIB="$BATS_TEST_DIRNAME/../scripts/lib/coach_metrics.sh"
     export PROMPTS_LIB="$BATS_TEST_DIRNAME/../scripts/lib/coach_prompts.sh"
-    export SOURCE_PREFIX="source '$CONFIG_LIB'; source '$COMMON_LIB'; source '$DATE_LIB'; source '$METRICS_LIB'; source '$PROMPTS_LIB'"
+    export SOURCE_PREFIX="source '$CONFIG_LIB'; source '$COMMON_LIB'; source '$DATE_LIB'; source '$HEALTH_LIB'; source '$METRICS_LIB'; source '$PROMPTS_LIB'"
 
     export DAY_MINUS1
     DAY_MINUS1="$(shift_date -1)"
@@ -52,6 +53,8 @@ teardown() {
     [[ "$output" == *"Yesterday's commits:"* ]]
     [[ "$output" == *"Recent GitHub pushes"* ]]
     [[ "$output" == *"Behavior digest:"* ]]
+    [[ "$output" == *"Wearable guidance:"* ]]
+    [[ "$output" == *"Energy and fog guidance:"* ]]
     [[ "$output" == *"Briefing Summary:"* ]]
     [[ "$output" == *"GitHub blindspots/opportunities (1-10):"* ]]
     [[ "$output" == *"North Star:"* ]]
@@ -98,6 +101,8 @@ teardown() {
     [[ "$output" == *"Today's focus:"* ]]
     [[ "$output" == *"Today's commits:"* ]]
     [[ "$output" == *"Behavior digest:"* ]]
+    [[ "$output" == *"Wearable guidance:"* ]]
+    [[ "$output" == *"Energy and fog guidance:"* ]]
     [[ "$output" == *"Reflection Summary:"* ]]
     [[ "$output" == *"Blindspots to sleep on (1-10):"* ]]
     [[ "$output" == *"What worked:"* ]]
@@ -132,6 +137,7 @@ teardown() {
     [[ "$output" == *"Today's commits:"* ]]
     [[ "$output" == *"Recent GitHub pushes (last 7 days):"* ]]
     [[ "$output" == *"Behavior digest:"* ]]
+    [[ "$output" == *"Energy and fog guidance:"* ]]
     [[ "$output" == *"Current directory:"* ]]
     [[ "$output" == *"/tmp/project"* ]]
     [[ "$output" == *"Current project context:"* ]]
@@ -327,4 +333,47 @@ teardown() {
     [[ "$output" == *"Blindspots to sleep on (1-10):"* ]]
     [[ "$output" == *"1. Recent work is feature-heavy across ai-ethics-comparator and youtube-face-blur; turn one shipped change into a write-up, changelog, or demo angle instead of starting from a blank page."* ]]
     [[ "$output" == *"9. Repo youtube-face-blur likely wants a short demo, screenshot, or walkthrough so the newest capability is legible without code-reading."* ]]
+}
+
+@test "coach_build_behavior_digest includes wearable context when Fitbit data exists" {
+    mkdir -p "$DATA_DIR/fitbit"
+    cat > "$DATA_DIR/fitbit/sleep_minutes.txt" <<'EOF'
+2026-03-26|257
+EOF
+    cat > "$DATA_DIR/fitbit/resting_heart_rate.txt" <<'EOF'
+2026-03-26|73
+EOF
+    cat > "$DATA_DIR/fitbit/hrv.txt" <<'EOF'
+2026-03-26|67
+EOF
+    cat > "$DATA_DIR/fitbit/steps.txt" <<'EOF'
+2026-03-26|822
+EOF
+
+    run bash -c "$SOURCE_PREFIX; coach_build_behavior_digest '2026-03-26' 7 30 '' ''"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Wearable context:"* ]]
+    [[ "$output" == *"Fitbit sleep: 257m (2026-03-26)"* ]]
+    [[ "$output" == *"Fitbit resting HR: 73 (2026-03-26)"* ]]
+    [[ "$output" == *"Fitbit HRV: 67 (2026-03-26)"* ]]
+    [[ "$output" == *"Fitbit steps: 822 (2026-03-26)"* ]]
+}
+
+@test "coach_build_behavior_digest includes both latest and average energy fog context" {
+    cat > "$DATA_DIR/health.txt" <<'EOF'
+ENERGY|2026-03-23 01:14|2
+FOG|2026-03-23 01:14|8
+ENERGY|2026-03-23 10:54|10
+FOG|2026-03-23 10:54|2
+ENERGY|2026-03-23 23:24|3
+FOG|2026-03-23 23:24|7
+ENERGY|2026-03-26 13:02|7
+FOG|2026-03-26 13:02|3
+EOF
+
+    run bash -c "$SOURCE_PREFIX; coach_build_behavior_digest '2026-03-26' 7 30 '' ''"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"latest_energy=7 (2026-03-26 13:02), latest_fog=3 (2026-03-26 13:02), avg_energy=5.5, avg_fog=5.0"* ]]
 }

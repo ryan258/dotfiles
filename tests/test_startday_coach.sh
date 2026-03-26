@@ -32,6 +32,7 @@ setup() {
     cp "$BATS_TEST_DIRNAME/../scripts/lib/coaching.sh" "$DOTFILES_DIR/scripts/lib/coaching.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/config.sh" "$DOTFILES_DIR/scripts/lib/config.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/date_utils.sh" "$DOTFILES_DIR/scripts/lib/date_utils.sh"
+    cp "$BATS_TEST_DIRNAME/../scripts/lib/health_ops.sh" "$DOTFILES_DIR/scripts/lib/health_ops.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/common.sh" "$DOTFILES_DIR/scripts/lib/common.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/file_ops.sh" "$DOTFILES_DIR/scripts/lib/file_ops.sh"
     chmod +x "$DOTFILES_DIR/scripts/startday.sh"
@@ -116,6 +117,7 @@ teardown() {
 
     [[ "$prompt" == *"Coach mode for today:"* ]]
     [[ "$prompt" == *"Behavior digest:"* ]]
+    [[ "$prompt" == *"Wearable guidance:"* ]]
     [[ "$prompt" == *"Health lens:"* ]]
     [[ "$prompt" == *"Scope anchor:"* ]]
     [[ "$args" == *"--temperature"* ]]
@@ -129,6 +131,29 @@ teardown() {
 
     [ -f "$DATA_DIR/coach_log.txt" ]
     grep -q '^STARTDAY|' "$DATA_DIR/coach_log.txt"
+}
+
+@test "startday auto-syncs Fitbit data before the briefing when auth exists" {
+    cat > "$DOTFILES_DIR/scripts/fitbit_sync.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+printf '%s\n' "$*" > "$DATA_DIR/fitbit_sync_args_startday.txt"
+EOF
+    chmod +x "$DOTFILES_DIR/scripts/fitbit_sync.sh"
+    printf '%s\n' '{"refresh_token":"test"}' > "$DATA_DIR/google_health_oauth.json"
+
+    run env \
+        PATH="$DOTFILES_DIR/bin:$PATH" \
+        HOME="$HOME" \
+        DATA_DIR="$DATA_DIR" \
+        DOTFILES_DIR="$DOTFILES_DIR" \
+        AI_BRIEFING_ENABLED=false \
+        GOOGLE_HEALTH_DEFAULT_DAYS=14 \
+        bash -c "$DOTFILES_DIR/scripts/startday.sh refresh < /dev/null"
+
+    [ "$status" -eq 0 ]
+    [ -f "$DATA_DIR/fitbit_sync_args_startday.txt" ]
+    [[ "$(cat "$DATA_DIR/fitbit_sync_args_startday.txt")" == "sync 14" ]]
 }
 
 @test "startday uses deterministic fallback when strategy call times out" {

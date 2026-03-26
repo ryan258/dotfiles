@@ -99,6 +99,13 @@ case "${1:-}" in
         ;;
 esac
 
+# Refresh wearable data before building the mid-day dashboard.
+# This helps the coach talk about your newest body signals instead of stale ones.
+# Any sync error is ignored so `status.sh` still works as a recovery tool.
+if command -v health_ops_auto_sync_fitbit >/dev/null 2>&1; then
+    health_ops_auto_sync_fitbit >/dev/null 2>&1 || true
+fi
+
 _status_today=$(date_today)
 CURRENT_DIR=$(pwd)
 _status_project_context="(no project context)"
@@ -236,6 +243,8 @@ echo "  Spear alignment: ${_status_alignment}"
 if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
     echo ""
     echo "🤖 STATUS COACH:"
+    # Mid-day coaching is simpler than morning/evening:
+    # gather the digest, build a short prompt, ask for one recentering brief.
     _status_behavior_digest="(behavior digest unavailable)"
     _status_prompt=""
     _status_briefing=""
@@ -245,10 +254,13 @@ if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
     _status_dispatcher=""
     _status_exit_code=0
 
+    # Build the same shared fact sheet used by the other coach flows.
+    # This is where fresh Fitbit data gets folded into the AI context.
     if command -v coaching_build_behavior_digest >/dev/null 2>&1; then
         _status_behavior_digest=$(coaching_build_behavior_digest "$_status_today" "${AI_COACH_TACTICAL_DAYS:-7}" "${AI_COACH_PATTERN_DAYS:-30}" "${STATUS_COACH_RECENT_PUSHES:-}" "${STATUS_COACH_TODAY_COMMITS:-}" 2>/dev/null || echo "(behavior digest unavailable)")
     fi
 
+    # Turn the facts into a status-specific instruction letter for the AI.
     if command -v coaching_build_status_prompt >/dev/null 2>&1; then
         _status_prompt=$(coaching_build_status_prompt \
             "${_status_mode:-LOCKED}" \
@@ -263,6 +275,7 @@ if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
         _status_prompt="Produce a concise mid-day GitHub-first coaching brief grounded in today's focus and current GitHub activity."
     fi
 
+    # Ask the AI for the actual recentering message.
     if command -v coaching_generate_response >/dev/null 2>&1; then
         _status_briefing=$(coaching_generate_response "$_status_prompt" "$_status_temperature" "${_status_focus_text:-"(no focus set)"}" "${_status_mode:-LOCKED}" "$_status_combined_git" "${_status_behavior_digest:-}" "status" "${_status_project_context:-}" "${_status_context_scope:-global}" "$CURRENT_DIR")
     else

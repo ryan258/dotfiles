@@ -263,6 +263,23 @@ EOF
     [[ "$prompt" == *"Current project context:"* ]]
     [[ "$prompt" == *"Today's commits:"* ]]
     [[ "$prompt" == *"Recent GitHub pushes (last 7 days):"* ]]
+    [[ "$prompt" == *"Wearable guidance:"* ]]
+}
+
+@test "status.sh auto-syncs Fitbit data before rendering when auth exists" {
+    cat > "$DOTFILES_DIR/scripts/fitbit_sync.sh" <<'STUB'
+#!/usr/bin/env bash
+set -euo pipefail
+printf '%s\n' "$*" > "$DATA_DIR/fitbit_sync_args_status.txt"
+STUB
+    chmod +x "$DOTFILES_DIR/scripts/fitbit_sync.sh"
+    printf '%s\n' '{"refresh_token":"test"}' > "$DATA_DIR/google_health_oauth.json"
+
+    run _run_status GOOGLE_HEALTH_DEFAULT_DAYS=14
+
+    [ "$status" -eq 0 ]
+    [ -f "$DATA_DIR/fitbit_sync_args_status.txt" ]
+    [[ "$(cat "$DATA_DIR/fitbit_sync_args_status.txt")" == "sync 14" ]]
 }
 
 @test "status.sh --coach passes no-focus placeholder into the status coach prompt" {

@@ -8,7 +8,7 @@
 
 - Track energy, fog, and appointments in `health.txt`.
 - Import Fitbit CSV exports into `~/.config/dotfiles-data/fitbit/*.txt` for objective sleep and heart-rate trend data.
-- Use `fitbit_sync.sh` for a one-time OAuth setup plus recurring Fitbit API pulls into those same local metric files.
+- Use `fitbit_sync.sh` for a one-time OAuth setup plus recurring Google Health API pulls into those same local metric files.
 - Use `health check` and `health dashboard` for feedback.
 - Designed to prevent overwork and burnout.
 
@@ -25,7 +25,7 @@ For developers with chronic illness (MS, Long Covid, burnout), standard producti
 - **Circuit Breaker:** Automatically trips if Energy dips below 4/10 or Brain Fog exceeds 6/10, recommending immediate recovery steps to prevent a crash.
 - **Correlation Engine:** Analyzes `git log` and `todo.txt` history to show you: "_On days with 4/10 energy, you average 5 tasks. Today you have 2. Stop now._"
 - **Wearable Sidecar:** `fitbit_import.sh` keeps Fitbit sleep, steps, resting heart rate, and HRV in separate local metric files so you can correlate device signals without replacing subjective energy/fog logs.
-- **API Sync Option:** `fitbit_sync.sh` can authenticate once and sync recent Fitbit API data into the same local files, which reduces manual export work.
+- **API Sync Option:** `fitbit_sync.sh` can authenticate once and sync recent Google Health API data into the same local files, which reduces manual export work while avoiding a later Fitbit Web API migration.
 - **Spoon Budgeting:** Tracks daily energy expenditure against a "Spoon" budget, preventing overdrafts.
 - **Privacy First:** All health data is stored locally in `~/.config/dotfiles-data/health.txt`. No cloud, no tracking.
 

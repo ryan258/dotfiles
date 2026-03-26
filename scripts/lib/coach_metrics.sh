@@ -221,6 +221,10 @@ coach_collect_tactical_metrics() {
     local energy_count=0
     local fog_sum=0
     local fog_count=0
+    local latest_energy=""
+    local latest_energy_at=""
+    local latest_fog=""
+    local latest_fog_at=""
     local spoon_budget_sum=0
     local spoon_budget_count=0
     local spoon_spend_sum=0
@@ -279,6 +283,36 @@ coach_collect_tactical_metrics() {
             }
             END {print sum+0, count+0}
         ' "$health_file")"
+
+        IFS=$'\t' read -r latest_energy latest_energy_at <<< "$(awk -F'|' -v end="$anchor_date" '
+            $1 == "ENERGY" && $2 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}/ && $3 ~ /^[0-9]+$/ {
+                day = substr($2, 1, 10)
+                if (day <= end) {
+                    value = $3
+                    ts = $2
+                }
+            }
+            END {
+                if (value != "") {
+                    printf "%s\t%s\n", value, ts
+                }
+            }
+        ' "$health_file")"
+
+        IFS=$'\t' read -r latest_fog latest_fog_at <<< "$(awk -F'|' -v end="$anchor_date" '
+            $1 == "FOG" && $2 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}/ && $3 ~ /^[0-9]+$/ {
+                day = substr($2, 1, 10)
+                if (day <= end) {
+                    value = $3
+                    ts = $2
+                }
+            }
+            END {
+                if (value != "") {
+                    printf "%s\t%s\n", value, ts
+                }
+            }
+        ' "$health_file")"
     fi
 
     if [[ -f "$spoon_file" ]]; then
@@ -320,10 +354,14 @@ coach_collect_tactical_metrics() {
     echo "stale_tasks=$stale_tasks"
     echo "completed_tasks=$completed_tasks"
     echo "journal_entries=$journal_entries"
+    echo "latest_energy=${latest_energy:-N/A}"
+    echo "latest_energy_at=${latest_energy_at:-N/A}"
     echo "avg_energy=$(_coach_average "$energy_sum" "$energy_count")"
     local slump_bool="false"
     if [[ "${afternoon_slumps:-0}" -gt 0 ]]; then slump_bool="true"; fi
     echo "afternoon_slump=$slump_bool"
+    echo "latest_fog=${latest_fog:-N/A}"
+    echo "latest_fog_at=${latest_fog_at:-N/A}"
     echo "avg_fog=$(_coach_average "$fog_sum" "$fog_count")"
     echo "avg_spoon_budget=$(_coach_average "$spoon_budget_sum" "$spoon_budget_count")"
     echo "avg_spoon_spend=$(_coach_average "$spoon_spend_sum" "$spoon_spend_count")"
@@ -959,9 +997,14 @@ coach_build_behavior_digest() {
     local recent_pushes_context="${4:-}"
     local commit_context="${5:-}"
 
+    # This function builds the big "fact sheet" that the AI coach reads.
+    # It mixes together short-term facts (like today's energy) and longer patterns
+    # (like how often focus changes), then prints them in a predictable format.
     local tactical
     local pattern
     local quality
+    # "Tactical" means short-range, like what happened over the last few days.
+    # "Pattern" means zoomed-out trends over a longer window.
     tactical=$(coach_collect_tactical_metrics "$anchor_date" "$tactical_days") || return 1
     pattern=$(coach_collect_pattern_metrics "$anchor_date" "$pattern_days") || return 1
     quality=$(coach_collect_data_quality_flags)
@@ -973,7 +1016,8 @@ coach_build_behavior_digest() {
     energy_3d_trajectory=$(_coach_extract_value "$energy_traj" "energy_3d_trajectory")
     energy_3d_direction=$(_coach_extract_value "$energy_traj" "energy_3d_direction")
 
-    # Focus coherence
+    # Read today's focus text and compare it to visible work signals.
+    # This helps answer, "Did the work lane match the stated goal?"
     local focus_text=""
     if [[ -f "${FOCUS_FILE:-}" ]] && [[ -s "${FOCUS_FILE:-}" ]]; then
         focus_text=$(cat "$FOCUS_FILE" 2>/dev/null || true)
@@ -984,6 +1028,8 @@ coach_build_behavior_digest() {
     focus_coherence_pct=$(_coach_extract_value "$coherence" "focus_coherence_pct")
     focus_coherence_detail=$(_coach_extract_value "$coherence" "focus_coherence_detail")
 
+    # Compare the focus text with GitHub activity so the coach can decide
+    # whether the "spear" stayed pointed in one direction.
     local focus_git
     focus_git=$(coach_focus_git_signal "$focus_text" "$recent_pushes_context" "$commit_context" 2>/dev/null || echo $'focus_git_primary_repo=N/A\nfocus_git_primary_repo_share=N/A\nfocus_git_repo_count=0\nfocus_git_commit_total=0\nfocus_git_commit_matches=0\nfocus_git_commit_coherence=N/A\nfocus_git_status=no-git-evidence\nfocus_git_reason=focus-vs-git signal unavailable')
     local focus_git_primary_repo focus_git_primary_repo_share focus_git_repo_count focus_git_commit_total
@@ -997,6 +1043,8 @@ coach_build_behavior_digest() {
     focus_git_status=$(_coach_extract_value "$focus_git" "focus_git_status")
     focus_git_reason=$(_coach_extract_value "$focus_git" "focus_git_reason")
 
+    # Measure whether recent coach suggestions actually turned into action.
+    # This helps the AI know if its advice should be simpler next time.
     local adherence
     adherence=$(coach_suggestion_adherence "$anchor_date" 2>/dev/null || echo "suggestion_adherence=N/A")
     local suggestion_adherence
@@ -1015,18 +1063,36 @@ coach_build_behavior_digest() {
     late_night_commits=$(_coach_extract_value "$late_night" "late_night_commits")
     late_night_time=$(_coach_extract_value "$late_night" "late_night_time")
 
+    # Pull in the newest watch snapshot, if we have one.
+    # This gives the coach real body data like sleep and HRV instead of only
+    # local notes and Git activity.
+    local wearable_snapshot=""
+    if command -v health_ops_print_fitbit_snapshot >/dev/null 2>&1; then
+        wearable_snapshot=$(health_ops_print_fitbit_snapshot 2>/dev/null || true)
+    fi
+
+    # Pull out the specific values we want to talk about later.
+    # Keeping them in local variables makes the if/else rules easier to read.
     local stale_tasks completed_tasks unique_dirs dir_switches avg_energy avg_fog avg_spoon_budget avg_spoon_spend
+    local latest_energy latest_energy_at latest_fog latest_fog_at
     stale_tasks=$(_coach_extract_value "$tactical" "stale_tasks")
     completed_tasks=$(_coach_extract_value "$tactical" "completed_tasks")
     unique_dirs=$(_coach_extract_value "$tactical" "unique_dirs")
     dir_switches=$(_coach_extract_value "$tactical" "dir_switches")
+    latest_energy=$(_coach_extract_value "$tactical" "latest_energy")
+    latest_energy_at=$(_coach_extract_value "$tactical" "latest_energy_at")
     avg_energy=$(_coach_extract_value "$tactical" "avg_energy")
+    latest_fog=$(_coach_extract_value "$tactical" "latest_fog")
+    latest_fog_at=$(_coach_extract_value "$tactical" "latest_fog_at")
     avg_fog=$(_coach_extract_value "$tactical" "avg_fog")
     avg_spoon_budget=$(_coach_extract_value "$tactical" "avg_spoon_budget")
     avg_spoon_spend=$(_coach_extract_value "$tactical" "avg_spoon_spend")
     local afternoon_slump
     afternoon_slump=$(_coach_extract_value "$tactical" "afternoon_slump")
 
+    # These two lists are the coach's short scorecards:
+    # one list says "things are working,"
+    # the other says "watch out, this might be going sideways."
     local working_signals=()
     local drift_risks=()
 
@@ -1120,7 +1186,9 @@ coach_build_behavior_digest() {
         drift_risks+=("data quality flags detected")
     fi
 
-    # Active timer check — detect long-running hyperfocus sessions
+    # Check whether a timer has been running for a very long time.
+    # Long timer runs can mean good focus, but they can also mean hyperfocus
+    # where the user forgets food, water, or body checks.
     local active_timer_status="none"
     local active_timer_duration_min=0
     if command -v get_active_timer >/dev/null 2>&1 || type get_active_timer >/dev/null 2>&1; then
@@ -1144,10 +1212,12 @@ coach_build_behavior_digest() {
         fi
     fi
 
+    # Print the digest in a stable shape.
+    # The AI coach sees this like a worksheet full of clues.
     echo "Behavior digest (structured):"
     echo "Tactical window: ${tactical_days}d ending $anchor_date"
     echo "  open_tasks=$(_coach_extract_value "$tactical" "open_tasks"), stale_tasks=$stale_tasks, completed_tasks=$completed_tasks, journal_entries=$(_coach_extract_value "$tactical" "journal_entries")"
-    echo "  avg_energy=${avg_energy}, avg_fog=${avg_fog}, energy_3d=${energy_3d_trajectory:-N/A} (${energy_3d_direction:-N/A}), afternoon_slump=${afternoon_slump:-N/A}, avg_spoon_budget=$(_coach_extract_value "$tactical" "avg_spoon_budget"), avg_spoon_spend=$(_coach_extract_value "$tactical" "avg_spoon_spend")"
+    echo "  latest_energy=${latest_energy:-N/A} (${latest_energy_at:-N/A}), latest_fog=${latest_fog:-N/A} (${latest_fog_at:-N/A}), avg_energy=${avg_energy}, avg_fog=${avg_fog}, energy_3d=${energy_3d_trajectory:-N/A} (${energy_3d_direction:-N/A}), afternoon_slump=${afternoon_slump:-N/A}, avg_spoon_budget=$(_coach_extract_value "$tactical" "avg_spoon_budget"), avg_spoon_spend=$(_coach_extract_value "$tactical" "avg_spoon_spend")"
     echo "  unique_dirs=$unique_dirs, dir_switches=$dir_switches, suggestion_adherence=${suggestion_adherence:-N/A}, suggestion_adherence_rate=${suggestion_adherence_rate:-N/A} (${suggestion_adherence_samples:-0} samples), late_night_commits=${late_night_commits:-N/A}, recent_pushes=$(_coach_extract_value "$tactical" "recent_pushes_count"), commit_context=$(_coach_extract_value "$tactical" "commit_context_count")"
     echo "Pattern window: ${pattern_days}d ending $anchor_date"
     echo "  completion_trend=$(_coach_extract_value "$pattern" "completion_trend") (first=$(_coach_extract_value "$pattern" "completion_first_half"), second=$(_coach_extract_value "$pattern" "completion_second_half"))"
@@ -1159,6 +1229,15 @@ coach_build_behavior_digest() {
     echo "  active_timer=${active_timer_status}"
     echo "  focus_git_reason=${focus_git_reason:-N/A}"
     echo "  focus_coherence_secondary=${focus_coherence_pct:-N/A}% (${focus_coherence_detail:-N/A})"
+    # The behavior digest is a big fact sheet for the AI coach.
+    # We add a separate wearable section so the coach can "see" recent Fitbit data
+    # and talk about it directly.
+    echo "Wearable context:"
+    if [[ -n "$wearable_snapshot" ]]; then
+        printf '%s\n' "$wearable_snapshot"
+    else
+        echo "  - none"
+    fi
     echo "Working signals:"
     if [[ ${#working_signals[@]} -eq 0 ]]; then
         echo "  - none detected"

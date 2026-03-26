@@ -15,6 +15,14 @@ The full rules live in `../CLAUDE.md`.
 - `health`
 - `spoons`
 
+## Health Correlation Aliases
+
+- `correlate`
+- `corr-sleep`
+- `corr-steps`
+- `corr-rhr`
+- `corr-hrv`
+
 ## AI Aliases
 
 - `tech`, `content`, `strategy`, `creative`, `brand`, `market`, `research`, `stoic`, `narrative`, `aicopy`, `finance`
@@ -49,4 +57,5 @@ The full rules live in `../CLAUDE.md`.
 - `grep` is changed on purpose to add color (`ggrep --color=auto` when it exists).
 - `memo` now points straight to `cheatsheet.sh`. The old `memo.sh` wrapper is gone.
 - AI aliases find their scripts through `DOTFILES_ALIAS_ROOT` (falls back to `$HOME/dotfiles`).
+- `corr-sleep`, `corr-steps`, `corr-rhr`, and `corr-hrv` are fixed shortcuts for correlating Fitbit metric files against `~/.config/dotfiles-data/health.txt`.
 - For the full rules and limits, see `../CLAUDE.md`.

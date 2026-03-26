@@ -158,6 +158,7 @@ readonly _LIBRARY_NAME_LOADED=true
 | `config.sh`       | Paths, models, feature flags, environment loading | When needing configuration |
 | `file_ops.sh`     | Atomic writes, file validation                    | File manipulation          |
 | `date_utils.sh`   | Cross-platform date handling                      | Date calculations          |
+| `health_ops.sh`   | Shared health + wearable helpers                  | Health summaries and Fitbit context |
 | `spoon_budget.sh` | Energy tracking                                   | Spoon-related features     |
 | `blog_common.sh`  | Blog utilities                                    | Blog operations            |
 | `coach_chat.sh`   | Interactive post-briefing coach conversation       | After startday/status/goodevening |
@@ -319,6 +320,13 @@ dhp_dispatch \
 - `--verbose` - Debug logging
 - `--temperature <float>` - Override default
 
+## Wearable Context
+
+- Fitbit wearable data should flow into `~/.config/dotfiles-data/fitbit/*.txt` through `scripts/fitbit_sync.sh` or `scripts/fitbit_import.sh`.
+- When Google Health auth is already present, `scripts/startday.sh`, `scripts/status.sh`, and `scripts/goodevening.sh` should do a best-effort Fitbit sync before rendering summaries or coach context.
+- Coach prompts must treat wearable metrics in the behavior digest as live health context and must not suggest Fitbit setup or migration work when those metrics are already present.
+- When both latest manual energy/fog readings and trailing averages are present in the behavior digest, coach prompts should treat the latest values as current state and the averages as recent trend.
+
 ### Specialized Standalone Agents
 
 - Not every AI entrypoint needs to be a `dhp-*` dispatcher.
@@ -350,6 +358,7 @@ Dispatchers accept input via:
 | AI Dispatchers | Type name           | `tech`, `creative`, `strategy` |
 | Repo Agents    | Project name        | `cyborg`                       |
 | Spoons         | `s-` prefix         | `s-check`, `s-spend`           |
+| Correlations   | `corr-` prefix      | `corr-sleep`, `corr-rhr`       |
 
 ### Alias vs Function
 

@@ -275,6 +275,7 @@ dhp_dispatch \
 | Repo Agents    | Project name | `cyborg`                      |
 | Scripts        | Full/abbrev | `todo`, `journal`, `j`         |
 | Spoons         | `s-` prefix | `s-check`, `s-spend`           |
+| Correlations   | `corr-` prefix | `corr-sleep`, `corr-rhr`    |
 
 ---
 

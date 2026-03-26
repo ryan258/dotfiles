@@ -9,6 +9,13 @@ mkdir -p "$DATA_DIR"
 CURRENT_DAY_FILE="$DATA_DIR/current_day"
 BRIEFING_CACHE="$BRIEFING_CACHE_FILE"
 
+# Refresh Fitbit data before the morning summary begins.
+# We do this early so the health summary and AI briefing can use the newest sleep,
+# steps, heart rate, and HRV numbers. If sync fails, we keep going.
+if command -v health_ops_auto_sync_fitbit >/dev/null 2>&1; then
+    health_ops_auto_sync_fitbit >/dev/null 2>&1 || true
+fi
+
 # Support "refresh" to force new AI briefing.
 # By default we keep GitHub cache so transient network failures still degrade gracefully.
 if [[ "${1:-}" == "refresh" ]]; then
@@ -317,6 +324,12 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
     echo ""
     echo "🤖 AI BRIEFING:"
 
+    # This whole block does four jobs:
+    # 1. gather facts,
+    # 2. build an AI prompt,
+    # 3. ask the AI for a briefing,
+    # 4. save the answer so we do not ask again the same morning.
+
     # Cache file for today's briefing
     BRIEFING_CACHE="$BRIEFING_CACHE_FILE"
     TODAY=$(date_today)
@@ -330,8 +343,8 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
         echo "  (Signal: CACHED - briefing from earlier today)"
         _COACH_CHAT_BRIEFING="$CACHED_BRIEFING"
     else
-        # Generate new briefing
-        # Gather context
+        # No cached morning briefing yet, so we build a fresh one.
+        # First we gather the facts the AI is allowed to use.
         FOCUS_CONTEXT=""
         if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
             FOCUS_CONTEXT=$(cat "$FOCUS_FILE")
@@ -354,12 +367,15 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
         if command -v coaching_collect_data_quality_flags >/dev/null 2>&1; then
             COACH_DATA_QUALITY_FLAGS=$(coaching_collect_data_quality_flags 2>/dev/null || true)
         fi
+        # The behavior digest is the condensed "fact sheet" for the coach.
+        # It now includes wearable context too, when Fitbit data exists.
         if command -v coaching_build_behavior_digest >/dev/null 2>&1; then
             COACH_BEHAVIOR_DIGEST=$(coaching_build_behavior_digest "$TODAY" "$COACH_TACTICAL_DAYS" "$COACH_PATTERN_DAYS" "${RECENT_PUSHES:-}" "${YESTERDAY_COMMITS:-}" 2>/dev/null || echo "(behavior digest unavailable)")
         fi
 
         _sd_git_combined=$(printf '%s\n%s\n' "${YESTERDAY_COMMITS:-}" "${RECENT_PUSHES:-}")
 
+        # Next we turn all those facts into one clear instruction packet for the AI.
         if command -v coaching_build_startday_prompt >/dev/null 2>&1; then
             BRIEFING_PROMPT="$(coaching_build_startday_prompt \
                 "${FOCUS_CONTEXT:-}" \
@@ -371,18 +387,21 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
             BRIEFING_PROMPT="Produce a high-signal morning execution guide grounded only in today's focus and GitHub activity."
         fi
 
+        # Now we ask the AI to write the actual morning briefing.
         if command -v coaching_generate_response >/dev/null 2>&1; then
             BRIEFING=$(coaching_generate_response "$BRIEFING_PROMPT" "$BRIEFING_TEMPERATURE" "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "$_sd_git_combined" "${COACH_BEHAVIOR_DIGEST:-}" "startday")
         else
             BRIEFING="Unable to generate AI briefing at this time."
         fi
 
+        # Save today's answer so repeat runs can reuse it instead of re-calling the AI.
         BRIEFING_ESCAPED="${BRIEFING//$'\n'/\\n}"
         printf '%s|%s\n' "$TODAY" "$BRIEFING_ESCAPED" > "$BRIEFING_CACHE"
         echo "$BRIEFING" | sed 's/^/  /'
         _COACH_CHAT_BRIEFING="$BRIEFING"
 
-        # Signal metadata: summarize confidence and why evidence is sparse.
+        # This confidence summary is a quick report card for the briefing itself.
+        # It tells the user whether the coach had lots of evidence or only a little.
         _sd_present=0
         _sd_reasons=()
         if [ -n "${FOCUS_CONTEXT:-}" ]; then

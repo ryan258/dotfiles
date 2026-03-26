@@ -1,6 +1,32 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** March 25, 2026
+**Last Updated:** March 26, 2026
+
+## Version 2.2.54 (March 26, 2026) - Coach Wearable Context
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- `scripts/startday.sh`, `scripts/status.sh`, and `scripts/goodevening.sh` now run a best-effort Fitbit sync first when Google Health auth is already present, so the daily summaries and coach flows see fresh wearable data without a manual sync step.
+- `scripts/lib/coach_metrics.sh` now includes the latest Fitbit wearable snapshot in the shared behavior digest, and `scripts/lib/coach_prompts.sh` now explicitly tells the coach to treat those metrics as live health context instead of suggesting Fitbit setup work.
+- The shared coach digest now includes both the latest manual energy/fog reading and the trailing averages, and the prompt templates now tell the AI to treat latest values as current state and averages as background trend.
+- Added `corr-sleep`, `corr-steps`, `corr-rhr`, and `corr-hrv` aliases for the common Fitbit-vs-health correlations.
+- Updated the scripts README, alias reference, cheatsheet, and general handbook to reflect the auto-sync and correlation shortcut workflow.
+
+---
+
+## Version 2.2.53 (March 26, 2026) - Fitbit Sync On Google Health API
+
+**Status:** ✅ Production Ready
+
+### New
+
+- Replaced `scripts/fitbit_sync.sh` with a Google Health API-backed Fitbit sync flow that uses Google OAuth 2.0, stores tokens locally, and writes synced wearable data into the existing normalized metric files under `~/.config/dotfiles-data/fitbit/`.
+- Removed the extra `google_health_sync.sh` command and the legacy Fitbit Web API sync path so there is one canonical Fitbit sync workflow.
+- Updated BATS coverage, `.env.example`, the scripts README, the health brief, and the handbook to reflect the single Google Health-backed Fitbit sync path.
+
+---
 
 ## Version 2.2.52 (March 25, 2026) - Cyborg Iterate Mode
 

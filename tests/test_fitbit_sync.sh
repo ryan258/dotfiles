@@ -9,9 +9,9 @@ setup() {
     export DOTFILES_DIR
     DOTFILES_DIR="$(cd "$BATS_TEST_DIRNAME/.." && pwd)"
 
-    export FITBIT_CLIENT_ID="test-client"
-    export FITBIT_CLIENT_SECRET="test-secret"
-    export FITBIT_REDIRECT_URI="http://127.0.0.1:8765/callback"
+    export GOOGLE_HEALTH_CLIENT_ID="test-client"
+    export GOOGLE_HEALTH_CLIENT_SECRET="test-secret"
+    export GOOGLE_HEALTH_REDIRECT_URI="https://www.google.com"
 
     mkdir -p "$TEST_DIR/fake-bin"
 }
@@ -20,29 +20,50 @@ teardown() {
     teardown_test_environment
 }
 
-@test "fitbit_sync.sh auth-url creates pending PKCE state and prints authorize URL" {
+@test "fitbit_sync.sh auth-url creates pending state and prints authorize URL" {
     run env PATH="$TEST_DIR/fake-bin:$PATH" "$DOTFILES_DIR/scripts/fitbit_sync.sh" auth-url
 
     [ "$status" -eq 0 ]
-    [[ "$output" == https://www.fitbit.com/oauth2/authorize* ]]
+    [[ "$output" == https://accounts.google.com/o/oauth2/v2/auth* ]]
     [[ "$output" == *"client_id=test-client"* ]]
-    assert_file_exists "$DOTFILES_DATA_DIR/fitbit_oauth_pending.json"
-    assert_file_contains "$DOTFILES_DATA_DIR/fitbit_oauth_pending.json" "\"code_verifier\""
-    assert_file_contains "$DOTFILES_DATA_DIR/fitbit_oauth_pending.json" "\"state\""
+    [[ "$output" == *"access_type=offline"* ]]
+    assert_file_exists "$DOTFILES_DATA_DIR/google_health_oauth_pending.json"
+    assert_file_contains "$DOTFILES_DATA_DIR/google_health_oauth_pending.json" "\"state\""
 }
 
-@test "fitbit_sync.sh auth-exchange saves OAuth tokens from Fitbit token response" {
+@test "fitbit_sync.sh auth-exchange saves OAuth tokens and identity metadata" {
     cat > "$TEST_DIR/fake-bin/curl" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
-printf '%s' '{"access_token":"access-123","refresh_token":"refresh-123","expires_in":3600,"token_type":"Bearer","user_id":"user-1"}'
+
+url="${@: -1}"
+wants_http_code="false"
+for arg in "$@"; do
+  if [[ "$arg" == *"%{http_code}"* ]]; then
+    wants_http_code="true"
+  fi
+done
+
+body='{}'
+
+if [[ "$url" == "https://oauth2.googleapis.com/token" ]]; then
+  body='{"access_token":"access-123","refresh_token":"refresh-123","expires_in":3600,"token_type":"Bearer","scope":"https://www.googleapis.com/auth/googlehealth.activity_and_fitness.readonly"}'
+elif [[ "$url" == "https://health.googleapis.com/v4/users/me/identity" ]]; then
+  body='{"legacyUserId":"legacy-1","healthUserId":"health-1"}'
+fi
+
+if [[ "$wants_http_code" == "true" ]]; then
+  printf '%s\n200' "$body"
+else
+  printf '%s' "$body"
+fi
 EOF
     chmod +x "$TEST_DIR/fake-bin/curl"
 
     run env PATH="$TEST_DIR/fake-bin:$PATH" "$DOTFILES_DIR/scripts/fitbit_sync.sh" auth-url
     [ "$status" -eq 0 ]
 
-    state="$(python3 - "$DOTFILES_DATA_DIR/fitbit_oauth_pending.json" <<'PY'
+    state="$(python3 - "$DOTFILES_DATA_DIR/google_health_oauth_pending.json" <<'PY'
 import json
 import sys
 
@@ -51,17 +72,19 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
 PY
 )"
 
-    redirect_url="http://127.0.0.1:8765/callback?code=auth-code-abc&state=$state"
+    redirect_url="https://www.google.com/?code=auth-code-abc&state=$state"
     run env PATH="$TEST_DIR/fake-bin:$PATH" "$DOTFILES_DIR/scripts/fitbit_sync.sh" auth-exchange "$redirect_url"
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"Fitbit authentication saved"* ]]
-    assert_file_contains "$DOTFILES_DATA_DIR/fitbit_oauth.json" "\"access_token\": \"access-123\""
-    assert_file_contains "$DOTFILES_DATA_DIR/fitbit_oauth.json" "\"refresh_token\": \"refresh-123\""
-    [ ! -f "$DOTFILES_DATA_DIR/fitbit_oauth_pending.json" ]
+    [[ "$output" == *"Fitbit sync authentication saved"* ]]
+    assert_file_contains "$DOTFILES_DATA_DIR/google_health_oauth.json" "\"access_token\": \"access-123\""
+    assert_file_contains "$DOTFILES_DATA_DIR/google_health_oauth.json" "\"refresh_token\": \"refresh-123\""
+    assert_file_contains "$DOTFILES_DATA_DIR/google_health_oauth.json" "\"legacy_user_id\": \"legacy-1\""
+    assert_file_contains "$DOTFILES_DATA_DIR/google_health_oauth.json" "\"health_user_id\": \"health-1\""
+    [ ! -f "$DOTFILES_DATA_DIR/google_health_oauth_pending.json" ]
 }
 
-@test "fitbit_sync.sh sync writes local metric files from mocked API responses" {
+@test "fitbit_sync.sh sync writes local metric files from mocked Google Health responses" {
     mock_day="$(date '+%Y-%m-%d')"
     export MOCK_DAY="$mock_day"
 
@@ -77,15 +100,20 @@ for arg in "$@"; do
   fi
 done
 
+year="${MOCK_DAY%%-*}"
+month_day="${MOCK_DAY#*-}"
+month="${month_day%%-*}"
+day="${MOCK_DAY##*-}"
+
 body='{}'
-if [[ "$url" == "https://api.fitbit.com/oauth2/token" ]]; then
-  body='{"access_token":"refreshed-access","refresh_token":"refreshed-refresh","expires_in":3600,"token_type":"Bearer","user_id":"user-1"}'
-elif [[ "$url" == *"/activities/steps/date/"* ]]; then
-  body="{\"activities-steps\":[{\"dateTime\":\"${MOCK_DAY}\",\"value\":\"6789\"}]}"
-elif [[ "$url" == *"/activities/heart/date/"* ]]; then
-  body="{\"activities-heart\":[{\"dateTime\":\"${MOCK_DAY}\",\"value\":{\"restingHeartRate\":61}}]}"
-elif [[ "$url" == *"/sleep/date/"* ]]; then
-  body="{\"summary\":{\"totalMinutesAsleep\":430}}"
+if [[ "$url" == *"/dataTypes/steps/dataPoints:dailyRollUp" ]]; then
+  body="{\"rollupDataPoints\":[{\"civilStartTime\":{\"date\":{\"year\":${year#0},\"month\":${month#0},\"day\":${day#0}},\"time\":{}},\"steps\":{\"countSum\":\"6789\"}}]}"
+elif [[ "$url" == *"/dataTypes/sleep/dataPoints:reconcile"* ]]; then
+  body="{\"dataPoints\":[{\"sleep\":{\"interval\":{\"endTime\":\"${MOCK_DAY}T07:30:00Z\"},\"metadata\":{\"main\":true},\"summary\":{\"minutesAsleep\":\"430\"}}}]}"
+elif [[ "$url" == *"/dataTypes/daily-resting-heart-rate/dataPoints"* ]]; then
+  body="{\"dataPoints\":[{\"dailyRestingHeartRate\":{\"date\":{\"year\":${year#0},\"month\":${month#0},\"day\":${day#0}},\"beatsPerMinute\":61}}]}"
+elif [[ "$url" == *"/dataTypes/daily-heart-rate-variability/dataPoints"* ]]; then
+  body="{\"dataPoints\":[{\"dailyHeartRateVariability\":{\"date\":{\"year\":${year#0},\"month\":${month#0},\"day\":${day#0}},\"rmssdMillis\":42}}]}"
 fi
 
 if [[ "$wants_http_code" == "true" ]]; then
@@ -96,15 +124,15 @@ fi
 EOF
     chmod +x "$TEST_DIR/fake-bin/curl"
 
-    cat > "$DOTFILES_DATA_DIR/fitbit_oauth.json" <<EOF
+    cat > "$DOTFILES_DATA_DIR/google_health_oauth.json" <<EOF
 {
   "access_token": "cached-access",
   "client_id": "test-client",
   "client_secret": "test-secret",
   "expires_at": 9999999999,
-  "redirect_uri": "http://127.0.0.1:8765/callback",
+  "redirect_uri": "https://www.google.com",
   "refresh_token": "refresh-123",
-  "scopes": "activity heartrate sleep profile"
+  "scopes": "https://www.googleapis.com/auth/googlehealth.activity_and_fitness.readonly https://www.googleapis.com/auth/googlehealth.health_metrics_and_measurements.readonly https://www.googleapis.com/auth/googlehealth.sleep.readonly"
 }
 EOF
 
@@ -113,6 +141,7 @@ EOF
     [ "$status" -eq 0 ]
     [[ "$output" == *"Synced Fitbit data for 1 day(s)"* ]]
     assert_file_contains "$DOTFILES_DATA_DIR/fitbit/steps.txt" "$mock_day|6789"
-    assert_file_contains "$DOTFILES_DATA_DIR/fitbit/resting_heart_rate.txt" "$mock_day|61"
     assert_file_contains "$DOTFILES_DATA_DIR/fitbit/sleep_minutes.txt" "$mock_day|430"
+    assert_file_contains "$DOTFILES_DATA_DIR/fitbit/resting_heart_rate.txt" "$mock_day|61"
+    assert_file_contains "$DOTFILES_DATA_DIR/fitbit/hrv.txt" "$mock_day|42"
 }

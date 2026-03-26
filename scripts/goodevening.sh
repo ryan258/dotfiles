@@ -108,6 +108,13 @@ done
 
 TODAY=$(determine_session_date "$FORCE_CURRENT_DAY" "$DATE_OVERRIDE")
 
+# Refresh Fitbit data before the evening review.
+# That way the reflection can see the latest wearable picture from today.
+# If syncing is unavailable, we still finish the rest of the close-out.
+if command -v health_ops_auto_sync_fitbit >/dev/null 2>&1; then
+    health_ops_auto_sync_fitbit >/dev/null 2>&1 || true
+fi
+
 echo "=== Evening Close-Out for $TODAY — $(date_now '%Y-%m-%d %H:%M') ==="
 
 # --- Focus ---
@@ -506,8 +513,9 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     echo ""
     echo "🤖 AI REFLECTION:"
 
-    # Gather today's data
-    # TODAY is already set globally (handling overrides)
+    # The evening coach follows the same broad pattern as startday:
+    # gather facts, build a prompt, ask the AI, then print a reflection.
+    # TODAY is already set globally above, including refresh/override handling.
     FOCUS_CONTEXT=""
     if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
         FOCUS_CONTEXT=$(cat "$FOCUS_FILE")
@@ -538,10 +546,13 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     if command -v coaching_collect_data_quality_flags >/dev/null 2>&1; then
         COACH_DATA_QUALITY_FLAGS=$(coaching_collect_data_quality_flags 2>/dev/null || true)
     fi
+    # Build the shared digest so the evening coach can see work patterns,
+    # energy patterns, and the newest wearable context in one place.
     if command -v coaching_build_behavior_digest >/dev/null 2>&1; then
         COACH_BEHAVIOR_DIGEST=$(coaching_build_behavior_digest "$TODAY" "$COACH_TACTICAL_DAYS" "$COACH_PATTERN_DAYS" "${RECENT_PUSHES:-}" "${TODAY_COMMITS:-}" 2>/dev/null || echo "(behavior digest unavailable)")
     fi
 
+    # Build the AI's instruction letter for the evening reflection.
     if command -v coaching_build_goodevening_prompt >/dev/null 2>&1; then
         REFLECTION_PROMPT="$(coaching_build_goodevening_prompt \
             "${COACH_MODE:-LOCKED}" \
@@ -558,6 +569,7 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
 
     _ge_git_combined=$(printf '%s\n%s\n' "${TODAY_COMMITS:-}" "${RECENT_PUSHES:-}")
     
+    # Ask the AI to write the reflection itself.
     if command -v coaching_generate_response >/dev/null 2>&1; then
         REFLECTION=$(coaching_generate_response "$REFLECTION_PROMPT" "$COACH_TEMPERATURE" "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "$_ge_git_combined" "${COACH_BEHAVIOR_DIGEST:-}" "goodevening")
     else
@@ -567,7 +579,8 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     echo "$REFLECTION" | sed 's/^/  /'
     _COACH_CHAT_BRIEFING="$REFLECTION"
 
-    # Signal metadata: summarize confidence and why evidence is sparse.
+    # Just like startday, this gives a small confidence label for the reflection.
+    # It tells us whether the AI had enough evidence to make a strong call.
     _ge_present=0
     _ge_reasons=()
     if [ -n "${FOCUS_CONTEXT:-}" ]; then

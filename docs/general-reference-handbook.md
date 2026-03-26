@@ -1759,8 +1759,13 @@ If you wear a Fitbit, import the device data as objective signals and keep `heal
 # One-time OAuth setup for API sync
 fitbit_sync.sh auth
 
-# Pull recent Fitbit data into local files
+# Pull recent Fitbit data into local files through the Google Health API
 fitbit_sync.sh sync 7
+
+# Daily coach flows now do a best-effort refresh automatically when auth exists
+startday
+status
+goodevening
 
 # Import Fitbit CSV exports into normalized local files
 fitbit_import.sh import steps ~/Downloads/steps.csv
@@ -1775,18 +1780,27 @@ fitbit_import.sh latest
 
 # Correlate Fitbit sleep score with your manual energy log
 correlate run ~/.config/dotfiles-data/fitbit/sleep_score.txt ~/.config/dotfiles-data/health.txt 0 1 1 2
+
+# Shortcut aliases for the common wearable correlations
+corr-sleep
+corr-steps
+corr-rhr
+corr-hrv
 ```
 
 **Use this split:**
 
 - `health energy` and `health fog` = subjective reality
-- `fitbit_sync.sh` = lower-friction API pull for steps, sleep minutes, resting HR
+- `fitbit_sync.sh` = Google Health API pull for steps, sleep minutes, and best-effort resting HR / HRV
 - `fitbit_import.sh` = sleep, steps, resting heart rate, HRV
 - `correlate` = check whether the device signals line up with your crash days or good days
+- `corr-sleep`, `corr-steps`, `corr-rhr`, `corr-hrv` = fixed shortcuts for the common Fitbit-vs-health correlations
 
 **Caution:**
 
-- Fitbit’s legacy Web API is currently slated for deprecation in September 2026, so the sync path is intentionally a thin adapter that writes the same local files as the CSV importer.
+- Google’s Health API docs say app verification opens on March 30, 2026 and recommend waiting until the end of May 2026 to officially launch because breaking changes may still occur while the API stabilizes.
+- `fitbit_sync.sh` now uses the Google Health API path. The old Fitbit Web API sync path has been removed so you do not need a second migration later.
+- `startday`, `status`, and `goodevening` now attempt a silent Fitbit refresh first when Google Health auth is already stored locally, so the coach sees the newest wearable snapshot.
 
 ---
 
@@ -2756,6 +2770,10 @@ These aliases come from `zsh/aliases.zsh`. This is a full list of all commands y
 | `s-check`        | `spoon_manager.sh check`   | How many spoons remain today?                                     |
 | `s-spend`        | `spoon_manager.sh spend`   | Log spending spoons on an activity                                |
 | `correlate`      | `correlate.sh`             | Find patterns between health/productivity data                    |
+| `corr-sleep`     | `correlate.sh run ~/.config/dotfiles-data/fitbit/sleep_minutes.txt ~/.config/dotfiles-data/health.txt 0 1 1 2` | Correlate Fitbit sleep minutes with health logs |
+| `corr-steps`     | `correlate.sh run ~/.config/dotfiles-data/fitbit/steps.txt ~/.config/dotfiles-data/health.txt 0 1 1 2` | Correlate Fitbit steps with health logs |
+| `corr-rhr`       | `correlate.sh run ~/.config/dotfiles-data/fitbit/resting_heart_rate.txt ~/.config/dotfiles-data/health.txt 0 1 1 2` | Correlate Fitbit resting HR with health logs |
+| `corr-hrv`       | `correlate.sh run ~/.config/dotfiles-data/fitbit/hrv.txt ~/.config/dotfiles-data/health.txt 0 1 1 2` | Correlate Fitbit HRV with health logs |
 | `daily-report`   | `generate_report.sh daily` | Generate today's summary report                                   |
 | `insight`        | `insight.sh`               | AI-powered insight from recent data                               |
 | `health`         | `health.sh`                | Log symptoms, energy, and health events                           |
@@ -2783,8 +2801,8 @@ These aliases come from `zsh/aliases.zsh`. This is a full list of all commands y
 | `findbig`        | `findbig.sh`               | Find large files eating disk space                                |
 | `unpack`         | `unpacker.sh`              | Smart archive extractor (tar/zip/gz/etc.)                         |
 | `tidydown`       | `tidy_downloads.sh`        | Auto-organize ~/Downloads by file type                            |
-| `startday`       | `startday.sh`              | Morning routine: weather, briefing, todos, spoons                 |
-| `goodevening`    | `goodevening.sh`           | Evening wind-down: journal prompt, summary                        |
+| `startday`       | `startday.sh`              | Morning routine: weather, briefing, todos, spoons, Fitbit refresh |
+| `goodevening`    | `goodevening.sh`           | Evening wind-down: journal prompt, summary, Fitbit refresh        |
 | `greeting`       | `greeting.sh`              | Quick motivational greeting                                       |
 | `weekreview`     | `week_in_review.sh`        | Weekly retrospective summary                                      |
 
@@ -2847,7 +2865,7 @@ These aliases come from `zsh/aliases.zsh`. This is a full list of all commands y
 | `archextract` | `archive_manager.sh extract`                               | Extract an archive                       |
 | `archlist`    | `archive_manager.sh list`                                  | List archive contents without extracting |
 | `info`        | `weather.sh && echo && todo.sh list`                       | Weather + open tasks                     |
-| `status`      | `status.sh`                                                | Mid-day context reset: focus, coach mode, spoons, alignment |
+| `status`      | `status.sh`                                                | Mid-day context reset: focus, coach mode, spoons, alignment, Fitbit refresh |
 | `overview`    | `system_info.sh && echo && battery_check.sh`               | Hardware + battery                       |
 | `cleanup`     | `cd ~/Downloads && file_organizer.sh bytype && findbig.sh` | Tidy Downloads, flag large files         |
 | `quickbackup` | `backup_project.sh && echo 'Backup complete!'`             | One-command project backup               |

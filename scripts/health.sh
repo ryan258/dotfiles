@@ -271,7 +271,7 @@ cmd_list() {
 }
 
 cmd_summary() {
-    if [ ! -s "$HEALTH_FILE" ]; then
+    if [ ! -s "$HEALTH_FILE" ] && ! health_ops_has_fitbit_data; then
         echo "No health data tracked."
         exit 0
     fi
@@ -288,6 +288,7 @@ cmd_summary() {
     if [ "$symptom_count" -gt 0 ] 2>/dev/null; then
         echo "Symptoms logged today: $symptom_count"
     fi
+    health_ops_print_fitbit_snapshot || true
 }
 
 cmd_remove() {
@@ -362,29 +363,38 @@ cmd_dashboard() {
     local cutoff_date
     cutoff_date=$(date_shift_days "-$days_ago" "%Y-%m-%d")
 
-    if [ ! -s "$HEALTH_FILE" ]; then
+    if [ ! -s "$HEALTH_FILE" ] && ! health_ops_has_fitbit_data; then
         echo "Health data file is empty."
         exit 0
     fi
 
     # Filter relevant data once
     local recent_data
-    recent_data=$(grep -E "^(ENERGY|SYMPTOM)" "$HEALTH_FILE" | filter_entries_by_date "-" "$cutoff_date" 2 "since" || true)
+    recent_data=$(grep -E "^(ENERGY|SYMPTOM)" "$HEALTH_FILE" 2>/dev/null | filter_entries_by_date "-" "$cutoff_date" 2 "since" || true)
 
-    # 1. Average Energy Level
-    _dashboard_energy "$recent_data"
+    if [ -s "$HEALTH_FILE" ]; then
+        # 1. Average Energy Level
+        _dashboard_energy "$recent_data"
 
-    # 2. Symptom Frequency
-    _dashboard_symptoms "$recent_data"
+        # 2. Symptom Frequency
+        _dashboard_symptoms "$recent_data"
 
-    # 3. Average energy on days with 'fog'
-    _dashboard_fog "$recent_data"
+        # 3. Average energy on days with 'fog'
+        _dashboard_fog "$recent_data"
 
-    # 4. Energy vs. Productivity Correlation
-    echo ""
-    echo "• Energy vs. Productivity Correlation (30d):"
-    correlate_tasks "$recent_data"
-    correlate_commits "$recent_data"
+        # 4. Energy vs. Productivity Correlation
+        echo ""
+        echo "• Energy vs. Productivity Correlation (30d):"
+        correlate_tasks "$recent_data"
+        correlate_commits "$recent_data"
+    else
+        echo "• Manual health signals: not logged yet"
+    fi
+
+    if health_ops_has_fitbit_data; then
+        echo ""
+        health_ops_print_fitbit_dashboard 30
+    fi
 }
 
 cmd_export() {

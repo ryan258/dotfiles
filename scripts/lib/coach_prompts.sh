@@ -13,6 +13,7 @@ readonly _COACH_PROMPTS_LOADED=true
 
 _coach_reason_label() {
     local reason="${1:-unavailable}"
+    # Turn internal machine labels into friendlier words for humans.
     case "$reason" in
         dispatcher-missing)
             printf '%s\n' "dispatcher missing"
@@ -34,6 +35,10 @@ coach_build_startday_prompt() {
         custom_traps=$(cat "$DATA_DIR/traps.txt" 2>/dev/null || echo "(none defined)")
     fi
 
+    # This function builds a long instruction letter for the morning coach.
+    # The AI reads this letter and then writes the actual briefing for the user.
+    # The heredoc below is not the final answer to the user.
+    # It is the recipe the AI uses to make that answer.
     cat <<EOF
 Produce a high-signal morning execution guide for a user with brain fog.
 Prioritize clarity, momentum, and health-aware pacing. Empathize with and validate their natural ADHD-driven exploration.
@@ -56,6 +61,15 @@ ${recent_pushes:-"(none)"}
 
 Behavior digest:
 ${behavior_digest:-"(none)"}
+
+Wearable guidance:
+- If the behavior digest includes wearable metrics, treat them as live Fitbit/Google Health context.
+- Do not tell the user to build, set up, migrate, or debug a Fitbit sync pipeline when live wearable metrics are already present in the digest.
+- When relevant, use the most recent sleep, resting HR, HRV, and step readings as part of the health-aware pacing guidance.
+
+Energy and fog guidance:
+- If latest_energy/latest_fog and avg_energy/avg_fog are both present in the behavior digest, treat latest_* as the user's current state and avg_* as the recent trend.
+- If the latest reading and the average differ, mention both clearly instead of describing the current state from averages alone.
 
 Behavioral Interventions (use if triggered by digest):
 - If stale_tasks > 4, suggest a "triage block" to clear old items.
@@ -150,6 +164,10 @@ coach_build_goodevening_prompt() {
         custom_traps=$(cat "$DATA_DIR/traps.txt" 2>/dev/null || echo "(none defined)")
     fi
 
+    # This one builds the evening version of the coach letter.
+    # It asks the AI to reflect on the day and also prepare tomorrow.
+    # Think of it like writing instructions for a helper before they make
+    # an evening summary card.
     cat <<EOF
 Produce a reflective daily coaching summary for a user managing brain fog and fatigue.
 Use the behavior digest and today's signals to identify what worked, where natural deviation (drift) happened, and how to lock tomorrow.
@@ -173,6 +191,15 @@ ${recent_pushes:-"(none)"}
 
 Behavior digest:
 ${behavior_digest:-"(none)"}
+
+Wearable guidance:
+- If the behavior digest includes wearable metrics, treat them as live Fitbit/Google Health context.
+- Do not tell the user to build, set up, migrate, or debug a Fitbit sync pipeline when live wearable metrics are already present in the digest.
+- When relevant, use the most recent sleep, resting HR, HRV, and step readings as part of the health-aware pacing guidance.
+
+Energy and fog guidance:
+- If latest_energy/latest_fog and avg_energy/avg_fog are both present in the behavior digest, treat latest_* as the user's current state and avg_* as the recent trend.
+- If the latest reading and the average differ, mention both clearly instead of describing the current state from averages alone.
 
 Behavioral Interventions (use if triggered by digest):
 - If dir_switches > 80, diagnose lack of flow state and suggest a "single-project lock" setup for tomorrow.
@@ -251,6 +278,9 @@ coach_build_status_prompt() {
     local project_context="$7"
     local context_scope="${8:-global}"
 
+    # This is the shorter middle-of-the-day coach letter.
+    # It is meant to help the AI recentre the user quickly.
+    # It is shorter because mid-day help needs to be fast and easy to act on.
     cat <<EOF
 Produce a concise mid-day recenter coaching brief for a user managing brain fog and fatigue. Validate their ADHD exploration style.
 Use declared focus and non-fork GitHub activity as the primary signal for whether the spear is moving, while accepting that natural deviation is valid.
@@ -282,6 +312,15 @@ ${recent_pushes:-"(none)"}
 
 Behavior digest:
 ${behavior_digest:-"(none)"}
+
+Wearable guidance:
+- If the behavior digest includes wearable metrics, treat them as live Fitbit/Google Health context.
+- Do not tell the user to build, set up, migrate, or debug a Fitbit sync pipeline when live wearable metrics are already present in the digest.
+- When relevant, use the most recent sleep, resting HR, HRV, and step readings as part of the health-aware pacing guidance.
+
+Energy and fog guidance:
+- If latest_energy/latest_fog and avg_energy/avg_fog are both present in the behavior digest, treat latest_* as the user's current state and avg_* as the recent trend.
+- If the latest reading and the average differ, mention both clearly instead of describing the current state from averages alone.
 
 Current directory:
 ${current_dir:-"(unknown)"}
