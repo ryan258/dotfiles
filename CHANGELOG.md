@@ -1,6 +1,19 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** March 26, 2026
+**Last Updated:** March 28, 2026
+
+## Version 2.2.55 (March 28, 2026) - Daily Health Check First
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- `scripts/startday.sh` and `scripts/goodevening.sh` now open with the interactive energy/fog check and health summary, so manual health context is captured before the rest of each routine.
+- Added `health_ops_prompt_for_manual_checkin()` in `scripts/lib/health_ops.sh` and pointed `scripts/status.sh` at the shared prompt flow so the daily routines use one consistent energy/fog logger.
+- `scripts/g.sh` now reads both legacy `timestamp:path` and canonical `timestamp|path` directory logs, filters blank/dead entries, and `scripts/startday.sh` now preserves suggested paths with spaces instead of truncating them at the first word.
+- Added interactive BATS coverage for the new prompt order in `tests/test_startday_coach.sh` and `tests/test_goodevening_coach.sh`.
+
+---
 
 ## Version 2.2.54 (March 26, 2026) - Coach Wearable Context
 

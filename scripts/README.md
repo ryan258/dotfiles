@@ -41,7 +41,9 @@ The full rules live in `../CLAUDE.md`.
 - Daily coaching calls `dhp-coach.sh` first. This is a single, fast call to OpenRouter. It skips the slower AI-Staff-HQ swarm path used by `dhp-strategy.sh`.
 - The coaching model is set in root `dotfiles/.env` with `AI_COACH_MODEL`. Changing `ai-staff-hq/.env` does not change `startday` or `goodevening`.
 - `status.sh --coach` uses the same fast `dhp-coach.sh` path for a mid-day reset. If you run it inside a git repo, the coach focuses on that repo. Outside a repo, it shows a wider view. Set `AI_STATUS_ENABLED=true` to show this on every `status` run. You can also tune `AI_STATUS_TEMPERATURE` on its own.
+- `startday.sh` and `goodevening.sh` now open with the manual energy/fog check and health summary, so you can log current state before the rest of the morning or evening flow.
 - When the AI status coach is on and `status.sh` is interactive, it asks for energy and fog before building the briefing so the same run can use your fresh manual readings.
+- `g.sh suggest` now tolerates legacy colon-delimited directory logs and preserves full paths with spaces, so `startday.sh` no longer truncates entries like `Projects/the merge/...`.
 - `config.sh` now reloads the root `.env` each time a process runs. This means coach timeout and model changes take effect right away.
 - Most scripts should source `common.sh` and then only the libraries they need. `loader.sh` is reserved for the coaching-heavy daily flows (`startday.sh`, `status.sh`, and `goodevening.sh`) that intentionally preload the full stack.
 - Coach modes: LOCKED (stay focused), FLOW (follow energy with check-ins), OVERRIDE (explore with limits), RECOVERY (low output for low-energy days). The coach suggests mode switches based on your numbers.

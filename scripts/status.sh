@@ -89,38 +89,13 @@ _status_filter_activity_for_repo() {
 
 _status_prompt_for_health_logging() {
     local health_script="$1"
-    local log_health=""
-    local energy=""
-    local fog=""
-
-    # This little interview happens before the coach when possible.
-    # That way, the coach reads the newest numbers instead of yesterday's news.
-    if ! [ -t 0 ] || ! [ -x "$health_script" ]; then
-        return 1
+    if command -v health_ops_prompt_for_manual_checkin >/dev/null 2>&1; then
+        echo ""
+        health_ops_prompt_for_manual_checkin "$health_script"
+        return $?
     fi
 
-    echo ""
-    echo -n "🏥 Log Energy/Fog levels? [y/N]: "
-    read -r log_health
-    if [[ "$log_health" =~ ^[yY] ]]; then
-        echo -n "   Energy Level (1-10): "
-        read -r energy
-        if validate_range "$energy" 1 10 "energy level" >/dev/null 2>&1; then
-            "$health_script" energy "$energy" | sed 's/^/   /'
-        elif [ -n "$energy" ]; then
-            echo "   (Skipped: must be 1-10)"
-        fi
-
-        echo -n "   Brain Fog Level (1-10): "
-        read -r fog
-        if validate_range "$fog" 1 10 "brain fog level" >/dev/null 2>&1; then
-            "$health_script" fog "$fog" | sed 's/^/   /'
-        elif [ -n "$fog" ]; then
-            echo "   (Skipped: must be 1-10)"
-        fi
-    fi
-
-    return 0
+    return 1
 }
 
 STATUS_COACH_ENABLED="${AI_STATUS_ENABLED:-false}"

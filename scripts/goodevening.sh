@@ -107,6 +107,7 @@ for arg in "$@"; do
 done
 
 TODAY=$(determine_session_date "$FORCE_CURRENT_DAY" "$DATE_OVERRIDE")
+HEALTH_SCRIPT="${HEALTH_SCRIPT:-$DOTFILES_DIR/scripts/health.sh}"
 
 # Refresh Fitbit data before the evening review.
 # That way the reflection can see the latest wearable picture from today.
@@ -116,6 +117,18 @@ if command -v health_ops_auto_sync_fitbit >/dev/null 2>&1; then
 fi
 
 echo "=== Evening Close-Out for $TODAY — $(date_now '%Y-%m-%d %H:%M') ==="
+
+# --- HEALTH CHECK ---
+echo ""
+echo "🏥 HEALTH CHECK:"
+if command -v health_ops_prompt_for_manual_checkin >/dev/null 2>&1; then
+    health_ops_prompt_for_manual_checkin "$HEALTH_SCRIPT" || true
+fi
+if command -v show_health_summary >/dev/null 2>&1; then
+    show_health_summary
+else
+    echo "  (Health operations library not loaded)"
+fi
 
 # --- Focus ---
 echo ""

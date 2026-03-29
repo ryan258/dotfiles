@@ -97,6 +97,88 @@ teardown() {
     rm -rf "$TEST_ROOT"
 }
 
+@test "startday prompts for energy and fog before focus in interactive runs" {
+    local runner="$TEST_ROOT/run_startday_with_tty.sh"
+    local today
+
+    today="$(date +%Y-%m-%d)"
+
+    cat > "$DOTFILES_DIR/scripts/health.sh" <<'STUB'
+#!/usr/bin/env bash
+set -euo pipefail
+
+timestamp="${TEST_HEALTH_TIMESTAMP:-$(date '+%Y-%m-%d %H:%M')}"
+
+case "${1:-}" in
+    energy)
+        printf 'ENERGY|%s|%s\n' "$timestamp" "${2:-}" >> "$DATA_DIR/health.txt"
+        printf 'Logged energy level: %s/10\n' "${2:-}"
+        ;;
+    fog)
+        printf 'FOG|%s|%s\n' "$timestamp" "${2:-}" >> "$DATA_DIR/health.txt"
+        printf 'Logged brain fog level: %s/10\n' "${2:-}"
+        ;;
+esac
+STUB
+    chmod +x "$DOTFILES_DIR/scripts/health.sh"
+
+    cat > "$runner" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+export HOME="$HOME"
+export DATA_DIR="$DATA_DIR"
+export DOTFILES_DIR="$DOTFILES_DIR"
+export PATH="$DOTFILES_DIR/bin:\$PATH"
+export AI_BRIEFING_ENABLED=false
+export AI_COACH_CHAT_ENABLED=false
+export TEST_HEALTH_TIMESTAMP="$today 08:15"
+/usr/bin/expect <<'EXPECT'
+set timeout 20
+spawn bash \$env(DOTFILES_DIR)/scripts/startday.sh
+expect -re {Log Energy/Fog levels\\? \\[y/N\\]: $}
+send -- "y\r"
+expect -re {Energy Level \\(1-10\\): $}
+send -- "6\r"
+expect -re {Brain Fog Level \\(1-10\\): $}
+send -- "2\r"
+expect -re {Update focus\\? \\[y/N\\]: $}
+send -- "n\r"
+expect eof
+EXPECT
+EOF
+    chmod +x "$runner"
+
+    run bash "$runner"
+
+    [ "$status" -eq 0 ]
+    grep -q "^ENERGY|$today 08:15|6\$" "$DATA_DIR/health.txt"
+    grep -q "^FOG|$today 08:15|2\$" "$DATA_DIR/health.txt"
+}
+
+@test "startday preserves suggested directory paths that contain spaces" {
+    cat > "$DOTFILES_DIR/scripts/g.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+printf '%s\n' \
+  "1.86	/Users/ryanjohnson/Projects/the merge/promptchaining-lab" \
+  "1.68	/Users/ryanjohnson/dotfiles" \
+  "0.89	/Users/ryanjohnson/Projects/cyborg/my-ms-ai-blog"
+EOF
+    chmod +x "$DOTFILES_DIR/scripts/g.sh"
+
+    run env \
+        PATH="$DOTFILES_DIR/bin:$PATH" \
+        HOME="$HOME" \
+        DATA_DIR="$DATA_DIR" \
+        DOTFILES_DIR="$DOTFILES_DIR" \
+        AI_BRIEFING_ENABLED=false \
+        AI_COACH_CHAT_ENABLED=false \
+        bash -c "$DOTFILES_DIR/scripts/startday.sh refresh < /dev/null"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"  • /Users/ryanjohnson/Projects/the merge/promptchaining-lab"* ]]
+}
+
 @test "startday coaching prompt includes digest, mode, and health lens" {
     run env \
         PATH="$DOTFILES_DIR/bin:$PATH" \

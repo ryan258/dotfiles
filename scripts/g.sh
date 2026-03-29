@@ -60,7 +60,20 @@ case "${1:-list}" in
   -r|recent)
     # Show recent directories
     if [ -f "$HISTORY_FILE" ]; then
-      awk -F'|' 'NF>1 {print $2; next} {print}' "$HISTORY_FILE"
+      awk '
+      {
+        line = $0
+        pipe_index = index(line, "|")
+        colon_index = index(line, ":")
+
+        if (pipe_index > 0) {
+          print substr(line, pipe_index + 1)
+        } else if (colon_index > 0) {
+          print substr(line, colon_index + 1)
+        } else {
+          print line
+        }
+      }' "$HISTORY_FILE"
     else
       echo "No directory history."
     fi
@@ -144,27 +157,59 @@ case "${1:-list}" in
     fi
 
     NOW=$(date +%s)
-    awk -F'|' -v now="$NOW" '
+    awk -v now="$NOW" '
+    function trim(value) {
+        sub(/^[[:space:]]+/, "", value)
+        sub(/[[:space:]]+$/, "", value)
+        return value
+    }
     {
-        # Track visit count and last visit time for each directory
-        dir = $2
-        timestamp = $1
+        line = $0
+        pipe_index = index(line, "|")
+        colon_index = index(line, ":")
 
+        if (pipe_index > 0) {
+            timestamp = substr(line, 1, pipe_index - 1)
+            dir = substr(line, pipe_index + 1)
+        } else if (colon_index > 0) {
+            timestamp = substr(line, 1, colon_index - 1)
+            dir = substr(line, colon_index + 1)
+        } else {
+            next
+        }
+
+        timestamp = trim(timestamp)
+        dir = trim(dir)
+
+        if (length(timestamp) < 9 || timestamp !~ /^[0-9]+$/ || dir !~ /^\//) {
+            next
+        }
+
+        # Track visit count and last visit time for each directory
         if (dir in visit_count) {
             visit_count[dir]++
         } else {
             visit_count[dir] = 1
         }
-        last_visit[dir] = timestamp
+        if (!(dir in last_visit) || timestamp > last_visit[dir]) {
+            last_visit[dir] = timestamp
+        }
     }
     END {
         for (dir in visit_count) {
             # score = (visit_count) / (days_since_last_visit + 1)
             days_since = (now - last_visit[dir]) / 86400
+            if (days_since < 0) {
+                days_since = 0
+            }
             score = visit_count[dir] / (days_since + 1)
-            printf "%.2f %s\n", score, dir
+            printf "%.2f\t%s\n", score, dir
         }
-    }' "$USAGE_LOG" | sort -rn | head -n "${MAX_SUGGESTIONS:-10}"
+    }' "$USAGE_LOG" | sort -rn | while IFS=$'\t' read -r score dir; do
+        if [ -n "$dir" ] && [ -d "$dir" ]; then
+            printf '%s\t%s\n' "$score" "$dir"
+        fi
+    done | head -n "${MAX_SUGGESTIONS:-10}"
     ;;
 
   prune)

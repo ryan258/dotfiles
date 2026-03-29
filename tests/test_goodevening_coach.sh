@@ -107,6 +107,64 @@ teardown() {
     rm -rf "$TEST_ROOT"
 }
 
+@test "goodevening prompts for energy and fog before focus in interactive runs" {
+    local runner="$TEST_ROOT/run_goodevening_with_tty.sh"
+    local today
+
+    today="$(date +%Y-%m-%d)"
+
+    cat > "$DOTFILES_DIR/scripts/health.sh" <<'STUB'
+#!/usr/bin/env bash
+set -euo pipefail
+
+timestamp="${TEST_HEALTH_TIMESTAMP:-$(date '+%Y-%m-%d %H:%M')}"
+
+case "${1:-}" in
+    energy)
+        printf 'ENERGY|%s|%s\n' "$timestamp" "${2:-}" >> "$DATA_DIR/health.txt"
+        printf 'Logged energy level: %s/10\n' "${2:-}"
+        ;;
+    fog)
+        printf 'FOG|%s|%s\n' "$timestamp" "${2:-}" >> "$DATA_DIR/health.txt"
+        printf 'Logged brain fog level: %s/10\n' "${2:-}"
+        ;;
+esac
+STUB
+    chmod +x "$DOTFILES_DIR/scripts/health.sh"
+
+    cat > "$runner" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+export HOME="$HOME"
+export DATA_DIR="$DATA_DIR"
+export DOTFILES_DIR="$DOTFILES_DIR"
+export PROJECTS_DIR="$PROJECTS_DIR"
+export PATH="$DOTFILES_DIR/bin:\$PATH"
+export AI_REFLECTION_ENABLED=false
+export AI_COACH_CHAT_ENABLED=false
+export TEST_HEALTH_TIMESTAMP="$today 18:05"
+/usr/bin/expect <<'EXPECT'
+set timeout 20
+spawn bash \$env(DOTFILES_DIR)/scripts/goodevening.sh --refresh
+expect -re {Log Energy/Fog levels\\? \\[y/N\\]: $}
+send -- "y\r"
+expect -re {Energy Level \\(1-10\\): $}
+send -- "5\r"
+expect -re {Brain Fog Level \\(1-10\\): $}
+send -- "4\r"
+expect -re {TODAY'S FOCUS:}
+expect eof
+EXPECT
+EOF
+    chmod +x "$runner"
+
+    run bash "$runner"
+
+    [ "$status" -eq 0 ]
+    grep -q "^ENERGY|$today 18:05|5\$" "$DATA_DIR/health.txt"
+    grep -q "^FOG|$today 18:05|4\$" "$DATA_DIR/health.txt"
+}
+
 @test "goodevening falls back to system date when startday marker is missing" {
     rm -f "$DATA_DIR/current_day"
     expected_today="$(date +%Y-%m-%d)"

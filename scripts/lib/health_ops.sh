@@ -4,6 +4,7 @@
 # NOTE: SOURCED file. Do NOT use set -euo pipefail.
 #
 # Dependencies:
+# - common.sh: validate_range
 # - config.sh: DATA_DIR, DOTFILES_DIR, HEALTH_FILE
 # - date_utils.sh: timestamp_to_epoch, date_today
 
@@ -326,6 +327,41 @@ health_ops_get_daily_summary() {
     printf 'fog=%s\n' "$fog"
     printf 'symptom_count=%s\n' "$symptom_count"
     printf 'symptoms=%s\n' "$symptoms"
+}
+
+# Prompt for optional same-run manual energy/fog logging.
+# Usage: health_ops_prompt_for_manual_checkin [health_script]
+health_ops_prompt_for_manual_checkin() {
+    local health_script="${1:-${HEALTH_SCRIPT:-${DOTFILES_DIR:-$HOME/dotfiles}/scripts/health.sh}}"
+    local log_health=""
+    local energy=""
+    local fog=""
+
+    if ! [ -t 0 ] || ! [ -x "$health_script" ]; then
+        return 1
+    fi
+
+    echo -n "🏥 Log Energy/Fog levels? [y/N]: "
+    read -r log_health
+    if [[ "$log_health" =~ ^[yY] ]]; then
+        echo -n "   Energy Level (1-10): "
+        read -r energy
+        if validate_range "$energy" 1 10 "energy level" >/dev/null 2>&1; then
+            "$health_script" energy "$energy" | sed 's/^/   /'
+        elif [ -n "$energy" ]; then
+            echo "   (Skipped: must be 1-10)"
+        fi
+
+        echo -n "   Brain Fog Level (1-10): "
+        read -r fog
+        if validate_range "$fog" 1 10 "brain fog level" >/dev/null 2>&1; then
+            "$health_script" fog "$fog" | sed 's/^/   /'
+        elif [ -n "$fog" ]; then
+            echo "   (Skipped: must be 1-10)"
+        fi
+    fi
+
+    return 0
 }
 
 # Display health summary (Appointments, Energy, Symptoms)

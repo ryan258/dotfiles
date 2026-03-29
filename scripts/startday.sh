@@ -40,6 +40,19 @@ if [ "$CONTEXT_CAPTURE_ON_START" = "true" ]; then
 fi
 
 SPOON_MANAGER="$SCRIPT_DIR/spoon_manager.sh"
+HEALTH_SCRIPT="${HEALTH_SCRIPT:-$DOTFILES_DIR/scripts/health.sh}"
+
+# --- HEALTH CHECK ---
+echo ""
+echo "🏥 HEALTH CHECK:"
+if command -v health_ops_prompt_for_manual_checkin >/dev/null 2>&1; then
+    health_ops_prompt_for_manual_checkin "$HEALTH_SCRIPT" || true
+fi
+if command -v show_health_summary >/dev/null 2>&1; then
+    show_health_summary
+else
+    echo "  (Health operations library not loaded)"
+fi
 
 # 1. Daily Focus
 FOCUS_SCRIPT="$SCRIPT_DIR/focus.sh"
@@ -244,11 +257,9 @@ echo "💡 SUGGESTED DIRECTORIES:"
 if [ -f "$SCRIPT_DIR/g.sh" ]; then
     suggested_dirs=$("$SCRIPT_DIR/g.sh" suggest 2>/dev/null | awk '
         {
-            for (i = 1; i <= NF; i++) {
-                if ($i ~ /^\//) {
-                    print "  • " $i
-                    break
-                }
+            sub(/^[0-9.]+[[:space:]]+/, "", $0)
+            if ($0 ~ /^\//) {
+                print "  • " $0
             }
         }
     ' | head -n 3 || true)
@@ -272,16 +283,6 @@ if [ "$BLOG_READY" = true ]; then
             echo "  ⚠️ Unable to list recent content (check BLOG_CONTENT_DIR)."
         fi
     fi
-fi
-
-# --- Helpers ---
-# --- HEALTH ---
-echo ""
-echo "🏥 HEALTH:"
-if command -v show_health_summary >/dev/null 2>&1; then
-    show_health_summary
-else
-    echo "  (Health operations library not loaded)"
 fi
 
 # --- SCHEDULED TASKS ---
