@@ -228,6 +228,7 @@ source "$SCRIPT_DIR/lib/config.sh"
 | `journal.txt`   | `YYYY-MM-DD HH:MM:SS\|entry`     | `2025-01-15 09:00:00\|Morning reflection...` |
 | `health.txt`    | `TYPE\|DATE\|fields...`          | `SYMPTOM\|2025-01-15\|fatigue\|3`            |
 | `spoons.txt`    | `TYPE\|DATE\|fields...`          | `BUDGET\|2025-01-15\|12`                     |
+| `github_inactive_repos.txt` | `repo\|YYYY-MM-DD\|note` | `dotfiles\|2026-03-30\|good place` |
 
 **Critical:** Always sanitize user input before writing:
 
@@ -334,6 +335,7 @@ dhp_dispatch \
 - Coach outputs should open with what is working unless there is a real risk. Real risk means a clear health/body risk, a same-day blocker, `latest_energy <= 1`, or `latest_fog >= 8`.
 - `startday` should feel like a gentle check-in first, then a plan. `status` should feel like a midpoint reset with one immediate next move. `goodevening` should celebrate wins first, then debrief and set up tomorrow lightly.
 - In interactive runs, `startday`, `status`, and `goodevening` may ask up to 3 pre-brief clarification questions before calling the AI. Those questions should be answerable in one line using numbered `A/B/C/D/E` choices like `1B 2A 3E`, with `E` reserved for a custom note.
+- The daily GitHub repo signal should respect a manual inactive-repo list stored in `github_inactive_repos.txt`. Parked repos should be hidden from recent-push and commit recap signals until reactivated, while the daily routines still show a separate list of parked repo names that can be reactivated later.
 - The daily coach prompts may now include an Additional local context bundle with bounded raw local context from the last 7 days: journal entries, open todos/top tasks, schedule output, suggested directories, blog snapshots, launchpad text, weekly review text, and raw health/spoon/directory-log slices. Git/focus remain primary signals; the local bundle is secondary evidence for specificity.
 - GitHub blindspot/opportunity sections should be capped at 5 items. Each item must be concrete, point to an obvious next action, and use real repo names when the evidence supports it.
 - Blindspot sections may be post-processed after AI generation to remove raw metric/debug noise such as `dir_usage_malformed`, `commit_context`, or raw `focus_git_status=...` values, then backfill grounded repo-specific actions.

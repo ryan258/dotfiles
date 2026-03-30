@@ -47,6 +47,190 @@ _extract_github_error() {
     printf "%s" "$line"
 }
 
+_github_inactive_repos_file() {
+    if [[ -n "${GITHUB_INACTIVE_REPOS_FILE:-}" ]]; then
+        printf '%s' "$GITHUB_INACTIVE_REPOS_FILE"
+        return 0
+    fi
+
+    printf '%s' "${DATA_DIR:-${XDG_DATA_HOME:-$HOME/.config}/dotfiles-data}/github_inactive_repos.txt"
+}
+
+_github_normalize_repo_name() {
+    local repo_name="${1:-}"
+    repo_name=$(printf '%s' "$repo_name" | tr -d '\r' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+    printf '%s' "$repo_name"
+}
+
+_github_repo_name_is_valid() {
+    local repo_name="$(_github_normalize_repo_name "${1:-}")"
+    [[ "$repo_name" =~ ^[A-Za-z0-9._-]+$ ]]
+}
+
+_github_repo_today() {
+    if command -v date_today >/dev/null 2>&1; then
+        date_today
+        return 0
+    fi
+
+    date +"%Y-%m-%d"
+}
+
+list_inactive_github_repos_structured() {
+    local inactive_file
+    inactive_file=$(_github_inactive_repos_file)
+
+    [[ -f "$inactive_file" ]] || return 0
+
+    awk -F'|' '
+        NF >= 1 && $1 != "" {
+            repo=$1
+            date=(NF >= 2 ? $2 : "")
+            note=(NF >= 3 ? $3 : "")
+            latest[repo]=repo "|" date "|" note
+        }
+        END {
+            for (repo in latest) {
+                print latest[repo]
+            }
+        }
+    ' "$inactive_file" | LC_ALL=C sort
+}
+
+get_inactive_github_repo_names() {
+    local structured=""
+
+    structured=$(list_inactive_github_repos_structured)
+    [[ -n "$structured" ]] || return 0
+
+    while IFS='|' read -r repo_name _inactive_date _inactive_note; do
+        [[ -n "$repo_name" ]] || continue
+        printf '%s\n' "$repo_name"
+    done <<< "$structured"
+}
+
+get_inactive_github_repos() {
+    local structured=""
+
+    structured=$(list_inactive_github_repos_structured)
+    [[ -n "$structured" ]] || return 0
+
+    while IFS='|' read -r repo_name inactive_date inactive_note; do
+        [[ -n "$repo_name" ]] || continue
+        if [[ -n "$inactive_note" ]]; then
+            printf '  • %s (inactive %s - %s)\n' "$repo_name" "${inactive_date:-unknown}" "$inactive_note"
+        elif [[ -n "$inactive_date" ]]; then
+            printf '  • %s (inactive %s)\n' "$repo_name" "$inactive_date"
+        else
+            printf '  • %s\n' "$repo_name"
+        fi
+    done <<< "$structured"
+}
+
+_github_filter_inactive_repo_lines() {
+    local input_lines="${1:-}"
+    local repo_field="${2:-1}"
+    local inactive_file=""
+
+    [[ -n "$input_lines" ]] || return 0
+
+    inactive_file=$(_github_inactive_repos_file)
+    if [[ ! -f "$inactive_file" ]]; then
+        printf '%s\n' "$input_lines"
+        return 0
+    fi
+
+    printf '%s\n' "$input_lines" | awk -F'|' -v repo_field="$repo_field" '
+        NR == FNR {
+            if ($1 != "") {
+                inactive[$1]=1
+            }
+            next
+        }
+        {
+            repo=$repo_field
+            if (!(repo in inactive)) {
+                print
+            }
+        }
+    ' "$inactive_file" -
+}
+
+is_github_repo_inactive() {
+    local repo_name=""
+    local inactive_file=""
+
+    repo_name=$(_github_normalize_repo_name "${1:-}")
+    [[ -n "$repo_name" ]] || return 1
+
+    inactive_file=$(_github_inactive_repos_file)
+    [[ -f "$inactive_file" ]] || return 1
+
+    awk -F'|' -v repo="$repo_name" '
+        $1 == repo {
+            found=1
+            exit
+        }
+        END {
+            exit(found ? 0 : 1)
+        }
+    ' "$inactive_file"
+}
+
+deactivate_github_repo() {
+    local repo_name=""
+    local inactive_note="${*:2}"
+    local inactive_file=""
+    local tmp_file=""
+    local inactive_date=""
+
+    repo_name=$(_github_normalize_repo_name "${1:-}")
+    if ! _github_repo_name_is_valid "$repo_name"; then
+        echo "Invalid repo name: ${1:-}" >&2
+        return 1
+    fi
+
+    inactive_file=$(_github_inactive_repos_file)
+    mkdir -p "$(dirname "$inactive_file")"
+    tmp_file=$(mktemp -t "github-inactive-repos.XXXXXX") || return 1
+    chmod 600 "$tmp_file"
+
+    if [[ -f "$inactive_file" ]]; then
+        awk -F'|' -v repo="$repo_name" '$1 != repo' "$inactive_file" > "$tmp_file"
+    fi
+
+    inactive_date=$(_github_repo_today)
+    printf '%s|%s|%s\n' "$repo_name" "$inactive_date" "$inactive_note" >> "$tmp_file"
+    mv "$tmp_file" "$inactive_file"
+    chmod 600 "$inactive_file" 2>/dev/null || true
+}
+
+reactivate_github_repo() {
+    local repo_name=""
+    local inactive_file=""
+    local tmp_file=""
+
+    repo_name=$(_github_normalize_repo_name "${1:-}")
+    if ! _github_repo_name_is_valid "$repo_name"; then
+        echo "Invalid repo name: ${1:-}" >&2
+        return 1
+    fi
+
+    inactive_file=$(_github_inactive_repos_file)
+    [[ -f "$inactive_file" ]] || return 0
+
+    tmp_file=$(mktemp -t "github-inactive-repos.XXXXXX") || return 1
+    chmod 600 "$tmp_file"
+    awk -F'|' -v repo="$repo_name" '$1 != repo' "$inactive_file" > "$tmp_file"
+
+    if [[ -s "$tmp_file" ]]; then
+        mv "$tmp_file" "$inactive_file"
+        chmod 600 "$inactive_file" 2>/dev/null || true
+    else
+        rm -f "$tmp_file" "$inactive_file"
+    fi
+}
+
 # Get recent GitHub activity as structured pipe-delimited data.
 # Usage: get_recent_github_activity_structured [days]
 # Output format: repo_name|days_ago|pushed_at_iso
@@ -80,6 +264,7 @@ get_recent_github_activity_structured() {
     rm -f "$err_file"
 
     local repo_lines
+    local structured_lines=""
     repo_lines=$(echo "$github_repos" | jq -r '.[] | "\(.pushed_at) \(.name)"')
     local now
     now=$(date_epoch_now)
@@ -93,11 +278,15 @@ get_recent_github_activity_structured() {
         [ "$pushed_at_epoch" -le 0 ] && continue
         diff_days=$(( (now - pushed_at_epoch) / 86400 ))
         if [ "$diff_days" -le "$days" ]; then
-            printf '%s|%s|%s\n' "$repo_name" "$diff_days" "$pushed_at_str"
+            structured_lines="${structured_lines}${structured_lines:+$'\n'}${repo_name}|${diff_days}|${pushed_at_str}"
         else
             break
         fi
     done <<< "$repo_lines"
+
+    if [[ -n "$structured_lines" ]]; then
+        _github_filter_inactive_repo_lines "$structured_lines" 1
+    fi
 }
 
 # Get recent GitHub activity (pushes in the last 7 days) — formatted for display.
@@ -157,7 +346,7 @@ get_commit_activity_for_date_structured() {
     rm -f "$err_file"
 
     if [[ -n "$commits" ]]; then
-        printf '%s\n' "$commits"
+        _github_filter_inactive_repo_lines "$commits" 1
     fi
 
     return 0

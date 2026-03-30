@@ -153,11 +153,15 @@ fi
 
 STATUS_COACH_TODAY_COMMITS="${STATUS_TODAY_COMMITS:-}"
 STATUS_COACH_RECENT_PUSHES="${STATUS_RECENT_PUSHES:-}"
+STATUS_INACTIVE_REPOS=""
 _status_context_scope="global"
 if [[ "$_status_git_repo_focus" == "true" ]] && [[ "${_status_project_context:-}" != "(no project context)" ]]; then
     STATUS_COACH_TODAY_COMMITS=$(_status_filter_activity_for_repo "${STATUS_TODAY_COMMITS:-}" "${_status_project_context:-}")
     STATUS_COACH_RECENT_PUSHES=$(_status_filter_activity_for_repo "${STATUS_RECENT_PUSHES:-}" "${_status_project_context:-}")
     _status_context_scope="repo-local"
+fi
+if command -v get_inactive_github_repos >/dev/null 2>&1; then
+    STATUS_INACTIVE_REPOS=$(get_inactive_github_repos 2>/dev/null || true)
 fi
 _status_combined_git=$(printf '%s\n%s\n' "${STATUS_COACH_TODAY_COMMITS:-}" "${STATUS_COACH_RECENT_PUSHES:-}")
 HEALTH_SCRIPT="${HEALTH_SCRIPT:-$DOTFILES_DIR/scripts/health.sh}"
@@ -203,6 +207,12 @@ fi
 _status_depletion=""
 if command -v predict_spoon_depletion >/dev/null 2>&1; then
     _status_depletion=$(predict_spoon_depletion 2>/dev/null || true)
+fi
+_status_repo_tracking=""
+if [[ "$_status_git_repo_focus" == "true" ]] && command -v is_github_repo_inactive >/dev/null 2>&1; then
+    if is_github_repo_inactive "${_status_project_context:-}" 2>/dev/null; then
+        _status_repo_tracking="inactive until reactivated"
+    fi
 fi
 _status_focus_label="${_status_focus_text:-"(none set)"}"
 _status_alignment="no focus set"
@@ -252,6 +262,15 @@ else
     echo "  Mode: ${_status_mode} | Spoons: ${_status_spoons}/${_status_budget} remaining | Focus: ${_status_focus_label}"
 fi
 echo "  Spear alignment: ${_status_alignment}"
+if [ -n "$_status_repo_tracking" ]; then
+    echo "  Repo tracking: ${_status_repo_tracking}"
+fi
+
+if [ -n "$STATUS_INACTIVE_REPOS" ]; then
+    echo ""
+    echo "⏸️ INACTIVE REPOS (reactivate to track again):"
+    echo "$STATUS_INACTIVE_REPOS"
+fi
 
 # If the coach is about to speak, collect fresh energy and fog first.
 # That lets the same run use the numbers you just typed.

@@ -13,6 +13,7 @@ The full rules live in `../CLAUDE.md`.
 - `journal.sh`
 - `health.sh`
 - `focus.sh`
+- `repo_tracker.sh`
 
 ## Wearable Imports
 
@@ -42,6 +43,7 @@ The full rules live in `../CLAUDE.md`.
 - The coaching model is set in root `dotfiles/.env` with `AI_COACH_MODEL`. Changing `ai-staff-hq/.env` does not change `startday` or `goodevening`.
 - `status.sh --coach` uses the same fast `dhp-coach.sh` path for a mid-day reset. If you run it inside a git repo, the coach focuses on that repo. Outside a repo, it shows a wider view. Set `AI_STATUS_ENABLED=true` to show this on every `status` run. You can also tune `AI_STATUS_TEMPERATURE` on its own.
 - `startday.sh` and `goodevening.sh` now open with the manual energy/fog check and health summary, so you can log current state before the rest of the morning or evening flow.
+- `repo_tracker.sh` lets you deactivate a repo when it is in a good place and reactivate it later. Use `repo_tracker.sh deactivate <repo> [note...]`, `repo_tracker.sh reactivate <repo>`, `repo_tracker.sh list`, and `repo_tracker.sh names`.
 - When the AI status coach is on and `status.sh` is interactive, it asks for energy and fog before building the briefing so the same run can use your fresh manual readings.
 - In interactive runs, `startday.sh`, `status.sh --coach`, and `goodevening.sh` can ask up to 3 pre-brief clarification questions before the AI call. Answer them in one line with numbered choices like `1B 2A 3E (custom note)`. Set `AI_COACH_PREBRIEF_ENABLED=false` to skip them, `AI_COACH_PREBRIEF_ALWAYS_ASK=true` to force them, and `AI_COACH_PREBRIEF_MAX_QUESTIONS=1..3` to cap how many appear.
 - The three daily coach flows now append an Additional local context bundle to the AI prompt by default. It includes bounded last-7-day raw local context such as journal lines, open todos/top tasks, schedule output, suggested directories, blog status/content snapshots, launchpad text, the latest weekly review text, and raw `health.txt`, `spoons.txt`, and `dir_usage.log` slices. Tune it with `AI_COACH_LOCAL_CONTEXT_ENABLED`, `AI_COACH_LOCAL_CONTEXT_DAYS`, and `AI_COACH_LOCAL_CONTEXT_DIR_LOG_MAX_LINES`.
@@ -60,6 +62,7 @@ The full rules live in `../CLAUDE.md`.
 - If the AI returns output, the coaching flows keep that output but still clean and cap the blindspot sections so raw metric/debug noise does not leak into the user-facing briefing. Deterministic fallback text only appears when the dispatcher times out, errors, or is unavailable.
 - `status.sh` shows the current coach mode, spoon budget and use, focus text, and a Git-backed alignment signal in a DAILY CONTEXT section.
 - When the AI status coach is on, `status.sh` also shows a GitHub-first reset section. It uses today's commits, recent pushes, project context, and the same scan cleaner as the morning coach.
+- `startday.sh`, `status.sh`, and `goodevening.sh` now hide repos listed in `github_inactive_repos.txt` from their GitHub activity signal and show those parked repo names in a separate reactivation list instead.
 
 ## Correlation Shortcuts
 

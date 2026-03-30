@@ -80,6 +80,7 @@ CONTEXT_ROOT="${CONTEXT_ROOT:-$DATA_DIR/contexts}"
 GITHUB_TOKEN_FILE="${GITHUB_TOKEN_FILE:-$HOME/.github_token}"
 GITHUB_TOKEN_FALLBACK="${GITHUB_TOKEN_FALLBACK:-$DATA_DIR/github_token}"
 GITHUB_CACHE_DIR="${GITHUB_CACHE_DIR:-$DATA_DIR/cache/github}"
+GITHUB_INACTIVE_REPOS_FILE="${GITHUB_INACTIVE_REPOS_FILE:-$DATA_DIR/github_inactive_repos.txt}"
 GITHUB_EXCLUDE_FORKS="${GITHUB_EXCLUDE_FORKS:-true}"
 
 #=============================================================================

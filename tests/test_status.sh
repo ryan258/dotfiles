@@ -50,7 +50,11 @@ case "${1:-}" in
         fi
         ;;
     list_repos|list_user_events)
-        echo "[]"
+        if [ -n "${GITHUB_REPOS_FIXTURE:-}" ] && [ -f "$GITHUB_REPOS_FIXTURE" ]; then
+            cat "$GITHUB_REPOS_FIXTURE"
+        else
+            echo "[]"
+        fi
         ;;
 esac
 STUB
@@ -219,6 +223,24 @@ EOF
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"Spoons: ?/10 remaining"* ]]
+}
+
+@test "status.sh shows inactive repos and repo-local tracking when the current repo is parked" {
+    make_test_repo "$PROJECTS_DIR/dotfiles"
+    printf '%s\n' "dotfiles|${TODAY}|good place" > "$DATA_DIR/github_inactive_repos.txt"
+
+    run env \
+        HOME="$HOME" \
+        DATA_DIR="$DATA_DIR" \
+        DOTFILES_DIR="$DOTFILES_DIR" \
+        PROJECTS_DIR="$PROJECTS_DIR" \
+        AI_STATUS_ENABLED="" \
+        bash -lc "cd '$PROJECTS_DIR/dotfiles' && bash '$DOTFILES_DIR/scripts/status.sh' < /dev/null"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Repo tracking: inactive until reactivated"* ]]
+    [[ "$output" == *"⏸️ INACTIVE REPOS (reactivate to track again):"* ]]
+    [[ "$output" == *"dotfiles (inactive ${TODAY} - good place)"* ]]
 }
 
 @test "status.sh DAILY CONTEXT shows focus and spear alignment from Git evidence" {

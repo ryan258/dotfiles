@@ -218,6 +218,56 @@ EOF
     [[ "$output" == *"  • /Users/ryanjohnson/Projects/the merge/promptchaining-lab"* ]]
 }
 
+@test "startday hides inactive repos from active projects and shows the reactivation list" {
+    local repos_fixture="$TEST_ROOT/repos.json"
+    local today
+
+    today="$(date +%Y-%m-%d)"
+    cp "$BATS_TEST_DIRNAME/../scripts/lib/github_ops.sh" "$DOTFILES_DIR/scripts/lib/github_ops.sh"
+    cat > "$DOTFILES_DIR/scripts/github_helper.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+case "${1:-}" in
+    list_repos)
+        if [[ -n "${GITHUB_REPOS_FIXTURE:-}" ]] && [[ -f "$GITHUB_REPOS_FIXTURE" ]]; then
+            cat "$GITHUB_REPOS_FIXTURE"
+        else
+            echo "[]"
+        fi
+        ;;
+    list_commits_for_date)
+        exit 0
+        ;;
+esac
+EOF
+    chmod +x "$DOTFILES_DIR/scripts/github_helper.sh"
+
+    cat > "$repos_fixture" <<EOF
+[
+  {"name":"dotfiles","pushed_at":"${today}T00:00:00Z"},
+  {"name":"rockit","pushed_at":"${today}T00:00:00Z"}
+]
+EOF
+    printf '%s\n' "dotfiles|${today}|good place" > "$DATA_DIR/github_inactive_repos.txt"
+
+    run env \
+        PATH="$DOTFILES_DIR/bin:$PATH" \
+        HOME="$HOME" \
+        DATA_DIR="$DATA_DIR" \
+        DOTFILES_DIR="$DOTFILES_DIR" \
+        GITHUB_REPOS_FIXTURE="$repos_fixture" \
+        AI_BRIEFING_ENABLED=false \
+        AI_COACH_CHAT_ENABLED=false \
+        bash -c "$DOTFILES_DIR/scripts/startday.sh refresh < /dev/null"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"rockit (pushed today)"* ]]
+    [[ "$output" != *"dotfiles (pushed today)"* ]]
+    [[ "$output" == *"⏸️ INACTIVE REPOS (reactivate to track again):"* ]]
+    [[ "$output" == *"dotfiles (inactive ${today} - good place)"* ]]
+}
+
 @test "startday coaching prompt includes digest, mode, and health lens" {
     run env \
         PATH="$DOTFILES_DIR/bin:$PATH" \

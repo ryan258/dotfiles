@@ -230,6 +230,16 @@ else
     RECENT_PUSHES="(GitHub signal unavailable)"
 fi
 
+INACTIVE_REPOS=""
+if command -v get_inactive_github_repos >/dev/null 2>&1; then
+    INACTIVE_REPOS=$(get_inactive_github_repos 2>/dev/null || true)
+    if [ -n "$INACTIVE_REPOS" ]; then
+        echo ""
+        echo "⏸️ INACTIVE REPOS (reactivate to track again):"
+        echo "$INACTIVE_REPOS"
+    fi
+fi
+
 # --- YESTERDAY'S COMMITS ---
 echo ""
 echo "🧾 YESTERDAY'S COMMITS:"
