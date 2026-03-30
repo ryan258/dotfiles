@@ -1288,3 +1288,207 @@ coach_build_behavior_digest() {
         done <<< "$quality"
     fi
 }
+
+_coach_context_enabled() {
+    [[ "${AI_COACH_LOCAL_CONTEXT_ENABLED:-true}" != "false" ]]
+}
+
+_coach_context_days() {
+    local value="${AI_COACH_LOCAL_CONTEXT_DAYS:-7}"
+
+    if ! [[ "$value" =~ ^[1-9][0-9]*$ ]]; then
+        value=7
+    fi
+    printf '%s' "$value"
+}
+
+_coach_context_dir_log_limit() {
+    local value="${AI_COACH_LOCAL_CONTEXT_DIR_LOG_MAX_LINES:-120}"
+
+    if ! [[ "$value" =~ ^[1-9][0-9]*$ ]]; then
+        value=120
+    fi
+    printf '%s' "$value"
+}
+
+_coach_context_indent_block() {
+    local body="$1"
+
+    [[ -z "$body" ]] && return 0
+    printf '%s\n' "$body" | sed 's/^/  /'
+}
+
+_coach_context_append_section() {
+    local existing="$1"
+    local heading="$2"
+    local body="$3"
+    local rendered=""
+
+    rendered="${heading}:"
+    if [[ -n "$body" ]]; then
+        rendered="${rendered}"$'\n'"$(_coach_context_indent_block "$body")"
+    else
+        rendered="${rendered}"$'\n'"  - none"
+    fi
+
+    if [[ -n "$existing" ]]; then
+        printf '%s\n\n%s' "$existing" "$rendered"
+    else
+        printf '%s' "$rendered"
+    fi
+}
+
+_coach_context_date_field_lines() {
+    local file_path="$1"
+    local field_index="$2"
+    local window_start="$3"
+    local window_end="$4"
+
+    [[ -f "$file_path" ]] || return 0
+
+    awk -F'|' -v field_index="$field_index" -v start="$window_start" -v end="$window_end" '
+        {
+            day = substr($field_index, 1, 10)
+            if (day >= start && day <= end) {
+                print
+            }
+        }
+    ' "$file_path"
+}
+
+_coach_context_epoch_lines() {
+    local file_path="$1"
+    local window_start_epoch="$2"
+    local window_end_epoch="$3"
+    local line_limit="$4"
+
+    [[ -f "$file_path" ]] || return 0
+
+    awk -F'|' -v start="$window_start_epoch" -v end="$window_end_epoch" '
+        $1 ~ /^[0-9]+$/ && $1 >= start && $1 <= end { print }
+    ' "$file_path" | tail -n "$line_limit"
+}
+
+_coach_context_latest_weekly_review_file() {
+    local review_dir="${WEEKLY_REVIEW_DIR:-$HOME/Documents/Reviews/Weekly}"
+
+    [[ -d "$review_dir" ]] || return 0
+    find "$review_dir" -maxdepth 1 -type f -name '*.md' 2>/dev/null | LC_ALL=C sort | tail -n 1
+}
+
+coach_collect_local_context_bundle() {
+    local flow_type="${1:-general}"
+    local anchor_date="${2:-}"
+    local current_dir="${3:-}"
+    local context_scope="${4:-global}"
+    local days=0
+    local window_start=""
+    local window_start_epoch=0
+    local window_end_epoch=0
+    local dir_log_limit=0
+    local bundle=""
+    local dotfiles_root="${DOTFILES_DIR:-$HOME/dotfiles}"
+    local todo_script="$dotfiles_root/scripts/todo.sh"
+    local calendar_script="$dotfiles_root/scripts/gcal.sh"
+    local dir_script="$dotfiles_root/scripts/g.sh"
+    local blog_script="$dotfiles_root/scripts/blog.sh"
+    local blog_recent_script="$dotfiles_root/scripts/blog_recent_content.sh"
+    local blog_status_dir="${BLOG_STATUS_DIR:-${BLOG_DIR:-}}"
+    local blog_content_root="${BLOG_CONTENT_DIR:-}"
+    local launchpad_file="$DATA_DIR/tomorrow_launchpad"
+    local weekly_review_file=""
+    local journal_entries=""
+    local top_tasks=""
+    local raw_todos=""
+    local schedule_snapshot=""
+    local suggested_dirs=""
+    local blog_status=""
+    local blog_recent=""
+    local launchpad_text=""
+    local weekly_review_text=""
+    local health_lines=""
+    local spoon_lines=""
+    local dir_usage_lines=""
+
+    [[ -n "$flow_type" ]] || flow_type="general"
+    [[ -n "$current_dir" ]] || current_dir="$PWD"
+    [[ -n "$context_scope" ]] || context_scope="global"
+    if ! _coach_context_enabled; then
+        return 0
+    fi
+
+    if [[ -z "$anchor_date" ]]; then
+        anchor_date=$(date_today)
+    fi
+    days=$(_coach_context_days)
+    dir_log_limit=$(_coach_context_dir_log_limit)
+    window_start=$(_coach_shift_date "$anchor_date" "-$((days-1))") || return 1
+    window_start_epoch=$(_coach_date_to_epoch "$window_start 00:00:00")
+    window_end_epoch=$(_coach_date_to_epoch "$anchor_date 23:59:59")
+
+    journal_entries=$(_coach_context_date_field_lines "$JOURNAL_FILE" 1 "$window_start" "$anchor_date")
+    bundle=$(_coach_context_append_section "$bundle" "Raw journal entries (last ${days} days)" "$journal_entries")
+
+    if [[ -x "$todo_script" ]]; then
+        top_tasks=$("$todo_script" top 3 2>/dev/null || true)
+    fi
+    bundle=$(_coach_context_append_section "$bundle" "Top task descriptions" "$top_tasks")
+
+    raw_todos=$(_coach_context_date_field_lines "$TODO_FILE" 2 "$window_start" "$anchor_date")
+    bundle=$(_coach_context_append_section "$bundle" "Raw open todo lines (last ${days} days)" "$raw_todos")
+
+    if [[ -x "$calendar_script" ]]; then
+        schedule_snapshot=$("$calendar_script" agenda 1 2>/dev/null || true)
+    fi
+    bundle=$(_coach_context_append_section "$bundle" "Calendar or schedule output" "$schedule_snapshot")
+
+    if [[ -f "$dir_script" ]]; then
+        suggested_dirs=$("$dir_script" suggest 2>/dev/null | awk '
+            {
+                sub(/^[0-9.]+[[:space:]]+/, "", $0)
+                if ($0 ~ /^\//) {
+                    print $0
+                }
+            }
+        ' | head -n 5 || true)
+    fi
+    bundle=$(_coach_context_append_section "$bundle" "Suggested directories" "$suggested_dirs")
+
+    if [[ -z "$blog_content_root" && -n "$blog_status_dir" ]]; then
+        blog_content_root="$blog_status_dir/content"
+    fi
+    if [[ -x "$blog_script" && -n "$blog_status_dir" && -d "$blog_status_dir" ]]; then
+        blog_status=$(BLOG_DIR="$blog_status_dir" "$blog_script" status 2>/dev/null || true)
+    fi
+    bundle=$(_coach_context_append_section "$bundle" "Blog status" "$blog_status")
+
+    if [[ -x "$blog_recent_script" && -n "$blog_content_root" && -d "$blog_content_root" ]]; then
+        blog_recent=$(BLOG_CONTENT_DIR="$blog_content_root" "$blog_recent_script" 3 2>/dev/null || true)
+    fi
+    bundle=$(_coach_context_append_section "$bundle" "Latest blog content" "$blog_recent")
+
+    if [[ -f "$launchpad_file" ]]; then
+        launchpad_text=$(cat "$launchpad_file" 2>/dev/null || true)
+    fi
+    bundle=$(_coach_context_append_section "$bundle" "Yesterday's prep or launchpad text" "$launchpad_text")
+
+    weekly_review_file=$(_coach_context_latest_weekly_review_file)
+    if [[ -n "$weekly_review_file" && -f "$weekly_review_file" ]]; then
+        weekly_review_text="File: $weekly_review_file"$'\n'"$(cat "$weekly_review_file" 2>/dev/null || true)"
+    fi
+    bundle=$(_coach_context_append_section "$bundle" "Weekly review text" "$weekly_review_text")
+
+    health_lines=$(_coach_context_date_field_lines "$HEALTH_FILE" 2 "$window_start" "$anchor_date")
+    bundle=$(_coach_context_append_section "$bundle" "Raw health log lines (last ${days} days)" "$health_lines")
+
+    spoon_lines=$(_coach_context_date_field_lines "$SPOON_LOG" 2 "$window_start" "$anchor_date")
+    bundle=$(_coach_context_append_section "$bundle" "Raw spoon log lines (last ${days} days)" "$spoon_lines")
+
+    dir_usage_lines=$(_coach_context_epoch_lines "$DIR_USAGE_LOG" "$window_start_epoch" "$window_end_epoch" "$dir_log_limit")
+    bundle=$(_coach_context_append_section "$bundle" "Raw directory log lines (last ${days} days)" "$dir_usage_lines")
+
+    bundle=$(_coach_context_append_section "$bundle" "Context scope" "${context_scope}")
+    bundle=$(_coach_context_append_section "$bundle" "Current directory" "${current_dir}")
+
+    printf '%s' "$bundle"
+}

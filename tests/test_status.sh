@@ -258,6 +258,8 @@ EOF
     [[ "$prompt" == *"Current project context:"* ]]
     [[ "$prompt" == *"Today's commits:"* ]]
     [[ "$prompt" == *"Recent GitHub pushes (last 7 days):"* ]]
+    [[ "$prompt" == *"Additional local context bundle:"* ]]
+    [[ "$prompt" == *"Raw health log lines (last 7 days):"* ]]
     [[ "$prompt" == *"Wearable guidance:"* ]]
 }
 

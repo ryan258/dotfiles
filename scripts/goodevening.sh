@@ -540,6 +540,7 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     COACH_PATTERN_METRICS=""
     COACH_DATA_QUALITY_FLAGS=""
     COACH_BEHAVIOR_DIGEST="(behavior digest unavailable)"
+    COACH_LOCAL_CONTEXT_BUNDLE=""
     COACH_PREBRIEF_CONTEXT=""
     COACH_TEMPERATURE="${AI_BRIEFING_TEMPERATURE:-0.25}"
 
@@ -565,6 +566,9 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     if command -v coaching_build_behavior_digest >/dev/null 2>&1; then
         COACH_BEHAVIOR_DIGEST=$(coaching_build_behavior_digest "$TODAY" "$COACH_TACTICAL_DAYS" "$COACH_PATTERN_DAYS" "${RECENT_PUSHES:-}" "${TODAY_COMMITS:-}" 2>/dev/null || echo "(behavior digest unavailable)")
     fi
+    if command -v coaching_collect_local_context_bundle >/dev/null 2>&1; then
+        COACH_LOCAL_CONTEXT_BUNDLE=$(coaching_collect_local_context_bundle "goodevening" "$TODAY" "$PWD" "global" 2>/dev/null || true)
+    fi
 
     # Build the AI's instruction letter for the evening reflection.
     if command -v coaching_build_goodevening_prompt >/dev/null 2>&1; then
@@ -584,6 +588,9 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     _ge_git_combined=$(printf '%s\n%s\n' "${TODAY_COMMITS:-}" "${RECENT_PUSHES:-}")
     if command -v coaching_collect_prebrief_context >/dev/null 2>&1; then
         COACH_PREBRIEF_CONTEXT=$(coaching_collect_prebrief_context "goodevening" "${FOCUS_CONTEXT:-}" "${COACH_MODE:-LOCKED}" "$_ge_git_combined" "${COACH_BEHAVIOR_DIGEST:-}" "$PWD" "" "global" || true)
+    fi
+    if [[ -n "${COACH_LOCAL_CONTEXT_BUNDLE:-}" ]]; then
+        REFLECTION_PROMPT="${REFLECTION_PROMPT}"$'\n\n'"Additional local context bundle:"$'\n'"${COACH_LOCAL_CONTEXT_BUNDLE}"
     fi
     if [[ -n "${COACH_PREBRIEF_CONTEXT:-}" ]]; then
         REFLECTION_PROMPT="${REFLECTION_PROMPT}"$'\n\n'"Pre-brief clarifications:"$'\n'"${COACH_PREBRIEF_CONTEXT}"

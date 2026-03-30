@@ -17,10 +17,12 @@
 - `scripts/lib/coach_prompts.sh` now steers `startday`, `status`, and `goodevening` toward a gentler wins-first tone, caps GitHub blindspot sections at 5 grounded items, and rewrites those items to point at obvious next actions instead of vague repo commentary.
 - `scripts/lib/coach_prompts.sh` now supports an interactive pre-brief clarification pass for `startday`, `status`, and `goodevening`, with up to 3 numbered `A/B/C/D/E` questions that can be answered in one line like `1B 2A 3E (custom note)` before the AI call.
 - The same pre-brief flow now sends visible question text over stderr instead of stdout, avoids the Bash 3 piped-`while` subshell trap in its answer parser, and gives up after a few invalid attempts instead of retrying forever.
+- The daily coach prompts now include an Additional local context bundle by default, feeding the AI bounded raw local context from the last 7 days: journal lines, open todos/top tasks, calendar output, suggested directories, blog snapshots, launchpad text, the latest weekly review, and raw `health.txt`, `spoons.txt`, and `dir_usage.log` slices.
+- The local-context bundle now reads weekly reviews from configurable `WEEKLY_REVIEW_DIR` and suppresses stderr noise from calendar and blog helpers so auth warnings do not leak into AI prompt context.
 - `scripts/lib/coaching.sh` now always post-processes blindspot sections from both AI and fallback output, stripping raw metric/debug noise like `dir_usage_malformed` or `focus_git_status=...` and backfilling repo-grounded actions when needed.
 - `scripts/lib/coach_chat.sh` now tells the follow-up coach chat to prefer short `A/B/C/D/E` clarification questions with `E` as a custom answer when a prompt needs cleanup.
 - Added focused BATS coverage for commit-activity cache fallback and GraphQL error handling.
-- Added and updated BATS coverage for the new coach prompt contract, blindspot cleanup, the capped 5-item startday/status/goodevening sections, and the one-line pre-brief answer flow.
+- Added and updated BATS coverage for the new coach prompt contract, blindspot cleanup, the capped 5-item startday/status/goodevening sections, the one-line pre-brief answer flow, and the new local-context bundle.
 
 ## Version 2.2.55 (March 28, 2026) - Daily Health Check First
 

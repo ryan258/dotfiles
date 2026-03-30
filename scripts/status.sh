@@ -267,6 +267,7 @@ if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
     # Mid-day coaching is simpler than morning/evening:
     # gather the digest, build a short prompt, ask for one recentering brief.
     _status_behavior_digest="(behavior digest unavailable)"
+    _status_local_context_bundle=""
     _status_prebrief_context=""
     _status_prompt=""
     _status_briefing=""
@@ -280,6 +281,9 @@ if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
     # This is where fresh Fitbit data gets folded into the AI context.
     if command -v coaching_build_behavior_digest >/dev/null 2>&1; then
         _status_behavior_digest=$(coaching_build_behavior_digest "$_status_today" "${AI_COACH_TACTICAL_DAYS:-7}" "${AI_COACH_PATTERN_DAYS:-30}" "${STATUS_COACH_RECENT_PUSHES:-}" "${STATUS_COACH_TODAY_COMMITS:-}" 2>/dev/null || echo "(behavior digest unavailable)")
+    fi
+    if command -v coaching_collect_local_context_bundle >/dev/null 2>&1; then
+        _status_local_context_bundle=$(coaching_collect_local_context_bundle "status" "$_status_today" "$CURRENT_DIR" "${_status_context_scope:-global}" 2>/dev/null || true)
     fi
     if command -v coaching_collect_prebrief_context >/dev/null 2>&1; then
         _status_prebrief_context=$(coaching_collect_prebrief_context "status" "${_status_focus_text:-}" "${_status_mode:-LOCKED}" "$_status_combined_git" "${_status_behavior_digest:-}" "$CURRENT_DIR" "${_status_project_context:-}" "${_status_context_scope:-global}" || true)
@@ -298,6 +302,9 @@ if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
             "${_status_context_scope:-global}")
     else
         _status_prompt="Produce a concise mid-day GitHub-first coaching brief grounded in today's focus and current GitHub activity."
+    fi
+    if [[ -n "${_status_local_context_bundle:-}" ]]; then
+        _status_prompt="${_status_prompt}"$'\n\n'"Additional local context bundle:"$'\n'"${_status_local_context_bundle}"
     fi
     if [[ -n "${_status_prebrief_context:-}" ]]; then
         _status_prompt="${_status_prompt}"$'\n\n'"Pre-brief clarifications:"$'\n'"${_status_prebrief_context}"

@@ -269,6 +269,8 @@ PY
     [[ "$prompt" == *"Coach mode used today:"* ]]
     [[ "$prompt" == *"Behavior digest:"* ]]
     [[ "$prompt" == *"Wearable guidance:"* ]]
+    [[ "$prompt" == *"Additional local context bundle:"* ]]
+    [[ "$prompt" == *"Raw journal entries (last 7 days):"* ]]
     [[ "$prompt" == *"Blindspots to sleep on (1-5):"* ]]
     [[ "$prompt" == *"Tomorrow lock:"* ]]
     [[ "$prompt" == *"Health lens:"* ]]

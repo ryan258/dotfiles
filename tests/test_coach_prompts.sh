@@ -66,7 +66,8 @@ teardown() {
     [[ "$output" == *"surface 3-5 blindspots, side-quests, or enhancement opportunities"* ]]
     [[ "$output" == *"Prefer 3-5 blindspots. Never exceed 5."* ]]
     [[ "$output" == *"one short A-E multiple-choice question"* ]]
-    [[ "$output" == *"Keep journals and todos out of coaching"* ]]
+    [[ "$output" == *"Additional local context bundle"* ]]
+    [[ "$output" == *"secondary evidence for specificity and planning context"* ]]
     [[ "$output" == *"do not invent one. Step 1 should capture or choose the next concrete move"* ]]
     [[ "$output" == *"Do not mention journal evidence, journal momentum, todo completion"* ]]
 }
@@ -113,7 +114,8 @@ teardown() {
     [[ "$output" == *"Tomorrow lock:"* ]]
     [[ "$output" == *"Health lens:"* ]]
     [[ "$output" == *"declared focus and non-fork GitHub activity"* ]]
-    [[ "$output" == *"Keep journals and todos out of the coaching verdict"* ]]
+    [[ "$output" == *"Additional local context bundle"* ]]
+    [[ "$output" == *"secondary evidence for specificity and recall"* ]]
     [[ "$output" == *"Prefer 3-5 blindspots. Never exceed 5."* ]]
     [[ "$output" == *"one short A-E multiple-choice question"* ]]
 }
@@ -149,6 +151,8 @@ teardown() {
     [[ "$output" == *"Bias toward one immediate action"* ]]
     [[ "$output" == *"midpoint reset"* ]]
     [[ "$output" == *"one short A-E multiple-choice question"* ]]
+    [[ "$output" == *"Additional local context bundle"* ]]
+    [[ "$output" == *"secondary evidence for specificity and fast recentering"* ]]
 }
 
 @test "coach_build_prebrief_questions caps prompts at three questions" {
@@ -176,6 +180,53 @@ teardown() {
     [[ "$output" == *"- Lane: Current repo lane. Let recent repo or GitHub momentum lead the advice."* ]]
     [[ "$output" == *"- Priority: Concrete next move. Bias the briefing toward one clear first step."* ]]
     [[ "$output" == *"- Pacing: custom - keep it quiet"* ]]
+}
+
+@test "coach_collect_local_context_bundle includes raw local slices" {
+    local now_epoch
+    now_epoch="$(date +%s)"
+    cat > "$DATA_DIR/journal.txt" <<EOF
+$DAY_MINUS1 08:00:00|Journal line
+EOF
+    cat > "$DATA_DIR/todo.txt" <<EOF
+1|$DAY_MINUS1|Ship the logo
+EOF
+    cat > "$DATA_DIR/health.txt" <<EOF
+ENERGY|$DAY_MINUS1 09:00|6
+EOF
+    cat > "$DATA_DIR/spoons.txt" <<EOF
+BUDGET|$DAY_MINUS1|10
+EOF
+    cat > "$DATA_DIR/dir_usage.log" <<EOF
+$now_epoch|/Users/ryanjohnson/dotfiles
+EOF
+    cat > "$DATA_DIR/tomorrow_launchpad" <<'EOF'
+Tomorrow lock:
+- First move: Ship the logo.
+EOF
+    mkdir -p "$HOME/Documents/Reviews/Weekly"
+    cat > "$HOME/Documents/Reviews/Weekly/2026-W13.md" <<'EOF'
+# Weekly Review
+One good thing.
+EOF
+
+    run bash -c "$SOURCE_PREFIX; coach_collect_local_context_bundle 'startday' '$DAY_MINUS1' '/tmp/project' 'global'"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Raw journal entries (last 7 days):"* ]]
+    [[ "$output" == *"Journal line"* ]]
+    [[ "$output" == *"Raw open todo lines (last 7 days):"* ]]
+    [[ "$output" == *"Ship the logo"* ]]
+    [[ "$output" == *"Raw health log lines (last 7 days):"* ]]
+    [[ "$output" == *"ENERGY|$DAY_MINUS1 09:00|6"* ]]
+    [[ "$output" == *"Raw spoon log lines (last 7 days):"* ]]
+    [[ "$output" == *"BUDGET|$DAY_MINUS1|10"* ]]
+    [[ "$output" == *"Raw directory log lines (last 7 days):"* ]]
+    [[ "$output" == *"/Users/ryanjohnson/dotfiles"* ]]
+    [[ "$output" == *"Yesterday's prep or launchpad text:"* ]]
+    [[ "$output" == *"Tomorrow lock:"* ]]
+    [[ "$output" == *"Weekly review text:"* ]]
+    [[ "$output" == *"# Weekly Review"* ]]
 }
 
 # ─── coach_startday_fallback_output ───────────────────────────────────────

@@ -477,7 +477,8 @@ Tone and structure rules:
 Use the provided behavior digest as ground truth for what is working. DO NOT shame "drift"—treat deviation as natural exploration of what they are drawn to.
 Treat the declared focus and non-fork GitHub activity as the primary signal for the spear, but firmly accept that working on other projects is valid.
 Treat GitHub projects and recent commit activity as a map of their interests. Do NOT frame other repos as "neglected" or treat them as chores that "need attention."
-Keep journals and todos out of coaching; they remain local notes, not planning input.
+If an Additional local context bundle is provided after this prompt, you may use it as secondary evidence for specificity and planning context.
+Treat focus text and non-fork GitHub activity as the primary lane signal; use the local context bundle to sharpen the advice, not to override clearer Git/focus evidence.
 This morning briefing should feel like a gentle check-in first, then a plan.
 
 Today's focus:
@@ -528,7 +529,8 @@ Mode check:
 Action-source rules:
 - Use Today's focus as the PRIMARY source for Do Next actions.
 - Use yesterday commits and recent pushes to infer likely repo continuity, blindspots, and adjacent enhancement opportunities, but do not invent new work from them.
-- Do not use journals or todos for action selection or momentum claims.
+- Use the Additional local context bundle, when provided, as secondary evidence for schedule awareness, task specificity, launchpad continuity, health context, and raw note recall.
+- Do not let local notes overrule clearer focus/Git evidence.
 - Use recent repo names and commit-message patterns to surface 3-5 blindspots, side-quests, or enhancement opportunities. Frame these purely as optional explorations they might enjoy, NOT as overdue chores.
 
 Output format (strict, no extra sections):
@@ -613,7 +615,8 @@ Tone and structure rules:
 Always include health/energy context.
 Judge the day primarily against the declared focus and non-fork GitHub activity, but accept changing paths as valid.
 If today's commits show a long unbroken stretch in one repo (4+ hours of commits without switching), flag it as a hyperfocus session and ask whether the user remembered to eat, hydrate, move, and check body signals (numbness, vision, heat). Hyperfocus with MS burns spoons invisibly.
-Keep journals and todos out of the coaching verdict; they remain local notes for later querying.
+If an Additional local context bundle is provided after this prompt, you may use it as secondary evidence for specificity and recall.
+Treat focus text and non-fork GitHub activity as the primary lane signal; use the local context bundle to sharpen the reflection, not to override clearer Git/focus evidence.
 This evening reflection should feel like: celebrate wins, debrief what happened, set up tomorrow lightly, and help the body wind down.
 
 Coach mode used today:
@@ -694,7 +697,7 @@ Constraints:
 - No markdown headers, bold text, separators, or concluding paragraph.
 - If data is sparse, say so briefly instead of inventing details.
 - Make the main verdict about whether the spear moved, stalled, or diffused based on focus plus GitHub activity.
-- Do not use completed tasks or journal notes as explanation.
+- You may use the Additional local context bundle for nuance, but do not let it overrule clearer focus/Git evidence.
 - Do not claim the user worked on "Recent GitHub pushes" today. Only "Today's commits" and "Today's focus" count as today's context.
 - Prefer commit/repo evidence over local notes when they conflict.
 - Prefer 3-5 blindspots. Never exceed ${blindspot_limit}.
@@ -729,7 +732,8 @@ Tone and structure rules:
 - If the evidence is ambiguous, say so and ask before assuming.
 Use declared focus and non-fork GitHub activity as the primary signal for whether the spear is moving, while accepting that natural deviation is valid.
 Treat GitHub projects and recent commit/push activity as a map of their interests. Do not frame other repos as chores that "need attention."
-Keep journals and todos out of coaching; they remain local notes for later querying.
+If an Additional local context bundle is provided after this prompt, you may use it as secondary evidence for specificity and fast recentering.
+Treat focus text and non-fork GitHub activity as the primary lane signal; use the local context bundle to sharpen the next move, not to override clearer Git/focus evidence.
 Bias toward one immediate action that can be started right now.
 This status briefing should feel like a midpoint reset: energy/focus check, quick accountability, conversational recenter, and one clear next move.
 If today's commits show sustained single-repo activity over many hours, add a body-check nudge: "You've been deep in [repo] — check in with your body (numbness, vision, heat, hunger, hydration)." Hyperfocus with MS can silently burn spoons.
@@ -810,7 +814,7 @@ Constraints:
 - Keep language operational and immediate; avoid reflection-heavy tone.
 - If signal is missing, say so briefly instead of inventing details.
 - Do Next must be grounded in today's focus, today's commits, recent pushes, and current project context when present.
-- Do not use journal notes, todo items, completed tasks, or vague productivity language as evidence.
+- You may use the Additional local context bundle for specificity, but do not let it overrule clearer focus/Git evidence.
 - Do not claim the user worked on "Recent GitHub pushes" today. Only "Today's commits" and "Today's focus" count as today's context.
 - Do not invent new repositories, modules, pages, endpoints, or publish states unless those exact items appear in the provided GitHub activity or focus text.
 - If Context scope is repo-local, keep repo commentary, blindspots, and actions inside Current project context; do not widen back out to other repos.

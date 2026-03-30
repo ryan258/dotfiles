@@ -239,6 +239,8 @@ EOF
     [[ "$prompt" == *"Coach mode for today:"* ]]
     [[ "$prompt" == *"Behavior digest:"* ]]
     [[ "$prompt" == *"Wearable guidance:"* ]]
+    [[ "$prompt" == *"Additional local context bundle:"* ]]
+    [[ "$prompt" == *"Raw journal entries (last 7 days):"* ]]
     [[ "$prompt" == *"Health lens:"* ]]
     [[ "$prompt" == *"Scope anchor:"* ]]
     [[ "$args" == *"--temperature"* ]]
