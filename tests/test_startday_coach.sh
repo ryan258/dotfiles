@@ -155,6 +155,45 @@ EOF
     grep -q "^FOG|$today 08:15|2\$" "$DATA_DIR/health.txt"
 }
 
+@test "startday collects one-line pre-brief answers before building the coach prompt" {
+    local runner="$TEST_ROOT/run_startday_prebrief_with_tty.sh"
+
+    cat > "$runner" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+export HOME="$HOME"
+export DATA_DIR="$DATA_DIR"
+export DOTFILES_DIR="$DOTFILES_DIR"
+export PATH="$DOTFILES_DIR/bin:$PATH"
+export AI_BRIEFING_ENABLED=true
+export AI_COACH_CHAT_ENABLED=false
+export AI_COACH_PREBRIEF_ALWAYS_ASK=true
+export AI_COACH_PREBRIEF_MAX_QUESTIONS=3
+/usr/bin/expect <<'EXPECT'
+set timeout 20
+spawn bash $env(DOTFILES_DIR)/scripts/startday.sh refresh
+expect -re {Update focus\? \[y/N\]: $}
+send -- "n\r"
+expect -re {PRE-BRIEF CHECK:}
+expect -re {Pre-brief answers \[Enter to skip\]: $}
+send -- "1B 2A 3E (keep it quiet)\r"
+expect eof
+EXPECT
+EOF
+    chmod +x "$runner"
+
+    run bash "$runner"
+
+    [ "$status" -eq 0 ]
+    [ -f "$DATA_DIR/strategy_prompt_startday.txt" ]
+    prompt="$(cat "$DATA_DIR/strategy_prompt_startday.txt")"
+    [[ "$prompt" == *"Pre-brief clarifications:"* ]]
+    [[ "$prompt" == *"- Lane: Current repo lane. Let recent repo or GitHub momentum lead the advice."* ]]
+    [[ "$prompt" == *"- Priority: Concrete next move. Bias the briefing toward one clear first step."* ]]
+    [[ "$prompt" == *"- Pacing: custom - keep it quiet"* ]]
+    [[ "$prompt" != *"PRE-BRIEF CHECK:"* ]]
+}
+
 @test "startday preserves suggested directory paths that contain spaces" {
     cat > "$DOTFILES_DIR/scripts/g.sh" <<'EOF'
 #!/usr/bin/env bash
@@ -308,7 +347,7 @@ EOF
     [[ "$output" != *"Deterministic fallback (timeout)"* ]]
 }
 
-@test "startday preserves raw AI blindspots when the dispatcher returns output" {
+@test "startday filters noisy AI blindspots when the dispatcher returns output" {
     cat > "$DOTFILES_DIR/bin/dhp-strategy.sh" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -349,8 +388,9 @@ EOF
         bash -c "$DOTFILES_DIR/scripts/startday.sh refresh < /dev/null"
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"GitHub blindspots/opportunities (1-10):"* ]]
-    [[ "$output" == *"dir_usage_malformed=162 means the system is untrustworthy."* ]]
-    [[ "$output" == *"focus_git_status=diffuse proves the spear is broken."* ]]
-    [[ "$output" == *"commit_context is missing so there is nothing to learn."* ]]
+    [[ "$output" == *"GitHub blindspots/opportunities (1-5):"* ]]
+    [[ "$output" != *"dir_usage_malformed=162 means the system is untrustworthy."* ]]
+    [[ "$output" != *"focus_git_status=diffuse proves the spear is broken."* ]]
+    [[ "$output" != *"commit_context is missing so there is nothing to learn."* ]]
+    [[ "$output" == *"1. Keep the repo lane visible to future you."* ]]
 }

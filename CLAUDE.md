@@ -328,6 +328,16 @@ dhp_dispatch \
 - When both latest manual energy/fog readings and trailing averages are present in the behavior digest, coach prompts should treat the latest values as current state and the averages as recent trend.
 - When `scripts/status.sh` is interactive and the AI coach is enabled, it should offer manual energy/fog logging before building the coach digest so that same-run entries affect the briefing immediately.
 
+## Coach Briefing Contract
+
+- `startday`, `status`, and `goodevening` should all use a gentle-partner tone by default and keep outputs high-signal and low-noise.
+- Coach outputs should open with what is working unless there is a real risk. Real risk means a clear health/body risk, a same-day blocker, `latest_energy <= 1`, or `latest_fog >= 8`.
+- `startday` should feel like a gentle check-in first, then a plan. `status` should feel like a midpoint reset with one immediate next move. `goodevening` should celebrate wins first, then debrief and set up tomorrow lightly.
+- In interactive runs, `startday`, `status`, and `goodevening` may ask up to 3 pre-brief clarification questions before calling the AI. Those questions should be answerable in one line using numbered `A/B/C/D/E` choices like `1B 2A 3E`, with `E` reserved for a custom note.
+- GitHub blindspot/opportunity sections should be capped at 5 items. Each item must be concrete, point to an obvious next action, and use real repo names when the evidence supports it.
+- Blindspot sections may be post-processed after AI generation to remove raw metric/debug noise such as `dir_usage_malformed`, `commit_context`, or raw `focus_git_status=...` values, then backfill grounded repo-specific actions.
+- `scripts/lib/coach_chat.sh` should prefer short `A/B/C/D/E` clarifying questions with `E` as a custom answer when a follow-up question would materially improve the coaching.
+
 ### Specialized Standalone Agents
 
 - Not every AI entrypoint needs to be a `dhp-*` dispatcher.

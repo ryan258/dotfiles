@@ -1,6 +1,26 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** March 28, 2026
+**Last Updated:** March 30, 2026
+
+## Version 2.2.56 (March 30, 2026) - Resilient GitHub Commit Recaps
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- `scripts/github_helper.sh list_commits_for_date` now caches successful GitHub GraphQL commit-activity responses and reuses that cache on transient refresh failures, so `startday`, `status`, and `goodevening` keep showing commit recaps when GitHub briefly flakes.
+- The same helper now treats GraphQL error payloads as real failures instead of silently collapsing them into an empty commit list.
+- `scripts/lib/github_ops.sh` now treats an empty successful commit query as a real "no commits" result instead of surfacing it as a GitHub fetch failure in the daily routines.
+- `scripts/lib/health_ops.sh` now renders Fitbit sleep snapshots in hours/minutes form for daily summaries and coach context, so values like `562m` display as `9h 22m`.
+- `scripts/lib/coach_metrics.sh` now only flags `afternoon_slump` after repeated low-energy dips in the actual mid-afternoon window (2pm-6pm), so late-evening lows no longer get mislabeled as an afternoon pattern.
+- `scripts/lib/coach_metrics.sh` now restores traps without requiring `common.sh`, so the coach metrics helpers and tests no longer fail in stripped-down sourcing contexts.
+- `scripts/lib/coach_prompts.sh` now steers `startday`, `status`, and `goodevening` toward a gentler wins-first tone, caps GitHub blindspot sections at 5 grounded items, and rewrites those items to point at obvious next actions instead of vague repo commentary.
+- `scripts/lib/coach_prompts.sh` now supports an interactive pre-brief clarification pass for `startday`, `status`, and `goodevening`, with up to 3 numbered `A/B/C/D/E` questions that can be answered in one line like `1B 2A 3E (custom note)` before the AI call.
+- The same pre-brief flow now sends visible question text over stderr instead of stdout, avoids the Bash 3 piped-`while` subshell trap in its answer parser, and gives up after a few invalid attempts instead of retrying forever.
+- `scripts/lib/coaching.sh` now always post-processes blindspot sections from both AI and fallback output, stripping raw metric/debug noise like `dir_usage_malformed` or `focus_git_status=...` and backfilling repo-grounded actions when needed.
+- `scripts/lib/coach_chat.sh` now tells the follow-up coach chat to prefer short `A/B/C/D/E` clarification questions with `E` as a custom answer when a prompt needs cleanup.
+- Added focused BATS coverage for commit-activity cache fallback and GraphQL error handling.
+- Added and updated BATS coverage for the new coach prompt contract, blindspot cleanup, the capped 5-item startday/status/goodevening sections, and the one-line pre-brief answer flow.
 
 ## Version 2.2.55 (March 28, 2026) - Daily Health Check First
 

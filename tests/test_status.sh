@@ -64,17 +64,12 @@ cat > "$DATA_DIR/status_coach_prompt.txt"
 cat <<'OUT'
 Briefing Summary:
 - Mid-day repo signal is clear.
-GitHub blindspots/opportunities (1-10):
+GitHub blindspots/opportunities (1-5):
 1. Repo dotfiles likely wants one visible polish pass before new feature work.
 2. Repo dotfiles could use one short demo or README example tied to the latest change.
 3. Repo dotfiles may have one setup friction point worth removing before adding more features.
 4. Repo dotfiles is a candidate for a changelog note tied to the current lane.
 5. Repo dotfiles likely has one reusable helper worth extracting.
-6. Repo dotfiles may need one stability pass before the next feature wave.
-7. Repo dotfiles can likely yield one write-up or artifact angle from today's work.
-8. Repo dotfiles probably wants a clearer finish line for the next block.
-9. Repo dotfiles may hide one tiny cleanup that would make the latest change more legible.
-10. Repo dotfiles likely benefits from one screenshot, example, or walkthrough.
 North Star:
 - Keep the next block inside the logo work in dotfiles.
 Do Next (ordered 1-3):
@@ -297,6 +292,7 @@ export DOTFILES_DIR="$DOTFILES_DIR"
 export PROJECTS_DIR="$PROJECTS_DIR"
 export PATH="$DOTFILES_DIR/bin:\$PATH"
 export AI_COACH_CHAT_ENABLED=false
+export AI_COACH_PREBRIEF_ENABLED=false
 export TEST_HEALTH_TIMESTAMP="${TODAY} 13:02"
 /usr/bin/expect <<'EXPECT'
 set timeout 20
@@ -318,6 +314,49 @@ EOF
     [ -f "$DATA_DIR/status_coach_prompt.txt" ]
     prompt="$(cat "$DATA_DIR/status_coach_prompt.txt")"
     [[ "$prompt" == *"latest_energy=7 (${TODAY} 13:02), latest_fog=3 (${TODAY} 13:02)"* ]]
+}
+
+@test "status.sh --coach collects one-line pre-brief answers before building the prompt" {
+    local runner="$TEST_ROOT/run_status_prebrief_with_tty.sh"
+
+    echo "logo" > "$DATA_DIR/daily_focus.txt"
+    cat > "$DATA_DIR/github_commits.txt" <<'EOF'
+dotfiles|abc1234|ship logo
+EOF
+
+    cat > "$runner" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+export HOME="$HOME"
+export DATA_DIR="$DATA_DIR"
+export DOTFILES_DIR="$DOTFILES_DIR"
+export PROJECTS_DIR="$PROJECTS_DIR"
+export PATH="$DOTFILES_DIR/bin:$PATH"
+export GITHUB_COMMITS_FIXTURE="$DATA_DIR/github_commits.txt"
+export AI_COACH_CHAT_ENABLED=false
+export AI_COACH_PREBRIEF_ALWAYS_ASK=true
+export AI_COACH_PREBRIEF_MAX_QUESTIONS=3
+/usr/bin/expect <<'EXPECT'
+set timeout 20
+spawn bash $env(DOTFILES_DIR)/scripts/status.sh --coach
+expect -re {PRE-BRIEF CHECK:}
+expect -re {Pre-brief answers \[Enter to skip\]: $}
+send -- "1B 2A 3E (keep it quiet)\r"
+expect eof
+EXPECT
+EOF
+    chmod +x "$runner"
+
+    run bash "$runner"
+
+    [ "$status" -eq 0 ]
+    [ -f "$DATA_DIR/status_coach_prompt.txt" ]
+    prompt="$(cat "$DATA_DIR/status_coach_prompt.txt")"
+    [[ "$prompt" == *"Pre-brief clarifications:"* ]]
+    [[ "$prompt" == *"- Lane: Current repo lane. Let recent repo or GitHub momentum lead the advice."* ]]
+    [[ "$prompt" == *"- Priority: Concrete next move. Bias the briefing toward one clear first step."* ]]
+    [[ "$prompt" == *"- Pacing: custom - keep it quiet"* ]]
+    [[ "$prompt" != *"PRE-BRIEF CHECK:"* ]]
 }
 
 @test "status.sh auto-syncs Fitbit data before rendering when auth exists" {
@@ -464,7 +503,7 @@ STUB
     [[ "$output" == *"Switch to ai-ethics-comparator and inspect the PDF module."* ]]
 }
 
-@test "status.sh --coach preserves raw blindspots when the dispatcher returns output" {
+@test "status.sh --coach filters noisy blindspots when the dispatcher returns output" {
     echo "logo" > "$DATA_DIR/daily_focus.txt"
     cat > "$DOTFILES_DIR/bin/dhp-coach.sh" <<'STUB'
 #!/usr/bin/env bash
@@ -507,10 +546,11 @@ EOF
         bash "$DOTFILES_DIR/scripts/status.sh" --coach < /dev/null
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"GitHub blindspots/opportunities (1-10):"* ]]
-    [[ "$output" == *"dir_usage_malformed=162 means the system is unstable."* ]]
-    [[ "$output" == *"focus_git_status=diffuse proves the spear is broken."* ]]
-    [[ "$output" == *"commit context (0) means we cannot verify local work."* ]]
+    [[ "$output" == *"GitHub blindspots/opportunities (1-5):"* ]]
+    [[ "$output" != *"dir_usage_malformed=162 means the system is unstable."* ]]
+    [[ "$output" != *"focus_git_status=diffuse proves the spear is broken."* ]]
+    [[ "$output" != *"commit context (0) means we cannot verify local work."* ]]
+    [[ "$output" == *"1. Repo dotfiles likely wants one visible polish pass before new feature work."* ]]
 }
 
 @test "status.sh --coach uses deterministic fallback when no dispatcher is available" {

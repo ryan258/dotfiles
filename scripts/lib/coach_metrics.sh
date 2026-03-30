@@ -183,8 +183,23 @@ PY
     printf '%s' "$tmp_path"
 }
 
-# _coach_restore_trap: delegates to common.sh restore_trap
-_coach_restore_trap() { restore_trap "$@"; }
+# _coach_restore_trap: delegates to common.sh restore_trap when available.
+# Fall back to direct trap restoration so metrics tests do not require common.sh.
+_coach_restore_trap() {
+    local signal="$1"
+    local saved_trap="${2:-}"
+
+    if command -v restore_trap >/dev/null 2>&1; then
+        restore_trap "$signal" "$saved_trap"
+        return $?
+    fi
+
+    if [[ -n "$saved_trap" ]]; then
+        trap -- "$saved_trap" "$signal"
+    else
+        trap - "$signal"
+    fi
+}
 
 coach_collect_tactical_metrics() {
     local anchor_date="$1"
@@ -265,18 +280,21 @@ coach_collect_tactical_metrics() {
     fi
 
     if [[ -f "$health_file" ]]; then
-        read -r energy_sum energy_count afternoon_slumps <<< "$(awk -F'|' -v start="$window_start" -v end="$anchor_date" -v threshold="${COACH_LOW_ENERGY_THRESHOLD:-4}" '
+        read -r energy_sum energy_count afternoon_slump_days <<< "$(awk -F'|' -v start="$window_start" -v end="$anchor_date" -v threshold="${COACH_LOW_ENERGY_THRESHOLD:-4}" '
             $1 == "ENERGY" && $2 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}/ && $3 ~ /^[0-9]+$/ {
                 day = substr($2, 1, 10)
                 if (day >= start && day <= end) {
                     sum += $3; count++
                     if (length($2) >= 13) {
                         hour = substr($2, 12, 2) + 0
-                        if (hour >= 14 && $3 <= threshold) slumps++
+                        if (hour >= 14 && hour < 18 && $3 <= threshold) slump_days[day] = 1
                     }
                 }
             }
-            END {print sum+0, count+0, slumps+0}
+            END {
+                for (day in slump_days) slumps++
+                print sum+0, count+0, slumps+0
+            }
         ' "$health_file")"
 
         read -r fog_sum fog_count <<< "$(awk -F'|' -v start="$window_start" -v end="$anchor_date" '
@@ -361,7 +379,7 @@ coach_collect_tactical_metrics() {
     echo "latest_energy_at=${latest_energy_at:-N/A}"
     echo "avg_energy=$(_coach_average "$energy_sum" "$energy_count")"
     local slump_bool="false"
-    if [[ "${afternoon_slumps:-0}" -gt 0 ]]; then slump_bool="true"; fi
+    if [[ "${afternoon_slump_days:-0}" -ge 2 ]]; then slump_bool="true"; fi
     echo "afternoon_slump=$slump_bool"
     echo "latest_fog=${latest_fog:-N/A}"
     echo "latest_fog_at=${latest_fog_at:-N/A}"
@@ -1130,7 +1148,7 @@ coach_build_behavior_digest() {
         drift_risks+=("late night commits detected (e.g., at ${late_night_time}) - consider whether intentional or hyperfocus drift")
     fi
     if [[ "$afternoon_slump" == "true" ]]; then
-        drift_risks+=("afternoon energy slump detected")
+        drift_risks+=("repeated mid-afternoon energy dip detected")
     fi
 
     if [[ "${completed_tasks:-0}" -ge 1 ]]; then

@@ -540,6 +540,7 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     COACH_PATTERN_METRICS=""
     COACH_DATA_QUALITY_FLAGS=""
     COACH_BEHAVIOR_DIGEST="(behavior digest unavailable)"
+    COACH_PREBRIEF_CONTEXT=""
     COACH_TEMPERATURE="${AI_BRIEFING_TEMPERATURE:-0.25}"
 
     if command -v coaching_get_mode_for_date >/dev/null 2>&1; then
@@ -581,6 +582,12 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     REFLECTION_REASON_DETAIL=""
 
     _ge_git_combined=$(printf '%s\n%s\n' "${TODAY_COMMITS:-}" "${RECENT_PUSHES:-}")
+    if command -v coaching_collect_prebrief_context >/dev/null 2>&1; then
+        COACH_PREBRIEF_CONTEXT=$(coaching_collect_prebrief_context "goodevening" "${FOCUS_CONTEXT:-}" "${COACH_MODE:-LOCKED}" "$_ge_git_combined" "${COACH_BEHAVIOR_DIGEST:-}" "$PWD" "" "global" || true)
+    fi
+    if [[ -n "${COACH_PREBRIEF_CONTEXT:-}" ]]; then
+        REFLECTION_PROMPT="${REFLECTION_PROMPT}"$'\n\n'"Pre-brief clarifications:"$'\n'"${COACH_PREBRIEF_CONTEXT}"
+    fi
     
     # Ask the AI to write the reflection itself.
     if command -v coaching_generate_response >/dev/null 2>&1; then

@@ -41,6 +41,8 @@ You just delivered a ${session_type} coaching briefing (shown as your first mess
 
 Interactive follow-up rules:
 - Keep responses to 2-5 sentences unless the user asks for detail.
+- When clarification would improve the coaching, prefer a short A-E multiple-choice question instead of an open-ended question. Always include E as a custom answer.
+- Prefer one clarifying question per turn; ask two only if both are brief and necessary.
 - If the user shares a reflection or explains why they did something, acknowledge it and suggest they capture it: say \"Capture that with: /j <your words>\"
 - If the user mentions a task or next step, suggest: \"Track that with: /t <task description>\"
 - If the user wants to change direction, suggest: \"Update focus with: /f <new focus>\"

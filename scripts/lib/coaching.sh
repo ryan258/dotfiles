@@ -32,6 +32,14 @@ coaching_build_behavior_digest() {
     coach_build_behavior_digest "$@"
 }
 
+coaching_build_prebrief_questions() {
+    coach_build_prebrief_questions "$@"
+}
+
+coaching_collect_prebrief_context() {
+    coach_collect_prebrief_context "$@"
+}
+
 coaching_build_startday_prompt() {
     coach_build_startday_prompt "$@"
 }
@@ -141,6 +149,14 @@ coaching_generate_response() {
             result=$(coaching_status_fallback_output "${focus_context:-"(no focus set)"}" "$mode" "$reason" "$behavior_digest" "$git_commits" "$current_dir" "$project_context" "$context_scope")
         else
             result="Unable to generate AI output at this time."
+        fi
+    fi
+
+    if [ -n "$result" ] && command -v coach_refine_response >/dev/null 2>&1; then
+        local refined_result=""
+        refined_result=$(coach_refine_response "$result" "$type" "${focus_context:-"(no focus set)"}" "$git_commits" "$behavior_digest" "$current_dir" "$project_context" "$context_scope" 2>/dev/null || true)
+        if [ -n "$refined_result" ]; then
+            result="$refined_result"
         fi
     fi
 

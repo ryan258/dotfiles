@@ -358,6 +358,7 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
         COACH_PATTERN_METRICS=""
         COACH_DATA_QUALITY_FLAGS=""
         COACH_BEHAVIOR_DIGEST="(behavior digest unavailable)"
+        COACH_PREBRIEF_CONTEXT=""
 
         if command -v coaching_collect_tactical_metrics >/dev/null 2>&1; then
             COACH_TACTICAL_METRICS=$(coaching_collect_tactical_metrics "$TODAY" "$COACH_TACTICAL_DAYS" "${RECENT_PUSHES:-}" "${YESTERDAY_COMMITS:-}" 2>/dev/null || true)
@@ -376,6 +377,10 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
 
         _sd_git_combined=$(printf '%s\n%s\n' "${YESTERDAY_COMMITS:-}" "${RECENT_PUSHES:-}")
 
+        if command -v coaching_collect_prebrief_context >/dev/null 2>&1; then
+            COACH_PREBRIEF_CONTEXT=$(coaching_collect_prebrief_context "startday" "${FOCUS_CONTEXT:-}" "${COACH_MODE:-LOCKED}" "$_sd_git_combined" "${COACH_BEHAVIOR_DIGEST:-}" "$PWD" "" "global" || true)
+        fi
+
         # Next we turn all those facts into one clear instruction packet for the AI.
         if command -v coaching_build_startday_prompt >/dev/null 2>&1; then
             BRIEFING_PROMPT="$(coaching_build_startday_prompt \
@@ -386,6 +391,9 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
                 "${COACH_BEHAVIOR_DIGEST:-}")"
         else
             BRIEFING_PROMPT="Produce a high-signal morning execution guide grounded only in today's focus and GitHub activity."
+        fi
+        if [[ -n "${COACH_PREBRIEF_CONTEXT:-}" ]]; then
+            BRIEFING_PROMPT="${BRIEFING_PROMPT}"$'\n\n'"Pre-brief clarifications:"$'\n'"${COACH_PREBRIEF_CONTEXT}"
         fi
 
         # Now we ask the AI to write the actual morning briefing.

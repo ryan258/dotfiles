@@ -139,6 +139,26 @@ _cache_path_for() {
     fi
 }
 
+_commit_activity_cache_path_for_date() {
+    local target_date="$1"
+
+    _cache_path_for "/graphql/commit-activity?user=$USERNAME&date=$target_date"
+}
+
+_restore_commit_activity_cache() {
+    local cache_file="$1"
+    local target_date="$2"
+    local destination="$3"
+
+    if [ -n "$cache_file" ] && [ -f "$cache_file" ]; then
+        echo "Warning: Unable to refresh GitHub commit activity for $target_date. Serving cached data." >&2
+        cp "$cache_file" "$destination"
+        return 0
+    fi
+
+    return 1
+}
+
 _github_debug_log() {
     if [ "$GITHUB_DEBUG" = "true" ]; then
         echo "$*" >&2
@@ -359,6 +379,8 @@ list_commits_for_date() {
     local utc_end
     utc_start=$(echo "$window_data" | sed -n '1p')
     utc_end=$(echo "$window_data" | sed -n '2p')
+    local cache_file
+    cache_file=$(_commit_activity_cache_path_for_date "$target_date")
 
     # Optional exclude filtering
     local allowed_repos=""
@@ -390,11 +412,14 @@ list_commits_for_date() {
 
     local tmp_payload
     local tmp_response
+    local curl_err
+    local used_cache=false
     tmp_payload=$(mktemp -t "gh_gql_req.XXXXXX")
     tmp_response=$(mktemp -t "gh_gql_res.XXXXXX")
-    
+    curl_err=$(mktemp -t "gh_gql_err.XXXXXX")
+
     # shellcheck disable=SC2064
-    trap "rm -f '$tmp_payload' '$tmp_response'" RETURN
+    trap "rm -f '$tmp_payload' '$tmp_response' '$curl_err'" RETURN
 
     # Build the JSON payload safely
     jq -n --arg q "$query" '{query: $q}' > "$tmp_payload"
@@ -405,9 +430,38 @@ list_commits_for_date() {
          -H "Authorization: bearer $TOKEN" \
          -H "Content-Type: application/json" \
          -X POST -d "@$tmp_payload" \
-         "https://api.github.com/graphql" -o "$tmp_response" 2>/dev/null; then
-        echo "Error: Failed to reach GitHub GraphQL API" >&2
-        return 1
+         "https://api.github.com/graphql" -o "$tmp_response" 2>"$curl_err"; then
+        if [ "$GITHUB_DEBUG" = "true" ] && [ -s "$curl_err" ]; then
+            _github_debug_log "Primary Err: $(head -n 1 "$curl_err" | tr -d '\r')"
+        fi
+        if ! _restore_commit_activity_cache "$cache_file" "$target_date" "$tmp_response"; then
+            echo "Error: Failed to reach GitHub GraphQL API" >&2
+            return 1
+        fi
+        used_cache=true
+    fi
+
+    if ! jq empty "$tmp_response" >/dev/null 2>&1; then
+        if ! _restore_commit_activity_cache "$cache_file" "$target_date" "$tmp_response"; then
+            echo "Error: Invalid response from GitHub GraphQL API" >&2
+            return 1
+        fi
+        used_cache=true
+    fi
+
+    if jq -e '.errors? | type == "array" and length > 0' "$tmp_response" >/dev/null 2>&1; then
+        if [ "$GITHUB_DEBUG" = "true" ]; then
+            _github_debug_log "GraphQL Err: $(jq -r '.errors[0].message // "unknown GraphQL error"' "$tmp_response" 2>/dev/null)"
+        fi
+        if ! _restore_commit_activity_cache "$cache_file" "$target_date" "$tmp_response"; then
+            echo "Error: GitHub GraphQL returned an error for commit activity" >&2
+            return 1
+        fi
+        used_cache=true
+    fi
+
+    if [ "$used_cache" = false ] && [ -n "$cache_file" ]; then
+        cp "$tmp_response" "$cache_file"
     fi
 
     local raw_commits

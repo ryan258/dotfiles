@@ -67,14 +67,43 @@ _health_fitbit_metric_label() {
     esac
 }
 
+_health_format_minutes_human() {
+    local raw_minutes="$1"
+
+    if [[ ! "$raw_minutes" =~ ^-?[0-9]+$ ]]; then
+        printf '%sm' "$raw_minutes"
+        return 0
+    fi
+
+    local minutes="$raw_minutes"
+    local sign=""
+    if [ "$minutes" -lt 0 ]; then
+        sign="-"
+        minutes=$(( -minutes ))
+    fi
+
+    if [ "$minutes" -lt 60 ]; then
+        printf '%s%sm' "$sign" "$minutes"
+        return 0
+    fi
+
+    local hours=$(( minutes / 60 ))
+    local remaining_minutes=$(( minutes % 60 ))
+    if [ "$remaining_minutes" -eq 0 ]; then
+        printf '%s%sh' "$sign" "$hours"
+    else
+        printf '%s%sh %sm' "$sign" "$hours" "$remaining_minutes"
+    fi
+}
+
 _health_fitbit_metric_display() {
     local metric="$1"
     local value="$2"
 
     # Some numbers need tiny formatting help.
-    # Example: sleep is easier to read as "257m" than plain "257".
+    # Example: sleep is easier to read as "4h 17m" than plain "257".
     case "$metric" in
-        sleep_minutes) printf '%sm' "$value" ;;
+        sleep_minutes) _health_format_minutes_human "$value" ;;
         *)
             printf '%s' "$value"
             ;;

@@ -39,25 +39,28 @@ teardown() {
     rm -rf "$TEST_ROOT"
 }
 
-@test "coach_collect_tactical_metrics detects afternoon slump" {
-    # Generate data indicating an afternoon slump (low energy after 14:00)
+@test "coach_collect_tactical_metrics detects repeated mid-afternoon dips only" {
     local today
+    local yesterday
     today=$(date_today)
+    yesterday=$(date_shift_days -1 "%Y-%m-%d")
     cat <<EOF > "$HEALTH_FILE"
-ENERGY|${today} 09:00:00|8
-ENERGY|${today} 15:30:00|3
-ENERGY|${today} 19:00:00|4
+ENERGY|${yesterday} 09:00:00|8
+ENERGY|${yesterday} 15:30:00|3
+ENERGY|${today} 10:00:00|9
+ENERGY|${today} 16:00:00|4
 EOF
 
     run coach_collect_tactical_metrics "$today" 7
     assert_success
     assert_output_contains "afternoon_slump=true"
 
-    # Generate data with NO afternoon slump (low energy morning only)
+    # A single mid-afternoon dip plus late-evening lows should not count as a pattern.
     cat <<EOF > "$HEALTH_FILE"
-ENERGY|${today} 09:00:00|2
-ENERGY|${today} 15:30:00|8
-ENERGY|${today} 19:00:00|7
+ENERGY|${yesterday} 09:00:00|8
+ENERGY|${yesterday} 15:30:00|3
+ENERGY|${today} 17:30:00|7
+ENERGY|${today} 23:30:00|2
 EOF
 
     run coach_collect_tactical_metrics "$today" 7

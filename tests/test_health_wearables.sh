@@ -37,7 +37,7 @@ EOF
     run "$DOTFILES_DIR/scripts/health.sh" summary
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"Fitbit sleep: 257m (2026-03-26)"* ]]
+    [[ "$output" == *"Fitbit sleep: 4h 17m (2026-03-26)"* ]]
     [[ "$output" == *"Fitbit resting HR: 73 (2026-03-26)"* ]]
     [[ "$output" == *"Fitbit HRV: 67 (2026-03-26)"* ]]
     [[ "$output" == *"Fitbit steps: 822 (2026-03-26)"* ]]
@@ -73,4 +73,15 @@ EOF
     [[ "$output" == *"steps: avg 4500 over 2 day(s); latest 7000 (2026-03-25)"* ]]
     [[ "$output" == *"sleep on low-energy days (1-4): 360m (n=1)"* ]]
     [[ "$output" == *"sleep on high-energy days (7-10): 480m (n=1)"* ]]
+}
+
+@test "health.sh summary renders exact-hour Fitbit sleep without leftover minutes" {
+    cat > "$DOTFILES_DATA_DIR/fitbit/sleep_minutes.txt" <<'EOF'
+2026-03-26|480
+EOF
+
+    run "$DOTFILES_DIR/scripts/health.sh" summary
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Fitbit sleep: 8h (2026-03-26)"* ]]
 }

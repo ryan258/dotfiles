@@ -56,15 +56,16 @@ teardown() {
     [[ "$output" == *"Wearable guidance:"* ]]
     [[ "$output" == *"Energy and fog guidance:"* ]]
     [[ "$output" == *"Briefing Summary:"* ]]
-    [[ "$output" == *"GitHub blindspots/opportunities (1-10):"* ]]
+    [[ "$output" == *"GitHub blindspots/opportunities (1-5):"* ]]
     [[ "$output" == *"North Star:"* ]]
     [[ "$output" == *"Do Next (ordered 1-3):"* ]]
     [[ "$output" == *"Scope anchor:"* ]]
     [[ "$output" == *"Health lens:"* ]]
     [[ "$output" == *"non-fork GitHub activity as the primary signal for the spear"* ]]
     [[ "$output" == *"map of their interests"* ]]
-    [[ "$output" == *"10 blindspots, side-quests, or enhancement opportunities"* ]]
-    [[ "$output" == *"The GitHub blindspot/opportunity section must contain exactly 10 numbered lines."* ]]
+    [[ "$output" == *"surface 3-5 blindspots, side-quests, or enhancement opportunities"* ]]
+    [[ "$output" == *"Prefer 3-5 blindspots. Never exceed 5."* ]]
+    [[ "$output" == *"one short A-E multiple-choice question"* ]]
     [[ "$output" == *"Keep journals and todos out of coaching"* ]]
     [[ "$output" == *"do not invent one. Step 1 should capture or choose the next concrete move"* ]]
     [[ "$output" == *"Do not mention journal evidence, journal momentum, todo completion"* ]]
@@ -104,7 +105,7 @@ teardown() {
     [[ "$output" == *"Wearable guidance:"* ]]
     [[ "$output" == *"Energy and fog guidance:"* ]]
     [[ "$output" == *"Reflection Summary:"* ]]
-    [[ "$output" == *"Blindspots to sleep on (1-10):"* ]]
+    [[ "$output" == *"Blindspots to sleep on (1-5):"* ]]
     [[ "$output" == *"What worked:"* ]]
     [[ "$output" == *"Off-script momentum:"* ]]
     [[ "$output" == *"What pulled you in:"* ]]
@@ -113,7 +114,8 @@ teardown() {
     [[ "$output" == *"Health lens:"* ]]
     [[ "$output" == *"declared focus and non-fork GitHub activity"* ]]
     [[ "$output" == *"Keep journals and todos out of the coaching verdict"* ]]
-    [[ "$output" == *"The blindspot section must contain exactly 10 numbered lines."* ]]
+    [[ "$output" == *"Prefer 3-5 blindspots. Never exceed 5."* ]]
+    [[ "$output" == *"one short A-E multiple-choice question"* ]]
 }
 
 @test "coach_build_goodevening_prompt includes custom traps when traps.txt exists" {
@@ -142,9 +144,38 @@ teardown() {
     [[ "$output" == *"/tmp/project"* ]]
     [[ "$output" == *"Current project context:"* ]]
     [[ "$output" == *"dotfiles"* ]]
-    [[ "$output" == *"GitHub blindspots/opportunities (1-10):"* ]]
+    [[ "$output" == *"GitHub blindspots/opportunities (1-5):"* ]]
     [[ "$output" == *"Do Next (ordered 1-3):"* ]]
     [[ "$output" == *"Bias toward one immediate action"* ]]
+    [[ "$output" == *"midpoint reset"* ]]
+    [[ "$output" == *"one short A-E multiple-choice question"* ]]
+}
+
+@test "coach_build_prebrief_questions caps prompts at three questions" {
+    run bash -c "AI_COACH_PREBRIEF_ALWAYS_ASK=true; AI_COACH_PREBRIEF_MAX_QUESTIONS=3; $SOURCE_PREFIX; coach_build_prebrief_questions \
+        'status' '' 'LOCKED' 'git data' \$'Pattern window: 30d ending $DAY_MINUS1\n  focus_git_status=diffuse, primary_repo=dotfiles, primary_repo_share=57, commit_coherence=0, active_repos=4\nHealth window:\n  latest_energy=7 ($DAY_MINUS1 13:02), latest_fog=3 ($DAY_MINUS1 13:02)' \
+        '/tmp/project' 'dotfiles' 'repo-local'"
+
+    [ "$status" -eq 0 ]
+    question_count="$(printf '%s\n' "$output" | grep -c '^Q|')"
+    [ "$question_count" -eq 3 ]
+    [[ "$output" == *"Q|1|Lane|"* ]]
+    [[ "$output" == *"Q|2|Priority|"* ]]
+    [[ "$output" == *"Q|3|Pacing|"* ]]
+    [[ "$output" == *"O|1|A|Declared focus|"* ]]
+    [[ "$output" == *"O|2|B|Narrow scope|"* ]]
+    [[ "$output" == *"O|3|E|Custom|"* ]]
+}
+
+@test "coach_prebrief_answers_to_context parses one-line numbered answers" {
+    run bash -c "AI_COACH_PREBRIEF_ALWAYS_ASK=true; $SOURCE_PREFIX; \
+        questions=\$(coach_build_prebrief_questions 'status' '' 'LOCKED' 'git data' '' '/tmp/project' 'dotfiles' 'repo-local'); \
+        coach_prebrief_answers_to_context \"\$questions\" '1B 2A 3E (keep it quiet)'"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"- Lane: Current repo lane. Let recent repo or GitHub momentum lead the advice."* ]]
+    [[ "$output" == *"- Priority: Concrete next move. Bias the briefing toward one clear first step."* ]]
+    [[ "$output" == *"- Pacing: custom - keep it quiet"* ]]
 }
 
 # ─── coach_startday_fallback_output ───────────────────────────────────────
@@ -155,7 +186,7 @@ teardown() {
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"Briefing Summary:"* ]]
-    [[ "$output" == *"GitHub blindspots/opportunities (1-10):"* ]]
+    [[ "$output" == *"GitHub blindspots/opportunities (1-5):"* ]]
     [[ "$output" == *"North Star:"* ]]
     [[ "$output" == *"Do Next (ordered 1-3):"* ]]
     [[ "$output" == *"Operating insight (momentum + exploration):"* ]]
@@ -223,7 +254,7 @@ teardown() {
     [ "$status" -eq 0 ]
     [[ "$output" == *"timeout"* ]]
     [[ "$output" == *"Fallback is based on today's focus and recent GitHub activity only."* ]]
-    [[ "$output" == *"GitHub blindspots/opportunities (1-10):"* ]]
+    [[ "$output" == *"GitHub blindspots/opportunities (1-5):"* ]]
     [[ "$output" == *"Capture the first concrete move for today's focus (Making and polishing content for ryanleej.com)"* ]]
     [[ "$output" != *"top task"* ]]
 }
@@ -256,8 +287,8 @@ teardown() {
         \$'  • ai-ethics-comparator: feat: implement model fingerprinting\n  • youtube-face-blur: feat: rewrite thumbnail blurring flow'"
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"1. Recent work is feature-heavy across ai-ethics-comparator and youtube-face-blur; turn one shipped change into a write-up, changelog, or demo angle instead of starting from a blank page."* ]]
-    [[ "$output" == *"10. Repo ai-ethics-comparator is a candidate for a README or changelog pass tied directly to the newest change."* ]]
+    [[ "$output" == *"1. Turn one shipped change from ai-ethics-comparator and youtube-face-blur into a write-up, changelog, or demo angle instead of starting from a blank page."* ]]
+    [[ "$output" == *"5. Add one docs, demo, or test pass to the current lane so quality and legibility stop hiding behind feature momentum."* ]]
 }
 
 # ─── coach_goodevening_fallback_output ────────────────────────────────────
@@ -267,7 +298,7 @@ teardown() {
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"Reflection Summary:"* ]]
-    [[ "$output" == *"Blindspots to sleep on (1-10):"* ]]
+    [[ "$output" == *"Blindspots to sleep on (1-5):"* ]]
     [[ "$output" == *"What worked:"* ]]
     [[ "$output" == *"Off-script momentum:"* ]]
     [[ "$output" == *"What pulled you in:"* ]]
@@ -330,9 +361,9 @@ teardown() {
         \$'  • ai-ethics-comparator: feat: implement model fingerprinting\n  • youtube-face-blur: feat: rewrite thumbnail blurring flow'"
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"Blindspots to sleep on (1-10):"* ]]
-    [[ "$output" == *"1. Recent work is feature-heavy across ai-ethics-comparator and youtube-face-blur; turn one shipped change into a write-up, changelog, or demo angle instead of starting from a blank page."* ]]
-    [[ "$output" == *"9. Repo youtube-face-blur likely wants a short demo, screenshot, or walkthrough so the newest capability is legible without code-reading."* ]]
+    [[ "$output" == *"Blindspots to sleep on (1-5):"* ]]
+    [[ "$output" == *"1. Turn one shipped change from ai-ethics-comparator and youtube-face-blur into a write-up, changelog, or demo angle instead of starting from a blank page."* ]]
+    [[ "$output" == *"3. In ai-ethics-comparator, do one small polish pass before opening a new lane."* ]]
 }
 
 @test "coach_build_behavior_digest includes wearable context when Fitbit data exists" {
@@ -354,7 +385,7 @@ EOF
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"Wearable context:"* ]]
-    [[ "$output" == *"Fitbit sleep: 257m (2026-03-26)"* ]]
+    [[ "$output" == *"Fitbit sleep: 4h 17m (2026-03-26)"* ]]
     [[ "$output" == *"Fitbit resting HR: 73 (2026-03-26)"* ]]
     [[ "$output" == *"Fitbit HRV: 67 (2026-03-26)"* ]]
     [[ "$output" == *"Fitbit steps: 822 (2026-03-26)"* ]]

@@ -165,6 +165,44 @@ EOF
     grep -q "^FOG|$today 18:05|4\$" "$DATA_DIR/health.txt"
 }
 
+@test "goodevening collects one-line pre-brief answers before building the reflection prompt" {
+    local runner="$TEST_ROOT/run_goodevening_prebrief_with_tty.sh"
+
+    cat > "$runner" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+export HOME="$HOME"
+export DATA_DIR="$DATA_DIR"
+export DOTFILES_DIR="$DOTFILES_DIR"
+export PROJECTS_DIR="$PROJECTS_DIR"
+export PATH="$DOTFILES_DIR/bin:\$PATH"
+export AI_REFLECTION_ENABLED=true
+export AI_COACH_CHAT_ENABLED=false
+export AI_COACH_PREBRIEF_ALWAYS_ASK=true
+export AI_COACH_PREBRIEF_MAX_QUESTIONS=3
+/usr/bin/expect <<'EXPECT'
+set timeout 20
+spawn bash \$env(DOTFILES_DIR)/scripts/goodevening.sh --refresh $TEST_DAY
+expect -re {PRE-BRIEF CHECK:}
+expect -re {Pre-brief answers \[Enter to skip\]: $}
+send -- "1A 2B 3E (keep it gentle)\r"
+expect eof
+EXPECT
+EOF
+    chmod +x "$runner"
+
+    run bash "$runner"
+
+    [ "$status" -eq 0 ]
+    [ -f "$DATA_DIR/strategy_prompt_goodevening.txt" ]
+    prompt="$(cat "$DATA_DIR/strategy_prompt_goodevening.txt")"
+    [[ "$prompt" == *"Pre-brief clarifications:"* ]]
+    [[ "$prompt" == *"- Framing: Valid exploration. Treat side work as part of the real pattern."* ]]
+    [[ "$prompt" == *"- Lane: Current repo lane. Let recent repo or GitHub momentum lead the advice."* ]]
+    [[ "$prompt" == *"- Pacing: custom - keep it gentle"* ]]
+    [[ "$prompt" != *"PRE-BRIEF CHECK:"* ]]
+}
+
 @test "goodevening falls back to system date when startday marker is missing" {
     rm -f "$DATA_DIR/current_day"
     expected_today="$(date +%Y-%m-%d)"
@@ -231,7 +269,7 @@ PY
     [[ "$prompt" == *"Coach mode used today:"* ]]
     [[ "$prompt" == *"Behavior digest:"* ]]
     [[ "$prompt" == *"Wearable guidance:"* ]]
-    [[ "$prompt" == *"Blindspots to sleep on (1-10):"* ]]
+    [[ "$prompt" == *"Blindspots to sleep on (1-5):"* ]]
     [[ "$prompt" == *"Tomorrow lock:"* ]]
     [[ "$prompt" == *"Health lens:"* ]]
     [[ "$prompt" == *"Keep journals and todos out of the coaching verdict"* ]]
@@ -346,7 +384,7 @@ EOF
     [[ "$output" != *"Deterministic fallback (timeout)"* ]]
 }
 
-@test "goodevening preserves raw AI blindspots when the dispatcher returns output" {
+@test "goodevening filters noisy AI blindspots when the dispatcher returns output" {
     cat > "$DOTFILES_DIR/bin/dhp-strategy.sh" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -393,10 +431,11 @@ EOF
         bash -c "$DOTFILES_DIR/scripts/goodevening.sh --refresh $TEST_DAY < /dev/null"
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"Blindspots to sleep on (1-10):"* ]]
-    [[ "$output" == *"dir_usage_malformed=162 means your tracking stack is unstable."* ]]
-    [[ "$output" == *"focus_git_status=diffuse proves the spear is broken."* ]]
-    [[ "$output" == *"commit_context data is absent so the pattern is unknowable."* ]]
+    [[ "$output" == *"Blindspots to sleep on (1-5):"* ]]
+    [[ "$output" != *"dir_usage_malformed=162 means your tracking stack is unstable."* ]]
+    [[ "$output" != *"focus_git_status=diffuse proves the spear is broken."* ]]
+    [[ "$output" != *"commit_context data is absent so the pattern is unknowable."* ]]
+    [[ "$output" == *"1. Keep the repo lane visible to future you."* ]]
 }
 
 @test "goodevening summarizes project safety findings with a detail cap" {

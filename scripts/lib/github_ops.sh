@@ -156,7 +156,11 @@ get_commit_activity_for_date_structured() {
     fi
     rm -f "$err_file"
 
-    [[ -n "$commits" ]] && printf '%s\n' "$commits"
+    if [[ -n "$commits" ]]; then
+        printf '%s\n' "$commits"
+    fi
+
+    return 0
 }
 
 # Get commit activity for a specific date (YYYY-MM-DD) — formatted for display.
