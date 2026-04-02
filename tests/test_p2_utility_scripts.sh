@@ -135,6 +135,11 @@ EOF
     [[ "$output" == *"Usage:"* ]]
 }
 
+@test "goodevening.sh parses cleanly under bash" {
+    run bash -n "$DOTFILES_DIR/scripts/goodevening.sh"
+    [ "$status" -eq 0 ]
+}
+
 @test "run_with_modern_bash.sh uses configured modern bash wrapper" {
     local fake_bin="$TEST_DIR/fake-bin"
     mkdir -p "$fake_bin"
@@ -187,6 +192,27 @@ EOF
     [ "$status" -eq 0 ]
     perms="$(stat -f '%Lp' "$DOTFILES_DATA_DIR/dir_bookmarks")"
     [ "$perms" = "600" ]
+}
+
+@test "zsh smart navigation hook re-seals dir_usage.log before appending" {
+    local today
+    today="$(date '+%Y-%m-%d')"
+
+    printf '%s\n' "$today" > "$DOTFILES_DATA_DIR/.startday_last_run"
+    chmod 600 "$DOTFILES_DATA_DIR/.startday_last_run"
+    chmod 644 "$DOTFILES_DATA_DIR/dir_usage.log"
+    mkdir -p "$TEST_DIR/workspace"
+
+    run env HOME="$HOME" ZDOTDIR="$DOTFILES_DIR/zsh" DOTFILES_DIR="$DOTFILES_DIR" /bin/zsh -c '
+        source "$ZDOTDIR/.zshrc"
+        cd "$HOME/workspace"
+        printf "perms=%s\n" "$(stat -f "%Lp" "$HOME/.config/dotfiles-data/dir_usage.log")"
+        tail -n 1 "$HOME/.config/dotfiles-data/dir_usage.log"
+    '
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"perms=600"* ]]
+    [[ "$output" == *"|$HOME/workspace"* ]]
 }
 
 @test "health.sh list does not report no-appointments when appointments exist" {

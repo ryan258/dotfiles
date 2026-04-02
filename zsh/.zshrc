@@ -42,11 +42,21 @@ USAGE_LOG="$DOTFILES_DATA_ROOT/dir_usage.log"
 
 # Use zsh hook system to avoid conflicts
 autoload -U add-zsh-hook
+__ensure_private_usage_log() {
+    mkdir -p "$(dirname "$USAGE_LOG")"
+    if [ ! -f "$USAGE_LOG" ]; then
+        : > "$USAGE_LOG"
+    fi
+    chmod 600 "$USAGE_LOG" 2>/dev/null || true
+}
+
 __log_directory_change() {
     # Log directory changes for smart navigation suggestions (used by g suggest)
     # Format: timestamp|directory
-    echo "$(date +%s)|$(pwd)" >> "$USAGE_LOG"
+    __ensure_private_usage_log
+    printf '%s|%s\n' "$(date +%s)" "$(pwd)" >> "$USAGE_LOG"
 }
+__ensure_private_usage_log
 add-zsh-hook chpwd __log_directory_change
 
 # Added by Antigravity

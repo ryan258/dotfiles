@@ -224,8 +224,15 @@ EOF
 @test "goodevening hides inactive repos from recent pushes and shows the reactivation list" {
     local repos_fixture="$TEST_ROOT/repos.json"
     local today
+    local now_utc_iso
 
     today="$(date +%Y-%m-%d)"
+    now_utc_iso="$(python3 - <<'PY'
+from datetime import datetime, timezone
+
+print(datetime.now().astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
+PY
+)"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/github_ops.sh" "$DOTFILES_DIR/scripts/lib/github_ops.sh"
     cat > "$DOTFILES_DIR/scripts/github_helper.sh" <<'EOF'
 #!/usr/bin/env bash
@@ -248,8 +255,8 @@ EOF
 
     cat > "$repos_fixture" <<EOF
 [
-  {"name":"dotfiles","pushed_at":"${today}T00:00:00Z"},
-  {"name":"rockit","pushed_at":"${today}T00:00:00Z"}
+  {"name":"dotfiles","pushed_at":"${now_utc_iso}"},
+  {"name":"rockit","pushed_at":"${now_utc_iso}"}
 ]
 EOF
     printf '%s\n' "dotfiles|${today}|good place" > "$DATA_DIR/github_inactive_repos.txt"
@@ -337,6 +344,30 @@ PY
 
     [ -f "$DATA_DIR/coach_log.txt" ]
     grep -q '^GOODEVENING|' "$DATA_DIR/coach_log.txt"
+}
+
+@test "goodevening reuses a completed focus from today's history when the active focus was cleared" {
+    rm -f "$DATA_DIR/daily_focus.txt"
+    cat > "$DATA_DIR/focus_history.log" <<EOF
+$TEST_DAY|Ship one high-signal automation
+EOF
+
+    run env \
+        PATH="$DOTFILES_DIR/bin:$PATH" \
+        HOME="$HOME" \
+        DATA_DIR="$DATA_DIR" \
+        DOTFILES_DIR="$DOTFILES_DIR" \
+        PROJECTS_DIR="$PROJECTS_DIR" \
+        AI_REFLECTION_ENABLED=true \
+        AI_COACH_CHAT_ENABLED=false \
+        bash -c "$DOTFILES_DIR/scripts/goodevening.sh --refresh $TEST_DAY < /dev/null"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Ship one high-signal automation (completed earlier today)"* ]]
+    [[ "$output" != *"(No focus set)"* ]]
+
+    prompt="$(cat "$DATA_DIR/strategy_prompt_goodevening.txt")"
+    [[ "$prompt" == *"Today's focus:"*$'\n'"Ship one high-signal automation"* ]]
 }
 
 @test "goodevening auto-syncs Fitbit data before reflection when auth exists" {

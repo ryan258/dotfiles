@@ -53,6 +53,7 @@ goodevening
 - If a call times out or fails, the system gives you a basic plan instead.
 - User input is cleaned before saving.
 - File paths are checked before writing.
+- Smart-navigation logs under `~/.config/dotfiles-data/` should stay private (`600`), and the zsh hook now re-seals `dir_usage.log` before appending directory visits.
 
 ## 🤖 Cyborg Lab Agent
 

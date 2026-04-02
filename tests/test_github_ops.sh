@@ -3,6 +3,24 @@
 load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
 load "$BATS_TEST_DIRNAME/helpers/assertions.sh"
 
+local_now_utc_iso() {
+    python3 - <<'PY'
+from datetime import datetime, timezone
+
+print(datetime.now().astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
+PY
+}
+
+local_yesterday_late_utc_iso() {
+    python3 - <<'PY'
+from datetime import datetime, timedelta, timezone
+
+now = datetime.now().astimezone()
+yesterday_late = (now - timedelta(days=1)).replace(hour=23, minute=30, second=0, microsecond=0)
+print(yesterday_late.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
+PY
+}
+
 setup() {
     setup_test_environment
     export DOTFILES_DIR="$TEST_DIR/dotfiles"
@@ -72,7 +90,7 @@ teardown() {
     local inactive_file="$TEST_DIR/inactive.txt"
     local today_iso
 
-    today_iso="$(date -u '+%Y-%m-%dT00:00:00Z')"
+    today_iso="$(local_now_utc_iso)"
 
     cat > "$repos_fixture" <<EOF
 [
@@ -91,6 +109,28 @@ EOF
     [ "$status" -eq 0 ]
     [[ "$output" == *"rockit"* ]]
     [[ "$output" != *"dotfiles"* ]]
+}
+
+@test "get_recent_github_activity labels pushes by local calendar day instead of rolling 24 hours" {
+    local repos_fixture="$TEST_DIR/repos-yesterday.json"
+    local yesterday_late_iso
+
+    yesterday_late_iso="$(local_yesterday_late_utc_iso)"
+
+    cat > "$repos_fixture" <<EOF
+[
+  {"name":"dotfiles","pushed_at":"$yesterday_late_iso"}
+]
+EOF
+
+    run env \
+        TZ="America/Chicago" \
+        DOTFILES_DIR="$DOTFILES_DIR" \
+        GITHUB_REPOS_FIXTURE="$repos_fixture" \
+        bash -lc "source '$DOTFILES_DIR/scripts/lib/date_utils.sh'; source '$DOTFILES_DIR/scripts/lib/github_ops.sh'; get_recent_github_activity 7"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == "  • dotfiles (pushed yesterday)" ]]
 }
 
 @test "get_commit_activity_for_date filters inactive repos from commit recap" {

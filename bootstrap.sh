@@ -66,8 +66,10 @@ for file in "${DATA_FILES[@]}"; do
   FILE_PATH="$DATA_DIR/$file"
   if [ ! -f "$FILE_PATH" ]; then
     touch "$FILE_PATH"
+    chmod 600 "$FILE_PATH" 2>/dev/null || true
     echo "  ✓ Created $file"
   else
+    chmod 600 "$FILE_PATH" 2>/dev/null || true
     echo "  ✓ $file already exists"
   fi
 done

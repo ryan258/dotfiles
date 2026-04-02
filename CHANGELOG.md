@@ -1,6 +1,16 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** March 30, 2026
+**Last Updated:** April 1, 2026
+
+## Version 2.2.57 (April 1, 2026) - Calendar-Day GitHub Activity
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- `scripts/lib/github_ops.sh` now labels recent GitHub pushes by local calendar day instead of elapsed 24-hour buckets, so a repo pushed on March 31 in `America/Chicago` shows as `pushed yesterday` on April 1 rather than `pushed today`.
+- `scripts/github_helper.sh list_commits_for_date` now builds the daily commit recap from same-day GitHub push events across any pushed branch, then resolves each push head to a commit headline, so `startday`, `status`, and `goodevening` no longer miss non-default-branch work.
+- Updated BATS coverage for local-day push labeling, branch-agnostic commit recaps, and the recent-push fixtures used by the daily coach scripts.
 
 ## Version 2.2.56 (March 30, 2026) - Resilient GitHub Commit Recaps
 
@@ -8,6 +18,10 @@
 
 ### Changed
 
+- `scripts/goodevening.sh` now falls back to a focus completed earlier the same day when `focus done` has already cleared `daily_focus.txt`, so the evening display, completion win, and AI reflection no longer claim there was no declared focus.
+- `scripts/lib/coach_prompts.sh` now tells the evening coach not to invent journaling or task-completion evidence when `journal_entries` or `completed_tasks` are zero, and the response refiner now rewrites unsupported `What worked:` claims back to focus/Git-grounded language.
+- `zsh/.zshrc` now creates and re-seals `dir_usage.log` to `600` before the smart-navigation `chpwd` hook appends a directory visit, so interactive shell usage no longer leaves that local context log world-readable.
+- `bootstrap.sh` now re-applies `600` permissions to the core data files it initializes, including `dir_history` and `dir_usage.log`, so fresh setups and reruns land with private file modes.
 - `scripts/github_helper.sh list_commits_for_date` now caches successful GitHub GraphQL commit-activity responses and reuses that cache on transient refresh failures, so `startday`, `status`, and `goodevening` keep showing commit recaps when GitHub briefly flakes.
 - The same helper now treats GraphQL error payloads as real failures instead of silently collapsing them into an empty commit list.
 - `scripts/lib/github_ops.sh` now treats an empty successful commit query as a real "no commits" result instead of surfacing it as a GitHub fetch failure in the daily routines.

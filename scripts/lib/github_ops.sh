@@ -76,6 +76,61 @@ _github_repo_today() {
     date +"%Y-%m-%d"
 }
 
+_github_local_date_from_timestamp() {
+    local raw_timestamp="${1:-}"
+    local epoch=""
+
+    [[ -n "$raw_timestamp" ]] || return 1
+    epoch=$(timestamp_to_epoch "$raw_timestamp")
+    [[ "$epoch" =~ ^-?[0-9]+$ ]] || return 1
+    [ "$epoch" -gt 0 ] || return 1
+
+    if command -v python3 >/dev/null 2>&1; then
+        python3 - "$epoch" <<'PY'
+import sys
+from datetime import datetime
+
+try:
+    ts = int(sys.argv[1])
+except ValueError:
+    sys.exit(1)
+
+print(datetime.fromtimestamp(ts).strftime("%Y-%m-%d"))
+PY
+        return
+    fi
+
+    if date -r "$epoch" "+%Y-%m-%d" >/dev/null 2>&1; then
+        date -r "$epoch" "+%Y-%m-%d"
+        return
+    fi
+
+    if command -v gdate >/dev/null 2>&1; then
+        gdate -d "@$epoch" "+%Y-%m-%d"
+    else
+        date -d "@$epoch" "+%Y-%m-%d"
+    fi
+}
+
+_github_days_ago_for_local_date() {
+    local target_date="${1:-}"
+    local max_days="${2:-7}"
+    local offset=""
+    local candidate_date=""
+
+    [[ -n "$target_date" ]] || return 1
+
+    for ((offset=0; offset<=max_days; offset++)); do
+        candidate_date=$(date_shift_days "-$offset" "%Y-%m-%d")
+        if [[ "$candidate_date" == "$target_date" ]]; then
+            printf '%s\n' "$offset"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
 list_inactive_github_repos_structured() {
     local inactive_file
     inactive_file=$(_github_inactive_repos_file)
@@ -249,7 +304,7 @@ get_recent_github_activity_structured() {
         _github_ops_debug "jq not found; cannot parse GitHub activity."
         return 1
     fi
-    if ! command -v timestamp_to_epoch >/dev/null 2>&1 || ! command -v date_epoch_now >/dev/null 2>&1; then
+    if ! command -v timestamp_to_epoch >/dev/null 2>&1 || ! command -v date_shift_days >/dev/null 2>&1; then
         _github_ops_debug "date_utils helpers are not loaded."
         return 1
     fi
@@ -266,22 +321,19 @@ get_recent_github_activity_structured() {
     local repo_lines
     local structured_lines=""
     repo_lines=$(echo "$github_repos" | jq -r '.[] | "\(.pushed_at) \(.name)"')
-    local now
-    now=$(date_epoch_now)
 
     while read -r line; do
         [ -z "$line" ] && continue
-        local pushed_at_str repo_name pushed_at_epoch diff_days
+        local pushed_at_str repo_name pushed_local_date diff_days
         pushed_at_str=$(echo "$line" | awk '{print $1}')
         repo_name=$(echo "$line" | awk '{$1=""; print $0}' | xargs)
-        pushed_at_epoch=$(timestamp_to_epoch "$pushed_at_str")
-        [ "$pushed_at_epoch" -le 0 ] && continue
-        diff_days=$(( (now - pushed_at_epoch) / 86400 ))
-        if [ "$diff_days" -le "$days" ]; then
-            structured_lines="${structured_lines}${structured_lines:+$'\n'}${repo_name}|${diff_days}|${pushed_at_str}"
-        else
+        pushed_local_date=$(_github_local_date_from_timestamp "$pushed_at_str") || continue
+        if ! diff_days=$(_github_days_ago_for_local_date "$pushed_local_date" "$days"); then
+            # GitHub sorts by most recent push time, so once one repo falls outside
+            # the requested local-date window the remaining repos will too.
             break
         fi
+        structured_lines="${structured_lines}${structured_lines:+$'\n'}${repo_name}|${diff_days}|${pushed_at_str}"
     done <<< "$repo_lines"
 
     if [[ -n "$structured_lines" ]]; then

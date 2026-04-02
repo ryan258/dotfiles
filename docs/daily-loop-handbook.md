@@ -94,6 +94,7 @@ The evening feedback letter includes:
 - A story about everything you accomplished today.
 - What went well and what you got stuck on.
 - A lock for tomorrow (what you promise to do first thing in the morning).
+- If you already ran `focus done`, the reflection still uses that archived focus as today's lane.
 
 ### End of Day Checklist
 ```bash

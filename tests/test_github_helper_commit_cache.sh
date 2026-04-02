@@ -15,6 +15,7 @@ setup() {
 set -euo pipefail
 
 out_file=""
+url=""
 while [ "$#" -gt 0 ]; do
     case "$1" in
         -o)
@@ -22,14 +23,26 @@ while [ "$#" -gt 0 ]; do
             shift 2
             ;;
         *)
+            url="$1"
             shift
             ;;
     esac
 done
 
 case "${FAKE_CURL_MODE:-success}" in
-    success|graphql_error)
-        cat "${FAKE_CURL_RESPONSE_FILE:?}" > "$out_file"
+    success)
+        case "$url" in
+            *"/user/events?per_page=100"|*"/users/"*"/events?per_page=100")
+                cat "${FAKE_CURL_EVENTS_FILE:?}" > "$out_file"
+                ;;
+            *"/repos/"*"/commits/"*)
+                cat "${FAKE_CURL_COMMIT_FILE:?}" > "$out_file"
+                ;;
+            *)
+                echo "unsupported fake curl url: $url" >&2
+                exit 64
+                ;;
+        esac
         ;;
     fail)
         echo "curl: (6) Could not resolve host: api.github.com" >&2
@@ -48,32 +61,28 @@ teardown() {
     teardown_test_environment
 }
 
-@test "list_commits_for_date serves cached GraphQL data when refresh fails" {
-    export FAKE_CURL_RESPONSE_FILE="$TEST_DIR/graphql-success.json"
-    cat > "$FAKE_CURL_RESPONSE_FILE" <<'JSON'
-{
-  "data": {
-    "user": {
-      "repositories": {
-        "nodes": [
-          {
-            "name": "dotfiles",
-            "defaultBranchRef": {
-              "target": {
-                "history": {
-                  "nodes": [
-                    {
-                      "oid": "abcdef1234567890",
-                      "messageHeadline": "Fix cache fallback"
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        ]
-      }
+@test "list_commits_for_date serves cached branch push data when refresh fails" {
+    export FAKE_CURL_EVENTS_FILE="$TEST_DIR/events-success.json"
+    export FAKE_CURL_COMMIT_FILE="$TEST_DIR/commit-success.json"
+    cat > "$FAKE_CURL_EVENTS_FILE" <<'JSON'
+[
+  {
+    "type": "PushEvent",
+    "created_at": "2026-03-29T12:00:00Z",
+    "repo": {
+      "name": "ryan258/dotfiles"
+    },
+    "payload": {
+      "head": "abcdef1234567890",
+      "ref": "refs/heads/feature-branch"
     }
+  }
+]
+JSON
+    cat > "$FAKE_CURL_COMMIT_FILE" <<'JSON'
+{
+  "commit": {
+    "message": "Fix cache fallback\n\nMore detail"
   }
 }
 JSON
@@ -82,12 +91,12 @@ JSON
         PATH="$STUB_BIN_DIR:$PATH" \
         DOTFILES_DIR="$DOTFILES_DIR" \
         ENV_FILE="$TEST_DIR/missing.env" \
+        TZ="UTC" \
         GITHUB_TOKEN="test-token" \
         GITHUB_USERNAME="ryan258" \
         GITHUB_EXCLUDE_FORKS="false" \
         GITHUB_CACHE_DIR="$TEST_DIR/cache/github" \
         FAKE_CURL_MODE="success" \
-        FAKE_CURL_RESPONSE_FILE="$FAKE_CURL_RESPONSE_FILE" \
         "$DOTFILES_DIR/scripts/github_helper.sh" list_commits_for_date 2026-03-29
 
     [ "$status" -eq 0 ]
@@ -100,6 +109,7 @@ JSON
         PATH="$STUB_BIN_DIR:$PATH" \
         DOTFILES_DIR="$DOTFILES_DIR" \
         ENV_FILE="$TEST_DIR/missing.env" \
+        TZ="UTC" \
         GITHUB_TOKEN="test-token" \
         GITHUB_USERNAME="ryan258" \
         GITHUB_EXCLUDE_FORKS="false" \
@@ -112,30 +122,24 @@ JSON
     [[ "$output" == *"dotfiles|abcdef1|Fix cache fallback"* ]]
 }
 
-@test "list_commits_for_date fails on GraphQL error payloads when no cache exists" {
-    export FAKE_CURL_RESPONSE_FILE="$TEST_DIR/graphql-error.json"
-    cat > "$FAKE_CURL_RESPONSE_FILE" <<'JSON'
-{
-  "errors": [
-    {
-      "message": "Bad credentials"
-    }
-  ]
-}
+@test "list_commits_for_date fails when both events endpoints return invalid data and no cache exists" {
+    export FAKE_CURL_EVENTS_FILE="$TEST_DIR/events-invalid.json"
+    cat > "$FAKE_CURL_EVENTS_FILE" <<'JSON'
+{"not":"an array"
 JSON
 
     run env \
         PATH="$STUB_BIN_DIR:$PATH" \
         DOTFILES_DIR="$DOTFILES_DIR" \
         ENV_FILE="$TEST_DIR/missing.env" \
+        TZ="UTC" \
         GITHUB_TOKEN="test-token" \
         GITHUB_USERNAME="ryan258" \
         GITHUB_EXCLUDE_FORKS="false" \
         GITHUB_CACHE_DIR="$TEST_DIR/cache/github" \
-        FAKE_CURL_MODE="graphql_error" \
-        FAKE_CURL_RESPONSE_FILE="$FAKE_CURL_RESPONSE_FILE" \
+        FAKE_CURL_MODE="success" \
         "$DOTFILES_DIR/scripts/github_helper.sh" list_commits_for_date 2026-03-29
 
     [ "$status" -eq 1 ]
-    [[ "$output" == *"Error: GitHub GraphQL returned an error for commit activity"* ]]
+    [[ "$output" == *"Error: Failed to reach GitHub events API"* ]]
 }

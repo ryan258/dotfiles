@@ -504,6 +504,8 @@ Wearable guidance:
 Energy and fog guidance:
 - If latest_energy/latest_fog and avg_energy/avg_fog are both present in the behavior digest, treat latest_* as the user's current state and avg_* as the recent trend.
 - If the latest reading and the average differ, mention both clearly instead of describing the current state from averages alone.
+- Do not say journaling, journal capture, or note-taking happened today unless \`journal_entries\` in the tactical window is greater than 0.
+- Do not say task completion, todo completion, or checklist progress happened today unless \`completed_tasks\` in the tactical window is greater than 0.
 
 Behavioral Interventions (use if triggered by digest):
 - If stale_tasks > 4, suggest a "triage block" to clear old items.
@@ -642,6 +644,8 @@ Wearable guidance:
 Energy and fog guidance:
 - If latest_energy/latest_fog and avg_energy/avg_fog are both present in the behavior digest, treat latest_* as the user's current state and avg_* as the recent trend.
 - If the latest reading and the average differ, mention both clearly instead of describing the current state from averages alone.
+- Do not say journaling, journal capture, or note-taking happened today unless \`journal_entries\` in the tactical window is greater than 0.
+- Do not say task completion, todo completion, or checklist progress happened today unless \`completed_tasks\` in the tactical window is greater than 0.
 
 Behavioral Interventions (use if triggered by digest):
 - If dir_switches > 80, note the breadth and suggest a "single-project lock" setup for tomorrow.
@@ -1263,6 +1267,28 @@ _coach_extract_numbered_section_lines() {
     done <<< "$response"
 }
 
+_coach_extract_text_section_body() {
+    local response="$1"
+    local section_prefix="$2"
+    local line=""
+    local in_section=0
+
+    while IFS= read -r line; do
+        if [[ "$in_section" -eq 0 ]]; then
+            if _coach_line_has_prefix "$line" "$section_prefix"; then
+                in_section=1
+            fi
+            continue
+        fi
+
+        if _coach_line_is_heading "$line"; then
+            break
+        fi
+
+        printf '%s\n' "$line"
+    done <<< "$response"
+}
+
 _coach_clean_blindspot_section() {
     local existing_lines="$1"
     local grounded_scan="$2"
@@ -1322,6 +1348,12 @@ coach_refine_response() {
     local heading=""
     local insert_before=""
     local limit=""
+    local completed_tasks=""
+    local journal_entries=""
+    local what_worked_body=""
+    local what_worked_lower=""
+    local replace_what_worked=0
+    local grounded_what_worked=""
 
     limit=$(_coach_blindspot_limit)
     repo_summary=$(_coach_commit_repo_summary "$git_context")
@@ -1332,6 +1364,8 @@ coach_refine_response() {
         commit_coherence=$(_coach_digest_inline_value "$behavior_digest" "commit_coherence")
         active_repos=$(_coach_digest_inline_value "$behavior_digest" "active_repos")
         focus_git_reason=$(_coach_digest_line_value "$behavior_digest" "focus_git_reason")
+        completed_tasks=$(printf '%s\n' "$behavior_digest" | sed -n 's/.*completed_tasks=\([0-9][0-9]*\).*/\1/p' | head -n 1)
+        journal_entries=$(printf '%s\n' "$behavior_digest" | sed -n 's/.*journal_entries=\([0-9][0-9]*\).*/\1/p' | head -n 1)
     fi
 
     grounded_scan=$(_coach_github_blindspot_scan "$focus" "$git_context" "$focus_git_status" "$primary_repo" "$primary_repo_share" "$commit_coherence" "$active_repos" "$focus_git_reason" "$repo_summary")
@@ -1346,6 +1380,27 @@ coach_refine_response() {
             heading=$(_coach_blindspot_heading "goodevening")
             insert_before="What worked"
             response=$(_coach_replace_or_insert_numbered_section "$response" "Blindspots to sleep on" "$heading" "$insert_before" "$cleaned_lines")
+
+            what_worked_body=$(_coach_extract_text_section_body "$response" "What worked")
+            what_worked_lower=$(printf '%s' "$what_worked_body" | tr '[:upper:]' '[:lower:]')
+            if [[ "${journal_entries:-}" == "0" ]] && { [[ "$what_worked_lower" == *journal* ]] || [[ "$what_worked_lower" == *journaling* ]] || [[ "$what_worked_lower" == *note-taking* ]] || [[ "$what_worked_lower" == *"note taking"* ]]; }; then
+                replace_what_worked=1
+            fi
+            if [[ "${completed_tasks:-}" == "0" ]] && { [[ "$what_worked_lower" == *todo* ]] || [[ "$what_worked_lower" == *"task completion"* ]] || [[ "$what_worked_lower" == *"tasks completed"* ]] || [[ "$what_worked_lower" == *checklist* ]]; }; then
+                replace_what_worked=1
+            fi
+            if [[ "$replace_what_worked" -eq 1 ]]; then
+                if [[ -n "$focus" && "$focus" != "(no focus set)" ]] && [[ -n "$repo_summary" ]]; then
+                    grounded_what_worked="You kept the day grounded in ${focus}, with visible GitHub movement in ${repo_summary}."
+                elif [[ -n "$focus" && "$focus" != "(no focus set)" ]]; then
+                    grounded_what_worked="You kept the day grounded in ${focus}, and the visible work left a real trail to reflect on."
+                elif [[ -n "$repo_summary" ]]; then
+                    grounded_what_worked="You kept visible GitHub movement alive in ${repo_summary}, which gives the reflection a grounded trail without inventing extra local capture."
+                else
+                    grounded_what_worked="You left enough visible signal to debrief the day without inventing extra journaling or task evidence."
+                fi
+                response=$(_coach_replace_or_insert_text_section "$response" "What worked" "What worked:" "Off-script momentum" "$grounded_what_worked")
+            fi
             ;;
         startday|status)
             existing_lines=$(_coach_extract_numbered_section_lines "$response" "GitHub blindspots/opportunities")

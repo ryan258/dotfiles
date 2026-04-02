@@ -118,6 +118,10 @@ teardown() {
     [[ "$output" == *"secondary evidence for specificity and recall"* ]]
     [[ "$output" == *"Prefer 3-5 blindspots. Never exceed 5."* ]]
     [[ "$output" == *"one short A-E multiple-choice question"* ]]
+    [[ "$output" == *"Do not say journaling"* ]]
+    [[ "$output" == *'`journal_entries`'* ]]
+    [[ "$output" == *"Do not say task completion"* ]]
+    [[ "$output" == *'`completed_tasks`'* ]]
 }
 
 @test "coach_build_goodevening_prompt includes custom traps when traps.txt exists" {
@@ -415,6 +419,25 @@ EOF
     [[ "$output" == *"Blindspots to sleep on (1-5):"* ]]
     [[ "$output" == *"1. Turn one shipped change from ai-ethics-comparator and youtube-face-blur into a write-up, changelog, or demo angle instead of starting from a blank page."* ]]
     [[ "$output" == *"3. In ai-ethics-comparator, do one small polish pass before opening a new lane."* ]]
+}
+
+@test "coach_refine_response replaces unsupported journal claims in goodevening what worked" {
+    local response
+    local digest
+
+    response=$'Reflection Summary:\n- You kept things moving.\nBlindspots to sleep on (1-5):\n1. Check dotfiles.\nWhat worked:\nJournaling and commit logging stayed active, giving you clear visibility into the day.\nOff-script momentum:\nYou explored.\nWhat pulled you in:\nIt was interesting.\nPattern watch:\nNot enough data for pattern detection.\nTomorrow lock:\nStart with one repo.\nHealth lens:\nKeep sessions bounded.\nTomorrow mode suggestion:\nTry LOCKED.'
+    digest=$'Behavior digest (structured):\nTactical window: 7d ending 2026-03-30\n  open_tasks=1, stale_tasks=0, completed_tasks=2, journal_entries=0'
+
+    printf '%s\n' "$response" > "$DATA_DIR/refine_response.txt"
+    printf '%s\n' "$digest" > "$DATA_DIR/refine_digest.txt"
+
+    run bash -c "$SOURCE_PREFIX; response=\$(cat '$DATA_DIR/refine_response.txt'); digest=\$(cat '$DATA_DIR/refine_digest.txt'); coach_refine_response \
+        \"\$response\" 'goodevening' 'Ship the tracker' \$'  • dotfiles: feat: tighten tracker\n' \"\$digest\""
+
+    [ "$status" -eq 0 ]
+    [[ "$output" != *"Journaling and commit logging stayed active"* ]]
+    [[ "$output" == *"What worked:"* ]]
+    [[ "$output" == *"Ship the tracker"* ]]
 }
 
 @test "coach_build_behavior_digest includes wearable context when Fitbit data exists" {

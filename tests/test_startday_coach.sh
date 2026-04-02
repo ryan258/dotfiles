@@ -221,8 +221,15 @@ EOF
 @test "startday hides inactive repos from active projects and shows the reactivation list" {
     local repos_fixture="$TEST_ROOT/repos.json"
     local today
+    local now_utc_iso
 
     today="$(date +%Y-%m-%d)"
+    now_utc_iso="$(python3 - <<'PY'
+from datetime import datetime, timezone
+
+print(datetime.now().astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
+PY
+)"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/github_ops.sh" "$DOTFILES_DIR/scripts/lib/github_ops.sh"
     cat > "$DOTFILES_DIR/scripts/github_helper.sh" <<'EOF'
 #!/usr/bin/env bash
@@ -245,8 +252,8 @@ EOF
 
     cat > "$repos_fixture" <<EOF
 [
-  {"name":"dotfiles","pushed_at":"${today}T00:00:00Z"},
-  {"name":"rockit","pushed_at":"${today}T00:00:00Z"}
+  {"name":"dotfiles","pushed_at":"${now_utc_iso}"},
+  {"name":"rockit","pushed_at":"${now_utc_iso}"}
 ]
 EOF
     printf '%s\n' "dotfiles|${today}|good place" > "$DATA_DIR/github_inactive_repos.txt"

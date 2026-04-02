@@ -356,8 +356,31 @@ list_user_events() {
     } | iconv -c -f utf-8 -t utf-8
 }
 
-# Lists commits for a specific date (YYYY-MM-DD) by querying the Commits API.
-# Lists commits for a specific date (YYYY-MM-DD) natively via GraphQL.
+# Fetch the first-line commit headline for a specific repo SHA.
+_commit_headline_for_sha() {
+    local repo_full_name="$1"
+    local commit_sha="$2"
+    local commit_json=""
+    local headline=""
+
+    if [ -z "$repo_full_name" ] || [ -z "$commit_sha" ]; then
+        return 1
+    fi
+
+    if ! commit_json=$(_github_api_call "/repos/$repo_full_name/commits/$commit_sha"); then
+        return 1
+    fi
+
+    headline=$(printf '%s' "$commit_json" | jq -r '(.commit.message // "") | split("\n")[0] | gsub("\\|"; "/")' 2>/dev/null || true)
+    if [ -z "$headline" ] || [ "$headline" = "null" ]; then
+        return 1
+    fi
+
+    printf '%s\n' "$headline"
+}
+
+# Lists pushed commit heads for a specific local date (YYYY-MM-DD) across any branch.
+# Output format: repo|sha|message
 list_commits_for_date() {
     local target_date="$1"
     if [ -z "$target_date" ]; then
@@ -388,114 +411,85 @@ list_commits_for_date() {
         allowed_repos=$(_allowed_repo_names || true)
     fi
 
-    local query='query {
-      user(login: "'"$USERNAME"'") {
-        repositories(first: 30, orderBy: {field: PUSHED_AT, direction: DESC}) {
-          nodes {
-            name
-            defaultBranchRef {
-              target {
-                ... on Commit {
-                  history(since: "'"$utc_start"'", until: "'"$utc_end"'") {
-                    nodes {
-                      oid
-                      messageHeadline
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }'
-
-    local tmp_payload
-    local tmp_response
-    local curl_err
+    local events_json=""
+    local raw_pushes=""
+    local tmp_output
+    local err_file
     local used_cache=false
-    tmp_payload=$(mktemp -t "gh_gql_req.XXXXXX")
-    tmp_response=$(mktemp -t "gh_gql_res.XXXXXX")
-    curl_err=$(mktemp -t "gh_gql_err.XXXXXX")
+    tmp_output=$(mktemp -t "gh_commit_activity.XXXXXX")
+    err_file=$(mktemp -t "gh_commit_activity_err.XXXXXX")
 
     # shellcheck disable=SC2064
-    trap "rm -f '$tmp_payload' '$tmp_response' '$curl_err'" RETURN
+    trap "rm -f '$tmp_output' '$err_file'" RETURN
 
-    # Build the JSON payload safely
-    jq -n --arg q "$query" '{query: $q}' > "$tmp_payload"
-
-    if ! curl -fsS -L \
-         --connect-timeout "$GITHUB_CONNECT_TIMEOUT" \
-         --max-time "$GITHUB_REQUEST_TIMEOUT" \
-         -H "Authorization: bearer $TOKEN" \
-         -H "Content-Type: application/json" \
-         -X POST -d "@$tmp_payload" \
-         "https://api.github.com/graphql" -o "$tmp_response" 2>"$curl_err"; then
-        if [ "$GITHUB_DEBUG" = "true" ] && [ -s "$curl_err" ]; then
-            _github_debug_log "Primary Err: $(head -n 1 "$curl_err" | tr -d '\r')"
+    if ! events_json=$(list_user_events 2>"$err_file"); then
+        if [ -s "$err_file" ]; then
+            cat "$err_file" >&2
         fi
-        if ! _restore_commit_activity_cache "$cache_file" "$target_date" "$tmp_response"; then
-            echo "Error: Failed to reach GitHub GraphQL API" >&2
+        if ! _restore_commit_activity_cache "$cache_file" "$target_date" "$tmp_output"; then
+            echo "Error: Failed to reach GitHub events API" >&2
             return 1
         fi
         used_cache=true
     fi
 
-    if ! jq empty "$tmp_response" >/dev/null 2>&1; then
-        if ! _restore_commit_activity_cache "$cache_file" "$target_date" "$tmp_response"; then
-            echo "Error: Invalid response from GitHub GraphQL API" >&2
+    if [ "$used_cache" = false ] && ! printf '%s' "$events_json" | jq empty >/dev/null 2>&1; then
+        if ! _restore_commit_activity_cache "$cache_file" "$target_date" "$tmp_output"; then
+            echo "Error: Invalid response from GitHub events API" >&2
             return 1
         fi
         used_cache=true
     fi
 
-    if jq -e '.errors? | type == "array" and length > 0' "$tmp_response" >/dev/null 2>&1; then
-        if [ "$GITHUB_DEBUG" = "true" ]; then
-            _github_debug_log "GraphQL Err: $(jq -r '.errors[0].message // "unknown GraphQL error"' "$tmp_response" 2>/dev/null)"
+    if [ "$used_cache" = false ]; then
+        raw_pushes=$(printf '%s' "$events_json" | jq -r --arg start "$utc_start" --arg end "$utc_end" '
+            try (
+                .[]
+                | select(.type == "PushEvent")
+                | select((.created_at // "") >= $start and (.created_at // "") < $end)
+                | [.repo.name, (.payload.head // ""), (.payload.ref // "")]
+                | @tsv
+            ) catch empty
+        ' 2>/dev/null || true)
+
+        if [ -n "$raw_pushes" ]; then
+            while IFS=$'\t' read -r repo_full_name head_sha ref_name; do
+                local repo_name=""
+                local branch_name=""
+                local message=""
+
+                [ -n "$repo_full_name" ] || continue
+                [ -n "$head_sha" ] || continue
+
+                repo_name="${repo_full_name##*/}"
+                if [ -n "$allowed_repos" ] && ! printf '%s\n' "$allowed_repos" | grep -Fxq "$repo_name"; then
+                    continue
+                fi
+
+                message=$(_commit_headline_for_sha "$repo_full_name" "$head_sha" 2>/dev/null || true)
+                if [ -z "$message" ]; then
+                    branch_name="${ref_name#refs/heads/}"
+                    if [ -n "$branch_name" ] && [ "$branch_name" != "$ref_name" ]; then
+                        message="Pushed to $branch_name"
+                    else
+                        message="Pushed commit"
+                    fi
+                fi
+
+                printf '%s|%s|%s\n' "$repo_name" "${head_sha:0:7}" "$message" >> "$tmp_output"
+            done <<< "$raw_pushes"
         fi
-        if ! _restore_commit_activity_cache "$cache_file" "$target_date" "$tmp_response"; then
-            echo "Error: GitHub GraphQL returned an error for commit activity" >&2
-            return 1
+
+        if [ -s "$tmp_output" ]; then
+            LC_ALL=C sort -u "$tmp_output" -o "$tmp_output"
         fi
-        used_cache=true
-    fi
 
-    if [ "$used_cache" = false ] && [ -n "$cache_file" ]; then
-        cp "$tmp_response" "$cache_file"
-    fi
-
-    local raw_commits
-    raw_commits=$(jq -r '
-        try (
-            .data.user.repositories.nodes[] | 
-            select(.defaultBranchRef != null) | 
-            .name as $repo | 
-            .defaultBranchRef.target.history.nodes[]? | 
-            "\($repo)|\(.oid[0:7])|\(.messageHeadline | gsub("\\|"; "/"))"
-        ) catch empty
-    ' "$tmp_response" 2>/dev/null || true)
-
-    if [ -z "$raw_commits" ]; then
-        return 0
-    fi
-
-    local final_commits=""
-    while IFS= read -r line; do
-        [ -z "$line" ] && continue
-        local repo_name
-        repo_name="${line%%|*}"
-        
-        # Apply repo exclusions if active
-        if [ -n "$allowed_repos" ] && ! printf '%s\n' "$allowed_repos" | grep -Fxq "$repo_name"; then
-            continue
+        if [ -n "$cache_file" ]; then
+            cp "$tmp_output" "$cache_file"
         fi
-        
-        final_commits+="${line}"$'\n'
-    done <<< "$raw_commits"
-
-    if [ -n "$final_commits" ]; then
-        printf "%s" "$final_commits" | awk 'NF' | sort -u
     fi
+
+    cat "$tmp_output"
 }
 
 # Gets raw JSON data for a specific repository.

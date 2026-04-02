@@ -91,6 +91,38 @@ determine_session_date() {
     fi
 }
 
+goodevening_completed_focus_for_day() {
+    local target_day="$1"
+    local history_file="${FOCUS_HISTORY_FILE:-}"
+
+    if [ -z "$history_file" ] || [ ! -f "$history_file" ]; then
+        return 0
+    fi
+
+    awk -F'|' -v day="$target_day" '
+        $1 == day && $2 !~ / \(Replaced\)$/ {
+            focus = $2
+        }
+        END {
+            if (focus != "") {
+                sub(/ \(Completed\)$/, "", focus)
+                print focus
+            }
+        }
+    ' "$history_file"
+}
+
+goodevening_focus_context_for_day() {
+    local target_day="$1"
+
+    if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
+        cat "$FOCUS_FILE"
+        return 0
+    fi
+
+    goodevening_completed_focus_for_day "$target_day"
+}
+
 # 1. Parse arguments and determine session date
 FORCE_CURRENT_DAY=false
 DATE_OVERRIDE=""
@@ -108,6 +140,15 @@ done
 
 TODAY=$(determine_session_date "$FORCE_CURRENT_DAY" "$DATE_OVERRIDE")
 HEALTH_SCRIPT="${HEALTH_SCRIPT:-$DOTFILES_DIR/scripts/health.sh}"
+ACTIVE_FOCUS_CONTEXT=""
+if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
+    ACTIVE_FOCUS_CONTEXT=$(cat "$FOCUS_FILE")
+fi
+COMPLETED_FOCUS_CONTEXT="$(goodevening_completed_focus_for_day "$TODAY")"
+SESSION_FOCUS_CONTEXT="$ACTIVE_FOCUS_CONTEXT"
+if [ -z "$SESSION_FOCUS_CONTEXT" ] && [ -n "$COMPLETED_FOCUS_CONTEXT" ]; then
+    SESSION_FOCUS_CONTEXT="$COMPLETED_FOCUS_CONTEXT"
+fi
 
 # Refresh Fitbit data before the evening review.
 # That way the reflection can see the latest wearable picture from today.
@@ -133,8 +174,12 @@ fi
 # --- Focus ---
 echo ""
 echo "🎯 TODAY'S FOCUS:"
-if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
-    echo "  $(cat "$FOCUS_FILE")"
+if [ -n "$SESSION_FOCUS_CONTEXT" ]; then
+    if [ -z "$ACTIVE_FOCUS_CONTEXT" ] && [ -n "$COMPLETED_FOCUS_CONTEXT" ]; then
+        echo "  $SESSION_FOCUS_CONTEXT (completed earlier today)"
+    else
+        echo "  $SESSION_FOCUS_CONTEXT"
+    fi
 else
     echo "  (No focus set)"
 fi
@@ -320,10 +365,8 @@ if [ "$TASKS_COMPLETED" -eq 0 ] && [ "$JOURNAL_ENTRY_COUNT" -eq 0 ] && [ "$_GE_C
     fi
 
     # Check if focus was completed
-    if [ -f "${FOCUS_HISTORY_FILE:-}" ]; then
-        if grep -q "^$TODAY|.*Completed" "$FOCUS_HISTORY_FILE" 2>/dev/null; then
-            _ge_focus_completed=true
-        fi
+    if [ -n "${COMPLETED_FOCUS_CONTEXT:-}" ]; then
+        _ge_focus_completed=true
     fi
 
     if [ "$_ge_had_low_energy" = true ] || [ "$_ge_had_high_fog" = true ] || [ "$_ge_spoons_exhausted" = true ]; then
@@ -539,10 +582,7 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     # The evening coach follows the same broad pattern as startday:
     # gather facts, build a prompt, ask the AI, then print a reflection.
     # TODAY is already set globally above, including refresh/override handling.
-    FOCUS_CONTEXT=""
-    if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
-        FOCUS_CONTEXT=$(cat "$FOCUS_FILE")
-    fi
+    FOCUS_CONTEXT="${SESSION_FOCUS_CONTEXT:-}"
     COACH_TACTICAL_DAYS="${AI_COACH_TACTICAL_DAYS:-7}"
     COACH_PATTERN_DAYS="${AI_COACH_PATTERN_DAYS:-30}"
     COACH_MODE="${AI_COACH_MODE_DEFAULT:-LOCKED}"

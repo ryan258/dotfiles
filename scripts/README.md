@@ -62,6 +62,7 @@ The full rules live in `../CLAUDE.md`.
 - If the AI returns output, the coaching flows keep that output but still clean and cap the blindspot sections so raw metric/debug noise does not leak into the user-facing briefing. Deterministic fallback text only appears when the dispatcher times out, errors, or is unavailable.
 - `status.sh` shows the current coach mode, spoon budget and use, focus text, and a Git-backed alignment signal in a DAILY CONTEXT section.
 - When the AI status coach is on, `status.sh` also shows a GitHub-first reset section. It uses today's commits, recent pushes, project context, and the same scan cleaner as the morning coach.
+- Recent GitHub push labels now use the local calendar day instead of a rolling 24-hour bucket, and the daily commit recaps follow any branch that was pushed that day instead of only the repo default branch.
 - `startday.sh`, `status.sh`, and `goodevening.sh` now hide repos listed in `github_inactive_repos.txt` from their GitHub activity signal and show those parked repo names in a separate reactivation list instead.
 
 ## Correlation Shortcuts
