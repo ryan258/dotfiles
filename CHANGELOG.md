@@ -1,6 +1,17 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** April 2, 2026
+**Last Updated:** April 3, 2026
+
+## Version 2.2.59 (April 3, 2026) - Fitbit Auth Repair Signals
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- `scripts/fitbit_sync.sh` now treats empty or invalid `google_health_oauth.json` files as a clear repairable auth problem instead of leaking a Python `JSONDecodeError`, and `auth-url` now ignores corrupted stored auth so rerunning the OAuth flow still works.
+- The same sync path now refuses to overwrite Fitbit auth state with empty or invalid JSON content, reducing the chance of a zero-byte auth file getting persisted again.
+- `scripts/lib/health_ops.sh` now surfaces a Fitbit auth repair hint in `health.sh summary` and the daily routines when wearable data exists but the local Google Health auth file is empty or invalid.
+- Added BATS coverage for corrupted Fitbit auth files across `fitbit_sync.sh` and `health.sh` summaries.
 
 ## Version 2.2.58 (April 2, 2026) - PDF To Markdown Utility
 

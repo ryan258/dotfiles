@@ -26,6 +26,7 @@ The full rules live in `../CLAUDE.md`.
 
 - `fitbit_import.sh` imports Fitbit CSV exports into normalized daily metric files under `~/.config/dotfiles-data/fitbit/`.
 - `fitbit_sync.sh` performs a one-time Google OAuth setup and then syncs recent Google Health API data into the same normalized metric files.
+- If `fitbit_sync.sh status` says the auth file is empty or invalid JSON, rerun `fitbit_sync.sh auth` to repair the local Google Health token state.
 - `startday.sh`, `status.sh`, and `goodevening.sh` now run a best-effort `fitbit_sync.sh sync "$GOOGLE_HEALTH_DEFAULT_DAYS"` first when Google Health auth is already present, so the daily views and coach prompts see fresh wearable data.
 - Keep `health.sh` for subjective signals like energy, fog, and symptoms. Use `fitbit_import.sh` for objective Fitbit metrics like sleep, steps, resting heart rate, and HRV.
 - `fitbit_import.sh auto <dir>` scans a Fitbit export directory, while `fitbit_import.sh latest` shows the newest imported values.

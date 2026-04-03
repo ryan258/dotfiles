@@ -31,6 +31,16 @@ teardown() {
     assert_file_contains "$DOTFILES_DATA_DIR/google_health_oauth_pending.json" "\"state\""
 }
 
+@test "fitbit_sync.sh auth-url ignores a corrupted stored auth file" {
+    : > "$DOTFILES_DATA_DIR/google_health_oauth.json"
+
+    run env PATH="$TEST_DIR/fake-bin:$PATH" "$DOTFILES_DIR/scripts/fitbit_sync.sh" auth-url
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == https://accounts.google.com/o/oauth2/v2/auth* ]]
+    assert_file_exists "$DOTFILES_DATA_DIR/google_health_oauth_pending.json"
+}
+
 @test "fitbit_sync.sh auth-exchange saves OAuth tokens and identity metadata" {
     cat > "$TEST_DIR/fake-bin/curl" <<'EOF'
 #!/usr/bin/env bash
@@ -144,4 +154,25 @@ EOF
     assert_file_contains "$DOTFILES_DATA_DIR/fitbit/sleep_minutes.txt" "$mock_day|430"
     assert_file_contains "$DOTFILES_DATA_DIR/fitbit/resting_heart_rate.txt" "$mock_day|61"
     assert_file_contains "$DOTFILES_DATA_DIR/fitbit/hrv.txt" "$mock_day|42"
+}
+
+@test "fitbit_sync.sh status reports an empty auth file without crashing" {
+    : > "$DOTFILES_DATA_DIR/google_health_oauth.json"
+
+    run env PATH="$TEST_DIR/fake-bin:$PATH" "$DOTFILES_DIR/scripts/fitbit_sync.sh" status
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Fitbit sync auth ready: no"* ]]
+    [[ "$output" == *"Auth file issue: Auth file is empty or invalid JSON."* ]]
+    [[ "$output" != *"JSONDecodeError"* ]]
+}
+
+@test "fitbit_sync.sh sync fails fast with a clear error for an empty auth file" {
+    : > "$DOTFILES_DATA_DIR/google_health_oauth.json"
+
+    run env PATH="$TEST_DIR/fake-bin:$PATH" "$DOTFILES_DIR/scripts/fitbit_sync.sh" sync 1
+
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"Fitbit sync auth file is empty or invalid JSON"* ]]
+    [[ "$output" != *"JSONDecodeError"* ]]
 }

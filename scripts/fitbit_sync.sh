@@ -91,8 +91,22 @@ path, key = sys.argv[1:3]
 if not os.path.exists(path):
     raise SystemExit(0)
 
-with open(path, "r", encoding="utf-8") as handle:
-    data = json.load(handle)
+try:
+    with open(path, "r", encoding="utf-8") as handle:
+        raw = handle.read()
+except OSError as exc:
+    print(f"Error: Failed to read JSON file {path}: {exc}", file=sys.stderr)
+    raise SystemExit(1)
+
+if not raw.strip():
+    print(f"Error: JSON file is empty: {path}", file=sys.stderr)
+    raise SystemExit(1)
+
+try:
+    data = json.loads(raw)
+except json.JSONDecodeError:
+    print(f"Error: Invalid JSON in {path}. Run fitbit_sync.sh auth again.", file=sys.stderr)
+    raise SystemExit(1)
 
 value = data.get(key, "")
 if value is None:
@@ -104,11 +118,87 @@ else:
 PY
 }
 
+json_content_is_valid() {
+    local content="$1"
+
+    python3 - "$content" <<'PY'
+import json
+import sys
+
+raw = sys.argv[1]
+if not raw.strip():
+    raise SystemExit(1)
+
+json.loads(raw)
+PY
+}
+
+json_file_is_valid() {
+    local file_path="$1"
+
+    python3 - "$file_path" <<'PY'
+import json
+import os
+import sys
+
+path = sys.argv[1]
+if not os.path.exists(path):
+    raise SystemExit(1)
+
+try:
+    with open(path, "r", encoding="utf-8") as handle:
+        raw = handle.read()
+except OSError:
+    raise SystemExit(1)
+
+if not raw.strip():
+    raise SystemExit(1)
+
+try:
+    json.loads(raw)
+except json.JSONDecodeError:
+    raise SystemExit(1)
+PY
+}
+
+auth_file_is_valid() {
+    local auth_file="${1:-$GOOGLE_HEALTH_AUTH_FILE}"
+
+    [[ -f "$auth_file" ]] || return 1
+    json_file_is_valid "$auth_file" >/dev/null 2>&1
+}
+
+ensure_auth_file_is_valid() {
+    if [[ ! -f "$GOOGLE_HEALTH_AUTH_FILE" ]]; then
+        die "No Fitbit sync auth file found. Run $(basename "$0") auth first." "$EXIT_FILE_NOT_FOUND"
+        return 1
+    fi
+    if ! auth_file_is_valid "$GOOGLE_HEALTH_AUTH_FILE"; then
+        die "Fitbit sync auth file is empty or invalid JSON at $GOOGLE_HEALTH_AUTH_FILE. Run $(basename "$0") auth again." "$EXIT_ERROR"
+        return 1
+    fi
+}
+
+load_auth_field_if_valid() {
+    local key="$1"
+
+    if auth_file_is_valid "$GOOGLE_HEALTH_AUTH_FILE"; then
+        json_get "$GOOGLE_HEALTH_AUTH_FILE" "$key"
+    fi
+}
+
 write_json_file() {
     local target_file="$1"
     local content="$2"
 
-    atomic_write "$content" "$target_file" || die "Failed to write $target_file" "$EXIT_ERROR"
+    if ! json_content_is_valid "$content"; then
+        die "Refusing to write empty or invalid JSON to $target_file" "$EXIT_ERROR"
+        return 1
+    fi
+    if ! atomic_write "$content" "$target_file"; then
+        die "Failed to write $target_file" "$EXIT_ERROR"
+        return 1
+    fi
     set_private_permissions "$target_file"
 }
 
@@ -188,7 +278,7 @@ prompt_if_missing() {
 
 resolve_client_id() {
     local value="${GOOGLE_HEALTH_CLIENT_ID:-}"
-    if [[ -z "$value" ]]; then
+    if [[ -z "$value" ]] && auth_file_is_valid "$GOOGLE_HEALTH_AUTH_FILE"; then
         value="$(json_get "$GOOGLE_HEALTH_AUTH_FILE" "client_id")"
     fi
     value=$(prompt_if_missing "$value" "Enter Google Health OAuth Client ID: ")
@@ -198,7 +288,7 @@ resolve_client_id() {
 
 resolve_client_secret() {
     local value="${GOOGLE_HEALTH_CLIENT_SECRET:-}"
-    if [[ -z "$value" ]]; then
+    if [[ -z "$value" ]] && auth_file_is_valid "$GOOGLE_HEALTH_AUTH_FILE"; then
         value="$(json_get "$GOOGLE_HEALTH_AUTH_FILE" "client_secret")"
     fi
     value=$(prompt_if_missing "$value" "Enter Google Health Client Secret: " true)
@@ -241,8 +331,8 @@ save_auth_tokens() {
     now_epoch=$(date_epoch_now)
 
     local existing_legacy_user_id existing_health_user_id
-    existing_legacy_user_id="$(json_get "$GOOGLE_HEALTH_AUTH_FILE" "legacy_user_id")"
-    existing_health_user_id="$(json_get "$GOOGLE_HEALTH_AUTH_FILE" "health_user_id")"
+    existing_legacy_user_id="$(load_auth_field_if_valid "legacy_user_id")"
+    existing_health_user_id="$(load_auth_field_if_valid "health_user_id")"
 
     local auth_json
     auth_json="$(python3 - "$client_id" "$client_secret" "$redirect_uri" "$scopes" "$response_json" "$fallback_refresh" "$now_epoch" "$existing_legacy_user_id" "$existing_health_user_id" <<'PY'
@@ -319,7 +409,7 @@ PY
 }
 
 refresh_access_token() {
-    [[ -f "$GOOGLE_HEALTH_AUTH_FILE" ]] || die "No Fitbit sync auth file found. Run $(basename "$0") auth first." "$EXIT_FILE_NOT_FOUND"
+    ensure_auth_file_is_valid || return 1
 
     local client_id client_secret refresh_token redirect_uri scopes response_json
     client_id="$(json_get "$GOOGLE_HEALTH_AUTH_FILE" "client_id")"
@@ -335,7 +425,7 @@ refresh_access_token() {
 }
 
 get_access_token() {
-    [[ -f "$GOOGLE_HEALTH_AUTH_FILE" ]] || die "No Fitbit sync auth file found. Run $(basename "$0") auth first." "$EXIT_FILE_NOT_FOUND"
+    ensure_auth_file_is_valid || return 1
 
     local access_token expires_at now_epoch
     access_token="$(json_get "$GOOGLE_HEALTH_AUTH_FILE" "access_token")"
@@ -347,7 +437,7 @@ get_access_token() {
         return 0
     fi
 
-    refresh_access_token
+    refresh_access_token || return 1
     json_get "$GOOGLE_HEALTH_AUTH_FILE" "access_token"
 }
 
@@ -418,6 +508,7 @@ api_post_json() {
 
 save_identity_metadata() {
     local access_token="$1"
+    ensure_auth_file_is_valid || return 1
     local identity_json
     identity_json="$(api_get "/users/me/identity" "$access_token" || true)"
     [[ -n "$identity_json" ]] || return 0
@@ -888,8 +979,10 @@ cmd_sync() {
     validate_numeric "$days" "sync days" || die "Sync days must be a positive integer" "$EXIT_INVALID_ARGS"
     (( days >= 1 )) || die "Sync days must be at least 1" "$EXIT_INVALID_ARGS"
 
-    local access_token
-    access_token="$(get_access_token)"
+    local access_token=""
+    if ! access_token="$(get_access_token)"; then
+        return 1
+    fi
 
     local steps_count sleep_count resting_count hrv_count
     steps_count="$(sync_metric "steps" "$days" "$access_token" "true")"
@@ -906,6 +999,7 @@ cmd_sync() {
 
 cmd_status() {
     local auth_ready="no"
+    local auth_issue=""
     local client_id=""
     local expires_at=""
     local last_sync_at=""
@@ -913,17 +1007,22 @@ cmd_status() {
     local health_user_id=""
 
     if [[ -f "$GOOGLE_HEALTH_AUTH_FILE" ]]; then
-        auth_ready="yes"
-        client_id="$(json_get "$GOOGLE_HEALTH_AUTH_FILE" "client_id")"
-        expires_at="$(json_get "$GOOGLE_HEALTH_AUTH_FILE" "expires_at")"
-        legacy_user_id="$(json_get "$GOOGLE_HEALTH_AUTH_FILE" "legacy_user_id")"
-        health_user_id="$(json_get "$GOOGLE_HEALTH_AUTH_FILE" "health_user_id")"
+        if auth_file_is_valid "$GOOGLE_HEALTH_AUTH_FILE"; then
+            auth_ready="yes"
+            client_id="$(json_get "$GOOGLE_HEALTH_AUTH_FILE" "client_id")"
+            expires_at="$(json_get "$GOOGLE_HEALTH_AUTH_FILE" "expires_at")"
+            legacy_user_id="$(json_get "$GOOGLE_HEALTH_AUTH_FILE" "legacy_user_id")"
+            health_user_id="$(json_get "$GOOGLE_HEALTH_AUTH_FILE" "health_user_id")"
+        else
+            auth_issue="Auth file is empty or invalid JSON. Run $(basename "$0") auth again."
+        fi
     fi
     if [[ -f "$GOOGLE_HEALTH_SYNC_STATE_FILE" ]]; then
         last_sync_at="$(json_get "$GOOGLE_HEALTH_SYNC_STATE_FILE" "last_sync_at")"
     fi
 
     echo "Fitbit sync auth ready: $auth_ready"
+    [[ -n "$auth_issue" ]] && echo "Auth file issue: $auth_issue"
     [[ -n "$client_id" ]] && echo "Client ID: $client_id"
     [[ -n "$legacy_user_id" ]] && echo "Fitbit legacy user ID: $legacy_user_id"
     [[ -n "$health_user_id" ]] && echo "Google Health user ID: $health_user_id"

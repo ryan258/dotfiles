@@ -198,6 +198,33 @@ health_ops_print_fitbit_snapshot() {
     [[ "$printed" == "true" ]]
 }
 
+health_ops_print_fitbit_sync_notice() {
+    local auth_file="${GOOGLE_HEALTH_AUTH_FILE:-$DATA_DIR/google_health_oauth.json}"
+
+    [[ -e "$auth_file" ]] || return 1
+
+    if [[ ! -s "$auth_file" ]]; then
+        echo "  Fitbit sync auth needs repair: run 'fitbit_sync.sh auth' (auth file is empty)"
+        return 0
+    fi
+
+    python3 - "$auth_file" <<'PY'
+import json
+import sys
+
+path = sys.argv[1]
+
+try:
+    with open(path, "r", encoding="utf-8") as handle:
+        json.load(handle)
+except (OSError, json.JSONDecodeError):
+    print("  Fitbit sync auth needs repair: run 'fitbit_sync.sh auth' (auth file is invalid)")
+    raise SystemExit(0)
+
+raise SystemExit(1)
+PY
+}
+
 health_ops_print_fitbit_dashboard() {
     local days="${1:-30}"
     local health_file="${HEALTH_FILE:-}"
@@ -478,6 +505,9 @@ show_health_summary() {
     # These lines are printed after manual health notes so the whole summary reads
     # like "appointments, how you felt, what the watch saw."
     if health_ops_print_fitbit_snapshot; then
+        has_data=true
+    fi
+    if health_ops_print_fitbit_sync_notice; then
         has_data=true
     fi
 

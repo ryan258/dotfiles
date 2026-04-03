@@ -289,6 +289,7 @@ cmd_summary() {
         echo "Symptoms logged today: $symptom_count"
     fi
     health_ops_print_fitbit_snapshot || true
+    health_ops_print_fitbit_sync_notice || true
 }
 
 cmd_remove() {

@@ -85,3 +85,16 @@ EOF
     [ "$status" -eq 0 ]
     [[ "$output" == *"Fitbit sleep: 8h (2026-03-26)"* ]]
 }
+
+@test "health.sh summary flags a broken Fitbit auth file when wearable data is stale" {
+    cat > "$DOTFILES_DATA_DIR/fitbit/sleep_minutes.txt" <<'EOF'
+2026-03-26|480
+EOF
+    : > "$DOTFILES_DATA_DIR/google_health_oauth.json"
+
+    run "$DOTFILES_DIR/scripts/health.sh" summary
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Fitbit sleep: 8h (2026-03-26)"* ]]
+    [[ "$output" == *"Fitbit sync auth needs repair: run 'fitbit_sync.sh auth' (auth file is empty)"* ]]
+}

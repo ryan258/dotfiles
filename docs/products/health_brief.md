@@ -9,6 +9,7 @@
 - Track energy, fog, and appointments in `health.txt`.
 - Import Fitbit CSV exports into `~/.config/dotfiles-data/fitbit/*.txt` for objective sleep and heart-rate trend data.
 - Use `fitbit_sync.sh` for a one-time OAuth setup plus recurring Google Health API pulls into those same local metric files.
+- If `fitbit_sync.sh status` reports an empty or invalid auth file, rerun `fitbit_sync.sh auth` to repair the local token state before the next sync.
 - Use `health check` and `health dashboard` for feedback.
 - Designed to prevent overwork and burnout.
 
