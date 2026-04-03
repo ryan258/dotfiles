@@ -253,6 +253,7 @@ alias newscript="new_script.sh"          # Scaffold a new bash script with prope
 alias weather="weather.sh"               # Current weather forecast
 alias findtext="findtext.sh"             # Search file contents recursively
 alias graballtext="grab_all_text.sh"     # Concatenate all text files in a directory
+alias pdf2md="pdf_to_markdown.sh"        # Convert a PDF into Markdown for cheaper AI ingestion
 
 # --- Project & Development Tools ---
 alias newproject="start_project.sh"      # Scaffold a new project directory

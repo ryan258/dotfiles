@@ -1,6 +1,16 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** April 1, 2026
+**Last Updated:** April 2, 2026
+
+## Version 2.2.58 (April 2, 2026) - PDF To Markdown Utility
+
+**Status:** ✅ Production Ready
+
+### New
+
+- Added `scripts/pdf_to_markdown.sh`, a local-first PDF-to-Markdown converter that extracts embedded PDF text with macOS `PDFKit` via `swift` and writes `file.md` beside the source PDF by default.
+- Added the `pdf2md` alias plus quick-reference updates in the scripts docs, alias guide, cheatsheet, and general handbook so the new ingestion shortcut is easy to find.
+- Added focused BATS coverage for missing-file handling and a real sample PDF conversion path.
 
 ## Version 2.2.57 (April 1, 2026) - Calendar-Day GitHub Activity
 

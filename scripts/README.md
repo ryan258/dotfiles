@@ -15,6 +15,13 @@ The full rules live in `../CLAUDE.md`.
 - `focus.sh`
 - `repo_tracker.sh`
 
+## Document Utilities
+
+- `pdf_to_markdown.sh` extracts embedded text from a PDF and writes Markdown beside the source file by default, which is useful when you want a cheaper AI-ingestion format than the original PDF.
+- It uses macOS `PDFKit` via `swift`, so it works without extra Homebrew PDF tooling.
+- Use `pdf_to_markdown.sh report.pdf`, `pdf_to_markdown.sh report.pdf notes/report.md`, or `pdf_to_markdown.sh report.pdf --stdout`.
+- Scanned or image-only PDFs still need OCR. This tool only converts text that already exists in the PDF.
+
 ## Wearable Imports
 
 - `fitbit_import.sh` imports Fitbit CSV exports into normalized daily metric files under `~/.config/dotfiles-data/fitbit/`.

@@ -2792,6 +2792,7 @@ These aliases come from `zsh/aliases.zsh`. This is a full list of all commands y
 | `weather`        | `weather.sh`               | Current weather forecast                                          |
 | `findtext`       | `findtext.sh`              | Search file contents recursively                                  |
 | `graballtext`    | `grab_all_text.sh`         | Concatenate all text files in a directory                         |
+| `pdf2md`         | `pdf_to_markdown.sh`       | Convert a text-based PDF into Markdown for cheaper AI ingestion   |
 | `newproject`     | `start_project.sh`         | Scaffold a new project directory                                  |
 | `newpython`      | `mkproject_py.sh`          | Scaffold a Python project with venv                               |
 | `newpy`          | `mkproject_py.sh`          | Short form of newpython                                           |
@@ -3115,6 +3116,7 @@ Usage: blog <command> [args]
   health list             # Show upcoming appointments
   weekreview              # Show last 7 days activity
   graballtext             # Dump all readable text into all_text_contents.txt
+  pdf2md report.pdf       # Convert a PDF into Markdown for cheaper AI ingestion
   projects forgotten      # List old projects
   projects recall <name>  # Show details of an old project
   blog status             # Show blog status

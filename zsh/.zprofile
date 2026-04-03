@@ -1,6 +1,6 @@
 # .zprofile: Executed at login.
-# PATH modifications are now handled in ~/.zshenv to ensure they are
-# available to all shell types, including non-interactive ones.
+# PATH modifications are handled in ~/.zshenv so login and non-interactive shells
+# pick up Homebrew tools like node, npm, and npx.
 
 # Source the interactive config for login shells to unify environments
 

@@ -48,6 +48,7 @@ The full rules live in `../CLAUDE.md`.
 - `dotfiles-check` (run system checks)
 - `whatis <command>` (look up a command)
 - `memo` (your personal cheat sheet)
+- `pdf2md <file.pdf>` (convert a PDF into Markdown for cheaper AI ingestion)
 
 ## Notes
 
