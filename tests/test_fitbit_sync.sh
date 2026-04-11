@@ -8,6 +8,7 @@ setup() {
 
     export DOTFILES_DIR
     DOTFILES_DIR="$(cd "$BATS_TEST_DIRNAME/.." && pwd)"
+    export ENV_FILE="$TEST_DIR/nonexistent.env"
 
     export GOOGLE_HEALTH_CLIENT_ID="test-client"
     export GOOGLE_HEALTH_CLIENT_SECRET="test-secret"
@@ -154,6 +155,40 @@ EOF
     assert_file_contains "$DOTFILES_DATA_DIR/fitbit/sleep_minutes.txt" "$mock_day|430"
     assert_file_contains "$DOTFILES_DATA_DIR/fitbit/resting_heart_rate.txt" "$mock_day|61"
     assert_file_contains "$DOTFILES_DATA_DIR/fitbit/hrv.txt" "$mock_day|42"
+}
+
+@test "fitbit_sync.sh sync surfaces OAuth refresh failures and stores the sync error" {
+    cat > "$TEST_DIR/fake-bin/curl" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+url="${@: -1}"
+
+if [[ "$url" == "https://oauth2.googleapis.com/token" ]]; then
+  printf '%s' '{"error":"invalid_grant","error_description":"Token has been expired or revoked."}'
+else
+  printf '%s' '{}'
+fi
+EOF
+    chmod +x "$TEST_DIR/fake-bin/curl"
+
+    cat > "$DOTFILES_DATA_DIR/google_health_oauth.json" <<EOF
+{
+  "access_token": "stale-access",
+  "client_id": "test-client",
+  "client_secret": "test-secret",
+  "expires_at": 1,
+  "redirect_uri": "https://www.google.com",
+  "refresh_token": "refresh-123",
+  "scopes": "https://www.googleapis.com/auth/googlehealth.activity_and_fitness.readonly https://www.googleapis.com/auth/googlehealth.health_metrics_and_measurements.readonly https://www.googleapis.com/auth/googlehealth.sleep.readonly"
+}
+EOF
+
+    run env PATH="$TEST_DIR/fake-bin:$PATH" "$DOTFILES_DIR/scripts/fitbit_sync.sh" sync 1
+
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Google Health token refresh failed: invalid_grant (Token has been expired or revoked.)"* ]]
+    assert_file_contains "$DOTFILES_DATA_DIR/google_health_sync_state.json" "\"last_sync_error\": \"Google Health token refresh failed: invalid_grant (Token has been expired or revoked.)\""
 }
 
 @test "fitbit_sync.sh status reports an empty auth file without crashing" {

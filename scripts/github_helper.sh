@@ -306,12 +306,28 @@ _filter_repo_json() {
     fi
 }
 
+_github_owner_repos_endpoint() {
+    printf '%s' "/user/repos?affiliation=owner&sort=pushed&per_page=100"
+}
+
+_github_public_repos_endpoint() {
+    printf '/users/%s/repos?sort=pushed&per_page=100' "$USERNAME"
+}
+
 _allowed_repo_names() {
-    local repo_endpoint="/users/$USERNAME/repos?sort=pushed&per_page=100"
+    local repo_endpoint=""
+    local fallback_repo_endpoint=""
     local cache_file=""
     local repo_json=""
 
+    repo_endpoint=$(_github_owner_repos_endpoint)
+    fallback_repo_endpoint=$(_github_public_repos_endpoint)
+
     cache_file=$(_cache_path_for "$repo_endpoint")
+    if [ ! -f "$cache_file" ]; then
+        cache_file=$(_cache_path_for "$fallback_repo_endpoint")
+    fi
+
     if [ -n "$cache_file" ] && [ -f "$cache_file" ]; then
         repo_json=$(cat "$cache_file" 2>/dev/null || true)
         if [ -n "$repo_json" ]; then
@@ -332,8 +348,17 @@ _allowed_repo_names() {
 # Lists all repositories for the configured user, sorted by most recently pushed.
 # Fetches up to 100 repositories.
 list_repos() {
-    local json_data
-    if ! json_data=$(_github_api_call "/users/$USERNAME/repos?sort=pushed&per_page=100"); then
+    local json_data=""
+    local repo_endpoint=""
+
+    repo_endpoint=$(_github_owner_repos_endpoint)
+    if json_data=$(_github_api_call "$repo_endpoint" 2>/dev/null); then
+        _filter_repo_json "$json_data"
+        return 0
+    fi
+
+    repo_endpoint=$(_github_public_repos_endpoint)
+    if ! json_data=$(_github_api_call "$repo_endpoint"); then
         echo "Error: Failed to fetch repositories" >&2
         return 1
     fi

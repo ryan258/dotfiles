@@ -1,3 +1,7 @@
+export DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib${DYLD_FALLBACK_LIBRARY_PATH:+:$DYLD_FALLBACK_LIBRARY_PATH}
+
+export OPENROUTER_API_KEY=$(security find-generic-password -a "$USER" -s "OPENROUTER_API_KEY" -w)
+
 export PATH="$HOME/.composer/vendor/bin:$PATH"
 export PATH="/opt/homebrew/bin:$PATH"
 export PATH="$HOME/.config/composer/vendor/bin:$PATH"

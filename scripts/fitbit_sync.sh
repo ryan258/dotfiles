@@ -202,6 +202,62 @@ write_json_file() {
     set_private_permissions "$target_file"
 }
 
+build_sync_state_json() {
+    local sync_state_file="$1"
+    local now_epoch="$2"
+    local last_sync_at="$3"
+    local error_message="$4"
+
+    python3 - "$sync_state_file" "$now_epoch" "$last_sync_at" "$error_message" <<'PY'
+import json
+import os
+import sys
+
+path, now_epoch, last_sync_at, error_message = sys.argv[1:5]
+state = {}
+
+if os.path.exists(path):
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            raw = handle.read().strip()
+        if raw:
+            state = json.loads(raw)
+    except (OSError, json.JSONDecodeError):
+        state = {}
+
+state["last_attempt_at"] = int(now_epoch)
+
+if last_sync_at:
+    state["last_sync_at"] = int(last_sync_at)
+    state.pop("last_sync_error", None)
+    state.pop("last_sync_error_at", None)
+elif error_message:
+    state["last_sync_error"] = error_message
+    state["last_sync_error_at"] = int(now_epoch)
+
+print(json.dumps(state, indent=2, sort_keys=True))
+PY
+}
+
+record_sync_failure() {
+    local message="${1:-Unknown Fitbit sync error}"
+    local now_epoch state_json
+
+    message="$(sanitize_single_line "$message")"
+    [[ -n "$message" ]] || message="Unknown Fitbit sync error"
+    now_epoch="$(date_epoch_now)"
+    state_json="$(build_sync_state_json "$GOOGLE_HEALTH_SYNC_STATE_FILE" "$now_epoch" "" "$message")"
+    write_json_file "$GOOGLE_HEALTH_SYNC_STATE_FILE" "$state_json"
+}
+
+record_sync_success() {
+    local now_epoch state_json
+
+    now_epoch="$(date_epoch_now)"
+    state_json="$(build_sync_state_json "$GOOGLE_HEALTH_SYNC_STATE_FILE" "$now_epoch" "$now_epoch" "")"
+    write_json_file "$GOOGLE_HEALTH_SYNC_STATE_FILE" "$state_json"
+}
+
 save_pending_auth() {
     local client_id="$1"
     local client_secret="$2"
@@ -334,8 +390,9 @@ save_auth_tokens() {
     existing_legacy_user_id="$(load_auth_field_if_valid "legacy_user_id")"
     existing_health_user_id="$(load_auth_field_if_valid "health_user_id")"
 
-    local auth_json
-    auth_json="$(python3 - "$client_id" "$client_secret" "$redirect_uri" "$scopes" "$response_json" "$fallback_refresh" "$now_epoch" "$existing_legacy_user_id" "$existing_health_user_id" <<'PY'
+    local auth_json auth_status=0
+    auth_json="$(
+python3 - "$client_id" "$client_secret" "$redirect_uri" "$scopes" "$response_json" "$fallback_refresh" "$now_epoch" "$existing_legacy_user_id" "$existing_health_user_id" 2>&1 <<'PY'
 import json
 import sys
 
@@ -350,11 +407,23 @@ import sys
     legacy_user_id,
     health_user_id,
 ) = sys.argv[1:10]
-payload = json.loads(response_json)
+try:
+    payload = json.loads(response_json)
+except json.JSONDecodeError as exc:
+    print(f"Google Health token response was not valid JSON: {exc}", file=sys.stderr)
+    raise SystemExit(1)
 
 access_token = payload.get("access_token")
 if not access_token:
-    raise SystemExit("Error: Google Health token response did not contain access_token")
+    error = str(payload.get("error") or "").strip()
+    description = str(payload.get("error_description") or "").strip()
+    if error and description:
+        print(f"Google Health token refresh failed: {error} ({description})", file=sys.stderr)
+    elif error:
+        print(f"Google Health token refresh failed: {error}", file=sys.stderr)
+    else:
+        print("Google Health token response did not contain access_token", file=sys.stderr)
+    raise SystemExit(1)
 
 refresh_token = payload.get("refresh_token") or fallback_refresh
 expires_in = int(payload.get("expires_in", 3600))
@@ -376,7 +445,11 @@ result = {
 
 print(json.dumps(result, indent=2, sort_keys=True))
 PY
-)"
+    )" || auth_status=$?
+    if [[ "$auth_status" -ne 0 ]]; then
+        record_sync_failure "$auth_json"
+        die "$auth_json" "$EXIT_SERVICE_ERROR"
+    fi
 
     write_json_file "$GOOGLE_HEALTH_AUTH_FILE" "$auth_json"
 }
@@ -420,7 +493,13 @@ refresh_access_token() {
 
     [[ -n "$client_id" && -n "$client_secret" && -n "$refresh_token" ]] || die "Fitbit sync auth file is missing client_id, client_secret, or refresh_token. Run auth again." "$EXIT_ERROR"
 
-    response_json="$(token_request "refresh_token" "$client_id" "$client_secret" "refresh_token=$refresh_token")"
+    local token_status=0
+    response_json="$(token_request "refresh_token" "$client_id" "$client_secret" "refresh_token=$refresh_token" 2>&1)" || token_status=$?
+    if [[ "$token_status" -ne 0 ]]; then
+        response_json="$(sanitize_single_line "$response_json")"
+        record_sync_failure "Failed to reach Google Health token endpoint: ${response_json:-unknown curl error}"
+        die "Failed to reach Google Health token endpoint: ${response_json:-unknown curl error}" "$EXIT_SERVICE_ERROR"
+    fi
     save_auth_tokens "$client_id" "$client_secret" "$redirect_uri" "$scopes" "$response_json" "$refresh_token"
 }
 
@@ -845,7 +924,6 @@ for key in sorted(merged):
 PY
 )"
 
-    write_json_file "$GOOGLE_HEALTH_SYNC_STATE_FILE" "{\"last_sync_at\": $(date_epoch_now)}"
     atomic_write "$merged" "$target_file" || die "Failed to update $target_file" "$EXIT_ERROR"
     set_private_permissions "$target_file"
 }
@@ -989,6 +1067,7 @@ cmd_sync() {
     sleep_count="$(sync_metric "sleep_minutes" "$days" "$access_token" "true")"
     resting_count="$(sync_metric "resting_heart_rate" "$days" "$access_token" "false")"
     hrv_count="$(sync_metric "hrv" "$days" "$access_token" "false")"
+    record_sync_success
 
     echo "Synced Fitbit data for $days day(s)"
     echo "  steps: ${steps_count:-0} day(s)"
@@ -1003,6 +1082,7 @@ cmd_status() {
     local client_id=""
     local expires_at=""
     local last_sync_at=""
+    local last_sync_error=""
     local legacy_user_id=""
     local health_user_id=""
 
@@ -1019,6 +1099,7 @@ cmd_status() {
     fi
     if [[ -f "$GOOGLE_HEALTH_SYNC_STATE_FILE" ]]; then
         last_sync_at="$(json_get "$GOOGLE_HEALTH_SYNC_STATE_FILE" "last_sync_at")"
+        last_sync_error="$(json_get "$GOOGLE_HEALTH_SYNC_STATE_FILE" "last_sync_error")"
     fi
 
     echo "Fitbit sync auth ready: $auth_ready"
@@ -1028,6 +1109,7 @@ cmd_status() {
     [[ -n "$health_user_id" ]] && echo "Google Health user ID: $health_user_id"
     [[ -n "$expires_at" ]] && echo "Token expiry epoch: $expires_at"
     [[ -n "$last_sync_at" ]] && echo "Last sync epoch: $last_sync_at"
+    [[ -n "$last_sync_error" ]] && echo "Last sync error: $last_sync_error"
     echo "Metric dir: $FITBIT_DATA_DIR"
 }
 

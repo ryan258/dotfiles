@@ -1,6 +1,26 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** April 3, 2026
+**Last Updated:** April 11, 2026
+
+## Version 2.2.61 (April 11, 2026) - Fitbit Refresh Failure Signals
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- `scripts/fitbit_sync.sh` now preserves the real Google OAuth refresh failure in `google_health_sync_state.json` instead of collapsing it into a generic invalid-JSON write error, and `fitbit_sync.sh status` shows that last sync error directly.
+- `scripts/lib/health_ops.sh` now surfaces stored Fitbit sync/auth refresh failures in `health.sh summary`, so `startday`, `status`, and `goodevening` stop quietly showing stale Fitbit data with no repair hint.
+- Added focused BATS coverage for stored Fitbit refresh failures and isolated `tests/test_fitbit_sync.sh` from repo-local `.env` overrides so the Fitbit auth tests stay deterministic.
+
+## Version 2.2.60 (April 5, 2026) - Private Repo Activity Visibility
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- `scripts/github_helper.sh list_repos` now prefers the authenticated `/user/repos?affiliation=owner` listing before falling back to the public profile listing, so private repos you own can appear in the daily GitHub activity scans.
+- `scripts/lib/github_ops.sh` now benefits from that authenticated owner-repo listing automatically, which fixes missing private repos in `startday`, `status`, and `goodevening` recent-push context.
+- Added focused BATS coverage for authenticated owner-repo listing and the public-list fallback path.
 
 ## Version 2.2.59 (April 3, 2026) - Fitbit Auth Repair Signals
 

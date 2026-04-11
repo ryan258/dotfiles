@@ -200,6 +200,7 @@ health_ops_print_fitbit_snapshot() {
 
 health_ops_print_fitbit_sync_notice() {
     local auth_file="${GOOGLE_HEALTH_AUTH_FILE:-$DATA_DIR/google_health_oauth.json}"
+    local sync_state_file="${GOOGLE_HEALTH_SYNC_STATE_FILE:-$DATA_DIR/google_health_sync_state.json}"
 
     [[ -e "$auth_file" ]] || return 1
 
@@ -222,6 +223,40 @@ except (OSError, json.JSONDecodeError):
     raise SystemExit(0)
 
 raise SystemExit(1)
+PY
+    local auth_status=$?
+    if [[ "$auth_status" -eq 0 ]]; then
+        return 0
+    fi
+
+    [[ -s "$sync_state_file" ]] || return 1
+
+    python3 - "$sync_state_file" <<'PY'
+import json
+import sys
+
+path = sys.argv[1]
+
+try:
+    with open(path, "r", encoding="utf-8") as handle:
+        data = json.load(handle)
+except (OSError, json.JSONDecodeError):
+    raise SystemExit(1)
+
+error = str(data.get("last_sync_error") or "").strip()
+if not error:
+    raise SystemExit(1)
+
+lower = error.lower()
+if (
+    "invalid_grant" in lower
+    or "access_token" in lower
+    or "token refresh failed" in lower
+    or "refresh token" in lower
+):
+    print(f"  Fitbit sync auth needs repair: run 'fitbit_sync.sh auth' ({error})")
+else:
+    print(f"  Fitbit sync needs attention: {error}")
 PY
 }
 

@@ -27,6 +27,7 @@ The full rules live in `../CLAUDE.md`.
 - `fitbit_import.sh` imports Fitbit CSV exports into normalized daily metric files under `~/.config/dotfiles-data/fitbit/`.
 - `fitbit_sync.sh` performs a one-time Google OAuth setup and then syncs recent Google Health API data into the same normalized metric files.
 - If `fitbit_sync.sh status` says the auth file is empty or invalid JSON, rerun `fitbit_sync.sh auth` to repair the local Google Health token state.
+- `fitbit_sync.sh status` now also shows the last stored sync error, and the daily health summary surfaces that refresh failure when stale Fitbit data is still on screen.
 - `startday.sh`, `status.sh`, and `goodevening.sh` now run a best-effort `fitbit_sync.sh sync "$GOOGLE_HEALTH_DEFAULT_DAYS"` first when Google Health auth is already present, so the daily views and coach prompts see fresh wearable data.
 - Keep `health.sh` for subjective signals like energy, fog, and symptoms. Use `fitbit_import.sh` for objective Fitbit metrics like sleep, steps, resting heart rate, and HRV.
 - `fitbit_import.sh auto <dir>` scans a Fitbit export directory, while `fitbit_import.sh latest` shows the newest imported values.
@@ -71,6 +72,7 @@ The full rules live in `../CLAUDE.md`.
 - `status.sh` shows the current coach mode, spoon budget and use, focus text, and a Git-backed alignment signal in a DAILY CONTEXT section.
 - When the AI status coach is on, `status.sh` also shows a GitHub-first reset section. It uses today's commits, recent pushes, project context, and the same scan cleaner as the morning coach.
 - Recent GitHub push labels now use the local calendar day instead of a rolling 24-hour bucket, and the daily commit recaps follow any branch that was pushed that day instead of only the repo default branch.
+- The recent-repo scan now prefers the authenticated owner-repo listing before falling back to the public profile listing, so private repos you own can appear in `startday`, `status`, and `goodevening`.
 - `startday.sh`, `status.sh`, and `goodevening.sh` now hide repos listed in `github_inactive_repos.txt` from their GitHub activity signal and show those parked repo names in a separate reactivation list instead.
 
 ## Correlation Shortcuts

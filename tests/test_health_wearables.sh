@@ -98,3 +98,31 @@ EOF
     [[ "$output" == *"Fitbit sleep: 8h (2026-03-26)"* ]]
     [[ "$output" == *"Fitbit sync auth needs repair: run 'fitbit_sync.sh auth' (auth file is empty)"* ]]
 }
+
+@test "health.sh summary flags a stored Fitbit sync auth failure when wearable data is stale" {
+    cat > "$DOTFILES_DATA_DIR/fitbit/sleep_minutes.txt" <<'EOF'
+2026-03-26|480
+EOF
+
+    cat > "$DOTFILES_DATA_DIR/google_health_oauth.json" <<'EOF'
+{
+  "access_token": "cached-access",
+  "client_id": "test-client",
+  "client_secret": "test-secret",
+  "expires_at": 9999999999,
+  "refresh_token": "refresh-123"
+}
+EOF
+
+    cat > "$DOTFILES_DATA_DIR/google_health_sync_state.json" <<'EOF'
+{
+  "last_sync_error": "Google Health token refresh failed: invalid_grant (Token has been expired or revoked.)"
+}
+EOF
+
+    run "$DOTFILES_DIR/scripts/health.sh" summary
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Fitbit sleep: 8h (2026-03-26)"* ]]
+    [[ "$output" == *"Fitbit sync auth needs repair: run 'fitbit_sync.sh auth' (Google Health token refresh failed: invalid_grant (Token has been expired or revoked.))"* ]]
+}

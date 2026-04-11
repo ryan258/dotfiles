@@ -1802,6 +1802,7 @@ corr-hrv
 - Google’s Health API docs say app verification opens on March 30, 2026 and recommend waiting until the end of May 2026 to officially launch because breaking changes may still occur while the API stabilizes.
 - `fitbit_sync.sh` now uses the Google Health API path. The old Fitbit Web API sync path has been removed so you do not need a second migration later.
 - `startday`, `status`, and `goodevening` now attempt a silent Fitbit refresh first when Google Health auth is already stored locally, so the coach sees the newest wearable snapshot.
+- If those daily flows keep showing yesterday’s Fitbit data, run `fitbit_sync.sh status`. It now reports the last sync error, and the health summary will point you back to `fitbit_sync.sh auth` when Google rejects a token refresh.
 
 ---
 
@@ -3396,6 +3397,8 @@ Usage: projects {forgotten|recall <name>}
 ### `github_helper.sh`
 
 **Description:** github_helper.sh - Functions for talking to the GitHub API
+
+`list_repos` prefers the authenticated owner-repo listing before falling back to the public profile listing, so private repos you own can feed the daily GitHub activity views.
 
 **Usage & Examples:**
 
