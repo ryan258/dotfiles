@@ -548,7 +548,8 @@ Recent GitHub pushes (last 7 days):
 ${recent_pushes:-"(none)"}
 
 Behavior digest:
-${behavior_digest:-"(none)"}
+$(_coach_render_behavior_digest "${behavior_digest:-"(none)"}")
+$(_coach_drive_snippet_block "$behavior_digest")
 
 Wearable guidance:
 - If the behavior digest includes wearable metrics, treat them as live Fitbit/Google Health context.
@@ -690,7 +691,8 @@ Recent GitHub pushes (last 7 days):
 ${recent_pushes:-"(none)"}
 
 Behavior digest:
-${behavior_digest:-"(none)"}
+$(_coach_render_behavior_digest "${behavior_digest:-"(none)"}")
+$(_coach_drive_snippet_block "$behavior_digest")
 
 Wearable guidance:
 - If the behavior digest includes wearable metrics, treat them as live Fitbit/Google Health context.
@@ -822,7 +824,8 @@ Recent GitHub pushes (last 7 days):
 ${recent_pushes:-"(none)"}
 
 Behavior digest:
-${behavior_digest:-"(none)"}
+$(_coach_render_behavior_digest "${behavior_digest:-"(none)"}")
+$(_coach_drive_snippet_block "$behavior_digest")
 
 Wearable guidance:
 - If the behavior digest includes wearable metrics, treat them as live Fitbit/Google Health context.
@@ -966,6 +969,33 @@ _coach_digest_line_value() {
                 print line
                 exit
             }
+        }
+    '
+}
+
+_coach_base64_decode() {
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        base64 -D
+        return
+    fi
+    if base64 --help 2>/dev/null | grep -q -- '--decode'; then
+        base64 --decode
+    else
+        base64 -d
+    fi
+}
+
+_coach_render_behavior_digest() {
+    local digest="$1"
+
+    printf '%s\n' "$digest" | awk '
+        {
+            trimmed = $0
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "", trimmed)
+            if (trimmed ~ /^drive_top_file_(id|name|snippet_b64)=/) {
+                next
+            }
+            print $0
         }
     '
 }
@@ -2146,4 +2176,26 @@ Tomorrow lock:
 Health lens:
 - ${health_lens}
 EOF
+}
+
+_coach_drive_snippet_block() {
+    local digest="$1"
+    if [[ -z "$digest" ]]; then
+        return 0
+    fi
+    local drive_top_file_name
+    local drive_top_file_snippet_b64
+    local snippet
+
+    drive_top_file_name=$(_coach_digest_line_value "$digest" "drive_top_file_name")
+    drive_top_file_snippet_b64=$(_coach_digest_line_value "$digest" "drive_top_file_snippet_b64")
+
+    if [[ -n "$drive_top_file_snippet_b64" && "$drive_top_file_snippet_b64" != "none" ]]; then
+        snippet=$(printf '%s' "$drive_top_file_snippet_b64" | _coach_base64_decode 2>/dev/null || true)
+        snippet=${snippet%$'\n'}
+        if [[ -n "$snippet" ]]; then
+            [[ -n "$drive_top_file_name" && "$drive_top_file_name" != "none" ]] || drive_top_file_name="Recent Google Drive document"
+            printf '\n### Recent Google Drive Document Excerpt: %s\n````text\n%s\n````\n' "$drive_top_file_name" "$snippet"
+        fi
+    fi
 }

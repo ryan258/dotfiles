@@ -524,11 +524,13 @@ EOF
 set -euo pipefail
 if [[ "${1:-}" == "recent" && "${2:-}" == "1" ]]; then
   cat <<'JSON'
-[{"name":"Architecture review memo"}]
+[{"id":"doc-1","name":"Architecture review memo"}]
 JSON
+elif [[ "${1:-}" == "read" && "${2:-}" == "doc-1" ]]; then
+  printf 'Architecture review memo excerpt'
 else
   cat <<'JSON'
-[{"name":"Architecture review memo"},{"name":"System design notes"}]
+[{"id":"doc-1","name":"Architecture review memo"},{"id":"doc-2","name":"System design notes"}]
 JSON
 fi
 EOF
@@ -540,5 +542,22 @@ EOF
     [[ "$output" == *"journal_focus_hits=1"* ]]
     [[ "$output" == *"drive_focus_hits_today=1"* ]]
     [[ "$output" == *"drive_focus_hits_week=2"* ]]
+    [[ "$output" == *"drive_top_file_id=doc-1"* ]]
+    [[ "$output" == *"drive_top_file_name=Architecture review memo"* ]]
+    [[ "$output" == *"drive_top_file_snippet_b64="* ]]
     [[ "$output" == *"strategy_evidence_sources=journal,drive"* ]]
+}
+
+@test "coach_build_startday_prompt renders cached drive snippets without exposing internal digest fields" {
+    local snippet_b64
+    snippet_b64="$(printf 'Architecture review memo excerpt' | base64 | tr -d '\n')"
+
+    run bash -c "$SOURCE_PREFIX; coach_build_startday_prompt \
+        'Architecture review memo' 'LOCKED' '' '' \$'Behavior digest (structured):\n  drive_recent_titles=Architecture review memo\n  drive_top_file_id=doc-1\n  drive_top_file_name=Architecture review memo\n  drive_top_file_snippet_b64=${snippet_b64}\n  strategy_evidence_sources=drive'"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"### Recent Google Drive Document Excerpt: Architecture review memo"* ]]
+    [[ "$output" == *"Architecture review memo excerpt"* ]]
+    [[ "$output" != *"drive_top_file_id=doc-1"* ]]
+    [[ "$output" != *"drive_top_file_snippet_b64="* ]]
 }

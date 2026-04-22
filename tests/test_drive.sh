@@ -154,32 +154,55 @@ EOF
     [[ "$(cat "$TEST_DATA_DIR/google_drive_token_cache.json")" == *"fresh-token"* ]]
 }
 
-@test "drive auth saves credentials and token via device flow" {
+@test "drive auth saves credentials and token via loopback flow" {
     local mock_bin="$TEST_DIR/bin"
     mkdir -p "$mock_bin"
 
     cat > "$mock_bin/curl" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
-count_file="${CURL_COUNT_FILE:?missing}"
-count="$(cat "$count_file" 2>/dev/null || echo 0)"
-count=$((count + 1))
-echo "$count" > "$count_file"
-if [[ "$count" -eq 1 ]]; then
-  cat <<'JSON'
-{"device_code":"device-123","user_code":"ABCD-EFGH","verification_url":"https://verify.example.com","interval":0}
-JSON
-else
-  cat <<'JSON'
+cat <<'JSON'
 {"access_token":"fresh-token","refresh_token":"refresh-456","expires_in":3600}
 JSON
-fi
 EOF
     chmod +x "$mock_bin/curl"
-    echo "0" > "$TEST_DIR/curl_count.txt"
 
-    run bash -c "printf 'client-id\nclient-secret\n' | PATH='$mock_bin:$PATH' CURL_COUNT_FILE='$TEST_DIR/curl_count.txt' bash '$(_drive_script)' auth"
+    cat > "$mock_bin/nc" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "${1:-}" == "-z" ]]; then
+  exit 1
+fi
+cat >/dev/null
+printf 'GET /?code=auth-code-123&scope=drive HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n'
+EOF
+    chmod +x "$mock_bin/nc"
+
+    run bash -c "printf 'client-id\nclient-secret\n' | PATH='$mock_bin:$PATH' OSTYPE='linux-gnu' bash '$(_drive_script)' auth"
     [ "$status" -eq 0 ]
     [[ "$(cat "$TEST_DATA_DIR/google_drive_creds.json")" == *"refresh-456"* ]]
     [[ "$(cat "$TEST_DATA_DIR/google_drive_token_cache.json")" == *"fresh-token"* ]]
+}
+
+@test "drive read falls back to alt=media when export is unavailable" {
+    local mock_bin="$TEST_DIR/bin"
+    mkdir -p "$mock_bin"
+    _write_valid_token
+
+    cat > "$mock_bin/curl" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$*" == *"/export?mimeType=text/plain"* ]]; then
+  cat <<'JSON'
+{"error":{"code":403,"message":"Export only supports Docs editors files."}}
+JSON
+else
+  printf 'Fallback file contents'
+fi
+EOF
+    chmod +x "$mock_bin/curl"
+
+    run env PATH="$mock_bin:$PATH" bash "$(_drive_script)" read file-123
+    [ "$status" -eq 0 ]
+    [ "$output" = "Fallback file contents" ]
 }

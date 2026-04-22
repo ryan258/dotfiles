@@ -14,6 +14,7 @@ TOKEN_FILE="${GDRIVE_TOKEN_FILE:?GDRIVE_TOKEN_FILE is not set by config.sh}"
 CACHE_FILE="${GDRIVE_CACHE_FILE:?GDRIVE_CACHE_FILE is not set by config.sh}"
 
 AUTH_BASE="https://oauth2.googleapis.com"
+AUTH_URL_BASE="https://accounts.google.com/o/oauth2/v2/auth"
 API_BASE="https://www.googleapis.com/drive/v3"
 SCOPE="https://www.googleapis.com/auth/drive.readonly"
 GOOGLE_DRIVE_CLIENT_ID="${GOOGLE_DRIVE_CLIENT_ID:-}"
@@ -22,27 +23,32 @@ GOOGLE_DRIVE_DEFAULT_DAYS="${GOOGLE_DRIVE_DEFAULT_DAYS:-7}"
 DRIVE_CACHE_TTL_SECONDS="${DRIVE_CACHE_TTL_SECONDS:-900}"
 GDRIVE_CONNECT_TIMEOUT_SECONDS="${GDRIVE_CONNECT_TIMEOUT_SECONDS:-5}"
 GDRIVE_MAX_TIME_SECONDS="${GDRIVE_MAX_TIME_SECONDS:-20}"
+GDRIVE_AUTH_LISTEN_TIMEOUT_SECONDS="${GDRIVE_AUTH_LISTEN_TIMEOUT_SECONDS:-120}"
+GDRIVE_AUTH_PORT_CANDIDATES="${GDRIVE_AUTH_PORT_CANDIDATES:-8080 8765 8899 49152}"
 
 mkdir -p "$DATA_DIR" "$CACHE_DIR"
 
 [[ "$GDRIVE_CONNECT_TIMEOUT_SECONDS" =~ ^[0-9]+$ ]] || GDRIVE_CONNECT_TIMEOUT_SECONDS=5
 [[ "$GDRIVE_MAX_TIME_SECONDS" =~ ^[0-9]+$ ]] || GDRIVE_MAX_TIME_SECONDS=20
+[[ "$GDRIVE_AUTH_LISTEN_TIMEOUT_SECONDS" =~ ^[0-9]+$ ]] || GDRIVE_AUTH_LISTEN_TIMEOUT_SECONDS=120
 
 show_help() {
     cat <<EOF
-Usage: $(basename "$0") {auth|status|recent|recall}
+Usage: $(basename "$0") {auth|status|recent|recall|read}
 
 Commands:
-  auth                       Authenticate with Google Drive (device flow)
+  auth                       Authenticate with Google Drive (desktop loopback flow)
   status                     Show local Drive auth/cache status
   recent [days]              Show recent relevant Docs activity (default: $GOOGLE_DRIVE_DEFAULT_DAYS)
   recall [query...]          Search for older relevant docs (uses current focus when omitted)
+  read <id>                  Read the plain-text content of a Drive file
 EOF
 }
 
 check_deps() {
     require_cmd "curl" "Install with: brew install curl"
     require_cmd "jq" "Install with: brew install jq"
+    require_cmd "nc" "Install with: brew install netcat"
 }
 
 json_file_valid() {
@@ -127,11 +133,42 @@ drive_token_valid() {
     [[ "$now_epoch" -lt "$expiry" ]]
 }
 
+_drive_urlencode() {
+    local value="${1:-}"
+    jq -rn --arg value "$value" '$value | @uri'
+}
+
+_drive_urldecode() {
+    local value="${1:-}"
+    value="${value//+/ }"
+    printf '%b' "${value//%/\\x}"
+}
+
+_drive_port_available() {
+    local port="${1:-}"
+    ! nc -z 127.0.0.1 "$port" >/dev/null 2>&1
+}
+
+_drive_pick_loopback_port() {
+    local port
+
+    for port in $GDRIVE_AUTH_PORT_CANDIDATES; do
+        [[ "$port" =~ ^[0-9]+$ ]] || continue
+        if _drive_port_available "$port"; then
+            printf '%s\n' "$port"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
 cmd_auth() {
     check_deps
+    require_cmd "python3" "Install with: brew install python"
 
-    echo "=== Google Drive Authentication (Device Flow) ==="
-    echo "Create OAuth credentials for 'TV and Limited Input devices'."
+    echo "=== Google Drive Authentication (Desktop App Loopback) ==="
+    echo "Ensure your OAuth credentials are for a 'Desktop app'."
     echo ""
 
     if [[ -z "$GOOGLE_DRIVE_CLIENT_ID" ]]; then
@@ -147,61 +184,133 @@ cmd_auth() {
     [[ -n "$GOOGLE_DRIVE_CLIENT_ID" ]] || die "Client ID is required" "$EXIT_INVALID_ARGS"
     [[ -n "$GOOGLE_DRIVE_CLIENT_SECRET" ]] || die "Client secret is required" "$EXIT_INVALID_ARGS"
 
-    local response device_code user_code verification_url interval
-    response=$(_drive_curl -d "client_id=$GOOGLE_DRIVE_CLIENT_ID" \
-        -d "scope=$SCOPE" \
-        "$AUTH_BASE/device/code")
+    local port
+    port=$(_drive_pick_loopback_port) || die "No free loopback port found for Drive auth. Tried: $GDRIVE_AUTH_PORT_CANDIDATES" "$EXIT_SERVICE_ERROR"
 
-    device_code=$(printf '%s' "$response" | jq -r '.device_code // empty')
-    user_code=$(printf '%s' "$response" | jq -r '.user_code // empty')
-    verification_url=$(printf '%s' "$response" | jq -r '.verification_url // empty')
-    interval=$(printf '%s' "$response" | jq -r '.interval // 5')
+    local redirect_uri="http://127.0.0.1:$port"
+    local encoded_client_id encoded_redirect_uri encoded_scope
+    encoded_client_id=$(_drive_urlencode "$GOOGLE_DRIVE_CLIENT_ID")
+    encoded_redirect_uri=$(_drive_urlencode "$redirect_uri")
+    encoded_scope=$(_drive_urlencode "$SCOPE")
 
-    [[ -n "$device_code" ]] || die "Drive device-code request failed: $response" "$EXIT_SERVICE_ERROR"
+    local auth_url="${AUTH_URL_BASE}?client_id=${encoded_client_id}&redirect_uri=${encoded_redirect_uri}&response_type=code&scope=${encoded_scope}&access_type=offline&prompt=consent"
 
+    echo "1. Open this URL in your browser to authorize:"
     echo ""
-    echo "1. Go to: $verification_url"
-    echo "2. Enter code: $user_code"
+    echo "$auth_url"
     echo ""
-    echo "Waiting for authorization..."
+    echo "Waiting for authorization (listening on $port for up to ${GDRIVE_AUTH_LISTEN_TIMEOUT_SECONDS}s)..."
 
-    while true; do
-        sleep "${interval:-5}"
-        local token_res error refresh_token access_token expires_in expiry
-        token_res=$(_drive_curl -d "client_id=$GOOGLE_DRIVE_CLIENT_ID" \
-            -d "client_secret=$GOOGLE_DRIVE_CLIENT_SECRET" \
-            -d "device_code=$device_code" \
-            -d "grant_type=urn:ietf:params:oauth:grant-type:device_code" \
-            "$AUTH_BASE/token")
+    # Automatically try to open the browser on macOS
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        open "$auth_url" 2>/dev/null || true
+    fi
 
-        error=$(printf '%s' "$token_res" | jq -r '.error // empty')
-        if [[ -z "$error" ]]; then
-            refresh_token=$(printf '%s' "$token_res" | jq -r '.refresh_token // empty')
-            access_token=$(printf '%s' "$token_res" | jq -r '.access_token // empty')
-            expires_in=$(printf '%s' "$token_res" | jq -r '.expires_in // 3600')
-            [[ -n "$access_token" && -n "$refresh_token" ]] || die "Drive auth did not return usable tokens" "$EXIT_SERVICE_ERROR"
+    local temp_out timeout_flag
+    temp_out=$(mktemp)
+    timeout_flag=$(mktemp)
 
-            jq -n --arg cid "$GOOGLE_DRIVE_CLIENT_ID" --arg secret "$GOOGLE_DRIVE_CLIENT_SECRET" --arg refresh "$refresh_token" \
-                '{client_id: $cid, client_secret: $secret, refresh_token: $refresh}' > "$CREDS_FILE"
-
-            expiry=$(( $(date_epoch_now) + expires_in - 60 ))
-            jq -n --arg token "$access_token" --argjson expiry "$expiry" \
-                '{access_token: $token, expiry: $expiry}' > "$TOKEN_FILE"
-
-            echo "✅ Drive authentication saved."
-            return 0
+    trap '
+        rm -f "$temp_out" "$timeout_flag"
+        if [[ -n "${timer_pid:-}" ]]; then
+            kill "$timer_pid" 2>/dev/null || true
         fi
-
-        if [[ "$error" == "authorization_pending" ]]; then
-            echo -n "."
-        elif [[ "$error" == "slow_down" ]]; then
-            interval=$((interval + 5))
-            echo -n "."
-        else
-            echo ""
-            die "Drive auth failed: $error" "$EXIT_SERVICE_ERROR"
+        if [[ -n "${nc_pid:-}" ]]; then
+            kill "$nc_pid" 2>/dev/null || true
+            wait "$nc_pid" 2>/dev/null || true
         fi
-    done
+    ' EXIT INT TERM
+
+    local success_body=$'Drive Auth successful! You can close this window and return to terminal.\n'
+    local success_length=${#success_body}
+
+    # Start netcat listener in background to capture the redirect
+    (
+        printf 'HTTP/1.1 200 OK\r\nContent-Length: %s\r\nConnection: close\r\n\r\n%s' "$success_length" "$success_body" | nc -l "$port"
+    ) > "$temp_out" &
+    local nc_pid=$!
+
+    python3 - "$GDRIVE_AUTH_LISTEN_TIMEOUT_SECONDS" "$nc_pid" "$timeout_flag" <<'PY' &
+import os
+import signal
+import sys
+import time
+
+timeout = int(sys.argv[1])
+pid = int(sys.argv[2])
+flag_path = sys.argv[3]
+
+time.sleep(timeout)
+try:
+    os.kill(pid, 0)
+except OSError:
+    sys.exit(0)
+
+with open(flag_path, "w", encoding="utf-8"):
+    pass
+
+try:
+    os.kill(pid, signal.SIGTERM)
+except OSError:
+    pass
+PY
+    local timer_pid=$!
+
+    local nc_status=0
+    set +e
+    wait "$nc_pid"
+    nc_status=$?
+    set -e
+    kill "$timer_pid" 2>/dev/null || true
+
+    if [[ -s "$timeout_flag" ]]; then
+        die "Drive auth timed out after ${GDRIVE_AUTH_LISTEN_TIMEOUT_SECONDS}s. Rerun auth when you're ready." "$EXIT_SERVICE_ERROR"
+    fi
+    if [[ "$nc_status" -ne 0 ]]; then
+        die "Drive auth listener failed on port $port. Check for a port conflict and rerun auth." "$EXIT_SERVICE_ERROR"
+    fi
+
+    local auth_code_raw auth_code
+    auth_code_raw=$(sed -n 's/.*[?&]code=\([^&[:space:]]*\).*/\1/p' "$temp_out" | head -n 1)
+    auth_code=$(_drive_urldecode "$auth_code_raw")
+    auth_code=$(sanitize_single_line "$auth_code")
+
+    trap - EXIT INT TERM
+    rm -f "$temp_out" "$timeout_flag"
+
+    if [[ -z "$auth_code" ]]; then
+        die "Failed to capture authorization code. Did you authorize in the browser?" "$EXIT_SERVICE_ERROR"
+    fi
+
+    echo "Authorization code captured. Exchanging for tokens..."
+
+    local token_res error refresh_token access_token expires_in expiry
+    token_res=$(_drive_curl -d "client_id=$GOOGLE_DRIVE_CLIENT_ID" \
+        -d "client_secret=$GOOGLE_DRIVE_CLIENT_SECRET" \
+        -d "code=$auth_code" \
+        -d "grant_type=authorization_code" \
+        -d "redirect_uri=$redirect_uri" \
+        "$AUTH_BASE/token")
+
+    error=$(printf '%s' "$token_res" | jq -r '.error // empty')
+    if [[ -n "$error" ]]; then
+        die "Drive token exchange failed: $error" "$EXIT_SERVICE_ERROR"
+    fi
+
+    refresh_token=$(printf '%s' "$token_res" | jq -r '.refresh_token // empty')
+    access_token=$(printf '%s' "$token_res" | jq -r '.access_token // empty')
+    expires_in=$(printf '%s' "$token_res" | jq -r '.expires_in // 3600')
+
+    [[ -n "$access_token" && -n "$refresh_token" ]] || die "Drive auth did not return usable tokens." "$EXIT_SERVICE_ERROR"
+
+    jq -n --arg cid "$GOOGLE_DRIVE_CLIENT_ID" --arg secret "$GOOGLE_DRIVE_CLIENT_SECRET" --arg refresh "$refresh_token" \
+        '{client_id: $cid, client_secret: $secret, refresh_token: $refresh}' > "$CREDS_FILE"
+
+    expiry=$(( $(date_epoch_now) + expires_in - 60 ))
+    jq -n --arg token "$access_token" --argjson expiry "$expiry" \
+        '{access_token: $token, expiry: $expiry}' > "$TOKEN_FILE"
+
+    echo "✅ Drive authentication saved successfully."
 }
 
 refresh_access_token() {
@@ -290,13 +399,20 @@ _drive_api_list_files() {
     local query="$1"
     local token response
     token=$(get_access_token)
-    response=$(_drive_curl --get \
-        -H "Authorization: Bearer $token" \
-        --data-urlencode "q=$query" \
-        --data-urlencode "pageSize=25" \
-        --data-urlencode "orderBy=viewedByMeTime desc,modifiedTime desc" \
-        --data-urlencode "fields=$(_drive_build_fields)" \
-        "$API_BASE/files")
+    
+    local curl_args=(
+        --get
+        -H "Authorization: Bearer $token"
+        --data-urlencode "q=$query"
+        --data-urlencode "pageSize=25"
+        --data-urlencode "fields=$(_drive_build_fields)"
+    )
+    
+    if [[ "$query" != *"fullText"* ]]; then
+        curl_args+=(--data-urlencode "orderBy=viewedByMeTime desc,modifiedTime desc")
+    fi
+
+    response=$(_drive_curl "${curl_args[@]}" "$API_BASE/files")
 
     if printf '%s' "$response" | jq -e '.error' >/dev/null 2>&1; then
         return 1
@@ -314,7 +430,7 @@ _drive_recent_query() {
 
     start_date=$(date_shift_days "-$((days-1))" "%Y-%m-%d")
     cutoff_iso="${start_date}T00:00:00Z"
-    query="trashed = false and $(_drive_mime_filter()) and (modifiedTime >= '$cutoff_iso' or viewedByMeTime >= '$cutoff_iso')"
+    query="trashed = false and $(_drive_mime_filter) and (modifiedTime >= '$cutoff_iso' or viewedByMeTime >= '$cutoff_iso')"
 
     local keyword_clause
     keyword_clause=$(_drive_keyword_clause "$keywords")
@@ -333,7 +449,7 @@ _drive_recall_query() {
         return 1
     fi
 
-    printf "trashed = false and %s and %s" "$(_drive_mime_filter())" "$keyword_clause"
+    printf "trashed = false and %s and %s" "$(_drive_mime_filter)" "$keyword_clause"
 }
 
 _drive_human_label() {
@@ -529,6 +645,36 @@ cmd_recall() {
     _drive_print_results "$results" "=== Drive Recall Results ==="
 }
 
+cmd_read() {
+    local file_id="${1:-}"
+    if [[ -z "$file_id" ]]; then
+        echo "Usage: $(basename "$0") read <file_id>"
+        return 1
+    fi
+
+    local token response
+    token=$(get_access_token)
+
+    # First attempt: Export as plain text (works for Google Docs)
+    response=$(_drive_curl --get \
+        -H "Authorization: Bearer $token" \
+        "$API_BASE/files/$file_id/export?mimeType=text/plain")
+
+    # If the response is a JSON error object, fallback to downloading as a file (alt=media)
+    if printf '%s' "$response" | jq -e '.error' >/dev/null 2>&1; then
+        response=$(_drive_curl --get \
+            -H "Authorization: Bearer $token" \
+            "$API_BASE/files/$file_id?alt=media")
+            
+        if printf '%s' "$response" | jq -e '.error' >/dev/null 2>&1; then
+            log_error "Failed to read file contents for ID: $file_id"
+            return 1
+        fi
+    fi
+
+    printf '%s' "$response"
+}
+
 main() {
     local cmd="${1:-help}"
     shift || true
@@ -538,6 +684,7 @@ main() {
         status) cmd_status "$@" ;;
         recent) cmd_recent "$@" ;;
         recall) cmd_recall "$@" ;;
+        read) cmd_read "$@" ;;
         help|-h|--help) show_help ;;
         *)
             echo "Unknown drive command: $cmd" >&2

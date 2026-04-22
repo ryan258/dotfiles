@@ -2,6 +2,18 @@
 
 **Last Updated:** April 22, 2026
 
+## Version 2.2.66 (April 22, 2026) - Drive Loopback Auth Hardening And Cached Coach Excerpts
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- `scripts/drive.sh` now uses an encoded desktop-app loopback auth URL, selects the first free local callback port from a small candidate set, computes the loopback success response length correctly, and times out/cleans up the temporary `nc` listener instead of waiting forever.
+- The same Drive helper now documents and tests the `read <id>` path, including the export-first then `alt=media` fallback for non-Google-Docs files.
+- `scripts/lib/coach_metrics.sh` now fetches and caches the top relevant Drive excerpt during tactical metric collection with a short Drive-specific timeout override, so prompt assembly no longer makes an extra synchronous Drive API call.
+- `scripts/lib/coach_metrics.sh` and `scripts/lib/coach_prompts.sh` now keep the new Drive excerpt metadata on dedicated digest lines, hide the internal `drive_top_file_*` fields from the visible prompt digest, and render the cached excerpt locally for `startday`, `status`, and `goodevening`.
+- Updated Drive and coach prompt BATS coverage for the loopback auth path, `read` fallback behavior, cached Drive snippet digest fields, and prompt rendering.
+
 ## Version 2.2.65 (April 22, 2026) - Coach Control Surface And Strategy Evidence
 
 **Status:** ✅ Production Ready

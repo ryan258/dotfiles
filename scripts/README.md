@@ -23,7 +23,8 @@ The canonical contract and coding rules live in `../CLAUDE.md`.
 
 - `todo.sh` keeps `list` backward-compatible for all open tasks and now adds `all`, `current`, and `stale` so the coach can separate active work from cleanup.
 - `journal.sh` now supports `list [n]`, `all`, `rel`, `edit <recent-index> <text>`, and `rm <recent-index>` without changing the flat-file journal format.
-- `drive.sh` adds read-only Google Drive activity and recall helpers: `auth`, `status`, `recent [days]`, and `recall [query...]`.
+- `drive.sh` adds read-only Google Drive activity and recall helpers: `auth`, `status`, `recent [days]`, `recall [query...]`, and `read <id>`.
+- `drive.sh auth` now uses a desktop-app loopback browser flow with a bounded local listener instead of the older device-flow setup.
 
 ## Health, Energy, and Wearables
 
@@ -95,7 +96,7 @@ These are support scripts used by the `bin/cyborg` and `cyborg-sync` entry point
 - **Interaction:** `coach_chat.sh` acts as a deterministic control surface after each briefing. It intercepts quick commands (`/t` todo, `/f` focus, `/j` journal, `/d` drive, `/q` quit) and prefers short `A/B/C/D/E` menu choices to minimize typing overhead. Disable with `AI_COACH_CHAT_ENABLED=false`.
 - **Fast Path:** Daily coaching (`startday`, `goodevening`, `status --coach`) uses `dhp-coach.sh` for a single, fast call to OpenRouter. Configure the model via `AI_COACH_MODEL` in `.env`.
 - **Context Gathering:** The coach consumes a wide array of signals: manual energy/fog checks, Fitbit metrics, spoon usage, daily focus text, and a bounded local context bundle (last 7 days of journal lines, top tasks, blog snapshots, schedule).
-- **Strategy Evidence:** While Git is the strongest code-day signal, the behavior digest also counts focus-related journal hits and relevant Google Drive docs (`drive.sh recent`) as valid strategy evidence. This ensures planning days are recognized as real progress instead of stalled momentum.
+- **Strategy Evidence:** While Git is the strongest code-day signal, the behavior digest also counts focus-related journal hits and relevant Google Drive docs (`drive.sh recent`) as valid strategy evidence. When a top relevant doc is available, the coach prompt can include a cached Drive excerpt without doing an extra network fetch during prompt assembly.
 - **GitHub Blindspots:** `startday` and `goodevening` generate a capped 3-5 item action-oriented scan of recent repos and commits, post-processed to remove debug noise. `goodevening` also checks repo safety.
 - **Repo Filtering:** Repos listed in `github_inactive_repos.txt` are excluded from the main activity signal and shown in a reactivation list. You can manage this manually with `repo_tracker.sh`.
 - **Coach Modes:** The coach supports four modes: LOCKED (stay focused), FLOW (follow energy), OVERRIDE (explore with limits), and RECOVERY (low-energy days). Mode switching is suggested dynamically based on thresholds set in `config.sh`.
