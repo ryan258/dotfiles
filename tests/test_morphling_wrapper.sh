@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_morphling_wrapper.sh - Bats coverage for morphling wrapper.
+
 load helpers/test_helpers.sh
 load helpers/assertions.sh
 

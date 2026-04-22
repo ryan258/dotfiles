@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_startday_coach.sh - Bats coverage for startday coach.
+
 load helpers/test_helpers.sh
 load helpers/assertions.sh
 

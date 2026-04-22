@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# morphling.sh - Launch Morphling in direct mode or swarm mode.
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 AI_STAFF_DIR="$DOTFILES_DIR/ai-staff-hq"
@@ -33,6 +35,7 @@ Wrapper options:
 EOF
 }
 
+# Join leftover words into one plain-text query for direct mode.
 join_query() {
     local first=true
     while [[ "$#" -gt 0 ]]; do
@@ -65,6 +68,7 @@ activate_args=("morphling")
 query_text=""
 has_query_flag=false
 
+# Treat leftover plain words as the query so `morphling do x` works naturally.
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
         -h|--help)
@@ -116,6 +120,7 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
+# Only read stdin when the caller did not already pass a query flag.
 if [[ "$has_query_flag" == false && ! -t 0 ]]; then
     stdin_query="$(cat)"
     if [[ -n "$stdin_query" ]]; then

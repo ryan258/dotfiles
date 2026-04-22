@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_coach_ops.sh - Bats coverage for coach ops.
+
 load helpers/test_helpers.sh
 load helpers/assertions.sh
 

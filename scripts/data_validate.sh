@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# data_validate.sh - Check data files, permissions, and record formats.
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 require_lib "config.sh"
@@ -77,6 +79,7 @@ get_permissions() {
   fi
 }
 
+# First pass: make sure the core files exist and can be read.
 for item in "${REQUIRED_ITEMS[@]}"; do
   path="$DATA_DIR/$item"
   if [ ! -e "$path" ]; then
@@ -93,6 +96,7 @@ for item in "${REQUIRED_ITEMS[@]}"; do
 done
 
 echo "Checking permissions for sensitive data files..."
+# Second pass: lock down files that hold personal data.
 for item in "${SENSITIVE_FILES[@]}"; do
   path="$DATA_DIR/$item"
   if [ -f "$path" ]; then
@@ -121,6 +125,7 @@ if [ "$STATUS" -eq 0 ]; then
   echo "✅ Data files present and readable."
 fi
 
+# Format checks stay optional because some repair runs only need the safety sweep.
 validate_format() {
   local path="$1"
   local regex="$2"

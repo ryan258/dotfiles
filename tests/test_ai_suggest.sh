@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_ai_suggest.sh - Bats coverage for ai suggest.
+
 load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
 load "$BATS_TEST_DIRNAME/helpers/assertions.sh"
 

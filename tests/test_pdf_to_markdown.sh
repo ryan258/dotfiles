@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_pdf_to_markdown.sh - Bats coverage for pdf to markdown.
+
 load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
 
 setup() {

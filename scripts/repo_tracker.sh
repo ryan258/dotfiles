@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# repo_tracker.sh - Mark GitHub repos as active or inactive.
+
 REPO_TRACKER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$REPO_TRACKER_DIR/lib/common.sh"
 source "$REPO_TRACKER_DIR/lib/config.sh"
@@ -21,6 +23,7 @@ Aliases:
 EOF
 }
 
+# Keep this CLI thin on purpose. github_ops.sh owns the storage rules.
 repo_tracker_deactivate() {
     local repo_name="${1:-}"
     shift || true
@@ -33,6 +36,7 @@ repo_tracker_deactivate() {
         die "Repo name is required for deactivate." "$EXIT_INVALID_ARGS"
     fi
 
+    # Save the note with the repo so future-you knows why it was parked.
     deactivate_github_repo "$repo_name" "$inactive_note" || die "Failed to deactivate repo: $repo_name" "$EXIT_ERROR"
 
     if [[ -n "$inactive_note" ]]; then
@@ -84,6 +88,7 @@ repo_tracker_names() {
     printf '%s\n' "$inactive_names"
 }
 
+# Main just routes to the small helper commands above.
 main() {
     local command="${1:-list}"
     shift || true

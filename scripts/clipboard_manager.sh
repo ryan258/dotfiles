@@ -13,6 +13,7 @@ mkdir -p "$(dirname "$CLIP_FILE")"
 touch "$CLIP_FILE"
 chmod 600 "$CLIP_FILE"
 
+# Escape newlines and pipes so each saved clip stays on one record line.
 encode_clipboard() {
     python3 - <<'PY'
 import sys, codecs
@@ -63,6 +64,7 @@ case "$MODE" in
             echo "Error: Clip name cannot contain '|'" >&2
             exit "$EXIT_INVALID_ARGS"
         fi
+        # Split on unescaped pipes only. Clip text may contain literal pipes.
         if python3 - "$NAME" "$CLIP_FILE" <<'PY' | pbcopy; then
 import sys, codecs
 name = sys.argv[1]
@@ -121,6 +123,7 @@ PY
 import sys, codecs
 path = sys.argv[1]
 with open(path, "r", encoding="utf-8") as f:
+    # Use the same escaped-pipe parsing as load() so previews stay honest.
     for line in f:
         line = line.rstrip("\n")
         parts = []

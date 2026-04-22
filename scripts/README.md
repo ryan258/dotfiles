@@ -1,19 +1,61 @@
 # scripts/ Overview
 
-This is a quick guide for the `scripts/` folder.
-The full rules live in `../CLAUDE.md`.
+This is the command map for `scripts/`.
+The canonical contract and coding rules live in `../CLAUDE.md`.
 
-## Daily Commands
+## Current Inventory
 
-- `startday.sh`
-- `status.sh`
-- `goodevening.sh`
-- `todo.sh`
-- `idea.sh`
-- `journal.sh`
-- `health.sh`
-- `focus.sh`
-- `repo_tracker.sh`
+- 72 top-level shell utilities
+- 4 top-level Python helpers
+- 25 sourced libraries under `scripts/lib/`
+
+## Daily Loop and Context Commands
+
+- `startday.sh`, `status.sh`, `goodevening.sh`
+- `focus.sh`, `repo_tracker.sh`, `schedule.sh`, `gcal.sh`
+- `week_in_review.sh`, `my_progress.sh`, `gh-projects.sh`
+
+## Tasks, Notes, and Time
+
+- `todo.sh`, `done.sh`, `idea.sh`, `journal.sh`
+- `time_tracker.sh`, `take_a_break.sh`, `remind_me.sh`
+- `generate_report.sh`, `setup_weekly_review.sh`
+
+## Health, Energy, and Wearables
+
+- `health.sh`, `meds.sh`, `spoon_manager.sh`
+- `fitbit_import.sh`, `fitbit_sync.sh`
+- `correlate.sh`, `insight.sh`
+
+## Blog, Context Capture, and Data Inspection
+
+- `blog.sh`, `blog_recent_content.sh`
+- `pdf_to_markdown.sh`, `grab_all_text.sh`, `context.sh`
+- `dump.sh`, `data_validate.sh`
+
+## Project, GitHub, and Scaffolding Utilities
+
+- `start_project.sh`, `mkproject_py.sh`, `new_script.sh`
+- `github_helper.sh`, `dotfiles_check.sh`, `validate_env.sh`
+- `open_file.sh`, `run_with_modern_bash.sh`
+
+## File, Media, and Maintenance Utilities
+
+- `archive_manager.sh`, `backup_data.sh`, `backup_project.sh`
+- `clipboard_manager.sh`, `duplicate_finder.sh`, `file_organizer.sh`
+- `findbig.sh`, `findtext.sh`, `logs.sh`, `media_converter.sh`
+- `network_info.sh`, `process_manager.sh`, `system_info.sh`
+- `text_processor.sh`, `tidy_downloads.sh`, `unpacker.sh`, `weather.sh`
+
+## Cyborg Support Workers
+
+These are support scripts used by the `bin/cyborg` and `cyborg-sync` entry points rather than everyday direct commands:
+
+- `cyborg_agent.py`
+- `cyborg_build.py`
+- `cyborg_docs_sync.py`
+- `cyborg_support.py`
+- `cyborg_scoped_site_check.sh`
 
 ## Document Utilities
 
@@ -96,3 +138,7 @@ Key files:
 - `health.txt`, `spoons.txt`
 - `fitbit/*.txt`
 - `coach_mode.txt`, `coach_log.txt`, `coach_adherence.txt`
+
+## Data Repair
+
+- `repair_todo_done.sh` merges legacy `todo_done` files/backups (including bracketed formats) into the canonical `todo_done.txt` if your completed-task history was wiped or split across older locations.

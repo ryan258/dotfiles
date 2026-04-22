@@ -8,6 +8,7 @@ if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
     source "$SCRIPT_DIR/lib/common.sh"
 fi
 
+# Strip newlines and pipes so names stay safe in logs and shell output.
 sanitize_arg() {
     local value
     value=$(sanitize_input "$1")
@@ -42,6 +43,7 @@ case "$MODE" in
 
         shift 2
         FILES=()
+        # Re-check every path before it reaches zip or tar.
         for f in "$@"; do
             f=$(sanitize_arg "$f")
             f=$(validate_path "$f") || exit 1

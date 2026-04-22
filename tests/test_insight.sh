@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_insight.sh - Bats coverage for insight.
+
 load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
 load "$BATS_TEST_DIRNAME/helpers/assertions.sh"
 

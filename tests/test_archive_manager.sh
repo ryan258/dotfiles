@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_archive_manager.sh - Bats coverage for archive manager.
+
 load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
 
 setup() {

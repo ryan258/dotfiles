@@ -73,6 +73,7 @@ Notes:
 EOF
 }
 
+# These helpers keep local auth files private and valid before we talk to Google.
 set_private_permissions() {
     local target="$1"
     chmod 600 "$target" 2>/dev/null || true
@@ -258,6 +259,7 @@ record_sync_success() {
     write_json_file "$GOOGLE_HEALTH_SYNC_STATE_FILE" "$state_json"
 }
 
+# OAuth helpers stage the browser handoff and store the returned tokens.
 save_pending_auth() {
     local client_id="$1"
     local client_secret="$2"
@@ -352,6 +354,7 @@ resolve_client_secret() {
     printf '%s' "$value"
 }
 
+# Keep token exchange and refresh logic in one place so auth failures stay clear.
 token_request() {
     local grant_type="$1"
     local client_id="$2"
@@ -520,6 +523,7 @@ get_access_token() {
     json_get "$GOOGLE_HEALTH_AUTH_FILE" "access_token"
 }
 
+# Retry once after a 401 so expired tokens heal quietly during sync.
 run_api_call() {
     local method="$1"
     local endpoint="$2"
@@ -617,6 +621,7 @@ PY
     write_json_file "$GOOGLE_HEALTH_AUTH_FILE" "$auth_json"
 }
 
+# Metric helpers turn mixed API payloads into one daily value per file.
 metric_output_path() {
     local metric="${1:-}"
 
@@ -984,6 +989,7 @@ sync_metric() {
     printf '%s' "$(count_update_lines "$updates")"
 }
 
+# Keep the public CLI entry points near the bottom for quick scanning.
 cmd_auth_url() {
     local client_id client_secret redirect_uri scopes state auth_url
 

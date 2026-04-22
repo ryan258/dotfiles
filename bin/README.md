@@ -1,6 +1,6 @@
 # Your AI Tool Shortcut Menu
 
-This folder holds 13 fast tools (and 4 extra tricks) that give you instant help from your AI-Staff-HQ team. Each tool connects you right to a smart AI helper so you don't have to copy and paste anything!
+This folder holds the repo's AI dispatchers, orchestration entry points, and repo-aware agents. The current root inventory includes 21 `dhp-*.sh` executables plus companion commands such as `dispatch.sh`, `morphling.sh`, `cyborg`, `cyborg-sync`, and `swipe.sh`.
 
 **Latest Update:** 
 - ✅ All tools can print answers live on your screen (use `--stream`)
@@ -24,11 +24,16 @@ This folder holds 13 fast tools (and 4 extra tricks) that give you instant help 
 | `dhp-research.sh` | `research` | Learn about hard topics |
 | `dhp-narrative.sh` | `narrative` | Fix story plots |
 | `dhp-copy.sh` | `aicopy` | Write ads that sell |
-| `dhp-morphling.sh`| `dhp-morphling` | The magic helper that can do anything |
+| `dhp-morphling.sh`| `morphling` | Swarm-mode Morphling analysis |
 | `dhp-finance.sh` | `finance` | Get advice about money and taxes |
+| `dhp-memory.sh` | `memory` | Save a memory to the Brain |
+| `dhp-memory-search.sh` | `memory-search` | Search stored memories |
+| `dispatch.sh` | `dispatch` | Route work to any dispatcher |
+| `cyborg` | `cyborg` | Repo-aware drafting and autopilot agent |
 | `cyborg-sync` | `cyborg-sync` | Updates mapped site pages from real repo changes |
+| `swipe.sh` | `swipe` | Run an AI command and save the output |
 
-**Magic Helper:** Typing `morphling` now opens the direct Morphling session from AI-Staff-HQ with full lead-developer capabilities — it can read, write, and list files, plus run shell commands to install deps, compile, and run tests. Use `morphling --swarm` when you want the older dispatcher-style context gathering path.
+**Magic Helper:** The `morphling` alias uses the swarm-mode dispatcher for one-shot context-rich analysis. Invoke `bin/morphling.sh` when you want the direct tool-capable Morphling session that can read, write, list, and run commands.
 
 ## ⚙️ Computer and Work (Tech & Copy)
 

@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_media_converter.sh - Bats coverage for media converter.
+
 load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
 
 setup() {

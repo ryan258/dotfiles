@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_p2_utility_scripts.sh - Bats coverage for p2 utility scripts.
+
 load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
 load "$BATS_TEST_DIRNAME/helpers/assertions.sh"
 

@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_spoon_integration.sh - Bats coverage for spoon integration.
+
 load helpers/test_helpers.sh
 load helpers/assertions.sh
 

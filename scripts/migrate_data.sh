@@ -58,6 +58,7 @@ DATA_DIR_VALIDATED=$(validate_path "$DATA_DIR") || exit 1
 log_info "Starting data migration${DRY_RUN:+ (dry run)}"
 log_info "Data directory: $DATA_DIR_VALIDATED"
 
+# Take a full backup before rewriting anything unless the caller opts out.
 if [[ "$NO_BACKUP" = false ]]; then
   if [[ -z "$BACKUP_DIR" ]]; then
     BACKUP_DIR="$HOME/Backups/dotfiles-data-pre-migration-$(date +%Y%m%d%H%M%S)"
@@ -78,6 +79,7 @@ else
   log_warn "Skipping backup (--no-backup)"
 fi
 
+# Every migration writes to a temp file first so dry runs and failures stay safe.
 finalize_migration() {
   local temp_file="$1"
   local target_file="$2"
@@ -381,6 +383,7 @@ migrate_favorite_apps() {
   finalize_migration "$tmp" "$src" "favorite_apps" "$total" "$invalid"
 }
 
+# Some history files lack timestamps, so rebuild them in file order.
 normalize_history_file() {
   local src="$1"
   local label="$2"
@@ -443,6 +446,7 @@ migrate_spoons
 migrate_dir_bookmarks
 migrate_favorite_apps
 
+# Old clipboard history lived as one file per clip. Fold it into one flat log.
 migrate_clipboard_history() {
   local src_dir="$DATA_DIR/clipboard_history"
   local dest="$CLIPBOARD_FILE"

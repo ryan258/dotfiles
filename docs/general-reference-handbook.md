@@ -416,7 +416,7 @@ todo debug 3           # AI analyzes task 3
 todo delegate 5 tech   # Send task 5 to tech AI
 ```
 
-**All 13 AI dispatchers are free-tier.** Use them without worry.
+**The everyday dispatcher aliases are intended for frequent low-friction use.** Reach for them when the task costs more energy than you want to spend manually.
 
 ---
 
@@ -917,9 +917,9 @@ This guide covers proven ways to get more done, keep your data clean, and build 
 
 > **Quick note on dispatchers:** Use the single-word aliases (they run the `dhp-*` scripts directly) for less typing. When you need a single entry point, use `dispatch <dispatcher> "brief"`. All scripts have been updated for better reliability.
 >
-> **Security Note:** For details on security, how to report problems, and key management, see our [Security Policy](../../SECURITY.md).
+> **Security Note:** For secrets, token setup, and repair steps, see [Troubleshooting](../TROUBLESHOOTING.md) and the root project contract in [CLAUDE.md](../CLAUDE.md).
 
-**Last Updated:** March 21, 2026
+**Last Updated:** April 21, 2026
 
 ---
 
@@ -2307,10 +2307,10 @@ systemlog | grep "feature-name"
 
 #### Related Docs
 
-- [Start Here](start-here.md)
-- [Happy Path](happy-path.md)
-- [System Overview](system-overview.md)
-- [AI Quick Reference](ai-quick-reference.md)
+- [Documentation Index](README.md)
+- [Daily Loop Handbook](daily-loop-handbook.md)
+- [Root Overview](../README.md)
+- [AI Handbook](ai-handbook.md)
 - [Troubleshooting](../TROUBLESHOOTING.md)
 
 ---
@@ -2444,7 +2444,7 @@ clipfmt prettier --parser markdown
 
 - `copy`, `paste`, `copyfile`, and `copyfolder` aliases (`zsh/aliases.zsh`).
 - `clip`, `clip save`, `clip load`, `clip list`, and `clip peek` wrap `clipboard_manager.sh` (supports executable snippets for dynamic output).
-- `graballtext` pairs well with `pbcopy` for quick sharing: `graballtext && pbcopy < all_text_contents.txt`.
+- `graballtext` now copies all readable non-ignored text from the current directory tree straight to the macOS clipboard.
 
 #### Troubleshooting
 
@@ -2457,9 +2457,9 @@ clipfmt prettier --parser markdown
 
 #### Related Docs
 
-- [Start Here](start-here.md)
-- [Daily Cheat Sheet](daily-cheatsheet.md)
-- [Best Practices](best-practices.md)
+- [Documentation Index](README.md)
+- [Daily Loop Handbook](daily-loop-handbook.md)
+- [Alias Guide](../scripts/README_aliases.md)
 - [Troubleshooting](../TROUBLESHOOTING.md)
 
 ---
@@ -2792,7 +2792,7 @@ These aliases come from `zsh/aliases.zsh`. This is a full list of all commands y
 | `newscript`      | `new_script.sh`            | Scaffold a new bash script with proper headers                    |
 | `weather`        | `weather.sh`               | Current weather forecast                                          |
 | `findtext`       | `findtext.sh`              | Search file contents recursively                                  |
-| `graballtext`    | `grab_all_text.sh`         | Concatenate all text files in a directory                         |
+| `graballtext`    | `grab_all_text.sh`         | Copy all readable non-ignored text files in a directory to clipboard |
 | `pdf2md`         | `pdf_to_markdown.sh`       | Convert a text-based PDF into Markdown for cheaper AI ingestion   |
 | `newproject`     | `start_project.sh`         | Scaffold a new project directory                                  |
 | `newpython`      | `mkproject_py.sh`          | Scaffold a Python project with venv                               |
@@ -3116,7 +3116,7 @@ Usage: blog <command> [args]
   health add
   health list             # Show upcoming appointments
   weekreview              # Show last 7 days activity
-  graballtext             # Dump all readable text into all_text_contents.txt
+  graballtext             # Copy all readable non-ignored text into clipboard
   pdf2md report.pdf       # Convert a PDF into Markdown for cheaper AI ingestion
   projects forgotten      # List old projects
   projects recall <name>  # Show details of an old project
@@ -3455,7 +3455,7 @@ Usage: github_helper.sh {list_repos|get_repo <repo>|get_latest_commit <repo>|get
   (Projects directory not found)
   ⚠️ Blog status unavailable (check BLOG_STATUS_DIR or BLOG_DIR configuration).
   ⚠️ Unable to list recent content (check BLOG_CONTENT_DIR).
-  (Old completed tasks removed)
+	  (Keeping full todo_done.txt history — no auto-cleanup)
   ✅ Data validation passed.
   ⚠️  WARNING: Backup failed: $backup_output
   ❌ ERROR: Data validation failed. Skipping backup.

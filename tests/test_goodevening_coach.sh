@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_goodevening_coach.sh - Bats coverage for goodevening coach.
+
 load helpers/test_helpers.sh
 load helpers/assertions.sh
 
@@ -332,7 +334,7 @@ PY
     [[ "$prompt" == *"Blindspots to sleep on (1-5):"* ]]
     [[ "$prompt" == *"Tomorrow lock:"* ]]
     [[ "$prompt" == *"Health lens:"* ]]
-    [[ "$prompt" == *"Keep journals and todos out of the coaching verdict"* ]]
+    [[ "$prompt" == *"Make the main verdict about whether the spear moved, stalled, or diffused based on focus plus GitHub activity"* ]]
     [[ "$args" == *"--temperature"* ]]
 
     [[ "$output" == *"What worked:"* ]]

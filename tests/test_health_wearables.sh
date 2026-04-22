@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_health_wearables.sh - Bats coverage for health wearables.
+
 load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
 load "$BATS_TEST_DIRNAME/helpers/assertions.sh"
 

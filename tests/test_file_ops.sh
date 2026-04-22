@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_file_ops.sh - Bats coverage for file ops.
+
 load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
 load "$BATS_TEST_DIRNAME/helpers/assertions.sh"
 

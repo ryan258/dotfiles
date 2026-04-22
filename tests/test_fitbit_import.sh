@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_fitbit_import.sh - Bats coverage for fitbit import.
+
 load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
 load "$BATS_TEST_DIRNAME/helpers/assertions.sh"
 

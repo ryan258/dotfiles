@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# scripts/lib/blog_gen.sh
+# blog_gen.sh - Shared draft generation helpers for the blog workflow.
 # NOTE: SOURCED file. Do NOT use set -euo pipefail.
 
 if [[ -n "${_BLOG_GEN_LOADED:-}" ]]; then
@@ -7,6 +7,7 @@ if [[ -n "${_BLOG_GEN_LOADED:-}" ]]; then
 fi
 readonly _BLOG_GEN_LOADED=true
 
+# Generate builds the brief, picks the target section, and calls the dispatcher.
 generate() {
     shift # remove subcommand label
     local persona=""
@@ -241,6 +242,7 @@ $file_content"
     echo "Review and edit the generated output in: $target_dir"
 }
 
+# Refine reads an existing draft and asks the content dispatcher to improve it.
 refine() {
     local file_path="${2:-}"
 
@@ -418,6 +420,7 @@ draft_command() {
     draft_from_archetype "$draft_type" "$slug" "$@"
 }
 
+# Workflow mode scaffolds a draft, then layers outline, draft text, and notes.
 run_workflow() {
     local type="$1"
     local slug="$2"

@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_status.sh - Bats coverage for status.
+
 load helpers/test_helpers.sh
 load helpers/assertions.sh
 

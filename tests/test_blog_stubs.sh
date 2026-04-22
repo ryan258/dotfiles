@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_blog_stubs.sh - Bats coverage for blog stubs.
+
 load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
 load "$BATS_TEST_DIRNAME/helpers/assertions.sh"
 

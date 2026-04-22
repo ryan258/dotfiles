@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_dispatcher_unknown_flags.sh - Bats coverage for dispatcher unknown flags.
+
 load helpers/test_helpers.sh
 load helpers/assertions.sh
 

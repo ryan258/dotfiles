@@ -1,80 +1,108 @@
-# Welcome to the Dotfiles Helper
+# Dotfiles Productivity System
 
-This is a set of tools you run on your computer. It helps you get through your workday even when your brain feels foggy. It was made for someone with MS (multiple sclerosis), which can make it hard to think or remember things. These tools do the hard work for you.
+This repo is a command-line productivity environment built around shell scripts, AI dispatchers, daily routines, and repo-aware automation. It is designed for brain-fog-friendly work: short commands, deterministic fallbacks, and strong support for context recovery.
 
-## What It Does
+## What It Covers
 
-- Automatically runs your daily routine: `startday`, `status`, and `goodevening`. A smart AI coach talks to you at each step.
-- Saves your tasks, your diary, your health, and your energy safely in your folders.
-- Gives you 13 AI helpers (like a Tech Expert or a Creative Writer) who can do work for you instantly.
-- Checks the AI's answers to make sure it doesn't make things up!
-- A special robot (Cyborg Lab) can automatically turn your code folders into full blog posts, or build a project from an idea and optionally publish it first.
-- **Autopilot Mode:** If you type `ap`, the computer will just do the chores for you while you rest.
+- Daily coaching and check-ins with `startday`, `status`, and `goodevening`
+- Task, journal, focus, reminder, and time-tracking workflows
+- Health, meds, spoon-budget, and Fitbit/Google Health tracking
+- AI dispatchers for coding, strategy, writing, research, memory, and orchestration
+- Repo-aware agents for project documentation, build-and-verify loops, and site sync
+- Local flat-file data under `~/.config/dotfiles-data/`
 
-## How It's Built
+## Current Inventory Snapshot
 
-The computer runs scripts (small lists of instructions) when you type a command. 
-- The AI helpers are stored in `bin/`.
-- The instructions for the tools are in `scripts/`.
-- Your saved data is kept safe in `~/.config/dotfiles-data/`.
+This snapshot reflects the root repo as audited on April 21, 2026:
 
-## The Rule Books
+- `scripts/`: 72 shell utilities plus 4 Python helpers
+- `scripts/lib/`: 25 sourced libraries
+- `bin/`: 28 non-markdown entry points, including 21 `dhp-*.sh` executables
+- `tests/`: 47 Bats test files
 
-- For the master rules on how everything works, read: `CLAUDE.md`
-- For rules about folders, read: `GUARDRAILS.md`
-- For the plan of what we will build next, read: `ROADMAP.md`
+## Install
 
-## How to Install It
-
-Open your terminal and type these lines, hitting Enter after each one:
 ```bash
 git clone https://github.com/ryan258/dotfiles.git "$HOME/dotfiles"
 cd "$HOME/dotfiles"
 ./bootstrap.sh
 dotfiles-check
 ```
-The `bootstrap.sh` script will install everything you need and make sure the computer knows where to find your new tools.
 
-## What You Need First
+`bootstrap.sh` wires the repo into your shell and makes the command aliases available.
 
-- An Apple Mac or a Linux computer.
-- Python 3 (a coding language usually already on your computer).
-- To make the AI helpers work, you must save an OpenRouter AI password (called an API key) in your `.env` file!
+## Requirements
 
-## Fast Commands to Try
+- macOS or Linux
+- Bash and Python 3
+- `OPENROUTER_API_KEY` in `.env` for AI-powered commands
+- Optional GitHub token support for GitHub-aware routines and market validation
+
+## Fast Commands To Try
 
 ```bash
-# Your Daily Routine
-startday                          # Morning briefing with your AI coach
-status                            # Mid-day check-in
-goodevening                       # Evening reflection
+# Daily loop
+startday
+status
+goodevening
 
-# Saving Your Work
-todo add "Fix the login bug"      # Add a chore to your list
-todo top                          # Show the most important chore
-focus set "Ship the API"          # Tell the computer what you are focused on
+# Tasks and focus
+todo add "Fix the login bug"
+todo top
+focus set "Ship the API"
+journal add "Stopped at parser error handling"
 
-# Your AI Helpers
-tech "Why is this crashing?"      # Ask the expert to fix your code
-strategy "Should I redesign?"     # Ask the boss for advice
-morphling "Look at my folder"     # Ask the magic helper anything
+# Health and energy
+health energy 6
+health fog 4
+s-check
 
-# Autopilot (for brain-fog days)
-ap                                # Automatic help with one button
-apb "idea"                        # Build + verify + document a new project
-apbp "idea"                       # Build + publish + document a new project
+# AI commands
+tech "Why is this crashing?"
+strategy "What is the smallest next step?"
+memory "Remember that the repo uses Google Health sync"
+
+# Repo-aware automation
+cyborg auto
+ap
+apb "CLI that tracks daily energy with spoon theory"
+cyborg-sync --repo ~/Projects/my-project plan
 ```
 
-## Where to Read More
+## AI and Automation
 
-- `docs/README.md` - Start here for a fast 5-minute tour!
-- `docs/daily-loop-handbook.md` - Steps for your morning, noon, and evening.
-- `docs/ai-handbook.md` - Exactly how to talk to your AI helpers.
-- `TROUBLESHOOTING.md` - How to fix common problems.
-- `CHANGELOG.md` - A list of everything we have updated.
+- `tech`, `content`, `strategy`, `creative`, `brand`, `market`, `research`, `stoic`, `narrative`, `aicopy`, and `finance` are the main dispatcher aliases.
+- `memory` and `memory-search` write to and query the shared Brain knowledge base.
+- `morphling` is the swarm-mode alias; `bin/morphling.sh` is the direct tool-capable launcher.
+- `cyborg` handles repo-aware drafting and autopilot flows.
+- `cyborg-sync` is the non-interactive docs-maintenance worker for mapped site pages.
+
+## Documentation Map
+
+- `docs/README.md` - Central index for all user-facing docs
+- `docs/daily-loop-handbook.md` - Morning, midday, and evening routines
+- `docs/ai-handbook.md` - AI command surface, routing, and repo-aware agents
+- `scripts/README.md` - Script inventory and command groups
+- `scripts/README_aliases.md` - Alias map from `zsh/aliases.zsh`
+- `bin/README.md` - Dispatcher and agent entry points in `bin/`
+- `bin/cyborg-readme.md` - Interactive Cyborg workflow
+- `bin/autopilot-readme.md` - Morphling + Cyborg autopilot architecture
+- `MORPHLING.md` - Direct vs swarm Morphling modes
+- `brain/HANDBOOK.md` - Brain knowledge-base usage
+- `TROUBLESHOOTING.md` - Common failures and repair steps
+
+## Rules and Scope
+
+- `GUARDRAILS.md` decides whether work belongs in root `dotfiles` or `ai-staff-hq/`.
+- `CLAUDE.md` is the canonical root-project contract.
+- `AGENTS.md` is the operational checklist aligned with `CLAUDE.md`.
 
 ## Testing
-If you ever want to check if the tools are broken, type this to run 37 automatic tests:
+
+Run the Bats suite with:
+
 ```bash
 bats tests/*.sh
 ```
+
+For recent changes and doc updates, see `CHANGELOG.md`.

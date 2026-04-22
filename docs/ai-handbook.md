@@ -1,77 +1,175 @@
-# The AI Helpers Handbook
+# AI Handbook
 
-Your computer comes with a team of 12 very smart AI helpers. They live right in your terminal. This page shows you how to use them to get your work done faster!
+This repo exposes more than one kind of AI command. Some commands are simple one-shot dispatchers, some orchestrate multiple specialists, some read and write the Brain knowledge base, and some are repo-aware agents with their own workflows.
 
----
+## Core Dispatchers
 
-## 🚀 Meet The Core Team
+These aliases route to the `dhp-*.sh` dispatcher family in `bin/`:
 
-You can call any of these helpers just by typing their name!
+- `tech` - technical and coding help
+- `content` - long-form writing and content strategy
+- `strategy` - planning, prioritization, and decision support
+- `creative` - ideation and storytelling
+- `brand` - voice and positioning
+- `market` - market research and competitor framing
+- `research` - deep reading and synthesis
+- `stoic` - mindset and reflection
+- `narrative` - story and structure work
+- `aicopy` - copywriting
+- `finance` - finance and tax-oriented prompting
 
-- `tech` - Your coder. Fixes broken computer scripts.
-- `content` - Your writer. Writes big blog posts and essays.
-- `strategy` - Your boss. Helps you make business decisions.
-- `creative` - Your storyteller. Helps you brainstorm wild ideas.
-- `brand` - Your voice. Decides how your company should sound.
-- `market` - Your researcher. Looks up what competitors are doing.
-- `research` - Your librarian. Can read huge folders of text for you.
-- `stoic` - Your life coach. Helps you calm down and focus.
-- `narrative` - Your plot designer. Thinks of twists for your stories.
-- `aicopy` - Your ad writer. Writes fast, catchy emails.
-- `finance` - Your accountant. Helps with S-Corp limits and taxes.
-- `morphling` - The magic shapeshifter. Can become any expert you need for one-shot analysis. For the full lead-developer mode that can run commands, install packages, run tests, and fix its own code, use `bin/morphling.sh` directly.
+Examples:
 
----
-
-## 🛠️ How to Talk to Them
-
-### 1. Give them a quick job
-Put your question inside quote marks.
 ```bash
-strategy "Should I start a new project or rest today?"
+tech "Why is this shell script failing on macOS?"
+content --stream "Outline a guide for low-energy developer workflows."
+strategy "What is the smallest next step for this repo?"
 ```
 
-### 2. Give them a long job
-If an answer is going to take a long time to write, add `--stream`. This makes the text appear on your screen as the AI types it out, like a chat window.
+## Morphling
+
+There are two Morphling entry paths:
+
+- `morphling` is the swarm-mode alias backed by `bin/dhp-morphling.sh`
+- `bin/morphling.sh` is the direct tool-capable launcher
+
+Use swarm mode when you want one-shot context-rich analysis. Use direct mode when you want the lead-developer flow that can read files, write files, list directories, and run shell commands.
+
+Examples:
+
 ```bash
-content --stream "Write a massive guide about computer programming."
+morphling "Analyze this repo's error-handling style."
+bin/morphling.sh "Refactor this module to use dependency injection."
+bin/morphling.sh --resume last
 ```
 
-### 3. Let them read your files
-If you want the `tech` helper to look at a broken script you wrote, you can "pipe" the text to the AI using the `|` symbol:
+See `../MORPHLING.md` for the full mode breakdown.
+
+## Memory and Recall
+
+These commands integrate with the shared Brain knowledge base:
+
+- `memory` - store a fact, decision, or pattern
+- `memory-search` - semantically search stored memories
+
+Examples:
+
+```bash
+memory "The coaching stack uses Google Health sync, not legacy Fitbit API sync."
+memory-search "coach mode thresholds"
+```
+
+See `../brain/HANDBOOK.md` for Brain details.
+
+## Routing and Orchestration Commands
+
+These commands help choose, route, or chain AI work:
+
+- `dhp` - default dispatcher alias, points to `tech`
+- `dispatch <dispatcher> "brief"` - generic dispatcher router
+- `ai-project` / `dhp-project` - multi-specialist orchestration
+- `ai-chain` / `dhp-chain` - pipe one specialist into another
+- `ai-suggest` - context-aware AI suggestion helper
+- `ai-context` - sourced helper for gathering local context
+- `swipe` - run an AI command and save the output
+
+Examples:
+
+```bash
+dispatch strategy "Plan a weekly review flow for this repo."
+dhp-chain market brand -- "Positioning for an accessibility-focused CLI"
+ai-project "Create a launch plan for a new utility script."
+swipe tech "Explain this stack trace and suggest a fix."
+```
+
+## Repo-Aware Agents
+
+These are not simple dispatchers. They have their own workflows and state.
+
+### `cyborg`
+
+Use `cyborg` when you want repo-aware drafting, project analysis, or autopilot flows.
+
+Key paths:
+
+- `cyborg ingest` - interactive Cyborg session
+- `cyborg auto` - code-first autopilot on an existing repo
+- `cyborg auto --iterate` - pick the next GitHub issue or backlog item and implement it
+- `cyborg auto --build` - scaffold a new project from an idea, verify it, then continue
+- `cyborg resume` - reopen a saved session
+
+Examples:
+
+```bash
+cyborg ingest --repo ~/Projects/my-project
+cyborg auto --iterate --repo ~/Projects/my-project
+cyborg auto --build "CLI that tracks daily energy with spoon theory"
+```
+
+See `../bin/cyborg-readme.md` and `../bin/autopilot-readme.md`.
+
+### `cyborg-sync`
+
+Use `cyborg-sync` when the repo is already real and you want repeatable docs maintenance for mapped site pages.
+
+Examples:
+
+```bash
+cyborg-sync --repo ~/Projects/my-project plan
+cyborg-sync --repo ~/Projects/my-project sync --dry-run
+cyborg-sync --repo ~/Projects/my-project sync --commit
+```
+
+See `cyborg-docs-sync.md` and `cyborg-project-to-site-playbook.md`.
+
+## Autopilot Aliases
+
+These shortcuts all route into `cyborg auto`:
+
+- `ap` - autopilot the current repo
+- `apy` - autopilot and auto-confirm
+- `apb "idea"` - build from an idea, then continue
+- `apby "idea"` - build and auto-confirm
+- `apbp "idea"` - build, publish, and continue
+- `apbpy "idea"` - build, publish, and auto-confirm
+- `apc` - resume the last autopilot or Cyborg session
+
+See `autopilot-happy-path.md` for the shortest cheat sheet.
+
+## Blog and Coaching Integration
+
+- Daily briefings call `dhp-coach.sh` internally; that coach path is optimized for the daily loop rather than general manual use.
+- `blog.sh` is the blog-management CLI. It can use personas and AI-generated content, but it is not a dispatcher alias itself.
+
+## Usage Patterns
+
+Quick prompt:
+
+```bash
+strategy "Should I rest today or finish one small task?"
+```
+
+Streaming output:
+
+```bash
+content --stream "Write a guide about recovering context after interruptions."
+```
+
+Pipe a file into a dispatcher:
+
 ```bash
 cat broken-script.sh | tech
 ```
 
-### 4. Let them work together
-You can pass the work from one AI to the next! This is called "chaining". 
-Do you want a creative story turned into an advertisement?
+Chain two specialists:
+
 ```bash
-dhp-chain creative aicopy -- "A story about a foggy brain"
+dhp-chain creative aicopy -- "A story about brain fog and recovery"
 ```
 
----
+## Setup Notes
 
-## 🎭 Writing the Blog
-
-When you want the AI to write a blog post for you, it is given a distinct personality (a "persona").
-
-We have three main personas that write your content:
-1. **Brenda**: Extremely gentle. She writes for people who are anxious and overwhelmed.
-2. **Mark**: The energy saver. He writes guides that focus on clicking the mouse as little as possible.
-3. **Sarah**: The organizer. She writes for people who have brain fog and too many unfinished tasks.
-
-You tell the computer to use a persona like this:
-```bash
-blog generate -p "Brenda" -a blog "Why feeling overwhelmed is okay"
-```
-
----
-
-## ⚙️ Setup and Fixing Things
-
-**To make the AI work:**
-You MUST have your OpenRouter password saved inside a hidden file called `.env`. If you do not have this file, the AI helpers will completely ignore you!
-
-**If you don't know who to talk to:**
-Just type `ai-suggest`. Your computer will look at your calendar, your diary, and your energy level, and tell you which AI helper you should talk to right now!
+- Set `OPENROUTER_API_KEY` in `.env` for AI-powered commands.
+- Some repo-aware flows also benefit from GitHub token access.
+- `copy` is the clipboard alias. `aicopy` is the AI copywriter. They are intentionally different.
+- If you are unsure which command to use, start with `ai-suggest`, `strategy`, or `tech` depending on the task.

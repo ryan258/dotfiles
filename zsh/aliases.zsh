@@ -252,7 +252,7 @@ alias checkenv="validate_env.sh"         # Validate .env config is complete and 
 alias newscript="new_script.sh"          # Scaffold a new bash script with proper headers
 alias weather="weather.sh"               # Current weather forecast
 alias findtext="findtext.sh"             # Search file contents recursively
-alias graballtext="grab_all_text.sh"     # Concatenate all text files in a directory
+alias graballtext="grab_all_text.sh"     # Copy all readable non-ignored text files to clipboard
 alias pdf2md="pdf_to_markdown.sh"        # Convert a PDF into Markdown for cheaper AI ingestion
 
 # --- Project & Development Tools ---

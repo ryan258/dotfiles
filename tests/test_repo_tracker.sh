@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_repo_tracker.sh - Bats coverage for repo tracker.
+
 load helpers/test_helpers.sh
 load helpers/assertions.sh
 

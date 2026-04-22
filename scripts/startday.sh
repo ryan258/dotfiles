@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 # startday.sh - Enhanced morning routine
+#
+# This script is a guided morning checklist.
+# It helps the user wake up, check health, choose a focus,
+# look at recent work, and optionally get an AI briefing.
+# Think of it like a morning dashboard plus a few small setup tasks.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/loader.sh" || exit 1
 
+# These files remember what day this session belongs to
+# and whether we already built a morning AI briefing.
 mkdir -p "$DATA_DIR"
 CURRENT_DAY_FILE="$DATA_DIR/current_day"
 BRIEFING_CACHE="$BRIEFING_CACHE_FILE"
@@ -19,8 +26,10 @@ fi
 # Support "refresh" to force new AI briefing.
 # By default we keep GitHub cache so transient network failures still degrade gracefully.
 if [[ "${1:-}" == "refresh" ]]; then
+    # Throw away the saved AI answer so this run can make a new one.
     rm -f "$BRIEFING_CACHE"
     if [[ "${2:-}" == "--clear-github-cache" ]]; then
+        # This is a stronger reset. It also clears saved GitHub lookups.
         rm -rf "$GITHUB_CACHE_DIR"
         echo "🔄 Cache cleared (AI briefing + GitHub). Forcing new session data..."
     else
@@ -28,11 +37,12 @@ if [[ "${1:-}" == "refresh" ]]; then
     fi
 fi
 
-# Persist the start date of this session
+# Save today's date so later scripts know which "day" this session started on.
 date_today > "$CURRENT_DAY_FILE"
 
 CONTEXT_CAPTURE_ON_START="${CONTEXT_CAPTURE_ON_START:-false}"
 if [ "$CONTEXT_CAPTURE_ON_START" = "true" ]; then
+    # Optional: save a snapshot of the current workspace at the start of the day.
     CONTEXT_SCRIPT="$SCRIPT_DIR/context.sh"
     if [ -x "$CONTEXT_SCRIPT" ]; then
         "$CONTEXT_SCRIPT" capture "startday-$(date_now '%Y%m%d-%H%M')" >/dev/null 2>&1 || true
@@ -57,7 +67,7 @@ fi
 # 1. Daily Focus
 FOCUS_SCRIPT="$SCRIPT_DIR/focus.sh"
 if [ -t 0 ]; then
-    # Interactive mode
+    # Interactive mode means a real person is at the keyboard.
     if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
         CURRENT_FOCUS=$(cat "$FOCUS_FILE")
         echo "🎯 TODAY'S FOCUS: $CURRENT_FOCUS"
@@ -81,7 +91,7 @@ if [ -t 0 ]; then
     fi
     echo ""
 else
-    # Non-interactive mode: just display if present
+    # Non-interactive mode is used by automation. Do not ask questions there.
     if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
         echo "🎯 TODAY'S FOCUS: $(cat "$FOCUS_FILE")"
         echo ""
@@ -91,14 +101,16 @@ fi
 # 2. Initialize Daily Spoons (Energy Budget)
 echo "🥣 SPOON CHECK:"
 if [ -x "$SPOON_MANAGER" ]; then
-    # Check if already initialized
+    # First ask whether today's energy budget already exists.
     if "$SPOON_MANAGER" check &>/dev/null; then
         remaining=$("$SPOON_MANAGER" check | grep -oE -- '-?[0-9]+' || echo "?")
         _sd_depletion=""
+        # Load the helper only if it was not loaded earlier.
         if [ -z "$(command -v predict_spoon_depletion)" ] && [ -f "$SCRIPT_DIR/lib/spoon_budget.sh" ]; then
             # shellcheck disable=SC1090
             source "$SCRIPT_DIR/lib/spoon_budget.sh"
         fi
+        # This guess says roughly when spoons may run out if the current pace continues.
         if command -v predict_spoon_depletion >/dev/null 2>&1; then
             _sd_depletion=$(predict_spoon_depletion 2>/dev/null || true)
         fi
@@ -122,7 +134,7 @@ if [ -x "$SPOON_MANAGER" ]; then
             fi
         fi
     else
-        # Not initialized yet - prompt for spoons
+        # If no budget exists yet, start one now.
         if [ -t 0 ]; then
             echo -n "  How many spoons do you have today? [10]: "
             read -r spoons_input
@@ -143,7 +155,7 @@ else
     echo "  (Spoon manager not found)"
 fi
 
-# Coach mode prompt is resolved before heavy sections so briefing cannot block.
+# Pick a coaching mode early so later AI work already knows the right tone.
 COACH_MODE_PREFILL="${AI_COACH_MODE_DEFAULT:-LOCKED}"
 if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ] && command -v coaching_get_mode_for_date >/dev/null 2>&1; then
     TODAY_FOR_MODE=$(date_today)
@@ -155,6 +167,7 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ] && command -v coaching_get_mode_f
 fi
 
 # --- LOGGING ---
+# Write one line to the system log so there is a trace that startday ran.
 SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:?SYSTEM_LOG_FILE is not set by config.sh}"
 echo "$(date_now): startday.sh - Running morning routine." >> "$SYSTEM_LOG_FILE"
 
@@ -170,6 +183,7 @@ if [ -f "$BLOG_SCRIPT" ] && [ -n "$BLOG_STATUS_DIR" ] && [ -d "$BLOG_STATUS_DIR"
 fi
 
 # --- YESTERDAY'S CONTEXT ---
+# Show yesterday's journal so the user can restart with context, not guesswork.
 JOURNAL_FILE="${JOURNAL_FILE:?JOURNAL_FILE is not set by config.sh}"
 YESTERDAY_JOURNAL_CONTEXT=""
 echo ""
@@ -193,11 +207,12 @@ LAUNCHPAD_FILE="$DATA_DIR/tomorrow_launchpad"
 if [ -f "$LAUNCHPAD_FILE" ]; then
     echo ""
     echo "🚀 YESTERDAY'S PREP FOR TODAY:"
-    # Extract the Tomorrow lock section or show everything if small.
+    # Show the part of last night's reflection that talked about today's next move.
     awk '/Tomorrow lock:/,EOF' "$LAUNCHPAD_FILE" | sed 's/^/  /' || true
 fi
 
 # --- WEEKLY REVIEW ---
+# On Mondays, remind the user about last week's written review.
 if [ "$(date_weekday_iso)" -eq 1 ]; then
     WEEK_NUM=$(date_shift_days -1 "%V")
     YEAR=$(date_shift_days -1 "%Y")
@@ -215,6 +230,7 @@ echo ""
 echo "🚀 ACTIVE PROJECTS (pushed to GitHub in last 7 days):"
 RECENT_PUSHES=""
 if command -v get_recent_github_activity >/dev/null 2>&1; then
+    # Recent pushes give the coach a real signal about what work is alive.
     if RECENT_PUSHES=$(get_recent_github_activity 7); then
         if [ -n "$RECENT_PUSHES" ]; then
             echo "$RECENT_PUSHES"
@@ -245,6 +261,7 @@ echo ""
 echo "🧾 YESTERDAY'S COMMITS:"
 YESTERDAY_COMMITS=""
 if command -v get_commit_activity_for_date >/dev/null 2>&1; then
+    # This is more exact than "recent pushes" because it asks about one date.
     yesterday_date=$(date_shift_days -1 "%Y-%m-%d")
     if YESTERDAY_COMMITS=$(get_commit_activity_for_date "$yesterday_date" 2>/dev/null); then
         if [ -n "$YESTERDAY_COMMITS" ]; then
@@ -265,6 +282,7 @@ fi
 echo ""
 echo "💡 SUGGESTED DIRECTORIES:"
 if [ -f "$SCRIPT_DIR/g.sh" ]; then
+    # Suggest a few places the user often visits so restarting work is easier.
     suggested_dirs=$("$SCRIPT_DIR/g.sh" suggest 2>/dev/null | awk '
         {
             sub(/^[0-9.]+[[:space:]]+/, "", $0)
@@ -282,6 +300,7 @@ fi
 
 # --- BLOG STATUS ---
 if [ "$BLOG_READY" = true ]; then
+    # If the blog tools are configured, show a quick publishing snapshot too.
     echo ""
     if ! BLOG_DIR="$BLOG_STATUS_DIR" "$BLOG_SCRIPT" status; then
         echo "  ⚠️ Blog status unavailable (check BLOG_STATUS_DIR or BLOG_DIR configuration)."
@@ -300,8 +319,7 @@ echo ""
 echo "🗓️  TODAY'S SCHEDULE:"
 CALENDAR_SCRIPT="$SCRIPT_DIR/gcal.sh"
 if [ -x "$CALENDAR_SCRIPT" ]; then
-    # Show agenda. If auth fails, gcal.sh will exit non-zero.
-    # We capture output. If it fails due to creds, we show a hint.
+    # Show the calendar agenda, but fail softly if auth is missing.
     if OUTPUT=$("$CALENDAR_SCRIPT" agenda 1 2>&1); then
         echo "$OUTPUT" | sed 's/^/  /'
     else
@@ -312,6 +330,7 @@ else
 fi
 
 # --- STALE TASKS (older than 7 days) ---
+# Older tasks are shown as a nudge, not deleted.
 STALE_TODO_FILE="$TODO_FILE"
 ensure_todo_migrated
 echo ""
@@ -325,6 +344,7 @@ fi
 echo ""
 echo "✅ TODAY'S TASKS:"
 if [ -f "$SCRIPT_DIR/todo.sh" ]; then
+    # Show the top few tasks instead of dumping the full list.
     "$SCRIPT_DIR/todo.sh" top 3
 else
     echo "  (todo.sh not found)"
@@ -345,7 +365,7 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
     BRIEFING_CACHE="$BRIEFING_CACHE_FILE"
     TODAY=$(date_today)
 
-    # Check if we already have today's briefing
+    # Reuse the saved briefing if we already made one earlier today.
     if [ -f "$BRIEFING_CACHE" ] && grep -q "^$TODAY|" "$BRIEFING_CACHE"; then
         echo "  (Cached from this morning)"
         CACHED_BRIEFING=$(grep "^$TODAY|" "$BRIEFING_CACHE" | tail -n 1 | cut -d'|' -f2- || true)
@@ -354,8 +374,7 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
         echo "  (Signal: CACHED - briefing from earlier today)"
         _COACH_CHAT_BRIEFING="$CACHED_BRIEFING"
     else
-        # No cached morning briefing yet, so we build a fresh one.
-        # First we gather the facts the AI is allowed to use.
+        # No cached morning briefing exists yet, so gather facts for a new one.
         FOCUS_CONTEXT=""
         if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
             FOCUS_CONTEXT=$(cat "$FOCUS_FILE")
@@ -380,8 +399,8 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
         if command -v coaching_collect_data_quality_flags >/dev/null 2>&1; then
             COACH_DATA_QUALITY_FLAGS=$(coaching_collect_data_quality_flags 2>/dev/null || true)
         fi
-        # The behavior digest is the condensed "fact sheet" for the coach.
-        # It now includes wearable context too, when Fitbit data exists.
+        # The behavior digest is a short fact sheet for the AI coach.
+        # It blends work history, health logs, and wearable data.
         if command -v coaching_build_behavior_digest >/dev/null 2>&1; then
             COACH_BEHAVIOR_DIGEST=$(coaching_build_behavior_digest "$TODAY" "$COACH_TACTICAL_DAYS" "$COACH_PATTERN_DAYS" "${RECENT_PUSHES:-}" "${YESTERDAY_COMMITS:-}" 2>/dev/null || echo "(behavior digest unavailable)")
         fi
@@ -395,7 +414,7 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
             COACH_PREBRIEF_CONTEXT=$(coaching_collect_prebrief_context "startday" "${FOCUS_CONTEXT:-}" "${COACH_MODE:-LOCKED}" "$_sd_git_combined" "${COACH_BEHAVIOR_DIGEST:-}" "$PWD" "" "global" || true)
         fi
 
-        # Next we turn all those facts into one clear instruction packet for the AI.
+        # Turn the facts into one prompt that tells the AI what kind of briefing to write.
         if command -v coaching_build_startday_prompt >/dev/null 2>&1; then
             BRIEFING_PROMPT="$(coaching_build_startday_prompt \
                 "${FOCUS_CONTEXT:-}" \
@@ -413,21 +432,20 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
             BRIEFING_PROMPT="${BRIEFING_PROMPT}"$'\n\n'"Pre-brief clarifications:"$'\n'"${COACH_PREBRIEF_CONTEXT}"
         fi
 
-        # Now we ask the AI to write the actual morning briefing.
+        # Ask the AI for the final morning message.
         if command -v coaching_generate_response >/dev/null 2>&1; then
             BRIEFING=$(coaching_generate_response "$BRIEFING_PROMPT" "$BRIEFING_TEMPERATURE" "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "$_sd_git_combined" "${COACH_BEHAVIOR_DIGEST:-}" "startday")
         else
             BRIEFING="Unable to generate AI briefing at this time."
         fi
 
-        # Save today's answer so repeat runs can reuse it instead of re-calling the AI.
+        # Save the answer so later runs today do not call the AI again.
         BRIEFING_ESCAPED="${BRIEFING//$'\n'/\\n}"
         printf '%s|%s\n' "$TODAY" "$BRIEFING_ESCAPED" > "$BRIEFING_CACHE"
         echo "$BRIEFING" | sed 's/^/  /'
         _COACH_CHAT_BRIEFING="$BRIEFING"
 
-        # This confidence summary is a quick report card for the briefing itself.
-        # It tells the user whether the coach had lots of evidence or only a little.
+        # This gives a simple confidence label based on how much real context existed.
         _sd_present=0
         _sd_reasons=()
         if [ -n "${FOCUS_CONTEXT:-}" ]; then
@@ -476,7 +494,7 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
     fi
 fi
 
-# Interactive coach chat (on by default; disable with AI_COACH_CHAT_ENABLED=false)
+# If chat mode is on, let the user ask follow-up questions about the briefing.
 if [[ -n "${_COACH_CHAT_BRIEFING:-}" ]] && type coach_start_chat >/dev/null 2>&1; then
     coach_start_chat "$_COACH_CHAT_BRIEFING" "startday"
 fi

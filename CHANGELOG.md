@@ -1,6 +1,34 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** April 11, 2026
+**Last Updated:** April 21, 2026
+
+## Version 2.2.64 (April 21, 2026) - Documentation Inventory Refresh
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- Refreshed `README.md` with a current root-repo inventory snapshot and a clearer documentation map.
+- Rebuilt `docs/README.md` so the index now surfaces the advanced Cyborg, Morphling, Brain, script, alias, and troubleshooting guides instead of only the high-level handbooks.
+- Expanded `docs/ai-handbook.md`, `scripts/README.md`, `scripts/README_aliases.md`, and `bin/README.md` to cover the current AI command surface, repo-aware agents, autopilot shortcuts, and missing script/alias groups.
+
+## Version 2.2.63 (April 13, 2026) - Preserve Completed Todo History
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- `scripts/goodevening.sh` no longer prunes older entries from `todo_done.txt`; completed tasks are retained indefinitely to prevent accidental history loss.
+- Added `scripts/repair_todo_done.sh` to merge legacy `todo_done` backups/formats into the canonical `~/.config/dotfiles-data/todo_done.txt`.
+
+## Version 2.2.62 (April 11, 2026) - Grab All Text Clipboard Flow
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- `scripts/grab_all_text.sh` now skips files ignored by Git when run inside a worktree, no longer writes `all_text_contents.txt`, and copies the collected readable text directly to the macOS clipboard with `pbcopy`.
+- Updated the `graballtext` alias description, cheatsheet entry, and handbook references to match the new clipboard-first behavior.
 
 ## Version 2.2.61 (April 11, 2026) - Fitbit Refresh Failure Signals
 

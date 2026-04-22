@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_scripts_syntax.sh - Bats coverage for scripts syntax.
+
 load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
 
 setup() {

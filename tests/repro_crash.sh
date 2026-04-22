@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# repro_crash.sh - Reproduce the meds-only ai_suggest crash case.
+
 setup() {
     export TEST_HOME
     TEST_HOME="$(mktemp -d)"

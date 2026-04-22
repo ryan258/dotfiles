@@ -3,7 +3,7 @@
 This file is a quick alias map based on `../zsh/aliases.zsh`.
 The full rules live in `../CLAUDE.md`.
 
-## Core Daily Aliases
+## Daily Loop Aliases
 
 - `startday`
 - `status`
@@ -15,6 +15,14 @@ The full rules live in `../CLAUDE.md`.
 - `health`
 - `spoons`
 
+## Task, Time, and Energy Shortcuts
+
+- `todoadd`, `todolist`, `tododone`
+- `t-start`, `t-stop`, `t-status`
+- `pomo`, `tbreak`
+- `s-check`, `s-spend`
+- `daily-report`, `insight`
+
 ## Health Correlation Aliases
 
 - `correlate`
@@ -23,14 +31,26 @@ The full rules live in `../CLAUDE.md`.
 - `corr-rhr`
 - `corr-hrv`
 
+## Blog, Data, and Validation
+
+- `blog`, `blog-recent`
+- `dump`, `data_validate`
+- `dotfiles-check`
+- `pdf2md`
+
 ## AI Aliases
 
 - `tech`, `content`, `strategy`, `creative`, `brand`, `market`, `research`, `stoic`, `narrative`, `aicopy`, `finance`
-- `morphling` -- A flexible AI helper (interactive mode via `morphling.sh`)
+- `morphling` -- Swarm-mode Morphling alias; use `bin/morphling.sh` for direct tool-capable mode
 - `memory` / `memory-search` -- Save and find things in the knowledge base
-- Single entry point: `dispatch <dispatcher> "brief"`
-- Chaining tools: `dhp-chain`, `dhp-project`, `ai-suggest`
-- `cyborg` -- Cyborg Lab agent for scanning repos and writing docs (not a dispatcher)
+- `dhp` -- Default dispatcher alias, points at `tech`
+- `dispatch <dispatcher> "brief"` -- Generic router
+- `dhp-chain` / `ai-chain` -- Chain specialists
+- `dhp-project` / `ai-project` -- Multi-specialist orchestration
+- `ai-suggest` -- Context-aware router
+- `ai-context` -- Source local context helpers into the shell
+- `swipe` -- Run an AI command and save the output
+- `cyborg` -- Repo-aware drafting and autopilot agent (not a dispatcher)
 
 ## Autopilot Aliases (Brain-Fog Days)
 
@@ -45,16 +65,16 @@ The full rules live in `../CLAUDE.md`.
 ## Navigation + Utility
 
 - `g` (jump to folders and get suggestions)
-- `dotfiles-check` (run system checks)
 - `whatis <command>` (look up a command)
 - `memo` (your personal cheat sheet)
-- `pdf2md <file.pdf>` (convert a PDF into Markdown for cheaper AI ingestion)
+- `cleanup`, `quickbackup`, `devstart`, `gitcheck`
 
 ## Notes
 
 - `copy` is the clipboard tool (like Ctrl+C for the terminal).
 - `aicopy` is the AI copywriter. Different from `copy`.
 - `cyborg` is not a normal AI alias. It is its own tool. See `../bin/cyborg-readme.md`.
+- `cyborg-sync` is a `bin/` command, not a shell alias. It is documented in `../docs/cyborg-docs-sync.md`.
 - `grep` is changed on purpose to add color (`ggrep --color=auto` when it exists).
 - `memo` now points straight to `cheatsheet.sh`. The old `memo.sh` wrapper is gone.
 - AI aliases find their scripts through `DOTFILES_ALIAS_ROOT` (falls back to `$HOME/dotfiles`).

@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_time_tracking_lib.sh - Bats coverage for time tracking library.
+
 load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
 load "$BATS_TEST_DIRNAME/helpers/assertions.sh"
 

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# pdf_to_markdown.sh - Convert a text PDF into Markdown.
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/config.sh"
 source "$SCRIPT_DIR/lib/common.sh"
@@ -39,6 +41,7 @@ validate_output_path() {
     printf '%s/%s' "$output_dir" "$(basename "$output_path")"
 }
 
+# Swift and PDFKit pull out embedded text without extra PDF packages.
 render_markdown() {
     local pdf_file="$1"
     local title="$2"
@@ -137,6 +140,7 @@ INPUT_FILE=""
 FORCE_MODE=false
 STDOUT_MODE=false
 
+# Parse flags first so we can reject bad input before touching files.
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -h|--help)
@@ -215,6 +219,7 @@ if [[ "$STDOUT_MODE" == "true" ]]; then
     exit "$EXIT_SUCCESS"
 fi
 
+# Write to a temp file first so a failed conversion never leaves a half file.
 TEMP_OUTPUT=$(mktemp "${OUTPUT_FILE}.XXXXXX") || die "Failed to create temp output file"
 
 if ! render_markdown "$INPUT_FILE" "$TITLE" > "$TEMP_OUTPUT"; then

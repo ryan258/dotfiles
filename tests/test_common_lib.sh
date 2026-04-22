@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_common_lib.sh - Bats coverage for common library.
+
 load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
 load "$BATS_TEST_DIRNAME/helpers/assertions.sh"
 

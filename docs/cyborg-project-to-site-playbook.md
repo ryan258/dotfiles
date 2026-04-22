@@ -20,8 +20,8 @@ If you only remember one rule, remember this:
 
 Use `morphling` when you want help thinking, shaping, or brainstorming.
 
-- default: direct Morphling session
-- `morphling --swarm`: older dispatcher-style path with more context gathering
+- `morphling`: swarm-mode alias for one-shot context-rich analysis
+- `bin/morphling.sh`: direct tool-capable Morphling session
 
 Good use:
 

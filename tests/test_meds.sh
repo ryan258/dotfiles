@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_meds.sh - Bats coverage for meds.
+
 load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
 load "$BATS_TEST_DIRNAME/helpers/assertions.sh"
 

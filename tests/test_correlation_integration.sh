@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_correlation_integration.sh - Bats coverage for correlation integration.
+
 load helpers/test_helpers.sh
 load helpers/assertions.sh
 

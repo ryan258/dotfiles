@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# goodevening.sh - Run the evening wrap-up routine and reflection flow.
+#
+# This script is an end-of-day checklist.
+# It looks back at what happened today, checks for loose ends,
+# runs a few safety checks, and can ask the AI for a closing reflection.
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/loader.sh" || exit 1
 
+# These are the main files the evening routine reads from and writes to.
 mkdir -p "$DATA_DIR"
 
 SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:?SYSTEM_LOG_FILE is not set by config.sh}"
@@ -42,14 +49,14 @@ determine_session_date() {
         return 0
     fi
 
-    # Refresh flag: use system date
+    # "refresh" means: ignore the saved day marker and trust the real clock.
     if [ "$force_current" = true ]; then
         log_info "goodevening.sh: refresh requested; using system date $(date_today)"
         date_today
         return 0
     fi
 
-    # Read startday marker if available
+    # If startday ran earlier, use its saved marker for the day.
     if [ -f "$current_day_file" ]; then
         local marker_date
         marker_date=$(cat "$current_day_file")
@@ -60,7 +67,7 @@ determine_session_date() {
             return 0
         fi
 
-        # Check for stale marker (> 24 hours old)
+        # Reject very old markers so yesterday's session does not leak into tonight.
         local marker_mtime marker_age_seconds now_epoch
         marker_mtime=$(file_mtime_epoch "$current_day_file" 2>/dev/null || echo "0")
         now_epoch=$(date_epoch_now)
@@ -79,7 +86,7 @@ determine_session_date() {
         return 0
     fi
 
-    # No marker: before 04:00 in interactive sessions, use previous day
+    # If there is no marker and it is very late at night, the user may still mean "yesterday."
     local current_hour_num
     current_hour_num=$((10#$(date_hour_24)))
     if [ -t 0 ] && [ "$current_hour_num" -lt 4 ]; then
@@ -91,6 +98,7 @@ determine_session_date() {
     fi
 }
 
+# Find the last completed focus for this date, if one was saved to history.
 goodevening_completed_focus_for_day() {
     local target_day="$1"
     local history_file="${FOCUS_HISTORY_FILE:-}"
@@ -112,6 +120,7 @@ goodevening_completed_focus_for_day() {
     ' "$history_file"
 }
 
+# Prefer the live focus file. If it is empty, fall back to today's completed focus.
 goodevening_focus_context_for_day() {
     local target_day="$1"
 
@@ -127,6 +136,7 @@ goodevening_focus_context_for_day() {
 FORCE_CURRENT_DAY=false
 DATE_OVERRIDE=""
 
+# Accept either a refresh flag or a manual date like 2026-04-21.
 for arg in "$@"; do
     case "$arg" in
         refresh|--refresh|-r)
@@ -144,6 +154,7 @@ ACTIVE_FOCUS_CONTEXT=""
 if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
     ACTIVE_FOCUS_CONTEXT=$(cat "$FOCUS_FILE")
 fi
+# This picks the best focus text to show in the report.
 COMPLETED_FOCUS_CONTEXT="$(goodevening_completed_focus_for_day "$TODAY")"
 SESSION_FOCUS_CONTEXT="$ACTIVE_FOCUS_CONTEXT"
 if [ -z "$SESSION_FOCUS_CONTEXT" ] && [ -n "$COMPLETED_FOCUS_CONTEXT" ]; then
@@ -189,6 +200,7 @@ echo ""
 echo "✅ COMPLETED TODAY:"
 COMPLETED_TASKS=""
 if [ -f "$TODO_DONE_FILE" ]; then
+    # Pull only the lines that belong to the chosen date.
     COMPLETED_TASKS=$(filter_entries_by_date "$TODO_DONE_FILE" "$TODAY")
     if [ -n "$COMPLETED_TASKS" ]; then
         echo "$COMPLETED_TASKS" | sed 's/^/  • /'
@@ -201,7 +213,7 @@ fi
 echo ""
 echo "📝 TODAY'S JOURNAL:"
 if [ -f "$JOURNAL_FILE" ]; then
-    # TODAY is valid
+    # TODAY was validated earlier, so it is safe to use as a date filter.
     TODAY_JOURNAL_ENTRIES_TEXT=$(filter_entries_by_date "$JOURNAL_FILE" "$TODAY")
     if [ -n "$TODAY_JOURNAL_ENTRIES_TEXT" ]; then
         echo "$TODAY_JOURNAL_ENTRIES_TEXT" | sed 's/^/  • /'
@@ -218,6 +230,7 @@ if [ -f "$TIME_TRACKING_LIB" ]; then
     # shellcheck disable=SC1090
     source "$TIME_TRACKING_LIB"
     if [ -f "$TIME_LOG" ]; then
+        # Some time tracking helpers need modern Bash features.
         if command -v time_tracking_supports_assoc_arrays >/dev/null 2>&1 && ! time_tracking_supports_assoc_arrays; then
             echo "  (Time tracking requires Bash 4+; current shell: ${BASH_VERSION:-unknown}. Ensure /usr/bin/env bash resolves to a newer Bash.)"
         else
@@ -240,6 +253,7 @@ echo ""
 echo "🚀 RECENT PUSHES (last 7 days):"
 RECENT_PUSHES=""
 if command -v get_recent_github_activity >/dev/null 2>&1; then
+    # Recent pushes show which repos were active near the end of the day.
     if RECENT_PUSHES=$(get_recent_github_activity 7); then
         if [ -n "$RECENT_PUSHES" ]; then
             echo "$RECENT_PUSHES"
@@ -270,6 +284,7 @@ echo ""
 echo "🧾 COMMIT RECAP:"
 TODAY_COMMITS=""
 if command -v get_commit_activity_for_date >/dev/null 2>&1; then
+    # Show yesterday and today side by side so momentum is easier to spot.
     YESTERDAY=$(date_shift_from "$TODAY" -1 "%Y-%m-%d")
     echo "  Yesterday ($YESTERDAY):"
     if ! get_commit_activity_for_date "$YESTERDAY"; then
@@ -326,7 +341,7 @@ if [ "$_GE_COMMIT_COUNT" -gt 0 ] && [ "$TASKS_COMPLETED" -eq 0 ]; then
 fi
 
 if [ "$TASKS_COMPLETED" -eq 0 ] && [ "$JOURNAL_ENTRY_COUNT" -eq 0 ] && [ "$_GE_COMMIT_COUNT" -eq 0 ]; then
-    # Smarter rest day detection: distinguish intentional rest from health crashes
+    # If nothing obvious was completed, inspect health and spoons before judging the day.
     _ge_had_low_energy=false
     _ge_had_high_fog=false
     _ge_spoons_exhausted=false
@@ -335,7 +350,7 @@ if [ "$TASKS_COMPLETED" -eq 0 ] && [ "$JOURNAL_ENTRY_COUNT" -eq 0 ] && [ "$_GE_C
     _ge_low_energy_threshold="${COACH_LOW_ENERGY_THRESHOLD:-4}"
     _ge_high_fog_threshold="${COACH_HIGH_FOG_THRESHOLD:-6}"
 
-    # Check health readings
+    # Look for low energy, high fog, or any health logging.
     if [ -f "${HEALTH_FILE:-}" ]; then
         _ge_low_energy=$(awk -F'|' -v day="$TODAY" -v threshold="$_ge_low_energy_threshold" '
             $1 == "ENERGY" && substr($2, 1, 10) == day && $3 ~ /^[0-9]+$/ && $3 <= threshold { found=1 }
@@ -354,7 +369,7 @@ if [ "$TASKS_COMPLETED" -eq 0 ] && [ "$JOURNAL_ENTRY_COUNT" -eq 0 ] && [ "$_GE_C
         [ "$_ge_any_health" -eq 1 ] && _ge_had_health_entries=true
     fi
 
-    # Check spoon exhaustion
+    # Also check whether the user mostly ran out of spoons.
     if [ -f "${SPOON_LOG:-}" ]; then
         _ge_budget=$(grep "^BUDGET|$TODAY" "$SPOON_LOG" 2>/dev/null | tail -1 | cut -d'|' -f3 || true)
         _ge_last_remaining=$(grep "^SPEND|$TODAY" "$SPOON_LOG" 2>/dev/null | tail -1 | cut -d'|' -f6 || true)
@@ -364,11 +379,12 @@ if [ "$TASKS_COMPLETED" -eq 0 ] && [ "$JOURNAL_ENTRY_COUNT" -eq 0 ] && [ "$_GE_C
         fi
     fi
 
-    # Check if focus was completed
+    # A completed focus still counts as a meaningful win.
     if [ -n "${COMPLETED_FOCUS_CONTEXT:-}" ]; then
         _ge_focus_completed=true
     fi
 
+    # Pick the gentlest true explanation instead of calling the day "empty."
     if [ "$_ge_had_low_energy" = true ] || [ "$_ge_had_high_fog" = true ] || [ "$_ge_spoons_exhausted" = true ]; then
         echo "  💪 Tough day. Your body needed rest — that's not failure, it's management."
     elif [ "$_ge_focus_completed" = true ]; then
@@ -386,6 +402,7 @@ echo "🚀 PROJECT SAFETY CHECK:"
 if [ -d "$PROJECTS_DIR" ]; then
     found_issues=false
 
+    # This helper checks one repo for common "don't forget this" problems.
     project_has_safety_issue() {
         local proj_dir="$1"
         local proj_name="$2"
@@ -393,7 +410,7 @@ if [ -d "$PROJECTS_DIR" ]; then
         local current_branch=""
         local default_branch="main"
 
-        # Check for uncommitted changes
+        # Warn if work is sitting uncommitted in the repo.
         if git -C "$proj_dir" status --porcelain 2>/dev/null | grep -q .; then
             local change_count
             local additions
@@ -417,6 +434,7 @@ if [ -d "$PROJECTS_DIR" ]; then
         else
             default_branch=$(git -C "$proj_dir" symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
 
+            # Older side branches are easy to forget, so flag them after a week.
             if [ "$current_branch" != "$default_branch" ] && [ "$current_branch" != "main" ] && [ "$current_branch" != "master" ]; then
                 local branch_commit_epoch
                 local branch_age_days
@@ -436,6 +454,7 @@ if [ -d "$PROJECTS_DIR" ]; then
                 fi
             fi
 
+            # On main/master, the most common problem is local commits not pushed yet.
             if [ "$current_branch" = "$default_branch" ] || [ "$current_branch" = "main" ] || [ "$current_branch" = "master" ]; then
                 if git -C "$proj_dir" rev-parse '@{u}' >/dev/null 2>&1; then
                     local unpushed
@@ -469,6 +488,7 @@ if [ -d "$PROJECTS_DIR" ]; then
         _ge_issue_detail_limit=8
     fi
 
+    # Scan several repos in parallel so the evening check stays quick.
     job_count=0
     scanned_projects=0
     tmp_results=$(mktemp -d) || die "Failed to create temp directory" "1"
@@ -538,25 +558,12 @@ if [ "$BLOG_READY" = true ]; then
 fi
 
 
-# 7. Clear completed tasks older than 7 days
+# 7. Completed tasks retention (non-destructive)
 echo ""
-echo "🧹 Tidying up old completed tasks..."
+echo "🧾 Completed tasks log:"
 if [ -f "$TODO_DONE_FILE" ]; then
-    CUTOFF_DATE_STR=$(date_shift_days "-${STALE_TASK_DAYS}" "%Y-%m-%d")
-    tasks_to_remove=$(awk -F'|' -v cutoff="$CUTOFF_DATE_STR" 'NF>=2 { date_str = substr($1, 1, 10); if (date_str < cutoff) { count++ } } END { print count+0 }' "$TODO_DONE_FILE")
-    echo "$(date_now): goodevening.sh - Cleaned $tasks_to_remove old tasks." >> "$SYSTEM_LOG_FILE"
-    awk -F'|' -v cutoff="$CUTOFF_DATE_STR" '
-        NF >= 2 {
-            date_str = substr($1, 1, 10)
-            if (date_str >= cutoff) {
-                print
-            }
-            next
-        }
-        { print }
-    ' "$TODO_DONE_FILE" > "${TODO_DONE_FILE}.tmp" && mv "${TODO_DONE_FILE}.tmp" "$TODO_DONE_FILE"
-    chmod 600 "$TODO_DONE_FILE"
-    echo "  (Old completed tasks removed)"
+    chmod 600 "$TODO_DONE_FILE" || true
+    echo "  (Keeping full todo_done.txt history — no auto-cleanup)"
 fi
 
 # 8. Data Validation
@@ -564,7 +571,7 @@ echo ""
 echo "🛡️  Validating data integrity..."
 if bash "$(dirname "$0")/data_validate.sh"; then
     echo "  ✅ Data validation passed."
-    # 9. Backup of dotfiles data
+    # Only back up the data after it passes the safety check.
     echo "$(date_now): goodevening.sh - Backing up dotfiles data." >> "$SYSTEM_LOG_FILE"
 if ! backup_output=$("$SCRIPT_DIR/backup_data.sh" 2>&1); then
         echo "  ⚠️  WARNING: Backup failed: $backup_output"
@@ -611,8 +618,7 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     if command -v coaching_collect_data_quality_flags >/dev/null 2>&1; then
         COACH_DATA_QUALITY_FLAGS=$(coaching_collect_data_quality_flags 2>/dev/null || true)
     fi
-    # Build the shared digest so the evening coach can see work patterns,
-    # energy patterns, and the newest wearable context in one place.
+    # Build the shared fact sheet so the AI can see work and health in one view.
     if command -v coaching_build_behavior_digest >/dev/null 2>&1; then
         COACH_BEHAVIOR_DIGEST=$(coaching_build_behavior_digest "$TODAY" "$COACH_TACTICAL_DAYS" "$COACH_PATTERN_DAYS" "${RECENT_PUSHES:-}" "${TODAY_COMMITS:-}" 2>/dev/null || echo "(behavior digest unavailable)")
     fi
@@ -620,7 +626,7 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
         COACH_LOCAL_CONTEXT_BUNDLE=$(coaching_collect_local_context_bundle "goodevening" "$TODAY" "$PWD" "global" 2>/dev/null || true)
     fi
 
-    # Build the AI's instruction letter for the evening reflection.
+    # Build the prompt that tells the AI what kind of reflection to write.
     if command -v coaching_build_goodevening_prompt >/dev/null 2>&1; then
         REFLECTION_PROMPT="$(coaching_build_goodevening_prompt \
             "${COACH_MODE:-LOCKED}" \
@@ -646,7 +652,7 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
         REFLECTION_PROMPT="${REFLECTION_PROMPT}"$'\n\n'"Pre-brief clarifications:"$'\n'"${COACH_PREBRIEF_CONTEXT}"
     fi
     
-    # Ask the AI to write the reflection itself.
+    # Ask the AI for the final reflection message.
     if command -v coaching_generate_response >/dev/null 2>&1; then
         REFLECTION=$(coaching_generate_response "$REFLECTION_PROMPT" "$COACH_TEMPERATURE" "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "$_ge_git_combined" "${COACH_BEHAVIOR_DIGEST:-}" "goodevening")
     else
@@ -656,8 +662,7 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     echo "$REFLECTION" | sed 's/^/  /'
     _COACH_CHAT_BRIEFING="$REFLECTION"
 
-    # Just like startday, this gives a small confidence label for the reflection.
-    # It tells us whether the AI had enough evidence to make a strong call.
+    # This confidence label says how much real evidence the reflection had to work with.
     _ge_present=0
     _ge_reasons=()
     if [ -n "${FOCUS_CONTEXT:-}" ]; then
@@ -703,6 +708,7 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     fi
     printf '  (Signal: %s - %s)\n' "$_ge_signal_confidence" "$_ge_signal_reason_text"
 
+    # Save the reflection as tomorrow's launchpad so the next morning can reuse it.
     echo "$REFLECTION" > "$DATA_DIR/tomorrow_launchpad"
 
     if command -v coaching_append_log >/dev/null 2>&1; then
@@ -711,7 +717,7 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     fi
 fi
 
-# Interactive coach chat
+# Let the user keep talking with the coach after the main reflection if desired.
 if [[ -n "${_COACH_CHAT_BRIEFING:-}" ]] && type coach_start_chat >/dev/null 2>&1; then
     coach_start_chat "$_COACH_CHAT_BRIEFING" "goodevening"
 fi

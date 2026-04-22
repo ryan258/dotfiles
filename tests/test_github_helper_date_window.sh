@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_github_helper_date_window.sh - Bats coverage for github helper date window.
+
 load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
 load "$BATS_TEST_DIRNAME/helpers/assertions.sh"
 

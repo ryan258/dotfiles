@@ -12,6 +12,7 @@ fi
 readonly _COACH_PROMPTS_LOADED=true
 readonly COACH_BLINDSPOT_LIMIT=5
 
+# Small helpers normalize labels, limits, and pre-brief question text.
 _coach_reason_label() {
     local reason="${1:-unavailable}"
     # Turn internal machine labels into friendlier words for humans.
@@ -212,6 +213,7 @@ _coach_prebrief_question_field() {
     '
 }
 
+# Pre-brief builders decide whether the coach should ask follow-up questions first.
 coach_build_prebrief_questions() {
     local flow_type="$1"
     local focus_context="$2"
@@ -448,6 +450,7 @@ coach_collect_prebrief_context() {
     done
 }
 
+# Prompt builders turn the current context into a full dispatcher prompt.
 coach_build_startday_prompt() {
     local focus_context="$1"
     local coach_mode="$2"
@@ -1326,6 +1329,7 @@ _coach_clean_blindspot_section() {
     done <<< "$cleaned"
 }
 
+# Refinement helpers patch missing sections and keep headings stable.
 coach_refine_response() {
     local response="$1"
     local flow_type="${2:-general}"
@@ -1555,6 +1559,7 @@ _coach_replace_or_insert_text_section() {
     unset -f _coach_print_text_replacement
 }
 
+# Fallback builders keep each flow useful even when AI is off or unavailable.
 coach_status_fallback_output() {
     local focus="$1"
     local mode="$2"

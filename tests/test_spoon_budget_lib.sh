@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_spoon_budget_lib.sh - Bats coverage for spoon budget library.
+
 load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
 load "$BATS_TEST_DIRNAME/helpers/assertions.sh"
 

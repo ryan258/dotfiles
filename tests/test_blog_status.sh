@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_blog_status.sh - Bats coverage for blog status.
+
 load helpers/test_helpers.sh
 load helpers/assertions.sh
 

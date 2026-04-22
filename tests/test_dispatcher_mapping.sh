@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_dispatcher_mapping.sh - Bats coverage for dispatcher mapping.
+
 load helpers/test_helpers.sh
 load helpers/assertions.sh
 

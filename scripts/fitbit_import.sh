@@ -74,6 +74,7 @@ metric_output_path() {
     esac
 }
 
+# Auto mode guesses the metric from the export file name.
 infer_metric_from_name() {
     local input_name="${1:-}"
     local lowered
@@ -117,6 +118,7 @@ import_metric_csv() {
     local target_file
     target_file=$(metric_output_path "$metric") || exit "$EXIT_INVALID_ARGS"
 
+    # Accept many Fitbit CSV shapes, then rewrite them into one daily format.
     local normalized
     normalized="$(python3 - "$metric" "$safe_source" "${date_column:-__AUTO__}" "${value_column:-__AUTO__}" "$target_file" <<'PY'
 import csv
@@ -349,6 +351,7 @@ cmd_import() {
     import_metric_csv "$metric" "$source_file" "$date_column" "$value_column"
 }
 
+# Auto mode scans a folder and only imports files we know how to map.
 cmd_auto() {
     local input_path="${1:-}"
     [[ -n "$input_path" ]] || {

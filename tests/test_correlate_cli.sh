@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_correlate_cli.sh - Bats coverage for correlate CLI.
+
 load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
 
 setup() {

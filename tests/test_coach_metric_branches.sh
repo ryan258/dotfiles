@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_coach_metric_branches.sh - Bats coverage for coach metric branches.
+
 assert_success() {
     if [ "$status" -ne 0 ]; then
         echo "Expected success but got exit code: $status" >&2

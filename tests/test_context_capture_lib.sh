@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+# test_context_capture_lib.sh - Bats coverage for context capture library.
+
 load "$BATS_TEST_DIRNAME/helpers/test_helpers.sh"
 load "$BATS_TEST_DIRNAME/helpers/assertions.sh"
 

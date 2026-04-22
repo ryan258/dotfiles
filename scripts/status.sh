@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 # status.sh - Provides a mid-day context recovery dashboard.
+#
+# This script is a "where am I right now?" check.
+# It helps the user stop, look around, and recover context in the middle of the day.
+# It can also ask the AI coach for a short recentering message.
 
 # --- Configuration ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -11,6 +15,8 @@ JOURNAL_FILE="${JOURNAL_FILE:?JOURNAL_FILE is not set by config.sh}"
 TODO_FILE="${TODO_FILE:?TODO_FILE is not set by config.sh}"
 PROJECTS_DIR="${PROJECTS_DIR:-$HOME/Projects}"
 
+# GitHub activity lines can come in a few text formats.
+# This helper pulls out the repo name so later code can filter by project.
 _status_extract_repo_name_from_line() {
     local raw_line="$1"
     local cleaned=""
@@ -42,6 +48,7 @@ _status_extract_repo_name_from_line() {
     printf '%s\n' "$cleaned"
 }
 
+# Trim leading and trailing spaces without changing the middle of the text.
 _status_trim_ascii_whitespace() {
     local value="$1"
 
@@ -50,6 +57,7 @@ _status_trim_ascii_whitespace() {
     printf '%s' "$value"
 }
 
+# When the user is inside one repo, show only that repo's GitHub activity to the coach.
 _status_filter_activity_for_repo() {
     local activity="$1"
     local repo_name="$2"
@@ -87,6 +95,7 @@ _status_filter_activity_for_repo() {
     fi
 }
 
+# Health logging is optional, but if it exists we want to ask before coaching.
 _status_prompt_for_health_logging() {
     local health_script="$1"
     if command -v health_ops_prompt_for_manual_checkin >/dev/null 2>&1; then
@@ -117,6 +126,7 @@ if command -v health_ops_auto_sync_fitbit >/dev/null 2>&1; then
     health_ops_auto_sync_fitbit >/dev/null 2>&1 || true
 fi
 
+# Figure out what "today" is and what project the user seems to be inside.
 _status_today=$(date_today)
 CURRENT_DIR=$(pwd)
 _status_project_context="(no project context)"
@@ -129,6 +139,9 @@ elif [[ "$CURRENT_DIR" == "$PROJECTS_DIR"* ]]; then
     _status_project_context=$(basename "$CURRENT_DIR")
 fi
 
+# Pull two GitHub signals:
+# 1. commits from today
+# 2. recent pushes from the last week
 STATUS_TODAY_COMMITS=""
 if command -v get_commit_activity_for_date >/dev/null 2>&1; then
     if ! STATUS_TODAY_COMMITS=$(get_commit_activity_for_date "$_status_today" 2>/dev/null); then
@@ -156,6 +169,7 @@ STATUS_COACH_RECENT_PUSHES="${STATUS_RECENT_PUSHES:-}"
 STATUS_INACTIVE_REPOS=""
 _status_context_scope="global"
 if [[ "$_status_git_repo_focus" == "true" ]] && [[ "${_status_project_context:-}" != "(no project context)" ]]; then
+    # If we know the current repo, narrow the AI context to that repo first.
     STATUS_COACH_TODAY_COMMITS=$(_status_filter_activity_for_repo "${STATUS_TODAY_COMMITS:-}" "${_status_project_context:-}")
     STATUS_COACH_RECENT_PUSHES=$(_status_filter_activity_for_repo "${STATUS_RECENT_PUSHES:-}" "${_status_project_context:-}")
     _status_context_scope="repo-local"
@@ -183,6 +197,7 @@ echo ""
 echo "📊 DAILY CONTEXT:"
 _status_mode="unknown"
 if [ -f "${COACH_MODE_FILE:-}" ]; then
+    # Read today's saved coaching mode if one was chosen earlier.
     _status_mode_line=$(grep "^${_status_today}|" "$COACH_MODE_FILE" 2>/dev/null | tail -1 || true)
     if [ -n "$_status_mode_line" ]; then
         _status_mode=$(echo "$_status_mode_line" | cut -d'|' -f2)
@@ -195,6 +210,7 @@ fi
 _status_spoons="?"
 _status_budget="${DEFAULT_DAILY_SPOONS:-10}"
 if command -v get_remaining_spoons >/dev/null 2>&1; then
+    # Remaining spoons are the quick energy snapshot for right now.
     _status_spoons=$(get_remaining_spoons 2>/dev/null || echo "?")
     [ -z "$_status_spoons" ] && _status_spoons="?"
 fi
@@ -217,6 +233,7 @@ fi
 _status_focus_label="${_status_focus_text:-"(none set)"}"
 _status_alignment="no focus set"
 if [ -n "$_status_focus_text" ] && command -v coach_focus_git_signal >/dev/null 2>&1; then
+    # Compare today's focus sentence with real GitHub activity.
     _status_git_metrics=$(coach_focus_git_signal "$_status_focus_text" "${STATUS_RECENT_PUSHES:-}" "${STATUS_TODAY_COMMITS:-}" 2>/dev/null || true)
     _status_git_state=$(printf '%s\n' "$_status_git_metrics" | awk -F'=' '$1 == "focus_git_status" {print $2; exit}')
     _status_git_repo=$(printf '%s\n' "$_status_git_metrics" | awk -F'=' '$1 == "focus_git_primary_repo" {print $2; exit}')
@@ -247,6 +264,7 @@ if [ -n "$_status_focus_text" ] && command -v coach_focus_git_signal >/dev/null 
             ;;
     esac
 elif [ -n "$_status_focus_text" ] && command -v coach_focus_coherence >/dev/null 2>&1; then
+    # If GitHub data is weak, fall back to task-based focus matching.
     _status_focus_metrics=$(coach_focus_coherence "$_status_focus_text" "$(date_today)" "false" 2>/dev/null || true)
     _status_focus_pct=$(printf '%s\n' "$_status_focus_metrics" | awk -F'=' '$1 == "focus_coherence_pct" {print $2; exit}')
     _status_focus_detail=$(printf '%s\n' "$_status_focus_metrics" | awk -F'=' '$1 == "focus_coherence_detail" {print $2; exit}')
@@ -308,7 +326,7 @@ if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
         _status_prebrief_context=$(coaching_collect_prebrief_context "status" "${_status_focus_text:-}" "${_status_mode:-LOCKED}" "$_status_combined_git" "${_status_behavior_digest:-}" "$CURRENT_DIR" "${_status_project_context:-}" "${_status_context_scope:-global}" || true)
     fi
 
-    # Turn the facts into a status-specific instruction letter for the AI.
+    # Turn the facts into one prompt that asks for a short mid-day reset.
     if command -v coaching_build_status_prompt >/dev/null 2>&1; then
         _status_prompt=$(coaching_build_status_prompt \
             "${_status_mode:-LOCKED}" \
@@ -329,7 +347,7 @@ if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
         _status_prompt="${_status_prompt}"$'\n\n'"Pre-brief clarifications:"$'\n'"${_status_prebrief_context}"
     fi
 
-    # Ask the AI for the actual recentering message.
+    # Ask the AI for the actual message the user will see.
     if command -v coaching_generate_response >/dev/null 2>&1; then
         _status_briefing=$(coaching_generate_response "$_status_prompt" "$_status_temperature" "${_status_focus_text:-"(no focus set)"}" "${_status_mode:-LOCKED}" "$_status_combined_git" "${_status_behavior_digest:-}" "status" "${_status_project_context:-}" "${_status_context_scope:-global}" "$CURRENT_DIR")
     else
@@ -343,12 +361,14 @@ if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
 fi
 
 # --- Display Header ---
+# After the coach block, show the rest of the plain dashboard.
 echo ""
 echo "🧭 WHERE YOU ARE:"
 echo "  • Current directory: $CURRENT_DIR"
 
 # --- Context Snapshots ---
 if [ -d "$CONTEXT_ROOT" ]; then
+    # Context snapshots are saved workspace checkpoints from context.sh.
     CONTEXT_COUNT=$(find "$CONTEXT_ROOT" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')
     if [ "$CONTEXT_COUNT" -gt 0 ]; then
         echo "  • Context snapshots: $CONTEXT_COUNT (context.sh list)"
@@ -384,6 +404,7 @@ fi
 echo ""
 echo "🚀 ACTIVE PROJECT:"
 if [[ "$CURRENT_DIR" == "$PROJECTS_DIR"* ]]; then
+    # If we are inside Projects, call out the project name and latest commit.
     PROJECT_NAME=$(basename "$CURRENT_DIR")
     echo "  • Project: $PROJECT_NAME"
     if [ -d ".git" ] || git rev-parse --git-dir > /dev/null 2>&1; then
@@ -412,7 +433,7 @@ else
 fi
 
 # --- Health Check (interactive only) ---
-# Show Health Summary
+# Show the latest health summary, then offer a quick manual check-in.
 echo ""
 echo "🏥 HEALTH STATUS:"
 if command -v show_health_summary >/dev/null 2>&1; then
@@ -427,12 +448,13 @@ fi
 echo ""
 echo "✅ TASKS:"
 if [ -x "$SCRIPT_DIR/todo.sh" ]; then
+    # Keep this short so the user gets the next few tasks, not a wall of text.
     "$SCRIPT_DIR/todo.sh" top 3
 else
     echo "  (todo.sh not found)"
 fi
 
-# Interactive coach chat
+# Let the user ask follow-up questions if coach chat is available.
 if [[ -n "${_COACH_CHAT_BRIEFING:-}" ]] && type coach_start_chat >/dev/null 2>&1; then
     coach_start_chat "$_COACH_CHAT_BRIEFING" "status"
 fi

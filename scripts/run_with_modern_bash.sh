@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 
+# run_with_modern_bash.sh - Re-run a script with a newer Bash when needed.
+
 # Bootstrap exception: this wrapper intentionally uses POSIX sh so launchd/cron
 # can find and exec a modern Bash before any Bash-dependent script starts.
 
