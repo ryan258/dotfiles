@@ -6,6 +6,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 require_lib "config.sh"
+require_lib "date_utils.sh"
 
 # Define Paths
 TODO_FILE="${TODO_FILE:?TODO_FILE is not set by config.sh}"
@@ -105,13 +106,52 @@ cmd_add() {
     printf "%s [#%s] ' \033[32m%s \033[0m'\n" "${messages[$((RANDOM % ${#messages[@]}))]}" "$task_id" "$task_text"
 }
 
-cmd_list() {
-    echo "--- TODO ---"
-    if [[ ! -s "$TODO_FILE" ]]; then
+_todo_stale_cutoff() {
+    local stale_days="${STALE_TASK_DAYS:-7}"
+    if ! [[ "$stale_days" =~ ^[0-9]+$ ]] || [[ "$stale_days" -lt 1 ]]; then
+        stale_days=7
+    fi
+    date_shift_days "-$stale_days" "%Y-%m-%d"
+}
+
+_cmd_print_tasks() {
+    local heading="$1"
+    local source_file="$2"
+
+    echo "--- $heading ---"
+    if [[ ! -s "$source_file" ]]; then
         echo "No tasks found."
         return
     fi
-    awk -F'|' '{ printf "#%-4s %-12s %s\n", $1, $2, $3 }' "$TODO_FILE"
+    awk -F'|' '{ printf "#%-4s %-12s %s\n", $1, $2, $3 }' "$source_file"
+}
+
+cmd_all() {
+    cmd_list
+}
+
+cmd_current() {
+    local cutoff
+    cutoff=$(_todo_stale_cutoff)
+    local temp_file
+    temp_file=$(mktemp "${TMPDIR:-/tmp}/todo_current.XXXXXX") || die "Failed to create temp file" "$EXIT_ERROR"
+    awk -F'|' -v cutoff="$cutoff" '$2 >= cutoff { print }' "$TODO_FILE" > "$temp_file"
+    _cmd_print_tasks "CURRENT TODO" "$temp_file"
+    rm -f "$temp_file"
+}
+
+cmd_stale() {
+    local cutoff
+    cutoff=$(_todo_stale_cutoff)
+    local temp_file
+    temp_file=$(mktemp "${TMPDIR:-/tmp}/todo_stale.XXXXXX") || die "Failed to create temp file" "$EXIT_ERROR"
+    awk -F'|' -v cutoff="$cutoff" '$2 < cutoff { print }' "$TODO_FILE" > "$temp_file"
+    _cmd_print_tasks "STALE TODO" "$temp_file"
+    rm -f "$temp_file"
+}
+
+cmd_list() {
+    _cmd_print_tasks "TODO" "$TODO_FILE"
 }
 
 cmd_done() {
@@ -429,7 +469,10 @@ Usage: $(basename "$0") <command> [args]
 
 Task Management:
   add <text>                  Add a new task
-  list                        Show all current tasks
+  list                        Show all open tasks
+  all                         Alias for list
+  current                     Show non-stale open tasks
+  stale                       Show stale open tasks
   done <id>                   Mark a task as complete
   rm <id>                     Remove a task permanently (no archive)
   clear                       Clear all tasks
@@ -468,6 +511,9 @@ main() {
     case "$cmd" in
         add)        cmd_add "$@" ;;
         list)       cmd_list "$@" ;;
+        all)        cmd_all "$@" ;;
+        current)    cmd_current "$@" ;;
+        stale)      cmd_stale "$@" ;;
         done)       cmd_done "$@" ;;
         rm)         cmd_rm "$@" ;;
         clear)      cmd_clear "$@" ;;

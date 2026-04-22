@@ -86,6 +86,56 @@ _coach_real_risk_from_digest() {
     return 1
 }
 
+_coach_strategy_signal_count() {
+    local digest="$1"
+    local key="$2"
+    local value=""
+
+    value=$(_coach_digest_line_value "$digest" "$key")
+    if [[ "$value" =~ ^[0-9]+$ ]]; then
+        printf '%s' "$value"
+    else
+        printf '0'
+    fi
+}
+
+_coach_strategy_signal_summary() {
+    local digest="$1"
+    local horizon="${2:-week}"
+    local drive_key="drive_focus_hits_week"
+    local journal_hits=0
+    local drive_hits=0
+    local drive_titles=""
+    local parts=()
+    local joined=""
+
+    if [[ "$horizon" == "today" ]]; then
+        drive_key="drive_focus_hits_today"
+    fi
+
+    journal_hits=$(_coach_strategy_signal_count "$digest" "journal_focus_hits")
+    drive_hits=$(_coach_strategy_signal_count "$digest" "$drive_key")
+    drive_titles=$(_coach_digest_line_value "$digest" "drive_recent_titles")
+
+    if [[ "$journal_hits" -gt 0 ]]; then
+        parts+=("${journal_hits} focus-related journal hit(s)")
+    fi
+    if [[ "$drive_hits" -gt 0 ]]; then
+        if [[ -n "$drive_titles" && "$drive_titles" != "none" ]]; then
+            parts+=("${drive_hits} relevant Drive doc hit(s) (${drive_titles})")
+        else
+            parts+=("${drive_hits} relevant Drive doc hit(s)")
+        fi
+    fi
+
+    if [[ ${#parts[@]} -eq 0 ]]; then
+        return 1
+    fi
+
+    printf -v joined '%s; ' "${parts[@]}"
+    printf '%s' "${joined%; }"
+}
+
 _coach_prebrief_enabled() {
     [[ "${AI_COACH_PREBRIEF_ENABLED:-true}" != "false" ]]
 }
@@ -479,9 +529,10 @@ Tone and structure rules:
 - If the evidence is ambiguous, do not pretend certainty. Keep the advice conditional rather than inventing motives.
 Use the provided behavior digest as ground truth for what is working. DO NOT shame "drift"—treat deviation as natural exploration of what they are drawn to.
 Treat the declared focus and non-fork GitHub activity as the primary signal for the spear, but firmly accept that working on other projects is valid.
+Treat focus-related journal evidence and recent relevant Drive activity as valid strategy evidence when commit output is light. Git remains the strongest signal for code days, but it is not the only proof that meaningful work happened.
 Treat GitHub projects and recent commit activity as a map of their interests. Do NOT frame other repos as "neglected" or treat them as chores that "need attention."
 If an Additional local context bundle is provided after this prompt, you may use it as secondary evidence for specificity and planning context.
-Treat focus text and non-fork GitHub activity as the primary lane signal; use the local context bundle to sharpen the advice, not to override clearer Git/focus evidence.
+Treat focus text, non-fork GitHub activity, and strategy evidence in the behavior digest as the primary lane signal; use the local context bundle to sharpen the advice, not to override clearer focus/Git/strategy evidence.
 This morning briefing should feel like a gentle check-in first, then a plan.
 
 Today's focus:
@@ -534,6 +585,7 @@ Mode check:
 Action-source rules:
 - Use Today's focus as the PRIMARY source for Do Next actions.
 - Use yesterday commits and recent pushes to infer likely repo continuity, blindspots, and adjacent enhancement opportunities, but do not invent new work from them.
+- If \`journal_focus_hits\`, \`drive_focus_hits_today\`, \`drive_focus_hits_week\`, or \`strategy_evidence_sources\` indicate focus-related strategy work, you may validate a zero-commit strategy day. Use that evidence to confirm planning or architecture progress without turning it into a lecture about journaling.
 - Use the Additional local context bundle, when provided, as secondary evidence for schedule awareness, task specificity, launchpad continuity, health context, and raw note recall.
 - Do not let local notes overrule clearer focus/Git evidence.
 - Use recent repo names and commit-message patterns to surface 3-5 blindspots, side-quests, or enhancement opportunities. Frame these purely as optional explorations they might enjoy, NOT as overdue chores.
@@ -579,7 +631,7 @@ Constraints:
 - Do not invent new repositories, modules, endpoints, files, APIs, or projects unless those exact items appear in today's focus or provided GitHub activity.
 - Do not invent page names, paragraphs, homepage sections, drafts, or publication status unless those exact items appear in today's focus or provided GitHub activity.
 - Data-quality flags (e.g., dir_usage_malformed, malformed lines) are diagnostic metadata for system health, not actionable risks for the user. Do not surface them as top risks or action items.
-- Do not mention journal evidence, journal momentum, todo completion, or journaling habits.
+- Do not mention journal evidence, journal momentum, todo completion, or journaling habits as habits or virtue signals. It is fine to validate strategy work when \`journal_focus_hits\` or relevant Drive hits show that planning/architecture work happened.
 - Do Next must not reference commit hashes.
 - If the behavior digest includes focus_git_status, primary_repo, or commit_coherence, use those as the primary cues for working vs drift.
 - Any blindspot, enhancement opportunity, or project idea must stay adjacent to actual repo names and commit patterns present in the provided GitHub activity.
@@ -619,9 +671,10 @@ Tone and structure rules:
 - If the evidence is ambiguous, say so and ask before assuming.
 Always include health/energy context.
 Judge the day primarily against the declared focus and non-fork GitHub activity, but accept changing paths as valid.
+Treat focus-related journal evidence and recent relevant Drive activity as valid strategy evidence when commit output is light. Git remains the strongest signal for code days, but it is not the only proof that meaningful work happened.
 If today's commits show a long unbroken stretch in one repo (4+ hours of commits without switching), flag it as a hyperfocus session and ask whether the user remembered to eat, hydrate, move, and check body signals (numbness, vision, heat). Hyperfocus with MS burns spoons invisibly.
 If an Additional local context bundle is provided after this prompt, you may use it as secondary evidence for specificity and recall.
-Treat focus text and non-fork GitHub activity as the primary lane signal; use the local context bundle to sharpen the reflection, not to override clearer Git/focus evidence.
+Treat focus text, non-fork GitHub activity, and strategy evidence in the behavior digest as the primary lane signal; use the local context bundle to sharpen the reflection, not to override clearer focus/Git/strategy evidence.
 This evening reflection should feel like: celebrate wins, debrief what happened, set up tomorrow lightly, and help the body wind down.
 
 Coach mode used today:
@@ -703,7 +756,8 @@ Constraints:
 - Reflective and supportive, but still operationally useful.
 - No markdown headers, bold text, separators, or concluding paragraph.
 - If data is sparse, say so briefly instead of inventing details.
-- Make the main verdict about whether the spear moved, stalled, or diffused based on focus plus GitHub activity.
+- Make the main verdict about whether the spear moved, stalled, or diffused based on focus plus available GitHub or strategy evidence.
+- When \`journal_focus_hits\`, \`drive_focus_hits_today\`, \`drive_focus_hits_week\`, or \`strategy_evidence_sources\` show focus-related strategy work, treat that as valid movement even on zero-commit days. Do not confuse missing commits with missing progress.
 - You may use the Additional local context bundle for nuance, but do not let it overrule clearer focus/Git evidence.
 - Do not claim the user worked on "Recent GitHub pushes" today. Only "Today's commits" and "Today's focus" count as today's context.
 - Prefer commit/repo evidence over local notes when they conflict.
@@ -738,9 +792,10 @@ Tone and structure rules:
 - Real risk means a clear health/body risk, a same-day blocker, latest_energy <= 1, or latest_fog >= 8.
 - If the evidence is ambiguous, say so and ask before assuming.
 Use declared focus and non-fork GitHub activity as the primary signal for whether the spear is moving, while accepting that natural deviation is valid.
+Treat focus-related journal evidence and recent relevant Drive activity as valid strategy evidence when commit output is light. Git remains the strongest signal for code days, but it is not the only proof that meaningful work happened.
 Treat GitHub projects and recent commit/push activity as a map of their interests. Do not frame other repos as chores that "need attention."
 If an Additional local context bundle is provided after this prompt, you may use it as secondary evidence for specificity and fast recentering.
-Treat focus text and non-fork GitHub activity as the primary lane signal; use the local context bundle to sharpen the next move, not to override clearer Git/focus evidence.
+Treat focus text, non-fork GitHub activity, and strategy evidence in the behavior digest as the primary lane signal; use the local context bundle to sharpen the next move, not to override clearer focus/Git/strategy evidence.
 Bias toward one immediate action that can be started right now.
 This status briefing should feel like a midpoint reset: energy/focus check, quick accountability, conversational recenter, and one clear next move.
 If today's commits show sustained single-repo activity over many hours, add a body-check nudge: "You've been deep in [repo] — check in with your body (numbness, vision, heat, hunger, hydration)." Hyperfocus with MS can silently burn spoons.
@@ -820,7 +875,7 @@ Constraints:
 - Total 280-520 words.
 - Keep language operational and immediate; avoid reflection-heavy tone.
 - If signal is missing, say so briefly instead of inventing details.
-- Do Next must be grounded in today's focus, today's commits, recent pushes, and current project context when present.
+- Do Next must be grounded in today's focus, today's commits, recent pushes, current project context, and any explicit strategy evidence in the behavior digest when present.
 - You may use the Additional local context bundle for specificity, but do not let it overrule clearer focus/Git evidence.
 - Do not claim the user worked on "Recent GitHub pushes" today. Only "Today's commits" and "Today's focus" count as today's context.
 - Do not invent new repositories, modules, pages, endpoints, or publish states unless those exact items appear in the provided GitHub activity or focus text.
@@ -1592,6 +1647,7 @@ coach_status_fallback_output() {
     local anti_tinker_rule="No repo switch until Step 3 is complete."
     local health_lens=""
     local evidence_sources="focus"
+    local strategy_summary=""
     local reason_line=""
     local working_signal_cap=""
     local real_risk=""
@@ -1610,11 +1666,15 @@ coach_status_fallback_output() {
         commit_coherence=$(_coach_digest_inline_value "$behavior_digest" "commit_coherence")
         active_repos=$(_coach_digest_inline_value "$behavior_digest" "active_repos")
         focus_git_reason=$(_coach_digest_line_value "$behavior_digest" "focus_git_reason")
+        strategy_summary=$(_coach_strategy_signal_summary "$behavior_digest" "today" 2>/dev/null || _coach_strategy_signal_summary "$behavior_digest" "week" 2>/dev/null || true)
     fi
 
     if [[ -n "$repo_summary" ]]; then
         working_signal="today's visible GitHub lane is ${repo_summary}"
         evidence_sources="${evidence_sources}, repo_summary=${repo_summary}"
+    elif [[ -n "$strategy_summary" ]]; then
+        working_signal="focus-related strategy evidence is present (${strategy_summary})"
+        evidence_sources="${evidence_sources}, strategy=${strategy_summary}"
     fi
     if [[ "$context_scope" == "repo-local" ]] && [[ -n "$current_project_label" && "$current_project_label" != "(no project context)" ]]; then
         repo_local_scope_line="- Status coach is scoped to the current repo (${current_project_label}), so the next block stays inside that repo unless you deliberately choose to leave it."
@@ -1630,6 +1690,8 @@ coach_status_fallback_output() {
         drift_risk="${focus_git_reason}"
     elif [[ "$focus_git_status" == "diffuse" ]]; then
         drift_risk="recent GitHub activity is spread across multiple repos relative to the declared focus"
+    elif [[ -n "$strategy_summary" ]]; then
+        drift_risk="convert the visible strategy lane into one concrete next move before widening scope"
     fi
 
     if [[ -n "$primary_repo" && "$primary_repo" != "N/A" ]]; then
@@ -1667,6 +1729,10 @@ coach_status_fallback_output() {
     else
         step_one="Write the next concrete move for ${focus_label}, then start it immediately for 10-15 minutes."
         step_two="If the move is still vague after that block, reduce it to one repo, file, or artifact before continuing."
+        if [[ -n "$strategy_summary" ]]; then
+            step_one="Turn one visible strategy thread for ${focus_label} into the next concrete move, then start it immediately for 10-15 minutes."
+            step_two="If the move is still vague after that block, reduce it to one doc, repo, file, or artifact before continuing."
+        fi
     fi
     if [[ "$context_scope" == "repo-local" ]] && [[ -n "$current_project_label" && "$current_project_label" != "(no project context)" ]]; then
         anti_tinker_rule="Do not leave ${current_project_label} until Step 3 is complete or you explicitly decide to change the repo-local lane."
@@ -1703,7 +1769,7 @@ ${summary_project_line}
 $(printf '%s' "$(_coach_blindspot_heading "github")")
 ${blindspot_scan}
 North Star:
-- Move one GitHub-visible step that matches ${focus_label} before switching lanes.
+- Move one concrete step that matches ${focus_label} before switching lanes.
 Do Next (ordered 1-3):
 1. ${step_one}
 2. ${step_two}
@@ -1748,6 +1814,7 @@ coach_startday_fallback_output() {
     local github_opportunity_line=""
     local github_blindspot_scan=""
     local fallback_kind="Deterministic fallback"
+    local strategy_summary=""
     local real_risk=""
     local opening_line=""
     local health_lens=""
@@ -1767,7 +1834,7 @@ coach_startday_fallback_output() {
         anti_tinker_rule="No side-quest work until Step 3 is complete and logged."
     fi
 
-    briefing_scope_line="Fallback is based on today's focus and recent GitHub activity only."
+    briefing_scope_line="Fallback is based on today's focus, recent GitHub activity, and any focus-related strategy evidence in the behavior digest."
     step_one="Capture the first concrete move for today's focus (${focus_label}), then spend 10-15 minutes starting it."
     step_two="If the next move is still vague after that block, write one explicit same-focus task before touching another repo or side quest."
     step_three="Done condition: one short focus block is completed and the next concrete move is captured."
@@ -1795,6 +1862,7 @@ coach_startday_fallback_output() {
         commit_coherence=$(_coach_digest_inline_value "$behavior_digest" "commit_coherence")
         active_repos=$(_coach_digest_inline_value "$behavior_digest" "active_repos")
         focus_git_reason=$(_coach_digest_line_value "$behavior_digest" "focus_git_reason")
+        strategy_summary=$(_coach_strategy_signal_summary "$behavior_digest" "week" 2>/dev/null || true)
     fi
 
     case "$focus_git_status" in
@@ -1828,18 +1896,38 @@ coach_startday_fallback_output() {
             evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}, primary_repo=${primary_repo:-N/A}, commit_coherence=${commit_coherence:-N/A}, active_repos=${active_repos:-N/A}"
             ;;
         no-git-evidence)
-            working_signal="focus is declared"
-            drift_risk="recent non-fork GitHub activity is thin, so spear movement is still unproven"
-            git_summary="No recent non-fork GitHub activity was available to confirm spear movement."
-            evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}"
+            if [[ -n "$strategy_summary" ]]; then
+                working_signal="focus-related strategy evidence supports the declared focus"
+                drift_risk="commit output is light, so convert that strategy lane into one explicit next move"
+                git_summary="Recent non-fork GitHub activity is thin, but strategy evidence is present (${strategy_summary})."
+                evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}, strategy=${strategy_summary}"
+            else
+                working_signal="focus is declared"
+                drift_risk="recent non-fork GitHub activity is thin, so spear movement is still unproven"
+                git_summary="No recent non-fork GitHub activity was available to confirm spear movement."
+                evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}"
+            fi
             ;;
         git-unavailable)
-            working_signal="focus is declared"
-            drift_risk="GitHub signal is unavailable, so use the focus text rather than repo momentum to choose the next move"
-            git_summary="GitHub signal was unavailable, so focus-vs-Git alignment could not be scored."
-            evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}"
+            if [[ -n "$strategy_summary" ]]; then
+                working_signal="focus-related strategy evidence is present even though GitHub signal is unavailable"
+                drift_risk="use the visible strategy lane to choose the next move instead of waiting for repo evidence"
+                git_summary="GitHub signal was unavailable, but strategy evidence is present (${strategy_summary})."
+                evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}, strategy=${strategy_summary}"
+            else
+                working_signal="focus is declared"
+                drift_risk="GitHub signal is unavailable, so use the focus text rather than repo momentum to choose the next move"
+                git_summary="GitHub signal was unavailable, so focus-vs-Git alignment could not be scored."
+                evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}"
+            fi
             ;;
     esac
+
+    if [[ -n "$strategy_summary" ]] && [[ -z "$commit_repo_summary" ]]; then
+        step_one="Capture the next concrete move for ${focus_label} from the visible strategy lane, then spend 10-15 minutes starting it."
+        step_two="Keep that same doc, repo, or planning lane open for one more short block before widening scope."
+        step_three="Done condition: one short focus block lands in the strategy lane and the next concrete move is captured."
+    fi
 
     github_opportunity_line=$(_coach_github_opportunity_line "$focus_label" "$commit_context" "$focus_git_status" "$primary_repo" "$active_repos" "$commit_repo_summary" || true)
     github_blindspot_scan=$(_coach_github_blindspot_scan "$focus_label" "$commit_context" "$focus_git_status" "$primary_repo" "$primary_repo_share" "$commit_coherence" "$active_repos" "$focus_git_reason" "$commit_repo_summary")
@@ -1910,6 +1998,7 @@ coach_goodevening_fallback_output() {
     local reason_label=""
     local commit_repo_summary=""
     local blindspots_to_sleep_on=""
+    local strategy_summary=""
     local real_risk=""
     local reflection_opening=""
     local health_lens=""
@@ -1936,6 +2025,7 @@ coach_goodevening_fallback_output() {
         commit_coherence=$(_coach_digest_inline_value "$behavior_digest" "commit_coherence")
         active_repos=$(_coach_digest_inline_value "$behavior_digest" "active_repos")
         focus_git_reason=$(_coach_digest_line_value "$behavior_digest" "focus_git_reason")
+        strategy_summary=$(_coach_strategy_signal_summary "$behavior_digest" "today" 2>/dev/null || _coach_strategy_signal_summary "$behavior_digest" "week" 2>/dev/null || true)
     fi
 
     tomorrow_first_move="capture the first concrete move for ${focus_label} before opening any unrelated repo or side quest."
@@ -1978,20 +2068,38 @@ coach_goodevening_fallback_output() {
             evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}, primary_repo=${primary_repo:-N/A}, commit_coherence=${commit_coherence:-N/A}, active_repos=${active_repos:-N/A}"
             ;;
         no-git-evidence)
-            git_summary="No recent non-fork GitHub activity was available to confirm spear movement."
-            what_worked="the day still ended with a declared focus and captured context for tomorrow."
-            where_drift="recent non-fork GitHub activity was too thin to prove whether the spear moved"
-            likely_trigger="work stayed too implicit to evaluate cleanly."
-            tomorrow_first_move="define one explicit move for ${focus_label} and start it early enough to produce evidence."
-            evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}"
+            if [[ -n "$strategy_summary" ]]; then
+                git_summary="Recent non-fork GitHub activity stayed thin, but strategy evidence is present (${strategy_summary})."
+                what_worked="focus-related strategy work stayed visible even without fresh commit output."
+                where_drift="code output stayed light, so tomorrow needs one explicit follow-through step from the strategy lane"
+                likely_trigger="planning, architecture, or document work pulled focus more than code execution."
+                tomorrow_first_move="turn one visible strategy thread for ${focus_label} into the first concrete move, then start it before opening a second lane."
+                evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}, strategy=${strategy_summary}"
+            else
+                git_summary="No recent non-fork GitHub activity was available to confirm spear movement."
+                what_worked="the day still ended with a declared focus and captured context for tomorrow."
+                where_drift="recent non-fork GitHub activity was too thin to prove whether the spear moved"
+                likely_trigger="work stayed too implicit to evaluate cleanly."
+                tomorrow_first_move="define one explicit move for ${focus_label} and start it early enough to produce evidence."
+                evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}"
+            fi
             ;;
         git-unavailable)
-            git_summary="GitHub signal was unavailable, so focus-vs-Git alignment could not be scored."
-            what_worked="the day still ended with a declared focus and a saved shutdown note."
-            where_drift="the evidence gap is about unavailable GitHub signal, not a confirmed lack of movement"
-            likely_trigger="signal quality, not necessarily behavior."
-            tomorrow_first_move="use the declared focus itself to choose one concrete first move before relying on repo memory."
-            evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}"
+            if [[ -n "$strategy_summary" ]]; then
+                git_summary="GitHub signal was unavailable, but strategy evidence is present (${strategy_summary})."
+                what_worked="focus-related strategy work stayed visible even though GitHub signal was unavailable."
+                where_drift="the evidence gap is about GitHub signal quality, not a confirmed lack of movement"
+                likely_trigger="signal quality, with the visible lane living in notes or docs instead of commit output."
+                tomorrow_first_move="use the visible strategy lane to choose one concrete first move before relying on repo memory."
+                evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}, strategy=${strategy_summary}"
+            else
+                git_summary="GitHub signal was unavailable, so focus-vs-Git alignment could not be scored."
+                what_worked="the day still ended with a declared focus and a saved shutdown note."
+                where_drift="the evidence gap is about unavailable GitHub signal, not a confirmed lack of movement"
+                likely_trigger="signal quality, not necessarily behavior."
+                tomorrow_first_move="use the declared focus itself to choose one concrete first move before relying on repo memory."
+                evidence_sources="${evidence_sources}, focus_git_status=${focus_git_status}"
+            fi
             ;;
     esac
 
@@ -2022,7 +2130,7 @@ Reflection Summary:
 - AI reflection was ${reason_label}; using deterministic fallback structure.
 - ${git_summary}
 $(printf '%s' "$(_coach_blindspot_heading "goodevening")")
-${blindspots_to_sleep_on:-1. Non-fork GitHub evidence is sparse, so the first blindspot to sleep on is how to create one visible commit early tomorrow.}
+${blindspots_to_sleep_on:-1. Start tomorrow by turning the visible strategy lane into one concrete move before opening a second thread.}
 What worked:
 - ${what_worked}
 Off-script momentum:

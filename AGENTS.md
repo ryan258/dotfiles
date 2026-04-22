@@ -142,7 +142,8 @@ my_function() {
 | `health_ops.sh`   | Shared health + wearable helpers           | `scripts/lib/` |
 | `spoon_budget.sh` | Energy tracking                            | `scripts/lib/` |
 | `blog_common.sh`  | Blog utilities                             | `scripts/lib/` |
-| `coach_chat.sh`   | Interactive post-briefing coach conversation | `scripts/lib/` |
+| `coach_chat.sh`   | Menu-driven post-briefing control surface and chat | `scripts/lib/` |
+| `focus_relevance.sh` | Focus keyword extraction and relevance scoring | `scripts/lib/` |
 
 **Sourcing pattern:**
 
@@ -258,6 +259,7 @@ dhp_dispatch \
 - `bin/cyborg` is the Cyborg Lab ingest/resume agent: an interactive session tool that scans a source repo, proposes a Cyborg Lab content graph, stages near-publishable drafts, stores resumable session artifacts under `~/Projects/cyborg-work` by default (override with `CYBORG_WORK_DIR`), only writes to `my-ms-ai-blog` on explicit apply, and should prefer accessible `A/B/C/D/E` short-choice prompts when it asks the user to choose. `cyborg auto` runs the full pipeline hands-free for low-energy sessions; `cyborg auto --iterate` is the existing-repo growth path: it picks the next GitHub issue or backlog item, applies the repo change, and runs the same build-verify-fix loop before stopping unless `--docs-after-code` is set. `cyborg auto --build` runs market validation, scaffolds a project via Morphling, runs the build-verify-fix loop, and then hands the verified repo to Cyborg for documentation. Add `--publish` when you want the verified build pushed to its registry before the docs pass. See [`bin/autopilot-readme.md`](bin/autopilot-readme.md) for the convergence architecture and [`MORPHLING.md`](MORPHLING.md) for Morphling's full capabilities including command execution.
 - `bin/morphling.sh` is the Morphling launcher. Direct mode (`bin/morphling.sh`) runs a LangChain ReAct agent with four tools: `read_file`, `write_file`, `list_directory`, and `run_command` (shell execution with 60s timeout). This gives it closed-loop lead-developer capabilities — write code, run tests, read errors, fix, repeat. The `morphling` shell alias points to swarm mode (`bin/dhp-morphling.sh`), which is one-shot context-rich analysis with no tool access. See [`MORPHLING.md`](MORPHLING.md) for the full architecture.
 - `bin/coach-chat.py` is the multi-turn coach chat handler. It maintains conversation history in a JSON file and calls OpenRouter for follow-up turns. Invoked by `scripts/lib/coach_chat.sh` — not called directly by users. Supports `init` (create history with system prompt + briefing) and `turn` (append message, call API, return response).
+
 
 ---
 

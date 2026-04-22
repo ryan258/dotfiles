@@ -13,10 +13,10 @@ This repo is a command-line productivity environment built around shell scripts,
 
 ## Current Inventory Snapshot
 
-This snapshot reflects the root repo as audited on April 21, 2026:
+This snapshot reflects the root repo as audited on April 22, 2026:
 
-- `scripts/`: 72 shell utilities plus 4 Python helpers
-- `scripts/lib/`: 25 sourced libraries
+- `scripts/`: 76 shell utilities plus 4 Python helpers
+- `scripts/lib/`: 26 sourced libraries
 - `bin/`: 28 non-markdown entry points, including 21 `dhp-*.sh` executables
 - `tests/`: 47 Bats test files
 
@@ -51,6 +51,9 @@ todo add "Fix the login bug"
 todo top
 focus set "Ship the API"
 journal add "Stopped at parser error handling"
+todo stale                              # Show tasks older than threshold
+journal rel                             # Show focus-related journal entries
+drive recent                            # Recent Drive docs matching current focus
 
 # Health and energy
 health energy 6

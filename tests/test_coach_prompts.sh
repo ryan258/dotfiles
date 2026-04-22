@@ -29,9 +29,10 @@ setup() {
     export COMMON_LIB="$BATS_TEST_DIRNAME/../scripts/lib/common.sh"
     export DATE_LIB="$BATS_TEST_DIRNAME/../scripts/lib/date_utils.sh"
     export HEALTH_LIB="$BATS_TEST_DIRNAME/../scripts/lib/health_ops.sh"
+    export FOCUS_RELEVANCE_LIB="$BATS_TEST_DIRNAME/../scripts/lib/focus_relevance.sh"
     export METRICS_LIB="$BATS_TEST_DIRNAME/../scripts/lib/coach_metrics.sh"
     export PROMPTS_LIB="$BATS_TEST_DIRNAME/../scripts/lib/coach_prompts.sh"
-    export SOURCE_PREFIX="source '$CONFIG_LIB'; source '$COMMON_LIB'; source '$DATE_LIB'; source '$HEALTH_LIB'; source '$METRICS_LIB'; source '$PROMPTS_LIB'"
+    export SOURCE_PREFIX="source '$CONFIG_LIB'; source '$COMMON_LIB'; source '$DATE_LIB'; source '$HEALTH_LIB'; source '$FOCUS_RELEVANCE_LIB'; source '$METRICS_LIB'; source '$PROMPTS_LIB'"
 
     export DAY_MINUS1
     DAY_MINUS1="$(shift_date -1)"
@@ -64,6 +65,7 @@ teardown() {
     [[ "$output" == *"Scope anchor:"* ]]
     [[ "$output" == *"Health lens:"* ]]
     [[ "$output" == *"non-fork GitHub activity as the primary signal for the spear"* ]]
+    [[ "$output" == *"focus-related journal evidence and recent relevant Drive activity as valid strategy evidence"* ]]
     [[ "$output" == *"map of their interests"* ]]
     [[ "$output" == *"surface 3-5 blindspots, side-quests, or enhancement opportunities"* ]]
     [[ "$output" == *"Prefer 3-5 blindspots. Never exceed 5."* ]]
@@ -71,7 +73,7 @@ teardown() {
     [[ "$output" == *"Additional local context bundle"* ]]
     [[ "$output" == *"secondary evidence for specificity and planning context"* ]]
     [[ "$output" == *"do not invent one. Step 1 should capture or choose the next concrete move"* ]]
-    [[ "$output" == *"Do not mention journal evidence, journal momentum, todo completion"* ]]
+    [[ "$output" == *"It is fine to validate strategy work when"* ]]
 }
 
 @test "coach_build_startday_prompt includes custom traps when traps.txt exists" {
@@ -116,6 +118,7 @@ teardown() {
     [[ "$output" == *"Tomorrow lock:"* ]]
     [[ "$output" == *"Health lens:"* ]]
     [[ "$output" == *"declared focus and non-fork GitHub activity"* ]]
+    [[ "$output" == *"focus-related journal evidence and recent relevant Drive activity as valid strategy evidence"* ]]
     [[ "$output" == *"Additional local context bundle"* ]]
     [[ "$output" == *"secondary evidence for specificity and recall"* ]]
     [[ "$output" == *"Prefer 3-5 blindspots. Never exceed 5."* ]]
@@ -159,6 +162,7 @@ teardown() {
     [[ "$output" == *"one short A-E multiple-choice question"* ]]
     [[ "$output" == *"Additional local context bundle"* ]]
     [[ "$output" == *"secondary evidence for specificity and fast recentering"* ]]
+    [[ "$output" == *"recent relevant Drive activity as valid strategy evidence"* ]]
 }
 
 @test "coach_build_prebrief_questions caps prompts at three questions" {
@@ -304,16 +308,27 @@ EOF
     [[ "$output" == *"AI coaching was error; using deterministic fallback structure."* ]]
 }
 
-@test "startday fallback uses focus and Git only" {
+@test "startday fallback uses focus Git and strategy evidence" {
     run bash -c "$SOURCE_PREFIX; coach_startday_fallback_output \
         'Making and polishing content for ryanleej.com' 'LOCKED' 'timeout'"
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"timeout"* ]]
-    [[ "$output" == *"Fallback is based on today's focus and recent GitHub activity only."* ]]
+    [[ "$output" == *"Fallback is based on today's focus, recent GitHub activity, and any focus-related strategy evidence"* ]]
     [[ "$output" == *"GitHub blindspots/opportunities (1-5):"* ]]
     [[ "$output" == *"Capture the first concrete move for today's focus (Making and polishing content for ryanleej.com)"* ]]
     [[ "$output" != *"top task"* ]]
+}
+
+@test "startday fallback counts strategy evidence when git output is thin" {
+    run bash -c "$SOURCE_PREFIX; coach_startday_fallback_output \
+        'Architecture review memo' 'LOCKED' 'timeout' \
+        \$'Pattern window: 30d ending $DAY_MINUS1\n  focus_git_status=no-git-evidence\n  journal_focus_hits=2\n  drive_focus_hits_week=1\n  drive_recent_titles=Architecture review memo\n  strategy_evidence_sources=journal,drive'"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"strategy evidence is present"* ]]
+    [[ "$output" == *"Architecture review memo"* ]]
+    [[ "$output" != *"spear movement is still unproven"* ]]
 }
 
 @test "startday fallback cites focus Git drift when digest reports diffuse activity" {
@@ -423,6 +438,17 @@ EOF
     [[ "$output" == *"3. In ai-ethics-comparator, do one small polish pass before opening a new lane."* ]]
 }
 
+@test "goodevening fallback counts strategy evidence on zero-commit days" {
+    run bash -c "$SOURCE_PREFIX; coach_goodevening_fallback_output \
+        'Architecture review memo' 'LOCKED' 'timeout' \
+        \$'Pattern window: 30d ending $DAY_MINUS1\n  focus_git_status=no-git-evidence\n  journal_focus_hits=2\n  drive_focus_hits_today=1\n  drive_recent_titles=Architecture review memo\n  strategy_evidence_sources=journal,drive'"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"strategy evidence is present"* ]]
+    [[ "$output" == *"focus-related strategy work stayed visible"* ]]
+    [[ "$output" != *"how to create one visible commit early tomorrow"* ]]
+}
+
 @test "coach_refine_response replaces unsupported journal claims in goodevening what worked" {
     local response
     local digest
@@ -483,4 +509,36 @@ EOF
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"latest_energy=7 (2026-03-26 13:02), latest_fog=3 (2026-03-26 13:02), avg_energy=5.5, avg_fog=5.0"* ]]
+}
+
+@test "coach_build_behavior_digest includes focus-related strategy evidence fields" {
+    cat > "$DATA_DIR/daily_focus.txt" <<'EOF'
+Architecture review memo
+EOF
+    cat > "$DATA_DIR/journal.txt" <<'EOF'
+2026-03-26 08:00:00|Architecture review memo outline
+EOF
+    mkdir -p "$DOTFILES_DIR/scripts"
+    cat > "$DOTFILES_DIR/scripts/drive.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "${1:-}" == "recent" && "${2:-}" == "1" ]]; then
+  cat <<'JSON'
+[{"name":"Architecture review memo"}]
+JSON
+else
+  cat <<'JSON'
+[{"name":"Architecture review memo"},{"name":"System design notes"}]
+JSON
+fi
+EOF
+    chmod +x "$DOTFILES_DIR/scripts/drive.sh"
+
+    run bash -c "$SOURCE_PREFIX; coach_build_behavior_digest '2026-03-26' 7 30 '' ''"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"journal_focus_hits=1"* ]]
+    [[ "$output" == *"drive_focus_hits_today=1"* ]]
+    [[ "$output" == *"drive_focus_hits_week=2"* ]]
+    [[ "$output" == *"strategy_evidence_sources=journal,drive"* ]]
 }

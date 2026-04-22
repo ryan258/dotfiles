@@ -5,14 +5,14 @@ The canonical contract and coding rules live in `../CLAUDE.md`.
 
 ## Current Inventory
 
-- 72 top-level shell utilities
+- 76 top-level shell utilities
 - 4 top-level Python helpers
-- 25 sourced libraries under `scripts/lib/`
+- 26 sourced libraries under `scripts/lib/`
 
 ## Daily Loop and Context Commands
 
 - `startday.sh`, `status.sh`, `goodevening.sh`
-- `focus.sh`, `repo_tracker.sh`, `schedule.sh`, `gcal.sh`
+- `focus.sh`, `repo_tracker.sh`, `schedule.sh`, `gcal.sh`, `drive.sh`
 - `week_in_review.sh`, `my_progress.sh`, `gh-projects.sh`
 
 ## Tasks, Notes, and Time
@@ -20,6 +20,10 @@ The canonical contract and coding rules live in `../CLAUDE.md`.
 - `todo.sh`, `done.sh`, `idea.sh`, `journal.sh`
 - `time_tracker.sh`, `take_a_break.sh`, `remind_me.sh`
 - `generate_report.sh`, `setup_weekly_review.sh`
+
+- `todo.sh` keeps `list` backward-compatible for all open tasks and now adds `all`, `current`, and `stale` so the coach can separate active work from cleanup.
+- `journal.sh` now supports `list [n]`, `all`, `rel`, `edit <recent-index> <text>`, and `rm <recent-index>` without changing the flat-file journal format.
+- `drive.sh` adds read-only Google Drive activity and recall helpers: `auth`, `status`, `recent [days]`, and `recall [query...]`.
 
 ## Health, Energy, and Wearables
 
@@ -87,35 +91,14 @@ These are support scripts used by the `bin/cyborg` and `cyborg-sync` entry point
 
 ## Coaching System
 
-- `scripts/lib/coach_ops.sh` checks that coaching tools are ready to run.
-- `scripts/lib/coach_metrics.sh`, `scripts/lib/coach_prompts.sh`, and `scripts/lib/coach_scoring.sh` handle numbers, prompt building, timed AI calls, mode saving, and coaching logs.
-- `scripts/lib/coach_chat.sh` gives you a chat after each briefing. You can talk to the coach, ask questions, and use short commands (`/j` journal, `/t` todo, `/f` focus, `/q` quit). When it needs clarification, it should prefer short `A/B/C/D/E` questions with `E` as a custom answer. It is on by default. Turn it off with `AI_COACH_CHAT_ENABLED=false`.
-- Daily coaching calls `dhp-coach.sh` first. This is a single, fast call to OpenRouter. It skips the slower AI-Staff-HQ swarm path used by `dhp-strategy.sh`.
-- The coaching model is set in root `dotfiles/.env` with `AI_COACH_MODEL`. Changing `ai-staff-hq/.env` does not change `startday` or `goodevening`.
-- `status.sh --coach` uses the same fast `dhp-coach.sh` path for a mid-day reset. If you run it inside a git repo, the coach focuses on that repo. Outside a repo, it shows a wider view. Set `AI_STATUS_ENABLED=true` to show this on every `status` run. You can also tune `AI_STATUS_TEMPERATURE` on its own.
-- `startday.sh` and `goodevening.sh` now open with the manual energy/fog check and health summary, so you can log current state before the rest of the morning or evening flow.
-- `repo_tracker.sh` lets you deactivate a repo when it is in a good place and reactivate it later. Use `repo_tracker.sh deactivate <repo> [note...]`, `repo_tracker.sh reactivate <repo>`, `repo_tracker.sh list`, and `repo_tracker.sh names`.
-- When the AI status coach is on and `status.sh` is interactive, it asks for energy and fog before building the briefing so the same run can use your fresh manual readings.
-- In interactive runs, `startday.sh`, `status.sh --coach`, and `goodevening.sh` can ask up to 3 pre-brief clarification questions before the AI call. Answer them in one line with numbered choices like `1B 2A 3E (custom note)`. Set `AI_COACH_PREBRIEF_ENABLED=false` to skip them, `AI_COACH_PREBRIEF_ALWAYS_ASK=true` to force them, and `AI_COACH_PREBRIEF_MAX_QUESTIONS=1..3` to cap how many appear.
-- The three daily coach flows now append an Additional local context bundle to the AI prompt by default. It includes bounded last-7-day raw local context such as journal lines, open todos/top tasks, schedule output, suggested directories, blog status/content snapshots, launchpad text, the latest weekly review text, and raw `health.txt`, `spoons.txt`, and `dir_usage.log` slices. Tune it with `AI_COACH_LOCAL_CONTEXT_ENABLED`, `AI_COACH_LOCAL_CONTEXT_DAYS`, and `AI_COACH_LOCAL_CONTEXT_DIR_LOG_MAX_LINES`.
-- `g.sh suggest` now tolerates legacy colon-delimited directory logs and preserves full paths with spaces, so `startday.sh` no longer truncates entries like `Projects/the merge/...`.
-- `config.sh` now reloads the root `.env` each time a process runs. This means coach timeout and model changes take effect right away.
-- Most scripts should source `common.sh` and then only the libraries they need. `loader.sh` is reserved for the coaching-heavy daily flows (`startday.sh`, `status.sh`, and `goodevening.sh`) that intentionally preload the full stack.
-- Coach modes: LOCKED (stay focused), FLOW (follow energy with check-ins), OVERRIDE (explore with limits), RECOVERY (low output for low-energy days). The coach suggests mode switches based on your numbers.
-- Drift and health limits (`COACH_*_THRESHOLD`) are set in `config.sh`. You can change them in `.env`.
-- `startday.sh` and `goodevening.sh` use daily focus and non-fork GitHub activity as coaching context. Journal and todo data stay local but do not steer the coach.
-- The shared behavior digest now includes the latest Fitbit wearable snapshot when it exists, and the coach prompts are told to treat those metrics as live health context instead of suggesting Fitbit setup work.
-- The shared behavior digest now includes both the latest manual energy/fog reading and the trailing averages, so the coach can distinguish "right now" from "recent trend."
-- `startday.sh` now creates a capped 3-5 item GitHub blindspot/opportunity scan. It looks at recent repos and commit messages, and each item should point to an obvious next action instead of vague repo trivia.
-- `goodevening.sh` now creates a capped 3-5 item "Blindspots to sleep on" scan using GitHub data, so tomorrow inherits a few grounded follow-ups instead of a wall of options.
-- `goodevening.sh` now summarizes repo safety findings after a capped number of project details. Tune the scan and visible detail counts with `GOODEVENING_PROJECT_SCAN_LIMIT`, `GOODEVENING_PROJECT_SCAN_JOBS`, and `GOODEVENING_PROJECT_ISSUE_DETAIL_LIMIT`.
-- Blog status now groups `drafts/ingest/<session>` markdown artifacts into review sessions instead of printing every generated artifact path. Tune the visible review list with `BLOG_STATUS_REVIEW_DETAIL_LIMIT`.
-- If the AI returns output, the coaching flows keep that output but still clean and cap the blindspot sections so raw metric/debug noise does not leak into the user-facing briefing. Deterministic fallback text only appears when the dispatcher times out, errors, or is unavailable.
-- `status.sh` shows the current coach mode, spoon budget and use, focus text, and a Git-backed alignment signal in a DAILY CONTEXT section.
-- When the AI status coach is on, `status.sh` also shows a GitHub-first reset section. It uses today's commits, recent pushes, project context, and the same scan cleaner as the morning coach.
-- Recent GitHub push labels now use the local calendar day instead of a rolling 24-hour bucket, and the daily commit recaps follow any branch that was pushed that day instead of only the repo default branch.
-- The recent-repo scan now prefers the authenticated owner-repo listing before falling back to the public profile listing, so private repos you own can appear in `startday`, `status`, and `goodevening`.
-- `startday.sh`, `status.sh`, and `goodevening.sh` now hide repos listed in `github_inactive_repos.txt` from their GitHub activity signal and show those parked repo names in a separate reactivation list instead.
+- **Core Mechanics:** `coach_ops.sh` validates tools. `coach_metrics.sh`, `coach_prompts.sh`, and `coach_scoring.sh` handle metric collection, prompt building, and state logging.
+- **Interaction:** `coach_chat.sh` acts as a deterministic control surface after each briefing. It intercepts quick commands (`/t` todo, `/f` focus, `/j` journal, `/d` drive, `/q` quit) and prefers short `A/B/C/D/E` menu choices to minimize typing overhead. Disable with `AI_COACH_CHAT_ENABLED=false`.
+- **Fast Path:** Daily coaching (`startday`, `goodevening`, `status --coach`) uses `dhp-coach.sh` for a single, fast call to OpenRouter. Configure the model via `AI_COACH_MODEL` in `.env`.
+- **Context Gathering:** The coach consumes a wide array of signals: manual energy/fog checks, Fitbit metrics, spoon usage, daily focus text, and a bounded local context bundle (last 7 days of journal lines, top tasks, blog snapshots, schedule).
+- **Strategy Evidence:** While Git is the strongest code-day signal, the behavior digest also counts focus-related journal hits and relevant Google Drive docs (`drive.sh recent`) as valid strategy evidence. This ensures planning days are recognized as real progress instead of stalled momentum.
+- **GitHub Blindspots:** `startday` and `goodevening` generate a capped 3-5 item action-oriented scan of recent repos and commits, post-processed to remove debug noise. `goodevening` also checks repo safety.
+- **Repo Filtering:** Repos listed in `github_inactive_repos.txt` are excluded from the main activity signal and shown in a reactivation list. You can manage this manually with `repo_tracker.sh`.
+- **Coach Modes:** The coach supports four modes: LOCKED (stay focused), FLOW (follow energy), OVERRIDE (explore with limits), and RECOVERY (low-energy days). Mode switching is suggested dynamically based on thresholds set in `config.sh`.
 
 ## Correlation Shortcuts
 

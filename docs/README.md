@@ -4,10 +4,10 @@ This folder is the entry point for the root `dotfiles` documentation. Use it as 
 
 ## Current Inventory Snapshot
 
-Current root-repo counts as of April 21, 2026:
+Current root-repo counts as of April 22, 2026:
 
-- `scripts/`: 72 shell utilities plus 4 Python helpers
-- `scripts/lib/`: 25 sourced libraries
+- `scripts/`: 76 shell utilities plus 4 Python helpers
+- `scripts/lib/`: 26 sourced libraries
 - `bin/`: 28 non-markdown entry points, including 21 `dhp-*.sh` executables
 - `tests/`: 47 Bats test files
 

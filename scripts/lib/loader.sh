@@ -30,6 +30,7 @@ _load_lib() {
 _load_lib "common.sh"
 _load_lib "config.sh"
 _load_lib "date_utils.sh"
+_load_lib "focus_relevance.sh"
 
 # 2. Domain operations
 _load_lib "github_ops.sh" "false"

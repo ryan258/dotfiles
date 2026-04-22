@@ -35,6 +35,7 @@ setup() {
     cp "$BATS_TEST_DIRNAME/../scripts/lib/coaching.sh" "$DOTFILES_DIR/scripts/lib/coaching.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/config.sh" "$DOTFILES_DIR/scripts/lib/config.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/date_utils.sh" "$DOTFILES_DIR/scripts/lib/date_utils.sh"
+    cp "$BATS_TEST_DIRNAME/../scripts/lib/focus_relevance.sh" "$DOTFILES_DIR/scripts/lib/focus_relevance.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/health_ops.sh" "$DOTFILES_DIR/scripts/lib/health_ops.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/common.sh" "$DOTFILES_DIR/scripts/lib/common.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/file_ops.sh" "$DOTFILES_DIR/scripts/lib/file_ops.sh"
@@ -334,7 +335,7 @@ PY
     [[ "$prompt" == *"Blindspots to sleep on (1-5):"* ]]
     [[ "$prompt" == *"Tomorrow lock:"* ]]
     [[ "$prompt" == *"Health lens:"* ]]
-    [[ "$prompt" == *"Make the main verdict about whether the spear moved, stalled, or diffused based on focus plus GitHub activity"* ]]
+    [[ "$prompt" == *"Make the main verdict about whether the spear moved, stalled, or diffused based on focus plus available GitHub or strategy evidence"* ]]
     [[ "$args" == *"--temperature"* ]]
 
     [[ "$output" == *"What worked:"* ]]

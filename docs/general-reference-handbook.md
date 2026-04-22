@@ -23,13 +23,14 @@ Terminal (zsh)
 
 ```text
 startday
-  -> gather focus/tasks/journal/health/git signals
+  -> gather focus/tasks/journal/health/git/drive signals
   -> build deterministic behavior digest (coach_ops)
+  -> strategy evidence: journal focus hits + Drive doc hits supplement git
   -> call strategy dispatcher with timeout guard
   -> fallback to deterministic schema if unavailable
 
 goodevening
-  -> gather today outcomes + same digest
+  -> gather today outcomes + same digest (including drive signals)
   -> call strategy dispatcher with timeout guard
   -> fallback to deterministic schema if unavailable
 ```
@@ -3263,6 +3264,19 @@ Usage: done.sh <your_command_here>
   done.sh rsync -avh /source /dest
 ```
 
+### `drive.sh`
+
+**Description:** drive.sh - Read-only Google Drive helper with device-flow auth
+
+**Usage & Examples:**
+
+```text
+  auth                            Authenticate with Google Drive (device flow)
+  status                          Show connection and token status
+  recent [days]                   Show focus-filtered recent Drive activity (cached)
+  recall [query...]               Search older Drive docs by keyword
+```
+
 ### `dotfiles_check.sh`
 
 **Usage & Examples:**
@@ -3541,7 +3555,11 @@ Usage: $(basename
    or: $(basename
   journal <text>              : Add a quick journal entry
   up                          : Open journal file in editor
-  list                        : Show last 5 entries
+  list [count]                : Show last N entries (default 5)
+  all                         : Show all entries
+  rel                         : Show entries related to current focus
+  edit <recent-index> <text>  : Edit the Nth most recent entry
+  rm <recent-index>           : Delete the Nth most recent entry
   search [--recent] <term>    : Search for a term in journal
   onthisday                   : Show entries from this day in past years
   analyze                     : AI analysis of last 7 days (insights & patterns)
@@ -3900,8 +3918,15 @@ Usage: $(basename
 **Usage & Examples:**
 
 ```text
-Usage: $(basename
-  $(basename
+  list                           Show all open tasks (default)
+  all                            Alias for list
+  current                        Show non-stale tasks only
+  stale                          Show tasks older than threshold
+  add <text>                     Add a new task
+  done <index>                   Mark task as done
+  rm <index>                     Remove a task
+  bump <index>                   Move task to top
+  top [count]                    Show top N tasks (default 3)
 ```
 
 ### `unpacker.sh`

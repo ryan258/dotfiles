@@ -52,6 +52,56 @@ teardown() {
   [[ "$output" =~ "Task B" ]]
 }
 
+@test "todo current filters out stale tasks using configured threshold" {
+  local today stale_day
+  today="$(date +%Y-%m-%d)"
+  stale_day="$(python3 - <<'PY'
+from datetime import date, timedelta
+print((date.today() - timedelta(days=10)).strftime("%Y-%m-%d"))
+PY
+)"
+
+  cat > "$TEST_DATA_DIR/.config/dotfiles-data/todo.txt" <<EOF
+1|$stale_day|Old task
+2|$today|Fresh task
+EOF
+
+  run env STALE_TASK_DAYS=7 bash "$BATS_TEST_DIRNAME/../scripts/todo.sh" current
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Fresh task"* ]]
+  [[ "$output" != *"Old task"* ]]
+}
+
+@test "todo stale shows only stale tasks using configured threshold" {
+  local today stale_day
+  today="$(date +%Y-%m-%d)"
+  stale_day="$(python3 - <<'PY'
+from datetime import date, timedelta
+print((date.today() - timedelta(days=10)).strftime("%Y-%m-%d"))
+PY
+)"
+
+  cat > "$TEST_DATA_DIR/.config/dotfiles-data/todo.txt" <<EOF
+1|$stale_day|Old task
+2|$today|Fresh task
+EOF
+
+  run env STALE_TASK_DAYS=7 bash "$BATS_TEST_DIRNAME/../scripts/todo.sh" stale
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Old task"* ]]
+  [[ "$output" != *"Fresh task"* ]]
+}
+
+@test "todo all is an explicit alias for list" {
+  cat > "$TEST_DATA_DIR/.config/dotfiles-data/todo.txt" <<EOF
+1|$(date +%Y-%m-%d)|Alias task
+EOF
+
+  run bash "$BATS_TEST_DIRNAME/../scripts/todo.sh" all
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Alias task"* ]]
+}
+
 @test "todo to-idea moves task to idea list" {
   echo "$(date +%Y-%m-%d)|Task to idea" >> "$TEST_DATA_DIR/.config/dotfiles-data/todo.txt"
   touch "$TEST_DATA_DIR/.config/dotfiles-data/ideas.txt"

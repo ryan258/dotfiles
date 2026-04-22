@@ -45,6 +45,7 @@ These rules are NON-NEGOTIABLE for the root dotfiles project:
 
 - Daily workflow automation (startday, goodevening, status)
 - Task and journal management
+- Google Drive integration (read-only activity and recall)
 - Health/energy tracking (spoon theory)
 - AI assistants via OpenRouter API
 - Blog content generation

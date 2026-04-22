@@ -1,6 +1,19 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** April 21, 2026
+**Last Updated:** April 22, 2026
+
+## Version 2.2.65 (April 22, 2026) - Coach Control Surface And Strategy Evidence
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- `scripts/lib/coach_chat.sh` now supports deterministic low-typing menus plus explicit local command routing for `/t`, `/i`, `/f`, `/j`, and `/d`, so coach chat can manage todos, ideas, focus, journal entries, and Drive lookups without pushing every turn through the model.
+- `scripts/todo.sh` now adds `all`, `current`, and `stale` while keeping `list` backward-compatible for all open tasks.
+- `scripts/journal.sh` now supports `list [n]`, `all`, `rel`, `edit <recent-index> <text>`, and `rm <recent-index>` using recent-entry indexes without changing the flat-file journal format.
+- Added `scripts/lib/focus_relevance.sh` plus a new read-only `scripts/drive.sh` helper with device-flow auth, cached `recent` activity scans, and manual `recall` search for older relevant Docs/Sheets/Slides.
+- `scripts/lib/coach_metrics.sh` and `scripts/lib/coach_prompts.sh` now treat focus-related journal hits and recent relevant Drive activity as valid strategy evidence, so zero-commit strategy days can still count as real progress instead of defaulting to "movement unproven."
+- Expanded BATS coverage with new journal, drive, and coach-chat tests, plus updated coach/startday/goodevening/status fixtures for the new focus-relevance and strategy-evidence paths.
 
 ## Version 2.2.64 (April 21, 2026) - Documentation Inventory Refresh
 

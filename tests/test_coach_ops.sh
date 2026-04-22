@@ -58,7 +58,8 @@ setup() {
     export COACH_CONFIG_LIB="$BATS_TEST_DIRNAME/../scripts/lib/config.sh"
     export COACH_COMMON_LIB="$BATS_TEST_DIRNAME/../scripts/lib/common.sh"
     export COACH_DATE_LIB="$BATS_TEST_DIRNAME/../scripts/lib/date_utils.sh"
-    export COACH_SOURCE_PREFIX="source '$COACH_CONFIG_LIB'; source '$COACH_COMMON_LIB'; source '$COACH_DATE_LIB'; source '$COACH_LIB'; source '$COACH_METRICS_LIB'; source '$COACH_PROMPTS_LIB'; source '$COACH_SCORING_LIB'"
+    export COACH_FOCUS_RELEVANCE_LIB="$BATS_TEST_DIRNAME/../scripts/lib/focus_relevance.sh"
+    export COACH_SOURCE_PREFIX="source '$COACH_CONFIG_LIB'; source '$COACH_COMMON_LIB'; source '$COACH_DATE_LIB'; source '$COACH_FOCUS_RELEVANCE_LIB'; source '$COACH_LIB'; source '$COACH_METRICS_LIB'; source '$COACH_PROMPTS_LIB'; source '$COACH_SCORING_LIB'"
 }
 
 teardown() {
@@ -165,6 +166,39 @@ EOF
     [[ "$output" == *"stale task load is high (5)"* ]]
     [[ "$output" == *"average energy is low (3.0/10)"* ]]
     [[ "$output" == *"average brain fog is high (7.0/10)"* ]]
+}
+
+@test "coach_build_behavior_digest counts journal and drive strategy evidence when git is thin" {
+    cat > "$DATA_DIR/daily_focus.txt" <<EOF
+Architecture review memo
+EOF
+    cat > "$DATA_DIR/journal.txt" <<EOF
+$ANCHOR_DAY 08:00:00|Architecture review memo outline
+EOF
+    mkdir -p "$DOTFILES_DIR/scripts"
+    cat > "$DOTFILES_DIR/scripts/drive.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "${1:-}" == "recent" && "${2:-}" == "1" ]]; then
+  cat <<'JSON'
+[{"name":"Architecture review memo"}]
+JSON
+else
+  cat <<'JSON'
+[{"name":"Architecture review memo"},{"name":"System design notes"}]
+JSON
+fi
+EOF
+    chmod +x "$DOTFILES_DIR/scripts/drive.sh"
+
+    run bash -c "$COACH_SOURCE_PREFIX; coach_build_behavior_digest '$ANCHOR_DAY' '7' '30'"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"journal_focus_hits=1"* ]]
+    [[ "$output" == *"drive_focus_hits_today=1"* ]]
+    [[ "$output" == *"drive_focus_hits_week=2"* ]]
+    [[ "$output" == *"strategy_evidence_sources=journal,drive"* ]]
+    [[ "$output" == *"non-Git strategy evidence is present even though recent GitHub evidence is thin"* ]]
 }
 
 @test "coach_get_mode_for_date persists and reuses daily mode" {
@@ -321,4 +355,3 @@ EOF
     [[ "$output" == *"AI coach: querying test-model..."* ]]
     [[ "$output" == *"Direct coach output."* ]]
 }
-

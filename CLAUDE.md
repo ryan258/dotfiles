@@ -161,7 +161,8 @@ readonly _LIBRARY_NAME_LOADED=true
 | `health_ops.sh`   | Shared health + wearable helpers                  | Health summaries and Fitbit context |
 | `spoon_budget.sh` | Energy tracking                                   | Spoon-related features     |
 | `blog_common.sh`  | Blog utilities                                    | Blog operations            |
-| `coach_chat.sh`   | Interactive post-briefing coach conversation       | After startday/status/goodevening |
+| `coach_chat.sh`   | Menu-driven post-briefing control surface and chat | After startday/status/goodevening |
+| `focus_relevance.sh` | Focus keyword extraction and relevance scoring | Drive filtering, journal rel, strategy evidence |
 
 ### Library Sourcing Pattern
 
@@ -339,7 +340,10 @@ dhp_dispatch \
 - The daily coach prompts may now include an Additional local context bundle with bounded raw local context from the last 7 days: journal entries, open todos/top tasks, schedule output, suggested directories, blog snapshots, launchpad text, weekly review text, and raw health/spoon/directory-log slices. Git/focus remain primary signals; the local bundle is secondary evidence for specificity.
 - GitHub blindspot/opportunity sections should be capped at 5 items. Each item must be concrete, point to an obvious next action, and use real repo names when the evidence supports it.
 - Blindspot sections may be post-processed after AI generation to remove raw metric/debug noise such as `dir_usage_malformed`, `commit_context`, or raw `focus_git_status=...` values, then backfill grounded repo-specific actions.
-- `scripts/lib/coach_chat.sh` should prefer short `A/B/C/D/E` clarifying questions with `E` as a custom answer when a follow-up question would materially improve the coaching.
+- `scripts/lib/coach_chat.sh` is a deterministic menu-driven control surface after each briefing. It intercepts local commands (`/t` todo, `/i` idea, `/f` focus, `/j` journal, `/d` drive, `/q` quit) and menu choices (`A/B/C/D/E`), only routing freeform text to the AI model. When asking follow-up questions, it should prefer short `A/B/C/D/E` choices with `E` as a custom answer.
+- The behavior digest now counts focus-related journal entries and recent relevant Drive documents as strategy evidence. On zero-commit days where strategy or planning work occurred, these signals count as real progress rather than defaulting to "movement unproven."
+- `scripts/drive.sh` provides read-only Google Drive context via device-flow OAuth. `recent [days]` surfaces focus-filtered, cached recent activity for the coach digest. `recall [query]` is the manual search path for older documents. Drive signals are secondary evidence; git remains the strongest code-day signal.
+- `scripts/lib/focus_relevance.sh` exports shared helpers (`focus_relevance_current_focus`, `focus_relevance_keywords_from_text`, `focus_relevance_keywords_from_current_focus`, `focus_relevance_score_text`) used by Drive filtering, journal relevance, and strategy evidence scoring.
 
 ### Specialized Standalone Agents
 

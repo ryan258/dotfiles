@@ -26,7 +26,7 @@ setup() {
     mkdir -p "$DATA_DIR" "$DOTFILES_DIR/scripts/lib" "$DOTFILES_DIR/bin" "$PROJECTS_DIR"
 
     # Copy core libraries
-    for lib in common.sh config.sh date_utils.sh file_ops.sh spoon_budget.sh health_ops.sh github_ops.sh coach_ops.sh coach_metrics.sh coach_prompts.sh coach_scoring.sh coaching.sh loader.sh; do
+    for lib in common.sh config.sh date_utils.sh file_ops.sh spoon_budget.sh health_ops.sh github_ops.sh coach_ops.sh coach_metrics.sh coach_prompts.sh coach_scoring.sh coaching.sh focus_relevance.sh loader.sh; do
         if [ -f "$BATS_TEST_DIRNAME/../scripts/lib/$lib" ]; then
             cp "$BATS_TEST_DIRNAME/../scripts/lib/$lib" "$DOTFILES_DIR/scripts/lib/$lib"
         fi

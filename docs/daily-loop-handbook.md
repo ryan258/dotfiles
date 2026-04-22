@@ -34,6 +34,8 @@ The morning AI coaching plan includes:
 | `health check` | Check if you are too sick to work |
 | `todo top` | Show only your top 3 tasks |
 | `g suggest` | Let the AI guess what you should do next |
+
+After any briefing, coach chat accepts quick aliases: `/t` (todo), `/i` (idea), `/f` (focus), `/j` (journal), `/d` (drive), `/q` (quit).
 | `gcal agenda 7` | Show your week's calendar |
 
 ---
@@ -66,6 +68,28 @@ health fog 4
 | `todo bump 5` | Move task 5 all the way to the top of the list |
 | `idea add "build a robot"` | Save a cool idea for much later |
 | `todo debug 2` | Ask the AI to help you figure out task 2 |
+| `todo stale` | Show tasks sitting around too long |
+| `todo current` | Show only non-stale active tasks |
+
+### Managing Your Journal
+
+| Command | What It Does |
+| --- | --- |
+| `journal add "what happened"` | Write a quick entry |
+| `journal list` | Show last 5 entries |
+| `journal list 10` | Show last 10 entries |
+| `journal all` | Show every entry |
+| `journal rel` | Show entries related to your current focus |
+| `journal edit 2 "corrected text"` | Fix the 2nd most recent entry |
+| `journal rm 1` | Delete the most recent entry |
+
+### Checking Google Drive
+
+| Command | What It Does |
+| --- | --- |
+| `drive recent` | Show recent Drive docs matching your focus |
+| `drive recall "search term"` | Search older Drive docs |
+| `drive status` | Check your Drive connection |
 
 ### Emergency Brain-Fog Reset
 If you feel totally confused, scattered, or stuck, type this:

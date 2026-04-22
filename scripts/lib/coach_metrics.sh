@@ -58,6 +58,27 @@ _coach_count_bullets() {
     printf '%s\n' "$text" | awk '/^[[:space:]]*• / {count++} END {print count+0}'
 }
 
+_coach_drive_script_path() {
+    local candidate="${DOTFILES_DIR:-$HOME/dotfiles}/scripts/drive.sh"
+    if [[ -x "$candidate" ]]; then
+        printf '%s' "$candidate"
+        return 0
+    fi
+    return 1
+}
+
+_coach_focus_match_count() {
+    local text="$1"
+    local keywords="$2"
+
+    if command -v focus_relevance_score_text >/dev/null 2>&1; then
+        focus_relevance_score_text "$text" "$keywords"
+        return 0
+    fi
+
+    printf '0'
+}
+
 _coach_extract_value() {
     local blob="$1"
     local key="$2"
@@ -249,6 +270,12 @@ coach_collect_tactical_metrics() {
     local spoon_spend_count=0
     local unique_dirs=0
     local dir_switches=0
+    local journal_focus_hits=0
+    local drive_focus_hits_today=0
+    local drive_focus_hits_week=0
+    local drive_recent_titles="none"
+    local focus_text=""
+    local focus_keywords=""
 
     if [[ -f "$todo_file" ]]; then
         # Ensure file is in new ID|DATE|text format before reading
@@ -274,6 +301,41 @@ coach_collect_tactical_metrics() {
             $1 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]][0-9]{2}:[0-9]{2}:[0-9]{2}$/ {
                 day = substr($1, 1, 10)
                 if (day >= start && day <= end) count++
+            }
+            END {print count+0}
+        ' "$journal_file")
+    fi
+
+    if command -v focus_relevance_current_focus >/dev/null 2>&1; then
+        focus_text=$(focus_relevance_current_focus 2>/dev/null || true)
+    fi
+    if [[ -n "$focus_text" ]] && command -v focus_relevance_keywords_from_text >/dev/null 2>&1; then
+        focus_keywords=$(focus_relevance_keywords_from_text "$focus_text")
+    fi
+    if [[ -n "$focus_keywords" ]] && [[ -f "$journal_file" ]]; then
+        local focus_keywords_csv
+        focus_keywords_csv=$(printf '%s\n' "$focus_keywords" | sed '/^[[:space:]]*$/d' | paste -sd ',' -)
+        journal_focus_hits=$(awk -F'|' -v start="$window_start" -v end="$anchor_date" -v keys="$focus_keywords_csv" '
+            BEGIN {
+                split(keys, raw, ",")
+                for (i in raw) {
+                    if (raw[i] != "") {
+                        wanted[raw[i]] = 1
+                    }
+                }
+            }
+            $1 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]][0-9]{2}:[0-9]{2}:[0-9]{2}$/ {
+                day = substr($1, 1, 10)
+                if (day >= start && day <= end) {
+                    lowered = tolower($0)
+                    score = 0
+                    for (key in wanted) {
+                        if (index(lowered, key) > 0) {
+                            score++
+                        }
+                    }
+                    if (score > 0) count++
+                }
             }
             END {print count+0}
         ' "$journal_file")
@@ -365,8 +427,22 @@ coach_collect_tactical_metrics() {
 
     local recent_pushes_count
     local commit_context_count
+    local drive_script=""
     recent_pushes_count=$(_coach_count_bullets "$pushes_context")
     commit_context_count=$(_coach_count_bullets "$commits_context")
+
+    if [[ -n "$focus_keywords" ]]; then
+        drive_script=$(_coach_drive_script_path 2>/dev/null || true)
+        if [[ -n "$drive_script" ]]; then
+            local drive_today_json drive_week_json
+            drive_today_json=$("$drive_script" recent 1 --json --quiet 2>/dev/null || printf '[]')
+            drive_week_json=$("$drive_script" recent 7 --json --quiet 2>/dev/null || printf '[]')
+            drive_focus_hits_today=$(printf '%s' "$drive_today_json" | jq 'length' 2>/dev/null || echo "0")
+            drive_focus_hits_week=$(printf '%s' "$drive_week_json" | jq 'length' 2>/dev/null || echo "0")
+            drive_recent_titles=$(printf '%s' "$drive_week_json" | jq -r '.[0:3] | map(.name) | join(", ")' 2>/dev/null || echo "none")
+            [[ -n "$drive_recent_titles" ]] || drive_recent_titles="none"
+        fi
+    fi
 
     echo "tactical_window_days=$days"
     echo "tactical_window_start=$window_start"
@@ -375,6 +451,10 @@ coach_collect_tactical_metrics() {
     echo "stale_tasks=$stale_tasks"
     echo "completed_tasks=$completed_tasks"
     echo "journal_entries=$journal_entries"
+    echo "journal_focus_hits=$journal_focus_hits"
+    echo "drive_focus_hits_today=$drive_focus_hits_today"
+    echo "drive_focus_hits_week=$drive_focus_hits_week"
+    echo "drive_recent_titles=$drive_recent_titles"
     echo "latest_energy=${latest_energy:-N/A}"
     echo "latest_energy_at=${latest_energy_at:-N/A}"
     echo "avg_energy=$(_coach_average "$energy_sum" "$energy_count")"
@@ -1103,8 +1183,13 @@ coach_build_behavior_digest() {
     # Keeping them in local variables makes the if/else rules easier to read.
     local stale_tasks completed_tasks unique_dirs dir_switches avg_energy avg_fog avg_spoon_budget avg_spoon_spend
     local latest_energy latest_energy_at latest_fog latest_fog_at
+    local journal_focus_hits drive_focus_hits_today drive_focus_hits_week drive_recent_titles strategy_evidence_sources
     stale_tasks=$(_coach_extract_value "$tactical" "stale_tasks")
     completed_tasks=$(_coach_extract_value "$tactical" "completed_tasks")
+    journal_focus_hits=$(_coach_extract_value "$tactical" "journal_focus_hits")
+    drive_focus_hits_today=$(_coach_extract_value "$tactical" "drive_focus_hits_today")
+    drive_focus_hits_week=$(_coach_extract_value "$tactical" "drive_focus_hits_week")
+    drive_recent_titles=$(_coach_extract_value "$tactical" "drive_recent_titles")
     unique_dirs=$(_coach_extract_value "$tactical" "unique_dirs")
     dir_switches=$(_coach_extract_value "$tactical" "dir_switches")
     latest_energy=$(_coach_extract_value "$tactical" "latest_energy")
@@ -1117,6 +1202,7 @@ coach_build_behavior_digest() {
     avg_spoon_spend=$(_coach_extract_value "$tactical" "avg_spoon_spend")
     local afternoon_slump
     afternoon_slump=$(_coach_extract_value "$tactical" "afternoon_slump")
+    strategy_evidence_sources=""
 
     # These two lists are the coach's short scorecards:
     # one list says "things are working,"
@@ -1133,9 +1219,24 @@ coach_build_behavior_digest() {
     elif [[ "$focus_git_status" == "diffuse" ]]; then
         drift_risks+=("Git activity is drifting from the declared focus (${focus_git_reason})")
     elif [[ "$focus_git_status" == "no-git-evidence" ]]; then
-        drift_risks+=("recent non-fork GitHub evidence is thin; focus movement is unproven")
+        if [[ "${journal_focus_hits:-0}" -gt 0 ]] || [[ "${drive_focus_hits_week:-0}" -gt 0 ]]; then
+            working_signals+=("non-Git strategy evidence is present even though recent GitHub evidence is thin")
+        else
+            drift_risks+=("recent non-fork GitHub evidence is thin; focus movement is unproven")
+        fi
     elif [[ "$focus_git_status" == "git-unavailable" ]]; then
         working_signals+=("GitHub signal was unavailable, so spear movement could not be evaluated from remote activity")
+    fi
+    if [[ "${focus_git_commit_total:-0}" -gt 0 ]] || [[ "$focus_git_status" == "aligned" ]] || [[ "$focus_git_status" == "mixed" ]] || [[ "$focus_git_status" == "repo-locked" ]]; then
+        strategy_evidence_sources="git"
+    fi
+    if [[ "${journal_focus_hits:-0}" -ge 1 ]]; then
+        working_signals+=("focus-related journal evidence is present (${journal_focus_hits})")
+        strategy_evidence_sources="${strategy_evidence_sources}${strategy_evidence_sources:+,}journal"
+    fi
+    if [[ "${drive_focus_hits_week:-0}" -ge 1 ]]; then
+        working_signals+=("recent Drive activity supports the current focus (${drive_focus_hits_week} hit(s): ${drive_recent_titles:-none})")
+        strategy_evidence_sources="${strategy_evidence_sources}${strategy_evidence_sources:+,}drive"
     fi
     if [[ "$suggestion_adherence_rate" =~ ^[0-9]+$ ]] && [[ "${suggestion_adherence_samples:-0}" =~ ^[0-9]+$ ]]; then
         if [[ "$suggestion_adherence_rate" -ge 70 ]]; then
@@ -1244,9 +1345,10 @@ coach_build_behavior_digest() {
     # The AI coach sees this like a worksheet full of clues.
     echo "Behavior digest (structured):"
     echo "Tactical window: ${tactical_days}d ending $anchor_date"
-    echo "  open_tasks=$(_coach_extract_value "$tactical" "open_tasks"), stale_tasks=$stale_tasks, completed_tasks=$completed_tasks, journal_entries=$(_coach_extract_value "$tactical" "journal_entries")"
+    echo "  open_tasks=$(_coach_extract_value "$tactical" "open_tasks"), stale_tasks=$stale_tasks, completed_tasks=$completed_tasks, journal_entries=$(_coach_extract_value "$tactical" "journal_entries"), journal_focus_hits=${journal_focus_hits:-0}, drive_focus_hits_today=${drive_focus_hits_today:-0}, drive_focus_hits_week=${drive_focus_hits_week:-0}"
     echo "  latest_energy=${latest_energy:-N/A} (${latest_energy_at:-N/A}), latest_fog=${latest_fog:-N/A} (${latest_fog_at:-N/A}), avg_energy=${avg_energy}, avg_fog=${avg_fog}, energy_3d=${energy_3d_trajectory:-N/A} (${energy_3d_direction:-N/A}), afternoon_slump=${afternoon_slump:-N/A}, avg_spoon_budget=$(_coach_extract_value "$tactical" "avg_spoon_budget"), avg_spoon_spend=$(_coach_extract_value "$tactical" "avg_spoon_spend")"
     echo "  unique_dirs=$unique_dirs, dir_switches=$dir_switches, suggestion_adherence=${suggestion_adherence:-N/A}, suggestion_adherence_rate=${suggestion_adherence_rate:-N/A} (${suggestion_adherence_samples:-0} samples), late_night_commits=${late_night_commits:-N/A}, recent_pushes=$(_coach_extract_value "$tactical" "recent_pushes_count"), commit_context=$(_coach_extract_value "$tactical" "commit_context_count")"
+    echo "  drive_recent_titles=${drive_recent_titles:-none}, strategy_evidence_sources=${strategy_evidence_sources:-none}"
     echo "Pattern window: ${pattern_days}d ending $anchor_date"
     echo "  completion_trend=$(_coach_extract_value "$pattern" "completion_trend") (first=$(_coach_extract_value "$pattern" "completion_first_half"), second=$(_coach_extract_value "$pattern" "completion_second_half"))"
     echo "  journal_trend=$(_coach_extract_value "$pattern" "journal_trend") (first=$(_coach_extract_value "$pattern" "journal_first_half"), second=$(_coach_extract_value "$pattern" "journal_second_half"))"

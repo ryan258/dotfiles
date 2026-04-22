@@ -11,6 +11,10 @@ if [[ -n "${_COACH_CHAT_LOADED:-}" ]]; then
 fi
 readonly _COACH_CHAT_LOADED=true
 
+_coach_chat_root_dir() {
+    printf '%s\n' "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+}
+
 # Start an interactive coaching session after a briefing.
 # Usage: coach_start_chat <briefing_text> <session_type>
 # session_type: startday | status | goodevening
@@ -58,6 +62,7 @@ Interactive follow-up rules:
     local _cc_history="$_cc_dir/history.json"
     local _cc_sysprompt="$_cc_dir/system.txt"
     local _cc_briefing="$_cc_dir/briefing.txt"
+    local _cc_menu_state="$_cc_dir/menu_state.tsv"
 
     printf '%s' "$system_prompt" > "$_cc_sysprompt"
     printf '%s' "$briefing" > "$_cc_briefing"
@@ -69,6 +74,7 @@ Interactive follow-up rules:
 
     echo "" >&2
     echo "--- Coach Chat (type /q to exit, /help for commands) ---" >&2
+    echo "Short aliases: /t todo  /i idea  /f focus  /j journal  /d drive" >&2
     echo "" >&2
 
     local user_input=""
@@ -89,6 +95,10 @@ Interactive follow-up rules:
 
         [[ -z "$user_input" ]] && continue
 
+        if _coach_chat_handle_menu_reply "$user_input" "$_cc_menu_state"; then
+            continue
+        fi
+
         # Slash commands handled locally
         case "$user_input" in
             /q|/quit|/done|/exit)
@@ -96,25 +106,11 @@ Interactive follow-up rules:
                 break
                 ;;
             /help|/h)
-                _coach_chat_show_help
+                _coach_chat_show_help "$_cc_menu_state"
                 continue
                 ;;
-            /j\ *|/journal\ *)
-                local entry="${user_input#/j }"
-                [[ "$entry" == "$user_input" ]] && entry="${user_input#/journal }"
-                _coach_chat_add_journal "$entry"
-                continue
-                ;;
-            /t\ *|/todo\ *)
-                local task="${user_input#/t }"
-                [[ "$task" == "$user_input" ]] && task="${user_input#/todo }"
-                _coach_chat_add_todo "$task"
-                continue
-                ;;
-            /f\ *|/focus\ *)
-                local new_focus="${user_input#/f }"
-                [[ "$new_focus" == "$user_input" ]] && new_focus="${user_input#/focus }"
-                _coach_chat_update_focus "$new_focus"
+            /t*|/todo*|/i*|/idea*|/f*|/focus*|/j*|/journal*|/d*|/drive*)
+                _coach_chat_handle_local_command "$user_input" "$_cc_menu_state"
                 continue
                 ;;
         esac
@@ -138,85 +134,604 @@ Interactive follow-up rules:
 }
 
 _coach_chat_show_help() {
+    local state_file="${1:-}"
+    if [[ -n "$state_file" ]]; then
+        _coach_chat_clear_menu_state "$state_file"
+    fi
     cat >&2 <<'HELP'
 Commands:
-  /j <text>   Save a journal entry
-  /t <text>   Add a todo item
-  /f <text>   Update your focus
+  /t          Todo menu
+  /i          Idea menu
+  /f          Focus menu
+  /j          Journal menu
+  /d          Drive menu
   /q          Exit coach chat
   /help       Show this help
 
-Or just type naturally to chat with your coach.
+Examples:
+  /t stale
+  /t done 14
+  /i to-todo 2
+  /f set Finish strategy brief
+  /j rel
+  /d recent 1
+
+Bare aliases still work for quick capture:
+  /t <text>   Add a todo
+  /i <text>   Add an idea
+  /f <text>   Set focus
+  /j <text>   Add a journal entry
+  /d <text>   Recall Drive docs for a query
+
+Or just type naturally to chat with your coach when no local menu is active.
 HELP
 }
 
-_coach_chat_add_journal() {
-    local entry="$1"
-    if [[ -z "$entry" ]]; then
-        echo "Usage: /j <journal entry text>" >&2
-        return
-    fi
-    local timestamp
-    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    local journal_file="${JOURNAL_FILE:-${DATA_DIR:-$HOME/.config/dotfiles-data}/journal.txt}"
-
-    if type sanitize_input >/dev/null 2>&1; then
-        entry=$(sanitize_input "$entry")
-    fi
-
-    echo "${timestamp}|${entry}" >> "$journal_file"
-    echo "Saved to journal." >&2
+_coach_chat_clear_menu_state() {
+    local state_file="$1"
+    rm -f "$state_file" 2>/dev/null || true
 }
 
-_coach_chat_add_todo() {
-    local task="$1"
-    if [[ -z "$task" ]]; then
-        echo "Usage: /t <task description>" >&2
+_coach_chat_write_menu_state() {
+    local state_file="$1"
+    shift
+    : > "$state_file"
+    while [[ $# -gt 0 ]]; do
+        printf '%s\n' "$1" >> "$state_file"
+        shift
+    done
+}
+
+_coach_chat_lookup_menu_command() {
+    local input="$1"
+    local state_file="$2"
+
+    [[ -s "$state_file" ]] || return 1
+
+    awk -F'\t' -v key="$input" '$1 == key { print $2; exit }' "$state_file"
+}
+
+_coach_chat_capture_cli() {
+    local script_name="$1"
+    shift
+    local script_path="$(_coach_chat_root_dir)/$script_name"
+    [[ -x "$script_path" ]] || {
+        echo "Command unavailable: $script_name" >&2
+        return 1
+    }
+    bash "$script_path" "$@" 2>&1
+}
+
+_coach_chat_split_args() {
+    local text="$1"
+    local -a parts=()
+
+    if [[ -n "$text" ]]; then
+        read -r -a parts <<< "$text"
+    fi
+
+    if [[ "${#parts[@]}" -gt 0 ]]; then
+        printf '%s\0' "${parts[@]}"
+    fi
+}
+
+_coach_chat_print_cli_output() {
+    local output="$1"
+    if [[ -n "$output" ]]; then
+        echo "" >&2
+        echo "$output" >&2
+        echo "" >&2
+    fi
+}
+
+_coach_chat_show_numeric_menu() {
+    local state_file="$1"
+    local heading="$2"
+    local command_prefix="$3"
+    local entries="$4"
+    local back_command="${5:-}"
+    local custom_command="${6:-__custom__}"
+    local lines=()
+    local index=1
+    local value=""
+    local label=""
+
+    echo "" >&2
+    echo "$heading" >&2
+
+    while IFS=$'\t' read -r value label; do
+        [[ -n "$value" ]] || continue
+        printf '%s. %s\n' "$index" "$label" >&2
+        lines+=("${index}"$'\t'"cmd:${command_prefix} ${value}")
+        index=$((index + 1))
+    done <<< "$entries"
+
+    if [[ "${#lines[@]}" -eq 0 ]]; then
+        echo "(Nothing to pick right now.)" >&2
+        _coach_chat_write_menu_state "$state_file" "A"$'\t'"menu:main" "E"$'\t'"__custom__"
         return
     fi
-    local today
-    today=$(date '+%Y-%m-%d')
-    local todo_file="${TODO_FILE:-${DATA_DIR:-$HOME/.config/dotfiles-data}/todo.txt}"
 
-    if type sanitize_input >/dev/null 2>&1; then
-        task=$(sanitize_input "$task")
+    if [[ -n "$back_command" ]]; then
+        echo "A. Back" >&2
+        lines+=("A"$'\t'"${back_command}")
     fi
+    echo "E. Custom command" >&2
+    lines+=("E"$'\t'"${custom_command}")
 
-    local task_id
-    if type next_todo_id >/dev/null 2>&1; then
-        task_id=$(next_todo_id)
+    _coach_chat_write_menu_state "$state_file" "${lines[@]}"
+    echo "" >&2
+}
+
+_coach_chat_parse_todo_entries() {
+    local output="$1"
+    printf '%s\n' "$output" | awk '
+        /^#/ {
+            id = $1
+            sub(/^#/, "", id)
+            $1 = ""
+            sub(/^[[:space:]]+/, "", $0)
+            print id "\t" $0
+        }
+    '
+}
+
+_coach_chat_parse_idea_entries() {
+    local output="$1"
+    printf '%s\n' "$output" | awk '
+        $1 ~ /^[0-9]+$/ {
+            idx = $1
+            $1 = ""
+            sub(/^[[:space:]]+/, "", $0)
+            print idx "\t" $0
+        }
+    '
+}
+
+_coach_chat_parse_journal_entries() {
+    local output="$1"
+    printf '%s\n' "$output" | awk '
+        $1 ~ /^[0-9]+\.$/ {
+            idx = $1
+            sub(/\.$/, "", idx)
+            $1 = ""
+            sub(/^[[:space:]]+/, "", $0)
+            print idx "\t" $0
+        }
+    '
+}
+
+_coach_chat_show_main_menu() {
+    local state_file="$1"
+    echo "" >&2
+    echo "What do you want to manage?" >&2
+    echo "A. Todos" >&2
+    echo "B. Ideas" >&2
+    echo "C. Focus" >&2
+    echo "D. Journal" >&2
+    echo "E. Drive" >&2
+    _coach_chat_write_menu_state "$state_file" \
+        "A"$'\t'"menu:todo" \
+        "B"$'\t'"menu:idea" \
+        "C"$'\t'"menu:focus" \
+        "D"$'\t'"menu:journal" \
+        "E"$'\t'"menu:drive"
+    echo "" >&2
+}
+
+_coach_chat_show_todo_menu() {
+    local state_file="$1"
+    echo "" >&2
+    echo "Todo menu:" >&2
+    echo "A. Current tasks" >&2
+    echo "B. Stale tasks" >&2
+    echo "C. All tasks" >&2
+    echo "D. Add a task" >&2
+    echo "E. Custom command" >&2
+    _coach_chat_write_menu_state "$state_file" \
+        "A"$'\t'"cmd:/t current" \
+        "B"$'\t'"cmd:/t stale" \
+        "C"$'\t'"cmd:/t all" \
+        "D"$'\t'"__pending_text__:/t add" \
+        "E"$'\t'"__custom__"
+    echo "" >&2
+}
+
+_coach_chat_show_idea_menu() {
+    local state_file="$1"
+    echo "" >&2
+    echo "Idea menu:" >&2
+    echo "A. List ideas" >&2
+    echo "B. Add an idea" >&2
+    echo "C. Promote one to todo" >&2
+    echo "D. Remove one" >&2
+    echo "E. Custom command" >&2
+    _coach_chat_write_menu_state "$state_file" \
+        "A"$'\t'"cmd:/i list" \
+        "B"$'\t'"__pending_text__:/i add" \
+        "C"$'\t'"menu:idea-select:to-todo" \
+        "D"$'\t'"menu:idea-select:rm" \
+        "E"$'\t'"__custom__"
+    echo "" >&2
+}
+
+_coach_chat_show_focus_menu() {
+    local state_file="$1"
+    echo "" >&2
+    echo "Focus menu:" >&2
+    echo "A. Show current focus" >&2
+    echo "B. Set focus" >&2
+    echo "C. Mark focus done" >&2
+    echo "D. Clear focus" >&2
+    echo "E. Focus history" >&2
+    _coach_chat_write_menu_state "$state_file" \
+        "A"$'\t'"cmd:/f show" \
+        "B"$'\t'"__pending_text__:/f set" \
+        "C"$'\t'"cmd:/f done" \
+        "D"$'\t'"cmd:/f clear" \
+        "E"$'\t'"cmd:/f history"
+    echo "" >&2
+}
+
+_coach_chat_show_journal_menu() {
+    local state_file="$1"
+    echo "" >&2
+    echo "Journal menu:" >&2
+    echo "A. List recent entries" >&2
+    echo "B. Entries related to current focus" >&2
+    echo "C. Add an entry" >&2
+    echo "D. Remove a recent entry" >&2
+    echo "E. Custom command" >&2
+    _coach_chat_write_menu_state "$state_file" \
+        "A"$'\t'"cmd:/j list" \
+        "B"$'\t'"cmd:/j rel" \
+        "C"$'\t'"__pending_text__:/j add" \
+        "D"$'\t'"menu:journal-select:rm" \
+        "E"$'\t'"__custom__"
+    echo "" >&2
+}
+
+_coach_chat_show_drive_menu() {
+    local state_file="$1"
+    echo "" >&2
+    echo "Drive menu:" >&2
+    echo "A. Recent relevant docs today" >&2
+    echo "B. Recent relevant docs this week" >&2
+    echo "C. Recall docs for current focus" >&2
+    echo "D. Status" >&2
+    echo "E. Authenticate" >&2
+    _coach_chat_write_menu_state "$state_file" \
+        "A"$'\t'"cmd:/d recent 1" \
+        "B"$'\t'"cmd:/d recent 7" \
+        "C"$'\t'"cmd:/d recall" \
+        "D"$'\t'"cmd:/d status" \
+        "E"$'\t'"cmd:/d auth"
+    echo "" >&2
+}
+
+_coach_chat_show_todo_followup_menu() {
+    local state_file="$1"
+    local view="$2"
+
+    echo "What next?" >&2
+    if [[ "$view" == "stale" ]]; then
+        echo "A. Mark one done" >&2
+        echo "B. Move one to ideas" >&2
+        echo "C. Remove one" >&2
     else
-        task_id=$(date '+%s')
+        echo "A. Mark one done" >&2
+        echo "B. Bump one" >&2
+        echo "C. Move one to ideas" >&2
     fi
-    echo "${task_id}|${today}|${task}" >> "$todo_file"
-    echo "Added todo: $task" >&2
+    echo "D. Back to todo menu" >&2
+    echo "E. Custom command" >&2
+
+    if [[ "$view" == "stale" ]]; then
+        _coach_chat_write_menu_state "$state_file" \
+            "A"$'\t'"menu:todo-select:done:${view}" \
+            "B"$'\t'"menu:todo-select:to-idea:${view}" \
+            "C"$'\t'"menu:todo-select:rm:${view}" \
+            "D"$'\t'"menu:todo" \
+            "E"$'\t'"__custom__"
+    else
+        _coach_chat_write_menu_state "$state_file" \
+            "A"$'\t'"menu:todo-select:done:${view}" \
+            "B"$'\t'"menu:todo-select:bump:${view}" \
+            "C"$'\t'"menu:todo-select:to-idea:${view}" \
+            "D"$'\t'"menu:todo" \
+            "E"$'\t'"__custom__"
+    fi
 }
 
-_coach_chat_update_focus() {
-    local new_focus="$1"
-    if [[ -z "$new_focus" ]]; then
-        echo "Usage: /f <new focus text>" >&2
+_coach_chat_show_todo_selection_menu() {
+    local state_file="$1"
+    local action="$2"
+    local view="$3"
+    local output entries
+
+    output=$(_coach_chat_capture_cli "todo.sh" "$view") || {
+        _coach_chat_show_todo_menu "$state_file"
         return
-    fi
-    local focus_file="${FOCUS_FILE:-${DATA_DIR:-$HOME/.config/dotfiles-data}/focus.txt}"
-    local history_file="${FOCUS_HISTORY_FILE:-${DATA_DIR:-$HOME/.config/dotfiles-data}/focus_history.log}"
+    }
+    entries=$(_coach_chat_parse_todo_entries "$output")
+    _coach_chat_show_numeric_menu "$state_file" "Choose a task:" "/t ${action}" "$entries" "menu:todo-view:${view}"
+}
 
-    if type sanitize_input >/dev/null 2>&1; then
-        new_focus=$(sanitize_input "$new_focus")
+_coach_chat_show_idea_selection_menu() {
+    local state_file="$1"
+    local action="$2"
+    local output entries
+
+    output=$(_coach_chat_capture_cli "idea.sh" list) || {
+        _coach_chat_show_idea_menu "$state_file"
+        return
+    }
+    entries=$(_coach_chat_parse_idea_entries "$output")
+    _coach_chat_show_numeric_menu "$state_file" "Choose an idea:" "/i ${action}" "$entries" "menu:idea"
+}
+
+_coach_chat_show_journal_selection_menu() {
+    local state_file="$1"
+    local action="$2"
+    local output entries
+
+    output=$(_coach_chat_capture_cli "journal.sh" list 5) || {
+        _coach_chat_show_journal_menu "$state_file"
+        return
+    }
+    _coach_chat_print_cli_output "$output"
+    entries=$(_coach_chat_parse_journal_entries "$output")
+    _coach_chat_show_numeric_menu "$state_file" "Choose a journal entry:" "/j ${action}" "$entries" "menu:journal"
+}
+
+_coach_chat_handle_state_command() {
+    local command="$1"
+    local state_file="$2"
+    local payload=""
+    local action=""
+    local view=""
+
+    case "$command" in
+        __custom__)
+            _coach_chat_clear_menu_state "$state_file"
+            echo "Type a custom command like /t stale, /j rel, /d recent, or a freeform message." >&2
+            ;;
+        __pending_text__:*)
+            _coach_chat_write_menu_state "$state_file" "__pending_text__"$'\t'"${command#__pending_text__:}"
+            echo "Type the text to save, or /help to cancel." >&2
+            ;;
+        menu:main) _coach_chat_show_main_menu "$state_file" ;;
+        menu:todo) _coach_chat_show_todo_menu "$state_file" ;;
+        menu:idea) _coach_chat_show_idea_menu "$state_file" ;;
+        menu:focus) _coach_chat_show_focus_menu "$state_file" ;;
+        menu:journal) _coach_chat_show_journal_menu "$state_file" ;;
+        menu:drive) _coach_chat_show_drive_menu "$state_file" ;;
+        menu:todo-view:*) _coach_chat_show_todo_followup_menu "$state_file" "${command#menu:todo-view:}" ;;
+        menu:todo-select:*)
+            payload="${command#menu:todo-select:}"
+            action="${payload%%:*}"
+            view="${payload#*:}"
+            _coach_chat_show_todo_selection_menu "$state_file" "$action" "$view"
+            ;;
+        menu:idea-select:*)
+            _coach_chat_show_idea_selection_menu "$state_file" "${command#menu:idea-select:}"
+            ;;
+        menu:journal-select:*)
+            _coach_chat_show_journal_selection_menu "$state_file" "${command#menu:journal-select:}"
+            ;;
+        cmd:*)
+            _coach_chat_clear_menu_state "$state_file"
+            _coach_chat_handle_local_command "${command#cmd:}" "$state_file"
+            ;;
+        *)
+            _coach_chat_clear_menu_state "$state_file"
+            ;;
+    esac
+}
+
+_coach_chat_handle_menu_reply() {
+    local input="$1"
+    local state_file="$2"
+    local command=""
+
+    [[ -s "$state_file" ]] || return 1
+
+    command=$(_coach_chat_lookup_menu_command "$input" "$state_file" || true)
+    if [[ -n "$command" ]]; then
+        _coach_chat_handle_state_command "$command" "$state_file"
+        return 0
     fi
 
-    # Archive existing focus before overwriting (matches focus.sh set behavior)
-    if [[ -f "$focus_file" ]] && [[ -s "$focus_file" ]]; then
-        local old_focus today
-        old_focus=$(cat "$focus_file")
-        today=$(date +%Y-%m-%d)
-        if type date_today >/dev/null 2>&1; then
-            today=$(date_today)
-        fi
-        mkdir -p "$(dirname "$history_file")"
-        printf '%s|%s (Replaced)\n' "$today" "$old_focus" >> "$history_file"
+    command=$(_coach_chat_lookup_menu_command "__pending_text__" "$state_file" || true)
+    if [[ -n "$command" ]] && [[ "$input" == "E" ]]; then
+        _coach_chat_clear_menu_state "$state_file"
+        echo "Pending text entry cancelled." >&2
+        return 0
+    fi
+    if [[ -n "$command" ]] && [[ "$input" != /* ]]; then
+        _coach_chat_clear_menu_state "$state_file"
+        _coach_chat_handle_local_command "$command $input" "$state_file"
+        return 0
     fi
 
-    printf '%s\n' "$new_focus" > "$focus_file"
-    echo "Focus updated to: $new_focus" >&2
+    if [[ "$input" =~ ^[A-Ea-e0-9]+$ ]]; then
+        echo "No local menu item for '$input'. Use /help to cancel or pick one of the shown options." >&2
+        return 0
+    fi
+
+    return 1
+}
+
+_coach_chat_handle_local_command() {
+    local input="$1"
+    local state_file="$2"
+    local alias="${input%%[[:space:]]*}"
+    local remainder=""
+    local subcmd=""
+    local rest=""
+    local output=""
+    local -a cli_args=()
+
+    remainder="${input#"$alias"}"
+    remainder="${remainder#"${remainder%%[![:space:]]*}"}"
+    subcmd="${remainder%%[[:space:]]*}"
+    if [[ "$subcmd" == "$remainder" ]]; then
+        rest=""
+    else
+        rest="${remainder#"$subcmd"}"
+        rest="${rest#"${rest%%[![:space:]]*}"}"
+    fi
+    if [[ -n "$rest" ]]; then
+        while IFS= read -r -d '' arg; do
+            cli_args+=("$arg")
+        done < <(_coach_chat_split_args "$rest")
+    fi
+
+    case "$alias" in
+        /t|/todo)
+            if [[ -z "$remainder" ]]; then
+                _coach_chat_show_todo_menu "$state_file"
+                return 0
+            fi
+            case "$subcmd" in
+                list|all|current|stale)
+                    output=$(_coach_chat_capture_cli "todo.sh" "$subcmd")
+                    _coach_chat_print_cli_output "$output"
+                    if [[ "$subcmd" == "list" ]]; then
+                        _coach_chat_show_todo_followup_menu "$state_file" "all"
+                    else
+                        _coach_chat_show_todo_followup_menu "$state_file" "$subcmd"
+                    fi
+                    ;;
+                add|done|rm|bump|to-idea)
+                    output=$(_coach_chat_capture_cli "todo.sh" "$subcmd" "${cli_args[@]}")
+                    _coach_chat_print_cli_output "$output"
+                    ;;
+                *)
+                    output=$(_coach_chat_capture_cli "todo.sh" add "$remainder")
+                    _coach_chat_print_cli_output "$output"
+                    ;;
+            esac
+            return 0
+            ;;
+        /i|/idea)
+            if [[ -z "$remainder" ]]; then
+                _coach_chat_show_idea_menu "$state_file"
+                return 0
+            fi
+            case "$subcmd" in
+                list)
+                    output=$(_coach_chat_capture_cli "idea.sh" list)
+                    _coach_chat_print_cli_output "$output"
+                    _coach_chat_write_menu_state "$state_file" \
+                        "A"$'\t'"menu:idea-select:to-todo" \
+                        "B"$'\t'"menu:idea-select:rm" \
+                        "C"$'\t'"menu:idea" \
+                        "E"$'\t'"__custom__"
+                    echo "A. Move one to todo" >&2
+                    echo "B. Remove one" >&2
+                    echo "C. Back to idea menu" >&2
+                    echo "E. Custom command" >&2
+                    ;;
+                add|rm|to-todo)
+                    output=$(_coach_chat_capture_cli "idea.sh" "$subcmd" "${cli_args[@]}")
+                    _coach_chat_print_cli_output "$output"
+                    ;;
+                *)
+                    output=$(_coach_chat_capture_cli "idea.sh" add "$remainder")
+                    _coach_chat_print_cli_output "$output"
+                    ;;
+            esac
+            return 0
+            ;;
+        /f|/focus)
+            if [[ -z "$remainder" ]]; then
+                _coach_chat_show_focus_menu "$state_file"
+                return 0
+            fi
+            case "$subcmd" in
+                show|check|set|done|clear|history)
+                    if [[ -n "$rest" ]]; then
+                        output=$(_coach_chat_capture_cli "focus.sh" "$subcmd" "$rest")
+                    else
+                        output=$(_coach_chat_capture_cli "focus.sh" "$subcmd")
+                    fi
+                    _coach_chat_print_cli_output "$output"
+                    ;;
+                *)
+                    output=$(_coach_chat_capture_cli "focus.sh" set "$remainder")
+                    _coach_chat_print_cli_output "$output"
+                    ;;
+            esac
+            return 0
+            ;;
+        /j|/journal)
+            if [[ -z "$remainder" ]]; then
+                _coach_chat_show_journal_menu "$state_file"
+                return 0
+            fi
+            case "$subcmd" in
+                add)
+                    output=$(_coach_chat_capture_cli "journal.sh" add "${cli_args[@]}")
+                    _coach_chat_print_cli_output "$output"
+                    ;;
+                list)
+                    if [[ "${#cli_args[@]}" -gt 0 ]]; then
+                        output=$(_coach_chat_capture_cli "journal.sh" list "${cli_args[@]}")
+                    else
+                        output=$(_coach_chat_capture_cli "journal.sh" list)
+                    fi
+                    _coach_chat_print_cli_output "$output"
+                    _coach_chat_write_menu_state "$state_file" \
+                        "A"$'\t'"menu:journal-select:edit" \
+                        "B"$'\t'"menu:journal-select:rm" \
+                        "C"$'\t'"cmd:/j all" \
+                        "D"$'\t'"menu:journal" \
+                        "E"$'\t'"__custom__"
+                    echo "A. Edit one of these" >&2
+                    echo "B. Remove one of these" >&2
+                    echo "C. Show all" >&2
+                    echo "D. Back to journal menu" >&2
+                    echo "E. Custom command" >&2
+                    ;;
+                all|rel|search|edit|rm|onthisday|analyze|mood|themes)
+                    if [[ "${#cli_args[@]}" -gt 0 ]]; then
+                        output=$(_coach_chat_capture_cli "journal.sh" "$subcmd" "${cli_args[@]}")
+                    else
+                        output=$(_coach_chat_capture_cli "journal.sh" "$subcmd")
+                    fi
+                    _coach_chat_print_cli_output "$output"
+                    ;;
+                *)
+                    output=$(_coach_chat_capture_cli "journal.sh" add "$remainder")
+                    _coach_chat_print_cli_output "$output"
+                    ;;
+            esac
+            return 0
+            ;;
+        /d|/drive)
+            if [[ -z "$remainder" ]]; then
+                _coach_chat_show_drive_menu "$state_file"
+                return 0
+            fi
+            case "$subcmd" in
+                auth|status|recent|recall)
+                    if [[ "${#cli_args[@]}" -gt 0 ]]; then
+                        output=$(_coach_chat_capture_cli "drive.sh" "$subcmd" "${cli_args[@]}")
+                    else
+                        output=$(_coach_chat_capture_cli "drive.sh" "$subcmd")
+                    fi
+                    _coach_chat_print_cli_output "$output"
+                    ;;
+                *)
+                    output=$(_coach_chat_capture_cli "drive.sh" recall "$remainder")
+                    _coach_chat_print_cli_output "$output"
+                    ;;
+            esac
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
 }
