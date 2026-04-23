@@ -1,6 +1,22 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** April 22, 2026
+**Last Updated:** April 23, 2026
+
+## Version 2.2.67 (April 23, 2026) - OAuth Helper Consolidation And Dispatcher Inventory Fixes
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- Added `scripts/lib/oauth.sh` to centralize shared OAuth refresh parsing, expiry math, and secure token/credential cache writes, then switched `scripts/drive.sh`, `scripts/gcal.sh`, and `scripts/fitbit_sync.sh` onto the shared helpers.
+- Extracted Fitbit daily metric parsing into `scripts/fitbit_metrics.py`, leaving `fitbit_sync.sh` with a small shell wrapper and direct BATS coverage for the standalone parser.
+- `bin/dhp-shared.sh` now lists `coach`, `chain`, `project`, `memory`, and `memory-search` in `dhp_available_dispatchers()`, and `tests/test_dispatcher_mapping.sh` now guards the expanded inventory.
+- `bin/dhp-lib.sh` now fails fast when `jq` is missing instead of assuming it is present.
+- `zsh/.zshrc` now uses `DOTFILES_DIR` with a `~/dotfiles` fallback for the once-per-day `startday.sh` auto-run path.
+- Removed dead no-op cleanup traps from `scripts/health.sh` and `scripts/journal.sh`.
+- Normalized both backup scripts onto the `require_lib` sourcing pattern.
+- `scripts/cheatsheet.sh` now sources shared config and reports the canonical `$DATA_DIR` instead of hardcoding the data root.
+- Added config-backed backup destination overrides for `scripts/backup_data.sh` and `scripts/backup_project.sh`, updated `.env.example`, and refreshed the README inventory counts for the new helper library/Python script totals.
 
 ## Version 2.2.66 (April 22, 2026) - Drive Loopback Auth Hardening And Cached Coach Excerpts
 

@@ -19,13 +19,6 @@ COMMITS_LOOKBACK_DAYS="${HEALTH_COMMITS_LOOKBACK_DAYS:?HEALTH_COMMITS_LOOKBACK_D
 # Ensure health file exists
 touch "$HEALTH_FILE"
 
-# Cleanup
-cleanup() {
-    # Remove temp files if any (atomic ops handle their own, but good practice)
-    :
-}
-trap cleanup EXIT
-
 # --- Helper Functions ---
 
 correlate_tasks() {

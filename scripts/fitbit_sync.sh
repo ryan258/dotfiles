@@ -7,8 +7,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 require_lib "config.sh"
 require_lib "date_utils.sh"
+require_lib "oauth.sh"
 
 require_cmd "curl" "Install curl"
+require_cmd "jq" "Install jq"
 require_cmd "python3" "Install Python 3"
 
 ensure_data_dirs
@@ -393,66 +395,57 @@ save_auth_tokens() {
     existing_legacy_user_id="$(load_auth_field_if_valid "legacy_user_id")"
     existing_health_user_id="$(load_auth_field_if_valid "health_user_id")"
 
-    local auth_json auth_status=0
-    auth_json="$(
-python3 - "$client_id" "$client_secret" "$redirect_uri" "$scopes" "$response_json" "$fallback_refresh" "$now_epoch" "$existing_legacy_user_id" "$existing_health_user_id" 2>&1 <<'PY'
-import json
-import sys
-
-(
-    client_id,
-    client_secret,
-    redirect_uri,
-    scopes,
-    response_json,
-    fallback_refresh,
-    now_epoch,
-    legacy_user_id,
-    health_user_id,
-) = sys.argv[1:10]
-try:
-    payload = json.loads(response_json)
-except json.JSONDecodeError as exc:
-    print(f"Google Health token response was not valid JSON: {exc}", file=sys.stderr)
-    raise SystemExit(1)
-
-access_token = payload.get("access_token")
-if not access_token:
-    error = str(payload.get("error") or "").strip()
-    description = str(payload.get("error_description") or "").strip()
-    if error and description:
-        print(f"Google Health token refresh failed: {error} ({description})", file=sys.stderr)
-    elif error:
-        print(f"Google Health token refresh failed: {error}", file=sys.stderr)
-    else:
-        print("Google Health token response did not contain access_token", file=sys.stderr)
-    raise SystemExit(1)
-
-refresh_token = payload.get("refresh_token") or fallback_refresh
-expires_in = int(payload.get("expires_in", 3600))
-expires_at = int(now_epoch) + max(expires_in - 60, 60)
-
-result = {
-    "client_id": client_id,
-    "client_secret": client_secret,
-    "redirect_uri": redirect_uri,
-    "scopes": payload.get("scope") or scopes,
-    "access_token": access_token,
-    "refresh_token": refresh_token,
-    "expires_at": expires_at,
-    "token_type": payload.get("token_type", "Bearer"),
-    "legacy_user_id": legacy_user_id,
-    "health_user_id": health_user_id,
-    "last_auth_at": int(now_epoch),
-}
-
-print(json.dumps(result, indent=2, sort_keys=True))
-PY
-    )" || auth_status=$?
-    if [[ "$auth_status" -ne 0 ]]; then
-        record_sync_failure "$auth_json"
-        die "$auth_json" "$EXIT_SERVICE_ERROR"
+    if ! printf '%s' "$response_json" | jq -e . >/dev/null 2>&1; then
+        local invalid_json_message="Google Health token response was not valid JSON"
+        record_sync_failure "$invalid_json_message"
+        # This helper is called under command substitution during refresh, so
+        # die() returns there instead of stopping the function body.
+        die "$invalid_json_message" "$EXIT_SERVICE_ERROR"
+        return "$EXIT_SERVICE_ERROR"
     fi
+
+    local access_token refresh_token expires_in expires_at token_type scope_value error_message auth_json
+    access_token="$(oauth_extract_access_token "$response_json")"
+    if [[ -z "$access_token" ]]; then
+        error_message="$(oauth_format_error_message "$response_json" "Google Health token refresh failed" "Google Health token response did not contain access_token")"
+        record_sync_failure "$error_message"
+        die "$error_message" "$EXIT_SERVICE_ERROR"
+        return "$EXIT_SERVICE_ERROR"
+    fi
+
+    refresh_token="$(oauth_extract_refresh_token "$response_json")"
+    [[ -n "$refresh_token" ]] || refresh_token="$fallback_refresh"
+    expires_in="$(oauth_extract_expires_in "$response_json" 3600)"
+    expires_at="$(oauth_compute_expiry_epoch "$expires_in")"
+    token_type="$(printf '%s' "$response_json" | jq -r '.token_type // "Bearer"' 2>/dev/null || printf 'Bearer')"
+    scope_value="$(printf '%s' "$response_json" | jq -r '.scope // empty' 2>/dev/null || true)"
+    [[ -n "$scope_value" ]] || scope_value="$scopes"
+
+    auth_json="$(jq -n \
+        --arg client_id "$client_id" \
+        --arg client_secret "$client_secret" \
+        --arg redirect_uri "$redirect_uri" \
+        --arg scopes "$scope_value" \
+        --arg access_token "$access_token" \
+        --arg refresh_token "$refresh_token" \
+        --arg token_type "$token_type" \
+        --arg legacy_user_id "$existing_legacy_user_id" \
+        --arg health_user_id "$existing_health_user_id" \
+        --argjson expires_at "$expires_at" \
+        --argjson last_auth_at "$now_epoch" \
+        '{
+            access_token: $access_token,
+            client_id: $client_id,
+            client_secret: $client_secret,
+            expires_at: $expires_at,
+            health_user_id: $health_user_id,
+            last_auth_at: $last_auth_at,
+            legacy_user_id: $legacy_user_id,
+            redirect_uri: $redirect_uri,
+            refresh_token: $refresh_token,
+            scopes: $scopes,
+            token_type: $token_type
+        }')"
 
     write_json_file "$GOOGLE_HEALTH_AUTH_FILE" "$auth_json"
 }
@@ -502,6 +495,7 @@ refresh_access_token() {
         response_json="$(sanitize_single_line "$response_json")"
         record_sync_failure "Failed to reach Google Health token endpoint: ${response_json:-unknown curl error}"
         die "Failed to reach Google Health token endpoint: ${response_json:-unknown curl error}" "$EXIT_SERVICE_ERROR"
+        return "$EXIT_SERVICE_ERROR"
     fi
     save_auth_tokens "$client_id" "$client_secret" "$redirect_uri" "$scopes" "$response_json" "$refresh_token"
 }
@@ -703,192 +697,7 @@ extract_metric_updates() {
     local metric="$1"
     local response_json="$2"
 
-    python3 - "$metric" "$response_json" <<'PY'
-import json
-import re
-import sys
-from datetime import datetime
-
-metric, response_json = sys.argv[1:3]
-payload = json.loads(response_json) if response_json.strip() else {}
-points = payload.get("rollupDataPoints") or payload.get("dataPoints") or []
-
-
-def coerce_number(value):
-    if isinstance(value, bool):
-        return None
-    if isinstance(value, (int, float)):
-        return float(value)
-    if isinstance(value, str):
-        cleaned = value.replace(",", "").strip()
-        if re.fullmatch(r"-?\d+(?:\.\d+)?", cleaned):
-            return float(cleaned)
-    return None
-
-
-def format_value(value):
-    rounded = round(value)
-    if abs(value - rounded) < 1e-9:
-        return str(int(rounded))
-    return f"{value:.2f}".rstrip("0").rstrip(".")
-
-
-def parse_day_from_dict(date_dict):
-    if not isinstance(date_dict, dict):
-        return None
-    year = date_dict.get("year")
-    month = date_dict.get("month")
-    day = date_dict.get("day")
-    if year is None or month is None or day is None:
-        return None
-    try:
-        return f"{int(year):04d}-{int(month):02d}-{int(day):02d}"
-    except (TypeError, ValueError):
-        return None
-
-
-def parse_day_from_iso(raw):
-    if not raw:
-        return None
-    text = str(raw).strip()
-    match = re.search(r"(\d{4}-\d{2}-\d{2})", text)
-    if match:
-        return match.group(1)
-    try:
-        return datetime.fromisoformat(text.replace("Z", "+00:00")).strftime("%Y-%m-%d")
-    except ValueError:
-        return None
-
-
-def walk_dicts(obj):
-    if isinstance(obj, dict):
-        yield obj
-        for value in obj.values():
-            yield from walk_dicts(value)
-    elif isinstance(obj, list):
-        for value in obj:
-            yield from walk_dicts(value)
-
-
-def walk_numeric(obj, path=()):
-    if isinstance(obj, dict):
-        for key, value in obj.items():
-            yield from walk_numeric(value, path + (str(key),))
-    elif isinstance(obj, list):
-        for value in obj:
-            yield from walk_numeric(value, path)
-    else:
-        number = coerce_number(obj)
-        if number is not None:
-            yield path, number
-
-
-def pick_day(item):
-    if metric == "sleep_minutes":
-        interval = item.get("sleep", {}).get("interval", {})
-        for key in ("endTime", "startTime"):
-            day = parse_day_from_iso(interval.get(key))
-            if day:
-                return day
-
-    for candidate in walk_dicts(item):
-        if "date" in candidate:
-            day = parse_day_from_dict(candidate.get("date"))
-            if day:
-                return day
-
-    for candidate in walk_dicts(item):
-        for key in ("endTime", "startTime", "physicalTime"):
-            day = parse_day_from_iso(candidate.get(key))
-            if day:
-                return day
-
-    return None
-
-
-def pick_generic_value(item, container_names, preferred_terms):
-    containers = []
-    for name in container_names:
-        candidate = item.get(name)
-        if isinstance(candidate, dict):
-            containers.append(candidate)
-    if not containers:
-        containers = [item]
-
-    excluded_terms = {"year", "month", "day", "hours", "minutes", "seconds", "nanos"}
-    flattened = []
-    for container in containers:
-        flattened.extend(walk_numeric(container))
-
-    for term in preferred_terms:
-        for path, value in flattened:
-            joined = ".".join(part.lower() for part in path)
-            if term in joined and not any(excluded in joined for excluded in excluded_terms):
-                return value
-
-    for path, value in flattened:
-        joined = ".".join(part.lower() for part in path)
-        if not any(excluded in joined for excluded in excluded_terms):
-            return value
-
-    return None
-
-
-if metric == "steps":
-    updates = {}
-    for item in points:
-        day = pick_day(item)
-        value = coerce_number(item.get("steps", {}).get("countSum"))
-        if value is None:
-            value = coerce_number(item.get("steps", {}).get("count"))
-        if day and value is not None:
-            updates[day] = value
-    for day in sorted(updates):
-        print(f"{day}|{format_value(updates[day])}")
-elif metric == "sleep_minutes":
-    updates = {}
-    priorities = {}
-    for item in points:
-        sleep = item.get("sleep", {})
-        day = pick_day(item)
-        value = coerce_number(sleep.get("summary", {}).get("minutesAsleep"))
-        if day is None or value is None:
-            continue
-        priority = 1 if sleep.get("metadata", {}).get("main") else 0
-        current_priority = priorities.get(day, -1)
-        current_value = updates.get(day, -1)
-        if priority > current_priority or (priority == current_priority and value > current_value):
-            priorities[day] = priority
-            updates[day] = value
-    for day in sorted(updates):
-        print(f"{day}|{format_value(updates[day])}")
-elif metric == "resting_heart_rate":
-    updates = {}
-    for item in points:
-        day = pick_day(item)
-        value = pick_generic_value(
-            item,
-            ("dailyRestingHeartRate", "restingHeartRate", "heartRate"),
-            ("restingheartrate", "resting_heart_rate", "beatsperminute", "bpm", "value"),
-        )
-        if day and value is not None:
-            updates[day] = value
-    for day in sorted(updates):
-        print(f"{day}|{format_value(updates[day])}")
-elif metric == "hrv":
-    updates = {}
-    for item in points:
-        day = pick_day(item)
-        value = pick_generic_value(
-            item,
-            ("dailyHeartRateVariability", "heartRateVariability"),
-            ("rmssd", "milliseconds", "millis", "value"),
-        )
-        if day and value is not None:
-            updates[day] = value
-    for day in sorted(updates):
-        print(f"{day}|{format_value(updates[day])}")
-PY
+    printf '%s' "$response_json" | python3 "$SCRIPT_DIR/fitbit_metrics.py" "$metric"
 }
 
 merge_metric_updates() {

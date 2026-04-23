@@ -14,13 +14,6 @@ JOURNAL_FILE="${JOURNAL_FILE:?JOURNAL_FILE is not set by config.sh}"
 # Ensure journal file exists
 touch "$JOURNAL_FILE"
 
-# Cleanup
-cleanup() {
-    # Placeholder for future temp file cleanup
-    :
-}
-trap cleanup EXIT
-
 # --- Main Logic ---
 
 _journal_recent_stream() {

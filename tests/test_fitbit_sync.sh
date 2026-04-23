@@ -159,6 +159,32 @@ EOF
     assert_file_contains "$DOTFILES_DATA_DIR/fitbit/hrv.txt" "$mock_day|42"
 }
 
+@test "fitbit_metrics.py extracts normalized daily values directly" {
+    run bash -lc "cat <<'JSON' | python3 '$DOTFILES_DIR/scripts/fitbit_metrics.py' steps
+{\"rollupDataPoints\":[{\"civilStartTime\":{\"date\":{\"year\":2026,\"month\":4,\"day\":23}},\"steps\":{\"countSum\":\"6789\"}}]}
+JSON"
+    [ "$status" -eq 0 ]
+    [ "$output" = "2026-04-23|6789" ]
+
+    run bash -lc "cat <<'JSON' | python3 '$DOTFILES_DIR/scripts/fitbit_metrics.py' sleep_minutes
+{\"dataPoints\":[{\"sleep\":{\"interval\":{\"endTime\":\"2026-04-23T07:30:00Z\"},\"metadata\":{\"main\":true},\"summary\":{\"minutesAsleep\":\"430\"}}}]}
+JSON"
+    [ "$status" -eq 0 ]
+    [ "$output" = "2026-04-23|430" ]
+
+    run bash -lc "cat <<'JSON' | python3 '$DOTFILES_DIR/scripts/fitbit_metrics.py' resting_heart_rate
+{\"dataPoints\":[{\"dailyRestingHeartRate\":{\"date\":{\"year\":2026,\"month\":4,\"day\":23},\"beatsPerMinute\":61}}]}
+JSON"
+    [ "$status" -eq 0 ]
+    [ "$output" = "2026-04-23|61" ]
+
+    run bash -lc "cat <<'JSON' | python3 '$DOTFILES_DIR/scripts/fitbit_metrics.py' hrv
+{\"dataPoints\":[{\"dailyHeartRateVariability\":{\"date\":{\"year\":2026,\"month\":4,\"day\":23},\"rmssdMillis\":42}}]}
+JSON"
+    [ "$status" -eq 0 ]
+    [ "$output" = "2026-04-23|42" ]
+}
+
 @test "fitbit_sync.sh sync surfaces OAuth refresh failures and stores the sync error" {
     cat > "$TEST_DIR/fake-bin/curl" <<'EOF'
 #!/usr/bin/env bash

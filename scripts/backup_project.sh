@@ -21,6 +21,8 @@ fi
 if ! validate_dependencies rsync; then
     exit 1
 fi
+require_lib "config.sh"
+require_lib "date_utils.sh"
 
 echo "Starting backup of current project..."
 
@@ -29,20 +31,20 @@ SOURCE_DIR="$(pwd)"
 VALIDATED_SOURCE_DIR=$(validate_path "$SOURCE_DIR") || exit 1
 SOURCE_DIR="$VALIDATED_SOURCE_DIR"
 
-# Where the backup should go (change this to your preferred location)
-DEST_DIR="$HOME/Backups"
+# Where the backup should go (override in .env if needed)
+DEST_DIR="${PROJECT_BACKUP_DIR:?PROJECT_BACKUP_DIR is not set by config.sh}"
 VALIDATED_DEST_DIR=$(validate_path "$DEST_DIR") || exit 1
 DEST_DIR="$VALIDATED_DEST_DIR"
 
 # Google Drive Configuration
-GDRIVE_REMOTE="gdrive"
-GDRIVE_BASE_FOLDER="Backups"
+GDRIVE_REMOTE="${PROJECT_BACKUP_GDRIVE_REMOTE:?PROJECT_BACKUP_GDRIVE_REMOTE is not set by config.sh}"
+GDRIVE_BASE_FOLDER="${PROJECT_BACKUP_GDRIVE_BASE_FOLDER:?PROJECT_BACKUP_GDRIVE_BASE_FOLDER is not set by config.sh}"
 
 # Create backup directory if it doesn't exist
 mkdir -p "$DEST_DIR"
 
 # Create a timestamp for this backup
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+TIMESTAMP=$(date_now "%Y%m%d_%H%M%S")
 PROJECT_NAME=$(basename "$SOURCE_DIR")
 BACKUP_NAME="backup_${PROJECT_NAME}_${TIMESTAMP}"
 FULL_BACKUP_PATH="$DEST_DIR/$BACKUP_NAME"

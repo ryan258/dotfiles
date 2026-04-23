@@ -22,6 +22,12 @@ if [[ -z "${DATA_DIR:-}" ]]; then
     echo "Error: DATA_DIR is not set. Source scripts/lib/config.sh before dhp-lib.sh." >&2
     return 1
 fi
+if type require_cmd >/dev/null 2>&1; then
+    require_cmd "jq" "Install with: brew install jq" || return 1
+elif ! command -v jq >/dev/null 2>&1; then
+    echo "Error: jq is required. Install with: brew install jq" >&2
+    return 1
+fi
 
 # --- Private Helper Functions ---
 

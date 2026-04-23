@@ -42,6 +42,11 @@ teardown() {
     [ "$status" -eq 0 ]
     [[ "$output" == *"tech"* ]]
     [[ "$output" == *"copy"* ]]
+    [[ "$output" == *"coach"* ]]
+    [[ "$output" == *"chain"* ]]
+    [[ "$output" == *"project"* ]]
+    [[ "$output" == *"memory"* ]]
+    [[ "$output" == *"memory-search"* ]]
 }
 
 @test "dhp_resolve_dispatcher_command centralizes command lookup" {

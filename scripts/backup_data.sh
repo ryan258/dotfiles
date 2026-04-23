@@ -23,28 +23,17 @@ else
     die "Shared utility library dhp-utils.sh not found." "$EXIT_FILE_NOT_FOUND"
 fi
 
-if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
-    # shellcheck disable=SC1090
-    source "$SCRIPT_DIR/lib/config.sh"
-else
-    die "configuration library not found at $SCRIPT_DIR/lib/config.sh" "$EXIT_FILE_NOT_FOUND"
-fi
-if [ -f "$SCRIPT_DIR/lib/date_utils.sh" ]; then
-    # shellcheck disable=SC1090
-    source "$SCRIPT_DIR/lib/date_utils.sh"
-else
-    die "date utilities not found at $SCRIPT_DIR/lib/date_utils.sh" "$EXIT_FILE_NOT_FOUND"
-fi
+require_lib "config.sh"
+require_lib "date_utils.sh"
 
 # Validate dependencies
 validate_dependencies tar || die "Required dependency validation failed (tar)." "$EXIT_FILE_NOT_FOUND"
 
 # Configuration
-BACKUP_DIR_DEFAULT="$HOME/Backups/dotfiles_data"
-BACKUP_DIR="${DOTFILES_BACKUP_DIR:-$BACKUP_DIR_DEFAULT}"
+BACKUP_DIR="${DOTFILES_BACKUP_DIR:?DOTFILES_BACKUP_DIR is not set by config.sh}"
 SOURCE_DIR="$DATA_DIR"
-GDRIVE_REMOTE="gdrive"
-GDRIVE_FOLDER="Backups/dotfiles_data"
+GDRIVE_REMOTE="${DOTFILES_BACKUP_GDRIVE_REMOTE:?DOTFILES_BACKUP_GDRIVE_REMOTE is not set by config.sh}"
+GDRIVE_FOLDER="${DOTFILES_BACKUP_GDRIVE_FOLDER:?DOTFILES_BACKUP_GDRIVE_FOLDER is not set by config.sh}"
 
 # Validate paths
 SOURCE_DIR=$(validate_path "$SOURCE_DIR") || die "Invalid source directory path: $SOURCE_DIR" "$EXIT_INVALID_ARGS"

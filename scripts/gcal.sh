@@ -26,6 +26,13 @@ else
     echo "Error: date utilities not found at $SCRIPT_DIR/lib/date_utils.sh" >&2
     exit 1
 fi
+if [ -f "$SCRIPT_DIR/lib/oauth.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/oauth.sh"
+else
+    echo "Error: OAuth helpers not found at $SCRIPT_DIR/lib/oauth.sh" >&2
+    exit 1
+fi
 
 CREDS_FILE="${GCAL_CREDS_FILE:?GCAL_CREDS_FILE is not set by config.sh}"
 TOKEN_FILE="${GCAL_TOKEN_FILE:?GCAL_TOKEN_FILE is not set by config.sh}"
@@ -60,10 +67,12 @@ show_help() {
 # --- Auth Functions ---
 
 check_deps() {
-    if ! command -v jq >/dev/null; then
-        echo "Error: 'jq' is required. Please install it (brew install jq)." >&2
-        exit 1
-    fi
+    require_cmd "curl" "Install with: brew install curl"
+    require_cmd "jq" "Install with: brew install jq"
+}
+
+_gcal_curl() {
+    curl -sS "$@"
 }
 
 load_creds() {
@@ -124,24 +133,18 @@ cmd_auth() {
         
         if [ -z "$ERROR" ]; then
             # Success!
-            REFRESH_TOKEN=$(echo "$TOKEN_RES" | jq -r '.refresh_token')
-            ACCESS_TOKEN=$(echo "$TOKEN_RES" | jq -r '.access_token')
-            EXPIRES_IN=$(echo "$TOKEN_RES" | jq -r '.expires_in')
-            
-            # Save Credentials
-            jq -n \
-               --arg cid "$CLIENT_ID" \
-               --arg csec "$CLIENT_SECRET" \
-               --arg rt "$REFRESH_TOKEN" \
-               '{client_id: $cid, client_secret: $csec, refresh_token: $rt}' > "$CREDS_FILE"
-            
-            # Save Initial Token
-            # Buffer: 60s to avoid boundary conditions where token expires during use
-            EXPIRY=$(( $(date_epoch_now) + EXPIRES_IN - 60 ))
-            jq -n \
-               --arg at "$ACCESS_TOKEN" \
-               --arg exp "$EXPIRY" \
-               '{access_token: $at, expiry: $exp}' > "$TOKEN_FILE"
+            REFRESH_TOKEN="$(oauth_extract_refresh_token "$TOKEN_RES")"
+            ACCESS_TOKEN="$(oauth_extract_access_token "$TOKEN_RES")"
+            EXPIRES_IN="$(oauth_extract_expires_in "$TOKEN_RES" 3600)"
+
+            oauth_write_refresh_credentials "$CREDS_FILE" "$CLIENT_ID" "$CLIENT_SECRET" "$REFRESH_TOKEN" || {
+                echo "Error: Failed to write Calendar credentials to $CREDS_FILE" >&2
+                exit 1
+            }
+            oauth_write_access_token_cache "$TOKEN_FILE" "$ACCESS_TOKEN" "$EXPIRES_IN" || {
+                echo "Error: Failed to write Calendar token cache to $TOKEN_FILE" >&2
+                exit 1
+            }
                
             echo "✅ Authentication successful! Credentials saved."
             break
@@ -176,28 +179,20 @@ get_access_token() {
         exit 1
     fi
     
-    REFRESH_RES=$(curl -s -d "client_id=$CLIENT_ID" \
-                          -d "client_secret=$CLIENT_SECRET" \
-                          -d "refresh_token=$REFRESH_TOKEN" \
-                          -d "grant_type=refresh_token" \
-                          "$AUTH_BASE/token")
+    REFRESH_RES="$(oauth_refresh_token_request "$AUTH_BASE/token" "$CLIENT_ID" "$CLIENT_SECRET" "$REFRESH_TOKEN" _gcal_curl)"
     
-    ACCESS_TOKEN=$(echo "$REFRESH_RES" | jq -r '.access_token')
-    EXPIRES_IN=$(echo "$REFRESH_RES" | jq -r '.expires_in')
+    ACCESS_TOKEN="$(oauth_extract_access_token "$REFRESH_RES")"
+    EXPIRES_IN="$(oauth_extract_expires_in "$REFRESH_RES" 3600)"
     
-    if [ "$ACCESS_TOKEN" == "null" ]; then
-        echo "Error refreshing token:" >&2
-        echo "$REFRESH_RES" >&2
+    if [[ -z "$ACCESS_TOKEN" ]]; then
+        echo "$(oauth_format_error_message "$REFRESH_RES" "Google Calendar token refresh failed" "Google Calendar token refresh failed: response did not contain access_token")" >&2
         exit 1
     fi
     
-    # Update Cache
-    # Buffer: 60s to ensure valid upon return
-    EXP=$(( $(date_epoch_now) + EXPIRES_IN - 60 ))
-    jq -n \
-       --arg at "$ACCESS_TOKEN" \
-       --arg exp "$EXP" \
-       '{access_token: $at, expiry: $exp}' > "$TOKEN_FILE"
+    oauth_write_access_token_cache "$TOKEN_FILE" "$ACCESS_TOKEN" "$EXPIRES_IN" || {
+        echo "Error: Failed to write Calendar token cache to $TOKEN_FILE" >&2
+        exit 1
+    }
        
     echo "$ACCESS_TOKEN"
 }

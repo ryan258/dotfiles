@@ -8,6 +8,7 @@ source "$SCRIPT_DIR/lib/common.sh"
 require_lib "config.sh"
 require_lib "date_utils.sh"
 require_lib "focus_relevance.sh"
+require_lib "oauth.sh"
 
 CREDS_FILE="${GDRIVE_CREDS_FILE:?GDRIVE_CREDS_FILE is not set by config.sh}"
 TOKEN_FILE="${GDRIVE_TOKEN_FILE:?GDRIVE_TOKEN_FILE is not set by config.sh}"
@@ -284,7 +285,7 @@ PY
 
     echo "Authorization code captured. Exchanging for tokens..."
 
-    local token_res error refresh_token access_token expires_in expiry
+    local token_res error refresh_token access_token expires_in
     token_res=$(_drive_curl -d "client_id=$GOOGLE_DRIVE_CLIENT_ID" \
         -d "client_secret=$GOOGLE_DRIVE_CLIENT_SECRET" \
         -d "code=$auth_code" \
@@ -292,23 +293,21 @@ PY
         -d "redirect_uri=$redirect_uri" \
         "$AUTH_BASE/token")
 
-    error=$(printf '%s' "$token_res" | jq -r '.error // empty')
+    error="$(oauth_extract_error_code "$token_res")"
     if [[ -n "$error" ]]; then
-        die "Drive token exchange failed: $error" "$EXIT_SERVICE_ERROR"
+        die "$(oauth_format_error_message "$token_res" "Drive token exchange failed" "Drive token exchange failed")" "$EXIT_SERVICE_ERROR"
     fi
 
-    refresh_token=$(printf '%s' "$token_res" | jq -r '.refresh_token // empty')
-    access_token=$(printf '%s' "$token_res" | jq -r '.access_token // empty')
-    expires_in=$(printf '%s' "$token_res" | jq -r '.expires_in // 3600')
+    refresh_token="$(oauth_extract_refresh_token "$token_res")"
+    access_token="$(oauth_extract_access_token "$token_res")"
+    expires_in="$(oauth_extract_expires_in "$token_res" 3600)"
 
     [[ -n "$access_token" && -n "$refresh_token" ]] || die "Drive auth did not return usable tokens." "$EXIT_SERVICE_ERROR"
 
-    jq -n --arg cid "$GOOGLE_DRIVE_CLIENT_ID" --arg secret "$GOOGLE_DRIVE_CLIENT_SECRET" --arg refresh "$refresh_token" \
-        '{client_id: $cid, client_secret: $secret, refresh_token: $refresh}' > "$CREDS_FILE"
-
-    expiry=$(( $(date_epoch_now) + expires_in - 60 ))
-    jq -n --arg token "$access_token" --argjson expiry "$expiry" \
-        '{access_token: $token, expiry: $expiry}' > "$TOKEN_FILE"
+    oauth_write_refresh_credentials "$CREDS_FILE" "$GOOGLE_DRIVE_CLIENT_ID" "$GOOGLE_DRIVE_CLIENT_SECRET" "$refresh_token" \
+        || die "Failed to write Drive credentials to $CREDS_FILE" "$EXIT_ERROR"
+    oauth_write_access_token_cache "$TOKEN_FILE" "$access_token" "$expires_in" \
+        || die "Failed to write Drive token cache to $TOKEN_FILE" "$EXIT_ERROR"
 
     echo "✅ Drive authentication saved successfully."
 }
@@ -319,20 +318,15 @@ refresh_access_token() {
 
     [[ -n "${REFRESH_TOKEN:-}" ]] || die "Drive refresh token missing. Run $(basename "$0") auth" "$EXIT_ERROR"
 
-    local refresh_res access_token expires_in expiry
-    refresh_res=$(_drive_curl -d "client_id=$GOOGLE_DRIVE_CLIENT_ID" \
-        -d "client_secret=$GOOGLE_DRIVE_CLIENT_SECRET" \
-        -d "refresh_token=$REFRESH_TOKEN" \
-        -d "grant_type=refresh_token" \
-        "$AUTH_BASE/token")
+    local refresh_res access_token expires_in
+    refresh_res="$(oauth_refresh_token_request "$AUTH_BASE/token" "$GOOGLE_DRIVE_CLIENT_ID" "$GOOGLE_DRIVE_CLIENT_SECRET" "$REFRESH_TOKEN" _drive_curl)"
 
-    access_token=$(printf '%s' "$refresh_res" | jq -r '.access_token // empty')
-    expires_in=$(printf '%s' "$refresh_res" | jq -r '.expires_in // 3600')
-    [[ -n "$access_token" ]] || die "Drive token refresh failed: $refresh_res" "$EXIT_SERVICE_ERROR"
+    access_token="$(oauth_extract_access_token "$refresh_res")"
+    expires_in="$(oauth_extract_expires_in "$refresh_res" 3600)"
+    [[ -n "$access_token" ]] || die "$(oauth_format_error_message "$refresh_res" "Drive token refresh failed" "Drive token refresh failed: response did not contain access_token")" "$EXIT_SERVICE_ERROR"
 
-    expiry=$(( $(date_epoch_now) + expires_in - 60 ))
-    jq -n --arg token "$access_token" --argjson expiry "$expiry" \
-        '{access_token: $token, expiry: $expiry}' > "$TOKEN_FILE"
+    oauth_write_access_token_cache "$TOKEN_FILE" "$access_token" "$expires_in" \
+        || die "Failed to write Drive token cache to $TOKEN_FILE" "$EXIT_ERROR"
 
     printf '%s' "$access_token"
 }

@@ -36,7 +36,8 @@ fi
 
 # If the last run date is not today, run the script
 if [ "$LAST_RUN_DATE" != "$TODAY" ]; then
-    bash "$HOME/dotfiles/scripts/startday.sh"
+    DOTFILES_STARTDAY_ROOT="${DOTFILES_DIR:-$HOME/dotfiles}"
+    bash "$DOTFILES_STARTDAY_ROOT/scripts/startday.sh"
     # Update the last run file with today's date
     echo "$TODAY" > "$LAST_RUN_FILE"
 fi

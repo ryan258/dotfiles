@@ -119,7 +119,7 @@ dhp_parse_flags() {
 
 # Human-readable list used by UX/help paths.
 dhp_available_dispatchers() {
-    printf '%s\n' "tech, creative, content, strategy, brand, market, stoic, research, narrative, copy, finance, morphling"
+    printf '%s\n' "tech, creative, content, strategy, brand, market, stoic, research, narrative, copy, finance, morphling, coach, chain, project, memory, memory-search"
 }
 
 # Resolve dispatcher aliases to canonical script names.
