@@ -15,10 +15,10 @@ This repo is a command-line productivity environment built around shell scripts,
 
 This snapshot reflects the root repo as audited on April 23, 2026:
 
-- `scripts/`: 76 shell utilities plus 5 Python helpers
-- `scripts/lib/`: 25 sourced libraries
-- `bin/`: 28 non-markdown entry points, including 21 `dhp-*.sh` executables
-- `tests/`: 47 Bats test files
+- `scripts/`: 73 shell utilities plus 5 Python helpers
+- `scripts/lib/`: 25 sourced shell libraries plus 2 Python modules
+- `bin/`: 30 non-markdown entry points, including 21 `dhp-*.sh` executables
+- `tests/`: 49 Bats test files
 
 ## Install
 

@@ -1,5 +1,8 @@
 # Dotfiles Masterplan Phases
 
+> **Archived** - This is historical documentation from early phase planning.
+> The current contract is `CLAUDE.md`. This file is preserved for reference only.
+
 Last updated: March 2, 2026
 Owner: `dotfiles` root project
 Canonical behavior contract: `CLAUDE.md`

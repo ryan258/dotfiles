@@ -1,6 +1,6 @@
 # Your AI Tool Shortcut Menu
 
-This folder holds the repo's AI dispatchers, orchestration entry points, and repo-aware agents. The current root inventory includes 21 `dhp-*.sh` executables plus companion commands such as `dispatch.sh`, `morphling.sh`, `cyborg`, `cyborg-sync`, and `swipe.sh`.
+This folder holds the repo's AI dispatchers, orchestration entry points, and repo-aware agents. The current root inventory includes 21 `dhp-*.sh` executables (17 user-facing dispatchers plus 4 infrastructure files) and companion commands such as `dispatch.sh`, `morphling.sh`, `cyborg`, `cyborg-sync`, and `swipe.sh`.
 
 **Latest Update:** 
 - ✅ All tools can print answers live on your screen (use `--stream`)
@@ -26,6 +26,8 @@ This folder holds the repo's AI dispatchers, orchestration entry points, and rep
 | `dhp-copy.sh` | `aicopy` | Write ads that sell |
 | `dhp-morphling.sh`| `morphling` | Swarm-mode Morphling analysis |
 | `dhp-finance.sh` | `finance` | Get advice about money and taxes |
+| `dhp-project.sh` | `ai-project` | Multi-phase project planning with specialist team |
+| `dhp-chain.sh` | `ai-chain` | Chain two dispatchers in sequence |
 | `dhp-memory.sh` | `memory` | Save a memory to the optional Brain |
 | `dhp-memory-search.sh` | `memory-search` | Search optional stored memories |
 | `dispatch.sh` | `dispatch` | Route work to any dispatcher |

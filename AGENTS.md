@@ -232,10 +232,10 @@ source "$(dirname "$0")/dhp-shared.sh"
 
 dhp_dispatch \
     "Dispatcher Name" \
-    "model-id" \
-    "$HOME/Documents/AI_Staff_HQ_Outputs/Category" \
+    "MODEL_TYPE" \
+    "" \
     "MODEL_ENV_VAR" \
-    "OUTPUT_DIR_ENV_VAR" \
+    "DHP_<TYPE>_OUTPUT_DIR" \
     "System prompt" \
     "0.5" \
     "$@"

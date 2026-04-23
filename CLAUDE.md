@@ -161,7 +161,14 @@ readonly _LIBRARY_NAME_LOADED=true
 | `health_ops.sh`   | Shared health + wearable helpers                  | Health summaries and Fitbit context |
 | `spoon_budget.sh` | Energy tracking                                   | Spoon-related features     |
 | `blog_common.sh`  | Blog utilities                                    | Blog operations            |
+| `oauth.sh`        | Shared OAuth token parsing, refresh, secure writes | Google Drive, Calendar, Fitbit sync |
+| `coaching.sh`     | Stable facade over the coach_* family (see below) | Daily briefing workflows   |
+| `coach_ops.sh`    | Core coaching implementation (mode, log, digest)  | Used internally by coaching.sh |
+| `coach_metrics.sh`| Tactical + pattern metrics collection             | Used by coaching.sh        |
+| `coach_prompts.sh`| Coach prompt builders                             | Used by coaching.sh        |
+| `coach_scoring.sh`| Coaching scoring and classification               | Used by coaching.sh        |
 | `coach_chat.sh`   | Menu-driven post-briefing control surface and chat | After startday/status/goodevening |
+| `github_ops.sh`   | GitHub API helpers (repos, commits, pushes)       | Daily briefing workflows   |
 | `focus_relevance.sh` | Focus keyword extraction and relevance scoring | Drive filtering, journal rel, strategy evidence |
 
 ### Library Sourcing Pattern
@@ -204,6 +211,10 @@ if [[ -n "${_COMMON_SH_LOADED:-}" ]]; then
 fi
 readonly _COMMON_SH_LOADED=true
 ```
+
+### The `coaching.sh` Facade
+
+`scripts/lib/coaching.sh` is a thin, stable wrapper around a family of `coach_*` libraries (`coach_ops.sh`, `coach_metrics.sh`, `coach_prompts.sh`, `coach_scoring.sh`). Workflow entry points (`startday.sh`, `status.sh`, `goodevening.sh`) call `coaching_*` functions so the underlying coach libraries can evolve without breaking callers. New coaching logic goes into the appropriate `coach_*.sh` file; the facade only needs a new one-line pass-through when a public function is added.
 
 ---
 
@@ -301,10 +312,10 @@ source "$(dirname "$0")/dhp-shared.sh"
 
 dhp_dispatch \
     "Dispatcher Name" \
-    "model-id" \
-    "$HOME/Documents/AI_Staff_HQ_Outputs/Category" \
+    "MODEL_TYPE" \
+    "" \
     "MODEL_ENV_VAR" \
-    "OUTPUT_DIR_ENV_VAR" \
+    "DHP_<TYPE>_OUTPUT_DIR" \
     "System prompt/instructions" \
     "0.5" \
     "$@"

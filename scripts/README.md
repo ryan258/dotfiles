@@ -5,9 +5,9 @@ The canonical contract and coding rules live in `../CLAUDE.md`.
 
 ## Current Inventory
 
-- 76 top-level shell utilities
+- 73 top-level shell utilities
 - 5 top-level Python helpers
-- 25 sourced libraries under `scripts/lib/`
+- 25 sourced shell libraries plus 2 Python modules under `scripts/lib/`
 
 ## Daily Loop and Context Commands
 
