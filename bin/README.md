@@ -26,14 +26,15 @@ This folder holds the repo's AI dispatchers, orchestration entry points, and rep
 | `dhp-copy.sh` | `aicopy` | Write ads that sell |
 | `dhp-morphling.sh`| `morphling` | Swarm-mode Morphling analysis |
 | `dhp-finance.sh` | `finance` | Get advice about money and taxes |
-| `dhp-memory.sh` | `memory` | Save a memory to the Brain |
-| `dhp-memory-search.sh` | `memory-search` | Search stored memories |
+| `dhp-memory.sh` | `memory` | Save a memory to the optional Brain |
+| `dhp-memory-search.sh` | `memory-search` | Search optional stored memories |
 | `dispatch.sh` | `dispatch` | Route work to any dispatcher |
 | `cyborg` | `cyborg` | Repo-aware drafting and autopilot agent |
 | `cyborg-sync` | `cyborg-sync` | Updates mapped site pages from real repo changes |
 | `swipe.sh` | `swipe` | Run an AI command and save the output |
 
 **Magic Helper:** The `morphling` alias uses the swarm-mode dispatcher for one-shot context-rich analysis. Invoke `bin/morphling.sh` when you want the direct tool-capable Morphling session that can read, write, list, and run commands.
+Dispatcher outputs default under `DHP_OUTPUT_BASE` from `.env`, with per-dispatcher `DHP_*_OUTPUT_DIR` overrides when you need a custom folder.
 
 ## ⚙️ Computer and Work (Tech & Copy)
 

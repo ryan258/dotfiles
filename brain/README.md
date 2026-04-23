@@ -4,7 +4,7 @@ A centralized vector database for cross-project memory and AI agent collaboratio
 
 ## What is this?
 
-The Brain is a ChromaDB-based vector store that runs as a local service. It provides:
+The Brain is a ChromaDB-based vector store that runs as a local service. It is currently an optional/manual subsystem rather than part of the default startday/status/goodevening loop. It provides:
 
 - **Shared memory** across all your projects and AI agents
 - **Chat log ingestion** from ChatGPT, Claude, and other exports

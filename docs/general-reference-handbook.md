@@ -2005,6 +2005,7 @@ cat outline.md | aicopy --stream > promotional-copy.txt
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
+# Example custom helper you create yourself:
 # ~/dotfiles/scripts/weekly_ai_review.sh
 
 # Generate standard review

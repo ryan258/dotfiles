@@ -10,7 +10,7 @@ source "$(dirname "$0")/dhp-shared.sh"
 dhp_dispatch \
     "Research Synthesis" \
     "RESEARCH" \
-    "$HOME/Documents/AI_Staff_HQ_Outputs/Personal_Development/Research" \
+    "" \
     "RESEARCH_MODEL" \
     "DHP_RESEARCH_OUTPUT_DIR" \
     "

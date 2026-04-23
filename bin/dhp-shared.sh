@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # dhp-shared.sh: Shared library for DHP dispatcher scripts
 # This script provides common setup, flag parsing, and input handling functions.
-# NOTE: SOURCED file. Do NOT use set -euo pipefail.
+# NOTE: SOURCED file. Strict mode is inherited from the calling dispatcher.
 
 if [[ -n "${_DHP_SHARED_LOADED:-}" ]]; then
     return 0
@@ -292,11 +292,11 @@ dhp_save_artifact() {
 }
 
 # Centralized Dispatcher Function
-# Usage: dhp_dispatch "SERVICE_NAME" "MODEL_TYPE" "OUTPUT_DIR_BASE" "ENV_MODEL_VAR" "ENV_OUTPUT_VAR" "SYSTEM_BRIEF" "DEFAULT_TEMP" -- "$@"
+# Usage: dhp_dispatch "SERVICE_NAME" "MODEL_TYPE" "OUTPUT_DIR_BASE(optional)" "ENV_MODEL_VAR" "ENV_OUTPUT_VAR" "SYSTEM_BRIEF" "DEFAULT_TEMP" -- "$@"
 dhp_dispatch() {
     local service_name="$1"
     local model_type="${2:-DEFAULT}"
-    local output_base="$3"
+    local output_base="${3:-}"
     local env_model_var="$4"
     local env_output_var="$5"
     local system_brief="${6:-}" # Optional system instruction/brief prefix
@@ -347,8 +347,15 @@ dhp_dispatch() {
     fi
     
     # Resolve Output Directory
+    local output_dir_default="$output_base"
     local output_dir_final
-    output_dir_final=$(default_output_dir "$output_base" "$env_output_var")
+    if [ -z "$output_dir_default" ] && type get_output_dir >/dev/null 2>&1; then
+        output_dir_default=$(get_output_dir "$model_type")
+    fi
+    if [ -z "$output_dir_default" ]; then
+        output_dir_default="${DHP_OUTPUT_BASE:-${AI_OUTPUT_BASE:-$HOME/Documents/AI_Staff_HQ_Outputs}}/General"
+    fi
+    output_dir_final=$(default_output_dir "$output_dir_default" "$env_output_var")
     mkdir -p "$output_dir_final"
     
     local slug

@@ -93,6 +93,11 @@ GITHUB_TOKEN_FALLBACK="${GITHUB_TOKEN_FALLBACK:-$DATA_DIR/github_token}"
 GITHUB_CACHE_DIR="${GITHUB_CACHE_DIR:-$DATA_DIR/cache/github}"
 GITHUB_INACTIVE_REPOS_FILE="${GITHUB_INACTIVE_REPOS_FILE:-$DATA_DIR/github_inactive_repos.txt}"
 GITHUB_EXCLUDE_FORKS="${GITHUB_EXCLUDE_FORKS:-true}"
+DOWNLOADS_DIR="${DOWNLOADS_DIR:-$HOME/Downloads}"
+DOCUMENTS_DIR="${DOCUMENTS_DIR:-$HOME/Documents}"
+PICTURES_DIR="${PICTURES_DIR:-$HOME/Pictures}"
+MUSIC_DIR="${MUSIC_DIR:-$HOME/Music}"
+DOWNLOAD_ARCHIVES_DIR="${DOWNLOAD_ARCHIVES_DIR:-$DOCUMENTS_DIR/Archives}"
 
 #=============================================================================
 # Model Configuration - SINGLE SOURCE OF TRUTH
@@ -160,8 +165,13 @@ is_free_model() {
 # Output Directory Configuration
 #=============================================================================
 
-# Base output directory for AI Staff HQ
-AI_OUTPUT_BASE="${AI_OUTPUT_BASE:-$HOME/Documents/AI_Staff_HQ_Outputs}"
+# Base output directory for AI Staff HQ dispatchers.
+# `AI_OUTPUT_BASE` is the legacy alias; prefer setting `DHP_OUTPUT_BASE`.
+# If both are set, dispatchers use `DHP_OUTPUT_BASE`.
+if [[ -z "${DHP_OUTPUT_BASE:-}" ]]; then
+    DHP_OUTPUT_BASE="${AI_OUTPUT_BASE:-$HOME/Documents/AI_Staff_HQ_Outputs}"
+fi
+AI_OUTPUT_BASE="${AI_OUTPUT_BASE:-$DHP_OUTPUT_BASE}"
 
 # Get output directory for a dispatcher type
 # Usage: dir=$(get_output_dir "TECH")
@@ -175,17 +185,21 @@ get_output_dir() {
     fi
 
     case "$type" in
-        BRAND) echo "${DHP_BRAND_OUTPUT_DIR:-$AI_OUTPUT_BASE/Strategy/Brand}" ;;
-        CONTENT) echo "${DHP_CONTENT_OUTPUT_DIR:-$AI_OUTPUT_BASE/Content/Guides}" ;;
-        COPY) echo "${DHP_COPY_OUTPUT_DIR:-$AI_OUTPUT_BASE/Creative/Copywriting}" ;;
-        CREATIVE) echo "${DHP_CREATIVE_OUTPUT_DIR:-$AI_OUTPUT_BASE/Creative/Stories}" ;;
-        MARKET) echo "${DHP_MARKET_OUTPUT_DIR:-$AI_OUTPUT_BASE/Strategy/Market_Research}" ;;
-        NARRATIVE) echo "${DHP_NARRATIVE_OUTPUT_DIR:-$AI_OUTPUT_BASE/Creative/Narratives}" ;;
-        RESEARCH) echo "${DHP_RESEARCH_OUTPUT_DIR:-$AI_OUTPUT_BASE/Personal_Development/Research}" ;;
-        STOIC) echo "${DHP_STOIC_OUTPUT_DIR:-$AI_OUTPUT_BASE/Personal_Development/Stoic_Coaching}" ;;
-        STRATEGY) echo "${DHP_STRATEGY_OUTPUT_DIR:-$AI_OUTPUT_BASE/Strategy/Analysis}" ;;
-        TECH) echo "${DHP_TECH_OUTPUT_DIR:-$AI_OUTPUT_BASE/Technical/Code_Analysis}" ;;
-        *) echo "$AI_OUTPUT_BASE/General" ;;
+        BRAND) echo "${DHP_BRAND_OUTPUT_DIR:-$DHP_OUTPUT_BASE/Strategy/Brand}" ;;
+        CONTENT) echo "${DHP_CONTENT_OUTPUT_DIR:-$DHP_OUTPUT_BASE/Content/Guides}" ;;
+        COPY) echo "${DHP_COPY_OUTPUT_DIR:-$DHP_OUTPUT_BASE/Creative/Copywriting}" ;;
+        CREATIVE) echo "${DHP_CREATIVE_OUTPUT_DIR:-$DHP_OUTPUT_BASE/Creative/Stories}" ;;
+        FINANCE) echo "${DHP_FINANCE_OUTPUT_DIR:-$DHP_OUTPUT_BASE/Strategy/Finance}" ;;
+        MARKET) echo "${DHP_MARKET_OUTPUT_DIR:-$DHP_OUTPUT_BASE/Strategy/Market_Research}" ;;
+        MORPHLING) echo "${DHP_MORPHLING_OUTPUT_DIR:-$DHP_OUTPUT_BASE/Morphling}" ;;
+        NARRATIVE) echo "${DHP_NARRATIVE_OUTPUT_DIR:-$DHP_OUTPUT_BASE/Creative/Narratives}" ;;
+        PROJECT) echo "${DHP_PROJECT_OUTPUT_DIR:-$DHP_OUTPUT_BASE/Strategy/Projects}" ;;
+        RESEARCH) echo "${DHP_RESEARCH_OUTPUT_DIR:-$DHP_OUTPUT_BASE/Personal_Development/Research}" ;;
+        STOIC) echo "${DHP_STOIC_OUTPUT_DIR:-$DHP_OUTPUT_BASE/Personal_Development/Stoic_Coaching}" ;;
+        STRATEGY) echo "${DHP_STRATEGY_OUTPUT_DIR:-$DHP_OUTPUT_BASE/Strategy/Analysis}" ;;
+        TECH) echo "${DHP_TECH_OUTPUT_DIR:-$DHP_OUTPUT_BASE/Technical/Code_Analysis}" ;;
+        COACH) echo "${DHP_COACH_OUTPUT_DIR:-$DHP_OUTPUT_BASE/Strategy/Coach}" ;;
+        *) echo "$DHP_OUTPUT_BASE/General" ;;
     esac
 }
 

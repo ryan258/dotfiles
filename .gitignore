@@ -12,6 +12,7 @@ zsh/.zsh_sessions/*.historynew
 *.bak.*
 zsh/aliases/fabric-ai.zsh
 .env
+.env.local
 .venv
 logs
 *.log
@@ -28,9 +29,7 @@ scripts/mtg_*.py
 
 ry.md
 commit.md
-logs/
 __pycache__/
-*.pyc
 
 brain/data/
 brain/.venv/

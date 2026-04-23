@@ -33,7 +33,7 @@ done
 # This line helps prevent errors if no files of a certain type are found
 shopt -s nullglob 2>/dev/null || true
 
-cd ~/Downloads || exit 1
+cd "$DOWNLOADS_DIR" || exit 1
 
 # Load ignore patterns
 declare -a IGNORE_PATTERNS
@@ -82,9 +82,9 @@ for img in *.jpg *.jpeg *.png *.gif *.heic *.HEIC; do
             continue
         fi
         if [ "$DRY_RUN" = true ]; then
-            echo "  Would move $img to ~/Pictures/"
+            echo "  Would move $img to $PICTURES_DIR/"
         else
-            mv "$img" ~/Pictures/
+            mv "$img" "$PICTURES_DIR/"
             echo "  Moved: $img"
         fi
     fi
@@ -99,9 +99,9 @@ for doc in *.pdf *.doc *.docx *.txt *.rtf *.pages *.md; do
             continue
         fi
         if [ "$DRY_RUN" = true ]; then
-            echo "  Would move $doc to ~/Documents/"
+            echo "  Would move $doc to $DOCUMENTS_DIR/"
         else
-            mv "$doc" ~/Documents/
+            mv "$doc" "$DOCUMENTS_DIR/"
             echo "  Moved: $doc"
         fi
     fi
@@ -116,9 +116,9 @@ for media in *.mp3 *.wav *.mp4 *.mov *.m4a *.aiff; do
             continue
         fi
         if [ "$DRY_RUN" = true ]; then
-            echo "  Would move $media to ~/Music/"
+            echo "  Would move $media to $MUSIC_DIR/"
         else
-            mv "$media" ~/Music/
+            mv "$media" "$MUSIC_DIR/"
             echo "  Moved: $media"
         fi
     fi
@@ -126,7 +126,7 @@ done
 
 # Move archives to a specific folder
 if [ "$DRY_RUN" = false ]; then
-    mkdir -p ~/Documents/Archives
+    mkdir -p "$DOWNLOAD_ARCHIVES_DIR"
 fi
 for archive in *.zip *.tar *.gz *.rar *.7z; do
     if [ -f "$archive" ]; then
@@ -135,9 +135,9 @@ for archive in *.zip *.tar *.gz *.rar *.7z; do
             continue
         fi
         if [ "$DRY_RUN" = true ]; then
-            echo "  Would move $archive to ~/Documents/Archives/"
+            echo "  Would move $archive to $DOWNLOAD_ARCHIVES_DIR/"
         else
-            mv "$archive" ~/Documents/Archives/
+            mv "$archive" "$DOWNLOAD_ARCHIVES_DIR/"
             echo "  Moved: $archive"
         fi
     fi

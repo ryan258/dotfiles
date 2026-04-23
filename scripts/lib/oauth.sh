@@ -2,7 +2,7 @@
 # oauth.sh - Shared OAuth token helpers
 # Dependencies (caller must source explicitly when needed):
 # - date_utils.sh for date_epoch_now (falls back to `date +%s` when unavailable)
-# - common.sh/file_ops.sh for atomic_write (falls back to plain writes when unavailable)
+# - common.sh/file_ops.sh for atomic_write (required for token writes)
 # NOTE: SOURCED file. Do NOT use set -euo pipefail.
 
 if [[ -n "${_OAUTH_SH_LOADED:-}" ]]; then
@@ -99,11 +99,11 @@ oauth_write_refresh_credentials() {
         --arg refresh "$refresh_token" \
         '{client_id: $cid, client_secret: $secret, refresh_token: $refresh}')
 
-    if type atomic_write >/dev/null 2>&1; then
-        atomic_write "$content" "$creds_file" || return 1
-    else
-        printf '%s' "$content" > "$creds_file" || return 1
+    if ! type atomic_write >/dev/null 2>&1; then
+        echo "Error: atomic_write is required before writing OAuth credentials." >&2
+        return 1
     fi
+    atomic_write "$content" "$creds_file" || return 1
     chmod 600 "$creds_file" 2>/dev/null || true
 }
 
@@ -121,11 +121,11 @@ oauth_write_access_token_cache() {
         --argjson expiry "$expiry_epoch" \
         '{access_token: $token, expiry: $expiry}')
 
-    if type atomic_write >/dev/null 2>&1; then
-        atomic_write "$content" "$token_file" || return 1
-    else
-        printf '%s' "$content" > "$token_file" || return 1
+    if ! type atomic_write >/dev/null 2>&1; then
+        echo "Error: atomic_write is required before writing OAuth token cache." >&2
+        return 1
     fi
+    atomic_write "$content" "$token_file" || return 1
     chmod 600 "$token_file" 2>/dev/null || true
 }
 

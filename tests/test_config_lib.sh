@@ -140,6 +140,28 @@ teardown() {
     [ "$output" = "0.7" ]
 }
 
+@test "get_output_dir covers extended dispatcher types from DHP_OUTPUT_BASE" {
+    run bash -c '
+        export HOME="'"$TEST_DIR"'"
+        export ENV_FILE="'"$ENV_FILE"'"
+        export DOTFILES_DIR="'"$DOTFILES_DIR"'"
+        export DHP_OUTPUT_BASE="'"$TEST_DIR"'/outputs"
+        unset DHP_FINANCE_OUTPUT_DIR DHP_MORPHLING_OUTPUT_DIR DHP_PROJECT_OUTPUT_DIR DHP_COACH_OUTPUT_DIR
+        unset _DOTFILES_CONFIG_LOADED _DOTFILES_ENV_FILE_LOADED
+        source "'"$BATS_TEST_DIRNAME"'/../scripts/lib/config.sh"
+        printf "%s\n" \
+            "$(get_output_dir FINANCE)" \
+            "$(get_output_dir MORPHLING)" \
+            "$(get_output_dir PROJECT)" \
+            "$(get_output_dir COACH)"
+    '
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"$TEST_DIR/outputs/Strategy/Finance"* ]]
+    [[ "$output" == *"$TEST_DIR/outputs/Morphling"* ]]
+    [[ "$output" == *"$TEST_DIR/outputs/Strategy/Projects"* ]]
+    [[ "$output" == *"$TEST_DIR/outputs/Strategy/Coach"* ]]
+}
+
 # ---------------------------------------------------------------------------
 # is_free_model()
 # ---------------------------------------------------------------------------

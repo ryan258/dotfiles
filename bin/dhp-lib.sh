@@ -168,10 +168,10 @@ call_openrouter_stream() {
     local model="$1"
     local prompt="$2"
     local dispatcher_name="${3:-unknown}"
-    # KNOWN LIMITATION: Streaming mode logs 0 tokens because OpenRouter SSE deltas
-    # do not include cumulative usage counts. The final stream event may contain a
-    # "usage" field, but parsing it would require buffering the entire stream.
-    # Token counts and cost estimates for streamed calls are therefore inaccurate.
+    if [[ -z "${_DHP_STREAM_USAGE_WARNED:-}" ]]; then
+        printf 'Warning: streamed token usage is logged as 0 because usage totals are not parsed from the live SSE stream.\n' >&2
+        _DHP_STREAM_USAGE_WARNED=true
+    fi
     _log_api_call "$dispatcher_name" "$model" "0" "0"
 
     local json_payload

@@ -222,66 +222,19 @@ _coach_restore_trap() {
     fi
 }
 
-coach_collect_tactical_metrics() {
-    local anchor_date="$1"
-    local days="${2:-7}"
-    local pushes_context="${3:-}"
-    local commits_context="${4:-}"
-    local todo_file="$TODO_FILE"
-    local done_file="$DONE_FILE"
-    local journal_file="$JOURNAL_FILE"
-    local health_file="$HEALTH_FILE"
-    local spoon_file="$SPOON_LOG"
-    local dir_usage_file="$DIR_USAGE_LOG"
-
-    if [[ -z "$anchor_date" ]]; then
-        anchor_date=$(date '+%Y-%m-%d')
-    fi
-    if ! [[ "$days" =~ ^[0-9]+$ ]] || [[ "$days" -lt 1 ]]; then
-        days=7
-    fi
-
-    local window_start
-    window_start=$(_coach_shift_date "$anchor_date" "-$((days-1))") || return 1
-
-    local stale_days="${AI_COACH_DRIFT_STALE_TASK_DAYS:-${STALE_TASK_DAYS:-7}}"
-    local stale_cutoff
-    stale_cutoff=$(_coach_shift_date "$anchor_date" "-$stale_days") || return 1
-    local window_start_epoch
-    local window_end_epoch
-    window_start_epoch=$(_coach_date_to_epoch "$window_start 00:00:00")
-    window_end_epoch=$(_coach_date_to_epoch "$anchor_date 23:59:59")
-
+_coach_collect_task_counts() {
+    local todo_file="$1"
+    local done_file="$2"
+    local journal_file="$3"
+    local window_start="$4"
+    local anchor_date="$5"
+    local stale_cutoff="$6"
     local open_tasks=0
     local stale_tasks=0
     local completed_tasks=0
     local journal_entries=0
-    local energy_sum=0
-    local energy_count=0
-    local fog_sum=0
-    local fog_count=0
-    local latest_energy=""
-    local latest_energy_at=""
-    local latest_fog=""
-    local latest_fog_at=""
-    local spoon_budget_sum=0
-    local spoon_budget_count=0
-    local spoon_spend_sum=0
-    local spoon_spend_count=0
-    local unique_dirs=0
-    local dir_switches=0
-    local journal_focus_hits=0
-    local drive_focus_hits_today=0
-    local drive_focus_hits_week=0
-    local drive_recent_titles="none"
-    local drive_top_file_id="none"
-    local drive_top_file_name="none"
-    local drive_top_file_snippet_b64="none"
-    local focus_text=""
-    local focus_keywords=""
 
     if [[ -f "$todo_file" ]]; then
-        # Ensure file is in new ID|DATE|text format before reading
         if type ensure_todo_migrated >/dev/null 2>&1; then
             ensure_todo_migrated
         fi
@@ -309,40 +262,64 @@ coach_collect_tactical_metrics() {
         ' "$journal_file")
     fi
 
-    if command -v focus_relevance_current_focus >/dev/null 2>&1; then
-        focus_text=$(focus_relevance_current_focus 2>/dev/null || true)
+    printf 'open_tasks=%s\n' "$open_tasks"
+    printf 'stale_tasks=%s\n' "$stale_tasks"
+    printf 'completed_tasks=%s\n' "$completed_tasks"
+    printf 'journal_entries=%s\n' "$journal_entries"
+}
+
+_coach_collect_focus_journal_hits() {
+    local focus_keywords="$1"
+    local journal_file="$2"
+    local window_start="$3"
+    local anchor_date="$4"
+    local focus_keywords_csv=""
+
+    if [[ -z "$focus_keywords" || ! -f "$journal_file" ]]; then
+        printf '0'
+        return 0
     fi
-    if [[ -n "$focus_text" ]] && command -v focus_relevance_keywords_from_text >/dev/null 2>&1; then
-        focus_keywords=$(focus_relevance_keywords_from_text "$focus_text")
-    fi
-    if [[ -n "$focus_keywords" ]] && [[ -f "$journal_file" ]]; then
-        local focus_keywords_csv
-        focus_keywords_csv=$(printf '%s\n' "$focus_keywords" | sed '/^[[:space:]]*$/d' | paste -sd ',' -)
-        journal_focus_hits=$(awk -F'|' -v start="$window_start" -v end="$anchor_date" -v keys="$focus_keywords_csv" '
-            BEGIN {
-                split(keys, raw, ",")
-                for (i in raw) {
-                    if (raw[i] != "") {
-                        wanted[raw[i]] = 1
-                    }
+
+    focus_keywords_csv=$(printf '%s\n' "$focus_keywords" | sed '/^[[:space:]]*$/d' | paste -sd ',' -)
+    awk -F'|' -v start="$window_start" -v end="$anchor_date" -v keys="$focus_keywords_csv" '
+        BEGIN {
+            split(keys, raw, ",")
+            for (i in raw) {
+                if (raw[i] != "") {
+                    wanted[raw[i]] = 1
                 }
             }
-            $1 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]][0-9]{2}:[0-9]{2}:[0-9]{2}$/ {
-                day = substr($1, 1, 10)
-                if (day >= start && day <= end) {
-                    lowered = tolower($0)
-                    score = 0
-                    for (key in wanted) {
-                        if (index(lowered, key) > 0) {
-                            score++
-                        }
+        }
+        $1 ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]][0-9]{2}:[0-9]{2}:[0-9]{2}$/ {
+            day = substr($1, 1, 10)
+            if (day >= start && day <= end) {
+                lowered = tolower($0)
+                score = 0
+                for (key in wanted) {
+                    if (index(lowered, key) > 0) {
+                        score++
                     }
-                    if (score > 0) count++
                 }
+                if (score > 0) count++
             }
-            END {print count+0}
-        ' "$journal_file")
-    fi
+        }
+        END {print count+0}
+    ' "$journal_file"
+}
+
+_coach_collect_health_metrics() {
+    local health_file="$1"
+    local window_start="$2"
+    local anchor_date="$3"
+    local energy_sum=0
+    local energy_count=0
+    local afternoon_slump_days=0
+    local fog_sum=0
+    local fog_count=0
+    local latest_energy=""
+    local latest_energy_at=""
+    local latest_fog=""
+    local latest_fog_at=""
 
     if [[ -f "$health_file" ]]; then
         read -r energy_sum energy_count afternoon_slump_days <<< "$(awk -F'|' -v start="$window_start" -v end="$anchor_date" -v threshold="${COACH_LOW_ENERGY_THRESHOLD:-4}" '
@@ -401,18 +378,50 @@ coach_collect_tactical_metrics() {
         ' "$health_file")"
     fi
 
+    printf 'energy_sum=%s\n' "$energy_sum"
+    printf 'energy_count=%s\n' "$energy_count"
+    printf 'afternoon_slump_days=%s\n' "$afternoon_slump_days"
+    printf 'fog_sum=%s\n' "$fog_sum"
+    printf 'fog_count=%s\n' "$fog_count"
+    printf 'latest_energy=%s\n' "${latest_energy:-}"
+    printf 'latest_energy_at=%s\n' "${latest_energy_at:-}"
+    printf 'latest_fog=%s\n' "${latest_fog:-}"
+    printf 'latest_fog_at=%s\n' "${latest_fog_at:-}"
+}
+
+_coach_collect_spoon_metrics() {
+    local spoon_file="$1"
+    local window_start="$2"
+    local anchor_date="$3"
+    local spoon_budget_sum=0
+    local spoon_budget_count=0
+    local spoon_spend_sum=0
+    local spoon_spend_count=0
+
     if [[ -f "$spoon_file" ]]; then
         read -r spoon_budget_sum spoon_budget_count <<< "$(awk -F'|' -v start="$window_start" -v end="$anchor_date" '
             $1 == "BUDGET" && $2 >= start && $2 <= end && $3 ~ /^[0-9]+$/ {sum += $3; count++}
             END {print sum+0, count+0}
         ' "$spoon_file")"
 
-        # SPEND layout: SPEND|YYYY-MM-DD|HH:MM|count|activity|remaining
         read -r spoon_spend_sum spoon_spend_count <<< "$(awk -F'|' -v start="$window_start" -v end="$anchor_date" '
             $1 == "SPEND" && $2 >= start && $2 <= end && $4 ~ /^[0-9]+$/ {sum += $4; count++}
             END {print sum+0, count+0}
         ' "$spoon_file")"
     fi
+
+    printf 'spoon_budget_sum=%s\n' "$spoon_budget_sum"
+    printf 'spoon_budget_count=%s\n' "$spoon_budget_count"
+    printf 'spoon_spend_sum=%s\n' "$spoon_spend_sum"
+    printf 'spoon_spend_count=%s\n' "$spoon_spend_count"
+}
+
+_coach_collect_directory_metrics() {
+    local dir_usage_file="$1"
+    local window_start_epoch="$2"
+    local window_end_epoch="$3"
+    local unique_dirs=0
+    local dir_switches=0
 
     if [[ -f "$dir_usage_file" ]]; then
         read -r unique_dirs dir_switches <<< "$(awk -F'|' -v start="$window_start_epoch" -v end="$window_end_epoch" '
@@ -428,45 +437,188 @@ coach_collect_tactical_metrics() {
         ' "$dir_usage_file")"
     fi
 
-    local recent_pushes_count
-    local commit_context_count
+    printf 'unique_dirs=%s\n' "$unique_dirs"
+    printf 'dir_switches=%s\n' "$dir_switches"
+}
+
+_coach_collect_drive_focus_metrics() {
+    local focus_keywords="$1"
+    local drive_focus_hits_today=0
+    local drive_focus_hits_week=0
+    local drive_recent_titles="none"
+    local drive_top_file_id="none"
+    local drive_top_file_name="none"
+    local drive_top_file_snippet_b64="none"
     local drive_script=""
-    recent_pushes_count=$(_coach_count_bullets "$pushes_context")
-    commit_context_count=$(_coach_count_bullets "$commits_context")
 
-    if [[ -n "$focus_keywords" ]]; then
-        drive_script=$(_coach_drive_script_path 2>/dev/null || true)
-        if [[ -n "$drive_script" ]]; then
-            local drive_today_json drive_week_json drive_top_file_snippet_raw drive_snippet_connect_timeout drive_snippet_timeout
-            drive_today_json=$("$drive_script" recent 1 --json --quiet 2>/dev/null || printf '[]')
-            drive_week_json=$("$drive_script" recent 7 --json --quiet 2>/dev/null || printf '[]')
-            drive_focus_hits_today=$(printf '%s' "$drive_today_json" | jq 'length' 2>/dev/null || echo "0")
-            drive_focus_hits_week=$(printf '%s' "$drive_week_json" | jq 'length' 2>/dev/null || echo "0")
-            drive_recent_titles=$(printf '%s' "$drive_week_json" | jq -r '.[0:3] | map(.name) | join(", ")' 2>/dev/null || echo "none")
-            [[ -n "$drive_recent_titles" ]] || drive_recent_titles="none"
-            drive_top_file_id=$(printf '%s' "$drive_week_json" | jq -r '.[0].id // empty' 2>/dev/null || true)
-            drive_top_file_name=$(printf '%s' "$drive_week_json" | jq -r '.[0].name // empty' 2>/dev/null || true)
-            [[ -n "$drive_top_file_id" ]] || drive_top_file_id="none"
-            [[ -n "$drive_top_file_name" ]] || drive_top_file_name="none"
+    if [[ -z "$focus_keywords" ]]; then
+        printf 'drive_focus_hits_today=%s\n' "$drive_focus_hits_today"
+        printf 'drive_focus_hits_week=%s\n' "$drive_focus_hits_week"
+        printf 'drive_recent_titles=%s\n' "$drive_recent_titles"
+        printf 'drive_top_file_id=%s\n' "$drive_top_file_id"
+        printf 'drive_top_file_name=%s\n' "$drive_top_file_name"
+        printf 'drive_top_file_snippet_b64=%s\n' "$drive_top_file_snippet_b64"
+        return 0
+    fi
 
-            drive_snippet_connect_timeout="${AI_COACH_DRIVE_SNIPPET_CONNECT_TIMEOUT_SECONDS:-3}"
-            drive_snippet_timeout="${AI_COACH_DRIVE_SNIPPET_MAX_TIME_SECONDS:-5}"
-            [[ "$drive_snippet_connect_timeout" =~ ^[0-9]+$ ]] || drive_snippet_connect_timeout=3
-            [[ "$drive_snippet_timeout" =~ ^[0-9]+$ ]] || drive_snippet_timeout=5
+    drive_script=$(_coach_drive_script_path 2>/dev/null || true)
+    if [[ -n "$drive_script" ]]; then
+        local drive_today_json=""
+        local drive_week_json=""
+        local drive_top_file_snippet_raw=""
+        local drive_snippet_connect_timeout=""
+        local drive_snippet_timeout=""
 
-            if [[ "$drive_top_file_id" != "none" ]]; then
-                drive_top_file_snippet_raw=$(
-                    GDRIVE_CONNECT_TIMEOUT_SECONDS="$drive_snippet_connect_timeout" \
-                    GDRIVE_MAX_TIME_SECONDS="$drive_snippet_timeout" \
-                    "$drive_script" read "$drive_top_file_id" 2>/dev/null || true
-                )
-                drive_top_file_snippet_raw=${drive_top_file_snippet_raw:0:1500}
-                if [[ -n "$drive_top_file_snippet_raw" ]]; then
-                    drive_top_file_snippet_b64=$(printf '%s' "$drive_top_file_snippet_raw" | base64 | tr -d '\n')
-                fi
+        drive_today_json=$("$drive_script" recent 1 --json --quiet 2>/dev/null || printf '[]')
+        drive_week_json=$("$drive_script" recent 7 --json --quiet 2>/dev/null || printf '[]')
+        drive_focus_hits_today=$(printf '%s' "$drive_today_json" | jq 'length' 2>/dev/null || echo "0")
+        drive_focus_hits_week=$(printf '%s' "$drive_week_json" | jq 'length' 2>/dev/null || echo "0")
+        drive_recent_titles=$(printf '%s' "$drive_week_json" | jq -r '.[0:3] | map(.name) | join(", ")' 2>/dev/null || echo "none")
+        [[ -n "$drive_recent_titles" ]] || drive_recent_titles="none"
+        drive_top_file_id=$(printf '%s' "$drive_week_json" | jq -r '.[0].id // empty' 2>/dev/null || true)
+        drive_top_file_name=$(printf '%s' "$drive_week_json" | jq -r '.[0].name // empty' 2>/dev/null || true)
+        [[ -n "$drive_top_file_id" ]] || drive_top_file_id="none"
+        [[ -n "$drive_top_file_name" ]] || drive_top_file_name="none"
+
+        drive_snippet_connect_timeout="${AI_COACH_DRIVE_SNIPPET_CONNECT_TIMEOUT_SECONDS:-3}"
+        drive_snippet_timeout="${AI_COACH_DRIVE_SNIPPET_MAX_TIME_SECONDS:-5}"
+        [[ "$drive_snippet_connect_timeout" =~ ^[0-9]+$ ]] || drive_snippet_connect_timeout=3
+        [[ "$drive_snippet_timeout" =~ ^[0-9]+$ ]] || drive_snippet_timeout=5
+
+        if [[ "$drive_top_file_id" != "none" ]]; then
+            drive_top_file_snippet_raw=$(
+                GDRIVE_CONNECT_TIMEOUT_SECONDS="$drive_snippet_connect_timeout" \
+                GDRIVE_MAX_TIME_SECONDS="$drive_snippet_timeout" \
+                "$drive_script" read "$drive_top_file_id" 2>/dev/null || true
+            )
+            drive_top_file_snippet_raw=${drive_top_file_snippet_raw:0:1500}
+            if [[ -n "$drive_top_file_snippet_raw" ]]; then
+                drive_top_file_snippet_b64=$(printf '%s' "$drive_top_file_snippet_raw" | base64 | tr -d '\n')
             fi
         fi
     fi
+
+    printf 'drive_focus_hits_today=%s\n' "$drive_focus_hits_today"
+    printf 'drive_focus_hits_week=%s\n' "$drive_focus_hits_week"
+    printf 'drive_recent_titles=%s\n' "$drive_recent_titles"
+    printf 'drive_top_file_id=%s\n' "$drive_top_file_id"
+    printf 'drive_top_file_name=%s\n' "$drive_top_file_name"
+    printf 'drive_top_file_snippet_b64=%s\n' "$drive_top_file_snippet_b64"
+}
+
+coach_collect_tactical_metrics() {
+    local anchor_date="$1"
+    local days="${2:-7}"
+    local pushes_context="${3:-}"
+    local commits_context="${4:-}"
+    local todo_file="$TODO_FILE"
+    local done_file="$DONE_FILE"
+    local journal_file="$JOURNAL_FILE"
+    local health_file="$HEALTH_FILE"
+    local spoon_file="$SPOON_LOG"
+    local dir_usage_file="$DIR_USAGE_LOG"
+
+    if [[ -z "$anchor_date" ]]; then
+        anchor_date=$(date '+%Y-%m-%d')
+    fi
+    if ! [[ "$days" =~ ^[0-9]+$ ]] || [[ "$days" -lt 1 ]]; then
+        days=7
+    fi
+
+    local window_start
+    window_start=$(_coach_shift_date "$anchor_date" "-$((days-1))") || return 1
+
+    local stale_days="${AI_COACH_DRIFT_STALE_TASK_DAYS:-${STALE_TASK_DAYS:-7}}"
+    local stale_cutoff
+    stale_cutoff=$(_coach_shift_date "$anchor_date" "-$stale_days") || return 1
+    local window_start_epoch
+    local window_end_epoch
+    window_start_epoch=$(_coach_date_to_epoch "$window_start 00:00:00")
+    window_end_epoch=$(_coach_date_to_epoch "$anchor_date 23:59:59")
+
+    local open_tasks=0
+    local stale_tasks=0
+    local completed_tasks=0
+    local journal_entries=0
+    local energy_sum=0
+    local energy_count=0
+    local afternoon_slump_days=0
+    local fog_sum=0
+    local fog_count=0
+    local latest_energy=""
+    local latest_energy_at=""
+    local latest_fog=""
+    local latest_fog_at=""
+    local spoon_budget_sum=0
+    local spoon_budget_count=0
+    local spoon_spend_sum=0
+    local spoon_spend_count=0
+    local unique_dirs=0
+    local dir_switches=0
+    local journal_focus_hits=0
+    local drive_focus_hits_today=0
+    local drive_focus_hits_week=0
+    local drive_recent_titles="none"
+    local drive_top_file_id="none"
+    local drive_top_file_name="none"
+    local drive_top_file_snippet_b64="none"
+    local focus_text=""
+    local focus_keywords=""
+
+    local task_metrics=""
+    task_metrics=$(_coach_collect_task_counts "$todo_file" "$done_file" "$journal_file" "$window_start" "$anchor_date" "$stale_cutoff")
+    open_tasks=$(_coach_extract_value "$task_metrics" "open_tasks")
+    stale_tasks=$(_coach_extract_value "$task_metrics" "stale_tasks")
+    completed_tasks=$(_coach_extract_value "$task_metrics" "completed_tasks")
+    journal_entries=$(_coach_extract_value "$task_metrics" "journal_entries")
+
+    if command -v focus_relevance_current_focus >/dev/null 2>&1; then
+        focus_text=$(focus_relevance_current_focus 2>/dev/null || true)
+    fi
+    if [[ -n "$focus_text" ]] && command -v focus_relevance_keywords_from_text >/dev/null 2>&1; then
+        focus_keywords=$(focus_relevance_keywords_from_text "$focus_text")
+    fi
+    if [[ -n "$focus_keywords" ]] && [[ -f "$journal_file" ]]; then
+        journal_focus_hits=$(_coach_collect_focus_journal_hits "$focus_keywords" "$journal_file" "$window_start" "$anchor_date")
+    fi
+
+    local health_metrics=""
+    health_metrics=$(_coach_collect_health_metrics "$health_file" "$window_start" "$anchor_date")
+    energy_sum=$(_coach_extract_value "$health_metrics" "energy_sum")
+    energy_count=$(_coach_extract_value "$health_metrics" "energy_count")
+    afternoon_slump_days=$(_coach_extract_value "$health_metrics" "afternoon_slump_days")
+    fog_sum=$(_coach_extract_value "$health_metrics" "fog_sum")
+    fog_count=$(_coach_extract_value "$health_metrics" "fog_count")
+    latest_energy=$(_coach_extract_value "$health_metrics" "latest_energy")
+    latest_energy_at=$(_coach_extract_value "$health_metrics" "latest_energy_at")
+    latest_fog=$(_coach_extract_value "$health_metrics" "latest_fog")
+    latest_fog_at=$(_coach_extract_value "$health_metrics" "latest_fog_at")
+
+    local spoon_metrics=""
+    spoon_metrics=$(_coach_collect_spoon_metrics "$spoon_file" "$window_start" "$anchor_date")
+    spoon_budget_sum=$(_coach_extract_value "$spoon_metrics" "spoon_budget_sum")
+    spoon_budget_count=$(_coach_extract_value "$spoon_metrics" "spoon_budget_count")
+    spoon_spend_sum=$(_coach_extract_value "$spoon_metrics" "spoon_spend_sum")
+    spoon_spend_count=$(_coach_extract_value "$spoon_metrics" "spoon_spend_count")
+
+    local directory_metrics=""
+    directory_metrics=$(_coach_collect_directory_metrics "$dir_usage_file" "$window_start_epoch" "$window_end_epoch")
+    unique_dirs=$(_coach_extract_value "$directory_metrics" "unique_dirs")
+    dir_switches=$(_coach_extract_value "$directory_metrics" "dir_switches")
+
+    local recent_pushes_count
+    local commit_context_count
+    recent_pushes_count=$(_coach_count_bullets "$pushes_context")
+    commit_context_count=$(_coach_count_bullets "$commits_context")
+
+    local drive_metrics=""
+    drive_metrics=$(_coach_collect_drive_focus_metrics "$focus_keywords")
+    drive_focus_hits_today=$(_coach_extract_value "$drive_metrics" "drive_focus_hits_today")
+    drive_focus_hits_week=$(_coach_extract_value "$drive_metrics" "drive_focus_hits_week")
+    drive_recent_titles=$(_coach_extract_value "$drive_metrics" "drive_recent_titles")
+    drive_top_file_id=$(_coach_extract_value "$drive_metrics" "drive_top_file_id")
+    drive_top_file_name=$(_coach_extract_value "$drive_metrics" "drive_top_file_name")
+    drive_top_file_snippet_b64=$(_coach_extract_value "$drive_metrics" "drive_top_file_snippet_b64")
 
     echo "tactical_window_days=$days"
     echo "tactical_window_start=$window_start"

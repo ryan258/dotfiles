@@ -30,7 +30,7 @@ EOF
 fi
 
 PROJECT_DESC=$(sanitize_input "$*")
-OUTPUT_DIR_FINAL=$(default_output_dir "$HOME/Documents/AI_Staff_HQ_Outputs/Strategy/Projects" "DHP_PROJECT_OUTPUT_DIR")
+OUTPUT_DIR_FINAL=$(get_output_dir "PROJECT")
 mkdir -p "$OUTPUT_DIR_FINAL"
 PROJECT_SLUG=$(slugify "$PROJECT_DESC")
 PROJECT_OUTPUT_FILE="$OUTPUT_DIR_FINAL/${PROJECT_SLUG}.md"

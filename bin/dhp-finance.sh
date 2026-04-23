@@ -10,7 +10,7 @@ source "$(dirname "$0")/dhp-shared.sh"
 dhp_dispatch \
     "Financial Strategy" \
     "FINANCE" \
-    "$HOME/Documents/AI_Staff_HQ_Outputs/Strategy/Finance" \
+    "" \
     "FINANCE_MODEL" \
     "DHP_FINANCE_OUTPUT_DIR" \
     "Analyze the following inputs and provide financial and tax optimization advice:

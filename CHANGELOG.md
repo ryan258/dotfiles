@@ -2,6 +2,19 @@
 
 **Last Updated:** April 23, 2026
 
+## Version 2.2.68 (April 23, 2026) - Audit Defaults Cleanup And Dispatcher Path Centralization
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- Centralized dispatcher output directory defaults in `scripts/lib/config.sh` under `DHP_OUTPUT_BASE`, added missing output-dir types (`COACH`, `PROJECT`, `FINANCE`, `MORPHLING`), and updated the `dhp-*` entry points to stop hardcoding `~/Documents/AI_Staff_HQ_Outputs/...`.
+- Tightened script safety by switching `scripts/backup_project.sh` to `require_cmd rsync`, making OAuth token writes require `atomic_write`, and moving `scripts/tidy_downloads.sh` onto config-backed destination directories.
+- Documented the intentional `coaching.sh` facade, clarified the `bin/dhp-shared.sh` strict-mode note, annotated the generated blog-hook heredoc, and removed the legacy `COMMON_SH_LOADED` compatibility guard.
+- Added visible skip reasons for coach-chat dependency failures, added `COACH_CHAT_MAX_TOKENS` support to `bin/coach-chat.py`, and warned explicitly when streamed dispatcher token accounting is incomplete.
+- Partially split `coach_collect_tactical_metrics()` into focused helper collectors for tasks, journal focus hits, health, spoons, directories, and Drive evidence while preserving the existing output contract.
+- Refreshed `.env.example`, README/docs references, and optional Brain/fabric-ai guidance to match the current behavior.
+
 ## Version 2.2.67 (April 23, 2026) - OAuth Helper Consolidation And Dispatcher Inventory Fixes
 
 **Status:** ✅ Production Ready

@@ -183,7 +183,7 @@ DELIVERABLE: Return a single, well-formatted Hugo markdown document."
 dhp_dispatch \
     "Content Workflow" \
     "CONTENT" \
-    "$HOME/Documents/AI_Staff_HQ_Outputs/Content/Guides" \
+    "" \
     "CONTENT_MODEL" \
     "DHP_CONTENT_OUTPUT_DIR" \
     "$SYSTEM_BRIEF_CONTENT" \

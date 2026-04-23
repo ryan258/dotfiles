@@ -10,7 +10,7 @@ source "$(dirname "$0")/dhp-shared.sh"
 dhp_dispatch \
     "Strategic Analysis" \
     "STRATEGY" \
-    "$HOME/Documents/AI_Staff_HQ_Outputs/Strategy/Analysis" \
+    "" \
     "STRATEGY_MODEL" \
     "DHP_STRATEGY_OUTPUT_DIR" \
     "Analyze the following inputs and provide strategic direction:

@@ -4,25 +4,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
-# Stop the script if any command fails
-
-# Source shared utilities
-DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
-DHP_UTILS="$DOTFILES_DIR/bin/dhp-utils.sh"
-if [ -f "$DHP_UTILS" ]; then
-    # shellcheck disable=SC1090
-    source "$DHP_UTILS"
-else
-    echo "Error: Shared utility library dhp-utils.sh not found." >&2
-    exit 1
-fi
-
-# Validate dependencies
-if ! validate_dependencies rsync; then
-    exit 1
-fi
 require_lib "config.sh"
 require_lib "date_utils.sh"
+require_cmd "rsync" "Install with: brew install rsync"
 
 echo "Starting backup of current project..."
 

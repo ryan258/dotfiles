@@ -230,7 +230,10 @@ $file_content"
         [ -n "$persona" ] && cmd+=(--persona "$persona")
         [ -n "$use_context" ] && cmd+=("$use_context")
         cmd+=("$input_text")
-        DHP_CONTENT_OUTPUT_DIR="$target_dir" "${cmd[@]}"
+        if ! DHP_CONTENT_OUTPUT_DIR="$target_dir" "${cmd[@]}"; then
+            log_error "Content generation failed via dhp-content.sh."
+            return 1
+        fi
     else
         echo "Error: dhp-content.sh dispatcher not found"
         echo "Make sure bin/ is in your PATH"

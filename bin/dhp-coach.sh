@@ -53,7 +53,7 @@ $PIPED_CONTENT"
 OUTPUT_DIR_FINAL=""
 OUTPUT_FILE=""
 if [ "${AI_COACH_SAVE_OUTPUTS:-false}" = "true" ] || [ -n "${DHP_COACH_OUTPUT_DIR:-}" ]; then
-    OUTPUT_DIR_FINAL=$(default_output_dir "$HOME/Documents/AI_Staff_HQ_Outputs/Strategy/Coach" "DHP_COACH_OUTPUT_DIR")
+    OUTPUT_DIR_FINAL=$(get_output_dir "COACH")
     mkdir -p "$OUTPUT_DIR_FINAL"
     OUTPUT_FILE="$OUTPUT_DIR_FINAL/$(slugify "$PIPED_CONTENT").md"
 fi

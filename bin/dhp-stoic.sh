@@ -10,7 +10,7 @@ source "$(dirname "$0")/dhp-shared.sh"
 dhp_dispatch \
     "Stoic Coaching" \
     "STOIC" \
-    "$HOME/Documents/AI_Staff_HQ_Outputs/Personal_Development/Stoic_Coaching" \
+    "" \
     "STOIC_MODEL" \
     "DHP_STOIC_OUTPUT_DIR" \
     "

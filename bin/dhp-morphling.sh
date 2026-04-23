@@ -54,7 +54,7 @@ $(pwd)
 dhp_dispatch \
     "Morphling Agent" \
     "MORPHLING" \
-    "$HOME/Documents/AI_Staff_HQ_Outputs/Morphling" \
+    "" \
     "MORPHLING_MODEL" \
     "DHP_MORPHLING_OUTPUT_DIR" \
     "

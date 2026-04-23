@@ -75,7 +75,7 @@ cyborg-sync --repo ~/Projects/my-project plan
 ## AI and Automation
 
 - `tech`, `content`, `strategy`, `creative`, `brand`, `market`, `research`, `stoic`, `narrative`, `aicopy`, and `finance` are the main dispatcher aliases.
-- `memory` and `memory-search` write to and query the shared Brain knowledge base.
+- `memory` and `memory-search` are optional Brain commands for the standalone ChromaDB memory store; they are not part of the default daily coaching path.
 - `morphling` is the swarm-mode alias; `bin/morphling.sh` is the direct tool-capable launcher.
 - `cyborg` handles repo-aware drafting and autopilot flows.
 - `cyborg-sync` is the non-interactive docs-maintenance worker for mapped site pages.

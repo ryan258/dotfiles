@@ -8,7 +8,7 @@ source "$(dirname "$0")/dhp-shared.sh"
 dhp_dispatch \
     "Copywriting" \
     "COPY" \
-    "$HOME/Documents/AI_Staff_HQ_Outputs/Creative/Copywriting" \
+    "" \
     "COPY_MODEL" \
     "DHP_COPY_OUTPUT_DIR" \
     "

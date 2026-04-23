@@ -65,6 +65,10 @@ def do_turn(history_file, user_message):
         )
     except ValueError:
         temperature = 0.4
+    try:
+        max_tokens = int(os.environ.get("COACH_CHAT_MAX_TOKENS", "500"))
+    except ValueError:
+        max_tokens = 500
 
     with open(history_file) as f:
         messages = json.load(f)
@@ -78,7 +82,7 @@ def do_turn(history_file, user_message):
             "model": model,
             "messages": messages,
             "temperature": temperature,
-            "max_tokens": 500,
+            "max_tokens": max_tokens,
         }
     ).encode()
 

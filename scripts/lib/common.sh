@@ -5,11 +5,10 @@
 # Callers should explicitly source config.sh before common.sh during migration
 # so removing this bootstrap later does not change behavior.
 
-if [[ -n "${_COMMON_SH_LOADED:-${COMMON_SH_LOADED:-}}" ]]; then
+if [[ -n "${_COMMON_SH_LOADED:-}" ]]; then
     return 0
 fi
 readonly _COMMON_SH_LOADED=true
-readonly COMMON_SH_LOADED=true
 
 #=============================================================================
 # Script Directory Resolution

@@ -69,6 +69,30 @@ teardown() {
     [ -n "$output" ]
 }
 
+@test "backup_project.sh uses rsync from PATH and writes into configured backup dir" {
+    local fake_bin="$TEST_DIR/fake-bin"
+    mkdir -p "$fake_bin" "$TEST_DIR/project" "$TEST_DIR/backups"
+    echo "hello" > "$TEST_DIR/project/notes.txt"
+
+    cat > "$fake_bin/rsync" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+src="${3%/}"
+dest="$4"
+mkdir -p "$dest"
+cp -R "$src/." "$dest"
+EOF
+    chmod +x "$fake_bin/rsync"
+
+    run env PATH="$fake_bin:$PATH" PROJECT_BACKUP_DIR="$TEST_DIR/backups" DOTFILES_DIR="$DOTFILES_DIR" HOME="$HOME" /bin/bash -c "cd '$TEST_DIR/project' && '$DOTFILES_DIR/scripts/backup_project.sh'"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Local backup complete"* ]]
+
+    run find "$TEST_DIR/backups" -type f -name "notes.txt"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"notes.txt"* ]]
+}
+
 @test "dev_shortcuts.sh json subcommand fails clearly for missing file" {
     run "$DOTFILES_DIR/scripts/dev_shortcuts.sh" json "$TEST_DIR/missing.json"
     [ "$status" -eq 3 ]

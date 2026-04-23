@@ -255,6 +255,8 @@ install_hooks() {
 
     local hook_file="$BLOG_DIR/.git/hooks/pre-commit"
     local dotfiles_root="${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+    # This heredoc writes a standalone hook script. Any `exit` inside it belongs
+    # to the generated hook, not to this sourced library.
     cat <<'HOOK' > "$hook_file"
 #!/bin/sh
 BLOG_DIR="__BLOG_DIR__"

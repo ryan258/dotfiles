@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # scripts/lib/coaching.sh
 # Stable coaching namespace for workflow scripts.
+# This facade is intentionally thin: workflow entry points call `coaching_*`,
+# while the implementation lives in `coach_*` libraries underneath.
 # NOTE: SOURCED file. Do NOT use set -euo pipefail.
 
 if [[ -n "${_COACHING_FACADE_LOADED:-}" ]]; then
@@ -11,6 +13,8 @@ readonly _COACHING_FACADE_LOADED=true
 # Dependencies:
 # - coach_ops.sh, coach_metrics.sh, coach_prompts.sh, and coach_scoring.sh
 #   must already be sourced by the caller.
+# Keep these wrappers in place so startday/status/goodevening have one stable
+# namespace even when the underlying coach libraries evolve.
 
 coaching_get_mode_for_date() {
     coach_get_mode_for_date "$@"

@@ -10,7 +10,7 @@ source "$(dirname "$0")/dhp-shared.sh"
 dhp_dispatch \
     "Narrative Design" \
     "NARRATIVE" \
-    "$HOME/Documents/AI_Staff_HQ_Outputs/Creative/Narratives" \
+    "" \
     "NARRATIVE_MODEL" \
     "DHP_NARRATIVE_OUTPUT_DIR" \
     "

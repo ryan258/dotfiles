@@ -1,6 +1,6 @@
 # The Master Plan (Roadmap)
 
-_Last updated: March 20, 2026 (Version 2.2.0 — Added the Cyborg Lab, the AI Coach, autopilot, and fixed lots of bugs)_
+_Last updated: April 23, 2026 (Version 2.2.67 — OAuth helpers, Drive auth hardening, coach control-surface improvements, and dispatcher/config cleanup)_
 
 ## 0. The Big Goal
 

@@ -669,3 +669,9 @@ alias apc="$DOTFILES_ALIAS_ROOT/bin/cyborg resume"
 # structured spec templates before sending them to AI dispatchers.
 # This file is SOURCED (not executed) — see spec_helper.sh header.
 source "$DOTFILES_ALIAS_ROOT/scripts/spec_helper.sh"
+
+# Optional add-on alias pack for the external `fabric-ai` CLI.
+# Disabled by default so shells do not assume the command is installed.
+if [[ "${ENABLE_FABRIC_AI_ALIASES:-false}" == "true" ]] && [[ -f "$DOTFILES_ALIAS_ROOT/zsh/aliases/fabric-ai.zsh" ]]; then
+    source "$DOTFILES_ALIAS_ROOT/zsh/aliases/fabric-ai.zsh"
+fi

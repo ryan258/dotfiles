@@ -23,6 +23,7 @@ coach_start_chat() {
     local session_type="${2:-general}"
 
     if [[ "${AI_COACH_CHAT_ENABLED:-true}" == "false" ]]; then
+        log_info "Coach chat skipped because AI_COACH_CHAT_ENABLED=false."
         return 0
     fi
 
@@ -33,9 +34,11 @@ coach_start_chat() {
 
     local chat_py="${DOTFILES_DIR:-$HOME/dotfiles}/bin/coach-chat.py"
     if [[ ! -f "$chat_py" ]]; then
+        log_info "Coach chat skipped because bin/coach-chat.py was not found."
         return 0
     fi
     if ! command -v python3 >/dev/null 2>&1; then
+        log_info "Coach chat skipped because python3 is unavailable."
         return 0
     fi
 
@@ -68,6 +71,7 @@ Interactive follow-up rules:
     printf '%s' "$briefing" > "$_cc_briefing"
 
     if ! python3 "$chat_py" init "$_cc_history" "$_cc_sysprompt" "$_cc_briefing" 2>/dev/null; then
+        log_warn "Coach chat could not initialize; continuing without the interactive follow-up."
         rm -rf "$_cc_dir" 2>/dev/null || true
         return 0
     fi

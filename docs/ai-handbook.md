@@ -1,6 +1,6 @@
 # AI Handbook
 
-This repo exposes more than one kind of AI command. Some commands are simple one-shot dispatchers, some orchestrate multiple specialists, some read and write the Brain knowledge base, and some are repo-aware agents with their own workflows.
+This repo exposes more than one kind of AI command. Some commands are simple one-shot dispatchers, some orchestrate multiple specialists, some read and write the optional Brain knowledge base, and some are repo-aware agents with their own workflows.
 
 ## Core Dispatchers
 
@@ -47,7 +47,7 @@ See `../MORPHLING.md` for the full mode breakdown.
 
 ## Memory and Recall
 
-These commands integrate with the shared Brain knowledge base:
+These commands integrate with the optional shared Brain knowledge base:
 
 - `memory` - store a fact, decision, or pattern
 - `memory-search` - semantically search stored memories
@@ -60,6 +60,7 @@ memory-search "coach mode thresholds"
 ```
 
 See `../brain/HANDBOOK.md` for Brain details.
+The Brain store is currently a manual/experimental path exposed through `memory` and `memory-search`; the daily coach does not depend on it.
 
 ## Routing and Orchestration Commands
 
