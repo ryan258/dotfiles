@@ -116,6 +116,7 @@ alias glog="git log --oneline"            # Compact one-line-per-commit log
 gitnexus() {
   npx --yes --package="${CYBORG_GITNEXUS_PACKAGE:-gitnexus@1.4.7}" gitnexus "$@"
 }
+alias clrnpx="rm -rf ~/.npm/_npx"
 
 # `gn` analyzes the current repo; `gn --audit` audits workspace health
 gn() {
