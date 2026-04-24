@@ -206,6 +206,22 @@ EOF
     [[ "$prompt" != *"PRE-BRIEF CHECK:"* ]]
 }
 
+@test "goodevening resolves data_validate.sh from SCRIPT_DIR when argv0 is remapped" {
+    local argv0_path="$TEST_ROOT/goodevening-link.sh"
+
+    cat > "$DOTFILES_DIR/scripts/health.sh" <<'STUB'
+#!/usr/bin/env bash
+set -euo pipefail
+exit 0
+STUB
+    chmod +x "$DOTFILES_DIR/scripts/health.sh"
+
+    run bash -c "HOME='$HOME' DATA_DIR='$DATA_DIR' DOTFILES_DIR='$DOTFILES_DIR' PROJECTS_DIR='$PROJECTS_DIR' PATH='$DOTFILES_DIR/bin:$PATH' AI_REFLECTION_ENABLED=false AI_COACH_CHAT_ENABLED=false exec -a '$argv0_path' bash '$DOTFILES_DIR/scripts/goodevening.sh' --refresh '$TEST_DAY' < /dev/null"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Data validation passed."* ]]
+}
+
 @test "goodevening falls back to system date when startday marker is missing" {
     rm -f "$DATA_DIR/current_day"
     expected_today="$(date +%Y-%m-%d)"

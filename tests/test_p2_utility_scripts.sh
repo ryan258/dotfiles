@@ -56,6 +56,18 @@ teardown() {
     [[ "$output" == *"Your Week in Review"* ]]
 }
 
+@test "week_in_review.sh --file writes into WEEKLY_REVIEW_DIR" {
+    export WEEKLY_REVIEW_DIR="$TEST_DIR/reviews"
+
+    run "$DOTFILES_DIR/scripts/week_in_review.sh" --file
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"$WEEKLY_REVIEW_DIR"* ]]
+
+    run find "$WEEKLY_REVIEW_DIR" -type f -name "*.md"
+    [ "$status" -eq 0 ]
+    [ -n "$output" ]
+}
+
 @test "backup_data.sh creates a local archive in configured backup dir" {
     echo "test task" > "$DOTFILES_DATA_DIR/todo.txt"
     export DOTFILES_BACKUP_DIR="$TEST_DIR/backups"

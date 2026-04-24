@@ -74,3 +74,21 @@ teardown() {
     [ "$status" -ne 0 ]
     [[ "$output" == *"between 0.0 and 2.0"* ]]
 }
+
+@test "dhp-shared surfaces swarm failures instead of exiting before its error branch" {
+    cat > "$TEST_ROOT/mock-bin/uv" <<'EOF'
+#!/usr/bin/env bash
+echo "mock swarm stderr" >&2
+cat >/dev/null
+printf 'partial swarm output\n'
+exit 9
+EOF
+    chmod +x "$TEST_ROOT/mock-bin/uv"
+
+    run bash -c "PATH='$PATH' HOME='$HOME' DOTFILES_DIR='$DOTFILES_DIR' DATA_DIR='$DATA_DIR' OPENROUTER_API_KEY='test-key' DHP_TECH_OUTPUT_DIR='$DATA_DIR/output' bash '$DOTFILES_DIR/bin/dhp-tech.sh' 'Fix parser issue' 2>&1"
+
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"partial swarm output"* ]]
+    [[ "$output" == *"mock swarm stderr"* ]]
+    [[ "$output" == *"FAILED: Swarm orchestration encountered an error"* ]]
+}

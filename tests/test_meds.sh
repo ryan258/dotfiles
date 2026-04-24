@@ -88,3 +88,25 @@ teardown() {
     [[ "$output" =~ "taken" ]]
     [[ "$output" =~ "All scheduled medications taken" ]]
 }
+
+@test "meds remind escapes notification text before calling osascript" {
+    local today="2025-01-02"
+    local fake_bin="$TEST_DATA_DIR/fake-bin"
+    mkdir -p "$fake_bin"
+
+    cat > "$fake_bin/osascript" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" > "$DATA_DIR/osascript_args.txt"
+EOF
+    chmod +x "$fake_bin/osascript"
+
+    printf 'MED|He said "go" \\ now|morning\n' > "$TEST_DATA_DIR/.config/dotfiles-data/medications.txt"
+
+    run env PATH="$fake_bin:$PATH" MEDS_TODAY_OVERRIDE="$today" MEDS_CURRENT_HOUR_OVERRIDE="9" \
+        bash "$BATS_TEST_DIRNAME/../scripts/meds.sh" remind
+
+    [ "$status" -eq 0 ]
+    run cat "$TEST_DATA_DIR/.config/dotfiles-data/osascript_args.txt"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'He said \"go\" \\ now'* ]]
+}

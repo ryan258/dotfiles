@@ -65,7 +65,7 @@ correlate_tasks() {
 }
 
 generate_commit_cache() {
-    local projects_dir="$HOME/Projects"
+    local projects_dir="${PROJECTS_DIR:-$HOME/Projects}"
     local cache_file="$COMMITS_CACHE_FILE"
     
     # Check TTL
@@ -96,7 +96,7 @@ generate_commit_cache() {
 
 correlate_commits() {
     local recent_data="$1"
-    local projects_dir="$HOME/Projects"
+    local projects_dir="${PROJECTS_DIR:-$HOME/Projects}"
 
     if [ ! -d "$projects_dir" ]; then
         echo "  - Avg commits on low energy days: N/A (no Projects dir)"

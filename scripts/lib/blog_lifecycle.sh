@@ -100,7 +100,10 @@ blog_version() {
             ;;
         history)
             if [ -d "$BLOG_DIR/.git" ]; then
-                cd "$BLOG_DIR" && git log --tags --simplify-by-decoration --pretty="format:%ai %d"
+                (
+                    cd "$BLOG_DIR"
+                    git log --tags --simplify-by-decoration --pretty="format:%ai %d"
+                )
             else
                 echo "Error: Blog directory is not a git repository." >&2
                 return 1

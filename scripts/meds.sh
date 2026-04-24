@@ -3,6 +3,24 @@ set -euo pipefail
 # meds.sh - Medication tracking and reminder system
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMMON_LIB="$SCRIPT_DIR/lib/common.sh"
+if [ -f "$COMMON_LIB" ]; then
+    # shellcheck disable=SC1090
+    source "$COMMON_LIB"
+else
+    echo "Error: common utilities not found at $COMMON_LIB" >&2
+    exit 1
+fi
+
+CONFIG_LIB="$SCRIPT_DIR/lib/config.sh"
+if [ -f "$CONFIG_LIB" ]; then
+    # shellcheck disable=SC1090
+    source "$CONFIG_LIB"
+else
+    echo "Error: configuration library not found at $CONFIG_LIB" >&2
+    exit 1
+fi
+
 DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
 if [ -f "$DATE_UTILS" ]; then
     # shellcheck disable=SC1090
@@ -12,26 +30,19 @@ else
     exit 1
 fi
 
-if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
-    # shellcheck disable=SC1090
-    source "$SCRIPT_DIR/lib/common.sh"
-else
-    echo "Error: common utilities not found at $SCRIPT_DIR/lib/common.sh" >&2
-    exit 1
-fi
-if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
-    # shellcheck disable=SC1090
-    source "$SCRIPT_DIR/lib/config.sh"
-else
-    echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh" >&2
-    exit 1
-fi
-
 MEDS_FILE="${MEDS_FILE:?MEDS_FILE is not set by config.sh}"
 SYSTEM_LOG_FILE="${SYSTEM_LOG_FILE:-$SYSTEM_LOG}"
 
 # Delegate to consolidated sanitize_single_line in common.sh
 sanitize_line() { sanitize_single_line "$1"; }
+
+escape_applescript() {
+    local input="$1"
+    input=${input//\\/\\\\}
+    input=${input//\"/\\\"}
+    input=${input//$'\n'/\\n}
+    printf '%s' "$input"
+}
 
 ensure_meds_dir() {
     mkdir -p "$(dirname "$MEDS_FILE")"
@@ -362,7 +373,8 @@ case "$COMMAND" in
                     if ! dose_taken_for_slot "$med_name" "$time_slot" "$today"; then
                         # Send notification
                         echo "$(date): meds.sh - Sending reminder for $med_name ($time_slot)." >> "$SYSTEM_LOG_FILE"
-                        osascript -e "display notification \"Time to take: $med_name ($time_slot)\" with title \"💊 Medication Reminder\""
+                        escaped_message=$(escape_applescript "Time to take: $med_name ($time_slot)")
+                        osascript -e "display notification \"$escaped_message\" with title \"💊 Medication Reminder\""
                         overdue_found=true
                     fi
                 fi

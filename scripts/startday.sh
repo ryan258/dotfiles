@@ -216,7 +216,7 @@ fi
 if [ "$(date_weekday_iso)" -eq 1 ]; then
     WEEK_NUM=$(date_shift_days -1 "%V")
     YEAR=$(date_shift_days -1 "%Y")
-    REVIEW_FILE="$HOME/Documents/Reviews/Weekly/$YEAR-W$WEEK_NUM.md"
+    REVIEW_FILE="$WEEKLY_REVIEW_DIR/$YEAR-W$WEEK_NUM.md"
     if [ -f "$REVIEW_FILE" ]; then
         echo ""
         echo "📈 LAST WEEK'S REVIEW:"

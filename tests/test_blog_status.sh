@@ -73,3 +73,14 @@ EOF
     [ "$status" -eq 0 ]
     [[ "$output" == *"2 more review item(s) not shown"* ]]
 }
+
+@test "blog status does not leak status globals into the caller" {
+    run env \
+        BLOG_DIR="$BLOG_DIR" \
+        DRAFTS_DIR="$DRAFTS_DIR" \
+        POSTS_DIR="$POSTS_DIR" \
+        bash -c 'source "$1"; blog_status >/dev/null; printf "%s|%s|%s|%s|%s|%s" "${TOTAL_POSTS-unset}" "${STUB_FILES-unset}" "${STUB_COUNT-unset}" "${LAST_UPDATE-unset}" "${LAST_UPDATE_EPOCH-unset}" "${DAYS_SINCE-unset}"' _ "$BATS_TEST_DIRNAME/../scripts/lib/blog_ops.sh"
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "unset|unset|unset|unset|unset|unset" ]
+}

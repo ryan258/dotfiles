@@ -3,24 +3,30 @@ set -euo pipefail
 # week_in_review.sh - Generates a report of your activity over the last week
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMMON_LIB="$SCRIPT_DIR/lib/common.sh"
+if [ -f "$COMMON_LIB" ]; then
+  # shellcheck disable=SC1090
+  source "$COMMON_LIB"
+else
+  echo "Error: common utilities not found at $COMMON_LIB" >&2
+  exit 1
+fi
+
+CONFIG_LIB="$SCRIPT_DIR/lib/config.sh"
+if [ -f "$CONFIG_LIB" ]; then
+  # shellcheck disable=SC1090
+  source "$CONFIG_LIB"
+else
+  echo "Error: configuration library not found at $CONFIG_LIB" >&2
+  exit 1
+fi
+
 DATE_UTILS="$SCRIPT_DIR/lib/date_utils.sh"
 if [ -f "$DATE_UTILS" ]; then
   # shellcheck disable=SC1090
   source "$DATE_UTILS"
 else
   echo "Error: date utilities not found at $DATE_UTILS" >&2
-  exit 1
-fi
-
-if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
-  # shellcheck disable=SC1090
-  source "$SCRIPT_DIR/lib/common.sh"
-fi
-if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
-  # shellcheck disable=SC1090
-  source "$SCRIPT_DIR/lib/config.sh"
-else
-  echo "Error: configuration library not found at $SCRIPT_DIR/lib/config.sh" >&2
   exit 1
 fi
 
@@ -35,7 +41,7 @@ OUTPUT_FILE=""
 if [ "${1:-}" == "--file" ]; then
   WEEK_NUM=$(date_now "%V")
   YEAR=$(date_now "%Y")
-  REVIEWS_DIR="$HOME/Documents/Reviews/Weekly"
+  REVIEWS_DIR="$WEEKLY_REVIEW_DIR"
   mkdir -p "$REVIEWS_DIR"
   OUTPUT_FILE="$REVIEWS_DIR/$YEAR-W$WEEK_NUM.md"
 fi

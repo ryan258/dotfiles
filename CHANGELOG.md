@@ -2,6 +2,18 @@
 
 **Last Updated:** April 23, 2026
 
+## Version 2.2.70 (April 23, 2026) - Contract Fixes From Direction Audit
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- `scripts/lib/blog_lifecycle.sh` now keeps `blog version history` inside a subshell, and `scripts/lib/blog_ops.sh` now localizes its status/stub bookkeeping so sourced callers do not inherit stray globals.
+- `scripts/lib/coach_ops.sh` now sets its load guard at the standard location, `bin/dhp-shared.sh` now reports failed swarm runs through its intended error branch, and `scripts/meds.sh` now escapes AppleScript notification text before invoking `osascript`.
+- `scripts/health.sh`, `scripts/week_in_review.sh`, and `scripts/startday.sh` now honor the configured project/review directories instead of hardcoded home-path defaults.
+- `scripts/goodevening.sh` now resolves `data_validate.sh` from `SCRIPT_DIR`, so symlinked invocations still find the sibling validator correctly.
+- Added focused BATS coverage for blog lifecycle cwd preservation, dispatcher failure reporting, escaped meds notifications, configurable weekly-review output, blog status scope hygiene, and symlink-safe goodevening validation.
+
 ## Version 2.2.69 (April 23, 2026) - Audit Follow-Up Fixes
 
 **Status:** ✅ Production Ready

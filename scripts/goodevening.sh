@@ -569,11 +569,11 @@ fi
 # 8. Data Validation
 echo ""
 echo "🛡️  Validating data integrity..."
-if bash "$(dirname "$0")/data_validate.sh"; then
+if bash "$SCRIPT_DIR/data_validate.sh"; then
     echo "  ✅ Data validation passed."
     # Only back up the data after it passes the safety check.
     echo "$(date_now): goodevening.sh - Backing up dotfiles data." >> "$SYSTEM_LOG_FILE"
-if ! backup_output=$("$SCRIPT_DIR/backup_data.sh" 2>&1); then
+    if ! backup_output=$("$SCRIPT_DIR/backup_data.sh" 2>&1); then
         echo "  ⚠️  WARNING: Backup failed: $backup_output"
         echo "$(date_now): goodevening.sh - Backup failed: $backup_output" >> "$SYSTEM_LOG_FILE"
     fi

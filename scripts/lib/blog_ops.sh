@@ -80,31 +80,38 @@ blog_print_review_summary() {
 
 # --- Subcommand: status ---
 blog_status() {
+    local total_posts
+    local stub_files
+    local stub_count
+    local last_update
+    local last_update_epoch
+    local days_since
+
     echo "📝 BLOG STATUS (ryanleej.com):"
 
-    TOTAL_POSTS=$(find "$POSTS_DIR" -name "*.md" | wc -l | tr -d ' ')
-    STUB_FILES=$(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null || true)
-    if [ -n "$STUB_FILES" ]; then
-        STUB_COUNT=$(printf "%s\n" "$STUB_FILES" | grep -c . || true)
+    total_posts=$(find "$POSTS_DIR" -name "*.md" | wc -l | tr -d ' ')
+    stub_files=$(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null || true)
+    if [ -n "$stub_files" ]; then
+        stub_count=$(printf "%s\n" "$stub_files" | grep -c . || true)
     else
-        STUB_COUNT=0
+        stub_count=0
     fi
 
-    echo "  • Total posts: $TOTAL_POSTS"
-    echo "  • Posts needing content: $STUB_COUNT"
+    echo "  • Total posts: $total_posts"
+    echo "  • Posts needing content: $stub_count"
 
     blog_print_review_summary
 
     if [ -d "$BLOG_DIR/.git" ]; then
-        LAST_UPDATE=$(cd "$BLOG_DIR" && git log -1 --format="%ad" --date=short)
-        echo "  • Last update: $LAST_UPDATE"
+        last_update=$(cd "$BLOG_DIR" && git log -1 --format="%ad" --date=short)
+        echo "  • Last update: $last_update"
 
         # Calculate days since last update
-        LAST_UPDATE_EPOCH=$(cd "$BLOG_DIR" && git log -1 --format="%ct")
-        DAYS_SINCE=$(( ( $(date +%s) - LAST_UPDATE_EPOCH ) / 86400 ))
+        last_update_epoch=$(cd "$BLOG_DIR" && git log -1 --format="%ct")
+        days_since=$(( ( $(date +%s) - last_update_epoch ) / 86400 ))
 
-        if [ "$DAYS_SINCE" -gt 14 ]; then
-            echo "  ⏰ It's been $DAYS_SINCE days since your last update"
+        if [ "$days_since" -gt 14 ]; then
+            echo "  ⏰ It's been $days_since days since your last update"
         fi
     fi
 
@@ -113,15 +120,24 @@ blog_status() {
 
 # --- Subcommand: stubs ---
 blog_stubs() {
+    local stub_files
+    local seven_days_ago
+    local thirty_days_ago
+
     echo "📄 CONTENT STUBS:"
 
-    STUB_FILES=$(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null || true)
+    stub_files=$(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null || true)
 
-    if [ -n "$STUB_FILES" ]; then
-        SEVEN_DAYS_AGO=$(date_shift_days -7 "%s")
-        THIRTY_DAYS_AGO=$(date_shift_days -30 "%s")
+    if [ -n "$stub_files" ]; then
+        seven_days_ago=$(date_shift_days -7 "%s")
+        thirty_days_ago=$(date_shift_days -30 "%s")
 
-        echo "$STUB_FILES" | while read -r file; do
+        while IFS= read -r file; do
+            local filename
+            local last_commit=""
+            local mod_time
+            local days_old
+
             filename=$(basename "$file")
 
             # Get last modified timestamp
@@ -139,16 +155,16 @@ blog_stubs() {
             fi
 
             # Calculate age and add warning if old
-            if [ "$mod_time" -lt "$THIRTY_DAYS_AGO" ]; then
+            if [ "$mod_time" -lt "$thirty_days_ago" ]; then
                 days_old=$(( ( $(date +%s) - mod_time ) / 86400 ))
                 echo "  ⚠️  $filename (stale: ${days_old} days old)"
-            elif [ "$mod_time" -lt "$SEVEN_DAYS_AGO" ]; then
+            elif [ "$mod_time" -lt "$seven_days_ago" ]; then
                 days_old=$(( ( $(date +%s) - mod_time ) / 86400 ))
                 echo "  ⏰ $filename (${days_old} days old)"
             else
                 echo "  • $filename"
             fi
-        done
+        done <<< "$stub_files"
     else
         echo "  (No content stubs found)"
     fi
@@ -156,36 +172,41 @@ blog_stubs() {
 
 # --- Subcommand: random ---
 blog_random_stub() {
+    local -a stub_files=()
+    local stub_file
+    local random_index
+    local random_file
+
     echo "🎲 Opening a random stub..."
 
-    STUB_FILES=()
     while IFS= read -r stub_file; do
         [ -z "$stub_file" ] && continue
-        STUB_FILES+=("$stub_file")
+        stub_files+=("$stub_file")
     done < <(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null || true)
 
-    if [ ${#STUB_FILES[@]} -eq 0 ]; then
+    if [ ${#stub_files[@]} -eq 0 ]; then
         echo "  (No content stubs to choose from)"
         return
     fi
-    
-    RANDOM_INDEX=$(( RANDOM % ${#STUB_FILES[@]} ))
-    RANDOM_FILE=${STUB_FILES[$RANDOM_INDEX]}
-    
-    echo "  Opening: $(basename "$RANDOM_FILE")"
-    
+
+    random_index=$(( RANDOM % ${#stub_files[@]} ))
+    random_file=${stub_files[$random_index]}
+
+    echo "  Opening: $(basename "$random_file")"
+
     if command -v code &> /dev/null; then
-        code "$RANDOM_FILE"
+        code "$random_file"
     else
-        open "$RANDOM_FILE"
+        open "$random_file"
     fi
 }
 
 # --- Subcommand: recent ---
 blog_recent() {
+    local -a recent_files=()
+
     echo "⏳ RECENTLY MODIFIED POSTS:"
 
-    recent_files=()
     while IFS= read -r -d '' file; do
         recent_files+=("$file")
     done < <(find "$POSTS_DIR" -name "*.md" -mtime -14 -print0 2>/dev/null)

@@ -401,9 +401,13 @@ $PIPED_CONTENT"
     fi
     
     # 7. Execute safely using array expansion
-    echo "$enhanced_brief" | "${cmd_args[@]}" | tee "$output_file"
-    local exit_code=${PIPESTATUS[1]} # exit code of the swarm command (PIPESTATUS[0]=echo, [1]=cmd, [2]=tee)
-    
+    local exit_code=0
+    if echo "$enhanced_brief" | "${cmd_args[@]}" | tee "$output_file"; then
+        exit_code=0
+    else
+        exit_code=$?
+    fi
+
     if [ "$exit_code" -eq 0 ]; then
         # Unified interactive/auto-save logic
         dhp_save_artifact "$output_file" "$slug" "$service_name" "dhp,swarm,$service_name" "ai-staff-hq" "generation"

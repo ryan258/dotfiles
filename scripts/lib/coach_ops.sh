@@ -12,6 +12,7 @@
 if [[ -n "${_COACH_OPS_LOADED:-}" ]]; then
     return 0
 fi
+readonly _COACH_OPS_LOADED=true
 
 # Dependencies:
 # - DATA_DIR and coach-related config values from config.sh.
@@ -29,5 +30,3 @@ if ! command -v date_shift_from >/dev/null 2>&1 || ! command -v timestamp_to_epo
     echo "Error: date_shift_from/timestamp_to_epoch are not available. Source scripts/lib/date_utils.sh before coach_ops.sh." >&2
     return 1
 fi
-
-readonly _COACH_OPS_LOADED=true
