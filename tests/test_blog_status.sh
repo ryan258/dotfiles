@@ -48,7 +48,7 @@ teardown() {
         DRAFTS_DIR="$DRAFTS_DIR" \
         POSTS_DIR="$POSTS_DIR" \
         BLOG_STATUS_REVIEW_DETAIL_LIMIT=10 \
-        bash -c 'source "$1"; status' _ "$BATS_TEST_DIRNAME/../scripts/lib/blog_ops.sh"
+        bash -c 'source "$1"; blog_status' _ "$BATS_TEST_DIRNAME/../scripts/lib/blog_ops.sh"
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"Drafts awaiting review: 3 item(s) across 5 markdown artifact(s)"* ]]
@@ -68,7 +68,7 @@ EOF
         DRAFTS_DIR="$DRAFTS_DIR" \
         POSTS_DIR="$POSTS_DIR" \
         BLOG_STATUS_REVIEW_DETAIL_LIMIT=2 \
-        bash -c 'source "$1"; status' _ "$BATS_TEST_DIRNAME/../scripts/lib/blog_ops.sh"
+        bash -c 'source "$1"; blog_status' _ "$BATS_TEST_DIRNAME/../scripts/lib/blog_ops.sh"
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"2 more review item(s) not shown"* ]]

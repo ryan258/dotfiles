@@ -277,12 +277,10 @@ log_error() { log_message "ERROR" "$1" "${2:-}"; }
 # Error Handling
 #=============================================================================
 
-# Check if script is being sourced or executed
-is_sourced() {
-    [[ "${BASH_SOURCE[0]}" != "${0}" ]]
-}
-
-# Standard error exit with logging
+# Standard error exit with logging.
+# common.sh is always sourced, so this helper returns a non-zero status and
+# lets the caller decide whether strict mode or an explicit `return`/`exit`
+# should stop execution immediately.
 # Usage: die "Error message" [exit_code]
 die() {
     local message="$1"
@@ -290,11 +288,8 @@ die() {
 
     log_error "$message"
     echo "Error: $message" >&2
-    
-    if is_sourced; then
-        return "$exit_code"
-    fi
-    exit "$exit_code"
+
+    return "$exit_code"
 }
 
 # Check command exists

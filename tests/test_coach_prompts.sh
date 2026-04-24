@@ -15,6 +15,15 @@ print((date.today() + timedelta(days=offset)).strftime("%Y-%m-%d"))
 PY
 }
 
+to_epoch() {
+    python3 - "$1" <<'PY'
+import sys
+from datetime import datetime
+
+print(int(datetime.strptime(sys.argv[1], "%Y-%m-%d %H:%M:%S").timestamp()))
+PY
+}
+
 setup() {
     export TEST_ROOT
     TEST_ROOT="$(mktemp -d)"
@@ -40,6 +49,13 @@ setup() {
 
 teardown() {
     rm -rf "$TEST_ROOT"
+}
+
+@test "coach_prompts requires coach_metrics to be sourced first" {
+    run bash -c "source '$CONFIG_LIB'; source '$COMMON_LIB'; source '$DATE_LIB'; source '$HEALTH_LIB'; source '$FOCUS_RELEVANCE_LIB'; source '$PROMPTS_LIB'"
+
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"coach_metrics.sh must be sourced before coach_prompts.sh"* ]]
 }
 
 # ─── coach_build_startday_prompt ──────────────────────────────────────────
@@ -194,7 +210,7 @@ teardown() {
 
 @test "coach_collect_local_context_bundle includes raw local slices" {
     local now_epoch
-    now_epoch="$(date +%s)"
+    now_epoch="$(to_epoch "$DAY_MINUS1 12:00:00")"
     cat > "$DATA_DIR/journal.txt" <<EOF
 $DAY_MINUS1 08:00:00|Journal line
 EOF

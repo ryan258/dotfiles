@@ -49,11 +49,6 @@ join_query() {
     done
 }
 
-if [[ "${1:-}" == "--swarm" ]]; then
-    shift
-    exec "$SWARM_BIN" "$@"
-fi
-
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
     usage
     exit 0

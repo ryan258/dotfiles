@@ -10,6 +10,44 @@ source "$SCRIPT_DIR/dhp-shared.sh"
 source "$DOTFILES_DIR/scripts/lib/common.sh"
 AVAILABLE_DISPATCHERS="$(dhp_available_dispatchers)"
 
+run_dispatcher_capture() {
+    local input_mode="$1"
+    local input_payload="$2"
+    shift 2
+
+    local dispatcher_script="$1"
+    shift
+
+    local stderr_file=""
+    local output=""
+    local status=0
+
+    stderr_file=$(mktemp "${TMPDIR:-/tmp}/dhp-chain.stderr.XXXXXX") \
+        || die "Failed to create dispatcher stderr capture file." "$EXIT_ERROR"
+
+    if [[ "$input_mode" == "arg" ]]; then
+        if output=$("$dispatcher_script" "$input_payload" "$@" 2>"$stderr_file"); then
+            status=0
+        else
+            status=$?
+        fi
+    else
+        if output=$(printf '%s' "$input_payload" | "$dispatcher_script" "$@" 2>"$stderr_file"); then
+            status=0
+        else
+            status=$?
+        fi
+    fi
+
+    if [[ -s "$stderr_file" ]]; then
+        cat "$stderr_file" >&2
+    fi
+    rm -f "$stderr_file"
+
+    printf '%s' "$output"
+    return "$status"
+}
+
 if [ $# -lt 2 ]; then
     cat >&2 <<EOF
 Usage: $0 <dispatcher1> <dispatcher2> [dispatcher3...] -- "<initial input>"
@@ -103,7 +141,7 @@ for dispatcher in "${DISPATCHERS[@]}"; do
     # Creative and content are called with argument input for compatibility.
     case "$DISPATCHER_SCRIPT_NAME" in
         dhp-creative.sh|dhp-content.sh)
-            if ! CURRENT_OUTPUT=$("$DISPATCHER_SCRIPT" "$CURRENT_OUTPUT" "${COMMON_FLAGS[@]}"); then
+            if ! CURRENT_OUTPUT=$(run_dispatcher_capture arg "$CURRENT_OUTPUT" "$DISPATCHER_SCRIPT" "${COMMON_FLAGS[@]}"); then
                 die "Step $STEP ($dispatcher) failed." "$EXIT_SERVICE_ERROR"
             fi
             echo "$CURRENT_OUTPUT" >&2
@@ -115,7 +153,7 @@ for dispatcher in "${DISPATCHERS[@]}"; do
 
     # Process through dispatcher (stdin-based)
     # We append common flags like --brain
-    if ! CURRENT_OUTPUT=$(echo "$CURRENT_OUTPUT" | "$DISPATCHER_SCRIPT" "${COMMON_FLAGS[@]}"); then
+    if ! CURRENT_OUTPUT=$(run_dispatcher_capture stdin "$CURRENT_OUTPUT" "$DISPATCHER_SCRIPT" "${COMMON_FLAGS[@]}"); then
         die "Step $STEP ($dispatcher) failed." "$EXIT_SERVICE_ERROR"
     fi
 

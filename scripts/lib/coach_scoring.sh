@@ -10,6 +10,10 @@
 if [[ -n "${_COACH_SCORING_LOADED:-}" ]]; then
     return 0
 fi
+if [[ -z "${_COACH_METRICS_LOADED:-}" ]]; then
+    echo "Error: coach_metrics.sh must be sourced before coach_scoring.sh." >&2
+    return 1
+fi
 readonly _COACH_SCORING_LOADED=true
 
 coach_strategy_dispatcher_name() {

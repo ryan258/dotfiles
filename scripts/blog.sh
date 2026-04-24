@@ -96,16 +96,16 @@ done
 # --- Main Logic ---
 case "${1:-}" in
     status|stat|s)
-        status
+        blog_status
         ;;
     stubs|stub|ls-stubs)
-        stubs
+        blog_stubs
         ;;
     random|rand|R)
-        random_stub
+        blog_random_stub
         ;;
     recent|rec)
-        recent
+        blog_recent
         ;;
     ideas|idea|i)
         shift
@@ -124,14 +124,14 @@ case "${1:-}" in
         workflow_command "$@"
         ;;
     publish|p)
-        publish_site
+        blog_publish_site
         ;;
     validate|check|v)
-        validate_site
+        blog_validate_site
         ;;
     hooks|hook)
         if [ "${2:-}" = "install" ]; then
-            install_hooks
+            blog_install_hooks
         else
             echo "Usage: blog hooks install"
             exit 1

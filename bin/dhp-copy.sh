@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-set -euo pipefail
 
 # dhp-copy.sh - Entry point for the copywriter dispatcher.
+
+set -euo pipefail
 
 source "$(dirname "$0")/dhp-shared.sh"
 

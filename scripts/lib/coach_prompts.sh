@@ -9,6 +9,10 @@
 if [[ -n "${_COACH_PROMPTS_LOADED:-}" ]]; then
     return 0
 fi
+if [[ -z "${_COACH_METRICS_LOADED:-}" ]]; then
+    echo "Error: coach_metrics.sh must be sourced before coach_prompts.sh." >&2
+    return 1
+fi
 readonly _COACH_PROMPTS_LOADED=true
 readonly COACH_BLINDSPOT_LIMIT=5
 

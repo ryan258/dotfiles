@@ -66,6 +66,13 @@ teardown() {
     rm -rf "$TEST_ROOT"
 }
 
+@test "coach_scoring requires coach_metrics to be sourced first" {
+    run bash -c "source '$COACH_CONFIG_LIB'; source '$COACH_COMMON_LIB'; source '$COACH_DATE_LIB'; source '$COACH_FOCUS_RELEVANCE_LIB'; source '$COACH_SCORING_LIB'"
+
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"coach_metrics.sh must be sourced before coach_scoring.sh"* ]]
+}
+
 @test "coach_collect_tactical_metrics extracts tactical window metrics" {
     cat > "$DATA_DIR/todo.txt" <<EOF
 1|$OLD_DAY_1|old stale task

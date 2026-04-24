@@ -2,6 +2,18 @@
 
 **Last Updated:** April 23, 2026
 
+## Version 2.2.69 (April 23, 2026) - Audit Follow-Up Fixes
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- `bin/dhp-chain.sh` now preserves each chained dispatcher's stderr when a step fails, so model or wrapper errors stay visible instead of disappearing inside command substitution.
+- `scripts/lib/coach_prompts.sh` and `scripts/lib/coach_scoring.sh` now fail fast unless `coach_metrics.sh` was sourced first, making the coaching loader contract explicit instead of relying on implicit source order.
+- `scripts/lib/blog_ops.sh` now uses `blog_*` names for its public operations, and `scripts/blog.sh` plus the blog status tests were updated to call the prefixed entry points.
+- Removed the duplicate `--swarm` fast-path branch from `bin/morphling.sh`, clarified `die()` in `scripts/lib/common.sh` to match its real return-based behavior, and restored the standard dispatcher header layout in `bin/dhp-copy.sh`.
+- Added focused BATS coverage for the `dhp-chain` stderr path and the new coach library dependency guards.
+
 ## Version 2.2.68 (April 23, 2026) - Audit Defaults Cleanup And Dispatcher Path Centralization
 
 **Status:** ✅ Production Ready

@@ -79,7 +79,7 @@ blog_print_review_summary() {
 }
 
 # --- Subcommand: status ---
-status() {
+blog_status() {
     echo "📝 BLOG STATUS (ryanleej.com):"
 
     TOTAL_POSTS=$(find "$POSTS_DIR" -name "*.md" | wc -l | tr -d ' ')
@@ -112,7 +112,7 @@ status() {
 }
 
 # --- Subcommand: stubs ---
-stubs() {
+blog_stubs() {
     echo "📄 CONTENT STUBS:"
 
     STUB_FILES=$(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null || true)
@@ -155,7 +155,7 @@ stubs() {
 }
 
 # --- Subcommand: random ---
-random_stub() {
+blog_random_stub() {
     echo "🎲 Opening a random stub..."
 
     STUB_FILES=()
@@ -182,7 +182,7 @@ random_stub() {
 }
 
 # --- Subcommand: recent ---
-recent() {
+blog_recent() {
     echo "⏳ RECENTLY MODIFIED POSTS:"
 
     recent_files=()
@@ -202,9 +202,9 @@ recent() {
     done
 }
 
-publish_site() {
+blog_publish_site() {
     echo "Running blog validation..."
-    if ! validate_site; then
+    if ! blog_validate_site; then
         echo "Publish aborted: validation failed." >&2
         return 1
     fi
@@ -234,7 +234,7 @@ publish_site() {
     echo "  3. Push when ready (DigitalOcean will build on push)."
 }
 
-validate_site() {
+blog_validate_site() {
     if ! command -v python3 >/dev/null 2>&1; then
         echo "Error: python3 is required for blog validate." >&2
         return 1
@@ -247,7 +247,7 @@ validate_site() {
         python3 "$_blog_ops_lib_dir/blog_validate.py"
 }
 
-install_hooks() {
+blog_install_hooks() {
     if [ ! -d "$BLOG_DIR/.git" ]; then
         echo "Error: $BLOG_DIR is not a git repository."
         return 1
