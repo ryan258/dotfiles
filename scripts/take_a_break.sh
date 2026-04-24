@@ -19,7 +19,7 @@ else
 fi
 
 BREAKS_LOG="${BREAKS_LOG:?BREAKS_LOG is not set by config.sh}"
-BREAK_TIMER_LOCK_DIR="${BREAK_TIMER_LOCK_DIR:-${TMPDIR:-/tmp}/take_a_break_lock}"
+BREAK_TIMER_LOCK_DIR="${BREAK_TIMER_LOCK_DIR:-$DATA_DIR/.take_a_break.lock}"
 BREAK_TIMER_PID_FILE="$BREAK_TIMER_LOCK_DIR/pid"
 BREAK_TIMER_MINUTES_FILE="$BREAK_TIMER_LOCK_DIR/minutes"
 mkdir -p "$DATA_DIR"
@@ -208,4 +208,3 @@ fi
 
 # Optional: Log break completion
 echo "[$(date)] Completed $MINUTES minute break (PID $$)" >> "$BREAKS_LOG"
-

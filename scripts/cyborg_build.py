@@ -1396,10 +1396,10 @@ def _setup_npm_auth(project_dir: Path) -> Path | None:
     if not token:
         return None
     npmrc = project_dir / f".npmrc.publish-{uuid.uuid4().hex}"
-    npmrc.write_text(
-        f"//registry.npmjs.org/:_authToken={token}\n",
-        encoding="utf-8",
-    )
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    fd = os.open(npmrc, flags, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as handle:
+        handle.write(f"//registry.npmjs.org/:_authToken={token}\n")
     return npmrc
 
 

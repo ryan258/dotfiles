@@ -43,13 +43,13 @@ _api_cooldown() {
 _dhp_lib_restore_trap() { restore_trap "$@"; }
 
 _dhp_lib_stream_cleanup() {
-    local fifo_path="${1:-}"
+    local stream_path="${1:-}"
     local curl_pid="${2:-}"
     if [[ -n "$curl_pid" ]]; then
         kill "$curl_pid" 2>/dev/null || true
     fi
-    if [[ -n "$fifo_path" ]]; then
-        rm -f "$fifo_path" 2>/dev/null || true
+    if [[ -n "$stream_path" ]]; then
+        rm -rf "$stream_path" 2>/dev/null || true
     fi
 }
 
@@ -182,19 +182,22 @@ call_openrouter_stream() {
     local stream_status=0
     local curl_status=0
     local fifo
+    local fifo_dir
+    local curl_pid=""
     local saved_int_trap=""
     local saved_term_trap=""
-    fifo=$(mktemp -u "${TMPDIR:-/tmp}/dhp-stream.XXXXXX")
+    fifo_dir=$(mktemp -d "${TMPDIR:-/tmp}/dhp-stream.XXXXXX")
+    fifo="$fifo_dir/stream"
     mkfifo -m 600 "$fifo"
     saved_int_trap=$(trap -p INT || true)
     saved_term_trap=$(trap -p TERM || true)
-    trap '_dhp_lib_stream_cleanup "$fifo" "$curl_pid"; stream_status=130' INT TERM
+    trap '_dhp_lib_stream_cleanup "$fifo_dir" "$curl_pid"; stream_status=130' INT TERM
 
     curl -s -N --max-time 300 -X POST "https://openrouter.ai/api/v1/chat/completions" \
         -H "Authorization: Bearer $OPENROUTER_API_KEY" \
         -H "Content-Type: application/json" \
         -d "$json_payload" > "$fifo" &
-    local curl_pid=$!
+    curl_pid=$!
 
     while IFS= read -r line; do
         [ -z "$line" ] && continue
@@ -222,7 +225,7 @@ call_openrouter_stream() {
 
     wait "$curl_pid"
     curl_status=$?
-    rm -f "$fifo"
+    rm -rf "$fifo_dir"
     _dhp_lib_restore_trap INT "$saved_int_trap"
     _dhp_lib_restore_trap TERM "$saved_term_trap"
 

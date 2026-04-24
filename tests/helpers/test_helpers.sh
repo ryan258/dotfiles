@@ -32,3 +32,30 @@ teardown_test_environment() {
         rm -rf "$TEST_DIR"
     fi
 }
+
+copy_test_scripts() {
+    local repo_root
+    repo_root="$(cd "$BATS_TEST_DIRNAME/.." && pwd)"
+    local destination="$1"
+    shift
+
+    mkdir -p "$destination/scripts"
+    local script
+    for script in "$@"; do
+        cp "$repo_root/scripts/$script" "$destination/scripts/$script"
+        chmod +x "$destination/scripts/$script"
+    done
+}
+
+copy_test_libs() {
+    local repo_root
+    repo_root="$(cd "$BATS_TEST_DIRNAME/.." && pwd)"
+    local destination="$1"
+    shift
+
+    mkdir -p "$destination/scripts/lib"
+    local lib
+    for lib in "$@"; do
+        cp "$repo_root/scripts/lib/$lib" "$destination/scripts/lib/$lib"
+    done
+}

@@ -188,12 +188,41 @@ next_todo_id() {
         echo "Error: TODO_ID_FILE is not set. Source config.sh first." >&2
         return 1
     fi
+    mkdir -p "$(dirname "$id_file")" || return 1
+
+    local lock_dir="${id_file}.lock"
+    local attempts=0
+    while ! mkdir "$lock_dir" 2>/dev/null; do
+        attempts=$((attempts + 1))
+        if [[ "$attempts" -ge 50 ]]; then
+            echo "Error: Could not acquire todo ID lock: $lock_dir" >&2
+            return 1
+        fi
+        sleep 0.1
+    done
+
     local next_id=1
     if [[ -f "$id_file" ]]; then
         next_id=$(cat "$id_file" 2>/dev/null || echo "1")
         validate_numeric "$next_id" "task ID counter" >/dev/null 2>&1 || next_id=1
     fi
-    echo "$((next_id + 1))" > "$id_file"
+    local temp_file
+    temp_file=$(mktemp "${id_file}.XXXXXX") || {
+        rm -rf "$lock_dir"
+        return 1
+    }
+    chmod 600 "$temp_file" 2>/dev/null || true
+    printf '%s\n' "$((next_id + 1))" > "$temp_file" || {
+        rm -f "$temp_file"
+        rm -rf "$lock_dir"
+        return 1
+    }
+    mv "$temp_file" "$id_file" || {
+        rm -f "$temp_file"
+        rm -rf "$lock_dir"
+        return 1
+    }
+    rm -rf "$lock_dir"
     printf '%s' "$next_id"
 }
 

@@ -235,7 +235,7 @@ source "$SCRIPT_DIR/lib/config.sh"
 
 | File            | Format                           | Example                                      |
 | --------------- | -------------------------------- | -------------------------------------------- |
-| `todo.txt`      | `DATE\|task text`                | `2025-01-15\|Fix login bug`                  |
+| `todo.txt`      | `ID\|DATE\|task text`            | `42\|2025-01-15\|Fix login bug`              |
 | `todo_done.txt` | `YYYY-MM-DD HH:MM:SS\|task text` | `2025-01-15 14:30:00\|Fix login bug`         |
 | `journal.txt`   | `YYYY-MM-DD HH:MM:SS\|entry`     | `2025-01-15 09:00:00\|Morning reflection...` |
 | `health.txt`    | `TYPE\|DATE\|fields...`          | `SYMPTOM\|2025-01-15\|fatigue\|3`            |
@@ -772,9 +772,9 @@ _This document should be updated whenever new patterns are established or existi
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **dotfiles** (3901 symbols, 6682 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **dotfiles** (5767 symbols, 8956 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
-> If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
+> If any GitNexus tool warns the index is stale, run `scripts/gitnexus.sh analyze` in terminal first. The wrapper prefers a configured or cached GitNexus binary before falling back to `npx`, which avoids known npm/Node install-run failures.
 
 ## Always Do
 
@@ -845,13 +845,13 @@ Before completing any code modification task, verify:
 After committing code changes, the GitNexus index becomes stale. Re-run analyze to update it:
 
 ```bash
-npx gitnexus analyze
+scripts/gitnexus.sh analyze
 ```
 
 If the index previously included embeddings, preserve them by adding `--embeddings`:
 
 ```bash
-npx gitnexus analyze --embeddings
+scripts/gitnexus.sh analyze --embeddings
 ```
 
 To check whether embeddings exist, inspect `.gitnexus/meta.json` — the `stats.embeddings` field shows the count (0 means no embeddings). **Running analyze without `--embeddings` will delete any previously generated embeddings.**

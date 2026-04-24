@@ -7,19 +7,8 @@ load helpers/assertions.sh
 
 setup() {
     setup_test_environment
-    
-    # Stage scripts and python file
-    mkdir -p "$TEST_DIR/scripts/lib"
-    cp "$BATS_TEST_DIRNAME/../scripts/lib/common.sh" "$TEST_DIR/scripts/lib/"
-    cp "$BATS_TEST_DIRNAME/../scripts/lib/config.sh" "$TEST_DIR/scripts/lib/"
-    cp "$BATS_TEST_DIRNAME/../scripts/lib/file_ops.sh" "$TEST_DIR/scripts/lib/"
-    cp "$BATS_TEST_DIRNAME/../scripts/lib/correlation_engine.sh" "$TEST_DIR/scripts/lib/"
-    cp "$BATS_TEST_DIRNAME/../scripts/lib/correlate.py" "$TEST_DIR/scripts/lib/"
-    cp "$BATS_TEST_DIRNAME/../scripts/lib/time_tracking.sh" "$TEST_DIR/scripts/lib/"
-    cp "$BATS_TEST_DIRNAME/../scripts/lib/date_utils.sh" "$TEST_DIR/scripts/lib/"
-    cp "$BATS_TEST_DIRNAME/../scripts/correlate.sh" "$TEST_DIR/scripts/"
-    cp "$BATS_TEST_DIRNAME/../scripts/generate_report.sh" "$TEST_DIR/scripts/"
-    chmod +x "$TEST_DIR/scripts/"*.sh
+    copy_test_libs "$TEST_DIR" common.sh config.sh file_ops.sh correlation_engine.sh correlate.py time_tracking.sh date_utils.sh
+    copy_test_scripts "$TEST_DIR" correlate.sh generate_report.sh run_with_modern_bash.sh
     
     # Create dummy data
     mkdir -p "$DATA_DIR"
@@ -67,7 +56,7 @@ teardown() {
     run "$TEST_DIR/scripts/correlate.sh" run "$DATA_DIR/dataset1.csv" "$DATA_DIR/dataset2.csv" 0 1 0 1
     echo "Output: $output"
     [ "$status" -eq 0 ]
-    [[ "$output" =~ "1.0000" ]]
+    [[ "$output" == *"1.0000"* ]]
 }
 
 @test "generate_report.sh creates report file" {
@@ -76,7 +65,7 @@ teardown() {
     # so we might verify the script runs without error for TODAY (which has no data) 
     # OR we just check the file is created with headers)
     
-    run "$TEST_DIR/scripts/generate_report.sh" daily
+    run "$TEST_DIR/scripts/run_with_modern_bash.sh" "$TEST_DIR/scripts/generate_report.sh" daily
     echo "Report Output: $output"
     [ "$status" -eq 0 ]
     assert_file_exists "$DATA_DIR/reports/report-daily-$(date +%Y-%m-%d).md"
@@ -90,13 +79,13 @@ teardown() {
     rm "$DATA_DIR/time_tracking.txt"
     rm "$DATA_DIR/spoons.txt"
     
-    run "$TEST_DIR/scripts/generate_report.sh" daily
+    run "$TEST_DIR/scripts/run_with_modern_bash.sh" "$TEST_DIR/scripts/generate_report.sh" daily
     [ "$status" -eq 0 ]
     
     # Verify content indicates 0 or no data
     run cat "$DATA_DIR/reports/report-daily-$(date +%Y-%m-%d).md"
-    [[ "$output" =~ "Total Focus Time:** 0h 0m" ]]
-    [[ "$output" =~ "No data" ]]
+    [[ "$output" == *"Total Focus Time:** 0h 0m"* ]]
+    [[ "$output" == *"No data"* ]]
 }
 
 @test "generate_report.sh fails clearly under /bin/bash 3.2" {

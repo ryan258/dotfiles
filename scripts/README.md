@@ -5,7 +5,7 @@ The canonical contract and coding rules live in `../CLAUDE.md`.
 
 ## Current Inventory
 
-- 73 top-level shell utilities
+- 74 top-level shell utilities
 - 5 top-level Python helpers
 - 25 sourced shell libraries plus 2 Python modules under `scripts/lib/`
 
@@ -42,7 +42,7 @@ The canonical contract and coding rules live in `../CLAUDE.md`.
 
 - `start_project.sh`, `mkproject_py.sh`, `new_script.sh`
 - `github_helper.sh`, `dotfiles_check.sh`, `validate_env.sh`
-- `open_file.sh`, `run_with_modern_bash.sh`
+- `gitnexus.sh`, `open_file.sh`, `run_with_modern_bash.sh`
 
 ## File, Media, and Maintenance Utilities
 

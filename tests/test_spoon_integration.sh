@@ -7,20 +7,12 @@ load helpers/assertions.sh
 
 setup() {
     setup_test_environment
-    
-    # Stage scripts
-    mkdir -p "$TEST_DIR/scripts/lib"
-    cp "$BATS_TEST_DIRNAME/../scripts/lib/common.sh" "$TEST_DIR/scripts/lib/"
-    cp "$BATS_TEST_DIRNAME/../scripts/lib/config.sh" "$TEST_DIR/scripts/lib/"
-    cp "$BATS_TEST_DIRNAME/../scripts/lib/file_ops.sh" "$TEST_DIR/scripts/lib/"
-    cp "$BATS_TEST_DIRNAME/../scripts/lib/spoon_budget.sh" "$TEST_DIR/scripts/lib/"
-    cp "$BATS_TEST_DIRNAME/../scripts/spoon_manager.sh" "$TEST_DIR/scripts/"
-    cp "$BATS_TEST_DIRNAME/../scripts/todo.sh" "$TEST_DIR/scripts/"
-    chmod +x "$TEST_DIR/scripts/"*.sh
+    copy_test_libs "$TEST_DIR" common.sh config.sh date_utils.sh file_ops.sh spoon_budget.sh
+    copy_test_scripts "$TEST_DIR" spoon_manager.sh todo.sh
     
     # Configure todo data
     mkdir -p "$DATA_DIR"
-    echo "$(date +%Y-%m-%d)|Task 1: Testing spoons" > "$DATA_DIR/todo.txt"
+    echo "1|$(date +%Y-%m-%d)|Task 1: Testing spoons" > "$DATA_DIR/todo.txt"
     
     # Set override for DATA_DIR which scripts use
     export DATA_DIR="$DATA_DIR"

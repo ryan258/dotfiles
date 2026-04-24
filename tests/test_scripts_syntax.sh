@@ -35,3 +35,20 @@ teardown() {
         fi
     done < <(find "$DOTFILES_DIR/scripts/lib" -maxdepth 1 -type f -name "*.sh" | sort)
 }
+
+@test "all bin shell entrypoints pass bash -n syntax checks" {
+    while IFS= read -r script_path; do
+        run bash -n "$script_path"
+        if [ "$status" -ne 0 ]; then
+            echo "syntax failure: $script_path"
+            echo "$output"
+            return 1
+        fi
+    done < <(
+        find "$DOTFILES_DIR/bin" -maxdepth 1 -type f | while IFS= read -r candidate; do
+            if head -n 1 "$candidate" | grep -q 'bash'; then
+                printf '%s\n' "$candidate"
+            fi
+        done | sort
+    )
+}

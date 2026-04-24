@@ -1,6 +1,26 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** April 23, 2026
+**Last Updated:** April 24, 2026
+
+## Version 2.2.72 (April 24, 2026) - Architecture Cleanup
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- Added `scripts/gitnexus.sh` as the canonical GitNexus CLI entrypoint, preferring configured/global/cached binaries before falling back to `npx`, and refreshed the GitNexus docs with current index stats.
+- Centralized repeated Bats fixture copy logic in `tests/helpers/test_helpers.sh` and expanded syntax coverage to include executable shell entry points under `bin/`.
+- Updated `scripts/new_script.sh` so generated scripts start with the current explicit config-then-common sourcing pattern, and refreshed the scripts inventory for the new maintenance utility.
+
+## Version 2.2.71 (April 24, 2026) - Review Fixes
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- Hardened publish and dispatcher temp-file handling by creating npm auth files with `0600` permissions and replacing streaming FIFO `mktemp -u` usage with a private temp directory.
+- Made todo ID allocation lock-backed and atomic, preserved caller `allexport` state when sourcing `.env`, and corrected the canonical todo data format docs.
+- Fixed stale BATS expectations for Bash 4 report execution, break-timer lock location, and todo/spoon fixture dependencies.
 
 ## Version 2.2.70 (April 23, 2026) - Contract Fixes From Direction Audit
 

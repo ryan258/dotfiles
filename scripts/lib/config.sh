@@ -20,9 +20,16 @@ ENV_FILE="${ENV_FILE:-$DOTFILES_DIR/.env}"
 # they can freeze stale AI/model settings after .env changes.
 if [[ "${_DOTFILES_ENV_FILE_LOADED:-}" != "$ENV_FILE" ]]; then
     if [[ -f "$ENV_FILE" ]]; then
+        _dotfiles_allexport_was_set=false
+        case $- in
+            *a*) _dotfiles_allexport_was_set=true ;;
+        esac
         set -a
         source "$ENV_FILE"
-        set +a
+        if [[ "$_dotfiles_allexport_was_set" == "false" ]]; then
+            set +a
+        fi
+        unset _dotfiles_allexport_was_set
     fi
     _DOTFILES_ENV_FILE_LOADED="$ENV_FILE"
 fi

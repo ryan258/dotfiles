@@ -4,14 +4,14 @@ set -euo pipefail
 # --- new_script.sh: New Script Creation Utility ---
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
-  # shellcheck disable=SC1090
-  source "$SCRIPT_DIR/lib/common.sh"
-fi
-
 if [ -f "$SCRIPT_DIR/lib/config.sh" ]; then
   # shellcheck disable=SC1090
   source "$SCRIPT_DIR/lib/config.sh"
+fi
+
+if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$SCRIPT_DIR/lib/common.sh"
 fi
 
 if [ -z "${1:-}" ]; then
@@ -103,6 +103,10 @@ cat << EOF > "$SCRIPT_PATH"
 set -euo pipefail
 
 # --- $SCRIPT_NAME.sh ---
+
+SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+source "\$SCRIPT_DIR/lib/config.sh"
+source "\$SCRIPT_DIR/lib/common.sh"
 
 echo "Hello from $SCRIPT_NAME.sh!"
 EOF
