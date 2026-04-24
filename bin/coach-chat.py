@@ -32,6 +32,59 @@ def read_file(path):
         return f.read()
 
 
+def _extract_text_content(choice):
+    message = choice.get("message") if isinstance(choice, dict) else None
+    if isinstance(message, dict):
+        content = message.get("content")
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            parts = []
+            for item in content:
+                if not isinstance(item, dict):
+                    continue
+                if item.get("type") == "text" and isinstance(item.get("text"), str):
+                    parts.append(item["text"])
+            if parts:
+                return "\n".join(parts)
+        if isinstance(message.get("text"), str):
+            return message["text"]
+
+    text = choice.get("text") if isinstance(choice, dict) else None
+    if isinstance(text, str):
+        return text
+
+    return None
+
+
+def _http_error_message(exc):
+    detail = ""
+    try:
+        raw = exc.read()
+    except Exception:
+        raw = b""
+
+    if raw:
+        try:
+            body = json.loads(raw.decode("utf-8", errors="replace"))
+            if isinstance(body, dict):
+                error = body.get("error")
+                if isinstance(error, dict) and error.get("message"):
+                    detail = error["message"]
+                elif body.get("message"):
+                    detail = str(body["message"])
+                else:
+                    detail = json.dumps(body)
+            else:
+                detail = str(body)
+        except Exception:
+            detail = raw.decode("utf-8", errors="replace").strip()
+
+    if detail:
+        return f"{exc} - {detail}"
+    return str(exc)
+
+
 def init_history(history_file, system_prompt_file, briefing_file=None):
     system_prompt = read_file(system_prompt_file)
     messages = [{"role": "system", "content": system_prompt}]
@@ -98,7 +151,10 @@ def do_turn(history_file, user_message):
     try:
         with urllib.request.urlopen(req, timeout=60) as resp:
             body = json.loads(resp.read())
-    except (urllib.error.URLError, urllib.error.HTTPError) as exc:
+    except urllib.error.HTTPError as exc:
+        print(f"API request failed: {_http_error_message(exc)}", file=sys.stderr)
+        return 1
+    except urllib.error.URLError as exc:
         print(f"API request failed: {exc}", file=sys.stderr)
         return 1
 
@@ -112,7 +168,18 @@ def do_turn(history_file, user_message):
         print("Error: empty response from API", file=sys.stderr)
         return 1
 
-    content = body["choices"][0]["message"]["content"]
+    content = _extract_text_content(body["choices"][0])
+    if not isinstance(content, str) or not content.strip():
+        finish_reason = ""
+        if isinstance(body["choices"][0], dict):
+            finish_reason = body["choices"][0].get("finish_reason", "")
+        print(
+            "Error: model returned no text content"
+            + (f" (finish_reason={finish_reason})" if finish_reason else ""),
+            file=sys.stderr,
+        )
+        return 1
+
     messages.append({"role": "assistant", "content": content})
 
     fd, tmp = tempfile.mkstemp(dir=os.path.dirname(history_file))

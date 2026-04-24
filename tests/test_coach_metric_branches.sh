@@ -191,7 +191,7 @@ EOF
 
 @test "coach_focus_git_signal reports mixed when coherence is between thresholds" {
     run coach_focus_git_signal \
-        "Ship the dotfiles coach focus pass" \
+        "Ship the coach focus pass" \
         $'  • dotfiles (pushed today)' \
         $'  • dotfiles: ship coach focus pass (abc1234)\n  • dotfiles: update release notes (def5678)'
 
@@ -210,6 +210,19 @@ EOF
     assert_output_contains "focus_git_repo_count=3"
     assert_output_contains "focus_git_commit_coherence=0"
     assert_output_contains "focus_git_status=diffuse"
+}
+
+@test "coach_focus_git_signal treats repo-named focus as valid Git coherence even with side pushes" {
+    run coach_focus_git_signal \
+        "Work on dotfiles" \
+        $'  • dotfiles (pushed today)\n  • ai-staff-hq (pushed 2 days ago)\n  • my-ms-ai-blog (pushed 3 days ago)' \
+        $'  • dotfiles: Audit defaults cleanup and dispatcher path centralization (207fbed)\n  • dotfiles: fix: audit follow-up fixes for dispatchers, coach modules, and blog ops (225bcae)\n  • dotfiles: feat: add dhp-project and dhp-chain dispatchers (37a901d)'
+
+    assert_success
+    assert_output_contains "focus_git_primary_repo=dotfiles"
+    assert_output_contains "focus_git_repo_count=3"
+    assert_output_contains "focus_git_commit_coherence=100"
+    assert_output_contains "focus_git_status=mixed"
 }
 
 @test "coach_focus_git_signal reports no focus when focus text is empty" {

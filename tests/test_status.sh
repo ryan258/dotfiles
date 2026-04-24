@@ -258,6 +258,28 @@ EOF
     [[ "$output" == *"Spear alignment: aligned via dotfiles (100% commit coherence; 1 repo active)"* ]]
 }
 
+@test "status.sh DAILY CONTEXT treats repo-named focus with strong primary repo as mixed not diffuse" {
+    echo "Work on dotfiles" > "$DATA_DIR/daily_focus.txt"
+    cat > "$DATA_DIR/github_commits.txt" <<'EOF'
+dotfiles|207fbed|Audit defaults cleanup and dispatcher path centralization
+dotfiles|225bcae|fix: audit follow-up fixes for dispatchers, coach modules, and blog ops
+dotfiles|37a901d|feat: add dhp-project and dhp-chain dispatchers
+EOF
+    cat > "$DATA_DIR/github_repos.json" <<'EOF'
+[
+  {"name":"dotfiles","pushed_at":"2026-04-23T18:00:00Z"},
+  {"name":"ai-staff-hq","pushed_at":"2026-04-22T18:00:00Z"},
+  {"name":"my-ms-ai-blog","pushed_at":"2026-04-21T18:00:00Z"}
+]
+EOF
+
+    run _run_status GITHUB_COMMITS_FIXTURE="$DATA_DIR/github_commits.txt" GITHUB_REPOS_FIXTURE="$DATA_DIR/github_repos.json"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Focus: Work on dotfiles"* ]]
+    [[ "$output" == *"Spear alignment: mixed via dotfiles (100% commit coherence; 3 repos active)"* ]]
+}
+
 @test "status.sh --coach renders AI status coach section and builds a status-specific prompt" {
     echo "logo" > "$DATA_DIR/daily_focus.txt"
     cat > "$DATA_DIR/github_commits.txt" <<'EOF'

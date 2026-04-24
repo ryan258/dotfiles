@@ -66,12 +66,18 @@ Interactive follow-up rules:
     local _cc_sysprompt="$_cc_dir/system.txt"
     local _cc_briefing="$_cc_dir/briefing.txt"
     local _cc_menu_state="$_cc_dir/menu_state.tsv"
+    local _cc_error_log="$_cc_dir/coach-chat.stderr"
 
     printf '%s' "$system_prompt" > "$_cc_sysprompt"
     printf '%s' "$briefing" > "$_cc_briefing"
 
-    if ! python3 "$chat_py" init "$_cc_history" "$_cc_sysprompt" "$_cc_briefing" 2>/dev/null; then
-        log_warn "Coach chat could not initialize; continuing without the interactive follow-up."
+    : > "$_cc_error_log"
+    if ! python3 "$chat_py" init "$_cc_history" "$_cc_sysprompt" "$_cc_briefing" 2>"$_cc_error_log"; then
+        if [[ -s "$_cc_error_log" ]]; then
+            log_warn "Coach chat could not initialize: $(tr '\n' ' ' < "$_cc_error_log" | sed 's/[[:space:]]\+/ /g; s/[[:space:]]$//'). Continuing without the interactive follow-up."
+        else
+            log_warn "Coach chat could not initialize; continuing without the interactive follow-up."
+        fi
         rm -rf "$_cc_dir" 2>/dev/null || true
         return 0
     fi
@@ -122,10 +128,19 @@ Interactive follow-up rules:
         # Send to AI
         response=""
         turn_status=0
-        response=$(python3 "$chat_py" turn "$_cc_history" "$user_input" 2>/dev/null) || turn_status=$?
+        : > "$_cc_error_log"
+        response=$(python3 "$chat_py" turn "$_cc_history" "$user_input" 2>"$_cc_error_log") || turn_status=$?
 
-        if [[ "$turn_status" -ne 0 ]] || [[ -z "$response" ]]; then
-            echo "(Couldn't get a response. Try again or /q to exit)" >&2
+        if [[ "$turn_status" -ne 0 ]] || [[ -z "$response" ]] || [[ "$response" == "None" ]] || [[ "$response" == "null" ]]; then
+            local error_summary=""
+            if [[ -s "$_cc_error_log" ]]; then
+                error_summary=$(tr '\n' ' ' < "$_cc_error_log" | sed 's/[[:space:]]\+/ /g; s/[[:space:]]$//')
+            fi
+            if [[ -n "$error_summary" ]]; then
+                echo "(Coach chat failed: $error_summary)" >&2
+            else
+                echo "(Couldn't get a response. Try again or /q to exit)" >&2
+            fi
         else
             echo "" >&2
             echo "$response" >&2

@@ -10,6 +10,8 @@
 
 - `scripts/lib/blog_lifecycle.sh` now keeps `blog version history` inside a subshell, and `scripts/lib/blog_ops.sh` now localizes its status/stub bookkeeping so sourced callers do not inherit stray globals.
 - `scripts/lib/coach_ops.sh` now sets its load guard at the standard location, `bin/dhp-shared.sh` now reports failed swarm runs through its intended error branch, and `scripts/meds.sh` now escapes AppleScript notification text before invoking `osascript`.
+- `scripts/lib/coach_chat.sh` now shows the real coach-chat failure reason instead of swallowing Python/API stderr, and `bin/coach-chat.py` now fails clearly when OpenRouter returns HTTP error details or a non-text/null assistant payload.
+- `scripts/lib/coach_metrics.sh` now counts repo-named focus lanes like `Work on dotfiles` as valid Git alignment even when commit subjects do not repeat the repo name, and it downgrades strong-primary-repo days with a little side activity to `mixed` instead of incorrectly calling them fully `diffuse`.
 - `scripts/health.sh`, `scripts/week_in_review.sh`, and `scripts/startday.sh` now honor the configured project/review directories instead of hardcoded home-path defaults.
 - `scripts/goodevening.sh` now resolves `data_validate.sh` from `SCRIPT_DIR`, so symlinked invocations still find the sibling validator correctly.
 - Added focused BATS coverage for blog lifecycle cwd preservation, dispatcher failure reporting, escaped meds notifications, configurable weekly-review output, blog status scope hygiene, and symlink-safe goodevening validation.

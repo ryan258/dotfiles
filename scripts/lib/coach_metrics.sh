@@ -116,6 +116,24 @@ _coach_text_matches_keywords() {
     return 1
 }
 
+_coach_git_signal_matches_focus() {
+    local repo_name="${1:-}"
+    local message_text="${2:-}"
+    local keywords="${3:-}"
+
+    [[ -n "$keywords" ]] || return 1
+
+    if [[ -n "$message_text" ]] && _coach_text_matches_keywords "$message_text" "$keywords"; then
+        return 0
+    fi
+
+    if [[ -n "$repo_name" ]] && _coach_text_matches_keywords "$repo_name" "$keywords"; then
+        return 0
+    fi
+
+    return 1
+}
+
 _coach_repo_from_activity_line() {
     local line="$1"
     printf '%s\n' "$line" | awk '
@@ -859,7 +877,7 @@ coach_focus_git_signal() {
         fi
         if [[ -n "$message" ]]; then
             commit_total=$((commit_total + 1))
-            if [[ -n "$keywords" ]] && _coach_text_matches_keywords "$message" "$keywords"; then
+            if _coach_git_signal_matches_focus "$repo" "$message" "$keywords"; then
                 commit_matches=$((commit_matches + 1))
             fi
         fi
@@ -907,15 +925,20 @@ coach_focus_git_signal() {
             status="diffuse"
             reason="recent GitHub activity is spread across ${repo_count} repos without commit-level evidence"
         fi
-    elif [[ "$commit_coherence" -ge "$high_threshold" ]] && [[ "${primary_repo_share:-0}" =~ ^[0-9]+$ ]] && [[ "${primary_repo_share:-0}" -ge "$repo_share_threshold" ]] && [[ "${repo_count:-0}" -le "$repo_drift_threshold" ]]; then
-        status="aligned"
-        reason="${commit_matches}/${commit_total} commit cues match focus; primary repo ${primary_repo} holds ${primary_repo_share}% of observed activity"
-    elif [[ "$commit_coherence" -lt "$low_threshold" ]] || [[ "${repo_count:-0}" -gt "$repo_drift_threshold" ]]; then
+    elif [[ "$commit_coherence" -ge "$high_threshold" ]] && [[ "${primary_repo_share:-0}" =~ ^[0-9]+$ ]] && [[ "${primary_repo_share:-0}" -ge "$repo_share_threshold" ]]; then
+        if [[ "${repo_count:-0}" -le "$repo_drift_threshold" ]]; then
+            status="aligned"
+            reason="${commit_matches}/${commit_total} Git cues match focus; primary repo ${primary_repo} holds ${primary_repo_share}% of observed activity"
+        else
+            status="mixed"
+            reason="${commit_matches}/${commit_total} Git cues match focus; primary repo ${primary_repo} still dominates ${primary_repo_share}% of observed activity even though ${repo_count} repos were active"
+        fi
+    elif [[ "$commit_coherence" -lt "$low_threshold" ]] || { [[ "${repo_count:-0}" -gt "$repo_drift_threshold" ]] && { [[ ! "${primary_repo_share:-0}" =~ ^[0-9]+$ ]] || [[ "${primary_repo_share:-0}" -lt "$repo_share_threshold" ]]; }; }; then
         status="diffuse"
-        reason="${commit_matches}/${commit_total} commit cues match focus; activity spans ${repo_count} repos"
+        reason="${commit_matches}/${commit_total} Git cues match focus; activity spans ${repo_count} repos"
     else
         status="mixed"
-        reason="${commit_matches}/${commit_total} commit cues match focus; primary repo ${primary_repo} holds ${primary_repo_share}% of observed activity"
+        reason="${commit_matches}/${commit_total} Git cues match focus; primary repo ${primary_repo} holds ${primary_repo_share}% of observed activity"
     fi
 
     echo "focus_git_primary_repo=${primary_repo:-N/A}"

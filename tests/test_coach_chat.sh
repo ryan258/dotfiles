@@ -20,15 +20,23 @@ setup() {
     cat > "$DOTFILES_DIR/bin/coach-chat.py" <<'EOF'
 #!/usr/bin/env python3
 import json
+import os
 import sys
 
 mode = sys.argv[1]
 history_path = sys.argv[2]
+stub_mode = os.environ.get("COACH_CHAT_STUB_MODE", "reply")
 if mode == "init":
     with open(history_path, "w", encoding="utf-8") as handle:
         json.dump({"ok": True}, handle)
     sys.exit(0)
 if mode == "turn":
+    if stub_mode == "fail":
+        print("stub failure from python", file=sys.stderr)
+        sys.exit(1)
+    if stub_mode == "none":
+        print("None")
+        sys.exit(0)
     print("Stub coach reply")
     sys.exit(0)
 sys.exit(1)
@@ -121,6 +129,59 @@ EOF
     chmod +x "$runner"
 
     run bash "$runner"
+
+    [ "$status" -eq 0 ]
+}
+
+@test "coach chat surfaces Python/API stderr instead of swallowing it" {
+    local runner="$TEST_ROOT/run_coach_chat_error_expect.sh"
+
+    cat > "$runner" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+export HOME="$HOME"
+export DATA_DIR="$DATA_DIR"
+export DOTFILES_DIR="$DOTFILES_DIR"
+export COACH_CHAT_STUB_MODE=fail
+/usr/bin/expect <<'EXPECT'
+set timeout 20
+spawn bash -lc "source '$env(DOTFILES_DIR)/scripts/lib/config.sh'; source '$env(DOTFILES_DIR)/scripts/lib/common.sh'; source '$env(DOTFILES_DIR)/scripts/lib/coach_chat.sh'; coach_start_chat 'Briefing text' 'status'"
+expect -re {coach>}
+send -- "hello\r"
+expect -re {Coach chat failed: stub failure from python}
+send -- "/q\r"
+expect -re {Take care\.}
+expect eof
+EXPECT
+EOF
+    chmod +x "$runner"
+
+    run bash "$runner"
+
+    [ "$status" -eq 0 ]
+}
+
+@test "coach-chat.py content extractor handles structured and missing content" {
+    run python3 - <<'PY'
+import importlib.util
+
+spec = importlib.util.spec_from_file_location("coach_chat_py", "bin/coach-chat.py")
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+
+structured = {
+    "message": {
+        "content": [
+            {"type": "text", "text": "First line"},
+            {"type": "image", "image_url": "ignored"},
+            {"type": "text", "text": "Second line"},
+        ]
+    }
+}
+
+assert module._extract_text_content(structured) == "First line\nSecond line"
+assert module._extract_text_content({"message": {"content": None}}) is None
+PY
 
     [ "$status" -eq 0 ]
 }
