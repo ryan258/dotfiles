@@ -5,7 +5,7 @@ The canonical contract and coding rules live in `../CLAUDE.md`.
 
 ## Current Inventory
 
-- 74 top-level shell utilities
+- 75 top-level shell utilities
 - 5 top-level Python helpers
 - 25 sourced shell libraries plus 2 Python modules under `scripts/lib/`
 
@@ -42,7 +42,13 @@ The canonical contract and coding rules live in `../CLAUDE.md`.
 
 - `start_project.sh`, `mkproject_py.sh`, `new_script.sh`
 - `github_helper.sh`, `dotfiles_check.sh`, `validate_env.sh`
-- `gitnexus.sh`, `open_file.sh`, `run_with_modern_bash.sh`
+- `gitnexus.sh`, `bash_intel.sh`, `open_file.sh`, `run_with_modern_bash.sh`
+
+## Code Intelligence
+
+- `gitnexus.sh` is the canonical GitNexus CLI entrypoint for supported languages and repo-level index tasks.
+- `bash_intel.sh` wraps `bash-language-server` for shell symbols, workspace searches, definitions, and references. It uses `BASH_LANGUAGE_SERVER_BIN` when configured, a `bash-language-server` binary on `PATH` when installed, or `npx --yes bash-language-server start` as a fallback. If a cold `npx` startup is slow, set `BASH_INTEL_TIMEOUT_MS=60000`.
+- GitNexus does not extract bash/zsh function symbols in this repo; for `.sh`/`.zsh` changes, combine `bash_intel.sh` with `rg`, manual sourced-vs-executed boundary checks, and targeted bats tests.
 
 ## File, Media, and Maintenance Utilities
 

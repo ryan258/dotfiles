@@ -1,6 +1,20 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** April 24, 2026
+**Last Updated:** April 26, 2026
+
+## Version 2.2.73 (April 26, 2026) - Shell Intelligence
+
+**Status:** ✅ Production Ready
+
+### Added
+
+- Added `scripts/bash_intel.sh` as the shell-code intelligence entrypoint backed by `bash-language-server`, with commands for backend checks, file symbols, workspace symbols, definitions, and references.
+- Added `scripts/bash_intel_client.mjs`, a dependency-free Node LSP client that prefers `BASH_LANGUAGE_SERVER_BIN`, then `PATH`, then an `npx` fallback.
+- Added focused BATS coverage for wrapper delegation, path validation, and argument handling.
+
+### Changed
+
+- Updated the GitNexus guidance to keep GitNexus on supported Python symbols while routing shell symbol work through `bash_intel.sh`, `rg`, manual boundary tracing, and bats tests.
 
 ## Version 2.2.72 (April 24, 2026) - Architecture Cleanup
 
