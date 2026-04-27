@@ -5,8 +5,8 @@ The canonical contract and coding rules live in `../CLAUDE.md`.
 
 ## Current Inventory
 
-- 75 top-level shell utilities
-- 5 top-level Python helpers
+- 76 top-level shell utilities
+- 6 top-level Python helpers
 - 25 sourced shell libraries plus 2 Python modules under `scripts/lib/`
 
 ## Daily Loop and Context Commands
@@ -42,13 +42,14 @@ The canonical contract and coding rules live in `../CLAUDE.md`.
 
 - `start_project.sh`, `mkproject_py.sh`, `new_script.sh`
 - `github_helper.sh`, `dotfiles_check.sh`, `validate_env.sh`
-- `gitnexus.sh`, `bash_intel.sh`, `open_file.sh`, `run_with_modern_bash.sh`
+- `bash_intel.sh`, `bash_graph.sh`, `gitnexus.sh`, `open_file.sh`, `run_with_modern_bash.sh`
 
 ## Code Intelligence
 
-- `gitnexus.sh` is the canonical GitNexus CLI entrypoint for supported languages and repo-level index tasks.
-- `bash_intel.sh` wraps `bash-language-server` for shell symbols, workspace searches, definitions, and references. It uses `BASH_LANGUAGE_SERVER_BIN` when configured, a `bash-language-server` binary on `PATH` when installed, or `npx --yes bash-language-server start` as a fallback. If a cold `npx` startup is slow, set `BASH_INTEL_TIMEOUT_MS=60000`.
-- GitNexus does not extract bash/zsh function symbols in this repo; for `.sh`/`.zsh` changes, combine `bash_intel.sh` with `rg`, manual sourced-vs-executed boundary checks, and targeted bats tests.
+- `bash_intel.sh` is the **canonical** code-intelligence tool for this repo. It wraps `bash-language-server` (LSP) for symbols, workspace searches, definitions, and references across `.sh`/`.bash`/`.zsh` files. It uses `BASH_LANGUAGE_SERVER_BIN` when configured, a `bash-language-server` binary on `PATH` when installed, or `npx --yes bash-language-server start` as a fallback. If a cold `npx` startup is slow, set `BASH_INTEL_TIMEOUT_MS=60000`.
+- `bash_graph.sh` is the scoped shell dependency graph for this repo. It scans shell files for function definitions, conservative function references, `source`/`.` edges, aliases, and impact summaries. Use it when you need source topology that the language server does not model.
+- `gitnexus.sh` is kept as a **portable cross-project shortcut** for running GitNexus in other repos (Python codebases where it actually adds value). It is **not** used against the dotfiles repo itself — GitNexus does not extract bash/zsh function symbols, so it provided no value here. Do not run `gitnexus analyze` against this repo or commit a `.gitnexus/` index.
+- See `docs/products/bash-intel.md` for the full operator handbook (commands, workflows, optimization tips, troubleshooting).
 
 ## File, Media, and Maintenance Utilities
 

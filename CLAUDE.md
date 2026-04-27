@@ -35,14 +35,17 @@ Every design decision should optimize for low-friction, low-cognitive-load inter
 
 ## Shell Code Intelligence
 
-GitNexus is **not active** for this repo — the index has been removed. GitNexus v1.6.3 cannot extract bash/zsh function symbols, so it provided no value for this predominantly shell codebase. Do not run any GitNexus tools (`gitnexus_impact`, `gitnexus_context`, `gitnexus_query`, `gitnexus_detect_changes`) here.
+GitNexus is **not used** on this repo. It cannot extract bash/zsh function symbols, so it provided no value for a predominantly shell codebase. Do **not** run GitNexus tools (`gitnexus_impact`, `gitnexus_context`, `gitnexus_query`, `gitnexus_detect_changes`, `gn analyze`) against this repo or reintroduce a `.gitnexus/` index here. The `scripts/gitnexus.sh` wrapper is kept only as a portable shortcut for use against **other** projects (Python codebases) — it is intentionally not invoked against dotfiles.
 
-For shell code navigation and impact analysis, use:
+For shell code navigation and impact analysis, use **`scripts/bash_intel.sh`** as the canonical tool:
 
-- `scripts/bash_intel.sh` for Bash language-server symbols (definitions, references, workspace search)
-- `rg` to trace callers and sourced files
-- Manual sourced-vs-executed boundary inspection
-- Targeted bats tests and smoke scripts
+- `bash_intel.sh symbols <file>` — outline a single shell file
+- `bash_intel.sh workspace-symbols <query>` — search across all shell files
+- `bash_intel.sh definition <symbol>` / `references <symbol>` — jump to or find callers of a function
+- `bash_graph.sh scan` / `impact <symbol-or-file>` — inspect shell dependency/source topology
+- Pair with `rg` for sourced-vs-executed boundary checks and targeted bats tests
+
+The full operator handbook lives at **`docs/products/bash-intel.md`** — read it before doing non-trivial shell refactors.
 
 ---
 

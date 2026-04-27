@@ -4,12 +4,12 @@ This folder is the entry point for the root `dotfiles` documentation. Use it as 
 
 ## Current Inventory Snapshot
 
-Current root-repo counts as of April 23, 2026:
+Current root-repo counts as of April 27, 2026:
 
-- `scripts/`: 73 shell utilities plus 5 Python helpers
+- `scripts/`: 76 shell utilities plus 6 Python helpers
 - `scripts/lib/`: 25 sourced shell libraries plus 2 Python modules
 - `bin/`: 30 non-markdown entry points, including 21 `dhp-*.sh` executables
-- `tests/`: 49 Bats test files
+- `tests/`: 53 Bats test files
 
 ## Start Here
 
@@ -114,6 +114,10 @@ Repair steps for missing commands, API keys, GitHub tokens, and shell issues.
 ### [Energy Road Map](ROADMAP-ENERGY.md)
 
 Choose work based on current energy instead of deadline pressure.
+
+### [Karpathy Protocol for Dotfiles](kplan.md)
+
+Low-bandwidth operator handbook for delegating execution to agents while using bash-intel, `rg`, tests, and diffs for blast-radius review.
 
 ### [Archive Phases](archive/phases.md)
 

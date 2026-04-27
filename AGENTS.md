@@ -39,7 +39,7 @@ This is a personal productivity system for a developer with MS (multiple scleros
 8. **Config loading:** Only `scripts/lib/config.sh` may source `.env` (except `scripts/validate_env.sh`)
 9. **DATA_DIR ownership:** Never redefine `DATA_DIR` with per-script home-path fallbacks after sourcing `config.sh`
 10. **Library dependencies:** `scripts/lib/*.sh` must not self-source sibling libs (compat exception: `common.sh` bootstrap only)
-11. **Shell intelligence:** GitNexus is not active for this repo; use `scripts/bash_intel.sh`, `rg`, manual boundary tracing, and bats tests for shell changes
+11. **Shell intelligence:** Do not run GitNexus against this repo (no shell symbol support). Use `scripts/bash_intel.sh` (LSP-backed) for symbols/definitions/references and `scripts/bash_graph.sh` for shell dependency/source topology, plus `rg`, manual sourced-vs-executed boundary tracing, and bats tests. See `docs/products/bash-intel.md`. (`scripts/gitnexus.sh` is retained only as a portable shortcut for use against other repos.)
 
 ---
 

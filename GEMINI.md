@@ -34,6 +34,7 @@ These rules are NON-NEGOTIABLE for the root dotfiles project:
 | User paths        | ALWAYS validate with `validate_path()`          |
 | `copy` alias      | Maps to `pbcopy` (clipboard)                    |
 | `aicopy` alias    | Maps to AI copywriter dispatcher                |
+| Shell intelligence| Do NOT run GitNexus. Use scripts/bash_intel.sh + scripts/bash_graph.sh |
 
 ---
 
@@ -256,6 +257,23 @@ dhp_dispatch "Name" "model" "$output_dir" \
 - AI: `tech`, `creative`, `strategy`
 - Scripts: `todo`, `journal`, `j`
 - Spoons: `s-check`, `s-spend`
+
+---
+
+## Code Intelligence
+
+Do **not** run GitNexus tools against this repo. It cannot extract bash/zsh function symbols, so it provides no value here. The `scripts/gitnexus.sh` wrapper is kept only as a portable shortcut for use against **other** projects.
+
+For shell code navigation, use **`scripts/bash_intel.sh`** (LSP-backed):
+
+- `bash_intel.sh symbols <file>`
+- `bash_intel.sh workspace-symbols <query>`
+- `bash_intel.sh definition <symbol>`
+- `bash_intel.sh references <symbol>`
+- `bash_graph.sh scan`
+- `bash_graph.sh impact <symbol-or-file>`
+
+Read **`docs/products/bash-intel.md`** for the full operator handbook.
 
 ---
 

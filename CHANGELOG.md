@@ -1,6 +1,19 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** April 26, 2026
+**Last Updated:** April 27, 2026
+
+## Version 2.2.74 (April 27, 2026) - Bash Dependency Graph
+
+**Status:** ✅ Production Ready
+
+### Added
+
+- Added `scripts/bash_graph.sh` and `scripts/bash_graph.py` as a scoped shell dependency graph for dotfiles, covering shell files, function definitions, conservative function references, `source`/`.` edges, aliases, and symbol/file impact summaries.
+- Added focused BATS coverage for graph scanning, source resolution, dependents, aliases, and symbol impact output.
+
+### Changed
+
+- Updated shell-intelligence guidance to pair `bash_intel.sh` for LSP-backed symbol lookup with `bash_graph.sh` for source/dependency topology, while keeping GitNexus out of the dotfiles repo itself.
 
 ## Version 2.2.73 (April 26, 2026) - Shell Intelligence
 
