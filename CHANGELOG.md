@@ -1,6 +1,18 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** April 27, 2026
+**Last Updated:** May 8, 2026
+
+## Version 2.2.75 (May 8, 2026) - Blog Status Per-Section Breakdown
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- `blog_status()` in `scripts/lib/blog_ops.sh` now walks every Hugo content section under `${BLOG_CONTENT_DIR:-$BLOG_DIR/content}`, reports a total plus a per-section breakdown sorted by count, skips `_index.md` and top-level content files (the stub scan uses `-mindepth 2` to stay aligned with the section walk), and respects the same `BLOG_CONTENT_DIR` override that `blog_recent_content.sh` and the coach context use. Previously it only counted `content/posts/*.md`, which produced a misleading "Total posts: 0" for blogs that organize content under sibling sections (e.g. `artifacts/`, `workflows/`, `learn/`) and made the daily coach narrate "0 published posts" despite hundreds of files.
+
+### Added
+
+- New BATS coverage in `tests/test_blog_status.sh` for the per-section breakdown, the empty-content fallback, stub counting across multiple sections, top-level-page exclusion from the stub count, and the `BLOG_CONTENT_DIR` override path.
 
 ## Version 2.2.74 (April 27, 2026) - Bash Dependency Graph
 

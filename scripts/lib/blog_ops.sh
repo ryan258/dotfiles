@@ -80,24 +80,63 @@ blog_print_review_summary() {
 
 # --- Subcommand: status ---
 blog_status() {
-    local total_posts
-    local stub_files
-    local stub_count
+    local content_root
+    local total=0
+    local section_count=0
+    local section_lines=""
+    local section_dir
+    local section_name
+    local section_total
+    local stub_count=0
+    local stub_files=""
     local last_update
     local last_update_epoch
     local days_since
 
     echo "📝 BLOG STATUS (ryanleej.com):"
 
-    total_posts=$(find "$POSTS_DIR" -name "*.md" | wc -l | tr -d ' ')
-    stub_files=$(grep -l -i "content stub" "$POSTS_DIR"/*.md 2>/dev/null || true)
-    if [ -n "$stub_files" ]; then
-        stub_count=$(printf "%s\n" "$stub_files" | grep -c . || true)
-    else
-        stub_count=0
+    content_root="${BLOG_CONTENT_DIR:-$BLOG_DIR/content}"
+
+    if [ -d "$content_root" ]; then
+        local pairs=""
+        while IFS= read -r section_dir; do
+            [ -z "$section_dir" ] && continue
+            section_name=$(basename "$section_dir")
+            section_total=$(find "$section_dir" -type f -name "*.md" ! -name "_index.md" 2>/dev/null | wc -l | tr -d ' ')
+            if [ "$section_total" -gt 0 ]; then
+                pairs="${pairs}${section_total} ${section_name}"$'\n'
+                total=$((total + section_total))
+                section_count=$((section_count + 1))
+            fi
+        done < <(find "$content_root" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort)
+
+        if [ -n "$pairs" ]; then
+            section_lines=$(printf "%s" "$pairs" | sort -k1,1 -nr -k2,2)
+        fi
+
+        # mindepth 2 keeps the stub scan aligned with the section walk above
+        # (which only counts files inside section subdirs, not bare pages at
+        # the content root like content/search.md).
+        stub_files=$(find "$content_root" -mindepth 2 -type f -name "*.md" ! -name "_index.md" -exec grep -l -i "content stub" {} + 2>/dev/null || true)
+        if [ -n "$stub_files" ]; then
+            stub_count=$(printf "%s\n" "$stub_files" | grep -c .)
+        fi
     fi
 
-    echo "  • Total posts: $total_posts"
+    if [ "$total" -eq 0 ]; then
+        echo "  • Total content: 0"
+    else
+        local section_label="sections"
+        [ "$section_count" -eq 1 ] && section_label="section"
+        echo "  • Total content: $total across $section_count $section_label"
+        local line count_part name_part
+        while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            count_part="${line%% *}"
+            name_part="${line#* }"
+            echo "    - $name_part: $count_part"
+        done <<< "$section_lines"
+    fi
     echo "  • Posts needing content: $stub_count"
 
     blog_print_review_summary
