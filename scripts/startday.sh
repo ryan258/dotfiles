@@ -40,6 +40,11 @@ fi
 # Save today's date so later scripts know which "day" this session started on.
 date_today > "$CURRENT_DAY_FILE"
 
+OBSERVER_SCRIPT="$SCRIPT_DIR/observer.sh"
+if [ "${OBSIDIAN_DAILY_ENABLED:-true}" = "true" ] && [ -x "$OBSERVER_SCRIPT" ]; then
+    "$OBSERVER_SCRIPT" ensure-daily "$(date_today)" >/dev/null 2>&1 || true
+fi
+
 CONTEXT_CAPTURE_ON_START="${CONTEXT_CAPTURE_ON_START:-false}"
 if [ "$CONTEXT_CAPTURE_ON_START" = "true" ]; then
     # Optional: save a snapshot of the current workspace at the start of the day.

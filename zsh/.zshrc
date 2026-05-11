@@ -64,6 +64,48 @@ __log_directory_change() {
 __ensure_private_usage_log
 add-zsh-hook chpwd __log_directory_change
 
+# --- Obsidian Observer: lightweight command event capture ---
+OBSERVER_SCRIPT="${OBSERVER_SCRIPT:-${DOTFILES_DIR:-$HOME/dotfiles}/scripts/observer.sh}"
+__observer_command_text=""
+__observer_command_cwd=""
+__observer_command_start=""
+
+__observer_preexec() {
+    [[ "${OBSERVER_ENABLED:-true}" == "false" ]] && return
+    [[ "${OBSERVER_CAPTURE_COMMANDS:-true}" == "false" ]] && return
+    __observer_command_text="$1"
+    __observer_command_cwd="$PWD"
+    __observer_command_start="$(date +%s)"
+}
+
+__observer_precmd() {
+    local exit_code=$?
+    [[ "${OBSERVER_ENABLED:-true}" == "false" ]] && return
+    [[ "${OBSERVER_CAPTURE_COMMANDS:-true}" == "false" ]] && return
+    [[ -n "${__observer_command_text:-}" ]] || return
+    [[ -x "$OBSERVER_SCRIPT" ]] || return
+
+    local command_text="$__observer_command_text"
+    local command_cwd="$__observer_command_cwd"
+    local command_start="${__observer_command_start:-$(date +%s)}"
+    local command_end
+    command_end="$(date +%s)"
+
+    __observer_command_text=""
+    __observer_command_cwd=""
+    __observer_command_start=""
+
+    "$OBSERVER_SCRIPT" record-command \
+        --command "$command_text" \
+        --exit-code "$exit_code" \
+        --cwd "$command_cwd" \
+        --start-epoch "$command_start" \
+        --end-epoch "$command_end" >/dev/null 2>&1 &!
+}
+
+add-zsh-hook preexec __observer_preexec
+add-zsh-hook precmd __observer_precmd
+
 # Added by Antigravity
 export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
 

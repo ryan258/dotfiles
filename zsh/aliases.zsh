@@ -373,6 +373,7 @@ alias archlist="archive_manager.sh list"        # List archive contents without 
 # Information dashboards — at-a-glance system + productivity state
 alias info="weather.sh && echo && todo.sh list"           # Weather + open tasks
 alias status="status.sh"                                  # Unified status dashboard
+alias observer="observer.sh"                              # Obsidian observer capture/digest tool
 alias overview="system_info.sh && echo && battery_check.sh"  # Hardware + battery
 
 # Quick maintenance routines
