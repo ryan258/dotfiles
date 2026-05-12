@@ -7,6 +7,7 @@ This repo is a command-line productivity environment built around shell scripts,
 - Daily coaching and check-ins with `startday`, `status`, and `goodevening`
 - Task, journal, focus, reminder, and time-tracking workflows
 - Health, meds, spoon-budget, and Fitbit/Google Health tracking
+- Obsidian Knowledge Graph integration (daily digests, loops, and web clips)
 - AI dispatchers for coding, strategy, writing, research, memory, and orchestration
 - Repo-aware agents for project documentation, build-and-verify loops, and site sync
 - Local flat-file data under `~/.config/dotfiles-data/`

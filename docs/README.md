@@ -97,6 +97,14 @@ Direct vs swarm Morphling modes and build-pipeline usage.
 
 ## Brain and Memory
 
+### [Obsidian Knowledge Graph Framework](obsidian-knowledge-graph-framework.md)
+
+Operator guide for the new local Markdown graph:
+
+- shell observer, daily notes, open loops, and explorations
+- Project and Workflow promotion
+- Web Clipper intake, Source notes, Concept tag rules, and graph checks
+
 ### [Brain Handbook](../brain/HANDBOOK.md)
 
 Shared vector-store memory, ingestion, and recall.

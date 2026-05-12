@@ -42,7 +42,7 @@ date_today > "$CURRENT_DAY_FILE"
 
 OBSERVER_SCRIPT="$SCRIPT_DIR/observer.sh"
 if [ "${OBSIDIAN_DAILY_ENABLED:-true}" = "true" ] && [ -x "$OBSERVER_SCRIPT" ]; then
-    "$OBSERVER_SCRIPT" ensure-daily "$(date_today)" >/dev/null 2>&1 || true
+    "$OBSERVER_SCRIPT" startday "$(date_today)" >/dev/null 2>&1 || true
 fi
 
 CONTEXT_CAPTURE_ON_START="${CONTEXT_CAPTURE_ON_START:-false}"

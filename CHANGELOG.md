@@ -1,6 +1,23 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** May 8, 2026
+**Last Updated:** May 11, 2026
+
+## Version 2.2.76 (May 11, 2026) - Obsidian Knowledge Graph Framework (V3)
+
+**Status:** ✅ Production Ready
+
+### New
+
+- Completely rebuilt the Obsidian observer into a sophisticated Knowledge Graph Framework (V3).
+- Added `docs/obsidian-knowledge-graph-framework.md` as the definitive operator guide for the local Markdown graph, covering the strict fenced ownership model (observer/codex/user) that prevents AI agents from overwriting user prose.
+- Implemented a layered data strategy in `scripts/observer.py`: V1 for open loops and temporary 24-hour explorations, V2 for repo-level project hubs and command sequence workflows, and V3 for web clipper intake, citation-backed source notes, and explicit concept tags.
+- Replaced the simple `ensure-daily` hook in `scripts/startday.sh` with a comprehensive `observer startday` hook that creates the daily note, surfaces accepted open loops, and cleans up expired explorations.
+- Added 12 new CLI subcommands to `observer.py`, including actions for open-loop resolution, project/workflow/concept/source note creation, clip archiving, and 11 distinct graph maintenance dashboards (`observer graph ...`).
+- Added robust deduplication, `git status --porcelain` integration for repo-specific loop detection (e.g., `TODO/FIXME` monitoring), and deterministic command-chain payload formatting.
+
+### Added
+
+- Three new comprehensive BATS test suites (`tests/test_observer_v1.sh`, `tests/test_observer_v2.sh`, `tests/test_observer_v3.sh`) to rigorously cover V1/V2/V3 features, ensuring state transitions, block replacement logic, and telemetry ingestion work flawlessly.
 
 ## Version 2.2.75 (May 8, 2026) - Blog Status Per-Section Breakdown
 
