@@ -80,7 +80,7 @@ esac
 EOF
     chmod +x "$DOTFILES_DIR/scripts/journal.sh"
 
-    for script in idea.sh focus.sh drive.sh; do
+    for script in idea.sh focus.sh; do
         cat > "$DOTFILES_DIR/scripts/$script" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -88,6 +88,25 @@ printf 'stub: %s %s\n' "${1:-}" "${2:-}"
 EOF
         chmod +x "$DOTFILES_DIR/scripts/$script"
     done
+
+    cat > "$DOTFILES_DIR/scripts/drive.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+case "${1:-}" in
+  status)
+    cat <<'OUT'
+=== Google Drive Status ===
+Auth: configured
+Token: valid
+Cache: available at /tmp/google_drive_search_cache.json
+OUT
+    ;;
+  *)
+    printf 'drive stub: %s %s\n' "${1:-}" "${2:-}"
+    ;;
+esac
+EOF
+    chmod +x "$DOTFILES_DIR/scripts/drive.sh"
 }
 
 teardown() {
@@ -131,6 +150,16 @@ EOF
     run bash "$runner"
 
     [ "$status" -eq 0 ]
+}
+
+@test "coach chat answers Drive access questions locally" {
+    run bash -c "source '$DOTFILES_DIR/scripts/lib/config.sh'; source '$DOTFILES_DIR/scripts/lib/common.sh'; source '$DOTFILES_DIR/scripts/lib/coach_chat.sh'; _coach_chat_maybe_handle_drive_question 'Are you still able to access my google drive activity?' '$TEST_ROOT/menu_state.tsv' 2>&1"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Drive access check:"* ]]
+    [[ "$output" == *"Auth: configured"* ]]
+    [[ "$output" == *"Token: valid"* ]]
+    [[ "$output" == *"Use /d recent 1"* ]]
 }
 
 @test "coach chat surfaces Python/API stderr instead of swallowing it" {

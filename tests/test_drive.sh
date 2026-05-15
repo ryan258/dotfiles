@@ -101,6 +101,30 @@ EOF
     [ "$(cat "$TEST_DIR/curl_count.txt")" -eq 1 ]
 }
 
+@test "drive recent --all returns recent activity without focus filtering" {
+    local mock_bin="$TEST_DIR/bin"
+    mkdir -p "$mock_bin"
+    _write_valid_token
+    echo "Strategy dashboard memo" > "$TEST_DATA_DIR/daily_focus.txt"
+
+    cat > "$mock_bin/curl" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+cat <<'JSON'
+{"files":[
+  {"id":"1","name":"Strategy dashboard memo","mimeType":"application/vnd.google-apps.document","modifiedTime":"2026-04-22T10:00:00Z","viewedByMeTime":"2026-04-22T11:00:00Z","webViewLink":"https://example.com/1"},
+  {"id":"2","name":"Completely unrelated file","mimeType":"application/pdf","modifiedTime":"2026-04-20T10:00:00Z","viewedByMeTime":"2026-04-20T11:00:00Z","webViewLink":"https://example.com/2"}
+]}
+JSON
+EOF
+    chmod +x "$mock_bin/curl"
+
+    run env PATH="$mock_bin:$PATH" bash "$(_drive_script)" recent 7 --all --json
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Strategy dashboard memo"* ]]
+    [[ "$output" == *"Completely unrelated file"* ]]
+}
+
 @test "drive recall uses current focus when no query is provided" {
     local mock_bin="$TEST_DIR/bin"
     mkdir -p "$mock_bin"

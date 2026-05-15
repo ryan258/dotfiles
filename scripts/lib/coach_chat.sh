@@ -54,6 +54,7 @@ Interactive follow-up rules:
 - If the user mentions a task or next step, suggest: \"Track that with: /t <task description>\"
 - If the user wants to change direction, suggest: \"Update focus with: /f <new focus>\"
 - Reference the briefing context freely. You remember everything you just said.
+- Google Drive context is available through deterministic local commands, not through the freeform model call itself. If asked about Drive access or activity, say this chat can check it with /d status, /d recent 1, /d recent 7, or /d recall <query>; do not claim Drive is unavailable just because you cannot call tools inside the AI turn.
 - Available timer commands the user can run: pomo (25-min focus), tbreak <min> (break timer), remind '+Xm' 'message' (timed reminder).
 - Stay grounded, specific, and MS+ADHD-aware. Validate exploration. Never shame.
 - Do not repeat the briefing. Build on it."
@@ -124,6 +125,10 @@ Interactive follow-up rules:
                 continue
                 ;;
         esac
+
+        if _coach_chat_maybe_handle_drive_question "$user_input" "$_cc_menu_state"; then
+            continue
+        fi
 
         # Send to AI
         response=""
@@ -579,6 +584,60 @@ _coach_chat_handle_menu_reply() {
     fi
 
     return 1
+}
+
+_coach_chat_maybe_handle_drive_question() {
+    local input="$1"
+    local state_file="${2:-}"
+    local lower=""
+    local output=""
+
+    lower=$(printf '%s' "$input" | tr '[:upper:]' '[:lower:]')
+
+    [[ "$lower" == *"drive"* ]] || return 1
+    if [[ "$lower" != *"access"* \
+        && "$lower" != *"activity"* \
+        && "$lower" != *"status"* \
+        && "$lower" != *"connect"* \
+        && "$lower" != *"auth"* \
+        && "$lower" != *"available"* \
+        && "$lower" != *"see"* ]]; then
+        return 1
+    fi
+    if [[ "$lower" != *"?" \
+        && "$lower" != *"are you"* \
+        && "$lower" != *"can you"* \
+        && "$lower" != *"do you"* \
+        && "$lower" != *"still"* \
+        && "$lower" != *"able"* \
+        && "$lower" != *"check"* \
+        && "$lower" != *"show"* ]]; then
+        return 1
+    fi
+
+    if [[ -n "$state_file" ]]; then
+        _coach_chat_clear_menu_state "$state_file"
+    fi
+
+    echo "" >&2
+    echo "Drive access check:" >&2
+    if output=$(_coach_chat_capture_cli "drive.sh" status); then
+        echo "$output" >&2
+        echo "" >&2
+        if [[ "$output" == *"Auth: configured"* && "$output" == *"Token: valid"* ]]; then
+            echo "Yes - Drive is configured locally. Use /d recent 1, /d recent 7, or /d recall <query> to fetch Drive activity here." >&2
+        elif [[ "$output" == *"Auth: configured"* ]]; then
+            echo "Drive auth is configured, but the cached token may need refresh. Try /d recent 1 or /d recall <query>; if refresh fails, use /d auth." >&2
+        else
+            echo "Drive is not fully ready. Use /d auth if auth is missing, then /d status to verify." >&2
+        fi
+    else
+        echo "Unable to run the Drive helper right now." >&2
+        echo "Try /d status or run scripts/drive.sh status from the repo for details." >&2
+    fi
+    echo "" >&2
+
+    return 0
 }
 
 _coach_chat_handle_local_command() {

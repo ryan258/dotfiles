@@ -464,46 +464,59 @@ _coach_collect_drive_focus_metrics() {
     local drive_focus_hits_today=0
     local drive_focus_hits_week=0
     local drive_recent_titles="none"
+    local drive_activity_hits_today=0
+    local drive_activity_hits_week=0
+    local drive_activity_titles="none"
     local drive_top_file_id="none"
     local drive_top_file_name="none"
+    local drive_top_file_mime="none"
     local drive_top_file_snippet_b64="none"
     local drive_script=""
-
-    if [[ -z "$focus_keywords" ]]; then
-        printf 'drive_focus_hits_today=%s\n' "$drive_focus_hits_today"
-        printf 'drive_focus_hits_week=%s\n' "$drive_focus_hits_week"
-        printf 'drive_recent_titles=%s\n' "$drive_recent_titles"
-        printf 'drive_top_file_id=%s\n' "$drive_top_file_id"
-        printf 'drive_top_file_name=%s\n' "$drive_top_file_name"
-        printf 'drive_top_file_snippet_b64=%s\n' "$drive_top_file_snippet_b64"
-        return 0
-    fi
 
     drive_script=$(_coach_drive_script_path 2>/dev/null || true)
     if [[ -n "$drive_script" ]]; then
         local drive_today_json=""
         local drive_week_json=""
+        local drive_activity_today_json=""
+        local drive_activity_week_json=""
         local drive_top_file_snippet_raw=""
         local drive_snippet_connect_timeout=""
         local drive_snippet_timeout=""
 
-        drive_today_json=$("$drive_script" recent 1 --json --quiet 2>/dev/null || printf '[]')
-        drive_week_json=$("$drive_script" recent 7 --json --quiet 2>/dev/null || printf '[]')
-        drive_focus_hits_today=$(printf '%s' "$drive_today_json" | jq 'length' 2>/dev/null || echo "0")
-        drive_focus_hits_week=$(printf '%s' "$drive_week_json" | jq 'length' 2>/dev/null || echo "0")
-        drive_recent_titles=$(printf '%s' "$drive_week_json" | jq -r '.[0:3] | map(.name) | join(", ")' 2>/dev/null || echo "none")
-        [[ -n "$drive_recent_titles" ]] || drive_recent_titles="none"
-        drive_top_file_id=$(printf '%s' "$drive_week_json" | jq -r '.[0].id // empty' 2>/dev/null || true)
-        drive_top_file_name=$(printf '%s' "$drive_week_json" | jq -r '.[0].name // empty' 2>/dev/null || true)
+        if [[ -n "$focus_keywords" ]]; then
+            drive_today_json=$("$drive_script" recent 1 --json --quiet 2>/dev/null || printf '[]')
+            drive_week_json=$("$drive_script" recent 7 --json --quiet 2>/dev/null || printf '[]')
+            drive_focus_hits_today=$(printf '%s' "$drive_today_json" | jq 'length' 2>/dev/null || echo "0")
+            drive_focus_hits_week=$(printf '%s' "$drive_week_json" | jq 'length' 2>/dev/null || echo "0")
+            drive_recent_titles=$(printf '%s' "$drive_week_json" | jq -r '.[0:3] | map(.name) | join(", ")' 2>/dev/null || echo "none")
+            [[ -n "$drive_recent_titles" ]] || drive_recent_titles="none"
+            drive_top_file_id=$(printf '%s' "$drive_week_json" | jq -r '.[0].id // empty' 2>/dev/null || true)
+            drive_top_file_name=$(printf '%s' "$drive_week_json" | jq -r '.[0].name // empty' 2>/dev/null || true)
+            drive_top_file_mime=$(printf '%s' "$drive_week_json" | jq -r '.[0].mimeType // empty' 2>/dev/null || true)
+        fi
+
+        drive_activity_today_json=$("$drive_script" recent 1 --json --quiet --all 2>/dev/null || printf '[]')
+        drive_activity_week_json=$("$drive_script" recent 7 --json --quiet --all 2>/dev/null || printf '[]')
+        drive_activity_hits_today=$(printf '%s' "$drive_activity_today_json" | jq 'length' 2>/dev/null || echo "0")
+        drive_activity_hits_week=$(printf '%s' "$drive_activity_week_json" | jq 'length' 2>/dev/null || echo "0")
+        drive_activity_titles=$(printf '%s' "$drive_activity_week_json" | jq -r '.[0:3] | map(.name) | join(", ")' 2>/dev/null || echo "none")
+        [[ -n "$drive_activity_titles" ]] || drive_activity_titles="none"
+
+        if [[ -z "$drive_top_file_id" || "$drive_top_file_id" == "none" ]]; then
+            drive_top_file_id=$(printf '%s' "$drive_activity_week_json" | jq -r '.[0].id // empty' 2>/dev/null || true)
+            drive_top_file_name=$(printf '%s' "$drive_activity_week_json" | jq -r '.[0].name // empty' 2>/dev/null || true)
+            drive_top_file_mime=$(printf '%s' "$drive_activity_week_json" | jq -r '.[0].mimeType // empty' 2>/dev/null || true)
+        fi
         [[ -n "$drive_top_file_id" ]] || drive_top_file_id="none"
         [[ -n "$drive_top_file_name" ]] || drive_top_file_name="none"
+        [[ -n "$drive_top_file_mime" ]] || drive_top_file_mime="none"
 
         drive_snippet_connect_timeout="${AI_COACH_DRIVE_SNIPPET_CONNECT_TIMEOUT_SECONDS:-3}"
         drive_snippet_timeout="${AI_COACH_DRIVE_SNIPPET_MAX_TIME_SECONDS:-5}"
         [[ "$drive_snippet_connect_timeout" =~ ^[0-9]+$ ]] || drive_snippet_connect_timeout=3
         [[ "$drive_snippet_timeout" =~ ^[0-9]+$ ]] || drive_snippet_timeout=5
 
-        if [[ "$drive_top_file_id" != "none" ]]; then
+        if [[ "$drive_top_file_id" != "none" && "$drive_top_file_mime" == application/vnd.google-apps.* ]]; then
             drive_top_file_snippet_raw=$(
                 GDRIVE_CONNECT_TIMEOUT_SECONDS="$drive_snippet_connect_timeout" \
                 GDRIVE_MAX_TIME_SECONDS="$drive_snippet_timeout" \
@@ -519,6 +532,9 @@ _coach_collect_drive_focus_metrics() {
     printf 'drive_focus_hits_today=%s\n' "$drive_focus_hits_today"
     printf 'drive_focus_hits_week=%s\n' "$drive_focus_hits_week"
     printf 'drive_recent_titles=%s\n' "$drive_recent_titles"
+    printf 'drive_activity_hits_today=%s\n' "$drive_activity_hits_today"
+    printf 'drive_activity_hits_week=%s\n' "$drive_activity_hits_week"
+    printf 'drive_activity_titles=%s\n' "$drive_activity_titles"
     printf 'drive_top_file_id=%s\n' "$drive_top_file_id"
     printf 'drive_top_file_name=%s\n' "$drive_top_file_name"
     printf 'drive_top_file_snippet_b64=%s\n' "$drive_top_file_snippet_b64"
@@ -577,6 +593,9 @@ coach_collect_tactical_metrics() {
     local drive_focus_hits_today=0
     local drive_focus_hits_week=0
     local drive_recent_titles="none"
+    local drive_activity_hits_today=0
+    local drive_activity_hits_week=0
+    local drive_activity_titles="none"
     local drive_top_file_id="none"
     local drive_top_file_name="none"
     local drive_top_file_snippet_b64="none"
@@ -634,6 +653,9 @@ coach_collect_tactical_metrics() {
     drive_focus_hits_today=$(_coach_extract_value "$drive_metrics" "drive_focus_hits_today")
     drive_focus_hits_week=$(_coach_extract_value "$drive_metrics" "drive_focus_hits_week")
     drive_recent_titles=$(_coach_extract_value "$drive_metrics" "drive_recent_titles")
+    drive_activity_hits_today=$(_coach_extract_value "$drive_metrics" "drive_activity_hits_today")
+    drive_activity_hits_week=$(_coach_extract_value "$drive_metrics" "drive_activity_hits_week")
+    drive_activity_titles=$(_coach_extract_value "$drive_metrics" "drive_activity_titles")
     drive_top_file_id=$(_coach_extract_value "$drive_metrics" "drive_top_file_id")
     drive_top_file_name=$(_coach_extract_value "$drive_metrics" "drive_top_file_name")
     drive_top_file_snippet_b64=$(_coach_extract_value "$drive_metrics" "drive_top_file_snippet_b64")
@@ -649,6 +671,9 @@ coach_collect_tactical_metrics() {
     echo "drive_focus_hits_today=$drive_focus_hits_today"
     echo "drive_focus_hits_week=$drive_focus_hits_week"
     echo "drive_recent_titles=$drive_recent_titles"
+    echo "drive_activity_hits_today=${drive_activity_hits_today:-0}"
+    echo "drive_activity_hits_week=${drive_activity_hits_week:-0}"
+    echo "drive_activity_titles=${drive_activity_titles:-none}"
     echo "drive_top_file_id=${drive_top_file_id:-none}"
     echo "drive_top_file_name=${drive_top_file_name:-none}"
     echo "drive_top_file_snippet_b64=${drive_top_file_snippet_b64:-none}"
@@ -1385,13 +1410,16 @@ coach_build_behavior_digest() {
     # Keeping them in local variables makes the if/else rules easier to read.
     local stale_tasks completed_tasks unique_dirs dir_switches avg_energy avg_fog avg_spoon_budget avg_spoon_spend
     local latest_energy latest_energy_at latest_fog latest_fog_at
-    local journal_focus_hits drive_focus_hits_today drive_focus_hits_week drive_recent_titles drive_top_file_id drive_top_file_name drive_top_file_snippet_b64 strategy_evidence_sources
+    local journal_focus_hits drive_focus_hits_today drive_focus_hits_week drive_recent_titles drive_activity_hits_today drive_activity_hits_week drive_activity_titles drive_top_file_id drive_top_file_name drive_top_file_snippet_b64 strategy_evidence_sources
     stale_tasks=$(_coach_extract_value "$tactical" "stale_tasks")
     completed_tasks=$(_coach_extract_value "$tactical" "completed_tasks")
     journal_focus_hits=$(_coach_extract_value "$tactical" "journal_focus_hits")
     drive_focus_hits_today=$(_coach_extract_value "$tactical" "drive_focus_hits_today")
     drive_focus_hits_week=$(_coach_extract_value "$tactical" "drive_focus_hits_week")
     drive_recent_titles=$(_coach_extract_value "$tactical" "drive_recent_titles")
+    drive_activity_hits_today=$(_coach_extract_value "$tactical" "drive_activity_hits_today")
+    drive_activity_hits_week=$(_coach_extract_value "$tactical" "drive_activity_hits_week")
+    drive_activity_titles=$(_coach_extract_value "$tactical" "drive_activity_titles")
     drive_top_file_id=$(_coach_extract_value "$tactical" "drive_top_file_id")
     drive_top_file_name=$(_coach_extract_value "$tactical" "drive_top_file_name")
     drive_top_file_snippet_b64=$(_coach_extract_value "$tactical" "drive_top_file_snippet_b64")
@@ -1442,6 +1470,8 @@ coach_build_behavior_digest() {
     if [[ "${drive_focus_hits_week:-0}" -ge 1 ]]; then
         working_signals+=("recent Drive activity supports the current focus (${drive_focus_hits_week} hit(s): ${drive_recent_titles:-none})")
         strategy_evidence_sources="${strategy_evidence_sources}${strategy_evidence_sources:+,}drive"
+    elif [[ "${drive_activity_hits_week:-0}" -ge 1 ]]; then
+        working_signals+=("recent Drive activity is available for context (${drive_activity_hits_week} hit(s): ${drive_activity_titles:-none})")
     fi
     if [[ "$suggestion_adherence_rate" =~ ^[0-9]+$ ]] && [[ "${suggestion_adherence_samples:-0}" =~ ^[0-9]+$ ]]; then
         if [[ "$suggestion_adherence_rate" -ge 70 ]]; then
@@ -1550,10 +1580,11 @@ coach_build_behavior_digest() {
     # The AI coach sees this like a worksheet full of clues.
     echo "Behavior digest (structured):"
     echo "Tactical window: ${tactical_days}d ending $anchor_date"
-    echo "  open_tasks=$(_coach_extract_value "$tactical" "open_tasks"), stale_tasks=$stale_tasks, completed_tasks=$completed_tasks, journal_entries=$(_coach_extract_value "$tactical" "journal_entries"), journal_focus_hits=${journal_focus_hits:-0}, drive_focus_hits_today=${drive_focus_hits_today:-0}, drive_focus_hits_week=${drive_focus_hits_week:-0}"
+    echo "  open_tasks=$(_coach_extract_value "$tactical" "open_tasks"), stale_tasks=$stale_tasks, completed_tasks=$completed_tasks, journal_entries=$(_coach_extract_value "$tactical" "journal_entries"), journal_focus_hits=${journal_focus_hits:-0}, drive_focus_hits_today=${drive_focus_hits_today:-0}, drive_focus_hits_week=${drive_focus_hits_week:-0}, drive_activity_hits_today=${drive_activity_hits_today:-0}, drive_activity_hits_week=${drive_activity_hits_week:-0}"
     echo "  latest_energy=${latest_energy:-N/A} (${latest_energy_at:-N/A}), latest_fog=${latest_fog:-N/A} (${latest_fog_at:-N/A}), avg_energy=${avg_energy}, avg_fog=${avg_fog}, energy_3d=${energy_3d_trajectory:-N/A} (${energy_3d_direction:-N/A}), afternoon_slump=${afternoon_slump:-N/A}, avg_spoon_budget=$(_coach_extract_value "$tactical" "avg_spoon_budget"), avg_spoon_spend=$(_coach_extract_value "$tactical" "avg_spoon_spend")"
     echo "  unique_dirs=$unique_dirs, dir_switches=$dir_switches, suggestion_adherence=${suggestion_adherence:-N/A}, suggestion_adherence_rate=${suggestion_adherence_rate:-N/A} (${suggestion_adherence_samples:-0} samples), late_night_commits=${late_night_commits:-N/A}, recent_pushes=$(_coach_extract_value "$tactical" "recent_pushes_count"), commit_context=$(_coach_extract_value "$tactical" "commit_context_count")"
     echo "  drive_recent_titles=${drive_recent_titles:-none}"
+    echo "  drive_activity_titles=${drive_activity_titles:-none}"
     echo "  drive_top_file_id=${drive_top_file_id:-none}"
     echo "  drive_top_file_name=${drive_top_file_name:-none}"
     echo "  drive_top_file_snippet_b64=${drive_top_file_snippet_b64:-none}"

@@ -40,7 +40,7 @@ Usage: $(basename "$0") {auth|status|recent|recall|read}
 Commands:
   auth                       Authenticate with Google Drive (desktop loopback flow)
   status                     Show local Drive auth/cache status
-  recent [days]              Show recent relevant Docs activity (default: $GOOGLE_DRIVE_DEFAULT_DAYS)
+  recent [days] [--all]      Show recent Drive activity (focus-filtered Docs unless --all is used)
   recall [query...]          Search for older relevant docs (uses current focus when omitted)
   read <id>                  Read the plain-text content of a Drive file
 EOF
@@ -418,13 +418,18 @@ _drive_api_list_files() {
 _drive_recent_query() {
     local days="$1"
     local keywords="$2"
+    local include_all_mime="${3:-false}"
     local start_date
     local cutoff_iso
     local query
 
     start_date=$(date_shift_days "-$((days-1))" "%Y-%m-%d")
     cutoff_iso="${start_date}T00:00:00Z"
-    query="trashed = false and $(_drive_mime_filter) and (modifiedTime >= '$cutoff_iso' or viewedByMeTime >= '$cutoff_iso')"
+    if [[ "$include_all_mime" == "true" ]]; then
+        query="trashed = false and (modifiedTime >= '$cutoff_iso' or viewedByMeTime >= '$cutoff_iso')"
+    else
+        query="trashed = false and $(_drive_mime_filter) and (modifiedTime >= '$cutoff_iso' or viewedByMeTime >= '$cutoff_iso')"
+    fi
 
     local keyword_clause
     keyword_clause=$(_drive_keyword_clause "$keywords")
@@ -523,6 +528,7 @@ cmd_recent() {
     local days="$GOOGLE_DRIVE_DEFAULT_DAYS"
     local json_output="false"
     local quiet="false"
+    local all_activity="false"
     local focus_text=""
     local keywords=""
 
@@ -530,6 +536,7 @@ cmd_recent() {
         case "$1" in
             --json) json_output="true" ;;
             --quiet) quiet="true" ;;
+            --all) all_activity="true" ;;
             *)
                 if [[ "$1" =~ ^[0-9]+$ ]]; then
                     days="$1"
@@ -539,17 +546,23 @@ cmd_recent() {
         shift
     done
 
-    focus_text=$(focus_relevance_current_focus 2>/dev/null || true)
-    if [[ -n "$focus_text" ]]; then
-        keywords=$(focus_relevance_keywords_from_text "$focus_text")
+    if [[ "$all_activity" != "true" ]]; then
+        focus_text=$(focus_relevance_current_focus 2>/dev/null || true)
+        if [[ -n "$focus_text" ]]; then
+            keywords=$(focus_relevance_keywords_from_text "$focus_text")
+        fi
     fi
 
     local cache_key query response results
-    cache_key="recent:${days}:$(printf '%s' "$keywords" | tr '\n' ',' | tr -d ' ')"
+    if [[ "$all_activity" == "true" ]]; then
+        cache_key="recent:${days}:all-files"
+    else
+        cache_key="recent:${days}:focus:$(printf '%s' "$keywords" | tr '\n' ',' | tr -d ' ')"
+    fi
     if response=$(drive_cache_get "$cache_key" "$DRIVE_CACHE_TTL_SECONDS" 2>/dev/null); then
         :
     else
-        query=$(_drive_recent_query "$days" "$keywords")
+        query=$(_drive_recent_query "$days" "$keywords" "$all_activity")
         if ! response=$(_drive_api_list_files "$query" 2>/dev/null); then
             if [[ "$json_output" == "true" ]]; then
                 printf '[]\n'

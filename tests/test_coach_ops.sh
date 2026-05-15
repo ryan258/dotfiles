@@ -208,6 +208,45 @@ EOF
     [[ "$output" == *"non-Git strategy evidence is present even though recent GitHub evidence is thin"* ]]
 }
 
+@test "coach_build_behavior_digest includes broad recent drive activity" {
+    cat > "$DATA_DIR/daily_focus.txt" <<EOF
+Architecture review memo
+EOF
+    mkdir -p "$DOTFILES_DIR/scripts"
+    cat > "$DOTFILES_DIR/scripts/drive.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$*" == *"--all"* && "${2:-}" == "1" ]]; then
+  cat <<'JSON'
+[{"id":"doc-activity-1","name":"DnD session prep"}]
+JSON
+elif [[ "$*" == *"--all"* ]]; then
+  cat <<'JSON'
+[{"id":"doc-activity-1","name":"DnD session prep"},{"id":"doc-activity-2","name":"House notes"}]
+JSON
+elif [[ "${1:-}" == "read" && "${2:-}" == "doc-activity-1" ]]; then
+  printf 'DnD session prep excerpt'
+else
+  printf '[]\n'
+fi
+EOF
+    chmod +x "$DOTFILES_DIR/scripts/drive.sh"
+
+    run bash -c "$COACH_SOURCE_PREFIX; coach_build_behavior_digest '$ANCHOR_DAY' '7' '30'"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"drive_focus_hits_today=0"* ]]
+    [[ "$output" == *"drive_focus_hits_week=0"* ]]
+    [[ "$output" == *"drive_activity_hits_today=1"* ]]
+    [[ "$output" == *"drive_activity_hits_week=2"* ]]
+    [[ "$output" == *"drive_activity_titles=DnD session prep, House notes"* ]]
+    [[ "$output" == *"drive_top_file_id=doc-activity-1"* ]]
+    [[ "$output" == *"drive_top_file_name=DnD session prep"* ]]
+    [[ "$output" == *"drive_top_file_snippet_b64="* ]]
+    [[ "$output" == *"recent Drive activity is available for context (2 hit(s): DnD session prep, House notes)"* ]]
+    [[ "$output" == *"strategy_evidence_sources=none"* ]]
+}
+
 @test "coach_get_mode_for_date persists and reuses daily mode" {
     run bash -c "$COACH_SOURCE_PREFIX; AI_COACH_MODE_DEFAULT=LOCKED; first=\$(coach_get_mode_for_date '$ANCHOR_DAY' false); second=\$(coach_get_mode_for_date '$ANCHOR_DAY' false); echo \"\$first|\$second\""
 

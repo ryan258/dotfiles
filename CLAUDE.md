@@ -289,7 +289,7 @@ Standalone agents must follow root-project rules: strict mode for shell launcher
 
 ### Drive Integration
 
-`scripts/drive.sh` provides read-only Google Drive context via device-flow OAuth. `recent [days]` for focus-filtered cached activity (coach digest). `recall [query]` for manual search. Drive signals are secondary; git is strongest code-day signal.
+`scripts/drive.sh` provides read-only Google Drive context via loopback OAuth. `recent [days]` returns focus-filtered cached Docs/Sheets/Slides activity, `recent [days] --all` returns broader recent Drive file activity, and `recall [query]` supports manual search. The coach digest uses focus-filtered Drive hits as strategy evidence and broad Drive activity as context. Drive signals are secondary; git is strongest code-day signal.
 
 `scripts/lib/focus_relevance.sh` exports: `focus_relevance_current_focus`, `focus_relevance_keywords_from_text`, `focus_relevance_keywords_from_current_focus`, `focus_relevance_score_text`.
 

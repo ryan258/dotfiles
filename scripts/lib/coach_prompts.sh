@@ -591,6 +591,7 @@ Action-source rules:
 - Use Today's focus as the PRIMARY source for Do Next actions.
 - Use yesterday commits and recent pushes to infer likely repo continuity, blindspots, and adjacent enhancement opportunities, but do not invent new work from them.
 - If \`journal_focus_hits\`, \`drive_focus_hits_today\`, \`drive_focus_hits_week\`, or \`strategy_evidence_sources\` indicate focus-related strategy work, you may validate a zero-commit strategy day. Use that evidence to confirm planning or architecture progress without turning it into a lecture about journaling.
+- If \`drive_activity_hits_today\`, \`drive_activity_hits_week\`, or \`drive_activity_titles\` show broader recent Drive activity, use that as recall/context. Do not treat broad Drive activity as focus alignment unless the focus-specific Drive fields also support it.
 - Use the Additional local context bundle, when provided, as secondary evidence for schedule awareness, task specificity, launchpad continuity, health context, and raw note recall.
 - Do not let local notes overrule clearer focus/Git evidence.
 - Use recent repo names and commit-message patterns to surface 3-5 blindspots, side-quests, or enhancement opportunities. Frame these purely as optional explorations they might enjoy, NOT as overdue chores.
@@ -636,7 +637,7 @@ Constraints:
 - Do not invent new repositories, modules, endpoints, files, APIs, or projects unless those exact items appear in today's focus or provided GitHub activity.
 - Do not invent page names, paragraphs, homepage sections, drafts, or publication status unless those exact items appear in today's focus or provided GitHub activity.
 - Data-quality flags (e.g., dir_usage_malformed, malformed lines) are diagnostic metadata for system health, not actionable risks for the user. Do not surface them as top risks or action items.
-- Do not mention journal evidence, journal momentum, todo completion, or journaling habits as habits or virtue signals. It is fine to validate strategy work when \`journal_focus_hits\` or relevant Drive hits show that planning/architecture work happened.
+- Do not mention journal evidence, journal momentum, todo completion, or journaling habits as habits or virtue signals. It is fine to validate strategy work when \`journal_focus_hits\` or focus-relevant Drive hits show that planning/architecture work happened. Use broad \`drive_activity_*\` fields only as context/recall.
 - Do Next must not reference commit hashes.
 - If the behavior digest includes focus_git_status, primary_repo, or commit_coherence, use those as the primary cues for working vs drift.
 - Any blindspot, enhancement opportunity, or project idea must stay adjacent to actual repo names and commit patterns present in the provided GitHub activity.
@@ -764,6 +765,7 @@ Constraints:
 - If data is sparse, say so briefly instead of inventing details.
 - Make the main verdict about whether the spear moved, stalled, or diffused based on focus plus available GitHub or strategy evidence.
 - When \`journal_focus_hits\`, \`drive_focus_hits_today\`, \`drive_focus_hits_week\`, or \`strategy_evidence_sources\` show focus-related strategy work, treat that as valid movement even on zero-commit days. Do not confuse missing commits with missing progress.
+- When only \`drive_activity_hits_today\`, \`drive_activity_hits_week\`, or \`drive_activity_titles\` are present, mention them as broad recent Drive context rather than proof that the spear moved.
 - You may use the Additional local context bundle for nuance, but do not let it overrule clearer focus/Git evidence.
 - Do not claim the user worked on "Recent GitHub pushes" today. Only "Today's commits" and "Today's focus" count as today's context.
 - Prefer commit/repo evidence over local notes when they conflict.

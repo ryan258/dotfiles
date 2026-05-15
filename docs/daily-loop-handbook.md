@@ -88,6 +88,7 @@ health fog 4
 | Command | What It Does |
 | --- | --- |
 | `drive recent` | Show recent Drive docs matching your focus |
+| `drive recent --all` | Show recent Drive files without focus filtering |
 | `drive recall "search term"` | Search older Drive docs |
 | `drive status` | Check your Drive connection |
 
