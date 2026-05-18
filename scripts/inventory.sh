@@ -201,10 +201,12 @@ collect_metrics() {
     fi
     source_loc=$(code_loc_scripts_bin)
     coach_loc=$(loc_for_files \
+        "scripts/lib/coach_brief.sh" \
         "scripts/lib/coach_prompts.sh" \
         "scripts/lib/coach_metrics.sh" \
         "scripts/lib/coach_chat.sh" \
         "scripts/lib/coach_scoring.sh")
+    coach_brief_loc=$(line_count "scripts/lib/coach_brief.sh")
     coach_prompts_loc=$(line_count "scripts/lib/coach_prompts.sh")
     coach_metrics_loc=$(line_count "scripts/lib/coach_metrics.sh")
     coach_chat_loc=$(line_count "scripts/lib/coach_chat.sh")
@@ -369,6 +371,7 @@ Do not refresh these values after Phase 0 is accepted. Later phases compare agai
 
 | File | LOC |
 | --- | ---: |
+| \`scripts/lib/coach_brief.sh\` | $coach_brief_loc |
 | \`scripts/lib/coach_prompts.sh\` | $coach_prompts_loc |
 | \`scripts/lib/coach_metrics.sh\` | $coach_metrics_loc |
 | \`scripts/lib/coach_chat.sh\` | $coach_chat_loc |
@@ -547,6 +550,7 @@ Generated: May 18, 2026
 - `tests/test_startday_coach.sh`
 - `tests/test_status.sh`
 - `tests/test_goodevening_coach.sh`
+- `tests/test_coach_brief.sh`
 - `tests/test_coach_ops.sh`
 - `tests/test_coach_prompts.sh`
 - `tests/test_coach_metric_branches.sh`
