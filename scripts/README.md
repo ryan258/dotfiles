@@ -59,6 +59,12 @@ The canonical contract and coding rules live in `../CLAUDE.md`.
 - `network_info.sh`, `process_manager.sh`, `system_info.sh`
 - `text_processor.sh`, `tidy_downloads.sh`, `unpacker.sh`, `weather.sh`
 
+## Runtime Artifacts
+
+- Repo-local `logs/` is ignored and should not be used for durable data.
+- Legacy repo-local run logs were moved to `~/.cache/dotfiles/logs/`.
+- The active system log viewed by `logs.sh` lives under `~/.config/dotfiles-data/` via `SYSTEM_LOG_FILE`.
+
 ## Cyborg Support Workers
 
 These are support scripts used by the `bin/cyborg` and `cyborg-sync` entry points rather than everyday direct commands:

@@ -15,6 +15,7 @@ zsh/aliases/fabric-ai.zsh
 .env.local
 .venv
 logs
+.tmp-*-review/
 *.log
 *.pyc
 brain/data
