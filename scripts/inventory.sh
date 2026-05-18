@@ -112,6 +112,61 @@ alias_class() {
     esac
 }
 
+script_inventory_paths() {
+    {
+        find "$DOTFILES_DIR/scripts" -maxdepth 1 -type f \( -name '*.sh' -o -name '*.py' \) -print 2>/dev/null
+        find "$DOTFILES_DIR/scripts/lib" -maxdepth 1 -type f \( -name '*.sh' -o -name '*.py' \) -print 2>/dev/null
+        find "$DOTFILES_DIR/bin" -maxdepth 1 -type f ! -name '*.md' -print 2>/dev/null
+    } | sort
+}
+
+script_class() {
+    local rel_path="$1"
+
+    case "$rel_path" in
+        scripts/lib/*)
+            printf 'support-library'
+            ;;
+        scripts/startday.sh|scripts/status.sh|scripts/goodevening.sh|scripts/todo.sh|scripts/journal.sh|scripts/health.sh|scripts/meds.sh|scripts/spoon_manager.sh|scripts/focus.sh|scripts/schedule.sh|scripts/remind_me.sh|scripts/gcal.sh|scripts/drive.sh|scripts/done.sh|scripts/idea.sh|scripts/time_tracker.sh|scripts/take_a_break.sh|scripts/week_in_review.sh|scripts/generate_report.sh|scripts/fitbit_import.sh|scripts/fitbit_sync.sh|scripts/correlate.sh|scripts/insight.sh|scripts/repo_tracker.sh|scripts/my_progress.sh|scripts/gh-projects.sh)
+            printf 'daily-core'
+            ;;
+        bin/coach-chat.py|bin/dhp-context.sh|bin/dhp-lib.sh|bin/dhp-shared.sh|bin/dhp-swarm.py|bin/dhp-utils.sh)
+            printf 'support-library'
+            ;;
+        scripts/observer.sh|scripts/gitnexus.sh|bin/cyborg|bin/cyborg-sync|bin/dispatch.sh|bin/dhp-*.sh|bin/morphling.sh)
+            printf 'compatibility-wrapper'
+            ;;
+        scripts/observer.py|scripts/cyborg_agent.py|scripts/cyborg_build.py|scripts/cyborg_docs_sync.py|scripts/cyborg_support.py|scripts/cyborg_scoped_site_check.sh|scripts/blog.sh|scripts/blog_recent_content.sh)
+            printf 'sibling-product-candidate'
+            ;;
+        *)
+            printf 'support-utility'
+            ;;
+    esac
+}
+
+script_note() {
+    local class="$1"
+
+    case "$class" in
+        daily-core)
+            printf 'Directly supports daily loop, data, health, focus, or context routines.'
+            ;;
+        support-library)
+            printf 'Sourced or imported helper code used by runnable commands.'
+            ;;
+        compatibility-wrapper)
+            printf 'Preserve command surface while implementation may move or consolidate.'
+            ;;
+        sibling-product-candidate)
+            printf 'Candidate for Cyborg, observer, blog, or other product boundary extraction.'
+            ;;
+        *)
+            printf 'General maintenance or convenience command retained in root dotfiles.'
+            ;;
+    esac
+}
+
 markdown_paths() {
     local path=""
     while IFS= read -r path; do
@@ -139,7 +194,11 @@ collect_metrics() {
     aliases=$(grep -E '^alias ' "$DOTFILES_DIR/zsh/aliases.zsh" 2>/dev/null | wc -l | tr -d ' ')
     alias_functions=$(grep -E '^[[:alnum:]_:-]+\(\) \{' "$DOTFILES_DIR/zsh/aliases.zsh" 2>/dev/null | wc -l | tr -d ' ')
     tests_shell=$(find "$DOTFILES_DIR/tests" -type f -name '*.sh' 2>/dev/null | wc -l | tr -d ' ')
-    logs_files=$(find "$DOTFILES_DIR/logs" -type f 2>/dev/null | wc -l | tr -d ' ')
+    if [ -d "$DOTFILES_DIR/logs" ]; then
+        logs_files=$(find "$DOTFILES_DIR/logs" -type f 2>/dev/null | wc -l | tr -d ' ')
+    else
+        logs_files=0
+    fi
     source_loc=$(code_loc_scripts_bin)
     coach_loc=$(loc_for_files \
         "scripts/lib/coach_prompts.sh" \
@@ -179,9 +238,34 @@ collect_alias_classes() {
     done < <(grep -E '^alias ' "$DOTFILES_DIR/zsh/aliases.zsh" 2>/dev/null || true)
 }
 
+collect_script_classes() {
+    script_daily=0
+    script_support_library=0
+    script_compat=0
+    script_sibling=0
+    script_support_utility=0
+
+    local path=""
+    local rel_path=""
+    local class=""
+
+    while IFS= read -r path; do
+        rel_path="${path#"$DOTFILES_DIR/"}"
+        class=$(script_class "$rel_path")
+        case "$class" in
+            daily-core) script_daily=$((script_daily + 1)) ;;
+            support-library) script_support_library=$((script_support_library + 1)) ;;
+            compatibility-wrapper) script_compat=$((script_compat + 1)) ;;
+            sibling-product-candidate) script_sibling=$((script_sibling + 1)) ;;
+            *) script_support_utility=$((script_support_utility + 1)) ;;
+        esac
+    done < <(script_inventory_paths)
+}
+
 print_summary() {
     collect_metrics
     collect_alias_classes
+    collect_script_classes
 
     cat <<EOF
 Dotfiles Inventory Summary
@@ -197,6 +281,7 @@ Dotfiles Inventory Summary
 - aliases: $aliases
 - shell functions in aliases file: $alias_functions
 - alias classes: daily=$alias_daily compatibility=$alias_compat convenience=$alias_convenience risky=$alias_risky
+- script classes: daily=$script_daily support_library=$script_support_library compatibility=$script_compat sibling_candidate=$script_sibling support_utility=$script_support_utility
 - coach core LOC: $coach_loc
 - product implementation LOC: $product_loc
 - shell tests: $tests_shell
@@ -282,6 +367,7 @@ EOF
 write_script_inventory() {
     local output_dir="$1"
     collect_metrics
+    collect_script_classes
 
     {
         cat <<EOF
@@ -297,6 +383,40 @@ Generated: May 18, 2026
 - Sourced shell libraries under \`scripts/lib/\`: $lib_shell
 - Python modules under \`scripts/lib/\`: $lib_py
 - \`bin/\` non-markdown entrypoints: $bin_entrypoints
+
+## Classification Summary
+
+- Daily-core scripts: $script_daily
+- Support libraries: $script_support_library
+- Compatibility wrappers: $script_compat
+- Sibling-product candidates: $script_sibling
+- Support utilities: $script_support_utility
+
+## Class Definitions
+
+- **daily-core**: $(script_note "daily-core")
+- **support-library**: $(script_note "support-library")
+- **compatibility-wrapper**: $(script_note "compatibility-wrapper")
+- **sibling-product-candidate**: $(script_note "sibling-product-candidate")
+- **support-utility**: $(script_note "support-utility")
+
+Daily-core includes commands that directly or indirectly support the daily loop. Phase 8 extraction should preserve the narrower daily command surface from the roadmap even when broader helper commands are classified here.
+
+## Script Classification
+
+| Path | Class |
+| --- | --- |
+EOF
+        local path=""
+        local rel_path=""
+        local class=""
+        while IFS= read -r path; do
+            rel_path="${path#"$DOTFILES_DIR/"}"
+            class=$(script_class "$rel_path")
+            printf '| `%s` | %s |\n' "$rel_path" "$class"
+        done < <(script_inventory_paths)
+
+        cat <<EOF
 
 ## Bin Entrypoints
 

@@ -163,7 +163,7 @@ Deliverables:
 - Generate a current command inventory from the filesystem.
 - Generate an alias inventory from `zsh/aliases.zsh`.
 - Classify aliases into daily core, compatibility, convenience, and risky/surprising.
-- Classify scripts into daily core, support library, compatibility wrapper, or sibling-product candidate.
+- Classify scripts into daily core, support library, compatibility wrapper, sibling-product candidate, or support-utility catch-all.
 - Record which tests protect each daily command.
 - Record which commands rely on external APIs or credentials.
 - Record baseline size metrics so later phases can prove they reduced maintenance surface.
@@ -255,11 +255,11 @@ Spoon cost: 2-4 spoons.
 
 Rollback: revert wrapper/design changes; no product files should be moved in this phase.
 
-### 8.1 Cyborg
+### 8.1 Cyborg Agent
 
 Likely target:
 
-- Sibling repo: `~/Projects/cyborg` or `~/Projects/cyborg-agent`.
+- Sibling repo: `~/Projects/cyborg-agent`.
 
 Move candidates:
 

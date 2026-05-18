@@ -43,6 +43,7 @@ teardown() {
     assert_file_contains "$out_dir/baseline-metrics.md" "Frozen Phase 0 Baseline"
     assert_file_contains "$out_dir/script-inventory.md" "Dispatcher Wrappers"
     assert_file_contains "$out_dir/script-inventory.md" "Bin Entrypoints"
+    assert_file_contains "$out_dir/script-inventory.md" "Script Classification"
     assert_file_contains "$out_dir/alias-inventory.md" "Alias Inventory"
     assert_file_contains "$out_dir/test-coverage-map.md" "Daily Loop Coverage"
     assert_file_contains "$out_dir/external-dependencies.md" "External Dependencies"
@@ -99,4 +100,43 @@ EOF
     sum=$((daily + compat + convenience + risky))
 
     [ "$sum" -eq "$total" ]
+}
+
+@test "inventory.sh script inventory classifies boundary examples" {
+    local out_dir="$TEST_DIR/generated"
+
+    run "$DOTFILES_DIR/scripts/inventory.sh" generate "$out_dir"
+
+    [ "$status" -eq 0 ]
+
+    local inventory
+    inventory=$(cat "$out_dir/script-inventory.md")
+
+    [[ "$inventory" == *"## Class Definitions"* ]]
+    [[ "$inventory" == *"| \`scripts/startday.sh\` | daily-core |"* ]]
+    [[ "$inventory" == *"| \`scripts/lib/common.sh\` | support-library |"* ]]
+    [[ "$inventory" == *"| \`bin/coach-chat.py\` | support-library |"* ]]
+    [[ "$inventory" == *"| \`bin/dhp-swarm.py\` | support-library |"* ]]
+    [[ "$inventory" == *"| \`scripts/observer.sh\` | compatibility-wrapper |"* ]]
+    [[ "$inventory" == *"| \`bin/cyborg\` | compatibility-wrapper |"* ]]
+    [[ "$inventory" == *"| \`scripts/cyborg_agent.py\` | sibling-product-candidate |"* ]]
+}
+
+@test "inventory.sh script class counts sum to classified script rows" {
+    local out_dir="$TEST_DIR/generated"
+
+    run "$DOTFILES_DIR/scripts/inventory.sh" generate "$out_dir"
+
+    [ "$status" -eq 0 ]
+
+    local daily support_lib compat sibling support_util rows sum
+    daily=$(awk -F': ' '/^- Daily-core scripts:/ {print $2}' "$out_dir/script-inventory.md")
+    support_lib=$(awk -F': ' '/^- Support libraries:/ {print $2}' "$out_dir/script-inventory.md")
+    compat=$(awk -F': ' '/^- Compatibility wrappers:/ {print $2}' "$out_dir/script-inventory.md")
+    sibling=$(awk -F': ' '/^- Sibling-product candidates:/ {print $2}' "$out_dir/script-inventory.md")
+    support_util=$(awk -F': ' '/^- Support utilities:/ {print $2}' "$out_dir/script-inventory.md")
+    rows=$(grep -c '^| `' "$out_dir/script-inventory.md")
+    sum=$((daily + support_lib + compat + sibling + support_util))
+
+    [ "$sum" -eq "$rows" ]
 }
