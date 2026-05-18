@@ -276,15 +276,29 @@ EOF
     _coach_brief_section_bullets "$digest" "Data quality flags:"
 }
 
+# Render a deterministic brief from the current COACH_BRIEF_* environment.
+# Expected integration shape:
+#   COACH_BRIEF_FLOW=startday \
+#   COACH_BRIEF_DATE="$today" \
+#   COACH_BRIEF_FOCUS="$focus_context" \
+#   COACH_BRIEF_MODE="$mode" \
+#   COACH_BRIEF_RECENT_PUSHES="$recent_pushes" \
+#   COACH_BRIEF_COMMIT_CONTEXT="$commit_context" \
+#   coach_brief_render
 coach_brief_render() {
-    local flow_type="${1:-status}"
-    local anchor_date="${2:-}"
-    local focus_context="${3:-}"
-    local mode="${4:-LOCKED}"
-    local recent_pushes_context="${5:-}"
-    local commit_context="${6:-}"
-    local tactical_days="${7:-7}"
-    local pattern_days="${8:-30}"
+    if [[ "$#" -gt 0 ]]; then
+        echo "coach_brief_render reads COACH_BRIEF_* environment variables; positional arguments are not supported" >&2
+        return 1
+    fi
+
+    local flow_type="${COACH_BRIEF_FLOW:-status}"
+    local anchor_date="${COACH_BRIEF_DATE:-}"
+    local focus_context="${COACH_BRIEF_FOCUS:-}"
+    local mode="${COACH_BRIEF_MODE:-LOCKED}"
+    local recent_pushes_context="${COACH_BRIEF_RECENT_PUSHES:-}"
+    local commit_context="${COACH_BRIEF_COMMIT_CONTEXT:-}"
+    local tactical_days="${COACH_BRIEF_TACTICAL_DAYS:-7}"
+    local pattern_days="${COACH_BRIEF_PATTERN_DAYS:-30}"
     local digest=""
 
     if [[ -z "$anchor_date" ]]; then

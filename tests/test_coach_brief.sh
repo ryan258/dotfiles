@@ -111,13 +111,13 @@ EOF
 Ship parser fix
 EOF
 
-    run coach_brief_render \
-        "startday" \
-        "2026-03-26" \
-        "Ship parser fix" \
-        "LOCKED" \
-        $'  - dotfiles (pushed today)' \
-        $'  - dotfiles: ship parser fix (abc1234)'
+    COACH_BRIEF_FLOW="startday" \
+        COACH_BRIEF_DATE="2026-03-26" \
+        COACH_BRIEF_FOCUS="Ship parser fix" \
+        COACH_BRIEF_MODE="LOCKED" \
+        COACH_BRIEF_RECENT_PUSHES=$'  - dotfiles (pushed today)' \
+        COACH_BRIEF_COMMIT_CONTEXT=$'  - dotfiles: ship parser fix (abc1234)' \
+        run coach_brief_render
 
     assert_success
     assert_output_contains "Coach Brief"
@@ -127,4 +127,11 @@ EOF
     assert_output_contains "Energy/Fog: latest energy 5"
     assert_output_contains "Patterns"
     assert_output_contains "Data Quality"
+}
+
+@test "coach_brief_render rejects positional arguments" {
+    run coach_brief_render "startday"
+
+    [ "$status" -ne 0 ]
+    assert_output_contains "COACH_BRIEF_* environment variables"
 }

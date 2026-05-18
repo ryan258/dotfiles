@@ -107,6 +107,7 @@ These are support scripts used by the `bin/cyborg` and `cyborg-sync` entry point
 ## Coaching System
 
 - **Core Mechanics:** `coach_ops.sh` validates tools. `coach_metrics.sh`, `coach_brief.sh`, `coach_prompts.sh`, and `coach_scoring.sh` handle metric collection, deterministic brief rendering, prompt building, and state logging.
+- **Brief API:** `coach_brief_render` reads `COACH_BRIEF_*` environment variables (`FLOW`, `DATE`, `FOCUS`, `MODE`, `RECENT_PUSHES`, `COMMIT_CONTEXT`, optional window sizes) so daily-loop call sites can set each input by name.
 - **Interaction:** `coach_chat.sh` acts as a deterministic control surface after each briefing. It intercepts quick commands (`/t` todo, `/f` focus, `/j` journal, `/d` drive, `/q` quit) and prefers short `A/B/C/D/E` menu choices to minimize typing overhead. Disable with `AI_COACH_CHAT_ENABLED=false`.
 - **Fast Path:** Daily coaching (`startday`, `goodevening`, `status --coach`) uses `dhp-coach.sh` for a single, fast call to OpenRouter. Configure the model via `AI_COACH_MODEL` in `.env`.
 - **Context Gathering:** The coach consumes a wide array of signals: manual energy/fog checks, Fitbit metrics, spoon usage, daily focus text, and a bounded local context bundle (last 7 days of journal lines, top tasks, blog snapshots, schedule).
