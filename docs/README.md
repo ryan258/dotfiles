@@ -2,14 +2,15 @@
 
 This folder is the entry point for the root `dotfiles` documentation. Use it as the map for the repo's daily workflows, AI tooling, repo-aware agents, and troubleshooting guides.
 
-## Current Inventory Snapshot
+## Current Inventory
 
-Current root-repo counts as of April 27, 2026:
+Generated inventory docs are the source of truth for root-repo counts:
 
-- `scripts/`: 76 shell utilities plus 6 Python helpers
-- `scripts/lib/`: 25 sourced shell libraries plus 2 Python modules
-- `bin/`: 30 non-markdown entry points, including 21 `dhp-*.sh` executables
-- `tests/`: 53 Bats test files
+- [baseline-metrics.md](generated/baseline-metrics.md) - frozen Phase 0 baseline and numeric exit gates
+- [script-inventory.md](generated/script-inventory.md) - script, library, `bin/`, and dispatcher inventory
+- [alias-inventory.md](generated/alias-inventory.md) - alias classes and shell functions
+- [test-coverage-map.md](generated/test-coverage-map.md) - test inventory and daily-loop coverage map
+- [external-dependencies.md](generated/external-dependencies.md) - optional service and credential-like config surface
 
 ## Start Here
 

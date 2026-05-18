@@ -12,14 +12,15 @@ This repo is a command-line productivity environment built around shell scripts,
 - Repo-aware agents for project documentation, build-and-verify loops, and site sync
 - Local flat-file data under `~/.config/dotfiles-data/`
 
-## Current Inventory Snapshot
+## Current Inventory
 
-This snapshot reflects the root repo as audited on April 27, 2026:
+Generated inventory docs are the source of truth for repo counts:
 
-- `scripts/`: 76 shell utilities plus 6 Python helpers
-- `scripts/lib/`: 25 sourced shell libraries plus 2 Python modules
-- `bin/`: 30 non-markdown entry points, including 21 `dhp-*.sh` executables
-- `tests/`: 53 Bats test files
+- `docs/generated/baseline-metrics.md` - frozen Phase 0 baseline and numeric exit gates
+- `docs/generated/script-inventory.md` - script, library, `bin/`, and dispatcher inventory
+- `docs/generated/alias-inventory.md` - alias classes and shell functions
+- `docs/generated/test-coverage-map.md` - test inventory and daily-loop coverage map
+- `docs/generated/external-dependencies.md` - optional service and credential-like config surface
 
 ## Install
 

@@ -5,9 +5,10 @@ The canonical contract and coding rules live in `../CLAUDE.md`.
 
 ## Current Inventory
 
-- 76 top-level shell utilities
-- 6 top-level Python helpers
-- 25 sourced shell libraries plus 2 Python modules under `scripts/lib/`
+Generated inventory docs are the source of truth for script counts:
+
+- `../docs/generated/script-inventory.md` - top-level scripts, sourced libraries, `bin/` entrypoints, and dispatchers
+- `../docs/generated/baseline-metrics.md` - frozen Phase 0 baseline and numeric exit gates
 
 ## Daily Loop and Context Commands
 
