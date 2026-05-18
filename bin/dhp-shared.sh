@@ -117,35 +117,187 @@ dhp_parse_flags() {
     done
 }
 
+dhp_registry_root() {
+    printf '%s\n' "${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+}
+
+dhp_registry_file() {
+    local root
+    root="$(dhp_registry_root)"
+    printf '%s\n' "${DHP_DISPATCHER_REGISTRY:-$root/config/dhp-dispatchers.tsv}"
+}
+
+dhp_normalize_dispatcher_id() {
+    local dispatcher="${1:-}"
+
+    dispatcher="${dispatcher##*/}"
+    dispatcher="${dispatcher%.sh}"
+    case "$dispatcher" in
+        dhp-*)
+            dispatcher="${dispatcher#dhp-}"
+            ;;
+        aicopy)
+            dispatcher="copy"
+            ;;
+        ai-project)
+            dispatcher="project"
+            ;;
+        ai-chain)
+            dispatcher="chain"
+            ;;
+    esac
+
+    [ -n "$dispatcher" ] || return 1
+    printf '%s\n' "$dispatcher"
+}
+
+dhp_registry_row() {
+    local dispatcher="${1:-}"
+    local registry
+    local normalized
+
+    normalized="$(dhp_normalize_dispatcher_id "$dispatcher")" || return 1
+    registry="$(dhp_registry_file)"
+    [ -f "$registry" ] || return 1
+
+    awk -F '\t' -v id="$normalized" '
+        NF && $1 !~ /^#/ && $1 == id {
+            print
+            found = 1
+            exit
+        }
+        END { exit(found ? 0 : 1) }
+    ' "$registry"
+}
+
+dhp_registry_field_index() {
+    case "${1:-}" in
+        id) echo 1 ;;
+        script) echo 2 ;;
+        mode) echo 3 ;;
+        display_name) echo 4 ;;
+        model_type) echo 5 ;;
+        model_env) echo 6 ;;
+        output_env) echo 7 ;;
+        default_temperature) echo 8 ;;
+        prompt_file) echo 9 ;;
+        *) return 1 ;;
+    esac
+}
+
+dhp_registry_field() {
+    local dispatcher="${1:-}"
+    local field="${2:-}"
+    local row
+    local index
+
+    row="$(dhp_registry_row "$dispatcher")" || return 1
+    index="$(dhp_registry_field_index "$field")" || return 1
+    printf '%s\n' "$row" | awk -F '\t' -v idx="$index" '{ print $idx }'
+}
+
+dhp_registry_ids() {
+    local registry
+    registry="$(dhp_registry_file)"
+    [ -f "$registry" ] || return 1
+
+    awk -F '\t' 'NF && $1 !~ /^#/ { print $1 }' "$registry"
+}
+
 # Human-readable list used by UX/help paths.
 dhp_available_dispatchers() {
-    printf '%s\n' "tech, creative, content, strategy, brand, market, stoic, research, narrative, copy, finance, morphling, coach, chain, project, memory, memory-search"
+    local ids=""
+    local id=""
+
+    while IFS= read -r id; do
+        [ -n "$id" ] || continue
+        if [ -z "$ids" ]; then
+            ids="$id"
+        else
+            ids="$ids, $id"
+        fi
+    done < <(dhp_registry_ids)
+
+    printf '%s\n' "$ids"
 }
 
 # Resolve dispatcher aliases to canonical script names.
 # Usage: script_name=$(dhp_dispatcher_script_name "tech")
 dhp_dispatcher_script_name() {
+    dhp_registry_field "${1:-}" script
+}
+
+dhp_registry_prompt_path() {
     local dispatcher="${1:-}"
-    case "$dispatcher" in
-        tech|dhp-tech|dhp-tech.sh) echo "dhp-tech.sh" ;;
-        creative|dhp-creative|dhp-creative.sh) echo "dhp-creative.sh" ;;
-        content|dhp-content|dhp-content.sh) echo "dhp-content.sh" ;;
-        strategy|dhp-strategy|dhp-strategy.sh) echo "dhp-strategy.sh" ;;
-        brand|dhp-brand|dhp-brand.sh) echo "dhp-brand.sh" ;;
-        market|dhp-market|dhp-market.sh) echo "dhp-market.sh" ;;
-        stoic|dhp-stoic|dhp-stoic.sh) echo "dhp-stoic.sh" ;;
-        research|dhp-research|dhp-research.sh) echo "dhp-research.sh" ;;
-        narrative|dhp-narrative|dhp-narrative.sh) echo "dhp-narrative.sh" ;;
-        copy|dhp-copy|dhp-copy.sh) echo "dhp-copy.sh" ;;
-        finance|dhp-finance|dhp-finance.sh) echo "dhp-finance.sh" ;;
-        morphling|dhp-morphling|dhp-morphling.sh) echo "dhp-morphling.sh" ;;
-        coach|dhp-coach|dhp-coach.sh) echo "dhp-coach.sh" ;;
-        chain|dhp-chain|dhp-chain.sh) echo "dhp-chain.sh" ;;
-        project|dhp-project|dhp-project.sh) echo "dhp-project.sh" ;;
-        memory|dhp-memory|dhp-memory.sh) echo "dhp-memory.sh" ;;
-        memory-search|dhp-memory-search|dhp-memory-search.sh) echo "dhp-memory-search.sh" ;;
-        *) return 1 ;;
+    local prompt_file
+    local root
+
+    prompt_file="$(dhp_registry_field "$dispatcher" prompt_file)" || return 1
+    [ -n "$prompt_file" ] && [ "$prompt_file" != "-" ] || return 1
+    case "$prompt_file" in
+        /*)
+            printf '%s\n' "$prompt_file"
+            ;;
+        *)
+            root="$(dhp_registry_root)"
+            printf '%s/%s\n' "$root" "$prompt_file"
+            ;;
     esac
+}
+
+dhp_dispatch_registered() {
+    local dispatcher="${1:-}"
+    shift || true
+
+    local row=""
+    local id=""
+    local script_name=""
+    local mode=""
+    local display_name=""
+    local model_type=""
+    local model_env=""
+    local output_env=""
+    local default_temperature=""
+    local prompt_file=""
+    local prompt_path=""
+    local system_brief=""
+
+    row="$(dhp_registry_row "$dispatcher")" || {
+        echo "Error: unknown dispatcher '$dispatcher'." >&2
+        return 1
+    }
+
+    IFS=$'\t' read -r id script_name mode display_name model_type model_env output_env default_temperature prompt_file <<< "$row"
+
+    if [ "$mode" != "registry" ]; then
+        echo "Error: dispatcher '$id' is handled by $script_name, not the registry-backed swarm path." >&2
+        return 1
+    fi
+
+    prompt_path="$(dhp_registry_prompt_path "$id")" || {
+        echo "Error: registry prompt path missing for dispatcher '$id'." >&2
+        return 1
+    }
+    if [ ! -f "$prompt_path" ]; then
+        echo "Error: registry prompt file not found: $prompt_path" >&2
+        return 1
+    fi
+
+    system_brief="$(cat "$prompt_path")"
+    dhp_dispatch "$display_name" "$model_type" "" "$model_env" "$output_env" "$system_brief" "$default_temperature" "$@"
+}
+
+dhp_dispatch_from_script() {
+    local caller="${BASH_SOURCE[1]:-}"
+    local dispatcher=""
+
+    if [ -z "$caller" ]; then
+        echo "Error: cannot determine dispatcher shim name." >&2
+        return 1
+    fi
+
+    dispatcher="$(dhp_normalize_dispatcher_id "$caller")" || return 1
+    dhp_dispatch_registered "$dispatcher" "$@"
 }
 
 dhp_resolve_dispatcher_command() {
@@ -430,10 +582,20 @@ $PIPED_CONTENT"
 export -f dhp_setup_env
 export -f dhp_validate_temperature
 export -f dhp_parse_flags
+export -f dhp_registry_root
+export -f dhp_registry_file
+export -f dhp_normalize_dispatcher_id
+export -f dhp_registry_row
+export -f dhp_registry_field_index
+export -f dhp_registry_field
+export -f dhp_registry_ids
 export -f dhp_available_dispatchers
 export -f dhp_dispatcher_script_name
+export -f dhp_registry_prompt_path
 export -f dhp_resolve_dispatcher_command
 export -f dhp_get_input
 export -f slugify
 export -f dhp_save_artifact
 export -f dhp_dispatch
+export -f dhp_dispatch_registered
+export -f dhp_dispatch_from_script

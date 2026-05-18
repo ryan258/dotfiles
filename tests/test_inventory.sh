@@ -42,6 +42,7 @@ teardown() {
 
     assert_file_contains "$out_dir/baseline-metrics.md" "Frozen Phase 0 Baseline"
     assert_file_contains "$out_dir/script-inventory.md" "Dispatcher Wrappers"
+    assert_file_contains "$out_dir/script-inventory.md" "Dispatcher Registry"
     assert_file_contains "$out_dir/script-inventory.md" "Bin Entrypoints"
     assert_file_contains "$out_dir/script-inventory.md" "Script Classification"
     assert_file_contains "$out_dir/alias-inventory.md" "Alias Inventory"

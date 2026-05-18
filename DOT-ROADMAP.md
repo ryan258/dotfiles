@@ -391,8 +391,9 @@ Acceptance criteria:
 - Each old dispatcher command resolves.
 - Output directories and model fallback behavior remain compatible.
 - Adding a new dispatcher requires editing one registry entry, not creating another near-duplicate script.
-- Hand-maintained dispatcher wrapper surface is reduced from the frozen baseline of 21 `dhp-*.sh` files to one registry-driven entrypoint plus registry data and prompt files.
-- Any remaining `dhp-*.sh` compatibility files are generated or tiny shims, and the generated baseline report records them separately from hand-maintained dispatcher logic.
+- Hand-maintained simple dispatcher wrapper surface is reduced from the frozen baseline of 21 `dhp-*.sh` files to one registry-driven path plus registry data and prompt files.
+- Specialized dispatchers with bespoke logic, such as content, morphling, coach, project, chain, memory, and memory-search, are recorded as custom registry entries instead of forced into the simple wrapper path.
+- Any remaining `dhp-*.sh` compatibility files are generated or tiny shims, and the generated inventory report records them separately from hand-maintained dispatcher logic.
 
 ## 10. Phase 4: Coach Reshape
 

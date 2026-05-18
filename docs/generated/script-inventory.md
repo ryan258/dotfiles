@@ -19,6 +19,15 @@ Generated: May 18, 2026
 - Sibling-product candidates: 8
 - Support utilities: 50
 
+## Dispatcher Registry
+
+- Registry file: `config/dhp-dispatchers.tsv`
+- Registry entries: 17
+- Registry-backed swarm dispatchers: 10
+- Custom/specialized dispatcher entries: 7
+- Prompt files under `bin/prompts/`: 10
+- Tiny registry shims under `bin/`: 10
+
 ## Class Definitions
 
 - **daily-core**: Directly supports daily loop, data, health, focus, or context routines.

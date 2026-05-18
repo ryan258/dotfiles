@@ -15,7 +15,7 @@ setup() {
     export TODAY
     TODAY="$(date +%Y-%m-%d)"
 
-    mkdir -p "$DATA_DIR" "$DOTFILES_DIR/scripts/lib" "$DOTFILES_DIR/bin" "$PROJECTS_DIR" "$TEST_ROOT/bin"
+    mkdir -p "$DATA_DIR" "$DOTFILES_DIR/scripts/lib" "$DOTFILES_DIR/bin" "$DOTFILES_DIR/config" "$PROJECTS_DIR" "$TEST_ROOT/bin"
 
     cp "$BATS_TEST_DIRNAME/../scripts/startday.sh" "$DOTFILES_DIR/scripts/startday.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/status.sh" "$DOTFILES_DIR/scripts/status.sh"
@@ -29,6 +29,8 @@ setup() {
     cp "$BATS_TEST_DIRNAME/../bin/dhp-shared.sh" "$DOTFILES_DIR/bin/dhp-shared.sh"
     cp "$BATS_TEST_DIRNAME/../bin/dhp-lib.sh" "$DOTFILES_DIR/bin/dhp-lib.sh"
     cp "$BATS_TEST_DIRNAME/../bin/dhp-utils.sh" "$DOTFILES_DIR/bin/dhp-utils.sh"
+    cp "$BATS_TEST_DIRNAME/../config/dhp-dispatchers.tsv" "$DOTFILES_DIR/config/dhp-dispatchers.tsv"
+    cp -R "$BATS_TEST_DIRNAME/../bin/prompts" "$DOTFILES_DIR/bin/prompts"
     chmod +x "$DOTFILES_DIR/bin/cyborg" "$DOTFILES_DIR/bin/dhp-tech.sh"
 
     cat > "$DOTFILES_DIR/scripts/todo.sh" <<'STUB'

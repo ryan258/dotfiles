@@ -12,7 +12,7 @@ setup() {
     export DATA_DIR="$HOME/.config/dotfiles-data"
     export DOTFILES_DIR="$TEST_ROOT/dotfiles"
     export PATH="$TEST_ROOT/mock-bin:$PATH"
-    mkdir -p "$DATA_DIR" "$DOTFILES_DIR/bin" "$DOTFILES_DIR/scripts/lib" "$DOTFILES_DIR/ai-staff-hq" "$TEST_ROOT/mock-bin"
+    mkdir -p "$DATA_DIR" "$DOTFILES_DIR/bin" "$DOTFILES_DIR/config" "$DOTFILES_DIR/scripts/lib" "$DOTFILES_DIR/ai-staff-hq" "$TEST_ROOT/mock-bin"
 
     cp "$BATS_TEST_DIRNAME/../bin/dhp-shared.sh" "$DOTFILES_DIR/bin/dhp-shared.sh"
     cp "$BATS_TEST_DIRNAME/../bin/dhp-tech.sh" "$DOTFILES_DIR/bin/dhp-tech.sh"
@@ -20,6 +20,8 @@ setup() {
     cp "$BATS_TEST_DIRNAME/../bin/dhp-content.sh" "$DOTFILES_DIR/bin/dhp-content.sh"
     cp "$BATS_TEST_DIRNAME/../bin/dhp-lib.sh" "$DOTFILES_DIR/bin/dhp-lib.sh"
     cp "$BATS_TEST_DIRNAME/../bin/dhp-utils.sh" "$DOTFILES_DIR/bin/dhp-utils.sh"
+    cp "$BATS_TEST_DIRNAME/../config/dhp-dispatchers.tsv" "$DOTFILES_DIR/config/dhp-dispatchers.tsv"
+    cp -R "$BATS_TEST_DIRNAME/../bin/prompts" "$DOTFILES_DIR/bin/prompts"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/config.sh" "$DOTFILES_DIR/scripts/lib/config.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/common.sh" "$DOTFILES_DIR/scripts/lib/common.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/file_ops.sh" "$DOTFILES_DIR/scripts/lib/file_ops.sh"
@@ -28,7 +30,7 @@ setup() {
     cat > "$TEST_ROOT/mock-bin/uv" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "$*" > "$DATA_DIR/mock_uv_args.txt"
-cat >/dev/null
+cat > "$DATA_DIR/mock_uv_stdin.txt"
 printf 'mock swarm output\n'
 EOF
     chmod +x "$TEST_ROOT/mock-bin/uv"
@@ -66,6 +68,16 @@ teardown() {
     run cat "$DATA_DIR/mock_uv_args.txt"
     [ "$status" -eq 0 ]
     [[ "$output" == *"--temperature 0.5"* ]]
+}
+
+@test "registry-backed dhp-tech shim reads prompt file and preserves input" {
+    run bash -c "PATH='$PATH' HOME='$HOME' DOTFILES_DIR='$DOTFILES_DIR' DATA_DIR='$DATA_DIR' OPENROUTER_API_KEY='test-key' DHP_TECH_OUTPUT_DIR='$DATA_DIR/output' bash '$DOTFILES_DIR/bin/dhp-tech.sh' 'Fix parser issue' 2>&1"
+
+    [ "$status" -eq 0 ]
+    run cat "$DATA_DIR/mock_uv_stdin.txt"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"--- TECHNICAL OBJECTIVES ---"* ]]
+    [[ "$output" == *"Fix parser issue"* ]]
 }
 
 @test "dhp-shared rejects out-of-range temperature values" {

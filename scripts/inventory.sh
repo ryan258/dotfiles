@@ -262,10 +262,38 @@ collect_script_classes() {
     done < <(script_inventory_paths)
 }
 
+collect_dispatcher_registry_metrics() {
+    dispatcher_registry_file="$DOTFILES_DIR/config/dhp-dispatchers.tsv"
+    dispatcher_registry_entries=0
+    dispatcher_registry_backed=0
+    dispatcher_registry_custom=0
+    dispatcher_prompt_files=$(count_find "$DOTFILES_DIR/bin/prompts" -maxdepth 1 -name '*.md')
+    dispatcher_tiny_shims=0
+
+    if [ -f "$dispatcher_registry_file" ]; then
+        dispatcher_registry_entries=$(awk -F '\t' 'NF && $1 !~ /^#/ { count++ } END { print count+0 }' "$dispatcher_registry_file")
+        dispatcher_registry_backed=$(awk -F '\t' 'NF && $1 !~ /^#/ && $3 == "registry" { count++ } END { print count+0 }' "$dispatcher_registry_file")
+        dispatcher_registry_custom=$(awk -F '\t' 'NF && $1 !~ /^#/ && $3 != "registry" { count++ } END { print count+0 }' "$dispatcher_registry_file")
+
+        local shim_script=""
+        local shim=""
+        while IFS=$'\t' read -r _id shim_script _mode _rest; do
+            [ "${_id:-}" ] || continue
+            [[ "$_id" == \#* ]] && continue
+            [ "${_mode:-}" = "registry" ] || continue
+            shim="$DOTFILES_DIR/bin/$shim_script"
+            if [ -f "$shim" ] && grep -q 'dhp_dispatch_from_script' "$shim" 2>/dev/null; then
+                dispatcher_tiny_shims=$((dispatcher_tiny_shims + 1))
+            fi
+        done < "$dispatcher_registry_file"
+    fi
+}
+
 print_summary() {
     collect_metrics
     collect_alias_classes
     collect_script_classes
+    collect_dispatcher_registry_metrics
 
     cat <<EOF
 Dotfiles Inventory Summary
@@ -282,6 +310,7 @@ Dotfiles Inventory Summary
 - shell functions in aliases file: $alias_functions
 - alias classes: daily=$alias_daily compatibility=$alias_compat convenience=$alias_convenience risky=$alias_risky
 - script classes: daily=$script_daily support_library=$script_support_library compatibility=$script_compat sibling_candidate=$script_sibling support_utility=$script_support_utility
+- dispatcher registry: entries=$dispatcher_registry_entries registry_backed=$dispatcher_registry_backed custom=$dispatcher_registry_custom prompt_files=$dispatcher_prompt_files tiny_shims=$dispatcher_tiny_shims
 - coach core LOC: $coach_loc
 - product implementation LOC: $product_loc
 - shell tests: $tests_shell
@@ -368,6 +397,7 @@ write_script_inventory() {
     local output_dir="$1"
     collect_metrics
     collect_script_classes
+    collect_dispatcher_registry_metrics
 
     {
         cat <<EOF
@@ -391,6 +421,15 @@ Generated: May 18, 2026
 - Compatibility wrappers: $script_compat
 - Sibling-product candidates: $script_sibling
 - Support utilities: $script_support_utility
+
+## Dispatcher Registry
+
+- Registry file: \`config/dhp-dispatchers.tsv\`
+- Registry entries: $dispatcher_registry_entries
+- Registry-backed swarm dispatchers: $dispatcher_registry_backed
+- Custom/specialized dispatcher entries: $dispatcher_registry_custom
+- Prompt files under \`bin/prompts/\`: $dispatcher_prompt_files
+- Tiny registry shims under \`bin/\`: $dispatcher_tiny_shims
 
 ## Class Definitions
 

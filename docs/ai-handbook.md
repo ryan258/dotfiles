@@ -4,7 +4,7 @@ This repo exposes more than one kind of AI command. Some commands are simple one
 
 ## Core Dispatchers
 
-These aliases route to the `dhp-*.sh` dispatcher family in `bin/`:
+These aliases route to the `dhp-*.sh` dispatcher family in `bin/`. The simple swarm dispatchers are registry-backed: metadata lives in `config/dhp-dispatchers.tsv`, and their system prompts live in `bin/prompts/`.
 
 - `tech` - technical and coding help
 - `content` - long-form writing and content strategy

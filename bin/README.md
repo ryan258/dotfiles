@@ -1,11 +1,11 @@
 # Your AI Tool Shortcut Menu
 
-This folder holds the repo's AI dispatchers, orchestration entry points, and repo-aware agents. The current root inventory includes 21 `dhp-*.sh` executables (17 user-facing dispatchers plus 4 infrastructure files) and companion commands such as `dispatch.sh`, `morphling.sh`, `cyborg`, `cyborg-sync`, and `swipe.sh`.
+This folder holds the repo's AI dispatchers, orchestration entry points, and repo-aware agents. Current counts live in `docs/generated/script-inventory.md`; the simple swarm dispatchers are now driven by `config/dhp-dispatchers.tsv` plus prompt files in `bin/prompts/`.
 
 **Latest Update:** 
 - ✅ All tools can print answers live on your screen (use `--stream`)
 - ✅ Errors are reported clearly so you know what broke
-- ✅ We deleted 1,500 lines of messy code to make it faster!
+- ✅ Simple dispatchers now use one registry instead of duplicated wrapper logic
 
 ---
 
@@ -155,9 +155,11 @@ swipe tech "How do I fix my internet?"
 
 ## 🛠️ How to Add a New Helper Tool
 
-1. Try opening `bin/dhp-stoic.sh` and make a copy of it. Name it `dhp-[your-name].sh`.
-2. Open the file and follow the directions inside.
-3. Make it run by typing `chmod +x bin/dhp-[your-name].sh`.
-4. Run the check tool `bash ~/dotfiles/scripts/dotfiles_check.sh` to make sure it works!
+1. Add one row to `config/dhp-dispatchers.tsv`.
+2. Add the prompt text as `bin/prompts/[your-name].md`.
+3. Add a tiny compatibility shim only if you need a direct `bin/dhp-[your-name].sh` command.
+4. Run the dispatcher tests before using it.
+
+Tiny registry shims are intentionally identical and should not be edited one-by-one; update `dhp-shared.sh`, the registry row, or the prompt file instead.
 
 **Important:** Make sure you have your `OPENROUTER_API_KEY` saved in your `.env` file, or none of this magic will work!

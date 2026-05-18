@@ -1,0 +1,18 @@
+# id	script	mode	display_name	model_type	model_env	output_env	default_temperature	prompt_file
+tech	dhp-tech.sh	registry	Technical Analysis	TECH	TECH_MODEL	DHP_TECH_OUTPUT_DIR	0.2	bin/prompts/tech.md
+creative	dhp-creative.sh	registry	Creative Workflow	CREATIVE	CREATIVE_MODEL	DHP_CREATIVE_OUTPUT_DIR	0.85	bin/prompts/creative.md
+content	dhp-content.sh	custom	Content Workflow	-	-	-	-	-
+strategy	dhp-strategy.sh	registry	Strategic Analysis	STRATEGY	STRATEGY_MODEL	DHP_STRATEGY_OUTPUT_DIR	0.6	bin/prompts/strategy.md
+brand	dhp-brand.sh	registry	Brand Strategy	BRAND	BRAND_MODEL	DHP_BRAND_OUTPUT_DIR	0.7	bin/prompts/brand.md
+market	dhp-market.sh	registry	Market Analysis	MARKET	MARKET_MODEL	DHP_MARKET_OUTPUT_DIR	0.7	bin/prompts/market.md
+stoic	dhp-stoic.sh	registry	Stoic Coaching	STOIC	STOIC_MODEL	DHP_STOIC_OUTPUT_DIR	0.3	bin/prompts/stoic.md
+research	dhp-research.sh	registry	Research Synthesis	RESEARCH	RESEARCH_MODEL	DHP_RESEARCH_OUTPUT_DIR	0.5	bin/prompts/research.md
+narrative	dhp-narrative.sh	registry	Narrative Design	NARRATIVE	NARRATIVE_MODEL	DHP_NARRATIVE_OUTPUT_DIR	0.8	bin/prompts/narrative.md
+copy	dhp-copy.sh	registry	Copywriting	COPY	COPY_MODEL	DHP_COPY_OUTPUT_DIR	0.7	bin/prompts/copy.md
+finance	dhp-finance.sh	registry	Financial Strategy	FINANCE	FINANCE_MODEL	DHP_FINANCE_OUTPUT_DIR	0.4	bin/prompts/finance.md
+morphling	dhp-morphling.sh	custom	Morphling Agent	-	-	-	-	-
+coach	dhp-coach.sh	custom	Coach	-	-	-	-	-
+chain	dhp-chain.sh	custom	Dispatcher Chain	-	-	-	-	-
+project	dhp-project.sh	custom	Project Orchestration	-	-	-	-	-
+memory	dhp-memory.sh	custom	Memory	-	-	-	-	-
+memory-search	dhp-memory-search.sh	custom	Memory Search	-	-	-	-	-

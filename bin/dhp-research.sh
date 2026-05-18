@@ -1,26 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# dhp-research.sh - Academic Researcher dispatcher (Swarm Edition)
-# Research organization, source summarization, knowledge synthesis
-
-# Source shared libraries
 source "$(dirname "$0")/dhp-shared.sh"
 
-dhp_dispatch \
-    "Research Synthesis" \
-    "RESEARCH" \
-    "" \
-    "RESEARCH_MODEL" \
-    "DHP_RESEARCH_OUTPUT_DIR" \
-    "
---- RESEARCH SYNTHESIS OBJECTIVES ---
-Conduct a deep dive research synthesis covering:
-1. Key themes, main arguments, and foundational concepts
-2. Structured organization of findings (taxonomy or framework)
-3. Important connections, patterns, and contradictions across sources
-4. Suggested next research directions and open questions
-
-DELIVERABLE: A structured, academic-grade research report." \
-    "0.5" \
-    "$@"
+dhp_dispatch_from_script "$@"
