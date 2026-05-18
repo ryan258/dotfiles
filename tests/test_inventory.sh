@@ -46,6 +46,7 @@ teardown() {
     assert_file_contains "$out_dir/script-inventory.md" "Script Classification"
     assert_file_contains "$out_dir/alias-inventory.md" "Alias Inventory"
     assert_file_contains "$out_dir/test-coverage-map.md" "Daily Loop Coverage"
+    assert_file_contains "$out_dir/test-coverage-map.md" "Compatibility Wrapper Degradation Coverage"
     assert_file_contains "$out_dir/external-dependencies.md" "External Dependencies"
 }
 

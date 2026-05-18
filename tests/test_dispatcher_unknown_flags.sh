@@ -12,7 +12,7 @@ setup() {
     export DATA_DIR="$HOME/.config/dotfiles-data"
     export DOTFILES_DIR="$TEST_ROOT/dotfiles"
     export PATH="$TEST_ROOT/mock-bin:$PATH"
-    mkdir -p "$DATA_DIR" "$DOTFILES_DIR/bin" "$DOTFILES_DIR/scripts/lib" "$TEST_ROOT/mock-bin"
+    mkdir -p "$DATA_DIR" "$DOTFILES_DIR/bin" "$DOTFILES_DIR/scripts/lib" "$DOTFILES_DIR/ai-staff-hq" "$TEST_ROOT/mock-bin"
 
     cp "$BATS_TEST_DIRNAME/../bin/dhp-shared.sh" "$DOTFILES_DIR/bin/dhp-shared.sh"
     cp "$BATS_TEST_DIRNAME/../bin/dhp-tech.sh" "$DOTFILES_DIR/bin/dhp-tech.sh"

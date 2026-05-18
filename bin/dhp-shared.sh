@@ -16,7 +16,7 @@ dhp_setup_env() {
     local common_lib
     shared_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$shared_dir/.." && pwd)}"
-    AI_STAFF_DIR="$DOTFILES_DIR/ai-staff-hq"
+    AI_STAFF_DIR="${AI_STAFF_DIR:-$DOTFILES_DIR/ai-staff-hq}"
 
     config_lib="$DOTFILES_DIR/scripts/lib/config.sh"
     common_lib="$DOTFILES_DIR/scripts/lib/common.sh"
@@ -329,6 +329,12 @@ dhp_dispatch() {
     if [ -z "$PIPED_CONTENT" ]; then
         echo "Usage: echo \"input\" | $(basename "$0") [options]" >&2
         echo "   or: $(basename "$0") "input" [options]" >&2
+        return 1
+    fi
+
+    if [ ! -d "$AI_STAFF_DIR" ]; then
+        echo "Warning: AI Staff HQ unavailable at $AI_STAFF_DIR." >&2
+        echo "Set AI_STAFF_DIR to a valid checkout or restore $DOTFILES_DIR/ai-staff-hq before running $service_name." >&2
         return 1
     fi
 

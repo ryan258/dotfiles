@@ -512,6 +512,10 @@ Generated: May 18, 2026
 - `tests/test_coach_prompts.sh`
 - `tests/test_coach_metric_branches.sh`
 
+## Compatibility Wrapper Degradation Coverage
+
+- `tests/test_optional_product_degradation.sh`
+
 ## Inventory Coverage
 
 - `tests/test_inventory.sh`
