@@ -68,6 +68,14 @@ coaching_build_status_prompt() {
     coach_build_status_prompt "$@"
 }
 
+coaching_build_framing_template() {
+    coach_build_framing_template "$@"
+}
+
+coaching_build_framing_prompt() {
+    coach_build_framing_prompt "$@"
+}
+
 coaching_strategy_with_retry() {
     coach_strategy_with_retry "$@"
 }
