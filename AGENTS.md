@@ -128,11 +128,14 @@ my_function() {
 | `coaching.sh`     | Stable facade over coach libraries         | `scripts/lib/` |
 | `coach_ops.sh`    | Core coaching mode, log, digest logic      | `scripts/lib/` |
 | `coach_metrics.sh` | Tactical and pattern metrics collection  | `scripts/lib/` |
-| `coach_prompts.sh` | Coach prompt builders                    | `scripts/lib/` |
+| `coach_brief.sh`  | Deterministic brief renderer (primary ground-truth path) | `scripts/lib/` |
+| `coach_prompts.sh` | Framing-prompt builder over the deterministic brief | `scripts/lib/` |
+| `coach_prebrief.sh` | Interactive pre-brief A/B/C/D/E questions | `scripts/lib/` |
 | `coach_scoring.sh` | Coaching scoring and classification      | `scripts/lib/` |
 | `coach_chat.sh`   | Menu-driven post-briefing control surface  | `scripts/lib/` |
 | `github_ops.sh`   | GitHub API helpers                         | `scripts/lib/` |
 | `focus_relevance.sh` | Focus keyword extraction and relevance  | `scripts/lib/` |
+| `wrapper_common.sh` | Shared helpers for sibling-product wrappers | `scripts/lib/` |
 
 Use `scripts/lib/date_utils.sh` for all date/time operations — no inline `date -v`, `date -d`, `gdate -d`.
 

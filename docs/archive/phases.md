@@ -1,7 +1,14 @@
 # Dotfiles Masterplan Phases
 
-> **Archived** - This is historical documentation from early phase planning.
-> The current contract is `CLAUDE.md`. This file is preserved for reference only.
+> **Archived** - This is historical documentation from the original coaching-system
+> phase plan. It is preserved as a record of how that plan evolved.
+>
+> - Current behavior contract: `CLAUDE.md`
+> - Current narrowing roadmap and phase status: `../../DOT-ROADMAP.md`
+>
+> The phase numbering here is **not** the same as the phase numbering in
+> `DOT-ROADMAP.md`. This file covers the early execution-coach phases; the
+> roadmap covers the later repo-narrowing phases.
 
 Last updated: March 2, 2026
 Owner: `dotfiles` root project
@@ -9,8 +16,9 @@ Canonical behavior contract: `CLAUDE.md`
 
 ## Purpose
 
-This file is the single source of truth for the active implementation plan for the
-execution coach system in `startday` and `goodevening`.
+This file was the single source of truth for the original execution-coach phase plan
+in `startday` and `goodevening`. The deterministic-brief reshape described in those
+phases later became Phase 4 of the repo-narrowing roadmap (`DOT-ROADMAP.md`).
 
 Use this file to bootstrap new conversations without re-explaining context.
 

@@ -1,6 +1,6 @@
 # Test Coverage Map
 
-Generated: May 18, 2026
+Generated: May 19, 2026
 
 ## Daily Loop Coverage
 
@@ -84,6 +84,6 @@ Generated: May 18, 2026
 - `tests/test_spoon_integration.sh`
 - `tests/test_startday_coach.sh`
 - `tests/test_status.sh`
-- `tests/test_time_tracking.sh`
 - `tests/test_time_tracking_lib.sh`
+- `tests/test_time_tracking.sh`
 - `tests/test_todo.sh`

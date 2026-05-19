@@ -1,20 +1,20 @@
 # Script Inventory
 
-Generated: May 18, 2026
+Generated: May 19, 2026
 
 ## Summary
 
-- Shell files under `scripts/`: 101
+- Shell files under `scripts/`: 102
 - Top-level `scripts/*.sh`: 78
 - Top-level `scripts/*.py`: 2
-- Sourced shell libraries under `scripts/lib/`: 23
+- Sourced shell libraries under `scripts/lib/`: 24
 - Python modules under `scripts/lib/`: 1
 - `bin/` non-markdown entrypoints: 28
 
 ## Classification Summary
 
 - Daily-core scripts: 26
-- Support libraries: 30
+- Support libraries: 31
 - Compatibility wrappers: 26
 - Sibling-product candidates: 0
 - Support utilities: 50
@@ -79,8 +79,8 @@ Daily-core includes commands that directly or indirectly support the daily loop.
 | `scripts/bash_graph.sh` | support-utility |
 | `scripts/bash_intel.sh` | support-utility |
 | `scripts/battery_check.sh` | support-utility |
-| `scripts/blog.sh` | compatibility-wrapper |
 | `scripts/blog_recent_content.sh` | compatibility-wrapper |
+| `scripts/blog.sh` | compatibility-wrapper |
 | `scripts/cheatsheet.sh` | support-utility |
 | `scripts/clipboard_manager.sh` | support-utility |
 | `scripts/context.sh` | support-utility |
@@ -139,6 +139,7 @@ Daily-core includes commands that directly or indirectly support the daily loop.
 | `scripts/lib/oauth.sh` | support-library |
 | `scripts/lib/spoon_budget.sh` | support-library |
 | `scripts/lib/time_tracking.sh` | support-library |
+| `scripts/lib/wrapper_common.sh` | support-library |
 | `scripts/logs.sh` | support-utility |
 | `scripts/media_converter.sh` | support-utility |
 | `scripts/meds.sh` | daily-core |
@@ -242,8 +243,8 @@ Daily-core includes commands that directly or indirectly support the daily loop.
 - `scripts/bash_graph.sh`
 - `scripts/bash_intel.sh`
 - `scripts/battery_check.sh`
-- `scripts/blog.sh`
 - `scripts/blog_recent_content.sh`
+- `scripts/blog.sh`
 - `scripts/cheatsheet.sh`
 - `scripts/clipboard_manager.sh`
 - `scripts/context.sh`
@@ -338,3 +339,4 @@ Daily-core includes commands that directly or indirectly support the daily loop.
 - `scripts/lib/oauth.sh`
 - `scripts/lib/spoon_budget.sh`
 - `scripts/lib/time_tracking.sh`
+- `scripts/lib/wrapper_common.sh`

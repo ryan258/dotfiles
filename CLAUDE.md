@@ -81,11 +81,14 @@ dotfiles/
 | `coaching.sh`     | Stable facade over the coach_* family (see below) | Daily briefing workflows   |
 | `coach_ops.sh`    | Core coaching implementation (mode, log, digest)  | Used internally by coaching.sh |
 | `coach_metrics.sh`| Tactical + pattern metrics collection             | Used by coaching.sh        |
-| `coach_prompts.sh`| Coach prompt builders                             | Used by coaching.sh        |
+| `coach_brief.sh`  | Deterministic brief renderer (`coach_brief_render`) | Primary ground-truth path for startday/status/goodevening |
+| `coach_prompts.sh`| Coach framing-prompt builder over the deterministic brief | Used by coaching.sh        |
+| `coach_prebrief.sh`| Interactive pre-brief A/B/C/D/E questions        | Used by status/startday before the brief renders |
 | `coach_scoring.sh`| Coaching scoring and classification               | Used by coaching.sh        |
 | `coach_chat.sh`   | Menu-driven post-briefing control surface and chat | After startday/status/goodevening |
 | `github_ops.sh`   | GitHub API helpers (repos, commits, pushes)       | Daily briefing workflows   |
 | `focus_relevance.sh` | Focus keyword extraction and relevance scoring | Drive filtering, journal rel, strategy evidence |
+| `wrapper_common.sh` | Shared helpers for sibling-product compatibility wrappers | Sourced by `bin/cyborg`, `bin/cyborg-sync`, `scripts/observer.sh`, `scripts/blog.sh`, `scripts/blog_recent_content.sh`, `scripts/cyborg_scoped_site_check.sh` |
 
 ### The `coaching.sh` Facade
 

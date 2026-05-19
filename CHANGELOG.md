@@ -24,6 +24,11 @@
 - Converted `scripts/blog.sh` and `scripts/blog_recent_content.sh` into compatibility wrappers that delegate to `BLOG_FACTORY_HOME`, with quiet daily-loop fallback through `BLOG_FACTORY_DAILY_HOOK=true`.
 - Added `tests/test_blog_factory_wrapper.sh` and extended optional-product degradation coverage for missing Blog Factory.
 - Documented the remaining roadmap decisions in `docs/blog-factory-boundary.md`, `docs/library-loading.md`, and `docs/artifact-log-policy.md`.
+- Extracted `scripts/lib/wrapper_common.sh` to centralize the six compatibility wrappers' shared helpers (`wrapper_truthy`, `wrapper_help_requested`, `wrapper_resolve_safe_path`); each wrapper now documents its daily-hook exit convention inline.
+- Restored executable bit on `scripts/blog.sh`, `scripts/blog_recent_content.sh`, and `scripts/cyborg_scoped_site_check.sh`; added repo-state assertion tests so the exec bit cannot regress silently.
+- Moved the `shift_date` test helper into `tests/helpers/test_helpers.sh` so date-window fixtures are shared.
+- Added a "Tests" cross-reference section to `docs/ai-staff-hq-boundary.md` so the boundary doc is self-contained.
+- Synced `CLAUDE.md` and `AGENTS.md` core-library tables to include `coach_brief.sh`, `coach_prebrief.sh`, and `wrapper_common.sh`. Updated `docs/general-reference-handbook.md` architecture and daily coaching flow sections to reflect the deterministic-brief + AI framing layer model.
 
 ## Version 2.2.76 (May 11, 2026) - Obsidian Knowledge Graph Framework (V3)
 

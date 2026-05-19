@@ -13,27 +13,38 @@ Terminal (zsh)
   -> aliases + functions (zsh/aliases.zsh)
   -> CLI scripts (scripts/*.sh)
   -> shared libraries (scripts/lib/*.sh)
-  -> AI dispatchers + orchestration (bin/dhp-*.sh)
-  -> Cyborg Lab wrapper (bin/cyborg -> ~/Projects/cyborg-agent)
-  -> Brain/knowledge base (brain/ — ChromaDB vector store)
+  -> AI dispatchers + orchestration (bin/dhp-*.sh, registry-backed via config/dhp-dispatchers.tsv)
+  -> Optional sibling-product wrappers:
+       bin/cyborg                    -> ~/Projects/cyborg-agent
+       bin/cyborg-sync               -> ~/Projects/cyborg-agent
+       scripts/observer.sh           -> ~/Projects/obsidian-observer
+       scripts/blog.sh               -> ~/Projects/blog-factory
+       scripts/blog_recent_content.sh -> ~/Projects/blog-factory
+       (AI Staff HQ via AI_STAFF_DIR; default ~/dotfiles/ai-staff-hq submodule)
+  -> Brain/knowledge base (brain/ — ChromaDB vector store, optional)
   -> data (~/.config/dotfiles-data/ — pipe-delimited flat files)
 ```
 
 ## Daily Coaching Flow
 
-```text
-startday
-  -> gather focus/tasks/journal/health/git/drive signals
-  -> build deterministic behavior digest (coach_ops)
-  -> strategy evidence: journal focus hits + Drive doc hits supplement git
-  -> call strategy dispatcher with timeout guard
-  -> fallback to deterministic schema if unavailable
+The coach runs deterministic metrics first, then layers a short AI framing
+sentence on top. Numbers, dates, repo names, and bullets come from the
+deterministic brief; the AI never owns ground-truth claims.
 
-goodevening
-  -> gather today outcomes + same digest (including drive signals)
-  -> call strategy dispatcher with timeout guard
-  -> fallback to deterministic schema if unavailable
+```text
+startday / status --coach / goodevening
+  -> coach_metrics collects signals: focus, todos, journal, health/spoons,
+     Fitbit wearables, GitHub commits/repos, focus-related Drive evidence,
+     broad recent Drive activity, calendar pressure
+  -> coach_brief renders the deterministic brief (coach_brief_render)
+  -> dhp-coach.sh produces a short framing layer over the rendered brief
+  -> coach_chat.sh offers a deterministic post-brief control surface
+     (/t todo, /i idea, /f focus, /j journal, /d drive, /q quit)
+  -> if dhp-coach is unavailable, the deterministic brief is the output
 ```
+
+See `docs/library-loading.md` for the shell loading strategy and
+`DOT-ROADMAP.md` Phase 4 for the deterministic-brief rationale.
 
 ## Data Contracts
 
@@ -71,18 +82,17 @@ cyborg auto --build --publish   # Build, verify, publish, then document
 cyborg resume             # Resume a previous session
 ```
 
-### Features
+### Highlights
 
-- GitNexus integration for code analysis
 - GitHub-issue/backlog-driven iteration for existing repos (`--iterate`, optional `--backlog-file`)
 - Market validation before `cyborg auto --build` (skip with `--no-validate`)
 - Optional registry publishing for build mode (`--publish`)
-- Token caching and draft loop speed-ups
-- Easy A/B/C/D/E choice prompts
-- Session saving so you can pick up later
-- OpenRouter API with configurable models (the AI service this tool uses)
+- Easy A/B/C/D/E choice prompts and session resume
 
-See [`bin/cyborg-readme.md`](../bin/cyborg-readme.md) for full details.
+Root dotfiles only owns the wrapper. The complete feature list and operator
+guide live in the sibling repo at `~/Projects/cyborg-agent/README.md`. See
+[`bin/cyborg-readme.md`](../bin/cyborg-readme.md) for the dotfiles boundary
+note.
 
 ---
 
@@ -2544,13 +2554,27 @@ git clone https://github.com/ryan258/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 ```
 
-### 2. Initialize the AI Submodule
+### 2. Initialize the AI Submodule (Optional)
 
-If you plan to use the `dhp-*` AI dispatchers, you must set up the `ai-staff-hq` submodule:
+The `dhp-*` AI dispatchers and Morphling use AI Staff HQ as their orchestration backend. Default is the in-repo submodule, but you can point at a sibling checkout via `AI_STAFF_DIR`. If you keep the submodule:
 
 ```bash
 git submodule update --init --recursive
 ```
+
+If `AI_STAFF_DIR` points at a missing path, the dispatchers fail with a short setup message instead of a Python stack trace. The daily loop (`startday`, `status`, `goodevening`) does not require AI Staff HQ. See [`ai-staff-hq-boundary.md`](ai-staff-hq-boundary.md).
+
+### 2b. Optional Sibling Products
+
+These products were extracted from root dotfiles and are optional. Compatibility wrappers stay in dotfiles and degrade gracefully when the sibling repo is absent.
+
+| Product | Default location | Override env |
+| ------- | ---------------- | ------------ |
+| Obsidian Observer | `~/Projects/obsidian-observer` | `OBSERVER_HOME` |
+| Cyborg Lab Agent | `~/Projects/cyborg-agent` | `CYBORG_HOME` |
+| Blog Factory | `~/Projects/blog-factory` | `BLOG_FACTORY_HOME` |
+
+See the boundary docs: [`obsidian-knowledge-graph-framework.md`](obsidian-knowledge-graph-framework.md), [`bin/cyborg-readme.md`](../bin/cyborg-readme.md), [`blog-factory-boundary.md`](blog-factory-boundary.md).
 
 ### 3. Run Bootstrap
 

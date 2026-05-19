@@ -6,7 +6,9 @@ Morphling is the only AI-Staff-HQ specialist with tool access. It operates as a 
 
 ### Direct Mode (default)
 
-Runs the full ReAct agent through `ai-staff-hq/tools/activate.py` with four tools enabled. The agent reasons step-by-step, calling tools as needed, reading output, and iterating until the task is complete.
+Runs the full ReAct agent through `$AI_STAFF_DIR/tools/activate.py` with four tools enabled (default `AI_STAFF_DIR=$DOTFILES_DIR/ai-staff-hq`). The agent reasons step-by-step, calling tools as needed, reading output, and iterating until the task is complete.
+
+If `AI_STAFF_DIR` points at a missing path, `bin/morphling.sh` exits with a short setup message. See `docs/ai-staff-hq-boundary.md`.
 
 **Tools:**
 

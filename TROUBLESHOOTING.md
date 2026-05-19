@@ -51,6 +51,15 @@ Create a file called `~/.github_token` on your computer. Paste your secret GitHu
 **The Problem:** You get a red error that says something about `osascript`.
 **The Fix:** That specific tool only works on Apple Mac computers. If you are using Linux, that tool will not work.
 
+## 7. "Observer / Cyborg / Blog Factory is unavailable"
+
+**The Problem:** You run `observer`, `cyborg`, or `blog` and see a message like "Obsidian observer is unavailable. Expected sibling repo: ...".
+**The Fix:** These are optional products that live in sibling repos. You have two choices:
+- Install the sibling repo at the expected path. The defaults are `~/Projects/obsidian-observer`, `~/Projects/cyborg-agent`, and `~/Projects/blog-factory`.
+- Or, point the wrapper at an existing checkout by setting the matching env var: `OBSERVER_HOME`, `CYBORG_HOME`, or `BLOG_FACTORY_HOME` in your `.env`.
+
+The daily loop (`startday`, `status`, `goodevening`) keeps working when these products are missing — only the optional sub-sections degrade. See `docs/blog-factory-boundary.md` and `docs/obsidian-knowledge-graph-framework.md` for the boundary contracts.
+
 ## Still Broken? Tell Us!
 
 If none of this helped, please go to our [GitHub Page](https://github.com/ryan258/dotfiles/issues) and click "New Issue" to tell us!

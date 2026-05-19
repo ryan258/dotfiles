@@ -16,6 +16,10 @@ if [ -f "$INVENTORY_SCRIPT_DIR/lib/common.sh" ]; then
     source "$INVENTORY_SCRIPT_DIR/lib/common.sh"
 fi
 
+# Generated-on stamp for non-baseline reports. The Phase 0 baseline keeps its
+# own frozen date (May 18, 2026) — do not refresh it.
+INVENTORY_GENERATED_DATE="${INVENTORY_GENERATED_DATE:-$(date +"%B %d, %Y")}"
+
 usage() {
     cat <<'EOF'
 Usage: inventory.sh <summary|generate> [output_dir]
@@ -409,7 +413,7 @@ write_script_inventory() {
         cat <<EOF
 # Script Inventory
 
-Generated: May 18, 2026
+Generated: $INVENTORY_GENERATED_DATE
 
 ## Summary
 
@@ -502,7 +506,7 @@ write_alias_inventory() {
         cat <<EOF
 # Alias Inventory
 
-Generated: May 18, 2026
+Generated: $INVENTORY_GENERATED_DATE
 
 ## Summary
 
@@ -543,11 +547,8 @@ write_test_coverage_map() {
     local output_dir="$1"
 
     {
+        printf '# Test Coverage Map\n\nGenerated: %s\n\n' "$INVENTORY_GENERATED_DATE"
         cat <<'EOF'
-# Test Coverage Map
-
-Generated: May 18, 2026
-
 ## Daily Loop Coverage
 
 - `tests/test_startday_coach.sh`
@@ -580,11 +581,8 @@ write_external_dependencies() {
     local output_dir="$1"
 
     {
+        printf '# External Dependencies\n\nGenerated: %s\n\n' "$INVENTORY_GENERATED_DATE"
         cat <<'EOF'
-# External Dependencies
-
-Generated: May 18, 2026
-
 ## Credential-Like Configuration Keys
 
 These keys were detected from `.env.example` and should stay out of generated logs.
