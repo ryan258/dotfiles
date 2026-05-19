@@ -20,9 +20,11 @@ setup() {
     cp "$BATS_TEST_DIRNAME/../scripts/startday.sh" "$DOTFILES_DIR/scripts/startday.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/status.sh" "$DOTFILES_DIR/scripts/status.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/goodevening.sh" "$DOTFILES_DIR/scripts/goodevening.sh"
+    cp "$BATS_TEST_DIRNAME/../scripts/blog.sh" "$DOTFILES_DIR/scripts/blog.sh"
+    cp "$BATS_TEST_DIRNAME/../scripts/blog_recent_content.sh" "$DOTFILES_DIR/scripts/blog_recent_content.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/"*.sh "$DOTFILES_DIR/scripts/lib/"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/"*.py "$DOTFILES_DIR/scripts/lib/" 2>/dev/null || true
-    chmod +x "$DOTFILES_DIR/scripts/startday.sh" "$DOTFILES_DIR/scripts/status.sh" "$DOTFILES_DIR/scripts/goodevening.sh"
+    chmod +x "$DOTFILES_DIR/scripts/startday.sh" "$DOTFILES_DIR/scripts/status.sh" "$DOTFILES_DIR/scripts/goodevening.sh" "$DOTFILES_DIR/scripts/blog.sh" "$DOTFILES_DIR/scripts/blog_recent_content.sh"
 
     cp "$BATS_TEST_DIRNAME/../bin/cyborg" "$DOTFILES_DIR/bin/cyborg"
     cp "$BATS_TEST_DIRNAME/../bin/dhp-tech.sh" "$DOTFILES_DIR/bin/dhp-tech.sh"
@@ -102,6 +104,8 @@ EOF
 BUDGET|$TODAY|7
 SPEND|$TODAY|11:00|1|test setup|6
 EOF
+
+    mkdir -p "$HOME/blog-status/content/posts"
 }
 
 teardown() {
@@ -122,6 +126,9 @@ run_with_missing_optional_products() {
         OBSIDIAN_VAULT="$TEST_ROOT/missing/obsidian-vault" \
         CYBORG_HOME="$HOME/Projects/missing-cyborg-agent" \
         CYBORG_LAB_DIR="$TEST_ROOT/missing/cyborg-lab" \
+        BLOG_FACTORY_HOME="$HOME/Projects/missing-blog-factory" \
+        BLOG_STATUS_DIR="$HOME/blog-status" \
+        BLOG_CONTENT_DIR="$HOME/blog-status/content" \
         AI_STAFF_DIR="$TEST_ROOT/missing/ai-staff-hq" \
         AI_BRIEFING_ENABLED=false \
         AI_REFLECTION_ENABLED=false \
@@ -145,6 +152,8 @@ assert_no_stack_trace() {
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"HEALTH CHECK"* ]]
+    [[ "$output" == *"Blog status unavailable"* ]]
+    [[ "$output" != *"Blog Factory is unavailable"* ]]
     assert_no_stack_trace "$output"
 }
 
@@ -161,6 +170,8 @@ assert_no_stack_trace() {
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"Evening wrap-up complete"* ]]
+    [[ "$output" == *"Blog status unavailable"* ]]
+    [[ "$output" != *"Blog Factory is unavailable"* ]]
     assert_no_stack_trace "$output"
 }
 

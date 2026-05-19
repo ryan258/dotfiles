@@ -59,3 +59,16 @@ copy_test_libs() {
         cp "$repo_root/scripts/lib/$lib" "$destination/scripts/lib/$lib"
     done
 }
+
+# shift_date <offset> — print today + <offset> days as YYYY-MM-DD.
+# Used by tests that need fixtures within a rolling N-day window (e.g.
+# health wearables 30d cutoff, status focus-repo activity).
+shift_date() {
+    python3 - "$1" <<'PY'
+import sys
+from datetime import date, timedelta
+
+offset = int(sys.argv[1])
+print((date.today() + timedelta(days=offset)).strftime("%Y-%m-%d"))
+PY
+}

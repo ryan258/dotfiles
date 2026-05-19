@@ -46,33 +46,45 @@ EOF
 }
 
 @test "health.sh dashboard includes wearable section and sleep by energy bands" {
+    local low_day high_day
+    low_day="$(shift_date -1)"
+    high_day="$(shift_date 0)"
+
     cat > "$DOTFILES_DATA_DIR/health.txt" <<'EOF'
-ENERGY|2026-03-24 08:00|3
-ENERGY|2026-03-25 08:00|8
-SYMPTOM|2026-03-25 10:00|brain fog
+ENERGY|__LOW_DAY__ 08:00|3
+ENERGY|__HIGH_DAY__ 08:00|8
+SYMPTOM|__HIGH_DAY__ 10:00|brain fog
 EOF
+    sed -i.bak "s/__LOW_DAY__/$low_day/g; s/__HIGH_DAY__/$high_day/g" "$DOTFILES_DATA_DIR/health.txt"
+    rm -f "$DOTFILES_DATA_DIR/health.txt.bak"
 
     cat > "$DOTFILES_DATA_DIR/fitbit/sleep_minutes.txt" <<'EOF'
-2026-03-24|360
-2026-03-25|480
+__LOW_DAY__|360
+__HIGH_DAY__|480
 EOF
+    sed -i.bak "s/__LOW_DAY__/$low_day/g; s/__HIGH_DAY__/$high_day/g" "$DOTFILES_DATA_DIR/fitbit/sleep_minutes.txt"
+    rm -f "$DOTFILES_DATA_DIR/fitbit/sleep_minutes.txt.bak"
 
     cat > "$DOTFILES_DATA_DIR/fitbit/steps.txt" <<'EOF'
-2026-03-24|2000
-2026-03-25|7000
+__LOW_DAY__|2000
+__HIGH_DAY__|7000
 EOF
+    sed -i.bak "s/__LOW_DAY__/$low_day/g; s/__HIGH_DAY__/$high_day/g" "$DOTFILES_DATA_DIR/fitbit/steps.txt"
+    rm -f "$DOTFILES_DATA_DIR/fitbit/steps.txt.bak"
 
     cat > "$DOTFILES_DATA_DIR/fitbit/resting_heart_rate.txt" <<'EOF'
-2026-03-24|75
-2026-03-25|68
+__LOW_DAY__|75
+__HIGH_DAY__|68
 EOF
+    sed -i.bak "s/__LOW_DAY__/$low_day/g; s/__HIGH_DAY__/$high_day/g" "$DOTFILES_DATA_DIR/fitbit/resting_heart_rate.txt"
+    rm -f "$DOTFILES_DATA_DIR/fitbit/resting_heart_rate.txt.bak"
 
     run "$DOTFILES_DIR/scripts/health.sh" dashboard
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"Wearable Signals (30d):"* ]]
-    [[ "$output" == *"sleep: avg 420m over 2 day(s); latest 480m (2026-03-25)"* ]]
-    [[ "$output" == *"steps: avg 4500 over 2 day(s); latest 7000 (2026-03-25)"* ]]
+    [[ "$output" == *"sleep: avg 420m over 2 day(s); latest 480m ($high_day)"* ]]
+    [[ "$output" == *"steps: avg 4500 over 2 day(s); latest 7000 ($high_day)"* ]]
     [[ "$output" == *"sleep on low-energy days (1-4): 360m (n=1)"* ]]
     [[ "$output" == *"sleep on high-energy days (7-10): 480m (n=1)"* ]]
 }

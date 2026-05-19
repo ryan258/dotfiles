@@ -38,7 +38,7 @@ This is a personal productivity system for a developer with MS (multiple scleros
 7. **Aliases:** `copy` = clipboard (pbcopy), `aicopy` = AI copywriter dispatcher
 8. **Config loading:** Only `scripts/lib/config.sh` may source `.env` (except `scripts/validate_env.sh`)
 9. **DATA_DIR ownership:** Never redefine `DATA_DIR` with per-script home-path fallbacks after sourcing `config.sh`
-10. **Library dependencies:** `scripts/lib/*.sh` must not self-source sibling libs (compat exception: `common.sh` bootstrap only)
+10. **Library dependencies:** `scripts/lib/*.sh` must not self-source sibling libs (transitional compat exception: `common.sh` bootstrap only; do not add new self-sourcing)
 11. **Shell intelligence:** Do not run GitNexus against this repo (no shell symbol support). Use `scripts/bash_intel.sh` (LSP-backed) for symbols/definitions/references and `scripts/bash_graph.sh` for shell dependency/source topology, plus `rg`, manual sourced-vs-executed boundary tracing, and bats tests. See `docs/products/bash-intel.md`. (`scripts/gitnexus.sh` is retained only as a portable shortcut for use against other repos.)
 
 ---
@@ -124,7 +124,6 @@ my_function() {
 | `date_utils.sh`   | Cross-platform dates                       | `scripts/lib/` |
 | `health_ops.sh`   | Shared health + wearable helpers           | `scripts/lib/` |
 | `spoon_budget.sh` | Energy tracking                            | `scripts/lib/` |
-| `blog_common.sh`  | Blog utilities                             | `scripts/lib/` |
 | `oauth.sh`        | OAuth token parsing, refresh, secure writes | `scripts/lib/` |
 | `coaching.sh`     | Stable facade over coach libraries         | `scripts/lib/` |
 | `coach_ops.sh`    | Core coaching mode, log, digest logic      | `scripts/lib/` |

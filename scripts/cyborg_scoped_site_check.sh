@@ -24,25 +24,22 @@ fi
 # shellcheck disable=SC1090
 source "$COMMON_LIB"
 
-cyborg_site_check_help_requested() {
-    local arg
-    for arg in "$@"; do
-        case "$arg" in
-            -h|--help|help)
-                return 0
-                ;;
-        esac
-    done
-    return 1
-}
+WRAPPER_LIB="$SCRIPT_DIR/lib/wrapper_common.sh"
+if [[ -f "$WRAPPER_LIB" ]]; then
+    # shellcheck disable=SC1090
+    source "$WRAPPER_LIB"
+fi
 
+# Daily-hook convention: scoped site check has no daily-hook integration; it
+# is invoked by Cyborg's docs-sync flow. Missing sibling always prints the
+# setup message; --help short-circuits to exit 0 with usage hint.
 cyborg_site_check_unavailable() {
     local message
 
     message="Cyborg scoped site check is unavailable. Expected sibling repo: $CYBORG_HOME. Missing helper: $CYBORG_SCOPED_SITE_CHECK. Install it there or set CYBORG_HOME/CYBORG_SCOPED_SITE_CHECK."
     echo "$message" >&2
 
-    if cyborg_site_check_help_requested "$@"; then
+    if wrapper_help_requested "$@"; then
         cyborg_site_check_usage
         exit 0
     fi
@@ -59,7 +56,7 @@ cyborg_site_check_validate_args() {
         exit "${EXIT_INVALID_ARGS:-2}"
     fi
 
-    if cyborg_site_check_help_requested "$@"; then
+    if wrapper_help_requested "$@"; then
         cyborg_site_check_usage
         exit 0
     fi
@@ -86,20 +83,14 @@ cyborg_site_check_validate_args() {
     done
 }
 
-PROJECTS_DIR="${PROJECTS_DIR:-$HOME/Projects}"
-if command -v validate_safe_path >/dev/null 2>&1; then
-    PROJECTS_DIR="$(validate_safe_path "$PROJECTS_DIR" "$HOME")" || exit "${EXIT_INVALID_ARGS:-2}"
-fi
+PROJECTS_DIR="$(wrapper_resolve_safe_path "${PROJECTS_DIR:-$HOME/Projects}" "$HOME")" \
+    || exit "${EXIT_INVALID_ARGS:-2}"
 
-CYBORG_HOME="${CYBORG_HOME:-$PROJECTS_DIR/cyborg-agent}"
-if command -v validate_safe_path >/dev/null 2>&1; then
-    CYBORG_HOME="$(validate_safe_path "$CYBORG_HOME" "$HOME")" || exit "${EXIT_INVALID_ARGS:-2}"
-fi
+CYBORG_HOME="$(wrapper_resolve_safe_path "${CYBORG_HOME:-$PROJECTS_DIR/cyborg-agent}" "$HOME")" \
+    || exit "${EXIT_INVALID_ARGS:-2}"
 
-CYBORG_SCOPED_SITE_CHECK="${CYBORG_SCOPED_SITE_CHECK:-$CYBORG_HOME/scripts/cyborg_scoped_site_check.sh}"
-if command -v validate_safe_path >/dev/null 2>&1; then
-    CYBORG_SCOPED_SITE_CHECK="$(validate_safe_path "$CYBORG_SCOPED_SITE_CHECK" "$HOME")" || exit "${EXIT_INVALID_ARGS:-2}"
-fi
+CYBORG_SCOPED_SITE_CHECK="$(wrapper_resolve_safe_path "${CYBORG_SCOPED_SITE_CHECK:-$CYBORG_HOME/scripts/cyborg_scoped_site_check.sh}" "$HOME")" \
+    || exit "${EXIT_INVALID_ARGS:-2}"
 
 if [[ ! -x "$CYBORG_SCOPED_SITE_CHECK" ]]; then
     cyborg_site_check_unavailable "$@"

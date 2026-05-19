@@ -30,13 +30,12 @@ Generated: May 18, 2026
 - `tests/helpers/assertions.sh`
 - `tests/helpers/mock_ai.sh`
 - `tests/helpers/test_helpers.sh`
+- `tests/test_ai_staff_boundary.sh`
 - `tests/test_ai_suggest.sh`
 - `tests/test_archive_manager.sh`
 - `tests/test_bash_graph.sh`
 - `tests/test_bash_intel.sh`
-- `tests/test_blog_lifecycle.sh`
-- `tests/test_blog_status.sh`
-- `tests/test_blog_stubs.sh`
+- `tests/test_blog_factory_wrapper.sh`
 - `tests/test_coach_brief.sh`
 - `tests/test_coach_chat.sh`
 - `tests/test_coach_framing.sh`

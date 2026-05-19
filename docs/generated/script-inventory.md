@@ -4,19 +4,19 @@ Generated: May 18, 2026
 
 ## Summary
 
-- Shell files under `scripts/`: 105
+- Shell files under `scripts/`: 101
 - Top-level `scripts/*.sh`: 78
 - Top-level `scripts/*.py`: 2
-- Sourced shell libraries under `scripts/lib/`: 27
-- Python modules under `scripts/lib/`: 2
+- Sourced shell libraries under `scripts/lib/`: 23
+- Python modules under `scripts/lib/`: 1
 - `bin/` non-markdown entrypoints: 28
 
 ## Classification Summary
 
 - Daily-core scripts: 26
-- Support libraries: 35
-- Compatibility wrappers: 24
-- Sibling-product candidates: 2
+- Support libraries: 30
+- Compatibility wrappers: 26
+- Sibling-product candidates: 0
 - Support utilities: 50
 
 ## Dispatcher Registry
@@ -33,7 +33,7 @@ Generated: May 18, 2026
 - **daily-core**: Directly supports daily loop, data, health, focus, or context routines.
 - **support-library**: Sourced or imported helper code used by runnable commands.
 - **compatibility-wrapper**: Preserve command surface while implementation may move or consolidate.
-- **sibling-product-candidate**: Candidate for Cyborg, observer, blog, or other product boundary extraction.
+- **sibling-product-candidate**: Candidate for a future product boundary extraction.
 - **support-utility**: General maintenance or convenience command retained in root dotfiles.
 
 Daily-core includes commands that directly or indirectly support the daily loop. Phase 8 extraction should preserve the narrower daily command surface from the roadmap even when broader helper commands are classified here.
@@ -79,8 +79,8 @@ Daily-core includes commands that directly or indirectly support the daily loop.
 | `scripts/bash_graph.sh` | support-utility |
 | `scripts/bash_intel.sh` | support-utility |
 | `scripts/battery_check.sh` | support-utility |
-| `scripts/blog.sh` | sibling-product-candidate |
-| `scripts/blog_recent_content.sh` | sibling-product-candidate |
+| `scripts/blog.sh` | compatibility-wrapper |
+| `scripts/blog_recent_content.sh` | compatibility-wrapper |
 | `scripts/cheatsheet.sh` | support-utility |
 | `scripts/clipboard_manager.sh` | support-utility |
 | `scripts/context.sh` | support-utility |
@@ -115,11 +115,6 @@ Daily-core includes commands that directly or indirectly support the daily loop.
 | `scripts/insight.sh` | daily-core |
 | `scripts/inventory.sh` | support-utility |
 | `scripts/journal.sh` | daily-core |
-| `scripts/lib/blog_common.sh` | support-library |
-| `scripts/lib/blog_gen.sh` | support-library |
-| `scripts/lib/blog_lifecycle.sh` | support-library |
-| `scripts/lib/blog_ops.sh` | support-library |
-| `scripts/lib/blog_validate.py` | support-library |
 | `scripts/lib/coach_brief.sh` | support-library |
 | `scripts/lib/coach_chat.sh` | support-library |
 | `scripts/lib/coach_metrics.sh` | support-library |
@@ -320,10 +315,6 @@ Daily-core includes commands that directly or indirectly support the daily loop.
 
 ## Sourced Shell Libraries
 
-- `scripts/lib/blog_common.sh`
-- `scripts/lib/blog_gen.sh`
-- `scripts/lib/blog_lifecycle.sh`
-- `scripts/lib/blog_ops.sh`
 - `scripts/lib/coach_brief.sh`
 - `scripts/lib/coach_chat.sh`
 - `scripts/lib/coach_metrics.sh`

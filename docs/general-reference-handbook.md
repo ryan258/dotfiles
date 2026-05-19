@@ -3044,7 +3044,9 @@ Usage: archive_manager.sh {create|extract|list}
 
 ### `blog.sh`
 
-**Description:** blog.sh - Tools for managing blog content. Modularized refactor.
+**Description:** blog.sh - Compatibility wrapper for the extracted Blog Factory sibling repo.
+
+Expected implementation path: `~/Projects/blog-factory/scripts/blog.sh`, or set `BLOG_FACTORY_HOME`.
 
 **Usage & Examples:**
 
@@ -3076,7 +3078,7 @@ Usage: blog <command> [args]
 
 ### `blog_recent_content.sh`
 
-**Description:** blog_recent_content.sh - show latest Hugo content activity
+**Description:** blog_recent_content.sh - Compatibility wrapper for Blog Factory recent content.
 
 ### `cheatsheet.sh`
 

@@ -20,18 +20,14 @@ if [[ -f "$COMMON_LIB" ]]; then
     source "$COMMON_LIB"
 fi
 
-cyborg_help_requested() {
-    local arg
-    for arg in "$@"; do
-        case "$arg" in
-            -h|--help|help)
-                return 0
-                ;;
-        esac
-    done
-    return 1
-}
+WRAPPER_LIB="$DOTFILES_DIR/scripts/lib/wrapper_common.sh"
+if [[ -f "$WRAPPER_LIB" ]]; then
+    # shellcheck disable=SC1090
+    source "$WRAPPER_LIB"
+fi
 
+# Daily-hook convention: cyborg has no daily-hook integration, so missing
+# sibling always prints the setup message. --help short-circuits to exit 0.
 cyborg_unavailable() {
     local expected_home="$1"
     local helper_path="$2"
@@ -41,26 +37,21 @@ cyborg_unavailable() {
     message="Cyborg agent is unavailable. Expected sibling repo: $expected_home. Missing helper: $helper_path. Install it there or set CYBORG_HOME/CYBORG_AGENT_HELPER."
     echo "$message" >&2
 
-    if cyborg_help_requested "$@"; then
+    if wrapper_help_requested "$@"; then
         exit 0
     fi
     exit "${EXIT_FILE_NOT_FOUND:-3}"
 }
 
-PROJECTS_DIR="${PROJECTS_DIR:-$HOME/Projects}"
-if command -v validate_safe_path >/dev/null 2>&1; then
-    PROJECTS_DIR="$(validate_safe_path "$PROJECTS_DIR" "$HOME")" || exit "${EXIT_INVALID_ARGS:-2}"
-fi
+PROJECTS_DIR="$(wrapper_resolve_safe_path "${PROJECTS_DIR:-$HOME/Projects}" "$HOME")" \
+    || exit "${EXIT_INVALID_ARGS:-2}"
 
-CYBORG_HOME="${CYBORG_HOME:-$PROJECTS_DIR/cyborg-agent}"
-if command -v validate_safe_path >/dev/null 2>&1; then
-    CYBORG_HOME="$(validate_safe_path "$CYBORG_HOME" "$HOME")" || exit "${EXIT_INVALID_ARGS:-2}"
-fi
+CYBORG_HOME="$(wrapper_resolve_safe_path "${CYBORG_HOME:-$PROJECTS_DIR/cyborg-agent}" "$HOME")" \
+    || exit "${EXIT_INVALID_ARGS:-2}"
 
 if [[ -n "${CYBORG_AGENT_HELPER:-}" ]]; then
-    if command -v validate_safe_path >/dev/null 2>&1; then
-        CYBORG_AGENT_HELPER="$(validate_safe_path "$CYBORG_AGENT_HELPER" "$HOME")" || exit "${EXIT_INVALID_ARGS:-2}"
-    fi
+    CYBORG_AGENT_HELPER="$(wrapper_resolve_safe_path "$CYBORG_AGENT_HELPER" "$HOME")" \
+        || exit "${EXIT_INVALID_ARGS:-2}"
 else
     CYBORG_AGENT_HELPER="$CYBORG_HOME/scripts/cyborg_agent.py"
 fi
@@ -115,7 +106,7 @@ if [[ "${1:-}" == "auto" ]]; then
         fi
     done
 
-    AI_STAFF_DIR="$DOTFILES_DIR/ai-staff-hq"
+    AI_STAFF_DIR="${AI_STAFF_DIR:-$DOTFILES_DIR/ai-staff-hq}"
 
     if [[ "$_skip_morphling" == "false" ]] \
         && command -v uv >/dev/null 2>&1 \

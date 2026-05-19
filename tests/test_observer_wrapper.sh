@@ -15,7 +15,12 @@ setup() {
     cp "$BATS_TEST_DIRNAME/../scripts/lib/config.sh" "$DOTFILES_DIR/scripts/lib/config.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/common.sh" "$DOTFILES_DIR/scripts/lib/common.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/file_ops.sh" "$DOTFILES_DIR/scripts/lib/file_ops.sh"
+    cp "$BATS_TEST_DIRNAME/../scripts/lib/wrapper_common.sh" "$DOTFILES_DIR/scripts/lib/wrapper_common.sh"
     chmod +x "$DOTFILES_DIR/scripts/observer.sh"
+}
+
+@test "observer wrapper in source tree retains executable bit" {
+    [ -x "$BATS_TEST_DIRNAME/../scripts/observer.sh" ]
 }
 
 teardown() {

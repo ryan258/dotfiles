@@ -9,9 +9,10 @@ setup() {
     export TEST_ROOT
     TEST_ROOT="$(mktemp -d)"
     export DOTFILES_DIR="$TEST_ROOT/dotfiles"
-    mkdir -p "$DOTFILES_DIR/bin" "$DOTFILES_DIR/ai-staff-hq/tools" "$TEST_ROOT/bin"
+    mkdir -p "$DOTFILES_DIR/bin" "$DOTFILES_DIR/scripts/lib" "$DOTFILES_DIR/ai-staff-hq/tools" "$TEST_ROOT/bin"
 
     cp "$BATS_TEST_DIRNAME/../bin/morphling.sh" "$DOTFILES_DIR/bin/morphling.sh"
+    cp "$BATS_TEST_DIRNAME/../scripts/lib/config.sh" "$DOTFILES_DIR/scripts/lib/config.sh"
     chmod +x "$DOTFILES_DIR/bin/morphling.sh"
 
     cat > "$DOTFILES_DIR/bin/dhp-morphling.sh" <<'EOF'
@@ -50,6 +51,19 @@ teardown() {
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"uv:run --project $DOTFILES_DIR/ai-staff-hq python $DOTFILES_DIR/ai-staff-hq/tools/activate.py morphling -q test prompt"* ]]
+}
+
+@test "morphling direct mode honors AI_STAFF_DIR override" {
+    local staff_dir="$TEST_ROOT/external-ai-staff-hq"
+    mkdir -p "$staff_dir/tools"
+    cat > "$staff_dir/tools/activate.py" <<'EOF'
+print("external stub")
+EOF
+
+    run bash -lc "DOTFILES_DIR='$DOTFILES_DIR' AI_STAFF_DIR='$staff_dir' '$DOTFILES_DIR/bin/morphling.sh' 'test prompt'"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"uv:run --project $staff_dir python $staff_dir/tools/activate.py morphling -q test prompt"* ]]
 }
 
 @test "morphling delegates to swarm mode when requested" {

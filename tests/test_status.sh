@@ -5,16 +5,6 @@
 load helpers/test_helpers.sh
 load helpers/assertions.sh
 
-shift_date() {
-    python3 - "$1" <<'PY'
-import sys
-from datetime import date, timedelta
-
-offset = int(sys.argv[1])
-print((date.today() + timedelta(days=offset)).strftime("%Y-%m-%d"))
-PY
-}
-
 setup() {
     export TEST_ROOT
     TEST_ROOT="$(mktemp -d)"
@@ -260,17 +250,22 @@ EOF
 }
 
 @test "status.sh DAILY CONTEXT treats repo-named focus with strong primary repo as mixed not diffuse" {
+    local today yesterday two_days_ago
+    today="$(shift_date 0)"
+    yesterday="$(shift_date -1)"
+    two_days_ago="$(shift_date -2)"
+
     echo "Work on dotfiles" > "$DATA_DIR/daily_focus.txt"
     cat > "$DATA_DIR/github_commits.txt" <<'EOF'
 dotfiles|207fbed|Audit defaults cleanup and dispatcher path centralization
 dotfiles|225bcae|fix: audit follow-up fixes for dispatchers, coach modules, and blog ops
 dotfiles|37a901d|feat: add dhp-project and dhp-chain dispatchers
 EOF
-    cat > "$DATA_DIR/github_repos.json" <<'EOF'
+    cat > "$DATA_DIR/github_repos.json" <<EOF
 [
-  {"name":"dotfiles","pushed_at":"2026-04-23T18:00:00Z"},
-  {"name":"ai-staff-hq","pushed_at":"2026-04-22T18:00:00Z"},
-  {"name":"my-ms-ai-blog","pushed_at":"2026-04-21T18:00:00Z"}
+  {"name":"dotfiles","pushed_at":"${today}T18:00:00Z"},
+  {"name":"ai-staff-hq","pushed_at":"${yesterday}T18:00:00Z"},
+  {"name":"my-ms-ai-blog","pushed_at":"${two_days_ago}T18:00:00Z"}
 ]
 EOF
 

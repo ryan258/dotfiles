@@ -12,7 +12,7 @@ This is a personal productivity system built around shell scripts, AI dispatcher
 - Task and journal management
 - Health and energy tracking (spoon theory)
 - AI-powered assistants via OpenRouter API
-- Blog content generation and management
+- Optional Blog Factory wrappers for blog content workflows
 
 Every design decision should optimize for low-friction, low-cognitive-load interactions. Prefer `A/B/C/D/E` short-choice prompts over freeform input. Prefer autopilot paths for low-energy sessions.
 
@@ -77,7 +77,6 @@ dotfiles/
 | `date_utils.sh`   | Cross-platform date handling                      | Date calculations          |
 | `health_ops.sh`   | Shared health + wearable helpers                  | Health summaries and Fitbit context |
 | `spoon_budget.sh` | Energy tracking                                   | Spoon-related features     |
-| `blog_common.sh`  | Blog utilities                                    | Blog operations            |
 | `oauth.sh`        | Shared OAuth token parsing, refresh, secure writes | Google Drive, Calendar, Fitbit sync |
 | `coaching.sh`     | Stable facade over the coach_* family (see below) | Daily briefing workflows   |
 | `coach_ops.sh`    | Core coaching implementation (mode, log, digest)  | Used internally by coaching.sh |
@@ -101,10 +100,12 @@ dotfiles/
 ### Library Dependency Contract
 
 - Libraries in `scripts/lib/` must not self-source sibling libraries.
-- Compatibility exception: `common.sh` may bootstrap `file_ops.sh`/`config.sh` while migration is in progress; do not add new self-sourcing patterns elsewhere.
+- Compatibility exception: `common.sh` may bootstrap `file_ops.sh`/`config.sh` while migration is in progress; this is transitional, not the permanent pattern.
+- New or touched executed scripts should source dependencies explicitly. Use `config.sh` before `common.sh` when the script needs configured paths, then source additional libraries such as `date_utils.sh`.
 - Each library should declare required dependencies in a short header comment.
 - Callers are responsible for sourcing dependencies in the correct order.
 - Dependency failures should be explicit and immediate, not silently auto-healed.
+- See `docs/library-loading.md` for the current loading strategy.
 
 ### Data Files
 

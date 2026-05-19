@@ -145,7 +145,7 @@ See `autopilot-happy-path.md` for the shortest cheat sheet.
 
 - Daily briefings call `dhp-coach.sh` internally; that coach path is optimized for the daily loop rather than general manual use.
 - The coach behavior digest incorporates strategy evidence from focus-related journal entries and Drive document activity, so zero-commit planning days are recognized as real progress. It also includes broad recent Drive file activity as recall/context without treating unrelated files as focus alignment.
-- `blog.sh` is the blog-management CLI. It can use personas and AI-generated content, but it is not a dispatcher alias itself.
+- `blog.sh` is now a compatibility wrapper for the optional Blog Factory sibling repo. It can still use personas and AI-generated content when `BLOG_FACTORY_HOME` points at an installed checkout, but it is not a dispatcher alias itself.
 
 ## Usage Patterns
 

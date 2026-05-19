@@ -16,7 +16,6 @@ dhp_setup_env() {
     local common_lib
     shared_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$shared_dir/.." && pwd)}"
-    AI_STAFF_DIR="${AI_STAFF_DIR:-$DOTFILES_DIR/ai-staff-hq}"
 
     config_lib="$DOTFILES_DIR/scripts/lib/config.sh"
     common_lib="$DOTFILES_DIR/scripts/lib/common.sh"
@@ -27,6 +26,8 @@ dhp_setup_env() {
         echo "Error: configuration library not found at $config_lib" >&2
         return 1
     fi
+
+    AI_STAFF_DIR="${AI_STAFF_DIR:-$DOTFILES_DIR/ai-staff-hq}"
 
     if [ -f "$common_lib" ]; then
         # shellcheck disable=SC1090

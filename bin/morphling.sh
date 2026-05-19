@@ -5,7 +5,13 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
-AI_STAFF_DIR="$DOTFILES_DIR/ai-staff-hq"
+CONFIG_LIB="$DOTFILES_DIR/scripts/lib/config.sh"
+if [[ -f "$CONFIG_LIB" ]]; then
+    # shellcheck disable=SC1090
+    source "$CONFIG_LIB"
+fi
+
+AI_STAFF_DIR="${AI_STAFF_DIR:-$DOTFILES_DIR/ai-staff-hq}"
 SWARM_BIN="$SCRIPT_DIR/dhp-morphling.sh"
 ACTIVATE_SCRIPT="$AI_STAFF_DIR/tools/activate.py"
 

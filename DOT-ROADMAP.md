@@ -12,9 +12,9 @@ _Created: May 18, 2026. Last updated: 2026-05-19._
 | 3 | Dispatcher Consolidation | Complete |
 | 4 | Coach Reshape | Complete |
 | 5 | Data Format Stability | Not started (deferred — no work required yet) |
-| 6 | Library Layering Cleanup | Not started |
-| 7 | Artifact and Log Policy Hardening | Partial (Phase 0 covered low-risk cleanup; log rotation policy still pending) |
-| 8 | Product Extraction Execution | Observer extracted; Cyborg extracted; AI Staff HQ boundary formalization pending; Blog Factory extraction pending |
+| 6 | Library Layering Cleanup | Complete (loading strategy documented; `common.sh` bootstrap remains transitional) |
+| 7 | Artifact and Log Policy Hardening | Complete (repo-local logs rejected; rotation/cleanup behavior documented) |
+| 8 | Product Extraction Execution | Complete for Observer, Cyborg, Blog Factory, and AI Staff HQ boundary |
 
 ## 1. Decision Record
 
@@ -267,7 +267,7 @@ Acceptance criteria:
 
 ## 8. Phase 2: Product Boundary Plan
 
-Status: Complete for Cyborg and Observer; planning still owed for Blog Factory and the AI Staff HQ boundary memo. The wrapper pattern proven by Observer and Cyborg is the template for the remaining two.
+Status: Complete for Cyborg, Observer, Blog Factory, and AI Staff HQ. The Observer/Cyborg wrapper pattern is now the product-extraction template.
 
 Goal: split non-dotfiles products while preserving current command names.
 
@@ -327,7 +327,8 @@ Keep in dotfiles:
 
 Likely target:
 
-- Already behaves like a separate project. Formalize it as a sibling repo or submodule with clearer boundaries.
+- Keep the existing `ai-staff-hq/` submodule as the default installation path.
+- Support sibling checkouts through `AI_STAFF_DIR`.
 
 Keep in dotfiles:
 
@@ -336,14 +337,15 @@ Keep in dotfiles:
 
 ### 8.4 Blog Factory
 
-Likely target:
+Selected target:
 
-- Move blog publishing, market validation, and content factory workflows with Cyborg or into a dedicated blog automation repo.
+- Dedicated sibling repo: `~/Projects/blog-factory`.
 
 Keep in dotfiles:
 
 - Daily loop may keep a lightweight "recent blog status" summary if useful.
 - Blog commands should degrade when the sibling product is absent.
+- Root dotfiles keeps `scripts/blog.sh`, `scripts/blog_recent_content.sh`, and `blog` / `blog-recent` aliases as wrappers.
 
 Acceptance criteria for Phase 2:
 
@@ -568,7 +570,7 @@ Acceptance criteria:
 
 ## 12. Phase 6: Library Layering Cleanup
 
-Status: Not started. The `common.sh` bootstrap of `config.sh`/`file_ops.sh` is still active under the migration exception in CLAUDE.md. Daily-loop tests are now strong enough that this work could begin; the open decision is whether to formalize the bootstrap as permanent (docs-only change) or migrate callers to explicit dependencies (multi-session refactor).
+Status: Complete as a docs-only decision. The `common.sh` bootstrap of `config.sh`/`file_ops.sh` remains active as a transitional compatibility bridge, not the permanent pattern. New or touched callers should source dependencies explicitly, with `config.sh` before `common.sh` when configured paths are needed.
 
 Goal: make the shell library loading rules match reality.
 
@@ -582,13 +584,12 @@ Current issue:
 - `common.sh` still bootstraps some siblings as a compatibility bridge.
 - `loader.sh` exists for the daily stack, while many scripts still source ad hoc dependencies.
 
-Plan:
+Decision:
 
-- Do not change this until daily command tests are strong.
-- Decide whether `common.sh` bootstrap is permanent or transitional.
-- If permanent, update docs to say so.
-- If transitional, migrate callers gradually to explicit dependencies.
-- Keep `loader.sh` only if it remains valuable for `startday`, `status`, and `goodevening`.
+- `common.sh` bootstrap is transitional.
+- The documented strategy is caller-owned explicit loading.
+- `loader.sh` remains for the daily stack while it keeps `startday`, `status`, and `goodevening` consistent.
+- Future behavior changes can migrate callers gradually under targeted tests.
 
 Acceptance criteria:
 
@@ -599,7 +600,7 @@ Acceptance criteria:
 
 ## 13. Phase 7: Artifact and Log Policy Hardening
 
-Status: Partial. Phase 0 covered gitignore coverage, `.tmp-*-review/` cleanup, and `.DS_Store` policy. Still open: deciding whether repo-local `logs/` should exist at all and writing a log rotation/cleanup behavior doc.
+Status: Complete. Phase 0 covered gitignore coverage, `.tmp-*-review/` cleanup, and `.DS_Store` policy. Phase 7 now documents that repo-local `logs/` should not be used for durable data and records rotation/cleanup behavior in `docs/artifact-log-policy.md`.
 
 Goal: finish the artifact policy started in Phase 0.
 
@@ -609,16 +610,14 @@ Rollback: restore the prior log path or cleanup rule if a daily command cannot f
 
 Phase 0 handles the low-risk cleanup: gitignore coverage, moving or excluding repo-local logs, and removing stranded `.tmp-*-review/` directories after confirmation. Phase 7 covers what remains: log rotation policy, documented cleanup behavior, and anything that surfaced during the larger refactors.
 
-Plan:
+Decision:
 
 - Keep runtime logs out of git.
-- Decide whether repo-local `logs/` should exist at all.
-- Prefer:
-  - `~/.cache/dotfiles/logs/` for runtime logs.
-  - `~/.config/dotfiles-data/` for user data.
-  - repo-local files only for source, tests, docs, and fixtures.
-- Remove stranded scratch dirs only after confirming they are unused.
-- Keep `.DS_Store` ignored and out of the repo.
+- Do not use repo-local `logs/` for durable data; `.gitignore` keeps it as an accidental-output safety net only.
+- Use `~/.config/dotfiles-data/` for active user data and active system/dispatcher logs.
+- Use `~/.cache/dotfiles/` and `~/.cache/dotfiles/logs/` for transient caches and run logs.
+- `logs.sh rotate` rotates logs over 10 MB and keeps five rotated copies; `logs.sh clean` removes rotated logs older than 30 days.
+- Cleanup must not delete user data.
 
 Acceptance criteria:
 
@@ -628,7 +627,7 @@ Acceptance criteria:
 
 ## 14. Phase 8: Product Extraction Execution
 
-Status: Observer and Cyborg extracted; AI Staff HQ boundary formalization and Blog Factory extraction still pending.
+Status: Complete. Observer, Cyborg, and Blog Factory are extracted; AI Staff HQ has a documented optional-product boundary.
 
 Goal: actually move sibling products after wrappers, tests, and docs are ready.
 
@@ -663,11 +662,12 @@ Completed:
 - `scripts/cyborg_scoped_site_check.sh` retains the original `content/`-prefix and `..`-traversal guards before delegating to the sibling, so security validation did not move out of dotfiles.
 - Wrapper degradation tests: `tests/test_cyborg_wrapper.sh`, `tests/test_observer_wrapper.sh`, and `tests/test_optional_product_degradation.sh` cover delegation, missing-sibling, daily-hook quiet mode, and unsafe-path rejection.
 - Current generated inventory reports product implementation LOC under root dotfiles as `0`.
-
-Outstanding:
-
-- AI Staff HQ boundary formalization. Today it lives as a submodule under `ai-staff-hq/`; decide whether to keep it submoduled, point at a sibling clone, or rely on a documented install link. The `dhp` dispatcher already degrades gracefully when `AI_STAFF_DIR` is missing (covered by `test_optional_product_degradation.sh`), so this work is mostly boundary documentation and config rather than wrapper plumbing.
-- Blog Factory extraction. `scripts/blog.sh` and `scripts/blog_recent_content.sh` are still classified `sibling-product-candidate` in the inventory. Decide whether they move with a future Cyborg follow-up or into a dedicated blog automation repo, then build wrappers using the Observer/Cyborg template.
+- AI Staff HQ boundary is documented in `docs/ai-staff-hq-boundary.md`; default remains the `ai-staff-hq/` submodule, with `AI_STAFF_DIR` as the supported sibling-checkout override.
+- Dispatcher swarms, Morphling direct mode, and `bin/dhp-swarm.py` honor `AI_STAFF_DIR`.
+- Blog Factory target selected: `~/Projects/blog-factory`.
+- Blog CLI implementation, recent-content helper, blog libraries, validation helper, and product-specific tests moved to the Blog Factory sibling repo.
+- Root dotfiles keeps `scripts/blog.sh` and `scripts/blog_recent_content.sh` as compatibility wrappers, with daily-loop calls using `BLOG_FACTORY_DAILY_HOOK=true` for concise fallback behavior.
+- `tests/test_blog_factory_wrapper.sh` and `tests/test_optional_product_degradation.sh` cover Blog Factory delegation, missing-sibling setup output, `--help`, and quiet daily-loop degradation.
 
 Acceptance criteria:
 
@@ -675,7 +675,7 @@ Acceptance criteria:
 - Optional products still work if installed.
 - Old commands produce either the old behavior or a clear setup message.
 - Root repo dependency and secret surface is smaller.
-- Non-wrapper product implementation LOC under root dotfiles drops from the frozen baseline of 11,730 LOC to approximately 0 after Observer and Cyborg extraction, with any remaining wrapper LOC recorded separately.
+- Non-wrapper product implementation LOC under root dotfiles drops from the frozen baseline of 11,730 LOC to 0 after Observer, Cyborg, and Blog Factory extraction, with any remaining wrapper LOC recorded separately.
 
 Per-extraction checklist:
 
@@ -698,17 +698,14 @@ Per-extraction checklist:
 6. ~~Add compatibility-wrapper degradation tests for optional products.~~ Done.
 7. ~~Consolidate dispatchers behind a registry.~~ Done.
 8. ~~Reshape coach output around deterministic brief first.~~ Done.
-9. ~~Review Phase 2 boundary decisions in light of dispatcher and coach reshape.~~ Done for Cyborg and Observer; pending for AI Staff HQ and Blog Factory.
-10. Extract Observer, then Cyborg, then AI Staff HQ boundary work. Observer and Cyborg done; AI Staff HQ boundary formalization is next.
-11. Clean library loading docs and behavior.
-12. Finish artifact/log policy hardening.
+9. ~~Review Phase 2 boundary decisions in light of dispatcher and coach reshape.~~ Done for Cyborg, Observer, Blog Factory, and AI Staff HQ.
+10. ~~Extract Observer, then Cyborg, then AI Staff HQ boundary work.~~ Done.
+11. ~~Clean library loading docs and behavior.~~ Done.
+12. ~~Finish artifact/log policy hardening.~~ Done.
 
 Remaining ordered work:
 
-- Formalize the AI Staff HQ boundary (Phase 2 plan + Phase 8 boundary doc).
-- Plan and execute Blog Factory extraction using the Observer/Cyborg wrapper template.
-- Decide `common.sh` bootstrap is permanent or transitional; update CLAUDE.md or migrate callers (Phase 6).
-- Document log rotation/cleanup behavior; decide whether repo-local `logs/` should remain (Phase 7).
+- None in this roadmap pass. Future follow-up work should be stabilization, not scope expansion.
 
 ## 16. What Not To Do Yet
 

@@ -8,8 +8,10 @@ This repo is a command-line productivity environment built around shell scripts,
 - Task, journal, focus, reminder, and time-tracking workflows
 - Health, meds, spoon-budget, and Fitbit/Google Health tracking
 - Optional Obsidian Observer integration via `~/Projects/obsidian-observer`
+- Optional Blog Factory integration via `~/Projects/blog-factory`
 - AI dispatchers for coding, strategy, writing, research, memory, and orchestration
 - Repo-aware agents for project documentation, build-and-verify loops, and site sync
+- Optional AI Staff HQ integration via `AI_STAFF_DIR`
 - Local flat-file data under `~/.config/dotfiles-data/`
 
 ## Current Inventory
@@ -80,12 +82,17 @@ cyborg-sync --repo ~/Projects/my-project plan
 - `memory` and `memory-search` are optional Brain commands for the standalone ChromaDB memory store; they are not part of the default daily coaching path.
 - `morphling` is the swarm-mode alias; `bin/morphling.sh` is the direct tool-capable launcher.
 - `cyborg` and `cyborg-sync` are compatibility wrappers for the optional `~/Projects/cyborg-agent` sibling repo.
+- `blog` and `blog-recent` are compatibility wrappers for the optional `~/Projects/blog-factory` sibling repo.
 
 ## Documentation Map
 
 - `docs/README.md` - Central index for all user-facing docs
 - `docs/daily-loop-handbook.md` - Morning, midday, and evening routines
 - `docs/ai-handbook.md` - AI command surface, routing, and repo-aware agents
+- `docs/ai-staff-hq-boundary.md` - AI Staff HQ optional product boundary
+- `docs/blog-factory-boundary.md` - Blog Factory optional product boundary
+- `docs/library-loading.md` - Shell library loading strategy
+- `docs/artifact-log-policy.md` - Runtime artifact and log policy
 - `scripts/README.md` - Script inventory and command groups
 - `scripts/README_aliases.md` - Alias map from `zsh/aliases.zsh`
 - `bin/README.md` - Dispatcher and agent entry points in `bin/`

@@ -19,6 +19,11 @@
 - Moved the Cyborg implementation, product-specific BATS suites, operator guides, and templates to `~/Projects/cyborg-agent`.
 - Converted `bin/cyborg`, `bin/cyborg-sync`, and `scripts/cyborg_scoped_site_check.sh` into compatibility wrappers that delegate to `CYBORG_HOME`.
 - Added wrapper-focused BATS coverage for Cyborg command delegation, missing-sibling setup output, `--help` degradation, `cyborg-sync`, and scoped site check manifests.
+- Formalized the AI Staff HQ boundary: `AI_STAFF_DIR` now has a shared config default, Morphling direct mode and `dhp-swarm.py` honor overrides, and `docs/ai-staff-hq-boundary.md` records the optional-product contract.
+- Moved the Blog Factory implementation, blog libraries, validation helper, and product-specific BATS suites to `~/Projects/blog-factory`.
+- Converted `scripts/blog.sh` and `scripts/blog_recent_content.sh` into compatibility wrappers that delegate to `BLOG_FACTORY_HOME`, with quiet daily-loop fallback through `BLOG_FACTORY_DAILY_HOOK=true`.
+- Added `tests/test_blog_factory_wrapper.sh` and extended optional-product degradation coverage for missing Blog Factory.
+- Documented the remaining roadmap decisions in `docs/blog-factory-boundary.md`, `docs/library-loading.md`, and `docs/artifact-log-policy.md`.
 
 ## Version 2.2.76 (May 11, 2026) - Obsidian Knowledge Graph Framework (V3)
 

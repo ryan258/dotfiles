@@ -16,37 +16,22 @@ if [ -f "$SCRIPT_DIR/lib/common.sh" ]; then
     source "$SCRIPT_DIR/lib/common.sh"
 fi
 
-observer_truthy() {
-    case "${1:-}" in
-        true|TRUE|1|yes|YES|y|Y|on|ON)
-            return 0
-            ;;
-        *)
-            return 1
-            ;;
-    esac
-}
+if [ -f "$SCRIPT_DIR/lib/wrapper_common.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$SCRIPT_DIR/lib/wrapper_common.sh"
+fi
 
 observer_verbose_enabled() {
-    observer_truthy "${OBSERVER_WRAPPER_VERBOSE:-${DOTFILES_DEBUG:-false}}"
-}
-
-observer_help_requested() {
-    local arg
-    for arg in "$@"; do
-        case "$arg" in
-            -h|--help|help)
-                return 0
-                ;;
-        esac
-    done
-    return 1
+    wrapper_truthy "${OBSERVER_WRAPPER_VERBOSE:-${DOTFILES_DEBUG:-false}}"
 }
 
 observer_daily_hook() {
-    observer_truthy "${OBSERVER_DAILY_HOOK:-false}"
+    wrapper_truthy "${OBSERVER_DAILY_HOOK:-false}"
 }
 
+# Daily-hook convention: observer's daily hook is fire-and-forget — the caller
+# (startday.sh) discards stdout/stderr and ignores exit status, so a missing
+# sibling is silent success (exit 0). Verbose mode prints the setup message.
 observer_unavailable() {
     local expected_home="$1"
     local helper_path="$2"
@@ -63,26 +48,21 @@ observer_unavailable() {
     fi
 
     echo "$message" >&2
-    if observer_help_requested "$@"; then
+    if wrapper_help_requested "$@"; then
         exit 0
     fi
     exit "${EXIT_FILE_NOT_FOUND:-3}"
 }
 
-PROJECTS_DIR="${PROJECTS_DIR:-$HOME/Projects}"
-if command -v validate_safe_path >/dev/null 2>&1; then
-    PROJECTS_DIR="$(validate_safe_path "$PROJECTS_DIR" "$HOME")" || exit "${EXIT_INVALID_ARGS:-2}"
-fi
+PROJECTS_DIR="$(wrapper_resolve_safe_path "${PROJECTS_DIR:-$HOME/Projects}" "$HOME")" \
+    || exit "${EXIT_INVALID_ARGS:-2}"
 
-OBSERVER_HOME="${OBSERVER_HOME:-$PROJECTS_DIR/obsidian-observer}"
-if command -v validate_safe_path >/dev/null 2>&1; then
-    OBSERVER_HOME="$(validate_safe_path "$OBSERVER_HOME" "$HOME")" || exit "${EXIT_INVALID_ARGS:-2}"
-fi
+OBSERVER_HOME="$(wrapper_resolve_safe_path "${OBSERVER_HOME:-$PROJECTS_DIR/obsidian-observer}" "$HOME")" \
+    || exit "${EXIT_INVALID_ARGS:-2}"
 
 if [ -n "${OBSERVER_HELPER:-}" ]; then
-    if command -v validate_safe_path >/dev/null 2>&1; then
-        OBSERVER_HELPER="$(validate_safe_path "$OBSERVER_HELPER" "$HOME")" || exit "${EXIT_INVALID_ARGS:-2}"
-    fi
+    OBSERVER_HELPER="$(wrapper_resolve_safe_path "$OBSERVER_HELPER" "$HOME")" \
+        || exit "${EXIT_INVALID_ARGS:-2}"
 else
     OBSERVER_HELPER="$OBSERVER_HOME/scripts/observer.py"
 fi

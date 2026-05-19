@@ -80,6 +80,18 @@ teardown() {
     [[ "$output" == *"Fix parser issue"* ]]
 }
 
+@test "registry-backed dispatcher honors AI_STAFF_DIR override" {
+    local staff_dir="$TEST_ROOT/external-ai-staff-hq"
+    mkdir -p "$staff_dir"
+
+    run bash -c "PATH='$PATH' HOME='$HOME' DOTFILES_DIR='$DOTFILES_DIR' DATA_DIR='$DATA_DIR' AI_STAFF_DIR='$staff_dir' OPENROUTER_API_KEY='test-key' DHP_TECH_OUTPUT_DIR='$DATA_DIR/output' bash '$DOTFILES_DIR/bin/dhp-tech.sh' 'Fix parser issue' 2>&1"
+
+    [ "$status" -eq 0 ]
+    run cat "$DATA_DIR/mock_uv_args.txt"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"--project $staff_dir"* ]]
+}
+
 @test "dhp-shared rejects out-of-range temperature values" {
     run bash -c "HOME='$HOME' DOTFILES_DIR='$DOTFILES_DIR' DATA_DIR='$DATA_DIR' bash '$DOTFILES_DIR/bin/dhp-tech.sh' --temperature 2.5 'Fix parser issue' 2>&1"
 

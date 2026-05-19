@@ -307,13 +307,13 @@ fi
 if [ "$BLOG_READY" = true ]; then
     # If the blog tools are configured, show a quick publishing snapshot too.
     echo ""
-    if ! BLOG_DIR="$BLOG_STATUS_DIR" "$BLOG_SCRIPT" status; then
+    if ! BLOG_FACTORY_DAILY_HOOK=true BLOG_DIR="$BLOG_STATUS_DIR" "$BLOG_SCRIPT" status; then
         echo "  ⚠️ Blog status unavailable (check BLOG_STATUS_DIR or BLOG_DIR configuration)."
     fi
     if [ -f "$SCRIPT_DIR/blog_recent_content.sh" ]; then
         echo ""
         echo "📰 LATEST BLOG CONTENT:"
-        if ! BLOG_CONTENT_DIR="$BLOG_CONTENT_ROOT" "$SCRIPT_DIR/blog_recent_content.sh" 3; then
+        if ! BLOG_FACTORY_DAILY_HOOK=true BLOG_CONTENT_DIR="$BLOG_CONTENT_ROOT" "$SCRIPT_DIR/blog_recent_content.sh" 3; then
             echo "  ⚠️ Unable to list recent content (check BLOG_CONTENT_DIR)."
         fi
     fi

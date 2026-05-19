@@ -2,12 +2,13 @@
 """Swarm orchestrator - Generic Python CLI wrapper."""
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
 # Add project root to path
 DOTFILES_DIR = Path(__file__).resolve().parent.parent
-AI_STAFF_HQ = DOTFILES_DIR / "ai-staff-hq"
+AI_STAFF_HQ = Path(os.environ.get("AI_STAFF_DIR", DOTFILES_DIR / "ai-staff-hq")).expanduser()
 sys.path.insert(0, str(AI_STAFF_HQ))
 
 from orchestrator.swarm_runner import SwarmRunner

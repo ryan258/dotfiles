@@ -53,6 +53,8 @@ Use this for the high-level architecture and the cross-cutting mental model:
 
 - daily coaching flow
 - Cyborg and autopilot overview
+- AI Staff HQ optional product boundary
+- Blog Factory optional product boundary
 - Brain and data contracts
 - MS-friendly design principles
 
@@ -96,6 +98,14 @@ Boundary note for the extracted project-to-site playbook.
 
 Direct vs swarm Morphling modes and build-pipeline usage.
 
+### [AI Staff HQ Boundary](ai-staff-hq-boundary.md)
+
+Optional product boundary for `AI_STAFF_DIR`, dispatcher swarms, and Morphling.
+
+### [Blog Factory Boundary](blog-factory-boundary.md)
+
+Optional product boundary for `BLOG_FACTORY_HOME`, `blog`, and `blog-recent`.
+
 ## Brain and Memory
 
 ### [Obsidian Observer Boundary](obsidian-knowledge-graph-framework.md)
@@ -115,6 +125,14 @@ Shared vector-store memory, ingestion, and recall.
 Quick-start view of Brain service layout and CLI usage.
 
 ## Troubleshooting and Planning
+
+### [Library Loading](library-loading.md)
+
+The current caller-owned shell loading strategy and the transitional `common.sh` bootstrap exception.
+
+### [Artifact And Log Policy](artifact-log-policy.md)
+
+Runtime artifact locations, log rotation, and cleanup behavior.
 
 ### [Troubleshooting](../TROUBLESHOOTING.md)
 

@@ -26,7 +26,8 @@ Client IDs and usernames may also appear in `.env.example`. They identify config
 - Google Calendar for schedule context.
 - Obsidian observer as an optional sibling product.
 - Cyborg agent as an optional sibling product.
-- Blog automation as an optional product boundary candidate.
+- Blog Factory as an optional sibling product.
+- AI Staff HQ as an optional submodule or sibling checkout.
 
 ## Phase 0 Note
 

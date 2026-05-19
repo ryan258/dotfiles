@@ -39,6 +39,8 @@ Generated inventory docs are the source of truth for script counts:
 - `pdf_to_markdown.sh`, `grab_all_text.sh`, `context.sh`
 - `dump.sh`, `data_validate.sh`
 
+`blog.sh` and `blog_recent_content.sh` are compatibility wrappers for the extracted Blog Factory sibling repo at `~/Projects/blog-factory`. Set `BLOG_FACTORY_HOME` to use a different checkout.
+
 ## Project, GitHub, and Scaffolding Utilities
 
 - `start_project.sh`, `mkproject_py.sh`, `new_script.sh`
@@ -65,6 +67,11 @@ Generated inventory docs are the source of truth for script counts:
 - Repo-local `logs/` is ignored and should not be used for durable data.
 - Legacy repo-local run logs were moved to `~/.cache/dotfiles/logs/`.
 - The active system log viewed by `logs.sh` lives under `~/.config/dotfiles-data/` via `SYSTEM_LOG_FILE`.
+- Full policy: `../docs/artifact-log-policy.md`.
+
+## Library Loading
+
+The loading strategy is caller-owned and documented in `../docs/library-loading.md`. `common.sh` still bootstraps `config.sh` and `file_ops.sh` as a transitional compatibility bridge; new or touched code should source dependencies explicitly.
 
 ## Cyborg Compatibility
 
