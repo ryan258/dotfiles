@@ -31,6 +31,7 @@ setup() {
     source "$BATS_TEST_DIRNAME/../scripts/lib/config.sh"
     source "$BATS_TEST_DIRNAME/../scripts/lib/common.sh"
     source "$BATS_TEST_DIRNAME/../scripts/lib/date_utils.sh"
+    source "$BATS_TEST_DIRNAME/../scripts/lib/health_ops.sh"
     source "$BATS_TEST_DIRNAME/../scripts/lib/focus_relevance.sh"
     source "$BATS_TEST_DIRNAME/../scripts/lib/coach_metrics.sh"
 }
@@ -81,4 +82,84 @@ EOF
     assert_output_contains "Working signals:"
     assert_output_contains "Drift risks:"
     assert_output_contains "Data quality flags:"
+}
+
+@test "coach_build_behavior_digest includes wearable context when Fitbit data exists" {
+    mkdir -p "$DATA_DIR/fitbit"
+    cat > "$DATA_DIR/fitbit/sleep_minutes.txt" <<'EOF'
+2026-03-26|257
+EOF
+    cat > "$DATA_DIR/fitbit/resting_heart_rate.txt" <<'EOF'
+2026-03-26|73
+EOF
+    cat > "$DATA_DIR/fitbit/hrv.txt" <<'EOF'
+2026-03-26|67
+EOF
+    cat > "$DATA_DIR/fitbit/steps.txt" <<'EOF'
+2026-03-26|822
+EOF
+
+    run coach_build_behavior_digest "2026-03-26" "7" "30" "" ""
+
+    assert_success
+    assert_output_contains "Wearable context:"
+    assert_output_contains "Fitbit sleep: 4h 17m (2026-03-26)"
+    assert_output_contains "Fitbit resting HR: 73 (2026-03-26)"
+    assert_output_contains "Fitbit HRV: 67 (2026-03-26)"
+    assert_output_contains "Fitbit steps: 822 (2026-03-26)"
+}
+
+@test "coach_build_behavior_digest includes both latest and average energy fog context" {
+    cat > "$DATA_DIR/health.txt" <<'EOF'
+ENERGY|2026-03-23 01:14|2
+FOG|2026-03-23 01:14|8
+ENERGY|2026-03-23 10:54|10
+FOG|2026-03-23 10:54|2
+ENERGY|2026-03-23 23:24|3
+FOG|2026-03-23 23:24|7
+ENERGY|2026-03-26 13:02|7
+FOG|2026-03-26 13:02|3
+EOF
+
+    run coach_build_behavior_digest "2026-03-26" "7" "30" "" ""
+
+    assert_success
+    assert_output_contains "latest_energy=7 (2026-03-26 13:02), latest_fog=3 (2026-03-26 13:02), avg_energy=5.5, avg_fog=5.0"
+}
+
+@test "coach_build_behavior_digest includes focus-related strategy evidence fields" {
+    cat > "$FOCUS_FILE" <<'EOF'
+Architecture review memo
+EOF
+    cat > "$JOURNAL_FILE" <<'EOF'
+2026-03-26 08:00:00|Architecture review memo outline
+EOF
+    mkdir -p "$DOTFILES_DIR/scripts"
+    cat > "$DOTFILES_DIR/scripts/drive.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "${1:-}" == "recent" && "${2:-}" == "1" ]]; then
+  cat <<'JSON'
+[{"id":"doc-1","name":"Architecture review memo"}]
+JSON
+elif [[ "${1:-}" == "read" && "${2:-}" == "doc-1" ]]; then
+  printf 'Architecture review memo excerpt'
+else
+  cat <<'JSON'
+[{"id":"doc-1","name":"Architecture review memo"},{"id":"doc-2","name":"System design notes"}]
+JSON
+fi
+EOF
+    chmod +x "$DOTFILES_DIR/scripts/drive.sh"
+
+    run coach_build_behavior_digest "2026-03-26" "7" "30" "" ""
+
+    assert_success
+    assert_output_contains "journal_focus_hits=1"
+    assert_output_contains "drive_focus_hits_today=1"
+    assert_output_contains "drive_focus_hits_week=2"
+    assert_output_contains "drive_top_file_id=doc-1"
+    assert_output_contains "drive_top_file_name=Architecture review memo"
+    assert_output_contains "drive_top_file_snippet_b64="
+    assert_output_contains "strategy_evidence_sources=journal,drive"
 }

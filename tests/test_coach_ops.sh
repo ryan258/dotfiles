@@ -53,13 +53,12 @@ setup() {
 
     export COACH_LIB="$BATS_TEST_DIRNAME/../scripts/lib/coach_ops.sh"
     export COACH_METRICS_LIB="$BATS_TEST_DIRNAME/../scripts/lib/coach_metrics.sh"
-    export COACH_PROMPTS_LIB="$BATS_TEST_DIRNAME/../scripts/lib/coach_prompts.sh"
     export COACH_SCORING_LIB="$BATS_TEST_DIRNAME/../scripts/lib/coach_scoring.sh"
     export COACH_CONFIG_LIB="$BATS_TEST_DIRNAME/../scripts/lib/config.sh"
     export COACH_COMMON_LIB="$BATS_TEST_DIRNAME/../scripts/lib/common.sh"
     export COACH_DATE_LIB="$BATS_TEST_DIRNAME/../scripts/lib/date_utils.sh"
     export COACH_FOCUS_RELEVANCE_LIB="$BATS_TEST_DIRNAME/../scripts/lib/focus_relevance.sh"
-    export COACH_SOURCE_PREFIX="source '$COACH_CONFIG_LIB'; source '$COACH_COMMON_LIB'; source '$COACH_DATE_LIB'; source '$COACH_FOCUS_RELEVANCE_LIB'; source '$COACH_LIB'; source '$COACH_METRICS_LIB'; source '$COACH_PROMPTS_LIB'; source '$COACH_SCORING_LIB'"
+    export COACH_SOURCE_PREFIX="source '$COACH_CONFIG_LIB'; source '$COACH_COMMON_LIB'; source '$COACH_DATE_LIB'; source '$COACH_FOCUS_RELEVANCE_LIB'; source '$COACH_LIB'; source '$COACH_METRICS_LIB'; source '$COACH_SCORING_LIB'"
 }
 
 teardown() {
@@ -265,27 +264,6 @@ EOF
     [[ "$line" == *"\\n"* ]]
     field_count=$(printf '%s\n' "$line" | awk -F'|' '{print NF}')
     [ "$field_count" -eq 7 ]
-}
-
-@test "_coach_extract_first_task skips headers and returns first real task" {
-    run bash -c "$COACH_SOURCE_PREFIX; _coach_extract_first_task \$'--- Top 3 Tasks ---\n1    $DAY_MINUS2   Vectorize the logo images for Aaron\n2    $DAY_MINUS2   Prepare posting times'"
-
-    [ "$status" -eq 0 ]
-    [ "$output" = "Vectorize the logo images for Aaron" ]
-}
-
-@test "_coach_extract_first_task handles pipe-delimited todo lines" {
-    run bash -c "$COACH_SOURCE_PREFIX; _coach_extract_first_task \$'$DAY_MINUS2|Vectorize logo\n$DAY_MINUS1|Set LinkedIn schedule'"
-
-    [ "$status" -eq 0 ]
-    [ "$output" = "Vectorize logo" ]
-}
-
-@test "_coach_extract_first_task returns empty when no real task is present" {
-    run bash -c "$COACH_SOURCE_PREFIX; _coach_extract_first_task '--- Top 3 Tasks ---'"
-
-    [ "$status" -eq 0 ]
-    [ -z "$output" ]
 }
 
 @test "coach_strategy_with_retry succeeds on second attempt after timeout" {

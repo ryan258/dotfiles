@@ -32,6 +32,7 @@ setup() {
     cp "$BATS_TEST_DIRNAME/../scripts/lib/coach_metrics.sh" "$DOTFILES_DIR/scripts/lib/coach_metrics.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/coach_brief.sh" "$DOTFILES_DIR/scripts/lib/coach_brief.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/coach_prompts.sh" "$DOTFILES_DIR/scripts/lib/coach_prompts.sh"
+    cp "$BATS_TEST_DIRNAME/../scripts/lib/coach_prebrief.sh" "$DOTFILES_DIR/scripts/lib/coach_prebrief.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/coach_scoring.sh" "$DOTFILES_DIR/scripts/lib/coach_scoring.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/coaching.sh" "$DOTFILES_DIR/scripts/lib/coaching.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/config.sh" "$DOTFILES_DIR/scripts/lib/config.sh"

@@ -633,8 +633,7 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
 
     # Build the framing-prompt: short instructions + the deterministic brief as ground truth.
     # Phase 4 §10.1 step 4: AI receives framing template + brief, not the broad
-    # builder's full prompt. The local context bundle is intentionally dropped
-    # here because the brief carries the facts the AI needs to ground its framing.
+    # builder's full prompt.
     if command -v coaching_build_framing_prompt >/dev/null 2>&1; then
         REFLECTION_PROMPT="$(coaching_build_framing_prompt "goodevening" "${COACH_DETERMINISTIC_BRIEF:-${COACH_BEHAVIOR_DIGEST:-}}")"
     else

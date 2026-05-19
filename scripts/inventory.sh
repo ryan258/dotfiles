@@ -203,11 +203,13 @@ collect_metrics() {
     coach_loc=$(loc_for_files \
         "scripts/lib/coach_brief.sh" \
         "scripts/lib/coach_prompts.sh" \
+        "scripts/lib/coach_prebrief.sh" \
         "scripts/lib/coach_metrics.sh" \
         "scripts/lib/coach_chat.sh" \
         "scripts/lib/coach_scoring.sh")
     coach_brief_loc=$(line_count "scripts/lib/coach_brief.sh")
     coach_prompts_loc=$(line_count "scripts/lib/coach_prompts.sh")
+    coach_prebrief_loc=$(line_count "scripts/lib/coach_prebrief.sh")
     coach_metrics_loc=$(line_count "scripts/lib/coach_metrics.sh")
     coach_chat_loc=$(line_count "scripts/lib/coach_chat.sh")
     coach_scoring_loc=$(line_count "scripts/lib/coach_scoring.sh")
@@ -373,6 +375,7 @@ Do not refresh these values after Phase 0 is accepted. Later phases compare agai
 | --- | ---: |
 | \`scripts/lib/coach_brief.sh\` | $coach_brief_loc |
 | \`scripts/lib/coach_prompts.sh\` | $coach_prompts_loc |
+| \`scripts/lib/coach_prebrief.sh\` | $coach_prebrief_loc |
 | \`scripts/lib/coach_metrics.sh\` | $coach_metrics_loc |
 | \`scripts/lib/coach_chat.sh\` | $coach_chat_loc |
 | \`scripts/lib/coach_scoring.sh\` | $coach_scoring_loc |
@@ -552,6 +555,7 @@ Generated: May 18, 2026
 - `tests/test_goodevening_coach.sh`
 - `tests/test_coach_brief.sh`
 - `tests/test_coach_framing.sh`
+- `tests/test_coach_prebrief.sh`
 - `tests/test_coach_metrics_digest_contract.sh`
 - `tests/test_coach_ops.sh`
 - `tests/test_coach_prompts.sh`

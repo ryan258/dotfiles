@@ -4,17 +4,17 @@ Generated: May 18, 2026
 
 ## Summary
 
-- Shell files under `scripts/`: 104
+- Shell files under `scripts/`: 105
 - Top-level `scripts/*.sh`: 78
 - Top-level `scripts/*.py`: 7
-- Sourced shell libraries under `scripts/lib/`: 26
+- Sourced shell libraries under `scripts/lib/`: 27
 - Python modules under `scripts/lib/`: 2
 - `bin/` non-markdown entrypoints: 28
 
 ## Classification Summary
 
 - Daily-core scripts: 26
-- Support libraries: 34
+- Support libraries: 35
 - Compatibility wrappers: 23
 - Sibling-product candidates: 8
 - Support utilities: 50
@@ -128,6 +128,7 @@ Daily-core includes commands that directly or indirectly support the daily loop.
 | `scripts/lib/coach_chat.sh` | support-library |
 | `scripts/lib/coach_metrics.sh` | support-library |
 | `scripts/lib/coach_ops.sh` | support-library |
+| `scripts/lib/coach_prebrief.sh` | support-library |
 | `scripts/lib/coach_prompts.sh` | support-library |
 | `scripts/lib/coach_scoring.sh` | support-library |
 | `scripts/lib/coaching.sh` | support-library |
@@ -332,6 +333,7 @@ Daily-core includes commands that directly or indirectly support the daily loop.
 - `scripts/lib/coach_chat.sh`
 - `scripts/lib/coach_metrics.sh`
 - `scripts/lib/coach_ops.sh`
+- `scripts/lib/coach_prebrief.sh`
 - `scripts/lib/coach_prompts.sh`
 - `scripts/lib/coach_scoring.sh`
 - `scripts/lib/coaching.sh`

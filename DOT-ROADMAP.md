@@ -503,6 +503,14 @@ Acceptance criteria:
 - `coach_prompts.sh` shrinks from the frozen baseline of 2,207 LOC to 300 LOC or less, unless a later explicit decision records why a larger framing module is needed.
 - `coach_metrics.sh` stays stable or shrinks from the frozen baseline of 1,836 LOC; it should not grow to replace prompt complexity with metric complexity.
 
+Completion notes:
+
+- Deterministic brief rendering is now the primary ground-truth path for `startday`, `status`, and `goodevening`; AI output is a short framing layer over the rendered brief.
+- `coach_prompts.sh` now owns only the framing prompt builder: 2,207 LOC frozen baseline to 60 LOC.
+- `coach_metrics.sh` is smaller than the frozen baseline: 1,836 LOC to 1,632 LOC.
+- Interactive pre-brief logic moved to `scripts/lib/coach_prebrief.sh`, keeping the framing prompt module under the Phase 4 numeric gate while preserving the short-choice clarification flow.
+- Current coach support surface for brief, prompts, pre-brief, metrics, chat, and scoring is 3,553 LOC, down from the 5,141 LOC Phase 0 coach core baseline even with the split-out brief and pre-brief modules.
+
 ## 11. Phase 5: Data Format Stability
 
 Goal: keep flat files for now, while reducing future migration risk.

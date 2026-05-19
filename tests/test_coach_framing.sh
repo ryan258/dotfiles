@@ -19,6 +19,7 @@ setup() {
     source "$BATS_TEST_DIRNAME/../scripts/lib/focus_relevance.sh"
     source "$BATS_TEST_DIRNAME/../scripts/lib/coach_metrics.sh"
     source "$BATS_TEST_DIRNAME/../scripts/lib/coach_prompts.sh"
+    source "$BATS_TEST_DIRNAME/../scripts/lib/coach_prebrief.sh"
 }
 
 teardown() {

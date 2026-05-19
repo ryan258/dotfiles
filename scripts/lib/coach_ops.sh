@@ -7,6 +7,7 @@
 # Per library contract, callers must source sibling modules explicitly:
 #   - coach_metrics.sh
 #   - coach_prompts.sh
+#   - coach_prebrief.sh
 #   - coach_scoring.sh
 
 if [[ -n "${_COACH_OPS_LOADED:-}" ]]; then

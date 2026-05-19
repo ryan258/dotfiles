@@ -9,6 +9,7 @@ Generated: May 18, 2026
 - `tests/test_goodevening_coach.sh`
 - `tests/test_coach_brief.sh`
 - `tests/test_coach_framing.sh`
+- `tests/test_coach_prebrief.sh`
 - `tests/test_coach_metrics_digest_contract.sh`
 - `tests/test_coach_ops.sh`
 - `tests/test_coach_prompts.sh`
@@ -42,6 +43,7 @@ Generated: May 18, 2026
 - `tests/test_coach_metric_branches.sh`
 - `tests/test_coach_metrics_digest_contract.sh`
 - `tests/test_coach_ops.sh`
+- `tests/test_coach_prebrief.sh`
 - `tests/test_coach_prompts.sh`
 - `tests/test_common_lib.sh`
 - `tests/test_config_lib.sh`
