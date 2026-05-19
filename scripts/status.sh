@@ -336,25 +336,17 @@ if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
         echo "  Coach Brief unavailable; behavior digest could not be rendered."
     fi
 
-    # Turn the facts into one prompt that asks for a short mid-day reset.
-    if command -v coaching_build_status_prompt >/dev/null 2>&1; then
-        _status_prompt=$(coaching_build_status_prompt \
-            "${_status_mode:-LOCKED}" \
-            "${_status_focus_text:-}" \
-            "${STATUS_COACH_TODAY_COMMITS:-}" \
-            "${STATUS_COACH_RECENT_PUSHES:-}" \
-            "${_status_behavior_digest:-}" \
-            "$CURRENT_DIR" \
-            "${_status_project_context:-}" \
-            "${_status_context_scope:-global}")
+    # Build the framing-prompt: short instructions + the deterministic brief as ground truth.
+    # Phase 4 §10.1 step 4: AI receives framing template + brief, not the broad
+    # builder's full prompt. The local context bundle is intentionally dropped
+    # here because the brief carries the facts the AI needs to ground its framing.
+    if command -v coaching_build_framing_prompt >/dev/null 2>&1; then
+        _status_prompt=$(coaching_build_framing_prompt "status" "${_status_deterministic_brief:-${_status_behavior_digest:-}}")
     else
         _status_prompt="Produce a concise mid-day GitHub-first coaching brief grounded in today's focus and current GitHub activity."
     fi
     if command -v coaching_collect_prebrief_context >/dev/null 2>&1; then
         _status_prebrief_context=$(coaching_collect_prebrief_context "status" "${_status_focus_text:-}" "${_status_mode:-LOCKED}" "$_status_combined_git" "${_status_behavior_digest:-}" "$CURRENT_DIR" "${_status_project_context:-}" "${_status_context_scope:-global}" || true)
-    fi
-    if [[ -n "${_status_local_context_bundle:-}" ]]; then
-        _status_prompt="${_status_prompt}"$'\n\n'"Additional local context bundle:"$'\n'"${_status_local_context_bundle}"
     fi
     if [[ -n "${_status_prebrief_context:-}" ]]; then
         _status_prompt="${_status_prompt}"$'\n\n'"Pre-brief clarifications:"$'\n'"${_status_prebrief_context}"

@@ -360,15 +360,17 @@ PY
     prompt="$(cat "$DATA_DIR/strategy_prompt_goodevening.txt")"
     args="$(cat "$DATA_DIR/strategy_args_goodevening.txt")"
 
-    [[ "$prompt" == *"Coach mode used today:"* ]]
-    [[ "$prompt" == *"Behavior digest:"* ]]
-    [[ "$prompt" == *"Wearable guidance:"* ]]
-    [[ "$prompt" == *"Additional local context bundle:"* ]]
-    [[ "$prompt" == *"Raw journal entries (last 7 days):"* ]]
-    [[ "$prompt" == *"Blindspots to sleep on (1-5):"* ]]
-    [[ "$prompt" == *"Tomorrow lock:"* ]]
-    [[ "$prompt" == *"Health lens:"* ]]
-    [[ "$prompt" == *"Make the main verdict about whether the spear moved, stalled, or diffused based on focus plus available GitHub or strategy evidence"* ]]
+    # Framing template envelope.
+    [[ "$prompt" == *"calm coach"* ]]
+    [[ "$prompt" == *"framing for what closed today"* ]]
+    [[ "$prompt" == *"Stay grounded in the brief"* ]]
+    # Deterministic brief is embedded as ground truth.
+    [[ "$prompt" == *"Deterministic brief:"* ]]
+    [[ "$prompt" == *"Flow: goodevening"* ]]
+    # Broad-builder artifacts that previously bloated the prompt are gone.
+    [[ "$prompt" != *"Additional local context bundle:"* ]]
+    [[ "$prompt" != *"Raw journal entries (last 7 days):"* ]]
+    [[ "$prompt" != *"Blindspots to sleep on (1-5):"* ]]
     [[ "$args" == *"--temperature"* ]]
 
     [[ "$output" == *"What worked:"* ]]
@@ -409,7 +411,7 @@ EOF
     [[ "$output" != *"(No focus set)"* ]]
 
     prompt="$(cat "$DATA_DIR/strategy_prompt_goodevening.txt")"
-    [[ "$prompt" == *"Today's focus:"*$'\n'"Ship one high-signal automation"* ]]
+    [[ "$prompt" == *"Focus: Ship one high-signal automation"* ]]
 }
 
 @test "goodevening auto-syncs Fitbit data before reflection when auth exists" {

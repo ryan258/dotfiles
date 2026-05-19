@@ -432,19 +432,14 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
             COACH_PREBRIEF_CONTEXT=$(coaching_collect_prebrief_context "startday" "${FOCUS_CONTEXT:-}" "${COACH_MODE:-LOCKED}" "$_sd_git_combined" "${COACH_BEHAVIOR_DIGEST:-}" "$PWD" "" "global" || true)
         fi
 
-        # Turn the facts into one prompt that tells the AI what kind of briefing to write.
-        if command -v coaching_build_startday_prompt >/dev/null 2>&1; then
-            BRIEFING_PROMPT="$(coaching_build_startday_prompt \
-                "${FOCUS_CONTEXT:-}" \
-                "${COACH_MODE:-LOCKED}" \
-                "${YESTERDAY_COMMITS:-}" \
-                "${RECENT_PUSHES:-}" \
-                "${COACH_BEHAVIOR_DIGEST:-}")"
+        # Build the framing-prompt: short instructions + the deterministic brief as ground truth.
+        # Phase 4 §10.1 step 4: AI receives framing template + brief, not the broad
+        # builder's full prompt. The local context bundle is intentionally dropped
+        # here because the brief carries the facts the AI needs to ground its framing.
+        if command -v coaching_build_framing_prompt >/dev/null 2>&1; then
+            BRIEFING_PROMPT="$(coaching_build_framing_prompt "startday" "${COACH_DETERMINISTIC_BRIEF:-${COACH_BEHAVIOR_DIGEST:-}}")"
         else
             BRIEFING_PROMPT="Produce a high-signal morning execution guide grounded only in today's focus and GitHub activity."
-        fi
-        if [[ -n "${COACH_LOCAL_CONTEXT_BUNDLE:-}" ]]; then
-            BRIEFING_PROMPT="${BRIEFING_PROMPT}"$'\n\n'"Additional local context bundle:"$'\n'"${COACH_LOCAL_CONTEXT_BUNDLE}"
         fi
         if [[ -n "${COACH_PREBRIEF_CONTEXT:-}" ]]; then
             BRIEFING_PROMPT="${BRIEFING_PROMPT}"$'\n\n'"Pre-brief clarifications:"$'\n'"${COACH_PREBRIEF_CONTEXT}"

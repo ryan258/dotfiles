@@ -308,13 +308,17 @@ EOF
 
     [ -f "$DATA_DIR/status_coach_prompt.txt" ]
     prompt="$(cat "$DATA_DIR/status_coach_prompt.txt")"
-    [[ "$prompt" == *"Current directory:"* ]]
-    [[ "$prompt" == *"Current project context:"* ]]
-    [[ "$prompt" == *"Today's commits:"* ]]
-    [[ "$prompt" == *"Recent GitHub pushes (last 7 days):"* ]]
-    [[ "$prompt" == *"Additional local context bundle:"* ]]
-    [[ "$prompt" == *"Raw health log lines (last 7 days):"* ]]
-    [[ "$prompt" == *"Wearable guidance:"* ]]
+    # Framing template envelope.
+    [[ "$prompt" == *"calm coach"* ]]
+    [[ "$prompt" == *"framing for right now"* ]]
+    [[ "$prompt" == *"Stay grounded in the brief"* ]]
+    # Deterministic brief is embedded as ground truth.
+    [[ "$prompt" == *"Deterministic brief:"* ]]
+    [[ "$prompt" == *"Flow: status"* ]]
+    [[ "$prompt" == *"Focus: logo"* ]]
+    # Broad-builder artifacts that previously bloated the prompt are gone.
+    [[ "$prompt" != *"Additional local context bundle:"* ]]
+    [[ "$prompt" != *"Raw health log lines (last 7 days):"* ]]
 }
 
 @test "status.sh --coach captures same-run energy and fog before building the coach prompt" {
@@ -369,7 +373,10 @@ EOF
     [ "$status" -eq 0 ]
     [ -f "$DATA_DIR/status_coach_prompt.txt" ]
     prompt="$(cat "$DATA_DIR/status_coach_prompt.txt")"
-    [[ "$prompt" == *"latest_energy=7 (${TODAY} 13:02), latest_fog=3 (${TODAY} 13:02)"* ]]
+    # The deterministic brief embedded in the framing prompt reformats digest
+    # values like latest_energy=7 (...) into narrative form for the AI.
+    [[ "$prompt" == *"latest energy 7 at ${TODAY} 13:02"* ]]
+    [[ "$prompt" == *"Latest fog 3 at ${TODAY} 13:02"* ]]
 }
 
 @test "status.sh --coach collects one-line pre-brief answers before building the prompt" {
@@ -455,7 +462,7 @@ EOF
 
     [ "$status" -eq 0 ]
     prompt="$(cat "$DATA_DIR/status_coach_prompt.txt")"
-    [[ "$prompt" == *"Today's focus:"*$'\n'"(no focus set)"* ]]
+    [[ "$prompt" == *"Focus: (no focus set)"* ]]
 }
 
 @test "status.sh --coach scopes the prompt to the current git repo when run inside one" {
@@ -480,9 +487,12 @@ EOF
 
     [ "$status" -eq 0 ]
     prompt="$(cat "$DATA_DIR/status_coach_prompt.txt")"
-    [[ "$prompt" == *"Context scope:"*$'\n'"repo-local"* ]]
-    [[ "$prompt" == *"• dotfiles: ship logo (abc1234)"* ]]
-    [[ "$prompt" != *"• other-repo: ship unrelated feature (def5678)"* ]]
+    # The framing prompt embeds the deterministic brief, which summarises
+    # GitHub scope via the Focus/Git line rather than raw commit bullets.
+    # In repo-local mode the digest is filtered to the current repo, so the
+    # brief should name only dotfiles as the primary repo and report 1 active.
+    [[ "$prompt" == *"primary repo dotfiles"* ]]
+    [[ "$prompt" == *"active repos 1"* ]]
 }
 
 @test "status.sh --coach keeps global repo context when run outside a git repo" {
@@ -507,9 +517,9 @@ EOF
 
     [ "$status" -eq 0 ]
     prompt="$(cat "$DATA_DIR/status_coach_prompt.txt")"
-    [[ "$prompt" == *"Context scope:"*$'\n'"global"* ]]
-    [[ "$prompt" == *"• dotfiles: ship logo (abc1234)"* ]]
-    [[ "$prompt" == *"• other-repo: ship unrelated feature (def5678)"* ]]
+    # In global mode the digest sees commits from multiple repos, so the
+    # brief's Focus/Git line should report 2 active repos.
+    [[ "$prompt" == *"active repos 2"* ]]
 }
 
 @test "status.sh --coach preserves raw AI output in repo-local mode" {

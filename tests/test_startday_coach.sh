@@ -297,7 +297,7 @@ EOF
     [[ "$output" != *"North Star:"* ]]
 }
 
-@test "startday coaching prompt includes digest, mode, and health lens" {
+@test "startday AI prompt is the framing template plus the deterministic brief" {
     run env \
         PATH="$DOTFILES_DIR/bin:$PATH" \
         HOME="$HOME" \
@@ -315,18 +315,25 @@ EOF
     prompt="$(cat "$DATA_DIR/strategy_prompt_startday.txt")"
     args="$(cat "$DATA_DIR/strategy_args_startday.txt")"
 
-    [[ "$prompt" == *"Coach mode for today:"* ]]
-    [[ "$prompt" == *"Behavior digest:"* ]]
-    [[ "$prompt" == *"Wearable guidance:"* ]]
-    [[ "$prompt" == *"Additional local context bundle:"* ]]
-    [[ "$prompt" == *"Raw journal entries (last 7 days):"* ]]
-    [[ "$prompt" == *"Health lens:"* ]]
-    [[ "$prompt" == *"Scope anchor:"* ]]
+    # Framing template envelope.
+    [[ "$prompt" == *"calm coach"* ]]
+    [[ "$prompt" == *"framing for today"* ]]
+    [[ "$prompt" == *"Stay grounded in the brief"* ]]
+
+    # Deterministic brief is embedded as ground truth.
+    [[ "$prompt" == *"Deterministic brief:"* ]]
+    [[ "$prompt" == *"Coach Brief"* ]]
+    [[ "$prompt" == *"Flow: startday"* ]]
+
+    # Broad-builder artifacts that previously bloated the prompt are gone.
+    [[ "$prompt" != *"Additional local context bundle:"* ]]
+    [[ "$prompt" != *"Raw journal entries (last 7 days):"* ]]
+
     [[ "$args" == *"--temperature"* ]]
 
+    # Mock dispatcher output still flows through to the user.
     [[ "$output" == *"North Star:"* ]]
     [[ "$output" == *"Do Next (ordered 1-3):"* ]]
-    [[ "$output" == *"Scope anchor:"* ]]
     [[ "$output" == *"🧭 COACH BRIEF:"* ]]
     [[ "$output" == *"🤖 AI BRIEFING:"* ]]
 

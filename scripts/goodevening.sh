@@ -636,14 +636,12 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
         echo "  Coach Brief unavailable; behavior digest could not be rendered."
     fi
 
-    # Build the prompt that tells the AI what kind of reflection to write.
-    if command -v coaching_build_goodevening_prompt >/dev/null 2>&1; then
-        REFLECTION_PROMPT="$(coaching_build_goodevening_prompt \
-            "${COACH_MODE:-LOCKED}" \
-            "${FOCUS_CONTEXT:-}" \
-            "${TODAY_COMMITS:-}" \
-            "${RECENT_PUSHES:-}" \
-            "${COACH_BEHAVIOR_DIGEST:-}")"
+    # Build the framing-prompt: short instructions + the deterministic brief as ground truth.
+    # Phase 4 §10.1 step 4: AI receives framing template + brief, not the broad
+    # builder's full prompt. The local context bundle is intentionally dropped
+    # here because the brief carries the facts the AI needs to ground its framing.
+    if command -v coaching_build_framing_prompt >/dev/null 2>&1; then
+        REFLECTION_PROMPT="$(coaching_build_framing_prompt "goodevening" "${COACH_DETERMINISTIC_BRIEF:-${COACH_BEHAVIOR_DIGEST:-}}")"
     else
         REFLECTION_PROMPT="Produce a reflective coaching summary grounded in today's focus and GitHub evidence."
     fi
@@ -654,9 +652,6 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     _ge_git_combined=$(printf '%s\n%s\n' "${TODAY_COMMITS:-}" "${RECENT_PUSHES:-}")
     if command -v coaching_collect_prebrief_context >/dev/null 2>&1; then
         COACH_PREBRIEF_CONTEXT=$(coaching_collect_prebrief_context "goodevening" "${FOCUS_CONTEXT:-}" "${COACH_MODE:-LOCKED}" "$_ge_git_combined" "${COACH_BEHAVIOR_DIGEST:-}" "$PWD" "" "global" || true)
-    fi
-    if [[ -n "${COACH_LOCAL_CONTEXT_BUNDLE:-}" ]]; then
-        REFLECTION_PROMPT="${REFLECTION_PROMPT}"$'\n\n'"Additional local context bundle:"$'\n'"${COACH_LOCAL_CONTEXT_BUNDLE}"
     fi
     if [[ -n "${COACH_PREBRIEF_CONTEXT:-}" ]]; then
         REFLECTION_PROMPT="${REFLECTION_PROMPT}"$'\n\n'"Pre-brief clarifications:"$'\n'"${COACH_PREBRIEF_CONTEXT}"
