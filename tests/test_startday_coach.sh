@@ -29,6 +29,7 @@ setup() {
     cp "$BATS_TEST_DIRNAME/../scripts/lib/loader.sh" "$DOTFILES_DIR/scripts/lib/loader.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/coach_ops.sh" "$DOTFILES_DIR/scripts/lib/coach_ops.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/coach_metrics.sh" "$DOTFILES_DIR/scripts/lib/coach_metrics.sh"
+    cp "$BATS_TEST_DIRNAME/../scripts/lib/coach_brief.sh" "$DOTFILES_DIR/scripts/lib/coach_brief.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/coach_prompts.sh" "$DOTFILES_DIR/scripts/lib/coach_prompts.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/coach_scoring.sh" "$DOTFILES_DIR/scripts/lib/coach_scoring.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/coaching.sh" "$DOTFILES_DIR/scripts/lib/coaching.sh"
@@ -278,6 +279,24 @@ EOF
     [[ "$output" == *"dotfiles (inactive ${today} - good place)"* ]]
 }
 
+@test "startday prints deterministic coach brief when AI briefing is disabled" {
+    run env \
+        PATH="$DOTFILES_DIR/bin:$PATH" \
+        HOME="$HOME" \
+        DATA_DIR="$DATA_DIR" \
+        DOTFILES_DIR="$DOTFILES_DIR" \
+        AI_BRIEFING_ENABLED=false \
+        AI_COACH_CHAT_ENABLED=false \
+        bash -c "$DOTFILES_DIR/scripts/startday.sh refresh < /dev/null"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"🧭 COACH BRIEF:"* ]]
+    [[ "$output" == *"Coach Brief"* ]]
+    [[ "$output" == *"Flow: startday"* ]]
+    [[ "$output" != *"🤖 AI BRIEFING:"* ]]
+    [[ "$output" != *"North Star:"* ]]
+}
+
 @test "startday coaching prompt includes digest, mode, and health lens" {
     run env \
         PATH="$DOTFILES_DIR/bin:$PATH" \
@@ -308,6 +327,12 @@ EOF
     [[ "$output" == *"North Star:"* ]]
     [[ "$output" == *"Do Next (ordered 1-3):"* ]]
     [[ "$output" == *"Scope anchor:"* ]]
+    [[ "$output" == *"🧭 COACH BRIEF:"* ]]
+    [[ "$output" == *"🤖 AI BRIEFING:"* ]]
+
+    brief_line=$(printf '%s\n' "$output" | awk '/🧭 COACH BRIEF:/ {print NR; exit}')
+    ai_line=$(printf '%s\n' "$output" | awk '/🤖 AI BRIEFING:/ {print NR; exit}')
+    [ "$brief_line" -lt "$ai_line" ]
 
     # Signal metadata line includes confidence and reason summary
     [[ "$output" == *"(Signal:"*" - "*")"* ]]
@@ -363,6 +388,7 @@ EOF
     [ "$status" -eq 0 ]
     [[ "$output" == *"North Star:"* ]]
     [[ "$output" == *"Do Next (ordered 1-3):"* ]]
+    [[ "$output" == *"🧭 COACH BRIEF:"* ]]
     [[ "$output" == *"Capture the first concrete move for today's focus (Ship the logo)"* ]]
     [[ "$output" != *"Vectorize logo"* ]]
     [[ "$output" == *"Operating insight (momentum + exploration):"* ]]

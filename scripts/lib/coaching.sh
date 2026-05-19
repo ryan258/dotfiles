@@ -11,8 +11,8 @@ fi
 readonly _COACHING_FACADE_LOADED=true
 
 # Dependencies:
-# - coach_ops.sh, coach_metrics.sh, coach_prompts.sh, and coach_scoring.sh
-#   must already be sourced by the caller.
+# - coach_ops.sh, coach_metrics.sh, coach_brief.sh, coach_prompts.sh, and
+#   coach_scoring.sh must already be sourced by the caller.
 # Keep these wrappers in place so startday/status/goodevening have one stable
 # namespace even when the underlying coach libraries evolve.
 
@@ -34,6 +34,14 @@ coaching_collect_data_quality_flags() {
 
 coaching_build_behavior_digest() {
     coach_build_behavior_digest "$@"
+}
+
+coaching_render_brief_from_digest() {
+    coach_brief_render_from_digest "$@"
+}
+
+coaching_render_brief() {
+    coach_brief_render "$@"
 }
 
 coaching_collect_local_context_bundle() {

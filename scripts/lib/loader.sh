@@ -41,6 +41,7 @@ _load_lib "spoon_budget.sh" "false"
 # 3. Coaching architecture
 _load_lib "coach_ops.sh"
 _load_lib "coach_metrics.sh"
+_load_lib "coach_brief.sh"
 _load_lib "coach_prompts.sh"
 _load_lib "coach_scoring.sh"
 _load_lib "coaching.sh"

@@ -355,6 +355,53 @@ else
     echo "  (todo.sh not found)"
 fi
 
+# --- COACH BRIEF (Deterministic) ---
+# Build the shared coach fact sheet once, show it directly, then let the AI
+# layer reuse the same digest when AI briefing is enabled.
+TODAY=$(date_today)
+FOCUS_CONTEXT=""
+if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
+    FOCUS_CONTEXT=$(cat "$FOCUS_FILE")
+fi
+BRIEFING_TEMPERATURE="${AI_BRIEFING_TEMPERATURE:-0.25}"
+COACH_TACTICAL_DAYS="${AI_COACH_TACTICAL_DAYS:-7}"
+COACH_PATTERN_DAYS="${AI_COACH_PATTERN_DAYS:-30}"
+COACH_MODE="${COACH_MODE_PREFILL:-${AI_COACH_MODE_DEFAULT:-LOCKED}}"
+COACH_TACTICAL_METRICS=""
+COACH_PATTERN_METRICS=""
+COACH_DATA_QUALITY_FLAGS=""
+COACH_BEHAVIOR_DIGEST="(behavior digest unavailable)"
+COACH_LOCAL_CONTEXT_BUNDLE=""
+COACH_PREBRIEF_CONTEXT=""
+COACH_DETERMINISTIC_BRIEF=""
+
+if command -v coaching_collect_tactical_metrics >/dev/null 2>&1; then
+    COACH_TACTICAL_METRICS=$(coaching_collect_tactical_metrics "$TODAY" "$COACH_TACTICAL_DAYS" "${RECENT_PUSHES:-}" "${YESTERDAY_COMMITS:-}" 2>/dev/null || true)
+fi
+if command -v coaching_collect_pattern_metrics >/dev/null 2>&1; then
+    COACH_PATTERN_METRICS=$(coaching_collect_pattern_metrics "$TODAY" "$COACH_PATTERN_DAYS" 2>/dev/null || true)
+fi
+if command -v coaching_collect_data_quality_flags >/dev/null 2>&1; then
+    COACH_DATA_QUALITY_FLAGS=$(coaching_collect_data_quality_flags 2>/dev/null || true)
+fi
+# The behavior digest is the deterministic fact sheet shared by the brief and AI layer.
+if command -v coaching_build_behavior_digest >/dev/null 2>&1; then
+    COACH_BEHAVIOR_DIGEST=$(coaching_build_behavior_digest "$TODAY" "$COACH_TACTICAL_DAYS" "$COACH_PATTERN_DAYS" "${RECENT_PUSHES:-}" "${YESTERDAY_COMMITS:-}" 2>/dev/null || echo "(behavior digest unavailable)")
+fi
+
+_sd_git_combined=$(printf '%s\n%s\n' "${YESTERDAY_COMMITS:-}" "${RECENT_PUSHES:-}")
+
+echo ""
+echo "🧭 COACH BRIEF:"
+if command -v coaching_render_brief_from_digest >/dev/null 2>&1; then
+    COACH_DETERMINISTIC_BRIEF=$(coaching_render_brief_from_digest "startday" "$TODAY" "${FOCUS_CONTEXT:-}" "$COACH_MODE" "${COACH_BEHAVIOR_DIGEST:-}" 2>/dev/null || true)
+fi
+if [ -n "$COACH_DETERMINISTIC_BRIEF" ]; then
+    echo "$COACH_DETERMINISTIC_BRIEF" | sed 's/^/  /'
+else
+    echo "  Coach Brief unavailable; behavior digest could not be rendered."
+fi
+
 # --- AI BRIEFING (Optional) ---
 if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
     echo ""
@@ -368,7 +415,6 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
 
     # Cache file for today's briefing
     BRIEFING_CACHE="$BRIEFING_CACHE_FILE"
-    TODAY=$(date_today)
 
     # Reuse the saved briefing if we already made one earlier today.
     if [ -f "$BRIEFING_CACHE" ] && grep -q "^$TODAY|" "$BRIEFING_CACHE"; then
@@ -379,39 +425,6 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
         echo "  (Signal: CACHED - briefing from earlier today)"
         _COACH_CHAT_BRIEFING="$CACHED_BRIEFING"
     else
-        # No cached morning briefing exists yet, so gather facts for a new one.
-        FOCUS_CONTEXT=""
-        if [ -f "$FOCUS_FILE" ] && [ -s "$FOCUS_FILE" ]; then
-            FOCUS_CONTEXT=$(cat "$FOCUS_FILE")
-        fi
-        BRIEFING_TEMPERATURE="${AI_BRIEFING_TEMPERATURE:-0.25}"
-        COACH_TACTICAL_DAYS="${AI_COACH_TACTICAL_DAYS:-7}"
-        COACH_PATTERN_DAYS="${AI_COACH_PATTERN_DAYS:-30}"
-        COACH_MODE="${COACH_MODE_PREFILL:-${AI_COACH_MODE_DEFAULT:-LOCKED}}"
-        COACH_TACTICAL_METRICS=""
-        COACH_PATTERN_METRICS=""
-        COACH_DATA_QUALITY_FLAGS=""
-        COACH_BEHAVIOR_DIGEST="(behavior digest unavailable)"
-        COACH_LOCAL_CONTEXT_BUNDLE=""
-        COACH_PREBRIEF_CONTEXT=""
-
-        if command -v coaching_collect_tactical_metrics >/dev/null 2>&1; then
-            COACH_TACTICAL_METRICS=$(coaching_collect_tactical_metrics "$TODAY" "$COACH_TACTICAL_DAYS" "${RECENT_PUSHES:-}" "${YESTERDAY_COMMITS:-}" 2>/dev/null || true)
-        fi
-        if command -v coaching_collect_pattern_metrics >/dev/null 2>&1; then
-            COACH_PATTERN_METRICS=$(coaching_collect_pattern_metrics "$TODAY" "$COACH_PATTERN_DAYS" 2>/dev/null || true)
-        fi
-        if command -v coaching_collect_data_quality_flags >/dev/null 2>&1; then
-            COACH_DATA_QUALITY_FLAGS=$(coaching_collect_data_quality_flags 2>/dev/null || true)
-        fi
-        # The behavior digest is a short fact sheet for the AI coach.
-        # It blends work history, health logs, and wearable data.
-        if command -v coaching_build_behavior_digest >/dev/null 2>&1; then
-            COACH_BEHAVIOR_DIGEST=$(coaching_build_behavior_digest "$TODAY" "$COACH_TACTICAL_DAYS" "$COACH_PATTERN_DAYS" "${RECENT_PUSHES:-}" "${YESTERDAY_COMMITS:-}" 2>/dev/null || echo "(behavior digest unavailable)")
-        fi
-
-        _sd_git_combined=$(printf '%s\n%s\n' "${YESTERDAY_COMMITS:-}" "${RECENT_PUSHES:-}")
-
         if command -v coaching_collect_local_context_bundle >/dev/null 2>&1; then
             COACH_LOCAL_CONTEXT_BUNDLE=$(coaching_collect_local_context_bundle "startday" "$TODAY" "$PWD" "global" 2>/dev/null || true)
         fi
@@ -439,7 +452,13 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
 
         # Ask the AI for the final morning message.
         if command -v coaching_generate_response >/dev/null 2>&1; then
+            set +e
             BRIEFING=$(coaching_generate_response "$BRIEFING_PROMPT" "$BRIEFING_TEMPERATURE" "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "$_sd_git_combined" "${COACH_BEHAVIOR_DIGEST:-}" "startday")
+            _sd_briefing_status=$?
+            set -e
+            if [ "$_sd_briefing_status" -ne 0 ] || [ -z "$BRIEFING" ]; then
+                BRIEFING="AI coaching was unavailable; deterministic coach brief is shown above."
+            fi
         else
             BRIEFING="Unable to generate AI briefing at this time."
         fi
