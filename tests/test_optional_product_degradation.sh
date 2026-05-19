@@ -109,16 +109,18 @@ teardown() {
 }
 
 run_with_missing_optional_products() {
+    # Wrapper path validation uses validate_safe_path "$path" "$HOME", so
+    # missing sibling fixtures must still live under the fake HOME.
     env \
         HOME="$HOME" \
         DATA_DIR="$DATA_DIR" \
         DOTFILES_DIR="$DOTFILES_DIR" \
-        PROJECTS_DIR="$PROJECTS_DIR" \
+        PROJECTS_DIR="$HOME/Projects" \
         PATH="$TEST_ROOT/bin:$DOTFILES_DIR/bin:/usr/bin:/bin:/usr/sbin:/sbin" \
         OBSIDIAN_DAILY_ENABLED=true \
         OBSERVER_HOME="$TEST_ROOT/missing/observer-home" \
         OBSIDIAN_VAULT="$TEST_ROOT/missing/obsidian-vault" \
-        CYBORG_HOME="$TEST_ROOT/missing/cyborg-agent" \
+        CYBORG_HOME="$HOME/Projects/missing-cyborg-agent" \
         CYBORG_LAB_DIR="$TEST_ROOT/missing/cyborg-lab" \
         AI_STAFF_DIR="$TEST_ROOT/missing/ai-staff-hq" \
         AI_BRIEFING_ENABLED=false \
@@ -172,8 +174,6 @@ assert_no_stack_trace() {
 }
 
 @test "cyborg wrapper help reports missing sibling repo after Phase 8" {
-    skip "Phase 8: bin/cyborg --help reports missing CYBORG_HOME without failing"
-
     run run_with_missing_optional_products bash "$DOTFILES_DIR/bin/cyborg" --help
 
     [ "$status" -eq 0 ]
@@ -182,8 +182,6 @@ assert_no_stack_trace() {
 }
 
 @test "cyborg wrapper action fails when sibling repo is missing after Phase 8" {
-    skip "Phase 8: cyborg action commands report missing CYBORG_HOME and exit non-zero"
-
     run run_with_missing_optional_products bash "$DOTFILES_DIR/bin/cyborg" auto --yes "test wrapper degradation"
 
     [ "$status" -ne 0 ]

@@ -86,6 +86,8 @@ swipe tech "Explain this stack trace and suggest a fix."
 ## Repo-Aware Agents
 
 These are not simple dispatchers. They have their own workflows and state.
+The Cyborg implementation now lives in the optional sibling repo at
+`~/Projects/cyborg-agent`; dotfiles keeps compatibility wrappers.
 
 ### `cyborg`
 
@@ -107,7 +109,8 @@ cyborg auto --iterate --repo ~/Projects/my-project
 cyborg auto --build "CLI that tracks daily energy with spoon theory"
 ```
 
-See `../bin/cyborg-readme.md` and `../bin/autopilot-readme.md`.
+See `../bin/cyborg-readme.md` and `../bin/autopilot-readme.md` for boundary notes,
+or `~/Projects/cyborg-agent/README.md` for the full guide.
 
 ### `cyborg-sync`
 
@@ -121,7 +124,8 @@ cyborg-sync --repo ~/Projects/my-project sync --dry-run
 cyborg-sync --repo ~/Projects/my-project sync --commit
 ```
 
-See `cyborg-docs-sync.md` and `cyborg-project-to-site-playbook.md`.
+See `cyborg-docs-sync.md` and `cyborg-project-to-site-playbook.md` for boundary
+notes, or `~/Projects/cyborg-agent/docs/` for the full guides.
 
 ## Autopilot Aliases
 

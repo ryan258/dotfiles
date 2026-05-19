@@ -74,23 +74,23 @@ Dispatcher and agent entry points under `bin/`.
 
 ### [Autopilot Easy Mode](autopilot-happy-path.md)
 
-Shortest path for `ap`, `apy`, `apb`, `apbp`, and resume flows.
+Boundary note for shortcuts now implemented by `~/Projects/cyborg-agent`.
 
 ### [Autopilot Architecture](../bin/autopilot-readme.md)
 
-Detailed Morphling + Cyborg pipeline behavior for existing repos, iterate mode, build mode, and publish mode.
+Boundary note for the extracted autopilot guide.
 
 ### [Cyborg Agent Wiki](../bin/cyborg-readme.md)
 
-Interactive Cyborg usage, mental model, and session lifecycle.
+Boundary note for the extracted Cyborg agent guide.
 
 ### [Cyborg Docs Sync](cyborg-docs-sync.md)
 
-Manifest-driven `cyborg-sync` workflow for repeatable project-to-site updates.
+Boundary note for the extracted `cyborg-sync` workflow.
 
 ### [Cyborg Project-to-Site Playbook](cyborg-project-to-site-playbook.md)
 
-End-to-end workflow from local repo to mapped site pages.
+Boundary note for the extracted project-to-site playbook.
 
 ### [Morphling](../MORPHLING.md)
 
@@ -98,13 +98,13 @@ Direct vs swarm Morphling modes and build-pipeline usage.
 
 ## Brain and Memory
 
-### [Obsidian Knowledge Graph Framework](obsidian-knowledge-graph-framework.md)
+### [Obsidian Observer Boundary](obsidian-knowledge-graph-framework.md)
 
-Operator guide for the new local Markdown graph:
+Dotfiles compatibility note for the extracted Observer product:
 
-- shell observer, daily notes, open loops, and explorations
-- Project and Workflow promotion
-- Web Clipper intake, Source notes, Concept tag rules, and graph checks
+- sibling repo lives at `~/Projects/obsidian-observer`
+- `observer` alias and `scripts/observer.sh` wrapper stay in dotfiles
+- daily hooks degrade quietly when the optional product is missing
 
 ### [Brain Handbook](../brain/HANDBOOK.md)
 

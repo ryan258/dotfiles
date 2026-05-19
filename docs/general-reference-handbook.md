@@ -14,7 +14,7 @@ Terminal (zsh)
   -> CLI scripts (scripts/*.sh)
   -> shared libraries (scripts/lib/*.sh)
   -> AI dispatchers + orchestration (bin/dhp-*.sh)
-  -> Cyborg Lab agent (bin/cyborg + scripts/cyborg_agent.py + scripts/cyborg_build.py + scripts/cyborg_support.py)
+  -> Cyborg Lab wrapper (bin/cyborg -> ~/Projects/cyborg-agent)
   -> Brain/knowledge base (brain/ — ChromaDB vector store)
   -> data (~/.config/dotfiles-data/ — pipe-delimited flat files)
 ```
@@ -58,7 +58,7 @@ goodevening
 
 ## 🤖 Cyborg Lab Agent
 
-The Cyborg Lab agent (`bin/cyborg`) now uses three Python modules: `scripts/cyborg_agent.py` for session orchestration, `scripts/cyborg_build.py` for scaffold/verify/publish helpers, and `scripts/cyborg_support.py` for shared shell/input helpers. Together they scan code projects, build new ones from ideas, plan blog posts, write drafts, and only save to `my-ms-ai-blog` when you say so.
+The Cyborg Lab implementation now lives in `~/Projects/cyborg-agent`. Root dotfiles keeps `bin/cyborg`, `bin/cyborg-sync`, and the autopilot aliases as compatibility wrappers so existing commands still work.
 
 ### Key Commands
 

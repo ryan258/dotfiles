@@ -73,8 +73,8 @@ The full rules live in `../CLAUDE.md`.
 
 - `copy` is the clipboard tool (like Ctrl+C for the terminal).
 - `aicopy` is the AI copywriter. Different from `copy`.
-- `cyborg` is not a normal AI alias. It is its own tool. See `../bin/cyborg-readme.md`.
-- `cyborg-sync` is a `bin/` command, not a shell alias. It is documented in `../docs/cyborg-docs-sync.md`.
+- `cyborg` is not a normal AI alias. It is a wrapper for `~/Projects/cyborg-agent`. See `../bin/cyborg-readme.md`.
+- `cyborg-sync` is a `bin/` wrapper for `~/Projects/cyborg-agent`, not a shell alias. See `../docs/cyborg-docs-sync.md`.
 - `grep` is changed on purpose to add color (`ggrep --color=auto` when it exists).
 - `memo` now points straight to `cheatsheet.sh`. The old `memo.sh` wrapper is gone.
 - AI aliases find their scripts through `DOTFILES_ALIAS_ROOT` (falls back to `$HOME/dotfiles`).

@@ -133,10 +133,10 @@ script_class() {
         bin/coach-chat.py|bin/dhp-context.sh|bin/dhp-lib.sh|bin/dhp-shared.sh|bin/dhp-swarm.py|bin/dhp-utils.sh)
             printf 'support-library'
             ;;
-        scripts/observer.sh|scripts/gitnexus.sh|bin/cyborg|bin/cyborg-sync|bin/dispatch.sh|bin/dhp-*.sh|bin/morphling.sh)
+        scripts/observer.sh|scripts/cyborg_scoped_site_check.sh|scripts/gitnexus.sh|bin/cyborg|bin/cyborg-sync|bin/dispatch.sh|bin/dhp-*.sh|bin/morphling.sh)
             printf 'compatibility-wrapper'
             ;;
-        scripts/observer.py|scripts/cyborg_agent.py|scripts/cyborg_build.py|scripts/cyborg_docs_sync.py|scripts/cyborg_support.py|scripts/cyborg_scoped_site_check.sh|scripts/blog.sh|scripts/blog_recent_content.sh)
+        scripts/observer.py|scripts/cyborg_agent.py|scripts/cyborg_build.py|scripts/cyborg_docs_sync.py|scripts/cyborg_support.py|scripts/blog.sh|scripts/blog_recent_content.sh)
             printf 'sibling-product-candidate'
             ;;
         *)
@@ -605,8 +605,9 @@ Client IDs and usernames may also appear in `.env.example`. They identify config
 - Fitbit for wearable health context.
 - Google Drive for focus-related document evidence.
 - Google Calendar for schedule context.
-- Obsidian observer as an optional product boundary candidate.
-- Cyborg/blog automation as an optional product boundary candidate.
+- Obsidian observer as an optional sibling product.
+- Cyborg agent as an optional sibling product.
+- Blog automation as an optional product boundary candidate.
 
 ## Phase 0 Note
 

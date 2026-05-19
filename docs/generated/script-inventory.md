@@ -6,7 +6,7 @@ Generated: May 18, 2026
 
 - Shell files under `scripts/`: 105
 - Top-level `scripts/*.sh`: 78
-- Top-level `scripts/*.py`: 7
+- Top-level `scripts/*.py`: 2
 - Sourced shell libraries under `scripts/lib/`: 27
 - Python modules under `scripts/lib/`: 2
 - `bin/` non-markdown entrypoints: 28
@@ -15,8 +15,8 @@ Generated: May 18, 2026
 
 - Daily-core scripts: 26
 - Support libraries: 35
-- Compatibility wrappers: 23
-- Sibling-product candidates: 8
+- Compatibility wrappers: 24
+- Sibling-product candidates: 2
 - Support utilities: 50
 
 ## Dispatcher Registry
@@ -85,11 +85,7 @@ Daily-core includes commands that directly or indirectly support the daily loop.
 | `scripts/clipboard_manager.sh` | support-utility |
 | `scripts/context.sh` | support-utility |
 | `scripts/correlate.sh` | daily-core |
-| `scripts/cyborg_agent.py` | sibling-product-candidate |
-| `scripts/cyborg_build.py` | sibling-product-candidate |
-| `scripts/cyborg_docs_sync.py` | sibling-product-candidate |
-| `scripts/cyborg_scoped_site_check.sh` | sibling-product-candidate |
-| `scripts/cyborg_support.py` | sibling-product-candidate |
+| `scripts/cyborg_scoped_site_check.sh` | compatibility-wrapper |
 | `scripts/data_validate.sh` | support-utility |
 | `scripts/dev_shortcuts.sh` | support-utility |
 | `scripts/done.sh` | daily-core |
@@ -156,7 +152,6 @@ Daily-core includes commands that directly or indirectly support the daily loop.
 | `scripts/my_progress.sh` | daily-core |
 | `scripts/network_info.sh` | support-utility |
 | `scripts/new_script.sh` | support-utility |
-| `scripts/observer.py` | sibling-product-candidate |
 | `scripts/observer.sh` | compatibility-wrapper |
 | `scripts/open_file.sh` | support-utility |
 | `scripts/pdf_to_markdown.sh` | support-utility |

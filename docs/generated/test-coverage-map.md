@@ -52,9 +52,7 @@ Generated: May 18, 2026
 - `tests/test_correlate_cli.sh`
 - `tests/test_correlation_engine_lib.sh`
 - `tests/test_correlation_integration.sh`
-- `tests/test_cyborg.sh`
-- `tests/test_cyborg_build.sh`
-- `tests/test_cyborg_docs_sync.sh`
+- `tests/test_cyborg_wrapper.sh`
 - `tests/test_dhp_chain.sh`
 - `tests/test_dispatcher_mapping.sh`
 - `tests/test_dispatcher_unknown_flags.sh`
@@ -77,11 +75,7 @@ Generated: May 18, 2026
 - `tests/test_media_converter.sh`
 - `tests/test_meds.sh`
 - `tests/test_morphling_wrapper.sh`
-- `tests/test_observer_memory_v05.sh`
-- `tests/test_observer_v0.sh`
-- `tests/test_observer_v1.sh`
-- `tests/test_observer_v2.sh`
-- `tests/test_observer_v3.sh`
+- `tests/test_observer_wrapper.sh`
 - `tests/test_optional_product_degradation.sh`
 - `tests/test_p2_utility_scripts.sh`
 - `tests/test_pdf_to_markdown.sh`

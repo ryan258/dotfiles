@@ -31,8 +31,8 @@ This folder holds the repo's AI dispatchers, orchestration entry points, and rep
 | `dhp-memory.sh` | `memory` | Save a memory to the optional Brain |
 | `dhp-memory-search.sh` | `memory-search` | Search optional stored memories |
 | `dispatch.sh` | `dispatch` | Route work to any dispatcher |
-| `cyborg` | `cyborg` | Repo-aware drafting and autopilot agent |
-| `cyborg-sync` | `cyborg-sync` | Updates mapped site pages from real repo changes |
+| `cyborg` | `cyborg` | Compatibility wrapper for `~/Projects/cyborg-agent` |
+| `cyborg-sync` | `cyborg-sync` | Compatibility wrapper for Cyborg docs sync |
 | `swipe.sh` | `swipe` | Run an AI command and save the output |
 
 **Magic Helper:** The `morphling` alias uses the swarm-mode dispatcher for one-shot context-rich analysis. Invoke `bin/morphling.sh` when you want the direct tool-capable Morphling session that can read, write, list, and run commands.
@@ -111,7 +111,7 @@ dhp-chain market brand -- "AI tools for writers"
 ```
 
 ### The Cyborg Lab (`cyborg`)
-This is a super smart chat robot that helps you write articles for your blog. It can read your folders, run health checks, build projects from ideas, check the market first, and optionally publish the verified package before it writes the docs.
+The implementation lives in `~/Projects/cyborg-agent`. Root dotfiles keeps this command as a compatibility wrapper so existing aliases and muscle memory still work.
 ```bash
 # Run the robot in the current folder
 cyborg ingest
@@ -127,7 +127,7 @@ cyborg auto --build --publish "CLI that scores menus by accessibility"
 ```
 
 ### The Docs Sync Worker (`cyborg-sync`)
-This is the non-chat path for keeping project docs on your site up to date. It reads a repo manifest, looks at what changed, updates the mapped site pages, and can make a branch and commit after checks pass.
+The implementation lives in `~/Projects/cyborg-agent`. Root dotfiles keeps this command as a compatibility wrapper for existing manifests and aliases.
 ```bash
 # Show the plan for a repo
 cyborg-sync --repo ~/Projects/alias-scanner plan

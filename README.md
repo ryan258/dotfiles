@@ -7,7 +7,7 @@ This repo is a command-line productivity environment built around shell scripts,
 - Daily coaching and check-ins with `startday`, `status`, and `goodevening`
 - Task, journal, focus, reminder, and time-tracking workflows
 - Health, meds, spoon-budget, and Fitbit/Google Health tracking
-- Obsidian Knowledge Graph integration (daily digests, loops, and web clips)
+- Optional Obsidian Observer integration via `~/Projects/obsidian-observer`
 - AI dispatchers for coding, strategy, writing, research, memory, and orchestration
 - Repo-aware agents for project documentation, build-and-verify loops, and site sync
 - Local flat-file data under `~/.config/dotfiles-data/`
@@ -79,8 +79,7 @@ cyborg-sync --repo ~/Projects/my-project plan
 - `tech`, `content`, `strategy`, `creative`, `brand`, `market`, `research`, `stoic`, `narrative`, `aicopy`, and `finance` are the main dispatcher aliases.
 - `memory` and `memory-search` are optional Brain commands for the standalone ChromaDB memory store; they are not part of the default daily coaching path.
 - `morphling` is the swarm-mode alias; `bin/morphling.sh` is the direct tool-capable launcher.
-- `cyborg` handles repo-aware drafting and autopilot flows.
-- `cyborg-sync` is the non-interactive docs-maintenance worker for mapped site pages.
+- `cyborg` and `cyborg-sync` are compatibility wrappers for the optional `~/Projects/cyborg-agent` sibling repo.
 
 ## Documentation Map
 
@@ -90,8 +89,8 @@ cyborg-sync --repo ~/Projects/my-project plan
 - `scripts/README.md` - Script inventory and command groups
 - `scripts/README_aliases.md` - Alias map from `zsh/aliases.zsh`
 - `bin/README.md` - Dispatcher and agent entry points in `bin/`
-- `bin/cyborg-readme.md` - Interactive Cyborg workflow
-- `bin/autopilot-readme.md` - Morphling + Cyborg autopilot architecture
+- `bin/cyborg-readme.md` - Cyborg sibling repo boundary
+- `bin/autopilot-readme.md` - Cyborg autopilot boundary
 - `MORPHLING.md` - Direct vs swarm Morphling modes
 - `brain/HANDBOOK.md` - Brain knowledge-base usage
 - `TROUBLESHOOTING.md` - Common failures and repair steps

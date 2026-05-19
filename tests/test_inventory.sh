@@ -120,8 +120,9 @@ EOF
     [[ "$inventory" == *"| \`bin/coach-chat.py\` | support-library |"* ]]
     [[ "$inventory" == *"| \`bin/dhp-swarm.py\` | support-library |"* ]]
     [[ "$inventory" == *"| \`scripts/observer.sh\` | compatibility-wrapper |"* ]]
+    [[ "$inventory" == *"| \`scripts/cyborg_scoped_site_check.sh\` | compatibility-wrapper |"* ]]
     [[ "$inventory" == *"| \`bin/cyborg\` | compatibility-wrapper |"* ]]
-    [[ "$inventory" == *"| \`scripts/cyborg_agent.py\` | sibling-product-candidate |"* ]]
+    [[ "$inventory" != *"| \`scripts/cyborg_agent.py\` |"* ]]
 }
 
 @test "inventory.sh script class counts sum to classified script rows" {

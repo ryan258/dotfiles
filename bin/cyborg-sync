@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 CONFIG_LIB="$DOTFILES_DIR/scripts/lib/config.sh"
+COMMON_LIB="$DOTFILES_DIR/scripts/lib/common.sh"
 
 if [[ ! -f "$CONFIG_LIB" ]]; then
     echo "Error: required config library is missing: $CONFIG_LIB" >&2
@@ -13,10 +14,64 @@ fi
 # shellcheck disable=SC1090
 source "$CONFIG_LIB"
 
+if [[ -f "$COMMON_LIB" ]]; then
+    # shellcheck disable=SC1090
+    source "$COMMON_LIB"
+fi
+
+cyborg_sync_help_requested() {
+    local arg
+    for arg in "$@"; do
+        case "$arg" in
+            -h|--help|help)
+                return 0
+                ;;
+        esac
+    done
+    return 1
+}
+
+cyborg_sync_unavailable() {
+    local expected_home="$1"
+    local helper_path="$2"
+    local message
+    shift 2
+
+    message="Cyborg docs sync is unavailable. Expected sibling repo: $expected_home. Missing helper: $helper_path. Install it there or set CYBORG_HOME/CYBORG_DOCS_SYNC_HELPER."
+    echo "$message" >&2
+
+    if cyborg_sync_help_requested "$@"; then
+        exit 0
+    fi
+    exit "${EXIT_FILE_NOT_FOUND:-3}"
+}
+
+PROJECTS_DIR="${PROJECTS_DIR:-$HOME/Projects}"
+if command -v validate_safe_path >/dev/null 2>&1; then
+    PROJECTS_DIR="$(validate_safe_path "$PROJECTS_DIR" "$HOME")" || exit "${EXIT_INVALID_ARGS:-2}"
+fi
+
+CYBORG_HOME="${CYBORG_HOME:-$PROJECTS_DIR/cyborg-agent}"
+if command -v validate_safe_path >/dev/null 2>&1; then
+    CYBORG_HOME="$(validate_safe_path "$CYBORG_HOME" "$HOME")" || exit "${EXIT_INVALID_ARGS:-2}"
+fi
+
+if [[ -n "${CYBORG_DOCS_SYNC_HELPER:-}" ]]; then
+    if command -v validate_safe_path >/dev/null 2>&1; then
+        CYBORG_DOCS_SYNC_HELPER="$(validate_safe_path "$CYBORG_DOCS_SYNC_HELPER" "$HOME")" || exit "${EXIT_INVALID_ARGS:-2}"
+    fi
+else
+    CYBORG_DOCS_SYNC_HELPER="$CYBORG_HOME/scripts/cyborg_docs_sync.py"
+fi
+
+if [[ ! -f "$CYBORG_DOCS_SYNC_HELPER" ]]; then
+    cyborg_sync_unavailable "$CYBORG_HOME" "$CYBORG_DOCS_SYNC_HELPER" "$@"
+fi
+
 if ! command -v python3 >/dev/null 2>&1; then
     echo "Error: python3 is required. Install Python 3 and retry." >&2
-    exit 1
+    exit "${EXIT_SERVICE_ERROR:-5}"
 fi
 
 export USER_CWD="$(pwd)"
-exec python3 "$DOTFILES_DIR/scripts/cyborg_docs_sync.py" "$@"
+exec python3 "$CYBORG_DOCS_SYNC_HELPER" "$@"

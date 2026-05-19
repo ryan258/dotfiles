@@ -1,6 +1,20 @@
 # Dotfiles Narrowing Roadmap
 
-_Created: May 18, 2026_
+_Created: May 18, 2026. Last updated: 2026-05-19._
+
+## Phase Status Snapshot
+
+| Phase | Title | Status |
+| ----- | ----- | ------ |
+| 0 | Baseline and Inventory | Complete |
+| 1 | Generated Documentation Counts | Complete |
+| 2 | Product Boundary Plan | Complete |
+| 3 | Dispatcher Consolidation | Complete |
+| 4 | Coach Reshape | Complete |
+| 5 | Data Format Stability | Not started (deferred — no work required yet) |
+| 6 | Library Layering Cleanup | Not started |
+| 7 | Artifact and Log Policy Hardening | Partial (Phase 0 covered low-risk cleanup; log rotation policy still pending) |
+| 8 | Product Extraction Execution | Observer extracted; Cyborg extracted; AI Staff HQ boundary formalization pending; Blog Factory extraction pending |
 
 ## 1. Decision Record
 
@@ -152,6 +166,8 @@ These rules should hold through every phase:
 
 ## 6. Phase 0: Baseline and Inventory
 
+Status: Complete. Inventory generation system landed (`scripts/inventory.sh`), the frozen baseline lives at `docs/generated/baseline-metrics.md`, and the gitignore/log-policy cleanup is in place. Live phases compare against the baseline file.
+
 Goal: make the current shape visible before moving anything.
 
 Spoon cost: 1-2 spoons.
@@ -214,6 +230,8 @@ Acceptance criteria:
 
 ## 7. Phase 1: Generated Documentation Counts
 
+Status: Complete. READMEs and `docs/generated/*` now consume the inventory generator instead of hand-maintained counts. Changelog retention rule is documented.
+
 Goal: keep current docs, but remove stale manual counts.
 
 Spoon cost: 1-2 spoons.
@@ -248,6 +266,8 @@ Acceptance criteria:
 - `CHANGELOG.md` has a documented retention rule so it does not grow forever.
 
 ## 8. Phase 2: Product Boundary Plan
+
+Status: Complete for Cyborg and Observer; planning still owed for Blog Factory and the AI Staff HQ boundary memo. The wrapper pattern proven by Observer and Cyborg is the template for the remaining two.
 
 Goal: split non-dotfiles products while preserving current command names.
 
@@ -342,6 +362,8 @@ Degradation smoke tests required before each extraction:
 
 ## 9. Phase 3: Dispatcher Consolidation
 
+Status: Complete. `config/dhp-dispatchers.tsv` is the registry; prompts live under `bin/prompts/<id>.md`; the remaining `bin/dhp-*.sh` files are thin shims that call the shared dispatcher with a registry id. Specialized dispatchers (content, morphling, coach, project, chain, memory) remain as custom entries by design.
+
 Goal: collapse `dhp-*.sh` duplication into one registry-driven dispatcher while preserving every current alias.
 
 Spoon cost: multi-session.
@@ -396,6 +418,8 @@ Acceptance criteria:
 - Any remaining `dhp-*.sh` compatibility files are generated or tiny shims, and the generated inventory report records them separately from hand-maintained dispatcher logic.
 
 ## 10. Phase 4: Coach Reshape
+
+Status: Complete. Deterministic brief is the primary ground-truth path for `startday`, `status`, and `goodevening`; AI is a short framing layer. Hallucination guards and the local context bundle have been removed. See completion notes at the end of this section.
 
 Goal: keep the smart coach, but make deterministic computed truth the primary artifact.
 
@@ -513,6 +537,8 @@ Completion notes:
 
 ## 11. Phase 5: Data Format Stability
 
+Status: Not started. Deferred — no migration is in flight and the flat-file rules in §16 forbid one during this roadmap. Pick this up only if a delimiter-collision bug forces it.
+
 Goal: keep flat files for now, while reducing future migration risk.
 
 Spoon cost: 1-2 spoons.
@@ -541,6 +567,8 @@ Acceptance criteria:
 - Future SQLite discussion is deferred until after repo scope is reduced.
 
 ## 12. Phase 6: Library Layering Cleanup
+
+Status: Not started. The `common.sh` bootstrap of `config.sh`/`file_ops.sh` is still active under the migration exception in CLAUDE.md. Daily-loop tests are now strong enough that this work could begin; the open decision is whether to formalize the bootstrap as permanent (docs-only change) or migrate callers to explicit dependencies (multi-session refactor).
 
 Goal: make the shell library loading rules match reality.
 
@@ -571,6 +599,8 @@ Acceptance criteria:
 
 ## 13. Phase 7: Artifact and Log Policy Hardening
 
+Status: Partial. Phase 0 covered gitignore coverage, `.tmp-*-review/` cleanup, and `.DS_Store` policy. Still open: deciding whether repo-local `logs/` should exist at all and writing a log rotation/cleanup behavior doc.
+
 Goal: finish the artifact policy started in Phase 0.
 
 Spoon cost: 1-2 spoons.
@@ -598,6 +628,8 @@ Acceptance criteria:
 
 ## 14. Phase 8: Product Extraction Execution
 
+Status: Observer and Cyborg extracted; AI Staff HQ boundary formalization and Blog Factory extraction still pending.
+
 Goal: actually move sibling products after wrappers, tests, and docs are ready.
 
 Spoon cost: multi-week.
@@ -615,6 +647,27 @@ Reasoning:
 - Observer is the best pattern-prover: narrow wrapper, real daily-loop consumers, and a smaller surface than Cyborg.
 - Cyborg should use the lessons from Observer because it has more aliases, workflow state, and publishing/build behavior.
 - AI Staff HQ already behaves like a separate project, so the final work is mostly formalizing the boundary rather than proving the wrapper pattern.
+
+Progress notes:
+
+Completed:
+
+- Observer target selected: `~/Projects/obsidian-observer`.
+- Cyborg target selected: `~/Projects/cyborg-agent`.
+- Observer implementation, operator guide, and product-specific tests moved to the Observer sibling repo.
+- Root dotfiles keeps `scripts/observer.sh` as the compatibility wrapper and `observer` as the alias surface.
+- Missing Observer during the `startday` daily hook degrades quietly by default; direct `observer` commands print a setup message.
+- Cyborg implementation, operator guides, product templates, and product-specific tests moved to the Cyborg sibling repo.
+- Root dotfiles keeps `bin/cyborg`, `bin/cyborg-sync`, `scripts/cyborg_scoped_site_check.sh`, and the autopilot aliases as compatibility wrappers.
+- All four wrappers (observer, cyborg, cyborg-sync, cyborg_scoped_site_check) share a consistent shape: `validate_safe_path` on env-supplied paths, full-args `--help` detection that exits 0 with a setup message, `EXIT_FILE_NOT_FOUND` for missing helper, and `EXIT_SERVICE_ERROR` for missing python3.
+- `scripts/cyborg_scoped_site_check.sh` retains the original `content/`-prefix and `..`-traversal guards before delegating to the sibling, so security validation did not move out of dotfiles.
+- Wrapper degradation tests: `tests/test_cyborg_wrapper.sh`, `tests/test_observer_wrapper.sh`, and `tests/test_optional_product_degradation.sh` cover delegation, missing-sibling, daily-hook quiet mode, and unsafe-path rejection.
+- Current generated inventory reports product implementation LOC under root dotfiles as `0`.
+
+Outstanding:
+
+- AI Staff HQ boundary formalization. Today it lives as a submodule under `ai-staff-hq/`; decide whether to keep it submoduled, point at a sibling clone, or rely on a documented install link. The `dhp` dispatcher already degrades gracefully when `AI_STAFF_DIR` is missing (covered by `test_optional_product_degradation.sh`), so this work is mostly boundary documentation and config rather than wrapper plumbing.
+- Blog Factory extraction. `scripts/blog.sh` and `scripts/blog_recent_content.sh` are still classified `sibling-product-candidate` in the inventory. Decide whether they move with a future Cyborg follow-up or into a dedicated blog automation repo, then build wrappers using the Observer/Cyborg template.
 
 Acceptance criteria:
 
@@ -637,18 +690,25 @@ Per-extraction checklist:
 
 ## 15. Suggested Implementation Order
 
-1. Add generated inventories.
-2. Add baseline metrics and target gates.
-3. Apply the low-risk artifact/log cleanup policy.
-4. Update docs to refer to generated inventories.
-5. Classify aliases and scripts.
-6. Add compatibility-wrapper degradation tests for optional products.
-7. Consolidate dispatchers behind a registry.
-8. Reshape coach output around deterministic brief first.
-9. Review Phase 2 boundary decisions in light of dispatcher and coach reshape.
-10. Extract Observer, then Cyborg, then AI Staff HQ boundary work.
+1. ~~Add generated inventories.~~ Done.
+2. ~~Add baseline metrics and target gates.~~ Done.
+3. ~~Apply the low-risk artifact/log cleanup policy.~~ Done.
+4. ~~Update docs to refer to generated inventories.~~ Done.
+5. ~~Classify aliases and scripts.~~ Done.
+6. ~~Add compatibility-wrapper degradation tests for optional products.~~ Done.
+7. ~~Consolidate dispatchers behind a registry.~~ Done.
+8. ~~Reshape coach output around deterministic brief first.~~ Done.
+9. ~~Review Phase 2 boundary decisions in light of dispatcher and coach reshape.~~ Done for Cyborg and Observer; pending for AI Staff HQ and Blog Factory.
+10. Extract Observer, then Cyborg, then AI Staff HQ boundary work. Observer and Cyborg done; AI Staff HQ boundary formalization is next.
 11. Clean library loading docs and behavior.
 12. Finish artifact/log policy hardening.
+
+Remaining ordered work:
+
+- Formalize the AI Staff HQ boundary (Phase 2 plan + Phase 8 boundary doc).
+- Plan and execute Blog Factory extraction using the Observer/Cyborg wrapper template.
+- Decide `common.sh` bootstrap is permanent or transitional; update CLAUDE.md or migrate callers (Phase 6).
+- Document log rotation/cleanup behavior; decide whether repo-local `logs/` should remain (Phase 7).
 
 ## 16. What Not To Do Yet
 

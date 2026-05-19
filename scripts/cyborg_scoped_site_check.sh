@@ -1,60 +1,110 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# cyborg_scoped_site_check.sh - Run a site check against selected content files.
+# cyborg_scoped_site_check.sh - Compatibility wrapper for Cyborg site checks.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/lib/common.sh"
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CONFIG_LIB="$SCRIPT_DIR/lib/config.sh"
+COMMON_LIB="$SCRIPT_DIR/lib/common.sh"
 
-if [[ "$#" -lt 1 ]]; then
-    die "Usage: cyborg_scoped_site_check.sh content/path-one.md [content/path-two.md ...]" "$EXIT_INVALID_ARGS"
+if [[ ! -f "$CONFIG_LIB" ]]; then
+    echo "Error: required config library is missing: $CONFIG_LIB" >&2
+    exit 1
 fi
 
-require_cmd "uv" "Install with: brew install uv"
+# shellcheck disable=SC1090
+source "$CONFIG_LIB"
 
-REPO_ROOT="$(pwd)"
-TMP_LAB="$(mktemp -d /tmp/cyborg-sync-lab-XXXXXX)"
+if [[ ! -f "$COMMON_LIB" ]]; then
+    echo "Error: required common library is missing: $COMMON_LIB" >&2
+    exit 1
+fi
 
-cleanup() {
-    rm -rf "$TMP_LAB"
-}
-trap cleanup EXIT
+# shellcheck disable=SC1090
+source "$COMMON_LIB"
 
-copy_target() {
-    local rel_path="$1"
-    local sanitized
-    local source_path
-    local target_path
-
-    sanitized="$(sanitize_input "$rel_path")"
-    if [[ -z "$sanitized" ]]; then
-        die "Scoped site check received an empty path." "$EXIT_INVALID_ARGS"
-    fi
-    if [[ "$sanitized" != content/* ]]; then
-        die "Scoped site check only accepts content/ paths: $sanitized" "$EXIT_INVALID_ARGS"
-    fi
-    if [[ "$sanitized" == *".."* ]]; then
-        die "Scoped site check path must not contain '..': $sanitized" "$EXIT_INVALID_ARGS"
-    fi
-
-    source_path="$REPO_ROOT/$sanitized"
-    if [[ ! -f "$source_path" ]]; then
-        die "Scoped site check target not found: $sanitized" "$EXIT_FILE_NOT_FOUND"
-    fi
-
-    target_path="$TMP_LAB/$sanitized"
-    mkdir -p "$(dirname "$target_path")"
-    cp "$source_path" "$target_path"
+cyborg_site_check_help_requested() {
+    local arg
+    for arg in "$@"; do
+        case "$arg" in
+            -h|--help|help)
+                return 0
+                ;;
+        esac
+    done
+    return 1
 }
 
-for rel_path in "$@"; do
-    copy_target "$rel_path"
-done
+cyborg_site_check_unavailable() {
+    local message
 
-PYTHONPATH=. uv run python lib/content_governance.py \
-    --repo-root "$TMP_LAB" \
-    --min-nav-published 0 \
-    --stale-draft-days 10000 \
-    --fail-on warn
+    message="Cyborg scoped site check is unavailable. Expected sibling repo: $CYBORG_HOME. Missing helper: $CYBORG_SCOPED_SITE_CHECK. Install it there or set CYBORG_HOME/CYBORG_SCOPED_SITE_CHECK."
+    echo "$message" >&2
 
-PYTHONPATH=. uv run python lib/site_validator.py --content-dir "$TMP_LAB/content" --lab-dir .
+    if cyborg_site_check_help_requested "$@"; then
+        cyborg_site_check_usage
+        exit 0
+    fi
+    exit "${EXIT_FILE_NOT_FOUND:-3}"
+}
+
+cyborg_site_check_usage() {
+    echo "Usage: cyborg_scoped_site_check.sh content/path-one.md [content/path-two.md ...]" >&2
+}
+
+cyborg_site_check_validate_args() {
+    if [[ "$#" -lt 1 ]]; then
+        cyborg_site_check_usage
+        exit "${EXIT_INVALID_ARGS:-2}"
+    fi
+
+    if cyborg_site_check_help_requested "$@"; then
+        cyborg_site_check_usage
+        exit 0
+    fi
+
+    local rel_path=""
+    local sanitized=""
+    CYBORG_SITE_CHECK_ARGS=()
+
+    for rel_path in "$@"; do
+        sanitized="$(sanitize_input "$rel_path")"
+        if [[ -z "$sanitized" ]]; then
+            echo "Scoped site check received an empty path." >&2
+            exit "${EXIT_INVALID_ARGS:-2}"
+        fi
+        if [[ "$sanitized" != content/* ]]; then
+            echo "Scoped site check only accepts content/ paths: $sanitized" >&2
+            exit "${EXIT_INVALID_ARGS:-2}"
+        fi
+        if [[ "$sanitized" == *".."* ]]; then
+            echo "Scoped site check path must not contain '..': $sanitized" >&2
+            exit "${EXIT_INVALID_ARGS:-2}"
+        fi
+        CYBORG_SITE_CHECK_ARGS+=("$sanitized")
+    done
+}
+
+PROJECTS_DIR="${PROJECTS_DIR:-$HOME/Projects}"
+if command -v validate_safe_path >/dev/null 2>&1; then
+    PROJECTS_DIR="$(validate_safe_path "$PROJECTS_DIR" "$HOME")" || exit "${EXIT_INVALID_ARGS:-2}"
+fi
+
+CYBORG_HOME="${CYBORG_HOME:-$PROJECTS_DIR/cyborg-agent}"
+if command -v validate_safe_path >/dev/null 2>&1; then
+    CYBORG_HOME="$(validate_safe_path "$CYBORG_HOME" "$HOME")" || exit "${EXIT_INVALID_ARGS:-2}"
+fi
+
+CYBORG_SCOPED_SITE_CHECK="${CYBORG_SCOPED_SITE_CHECK:-$CYBORG_HOME/scripts/cyborg_scoped_site_check.sh}"
+if command -v validate_safe_path >/dev/null 2>&1; then
+    CYBORG_SCOPED_SITE_CHECK="$(validate_safe_path "$CYBORG_SCOPED_SITE_CHECK" "$HOME")" || exit "${EXIT_INVALID_ARGS:-2}"
+fi
+
+if [[ ! -x "$CYBORG_SCOPED_SITE_CHECK" ]]; then
+    cyborg_site_check_unavailable "$@"
+fi
+
+cyborg_site_check_validate_args "$@"
+
+exec "$CYBORG_SCOPED_SITE_CHECK" "${CYBORG_SITE_CHECK_ARGS[@]}"

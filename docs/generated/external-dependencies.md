@@ -24,8 +24,9 @@ Client IDs and usernames may also appear in `.env.example`. They identify config
 - Fitbit for wearable health context.
 - Google Drive for focus-related document evidence.
 - Google Calendar for schedule context.
-- Obsidian observer as an optional product boundary candidate.
-- Cyborg/blog automation as an optional product boundary candidate.
+- Obsidian observer as an optional sibling product.
+- Cyborg agent as an optional sibling product.
+- Blog automation as an optional product boundary candidate.
 
 ## Phase 0 Note
 

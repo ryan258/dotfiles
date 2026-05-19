@@ -1,6 +1,24 @@
 # Dotfiles System - Changelog
 
-**Last Updated:** May 11, 2026
+**Last Updated:** May 19, 2026
+
+## Version 2.2.77 (May 19, 2026) - Product Boundary Extraction
+
+**Status:** ✅ Production Ready
+
+### Changed
+
+- Moved the Obsidian observer implementation, operator guide, and product-specific BATS suites to the sibling repo at `~/Projects/obsidian-observer`.
+- Converted `scripts/observer.sh` into a compatibility wrapper that resolves `${OBSERVER_HOME:-$PROJECTS_DIR/obsidian-observer}/scripts/observer.py`, preserves the `observer` alias surface, and reports a short setup message for direct commands when the sibling repo is missing.
+- `startday.sh` now marks its observer call as a daily hook so optional Observer absence degrades quietly by default; set `OBSERVER_WRAPPER_VERBOSE=true` to explain missing Observer setup during that hook.
+- Added `PROJECTS_DIR`, `OBSERVER_HOME`, and `CYBORG_HOME` path defaults for optional sibling products.
+
+### Added
+
+- Added wrapper-focused BATS coverage for Observer delegation, missing-sibling setup output, and quiet daily-hook degradation.
+- Moved the Cyborg implementation, product-specific BATS suites, operator guides, and templates to `~/Projects/cyborg-agent`.
+- Converted `bin/cyborg`, `bin/cyborg-sync`, and `scripts/cyborg_scoped_site_check.sh` into compatibility wrappers that delegate to `CYBORG_HOME`.
+- Added wrapper-focused BATS coverage for Cyborg command delegation, missing-sibling setup output, `--help` degradation, `cyborg-sync`, and scoped site check manifests.
 
 ## Version 2.2.76 (May 11, 2026) - Obsidian Knowledge Graph Framework (V3)
 

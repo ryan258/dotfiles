@@ -66,14 +66,13 @@ Generated inventory docs are the source of truth for script counts:
 - Legacy repo-local run logs were moved to `~/.cache/dotfiles/logs/`.
 - The active system log viewed by `logs.sh` lives under `~/.config/dotfiles-data/` via `SYSTEM_LOG_FILE`.
 
-## Cyborg Support Workers
+## Cyborg Compatibility
 
-These are support scripts used by the `bin/cyborg` and `cyborg-sync` entry points rather than everyday direct commands:
+The Cyborg implementation moved to `~/Projects/cyborg-agent`.
+Root dotfiles keeps compatibility wrappers:
 
-- `cyborg_agent.py`
-- `cyborg_build.py`
-- `cyborg_docs_sync.py`
-- `cyborg_support.py`
+- `../bin/cyborg`
+- `../bin/cyborg-sync`
 - `cyborg_scoped_site_check.sh`
 
 ## Document Utilities
