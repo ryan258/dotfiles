@@ -30,6 +30,7 @@ setup() {
     cp "$BATS_TEST_DIRNAME/../scripts/lib/loader.sh" "$DOTFILES_DIR/scripts/lib/loader.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/coach_ops.sh" "$DOTFILES_DIR/scripts/lib/coach_ops.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/coach_metrics.sh" "$DOTFILES_DIR/scripts/lib/coach_metrics.sh"
+    cp "$BATS_TEST_DIRNAME/../scripts/lib/coach_brief.sh" "$DOTFILES_DIR/scripts/lib/coach_brief.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/coach_prompts.sh" "$DOTFILES_DIR/scripts/lib/coach_prompts.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/coach_scoring.sh" "$DOTFILES_DIR/scripts/lib/coach_scoring.sh"
     cp "$BATS_TEST_DIRNAME/../scripts/lib/coaching.sh" "$DOTFILES_DIR/scripts/lib/coaching.sh"
@@ -240,6 +241,22 @@ STUB
     grep -q "startday marker missing; using system date $expected_today" "$DATA_DIR/system.log"
 }
 
+@test "goodevening does not print the coach brief when AI reflection is disabled" {
+    run env \
+        PATH="$DOTFILES_DIR/bin:$PATH" \
+        HOME="$HOME" \
+        DATA_DIR="$DATA_DIR" \
+        DOTFILES_DIR="$DOTFILES_DIR" \
+        PROJECTS_DIR="$PROJECTS_DIR" \
+        AI_REFLECTION_ENABLED=false \
+        AI_COACH_CHAT_ENABLED=false \
+        bash "$DOTFILES_DIR/scripts/goodevening.sh" --refresh "$TEST_DAY" < /dev/null
+
+    [ "$status" -eq 0 ]
+    [[ "$output" != *"🧭 COACH BRIEF:"* ]]
+    [[ "$output" != *"🤖 AI REFLECTION:"* ]]
+}
+
 @test "goodevening hides inactive repos from recent pushes and shows the reactivation list" {
     local repos_fixture="$TEST_ROOT/repos.json"
     local today
@@ -357,6 +374,12 @@ PY
     [[ "$output" == *"What worked:"* ]]
     [[ "$output" == *"Off-script momentum:"* ]]
     [[ "$output" == *"Tomorrow lock:"* ]]
+    [[ "$output" == *"🧭 COACH BRIEF:"* ]]
+    [[ "$output" == *"Flow: goodevening"* ]]
+
+    brief_line=$(printf '%s\n' "$output" | awk '/🧭 COACH BRIEF:/ {print NR; exit}')
+    reflection_line=$(printf '%s\n' "$output" | awk '/🤖 AI REFLECTION:/ {print NR; exit}')
+    [ "$brief_line" -lt "$reflection_line" ]
 
     # Signal metadata line includes confidence and reason summary
     [[ "$output" == *"(Signal:"*" - "*")"* ]]
@@ -440,6 +463,8 @@ EOF
     [[ "$output" == *"Off-script momentum:"* ]]
     [[ "$output" == *"What pulled you in:"* ]]
     [[ "$output" == *"Tomorrow lock:"* ]]
+    [[ "$output" == *"🧭 COACH BRIEF:"* ]]
+    [[ "$output" == *"Flow: goodevening"* ]]
     [[ "$output" == *"AI reflection was timeout; using deterministic fallback structure."* ]]
     [[ "$output" != *"top task aligned to focus"* ]]
 }

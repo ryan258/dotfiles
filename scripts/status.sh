@@ -299,15 +299,14 @@ if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
 fi
 
 if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
-    echo ""
-    echo "🤖 STATUS COACH:"
     # Mid-day coaching is simpler than morning/evening:
-    # gather the digest, build a short prompt, ask for one recentering brief.
+    # gather the digest, show the deterministic brief, then let the AI layer add a short framing.
     _status_behavior_digest="(behavior digest unavailable)"
     _status_local_context_bundle=""
     _status_prebrief_context=""
     _status_prompt=""
     _status_briefing=""
+    _status_deterministic_brief=""
     _status_reason="ai-error"
     _status_reason_detail=""
     _status_temperature="${AI_STATUS_TEMPERATURE:-${AI_BRIEFING_TEMPERATURE:-0.25}}"
@@ -322,8 +321,19 @@ if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
     if command -v coaching_collect_local_context_bundle >/dev/null 2>&1; then
         _status_local_context_bundle=$(coaching_collect_local_context_bundle "status" "$_status_today" "$CURRENT_DIR" "${_status_context_scope:-global}" 2>/dev/null || true)
     fi
-    if command -v coaching_collect_prebrief_context >/dev/null 2>&1; then
-        _status_prebrief_context=$(coaching_collect_prebrief_context "status" "${_status_focus_text:-}" "${_status_mode:-LOCKED}" "$_status_combined_git" "${_status_behavior_digest:-}" "$CURRENT_DIR" "${_status_project_context:-}" "${_status_context_scope:-global}" || true)
+
+    # Print the deterministic brief first so the user sees facts before AI framing.
+    # Prebrief context (which may prompt on /dev/tty) is collected after the brief
+    # so deterministic metrics always render before any interactive question.
+    echo ""
+    echo "🧭 COACH BRIEF:"
+    if command -v coaching_render_brief_from_digest >/dev/null 2>&1; then
+        _status_deterministic_brief=$(coaching_render_brief_from_digest "status" "$_status_today" "${_status_focus_text:-}" "${_status_mode:-LOCKED}" "${_status_behavior_digest:-}" 2>/dev/null || true)
+    fi
+    if [ -n "$_status_deterministic_brief" ]; then
+        echo "$_status_deterministic_brief" | sed 's/^/  /'
+    else
+        echo "  Coach Brief unavailable; behavior digest could not be rendered."
     fi
 
     # Turn the facts into one prompt that asks for a short mid-day reset.
@@ -340,6 +350,9 @@ if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
     else
         _status_prompt="Produce a concise mid-day GitHub-first coaching brief grounded in today's focus and current GitHub activity."
     fi
+    if command -v coaching_collect_prebrief_context >/dev/null 2>&1; then
+        _status_prebrief_context=$(coaching_collect_prebrief_context "status" "${_status_focus_text:-}" "${_status_mode:-LOCKED}" "$_status_combined_git" "${_status_behavior_digest:-}" "$CURRENT_DIR" "${_status_project_context:-}" "${_status_context_scope:-global}" || true)
+    fi
     if [[ -n "${_status_local_context_bundle:-}" ]]; then
         _status_prompt="${_status_prompt}"$'\n\n'"Additional local context bundle:"$'\n'"${_status_local_context_bundle}"
     fi
@@ -347,9 +360,19 @@ if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
         _status_prompt="${_status_prompt}"$'\n\n'"Pre-brief clarifications:"$'\n'"${_status_prebrief_context}"
     fi
 
-    # Ask the AI for the actual message the user will see.
+    echo ""
+    echo "🤖 STATUS COACH:"
+
+    # Ask the AI for the actual message the user will see. Tolerate failure so the
+    # deterministic brief above remains usable when the dispatcher is unreachable.
     if command -v coaching_generate_response >/dev/null 2>&1; then
+        set +e
         _status_briefing=$(coaching_generate_response "$_status_prompt" "$_status_temperature" "${_status_focus_text:-"(no focus set)"}" "${_status_mode:-LOCKED}" "$_status_combined_git" "${_status_behavior_digest:-}" "status" "${_status_project_context:-}" "${_status_context_scope:-global}" "$CURRENT_DIR")
+        _status_briefing_status=$?
+        set -e
+        if [ "$_status_briefing_status" -ne 0 ] || [ -z "$_status_briefing" ]; then
+            _status_briefing="AI status coaching was unavailable; deterministic coach brief is shown above."
+        fi
     else
         _status_briefing="Unable to generate status coach output at this time."
     fi

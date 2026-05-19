@@ -583,11 +583,8 @@ fi
 
 # --- AI REFLECTION (Optional) ---
 if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
-    echo ""
-    echo "🤖 AI REFLECTION:"
-
     # The evening coach follows the same broad pattern as startday:
-    # gather facts, build a prompt, ask the AI, then print a reflection.
+    # gather facts, show the deterministic brief, then ask the AI for a short reflection.
     # TODAY is already set globally above, including refresh/override handling.
     FOCUS_CONTEXT="${SESSION_FOCUS_CONTEXT:-}"
     COACH_TACTICAL_DAYS="${AI_COACH_TACTICAL_DAYS:-7}"
@@ -599,6 +596,7 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     COACH_BEHAVIOR_DIGEST="(behavior digest unavailable)"
     COACH_LOCAL_CONTEXT_BUNDLE=""
     COACH_PREBRIEF_CONTEXT=""
+    COACH_DETERMINISTIC_BRIEF=""
     COACH_TEMPERATURE="${AI_BRIEFING_TEMPERATURE:-0.25}"
 
     if command -v coaching_get_mode_for_date >/dev/null 2>&1; then
@@ -624,6 +622,18 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     fi
     if command -v coaching_collect_local_context_bundle >/dev/null 2>&1; then
         COACH_LOCAL_CONTEXT_BUNDLE=$(coaching_collect_local_context_bundle "goodevening" "$TODAY" "$PWD" "global" 2>/dev/null || true)
+    fi
+
+    # Print the deterministic brief first so the user sees facts before AI framing.
+    echo ""
+    echo "🧭 COACH BRIEF:"
+    if command -v coaching_render_brief_from_digest >/dev/null 2>&1; then
+        COACH_DETERMINISTIC_BRIEF=$(coaching_render_brief_from_digest "goodevening" "$TODAY" "${FOCUS_CONTEXT:-}" "$COACH_MODE" "${COACH_BEHAVIOR_DIGEST:-}" 2>/dev/null || true)
+    fi
+    if [ -n "$COACH_DETERMINISTIC_BRIEF" ]; then
+        echo "$COACH_DETERMINISTIC_BRIEF" | sed 's/^/  /'
+    else
+        echo "  Coach Brief unavailable; behavior digest could not be rendered."
     fi
 
     # Build the prompt that tells the AI what kind of reflection to write.
@@ -652,9 +662,19 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
         REFLECTION_PROMPT="${REFLECTION_PROMPT}"$'\n\n'"Pre-brief clarifications:"$'\n'"${COACH_PREBRIEF_CONTEXT}"
     fi
     
-    # Ask the AI for the final reflection message.
+    echo ""
+    echo "🤖 AI REFLECTION:"
+
+    # Ask the AI for the final reflection message. Tolerate failure so the
+    # deterministic brief above remains usable when the dispatcher is unreachable.
     if command -v coaching_generate_response >/dev/null 2>&1; then
+        set +e
         REFLECTION=$(coaching_generate_response "$REFLECTION_PROMPT" "$COACH_TEMPERATURE" "${FOCUS_CONTEXT:-"(no focus set)"}" "$COACH_MODE" "$_ge_git_combined" "${COACH_BEHAVIOR_DIGEST:-}" "goodevening")
+        _ge_reflection_status=$?
+        set -e
+        if [ "$_ge_reflection_status" -ne 0 ] || [ -z "$REFLECTION" ]; then
+            REFLECTION="AI reflection was unavailable; deterministic coach brief is shown above."
+        fi
     else
         REFLECTION="Unable to generate AI reflection at this time."
     fi

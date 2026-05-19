@@ -144,6 +144,7 @@ make_test_repo() {
 
     [ "$status" -eq 0 ]
     [[ "$output" != *"STATUS COACH:"* ]]
+    [[ "$output" != *"🧭 COACH BRIEF:"* ]]
 }
 
 @test "status.sh shows focus when focus file exists" {
@@ -298,6 +299,13 @@ EOF
     [ "$status" -eq 0 ]
     [[ "$output" == *"🤖 STATUS COACH:"* ]]
     [[ "$output" == *"Keep the next block inside the logo work in dotfiles."* ]]
+    [[ "$output" == *"🧭 COACH BRIEF:"* ]]
+    [[ "$output" == *"Flow: status"* ]]
+
+    brief_line=$(printf '%s\n' "$output" | awk '/🧭 COACH BRIEF:/ {print NR; exit}')
+    coach_line=$(printf '%s\n' "$output" | awk '/🤖 STATUS COACH:/ {print NR; exit}')
+    [ "$brief_line" -lt "$coach_line" ]
+
     [ -f "$DATA_DIR/status_coach_prompt.txt" ]
     prompt="$(cat "$DATA_DIR/status_coach_prompt.txt")"
     [[ "$prompt" == *"Current directory:"* ]]
@@ -405,6 +413,13 @@ EOF
     [[ "$prompt" == *"- Priority: Concrete next move. Bias the briefing toward one clear first step."* ]]
     [[ "$prompt" == *"- Pacing: custom - keep it quiet"* ]]
     [[ "$prompt" != *"PRE-BRIEF CHECK:"* ]]
+
+    # Deterministic brief must render before the prebrief prompt interrupts the user.
+    brief_line=$(printf '%s\n' "$output" | awk '/Coach Brief/ {print NR; exit}')
+    prebrief_line=$(printf '%s\n' "$output" | awk '/PRE-BRIEF CHECK:/ {print NR; exit}')
+    [ -n "$brief_line" ]
+    [ -n "$prebrief_line" ]
+    [ "$brief_line" -lt "$prebrief_line" ]
 }
 
 @test "status.sh auto-syncs Fitbit data before rendering when auth exists" {
@@ -618,6 +633,8 @@ EOF
         bash "$DOTFILES_DIR/scripts/status.sh" --coach < /dev/null
 
     [ "$status" -eq 0 ]
+    [[ "$output" == *"🧭 COACH BRIEF:"* ]]
+    [[ "$output" == *"Flow: status"* ]]
     [[ "$output" == *"AI status coach was dispatcher missing; using deterministic fallback structure."* ]]
 }
 
