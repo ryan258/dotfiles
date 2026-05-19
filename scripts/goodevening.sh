@@ -594,7 +594,6 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     COACH_PATTERN_METRICS=""
     COACH_DATA_QUALITY_FLAGS=""
     COACH_BEHAVIOR_DIGEST="(behavior digest unavailable)"
-    COACH_LOCAL_CONTEXT_BUNDLE=""
     COACH_PREBRIEF_CONTEXT=""
     COACH_DETERMINISTIC_BRIEF=""
     COACH_TEMPERATURE="${AI_BRIEFING_TEMPERATURE:-0.25}"
@@ -620,10 +619,6 @@ if [ "${AI_REFLECTION_ENABLED:-false}" = "true" ]; then
     if command -v coaching_build_behavior_digest >/dev/null 2>&1; then
         COACH_BEHAVIOR_DIGEST=$(coaching_build_behavior_digest "$TODAY" "$COACH_TACTICAL_DAYS" "$COACH_PATTERN_DAYS" "${RECENT_PUSHES:-}" "${TODAY_COMMITS:-}" 2>/dev/null || echo "(behavior digest unavailable)")
     fi
-    if command -v coaching_collect_local_context_bundle >/dev/null 2>&1; then
-        COACH_LOCAL_CONTEXT_BUNDLE=$(coaching_collect_local_context_bundle "goodevening" "$TODAY" "$PWD" "global" 2>/dev/null || true)
-    fi
-
     # Print the deterministic brief first so the user sees facts before AI framing.
     echo ""
     echo "🧭 COACH BRIEF:"

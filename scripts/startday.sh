@@ -371,7 +371,6 @@ COACH_TACTICAL_METRICS=""
 COACH_PATTERN_METRICS=""
 COACH_DATA_QUALITY_FLAGS=""
 COACH_BEHAVIOR_DIGEST="(behavior digest unavailable)"
-COACH_LOCAL_CONTEXT_BUNDLE=""
 COACH_PREBRIEF_CONTEXT=""
 COACH_DETERMINISTIC_BRIEF=""
 
@@ -425,9 +424,6 @@ if [ "${AI_BRIEFING_ENABLED:-true}" = "true" ]; then
         echo "  (Signal: CACHED - briefing from earlier today)"
         _COACH_CHAT_BRIEFING="$CACHED_BRIEFING"
     else
-        if command -v coaching_collect_local_context_bundle >/dev/null 2>&1; then
-            COACH_LOCAL_CONTEXT_BUNDLE=$(coaching_collect_local_context_bundle "startday" "$TODAY" "$PWD" "global" 2>/dev/null || true)
-        fi
         if command -v coaching_collect_prebrief_context >/dev/null 2>&1; then
             COACH_PREBRIEF_CONTEXT=$(coaching_collect_prebrief_context "startday" "${FOCUS_CONTEXT:-}" "${COACH_MODE:-LOCKED}" "$_sd_git_combined" "${COACH_BEHAVIOR_DIGEST:-}" "$PWD" "" "global" || true)
         fi

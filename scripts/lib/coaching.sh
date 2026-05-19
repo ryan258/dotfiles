@@ -44,10 +44,6 @@ coaching_render_brief() {
     coach_brief_render "$@"
 }
 
-coaching_collect_local_context_bundle() {
-    coach_collect_local_context_bundle "$@"
-}
-
 coaching_build_prebrief_questions() {
     coach_build_prebrief_questions "$@"
 }

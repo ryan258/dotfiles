@@ -85,53 +85,6 @@ teardown() {
     [[ "$output" == *"- Pacing: custom - keep it quiet"* ]]
 }
 
-@test "coach_collect_local_context_bundle includes raw local slices" {
-    local now_epoch
-    now_epoch="$(to_epoch "$DAY_MINUS1 12:00:00")"
-    cat > "$DATA_DIR/journal.txt" <<EOF
-$DAY_MINUS1 08:00:00|Journal line
-EOF
-    cat > "$DATA_DIR/todo.txt" <<EOF
-1|$DAY_MINUS1|Ship the logo
-EOF
-    cat > "$DATA_DIR/health.txt" <<EOF
-ENERGY|$DAY_MINUS1 09:00|6
-EOF
-    cat > "$DATA_DIR/spoons.txt" <<EOF
-BUDGET|$DAY_MINUS1|10
-EOF
-    cat > "$DATA_DIR/dir_usage.log" <<EOF
-$now_epoch|/Users/ryanjohnson/dotfiles
-EOF
-    cat > "$DATA_DIR/tomorrow_launchpad" <<'EOF'
-Tomorrow lock:
-- First move: Ship the logo.
-EOF
-    mkdir -p "$HOME/Documents/Reviews/Weekly"
-    cat > "$HOME/Documents/Reviews/Weekly/2026-W13.md" <<'EOF'
-# Weekly Review
-One good thing.
-EOF
-
-    run bash -c "$SOURCE_PREFIX; coach_collect_local_context_bundle 'startday' '$DAY_MINUS1' '/tmp/project' 'global'"
-
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Raw journal entries (last 7 days):"* ]]
-    [[ "$output" == *"Journal line"* ]]
-    [[ "$output" == *"Raw open todo lines (last 7 days):"* ]]
-    [[ "$output" == *"Ship the logo"* ]]
-    [[ "$output" == *"Raw health log lines (last 7 days):"* ]]
-    [[ "$output" == *"ENERGY|$DAY_MINUS1 09:00|6"* ]]
-    [[ "$output" == *"Raw spoon log lines (last 7 days):"* ]]
-    [[ "$output" == *"BUDGET|$DAY_MINUS1|10"* ]]
-    [[ "$output" == *"Raw directory log lines (last 7 days):"* ]]
-    [[ "$output" == *"/Users/ryanjohnson/dotfiles"* ]]
-    [[ "$output" == *"Yesterday's prep or launchpad text:"* ]]
-    [[ "$output" == *"Tomorrow lock:"* ]]
-    [[ "$output" == *"Weekly review text:"* ]]
-    [[ "$output" == *"# Weekly Review"* ]]
-}
-
 @test "coach_build_behavior_digest includes wearable context when Fitbit data exists" {
     mkdir -p "$DATA_DIR/fitbit"
     cat > "$DATA_DIR/fitbit/sleep_minutes.txt" <<'EOF'

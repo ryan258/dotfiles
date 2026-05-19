@@ -302,7 +302,6 @@ if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
     # Mid-day coaching is simpler than morning/evening:
     # gather the digest, show the deterministic brief, then let the AI layer add a short framing.
     _status_behavior_digest="(behavior digest unavailable)"
-    _status_local_context_bundle=""
     _status_prebrief_context=""
     _status_prompt=""
     _status_briefing=""
@@ -318,10 +317,6 @@ if [[ "$STATUS_COACH_ENABLED" == "true" ]]; then
     if command -v coaching_build_behavior_digest >/dev/null 2>&1; then
         _status_behavior_digest=$(coaching_build_behavior_digest "$_status_today" "${AI_COACH_TACTICAL_DAYS:-7}" "${AI_COACH_PATTERN_DAYS:-30}" "${STATUS_COACH_RECENT_PUSHES:-}" "${STATUS_COACH_TODAY_COMMITS:-}" 2>/dev/null || echo "(behavior digest unavailable)")
     fi
-    if command -v coaching_collect_local_context_bundle >/dev/null 2>&1; then
-        _status_local_context_bundle=$(coaching_collect_local_context_bundle "status" "$_status_today" "$CURRENT_DIR" "${_status_context_scope:-global}" 2>/dev/null || true)
-    fi
-
     # Print the deterministic brief first so the user sees facts before AI framing.
     # Prebrief context (which may prompt on /dev/tty) is collected after the brief
     # so deterministic metrics always render before any interactive question.
