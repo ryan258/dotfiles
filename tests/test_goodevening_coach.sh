@@ -461,14 +461,13 @@ EOF
         bash -c "$DOTFILES_DIR/scripts/goodevening.sh --refresh $TEST_DAY < /dev/null"
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"What worked:"* ]]
-    [[ "$output" == *"Off-script momentum:"* ]]
-    [[ "$output" == *"What pulled you in:"* ]]
-    [[ "$output" == *"Tomorrow lock:"* ]]
+    # Phase 4: deterministic brief stays visible; AI section degrades to a
+    # brief-aware message instead of synthesising a fake structured fallback.
     [[ "$output" == *"🧭 COACH BRIEF:"* ]]
     [[ "$output" == *"Flow: goodevening"* ]]
-    [[ "$output" == *"AI reflection was timeout; using deterministic fallback structure."* ]]
-    [[ "$output" != *"top task aligned to focus"* ]]
+    [[ "$output" == *"AI reflection was timeout; deterministic coach brief is shown above."* ]]
+    [[ "$output" != *"What worked:"* ]]
+    [[ "$output" != *"Off-script momentum:"* ]]
 }
 
 @test "goodevening retries after timeout and returns AI output when retry succeeds" {
@@ -514,35 +513,13 @@ EOF
     [[ "$output" != *"Deterministic fallback (timeout)"* ]]
 }
 
-@test "goodevening filters noisy AI blindspots when the dispatcher returns output" {
+@test "goodevening passes the dispatcher response through without post-processing" {
     cat > "$DOTFILES_DIR/bin/dhp-strategy.sh" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 cat <<'OUT'
-Reflection Summary:
-- Closed the day with one clear repo lane.
-Blindspots to sleep on (1-10):
-1. dir_usage_malformed=162 means your tracking stack is unstable.
-2. focus_git_status=diffuse proves the spear is broken.
-3. commit_context data is absent so the pattern is unknowable.
-4. High brain fog score suggests a mismatch between cognitive load and capacity.
-5. Low suggestion adherence rate implies planned interventions are being ignored.
-6. The afternoon slump is likely derailing any complex planning work.
-7. The upward completion trend is positive but based on only one recent task.
-8. The lack of commit context (0) means we cannot verify whether the work is only local.
-9. Keep the repo lane visible to future you.
-What worked:
-- Focus stayed mostly inside the declared repo lane.
-Off-script momentum:
-- Switched contexts before closing the primary task.
-What pulled you in:
-- Open-ended tooling exploration after commit work.
-Tomorrow lock:
-- First move: start with one locked task.
-- Done condition: ship one visible next step.
-- Scope anchor boundary: stop side quests until the done condition.
-Health lens:
-- Work in two bounded blocks with a break.
+One sentence of framing: today's repo lane stayed coherent through the close.
+Tomorrow setup: resume the lane with one short bounded block.
 OUT
 EOF
     chmod +x "$DOTFILES_DIR/bin/dhp-strategy.sh"
@@ -561,11 +538,10 @@ EOF
         bash -c "$DOTFILES_DIR/scripts/goodevening.sh --refresh $TEST_DAY < /dev/null"
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"Blindspots to sleep on (1-5):"* ]]
-    [[ "$output" != *"dir_usage_malformed=162 means your tracking stack is unstable."* ]]
-    [[ "$output" != *"focus_git_status=diffuse proves the spear is broken."* ]]
-    [[ "$output" != *"commit_context data is absent so the pattern is unknowable."* ]]
-    [[ "$output" == *"1. Keep the repo lane visible to future you."* ]]
+    # Phase 4 deleted coach_refine_response; AI output is shown verbatim.
+    [[ "$output" == *"One sentence of framing: today's repo lane stayed coherent through the close."* ]]
+    [[ "$output" == *"Tomorrow setup: resume the lane with one short bounded block."* ]]
+    [[ "$output" != *"Blindspots to sleep on"* ]]
 }
 
 @test "goodevening summarizes project safety findings with a detail cap" {

@@ -576,32 +576,15 @@ STUB
     [[ "$output" == *"Switch to ai-ethics-comparator and inspect the PDF module."* ]]
 }
 
-@test "status.sh --coach filters noisy blindspots when the dispatcher returns output" {
+@test "status.sh --coach passes the dispatcher response through without post-processing" {
     echo "logo" > "$DATA_DIR/daily_focus.txt"
     cat > "$DOTFILES_DIR/bin/dhp-coach.sh" <<'STUB'
 #!/usr/bin/env bash
 set -euo pipefail
 cat > /dev/null
 cat <<'OUT'
-Briefing Summary:
-- Mid-day repo signal is clear.
-GitHub blindspots/opportunities (1-10):
-1. dir_usage_malformed=162 means the system is unstable.
-2. focus_git_status=diffuse proves the spear is broken.
-3. commit context (0) means we cannot verify local work.
-4. Repo dotfiles likely wants one visible polish pass before new feature work.
-North Star:
-- Keep the next block inside dotfiles.
-Do Next (ordered 1-3):
-1. Capture the next concrete dotfiles move and start it now.
-2. Keep the same repo open for one more short block.
-3. Done when one focused block lands.
-Operating insight (momentum + exploration):
-- Working: focus is explicit. Drift risk: repo switching.
-Scope anchor:
-- No repo switch until the block lands.
-Health lens:
-- Use one short block and then reassess.
+One sentence of framing: the mid-day signal points to the current repo lane.
+Next move: keep one short block inside the focused repo before switching.
 OUT
 STUB
     chmod +x "$DOTFILES_DIR/bin/dhp-coach.sh"
@@ -619,14 +602,13 @@ EOF
         bash "$DOTFILES_DIR/scripts/status.sh" --coach < /dev/null
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"GitHub blindspots/opportunities (1-5):"* ]]
-    [[ "$output" != *"dir_usage_malformed=162 means the system is unstable."* ]]
-    [[ "$output" != *"focus_git_status=diffuse proves the spear is broken."* ]]
-    [[ "$output" != *"commit context (0) means we cannot verify local work."* ]]
-    [[ "$output" == *"1. Repo dotfiles likely wants one visible polish pass before new feature work."* ]]
+    # Phase 4 deleted coach_refine_response; AI output is shown verbatim.
+    [[ "$output" == *"One sentence of framing: the mid-day signal points to the current repo lane."* ]]
+    [[ "$output" == *"Next move: keep one short block inside the focused repo before switching."* ]]
+    [[ "$output" != *"GitHub blindspots/opportunities"* ]]
 }
 
-@test "status.sh --coach uses deterministic fallback when no dispatcher is available" {
+@test "status.sh --coach surfaces a brief-aware fallback when no dispatcher is available" {
     echo "logo" > "$DATA_DIR/daily_focus.txt"
     rm -f "$DOTFILES_DIR/bin/dhp-coach.sh"
     cat > "$DATA_DIR/github_commits.txt" <<'EOF'
@@ -645,7 +627,7 @@ EOF
     [ "$status" -eq 0 ]
     [[ "$output" == *"🧭 COACH BRIEF:"* ]]
     [[ "$output" == *"Flow: status"* ]]
-    [[ "$output" == *"AI status coach was dispatcher missing; using deterministic fallback structure."* ]]
+    [[ "$output" == *"AI coaching was dispatcher-missing; deterministic coach brief is shown above."* ]]
 }
 
 # ─── Journal section ─────────────────────────────────────────────────────

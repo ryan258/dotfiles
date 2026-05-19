@@ -393,13 +393,12 @@ EOF
         bash -c "$DOTFILES_DIR/scripts/startday.sh refresh < /dev/null"
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"North Star:"* ]]
-    [[ "$output" == *"Do Next (ordered 1-3):"* ]]
+    # Phase 4: deterministic brief stays visible; AI section degrades to a
+    # brief-aware message instead of synthesising a fake structured fallback.
     [[ "$output" == *"🧭 COACH BRIEF:"* ]]
-    [[ "$output" == *"Capture the first concrete move for today's focus (Ship the logo)"* ]]
-    [[ "$output" != *"Vectorize logo"* ]]
-    [[ "$output" == *"Operating insight (momentum + exploration):"* ]]
-    [[ "$output" == *"AI coaching was timeout; using deterministic fallback structure."* ]]
+    [[ "$output" == *"AI briefing was timeout; deterministic coach brief is shown above."* ]]
+    [[ "$output" != *"North Star:"* ]]
+    [[ "$output" != *"Operating insight (momentum + exploration):"* ]]
 }
 
 @test "startday retries after timeout and returns AI output when retry succeeds" {
@@ -442,30 +441,13 @@ EOF
     [[ "$output" != *"Deterministic fallback (timeout)"* ]]
 }
 
-@test "startday filters noisy AI blindspots when the dispatcher returns output" {
+@test "startday passes the dispatcher response through without post-processing" {
     cat > "$DOTFILES_DIR/bin/dhp-strategy.sh" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 cat <<'OUT'
-Briefing Summary:
-- GitHub-first note.
-GitHub blindspots/opportunities (1-10):
-1. dir_usage_malformed=162 means the system is untrustworthy.
-2. focus_git_status=diffuse proves the spear is broken.
-3. commit_context is missing so there is nothing to learn.
-4. Keep the repo lane visible to future you.
-North Star:
-- Keep momentum tied to focus.
-Do Next (ordered 1-3):
-1. Capture the next concrete move for Ship the logo.
-2. Start it in one short block.
-3. Done when one concrete move is started.
-Scope anchor:
-- No side quests before done condition.
-Operating insight (momentum + exploration):
-- Working: recent delivery. Drift: context switching.
-Health lens:
-- Use two 45-minute blocks with a break.
+One sentence of framing: the day is starting with one clear focus.
+Next move: capture the next concrete move for the focus and start a short block.
 OUT
 EOF
     chmod +x "$DOTFILES_DIR/bin/dhp-strategy.sh"
@@ -483,9 +465,8 @@ EOF
         bash -c "$DOTFILES_DIR/scripts/startday.sh refresh < /dev/null"
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"GitHub blindspots/opportunities (1-5):"* ]]
-    [[ "$output" != *"dir_usage_malformed=162 means the system is untrustworthy."* ]]
-    [[ "$output" != *"focus_git_status=diffuse proves the spear is broken."* ]]
-    [[ "$output" != *"commit_context is missing so there is nothing to learn."* ]]
-    [[ "$output" == *"1. Keep the repo lane visible to future you."* ]]
+    # Phase 4 deleted coach_refine_response; AI output is shown verbatim.
+    [[ "$output" == *"One sentence of framing: the day is starting with one clear focus."* ]]
+    [[ "$output" == *"Next move: capture the next concrete move for the focus and start a short block."* ]]
+    [[ "$output" != *"GitHub blindspots/opportunities"* ]]
 }
